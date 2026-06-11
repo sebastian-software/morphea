@@ -90,6 +90,21 @@ Each run summary also carries `editability_score`, `fragmentation_penalty`,
 `raster_l1_error`, and `raster_edge_error` when the manifest contains those
 metrics.
 
+## Primitive Classifier Model v1
+
+Written by `curve train`.
+
+Top-level fields:
+
+- `model_type`: currently `centroid_primitive_classifier`
+- `feature_names`
+- `classes`
+- `centroids`
+- `train_examples`
+- `evaluation`: direct classifier accuracy/confusion for validation/test splits
+- `ranking_evaluation`: heuristic-only versus classifier-prior candidate
+  ranking comparison for validation/test splits
+
 ## Run Directory v1
 
 Written by `curve vectorize --run-dir` and by each `curve sweep` run.

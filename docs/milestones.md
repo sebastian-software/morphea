@@ -375,11 +375,12 @@ Implemented so far:
 - confusion matrix output
 - optional `--classifier-model` prior during `curve vectorize`
 - `classifier_prior_error` metric in candidate manifests
+- `curve train` writes `ranking_evaluation` comparing heuristic-only candidate
+  ranking with classifier-prior-assisted ranking on validation/test splits
 
 Remaining:
 
 - replace or augment centroid baseline with small MLX Transformer
-- compare classifier-assisted ranking against heuristic-only ranking
 
 ## M8: Self-Learning Loop
 
