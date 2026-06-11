@@ -41,6 +41,26 @@ def main(argv: list[str] | None = None) -> None:
         help="RGB distance for grouping near-flat colors into one mask.",
     )
     vectorize.add_argument(
+        "--max-size",
+        type=int,
+        help="Resize the longest image side for analysis, then scale anchors back.",
+    )
+    vectorize.add_argument(
+        "--max-colors",
+        type=int,
+        help="Quantize the analysis image to this many colors before grouping.",
+    )
+    vectorize.add_argument(
+        "--max-component-area",
+        type=int,
+        help="Defer components larger than this analysis-pixel area.",
+    )
+    vectorize.add_argument(
+        "--timeout-seconds",
+        type=float,
+        help="Stop processing after this many seconds and write partial diagnostics.",
+    )
+    vectorize.add_argument(
         "--manifest",
         type=Path,
         help="Output JSON manifest path. Defaults to output path with .json suffix.",
@@ -60,6 +80,10 @@ def main(argv: list[str] | None = None) -> None:
             args.input,
             min_area=args.min_area,
             color_tolerance=args.color_tolerance,
+            max_size=args.max_size,
+            max_colors=args.max_colors,
+            max_component_area=args.max_component_area,
+            timeout_seconds=args.timeout_seconds,
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(scene.to_svg(), encoding="utf-8")

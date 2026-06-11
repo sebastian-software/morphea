@@ -29,6 +29,7 @@ class Scene:
     width: int
     height: int
     anchors: tuple[AnchorCandidate, ...]
+    diagnostics: tuple[dict[str, object], ...] = ()
 
     def to_svg(self, style: SvgStyle | None = None) -> str:
         return anchors_to_svg(self.anchors, self.width, self.height, style=style)
@@ -40,6 +41,7 @@ class Scene:
             "anchor_count": len(self.anchors),
             "anchors": [anchor_to_manifest(anchor) for anchor in self.anchors],
             "groups": scene_groups_to_manifest(self.anchors),
+            "diagnostics": list(self.diagnostics),
         }
 
 

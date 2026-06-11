@@ -86,6 +86,36 @@ class CliTests(unittest.TestCase):
             self.assertEqual(len(cutouts), 1)
             self.assertEqual(cutouts[0]["color"], "#ffffff")
 
+    def test_vectorize_writes_runtime_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            image = Image.new("RGB", (40, 40), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((8, 8, 31, 31), fill="#dd2222")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--max-size",
+                        "20",
+                        "--max-component-area",
+                        "20",
+                        "--timeout-seconds",
+                        "5",
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            codes = [diagnostic["code"] for diagnostic in manifest["diagnostics"]]
+            self.assertIn("image_resized_for_analysis", codes)
+            self.assertIn("color_mask_deferred", codes)
+
 
 if __name__ == "__main__":
     unittest.main()

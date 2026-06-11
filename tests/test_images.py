@@ -57,6 +57,33 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertEqual(cutouts[0].color, "#ffffff")
         self.assertIn('stroke="#ffffff"', svg)
 
+    def test_max_size_resizes_for_analysis_and_scales_anchor_back(self):
+        image_path = _write_large_circle_image()
+
+        scene = scene_from_flat_color_image(image_path, max_size=20)
+
+        self.assertEqual(scene.width, 40)
+        self.assertEqual(scene.height, 40)
+        self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
+        self.assertGreater(scene.anchors[0].circle.radius, 10)
+        self.assertEqual(scene.diagnostics[0]["code"], "image_resized_for_analysis")
+
+    def test_max_component_area_defers_large_masks(self):
+        image_path = _write_large_circle_image()
+
+        scene = scene_from_flat_color_image(image_path, max_component_area=20)
+
+        self.assertEqual(scene.anchors, ())
+        self.assertEqual(scene.diagnostics[0]["code"], "color_mask_deferred")
+        self.assertEqual(scene.diagnostics[0]["color"], "#dd2222")
+
+    def test_max_colors_quantizes_palette_before_grouping(self):
+        image_path = _write_multi_red_circle_image()
+
+        masks = flat_color_masks_from_image(image_path, max_colors=2, color_tolerance=8)
+
+        self.assertEqual(len(masks), 1)
+
 
 def _write_fixture_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -105,6 +132,29 @@ def _write_cutout_gap_image() -> Path:
     draw = ImageDraw.Draw(image)
     draw.rectangle((2, 2, 15, 6), fill="#003366")
     draw.rectangle((6, 4, 11, 4), fill="white")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_large_circle_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "large-circle.png"
+    image = Image.new("RGB", (40, 40), "white")
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((8, 8, 31, 31), fill="#dd2222")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_multi_red_circle_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "multi-red-circle.png"
+    image = Image.new("RGB", (18, 18), "white")
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((3, 3, 14, 14), fill="#dd2222")
+    draw.arc((3, 3, 14, 14), start=0, end=180, fill="#d91f1f", width=2)
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
