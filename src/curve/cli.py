@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from curve.classifier import train_centroid_classifier
-from curve.comparison import compare_snapshots
+from curve.comparison import compare_git_snapshots, compare_snapshots
 from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
@@ -258,6 +258,22 @@ def main(argv: list[str] | None = None) -> None:
     compare_snapshots_parser.add_argument("-o", "--output", type=Path, required=True)
     compare_snapshots_parser.add_argument("--markdown", type=Path)
 
+    compare_git_snapshots_parser = subcommands.add_parser(
+        "compare-git-snapshots",
+        help="Compare the same saved snapshot file across two git refs.",
+    )
+    compare_git_snapshots_parser.add_argument("before_ref")
+    compare_git_snapshots_parser.add_argument("after_ref")
+    compare_git_snapshots_parser.add_argument("--path", type=Path, required=True)
+    compare_git_snapshots_parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        required=True,
+    )
+    compare_git_snapshots_parser.add_argument("--markdown", type=Path)
+    compare_git_snapshots_parser.add_argument("--repo", type=Path, default=Path("."))
+
     refine = subcommands.add_parser(
         "refine",
         help="Apply a structure-preserving refinement backend to a manifest.",
@@ -481,6 +497,18 @@ def main(argv: list[str] | None = None) -> None:
             markdown=args.markdown,
         )
         print(f"compared {result['item_count']} snapshot items")
+        return
+
+    if args.command == "compare-git-snapshots":
+        result = compare_git_snapshots(
+            args.before_ref,
+            args.after_ref,
+            snapshot_path=args.path,
+            output=args.output,
+            markdown=args.markdown,
+            repo=args.repo,
+        )
+        print(f"compared {result['item_count']} git snapshot items")
         return
 
     if args.command == "refine":

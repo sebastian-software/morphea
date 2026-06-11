@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,46 @@ def compare_snapshots(
         before=str(before_path),
         after=str(after_path),
     )
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(comparison, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_snapshot_comparison_markdown(comparison),
+            encoding="utf-8",
+        )
+    return comparison
+
+
+def compare_git_snapshots(
+    before_ref: str,
+    after_ref: str,
+    *,
+    snapshot_path: str | Path,
+    output: str | Path,
+    markdown: str | Path | None = None,
+    repo: str | Path = ".",
+) -> dict[str, Any]:
+    snapshot = str(snapshot_path)
+    before_data = _git_show_json(repo, before_ref, snapshot)
+    after_data = _git_show_json(repo, after_ref, snapshot)
+    comparison = render_snapshot_comparison(
+        before_data,
+        after_data,
+        before=f"{before_ref}:{snapshot}",
+        after=f"{after_ref}:{snapshot}",
+    )
+    comparison["git"] = {
+        "repo": str(repo),
+        "before_ref": before_ref,
+        "after_ref": after_ref,
+        "snapshot_path": snapshot,
+    }
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -172,3 +213,18 @@ def _id_list(values: Any) -> str:
     if not values:
         return "none"
     return ", ".join(f"`{value}`" for value in values)
+
+
+def _git_show_json(repo: str | Path, ref: str, snapshot_path: str) -> dict[str, Any]:
+    result = subprocess.run(
+        ["git", "show", f"{ref}:{snapshot_path}"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    data = json.loads(result.stdout)
+    if not isinstance(data, dict):
+        raise ValueError(f"snapshot at {ref}:{snapshot_path} must be a JSON object")
+    return data

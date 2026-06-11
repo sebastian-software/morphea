@@ -41,6 +41,7 @@ from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
 from curve.profiling import profile_vectorize
 from curve.comparison import (
+    compare_git_snapshots,
     compare_snapshots,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
@@ -131,6 +132,7 @@ __all__ = [
     "generate_synthetic_dataset",
     "harvest_pseudo_labels",
     "centroids_from_examples",
+    "compare_git_snapshots",
     "compare_retraining",
     "compare_snapshots",
     "primitive_candidates_for_component",

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from curve.cli import main
 from curve.comparison import (
+    compare_git_snapshots,
     compare_snapshots,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
@@ -144,6 +145,53 @@ class SnapshotComparisonTests(unittest.TestCase):
         )
 
         self.assertIn("| n/a | n/a | n/a | n/a | n/a |", markdown)
+
+    def test_compare_git_snapshots_reads_snapshot_from_refs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "git-comparison.json"
+            markdown = root / "git-comparison.md"
+
+            result = compare_git_snapshots(
+                "HEAD",
+                "HEAD",
+                snapshot_path="docs/real-images/baselines/current-curated-snapshot.json",
+                output=output,
+                markdown=markdown,
+            )
+
+            self.assertEqual(result["item_kind"], "cases")
+            self.assertEqual(result["git"]["before_ref"], "HEAD")
+            self.assertTrue(output.exists())
+            self.assertTrue(markdown.exists())
+            self.assertEqual(
+                [item["changed_metric_count"] for item in result["items"]],
+                [0, 0],
+            )
+
+    def test_compare_git_snapshots_cli_writes_outputs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "git-comparison.json"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-git-snapshots",
+                        "HEAD",
+                        "HEAD",
+                        "--path",
+                        "docs/real-images/baselines/current-curated-snapshot.json",
+                        "-o",
+                        str(output),
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                result["git"]["snapshot_path"],
+                "docs/real-images/baselines/current-curated-snapshot.json",
+            )
 
 
 if __name__ == "__main__":
