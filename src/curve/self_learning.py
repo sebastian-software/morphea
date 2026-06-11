@@ -5,6 +5,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from curve.classifier import (
+    TrainingExample,
+    anchors_from_dataset,
+    centroids_from_examples,
+    evaluate_classifier,
+    evaluate_classifier_ranking,
+    examples_from_dataset,
+)
+
 
 def harvest_pseudo_labels(
     *,
@@ -91,6 +100,46 @@ def harvest_pseudo_labels(
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    return result
+
+
+def compare_retraining(
+    *,
+    base_dataset: str | Path,
+    pseudo_dataset: str | Path,
+    output: str | Path,
+    validation_dataset: str | Path | None = None,
+) -> dict[str, object]:
+    """Compare baseline training against reviewed pseudo-label augmentation."""
+
+    validation_source = validation_dataset or base_dataset
+    baseline_train = examples_from_dataset(base_dataset, splits=("train",))
+    pseudo_train = examples_from_dataset(pseudo_dataset, splits=("train",))
+    augmented_train = baseline_train + pseudo_train
+
+    baseline = _training_comparison_model(
+        train_examples=baseline_train,
+        validation_dataset=validation_source,
+    )
+    augmented = _training_comparison_model(
+        train_examples=augmented_train,
+        validation_dataset=validation_source,
+    )
+    result = {
+        "schema_version": 1,
+        "base_dataset": str(base_dataset),
+        "pseudo_dataset": str(pseudo_dataset),
+        "validation_dataset": str(validation_source),
+        "baseline": baseline,
+        "augmented": augmented,
+        "delta": _training_comparison_delta(baseline, augmented),
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     return result
 
 
@@ -243,3 +292,113 @@ def apply_review_file(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
+
+
+def _training_comparison_model(
+    *,
+    train_examples: tuple[TrainingExample, ...],
+    validation_dataset: str | Path,
+) -> dict[str, object]:
+    centroids = centroids_from_examples(train_examples)
+    return {
+        "model_type": "centroid_primitive_classifier",
+        "train_examples": len(train_examples),
+        "classes": sorted(centroids),
+        "evaluation": {
+            "val": evaluate_classifier(
+                centroids,
+                examples_from_dataset(validation_dataset, splits=("val",)),
+            ),
+            "test": evaluate_classifier(
+                centroids,
+                examples_from_dataset(validation_dataset, splits=("test",)),
+            ),
+        },
+        "ranking_evaluation": {
+            "val": evaluate_classifier_ranking(
+                centroids,
+                anchors_from_dataset(validation_dataset, splits=("val",)),
+            ),
+            "test": evaluate_classifier_ranking(
+                centroids,
+                anchors_from_dataset(validation_dataset, splits=("test",)),
+            ),
+        },
+    }
+
+
+def _training_comparison_delta(
+    baseline: dict[str, object],
+    augmented: dict[str, object],
+) -> dict[str, object]:
+    return {
+        "train_examples": (
+            int(augmented.get("train_examples", 0))
+            - int(baseline.get("train_examples", 0))
+        ),
+        "evaluation": {
+            split: _accuracy_delta(
+                _split_metric(baseline, "evaluation", split, "accuracy"),
+                _split_metric(augmented, "evaluation", split, "accuracy"),
+            )
+            for split in ("val", "test")
+        },
+        "ranking_evaluation": {
+            split: {
+                "classifier_accuracy": _accuracy_delta(
+                    _split_metric(
+                        baseline,
+                        "ranking_evaluation",
+                        split,
+                        "classifier_accuracy",
+                    ),
+                    _split_metric(
+                        augmented,
+                        "ranking_evaluation",
+                        split,
+                        "classifier_accuracy",
+                    ),
+                ),
+                "accuracy_improvement": _accuracy_delta(
+                    _split_metric(
+                        baseline,
+                        "ranking_evaluation",
+                        split,
+                        "accuracy_improvement",
+                    ),
+                    _split_metric(
+                        augmented,
+                        "ranking_evaluation",
+                        split,
+                        "accuracy_improvement",
+                    ),
+                ),
+            }
+            for split in ("val", "test")
+        },
+    }
+
+
+def _split_metric(
+    report: dict[str, object],
+    section: str,
+    split: str,
+    metric: str,
+) -> float | None:
+    section_data = report.get(section, {})
+    if not isinstance(section_data, dict):
+        return None
+    split_data = section_data.get(split, {})
+    if not isinstance(split_data, dict):
+        return None
+    value = split_data.get(metric)
+    return float(value) if isinstance(value, (int, float)) else None
+
+
+def _accuracy_delta(
+    baseline: float | None,
+    augmented: float | None,
+) -> float | None:
+    if baseline is None or augmented is None:
+        return None
+    return augmented - baseline

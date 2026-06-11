@@ -197,6 +197,15 @@ def train_centroid_classifier(
     return model
 
 
+def centroids_from_examples(
+    examples: tuple[TrainingExample, ...],
+) -> dict[str, tuple[float, ...]]:
+    if not examples:
+        msg = "training examples must not be empty"
+        raise ValueError(msg)
+    return _centroids(examples)
+
+
 def load_centroid_model(model_json: str | Path) -> dict[str, tuple[float, ...]]:
     model = json.loads(Path(model_json).read_text(encoding="utf-8"))
     if model.get("model_type") != "centroid_primitive_classifier":

@@ -7,8 +7,10 @@ from pathlib import Path
 
 from curve.cli import main
 from curve.classifier import examples_from_dataset
+from curve.dataset import generate_synthetic_dataset
 from curve.self_learning import (
     apply_review_file,
+    compare_retraining,
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
@@ -255,6 +257,80 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertTrue((output_dir / "dataset.json").exists())
 
+    def test_compare_retraining_reports_augmented_delta(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            output = root / "compare.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=90,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+
+            result = compare_retraining(
+                base_dataset=base_dir / "dataset.json",
+                pseudo_dataset=pseudo_dir / "dataset.json",
+                output=output,
+            )
+
+            self.assertTrue(output.exists())
+            self.assertEqual(result["schema_version"], 1)
+            self.assertEqual(result["delta"]["train_examples"], 1)
+            self.assertGreater(
+                result["augmented"]["train_examples"],
+                result["baseline"]["train_examples"],
+            )
+            self.assertIn("ranking_evaluation", result["delta"])
+
+    def test_compare_training_cli_writes_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            output = root / "compare.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=91,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-training",
+                        str(base_dir / "dataset.json"),
+                        "--pseudo-dataset",
+                        str(pseudo_dir / "dataset.json"),
+                        "-o",
+                        str(output),
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["delta"]["train_examples"], 1)
+
 
 def _write_manifest(
     root: Path,
@@ -282,6 +358,27 @@ def _write_manifest(
                     "editability_score": editability_score,
                     "fragmentation_penalty": fragmentation_penalty,
                 },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_reviewed_circle(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "accepted": [
+                    {
+                        "kind": "circle",
+                        "anchor": {
+                            "kind": "circle",
+                            "node_count": 1,
+                            "parameter_count": 3,
+                            "circle": {"cx": 5, "cy": 5, "r": 3},
+                        },
+                    }
+                ]
             }
         ),
         encoding="utf-8",

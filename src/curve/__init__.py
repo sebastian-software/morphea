@@ -43,6 +43,7 @@ from curve.classifier import (
     FEATURE_NAMES,
     TrainingExample,
     anchors_from_dataset,
+    centroids_from_examples,
     classifier_prior_error,
     evaluate_classifier,
     evaluate_classifier_ranking,
@@ -62,6 +63,7 @@ from curve.segmenters import (
 )
 from curve.self_learning import (
     apply_review_file,
+    compare_retraining,
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
@@ -122,6 +124,8 @@ __all__ = [
     "generate_synthetic_sample",
     "generate_synthetic_dataset",
     "harvest_pseudo_labels",
+    "centroids_from_examples",
+    "compare_retraining",
     "primitive_candidates_for_component",
     "load_centroid_model",
     "load_curated_suite",

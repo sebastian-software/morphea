@@ -14,6 +14,7 @@ from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
 from curve.self_learning import (
     apply_review_file,
+    compare_retraining,
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
@@ -183,6 +184,15 @@ def main(argv: list[str] | None = None) -> None:
     merge_labels.add_argument("reviewed_labels", type=Path)
     merge_labels.add_argument("-o", "--output-dir", type=Path, required=True)
 
+    compare_training = subcommands.add_parser(
+        "compare-training",
+        help="Compare baseline classifier training against pseudo-label augmentation.",
+    )
+    compare_training.add_argument("base_dataset", type=Path)
+    compare_training.add_argument("--pseudo-dataset", type=Path, required=True)
+    compare_training.add_argument("--validation-dataset", type=Path)
+    compare_training.add_argument("-o", "--output", type=Path, required=True)
+
     refine = subcommands.add_parser(
         "refine",
         help="Apply a structure-preserving refinement backend to a manifest.",
@@ -342,6 +352,20 @@ def main(argv: list[str] | None = None) -> None:
             output_dir=args.output_dir,
         )
         print(f"merged {dataset['count']} reviewed labels")
+        return
+
+    if args.command == "compare-training":
+        result = compare_retraining(
+            base_dataset=args.base_dataset,
+            pseudo_dataset=args.pseudo_dataset,
+            validation_dataset=args.validation_dataset,
+            output=args.output,
+        )
+        print(
+            "compared "
+            f"{result['baseline']['train_examples']} baseline examples with "
+            f"{result['augmented']['train_examples']} augmented examples"
+        )
         return
 
     if args.command == "refine":
