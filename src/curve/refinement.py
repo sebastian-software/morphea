@@ -45,7 +45,7 @@ def refine_manifest(
         "timeout_reached": False,
     }
     if config.source_image is not None and config.max_iterations > 0:
-        optimized_data, optimizer_metrics = _optimize_circle_radii(
+        optimized_data, optimizer_metrics = _optimize_local_geometry(
             data,
             source_image=Path(config.source_image),
             max_iterations=config.max_iterations,
@@ -88,7 +88,7 @@ def refine_manifest(
     return result
 
 
-def _optimize_circle_radii(
+def _optimize_local_geometry(
     data: dict[str, object],
     *,
     source_image: Path,
@@ -114,41 +114,90 @@ def _optimize_circle_radii(
         initial_metrics = current_metrics
         iterations = 0
         timeout_reached = False
+        optimized_kinds: set[str] = set()
         for _ in range(max_iterations):
             if _deadline_exceeded(started_at, timeout_seconds):
                 timeout_reached = True
                 break
             improved = False
             for anchor in result.get("anchors", []):
-                if not isinstance(anchor, dict) or anchor.get("kind") != "circle":
+                if not isinstance(anchor, dict):
                     continue
-                circle = anchor.get("circle")
-                if not isinstance(circle, dict):
-                    continue
-                base_radius = float(circle.get("r", 0.0))
-                best_radius = base_radius
+                kind = str(anchor.get("kind"))
                 best_error = current_error
-                for delta in (-1.0, 1.0):
-                    candidate_radius = max(0.5, base_radius + delta)
-                    candidate = _with_circle_radius(result, anchor, candidate_radius)
-                    candidate_metrics = _manifest_raster_metrics(
+                if kind == "circle":
+                    circle = anchor.get("circle")
+                    if not isinstance(circle, dict):
+                        continue
+                    base_radius = float(circle.get("r", 0.0))
+                    best_radius = base_radius
+                    for delta in (-1.0, 1.0):
+                        candidate_radius = max(0.5, base_radius + delta)
+                        candidate = _with_circle_radius(
+                            result,
+                            anchor,
+                            candidate_radius,
+                        )
+                        candidate_error = _manifest_objective(
+                            candidate,
+                            source,
+                            raster_l1_weight=raster_l1_weight,
+                            raster_edge_weight=raster_edge_weight,
+                        )
+                        if candidate_error < best_error:
+                            best_error = candidate_error
+                            best_radius = candidate_radius
+                    if best_error < current_error:
+                        old_radius = float(circle.get("r", best_radius))
+                        circle["r"] = best_radius
+                        metrics = dict(anchor.get("metrics", {}))
+                        metrics["refinement_radius_delta"] = (
+                            metrics.get("refinement_radius_delta", 0.0)
+                            + best_radius
+                            - old_radius
+                        )
+                        anchor["metrics"] = metrics
+                        current_error = best_error
+                        current_metrics = _manifest_raster_metrics(
+                            result,
+                            source,
+                            raster_l1_weight=raster_l1_weight,
+                            raster_edge_weight=raster_edge_weight,
+                        )
+                        optimized_kinds.add(kind)
+                        improved = True
+                    continue
+
+                if kind not in {"rect", "rounded_rect", "quad"}:
+                    continue
+                base_corners = _quad_corners(anchor)
+                if base_corners is None:
+                    continue
+                best_corners = base_corners
+                for candidate_corners in _quad_corner_variants(base_corners):
+                    candidate = _with_quad_corners(
+                        result,
+                        anchor,
+                        candidate_corners,
+                    )
+                    candidate_error = _manifest_objective(
                         candidate,
                         source,
                         raster_l1_weight=raster_l1_weight,
                         raster_edge_weight=raster_edge_weight,
                     )
-                    candidate_error = candidate_metrics["objective"]
                     if candidate_error < best_error:
                         best_error = candidate_error
-                        best_radius = candidate_radius
+                        best_corners = candidate_corners
                 if best_error < current_error:
-                    old_radius = float(circle.get("r", best_radius))
-                    circle["r"] = best_radius
+                    quad = anchor.get("quad")
+                    if not isinstance(quad, dict):
+                        continue
+                    quad["corners"] = _manifest_corners(best_corners)
                     metrics = dict(anchor.get("metrics", {}))
-                    metrics["refinement_radius_delta"] = (
-                        metrics.get("refinement_radius_delta", 0.0)
-                        + best_radius
-                        - old_radius
+                    metrics["refinement_quad_corner_delta"] = (
+                        metrics.get("refinement_quad_corner_delta", 0.0)
+                        + _corner_delta(base_corners, best_corners)
                     )
                     anchor["metrics"] = metrics
                     current_error = best_error
@@ -158,6 +207,7 @@ def _optimize_circle_radii(
                         raster_l1_weight=raster_l1_weight,
                         raster_edge_weight=raster_edge_weight,
                     )
+                    optimized_kinds.add(kind)
                     improved = True
             iterations += 1
             if not improved:
@@ -178,6 +228,7 @@ def _optimize_circle_radii(
         "final_raster_edge_error": current_metrics["raster_edge_error"],
         "initial_objective": initial_metrics["objective"],
         "final_objective": current_metrics["objective"],
+        "optimized_parameter_kinds": sorted(optimized_kinds),
         "timeout_reached": timeout_reached,
     }
 
@@ -200,6 +251,21 @@ def _manifest_raster_metrics(
     }
 
 
+def _manifest_objective(
+    manifest: dict[str, object],
+    source: Image.Image,
+    *,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> float:
+    return _manifest_raster_metrics(
+        manifest,
+        source,
+        raster_l1_weight=raster_l1_weight,
+        raster_edge_weight=raster_edge_weight,
+    )["objective"]
+
+
 def _with_circle_radius(
     manifest: dict[str, object],
     anchor: dict[str, object],
@@ -218,6 +284,78 @@ def _with_circle_radius(
             candidate_anchors.append(candidate_anchor)
     candidate["anchors"] = candidate_anchors
     return candidate
+
+
+def _with_quad_corners(
+    manifest: dict[str, object],
+    anchor: dict[str, object],
+    corners: tuple[tuple[float, float], ...],
+) -> dict[str, object]:
+    candidate = dict(manifest)
+    candidate_anchors = []
+    for candidate_anchor in manifest.get("anchors", []):
+        if candidate_anchor is anchor:
+            changed = dict(anchor)
+            quad = dict(changed.get("quad", {}))
+            quad["corners"] = _manifest_corners(corners)
+            changed["quad"] = quad
+            candidate_anchors.append(changed)
+        else:
+            candidate_anchors.append(candidate_anchor)
+    candidate["anchors"] = candidate_anchors
+    return candidate
+
+
+def _quad_corners(anchor: dict[str, object]) -> tuple[tuple[float, float], ...] | None:
+    quad = anchor.get("quad")
+    if not isinstance(quad, dict):
+        return None
+    corners = quad.get("corners")
+    if not isinstance(corners, list) or len(corners) != 4:
+        return None
+    parsed = []
+    for point in corners:
+        if not isinstance(point, dict):
+            return None
+        parsed.append((float(point.get("x", 0.0)), float(point.get("y", 0.0))))
+    return tuple(parsed)
+
+
+def _quad_corner_variants(
+    corners: tuple[tuple[float, float], ...],
+) -> tuple[tuple[tuple[float, float], ...], ...]:
+    cx = sum(point[0] for point in corners) / len(corners)
+    cy = sum(point[1] for point in corners) / len(corners)
+    half_extent = max(
+        max(abs(point[0] - cx) for point in corners),
+        max(abs(point[1] - cy) for point in corners),
+        1.0,
+    )
+    variants = []
+    for dx, dy in ((-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0)):
+        variants.append(tuple((x + dx, y + dy) for x, y in corners))
+    for delta in (-1.0, 1.0):
+        scale = max(0.1, 1.0 + (delta / half_extent))
+        variants.append(
+            tuple((cx + ((x - cx) * scale), cy + ((y - cy) * scale)) for x, y in corners)
+        )
+    return tuple(variants)
+
+
+def _manifest_corners(
+    corners: tuple[tuple[float, float], ...],
+) -> list[dict[str, float]]:
+    return [{"x": x, "y": y} for x, y in corners]
+
+
+def _corner_delta(
+    before: tuple[tuple[float, float], ...],
+    after: tuple[tuple[float, float], ...],
+) -> float:
+    return sum(
+        ((after_x - before_x) ** 2 + (after_y - before_y) ** 2) ** 0.5
+        for (before_x, before_y), (after_x, after_y) in zip(before, after, strict=True)
+    )
 
 
 def _deadline_exceeded(started_at: float, timeout_seconds: float | None) -> bool:
