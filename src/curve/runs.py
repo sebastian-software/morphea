@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from curve.rendering import write_manifest_preview
 from curve.scene import Scene
 
 
@@ -18,6 +19,7 @@ class VectorizeRun:
     manifest_path: Path
     config_path: Path
     report_path: Path
+    preview_path: Path
     input_path: Path
 
 
@@ -52,6 +54,7 @@ def write_vectorize_run(
     manifest_path = run_dir / "manifest.json"
     config_path = run_dir / "config.json"
     report_path = run_dir / "report.md"
+    preview_path = run_dir / "preview.png"
 
     manifest = scene.to_manifest()
     svg_path.write_text(scene.to_svg(), encoding="utf-8")
@@ -67,6 +70,7 @@ def write_vectorize_run(
         render_markdown_report(manifest=manifest, config=config),
         encoding="utf-8",
     )
+    write_manifest_preview(manifest=manifest, output=preview_path)
 
     return VectorizeRun(
         run_dir=run_dir,
@@ -74,6 +78,7 @@ def write_vectorize_run(
         manifest_path=manifest_path,
         config_path=config_path,
         report_path=report_path,
+        preview_path=preview_path,
         input_path=copied_input,
     )
 
