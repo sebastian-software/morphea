@@ -71,6 +71,10 @@ SEGMENT_CONFIG_DEFAULTS = {
     "max_colors": None,
     "max_component_area": None,
     "split_components": True,
+    "mlx_model_path": None,
+    "mlx_score_threshold": 0.0,
+    "mlx_max_masks": None,
+    "mlx_timeout_seconds": None,
 }
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
@@ -242,6 +246,10 @@ def main(argv: list[str] | None = None) -> None:
     segment.add_argument("--max-size", type=int)
     segment.add_argument("--max-colors", type=int)
     segment.add_argument("--max-component-area", type=int)
+    segment.add_argument("--mlx-model-path", type=Path)
+    segment.add_argument("--mlx-score-threshold", type=float)
+    segment.add_argument("--mlx-max-masks", type=int)
+    segment.add_argument("--mlx-timeout-seconds", type=float)
     segment.add_argument(
         "--split-components",
         dest="split_components",
@@ -802,7 +810,24 @@ def _segmenter_from_config(
             split_components=bool(config["split_components"]),
         )
     if segmenter == "mlx_sam":
-        return MlxSamSegmenter()
+        return MlxSamSegmenter(
+            model_path=(
+                str(config["mlx_model_path"])
+                if config.get("mlx_model_path") is not None
+                else None
+            ),
+            score_threshold=float(config["mlx_score_threshold"]),
+            max_masks=(
+                int(config["mlx_max_masks"])
+                if config.get("mlx_max_masks") is not None
+                else None
+            ),
+            timeout_seconds=(
+                float(config["mlx_timeout_seconds"])
+                if config.get("mlx_timeout_seconds") is not None
+                else None
+            ),
+        )
     raise ValueError(f"unsupported segmenter: {segmenter}")
 
 

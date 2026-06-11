@@ -76,10 +76,22 @@ class FlatColorSegmenter:
 
 @dataclass(frozen=True)
 class MlxSamSegmenter:
+    model_path: str | None = None
+    score_threshold: float = 0.0
+    max_masks: int | None = None
+    timeout_seconds: float | None = None
     source: str = "mlx_sam"
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
-        msg = "MLX SAM segmenter is not installed/configured yet"
+        details = []
+        if self.model_path is not None:
+            details.append(f"model_path={self.model_path}")
+        if self.max_masks is not None:
+            details.append(f"max_masks={self.max_masks}")
+        if self.timeout_seconds is not None:
+            details.append(f"timeout_seconds={self.timeout_seconds}")
+        suffix = f" ({', '.join(details)})" if details else ""
+        msg = f"MLX SAM segmenter is not installed/configured yet{suffix}"
         raise RuntimeError(msg)
 
 

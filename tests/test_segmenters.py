@@ -60,6 +60,14 @@ class SegmenterTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
             MlxSamSegmenter().propose("missing.png")
 
+    def test_mlx_sam_segmenter_reports_runtime_config_in_error(self):
+        with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):
+            MlxSamSegmenter(
+                model_path="models/sam.mlx",
+                max_masks=12,
+                timeout_seconds=3.5,
+            ).propose("missing.png")
+
     def test_segment_cli_writes_flat_color_manifest_from_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -112,6 +120,36 @@ class SegmenterTests(unittest.TestCase):
                         str(output),
                         "--segmenter",
                         "mlx_sam",
+                    ]
+                )
+
+    def test_segment_cli_accepts_mlx_runtime_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "segments.json"
+            config = root / "segment-mlx.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "segmenter": "mlx_sam",
+                        "mlx_model_path": "models/sam.mlx",
+                        "mlx_score_threshold": 0.7,
+                        "mlx_max_masks": 16,
+                        "mlx_timeout_seconds": 2.5,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(RuntimeError, "models/sam.mlx"):
+                main(
+                    [
+                        "segment",
+                        str(_write_two_color_image()),
+                        "-o",
+                        str(output),
+                        "--config",
+                        str(config),
                     ]
                 )
 
