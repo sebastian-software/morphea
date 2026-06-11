@@ -139,6 +139,8 @@ Implemented so far:
 - straight high-coverage stroke components classify as `butt` caps.
 - compact filled axis-aligned rectangles classify as `rect` and stay in the
   `filled_primitives` scene layer.
+- simple rounded-rectangle silhouettes classify as `rounded_rect`; descriptive
+  metrics such as `corner_radius` are excluded from candidate error scoring.
 
 ## M3: Scene Graph and Layer Semantics
 
