@@ -148,6 +148,33 @@ class CliTests(unittest.TestCase):
             self.assertTrue((run_dirs[0] / "manifest.json").exists())
             self.assertTrue((run_dirs[0] / "config.json").exists())
             self.assertTrue((run_dirs[0] / "report.md").exists())
+            self.assertTrue((run_dirs[0] / "debug.svg").exists())
+
+    def test_vectorize_can_write_debug_svg(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            debug_path = Path(temp_dir) / "debug.svg"
+            image = Image.new("RGB", (24, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((2, 2, 10, 10), fill="#dd2222")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--debug-svg",
+                        str(debug_path),
+                    ]
+                )
+
+            debug_svg = debug_path.read_text(encoding="utf-8")
+            self.assertIn('id="anchor-0000"', debug_svg)
+            self.assertIn("anchor-0000:circle", debug_svg)
 
     def test_vectorize_accepts_classifier_model_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:

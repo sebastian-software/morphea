@@ -142,6 +142,53 @@ class SceneExportTests(unittest.TestCase):
         )
         self.assertIn("editability_score", manifest["metrics"])
 
+    def test_manifest_explains_anchor_layer_reservation_and_provenance(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...###...",
+                "..#####..",
+                ".#######.",
+                "#########",
+                "#########",
+                "#########",
+                ".#######.",
+                "..#####..",
+                "...###...",
+            )
+        )
+
+        manifest = scene_from_mask(mask).to_manifest()
+        anchor = manifest["anchors"][0]
+
+        self.assertEqual(anchor["id"], "anchor-0000")
+        self.assertEqual(anchor["layer"], "filled_primitives")
+        self.assertEqual(anchor["reserved"]["reason"], "simple_shape_anchor")
+        self.assertEqual(anchor["provenance"]["source"], "primitive_anchor_detection")
+        self.assertTrue(anchor["export_policy"]["editable"])
+        self.assertGreater(anchor["confidence"], 0.0)
+
+    def test_debug_svg_includes_anchor_ids_bounds_and_labels(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...###...",
+                "..#####..",
+                ".#######.",
+                "#########",
+                "#########",
+                "#########",
+                ".#######.",
+                "..#####..",
+                "...###...",
+            )
+        )
+
+        svg = scene_from_mask(mask).to_debug_svg()
+
+        self.assertIn('id="anchor-0000"', svg)
+        self.assertIn('data-kind="circle"', svg)
+        self.assertIn('stroke-dasharray="2 2"', svg)
+        self.assertIn("anchor-0000:circle", svg)
+
     def test_scene_metrics_penalize_same_color_fragmentation(self):
         clean = (
             AnchorCandidate(

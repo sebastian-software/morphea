@@ -79,6 +79,11 @@ def main(argv: list[str] | None = None) -> None:
         help="Do not write a JSON recognition manifest.",
     )
     vectorize.add_argument(
+        "--debug-svg",
+        type=Path,
+        help="Optional debug SVG path with source ids, bounds, and labels.",
+    )
+    vectorize.add_argument(
         "--run-dir",
         type=Path,
         help="Write a timestamped experiment run directory under this root.",
@@ -190,6 +195,7 @@ def main(argv: list[str] | None = None) -> None:
             "command": "vectorize",
             "input": str(args.input),
             "output": str(args.output),
+            "debug_svg": str(args.debug_svg) if args.debug_svg else None,
             "min_area": args.min_area,
             "color_tolerance": args.color_tolerance,
             "max_size": args.max_size,
@@ -221,6 +227,9 @@ def main(argv: list[str] | None = None) -> None:
 
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(scene.to_svg(), encoding="utf-8")
+        if args.debug_svg is not None:
+            args.debug_svg.parent.mkdir(parents=True, exist_ok=True)
+            args.debug_svg.write_text(scene.to_debug_svg(), encoding="utf-8")
         if not args.no_manifest:
             manifest_path = args.manifest or args.output.with_suffix(".json")
             manifest_path.parent.mkdir(parents=True, exist_ok=True)

@@ -38,6 +38,7 @@ class RunWriterTests(unittest.TestCase):
             self.assertTrue(run.config_path.exists())
             self.assertTrue(run.report_path.exists())
             self.assertTrue(run.preview_path.exists())
+            self.assertTrue(run.debug_svg_path.exists())
             manifest = json.loads(run.manifest_path.read_text())
             self.assertEqual(manifest["anchor_count"], 1)
 

@@ -20,6 +20,7 @@ class VectorizeRun:
     config_path: Path
     report_path: Path
     preview_path: Path
+    debug_svg_path: Path
     input_path: Path
 
 
@@ -55,9 +56,11 @@ def write_vectorize_run(
     config_path = run_dir / "config.json"
     report_path = run_dir / "report.md"
     preview_path = run_dir / "preview.png"
+    debug_svg_path = run_dir / "debug.svg"
 
     manifest = scene.to_manifest()
     svg_path.write_text(scene.to_svg(), encoding="utf-8")
+    debug_svg_path.write_text(scene.to_debug_svg(), encoding="utf-8")
     manifest_path.write_text(
         json.dumps(manifest, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -79,6 +82,7 @@ def write_vectorize_run(
         config_path=config_path,
         report_path=report_path,
         preview_path=preview_path,
+        debug_svg_path=debug_svg_path,
         input_path=copied_input,
     )
 

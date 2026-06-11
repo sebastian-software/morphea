@@ -37,6 +37,14 @@ class Scene:
     def to_svg(self, style: SvgStyle | None = None) -> str:
         return anchors_to_svg(self.anchors, self.width, self.height, style=style)
 
+    def to_debug_svg(self, style: SvgStyle | None = None) -> str:
+        return anchors_to_debug_svg(
+            self.anchors,
+            self.width,
+            self.height,
+            style=style,
+        )
+
     def to_manifest(self) -> dict[str, object]:
         groups = scene_groups_to_manifest(self.anchors)
         return {
@@ -44,7 +52,10 @@ class Scene:
             "width": self.width,
             "height": self.height,
             "anchor_count": len(self.anchors),
-            "anchors": [anchor_to_manifest(anchor) for anchor in self.anchors],
+            "anchors": [
+                anchor_to_manifest_with_index(anchor, index=index)
+                for index, anchor in enumerate(self.anchors)
+            ],
             "groups": groups,
             "diagnostics": list(self.diagnostics),
             "metrics": scene_metrics_to_manifest(
@@ -84,6 +95,37 @@ def anchors_to_svg(
         )
     for anchor in anchors:
         lines.append(f"  {anchor_to_svg_element(anchor, style)}")
+    lines.append("</svg>")
+    return "\n".join(lines)
+
+
+def anchors_to_debug_svg(
+    anchors: Iterable[AnchorCandidate],
+    width: int,
+    height: int,
+    *,
+    style: SvgStyle | None = None,
+) -> str:
+    style = style or SvgStyle()
+    anchor_tuple = tuple(anchors)
+    lines = [
+        (
+            f'<svg xmlns="http://www.w3.org/2000/svg" '
+            f'viewBox="0 0 {width} {height}" width="{width}" height="{height}">'
+        )
+    ]
+    if style.background is not None:
+        lines.append(
+            f'<rect x="0" y="0" width="{width}" height="{height}" '
+            f'fill="{escape(style.background)}" />'
+        )
+    for index, anchor in enumerate(anchor_tuple):
+        anchor_id = f"anchor-{index:04d}"
+        lines.append(f'  <g id="{anchor_id}" data-kind="{escape(anchor.kind.value)}">')
+        lines.append(f"    {anchor_to_svg_element(anchor, style)}")
+        lines.append(f"    {_debug_bounds_element(anchor)}")
+        lines.append(f"    {_debug_label_element(anchor, anchor_id)}")
+        lines.append("  </g>")
     lines.append("</svg>")
     return "\n".join(lines)
 
@@ -131,9 +173,33 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
 
 
 def anchor_to_manifest(anchor: AnchorCandidate) -> dict[str, object]:
+    return anchor_to_manifest_with_index(anchor, index=None)
+
+
+def anchor_to_manifest_with_index(
+    anchor: AnchorCandidate,
+    *,
+    index: int | None,
+) -> dict[str, object]:
+    anchor_id = f"anchor-{index:04d}" if index is not None else None
     data: dict[str, object] = {
+        "id": anchor_id,
         "kind": anchor.kind.value,
         "color": anchor.color,
+        "layer": _anchor_layer(anchor),
+        "confidence": _anchor_confidence(anchor),
+        "reserved": {
+            "bounds": list(_anchor_bounds(anchor)),
+            "reason": _reservation_reason(anchor),
+        },
+        "provenance": {
+            "source": "primitive_anchor_detection",
+            "fitting": _anchor_fitting_stage(anchor),
+        },
+        "export_policy": {
+            "editable": anchor.is_simple_shape,
+            "debug_label": _debug_label(anchor, anchor_id),
+        },
         "raster_error": anchor.raster_error,
         "node_count": anchor.node_count,
         "parameter_count": anchor.parameter_count,
@@ -263,6 +329,86 @@ def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
         for count in _color_fragment_counts(anchors).values()
     )
     return min(excess_fragments / max(len(anchors), 1) * 0.5, 0.5)
+
+
+def _anchor_layer(anchor: AnchorCandidate) -> str:
+    if anchor.stroke is not None and anchor.stroke.is_cutout:
+        return "cutout_overlays"
+    if anchor.kind in {AnchorKind.STROKE_CIRCLE, AnchorKind.STROKE_POLYLINE, AnchorKind.STROKE_PATH}:
+        return "strokes"
+    if anchor.kind == AnchorKind.QUAD:
+        return "filled_primitives"
+    if anchor.kind == AnchorKind.CIRCLE:
+        return "filled_primitives"
+    return "generic_paths"
+
+
+def _anchor_confidence(anchor: AnchorCandidate) -> float:
+    metric_error = sum(
+        value for value in anchor.metrics.values() if isinstance(value, (int, float))
+    )
+    score = 1.0 - min(anchor.raster_error + metric_error * 0.1, 1.0)
+    if not anchor.is_simple_shape:
+        score -= 0.2
+    return round(max(0.0, min(score, 1.0)), 6)
+
+
+def _reservation_reason(anchor: AnchorCandidate) -> str:
+    if anchor.is_simple_shape:
+        return "simple_shape_anchor"
+    return "generic_fallback"
+
+
+def _anchor_fitting_stage(anchor: AnchorCandidate) -> str:
+    if anchor.kind == AnchorKind.CUBIC_PATH:
+        return "fallback_path"
+    return "primitive_fit"
+
+
+def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]:
+    if anchor.circle is not None:
+        center = anchor.circle.center
+        radius = anchor.circle.radius
+        return (
+            center.x - radius,
+            center.y - radius,
+            center.x + radius,
+            center.y + radius,
+        )
+    if anchor.stroke is not None and anchor.stroke.centerline:
+        xs = [point.x for point in anchor.stroke.centerline]
+        ys = [point.y for point in anchor.stroke.centerline]
+        pad = _stroke_width(anchor) / 2
+        return (min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad)
+    if anchor.quad is not None:
+        xs = [point.x for point in anchor.quad.corners]
+        ys = [point.y for point in anchor.quad.corners]
+        return (min(xs), min(ys), max(xs), max(ys))
+    return (0.0, 0.0, 0.0, 0.0)
+
+
+def _debug_label(anchor: AnchorCandidate, anchor_id: str | None) -> str:
+    prefix = anchor_id or "anchor"
+    return f"{prefix}:{anchor.kind.value}:{_anchor_confidence(anchor)}"
+
+
+def _debug_bounds_element(anchor: AnchorCandidate) -> str:
+    min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+    return (
+        f'<rect x="{_fmt(min_x)}" y="{_fmt(min_y)}" '
+        f'width="{_fmt(max_x - min_x)}" height="{_fmt(max_y - min_y)}" '
+        f'fill="none" stroke="#ff00ff" stroke-width="1" '
+        f'stroke-dasharray="2 2" />'
+    )
+
+
+def _debug_label_element(anchor: AnchorCandidate, anchor_id: str) -> str:
+    min_x, min_y, _, _ = _anchor_bounds(anchor)
+    return (
+        f'<text x="{_fmt(min_x)}" y="{_fmt(max(min_y - 2, 0))}" '
+        f'font-size="4" fill="#ff00ff">'
+        f'{escape(_debug_label(anchor, anchor_id))}</text>'
+    )
 
 
 def _polyline_path(points: tuple[Point, ...]) -> str:
