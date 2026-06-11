@@ -174,6 +174,17 @@ def render_markdown_report(
     else:
         lines.append("- none")
 
+    lines.extend(["", "## Groups", ""])
+    if groups:
+        for group in groups:
+            indexes = group.get("anchor_indexes", [])
+            details = f"{len(indexes)} anchors"
+            if group.get("color") is not None:
+                details = f"{details}, color `{group.get('color')}`"
+            lines.append(f"- `{group.get('kind')}`: {details}")
+    else:
+        lines.append("- none")
+
     lines.extend(["", "## Diagnostics", ""])
     if diagnostics:
         for diagnostic in diagnostics:
@@ -246,6 +257,19 @@ def render_html_report(
         )
         if layers
         else "  <p>none</p>",
+        "  <h2>Groups</h2>",
+        _html_table(
+            ("Group", "Details"),
+            (
+                (
+                    group.get("kind"),
+                    _group_report_details(group),
+                )
+                for group in groups
+            ),
+        )
+        if groups
+        else "  <p>none</p>",
         "  <h2>Diagnostics</h2>",
         _html_table(
             ("Level", "Code"),
@@ -306,6 +330,15 @@ def _html_table(
         body.append("      <tr><td colspan=\"2\">none</td></tr>")
     body.extend(["    </tbody>", "  </table>"])
     return "\n".join(body)
+
+
+def _group_report_details(group: dict[str, object]) -> str:
+    indexes = group.get("anchor_indexes", [])
+    count = len(indexes) if isinstance(indexes, list) else 0
+    details = f"{count} anchors"
+    if group.get("color") is not None:
+        details = f"{details}, color {group.get('color')}"
+    return details
 
 
 def _counts(values: object) -> dict[str, int]:

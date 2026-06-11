@@ -64,7 +64,13 @@ class RunWriterTests(unittest.TestCase):
                 "anchors": [{"kind": "circle"}, {"kind": "circle"}],
                 "layers": [{"name": "filled_primitives", "anchor_count": 2}],
                 "diagnostics": [{"level": "warning", "code": "component_deferred"}],
-                "groups": [],
+                "groups": [
+                    {
+                        "kind": "same_color_fragment_group",
+                        "color": "#dd2222",
+                        "anchor_indexes": [0, 1],
+                    }
+                ],
                 "metrics": {
                     "editability_score": 0.8,
                     "fragmentation_penalty": 0.1,
@@ -78,6 +84,7 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("`circle`: 2", report)
         self.assertIn("- Layers: 1", report)
         self.assertIn("`filled_primitives`: 2", report)
+        self.assertIn("`same_color_fragment_group`: 2 anchors, color `#dd2222`", report)
         self.assertIn("`warning` `component_deferred`", report)
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
@@ -92,7 +99,13 @@ class RunWriterTests(unittest.TestCase):
                 "anchors": [{"kind": "circle"}, {"kind": "circle"}],
                 "layers": [{"name": "filled_primitives", "anchor_count": 2}],
                 "diagnostics": [{"level": "warning", "code": "component_deferred"}],
-                "groups": [],
+                "groups": [
+                    {
+                        "kind": "same_color_fragment_group",
+                        "color": "#dd2222",
+                        "anchor_indexes": [0, 1],
+                    }
+                ],
                 "metrics": {
                     "editability_score": 0.8,
                     "fragmentation_penalty": 0.1,
@@ -106,6 +119,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("<code>circle</code>", report)
         self.assertIn("<td>2</td>", report)
         self.assertIn("<code>filled_primitives</code>", report)
+        self.assertIn("<code>same_color_fragment_group</code>", report)
+        self.assertIn("2 anchors, color #dd2222", report)
         self.assertIn("<td>component_deferred</td>", report)
         self.assertIn("<code>raster_l1_error</code>", report)
 
