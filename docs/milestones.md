@@ -244,6 +244,8 @@ Implemented so far:
 
 ## M6: Local MLX Segmentation Layer
 
+Status: started.
+
 Purpose: add local AI as a proposal layer, not as the final source of truth.
 
 Deliverables:
@@ -263,6 +265,14 @@ Acceptance criteria:
 - MLX SAM can propose regions locally for selected test images.
 - Pipeline can run with or without MLX and compare outcomes.
 - AI proposals never bypass geometry scoring and editability metrics.
+
+Implemented so far:
+
+- `Segmenter` protocol
+- `SegmentProposal` metadata schema
+- `FlatColorSegmenter` baseline
+- `MlxSamSegmenter` adapter placeholder with explicit not-configured error
+- manifest-ready proposal serialization
 
 ## M7: Primitive Classifier Training
 
