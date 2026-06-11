@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from math import hypot, pi, sqrt
 
 from curve.anchors import (
@@ -19,12 +20,30 @@ from curve.classifier import classifier_prior_error
 from curve.masks import BinaryMask, MaskComponent, connected_components
 
 
+@dataclass(frozen=True)
+class AnchorThresholdConfig:
+    stroke_circle_min_diameter: int = 6
+    stroke_circle_max_aspect_error: float = 0.18
+    stroke_circle_min_inner_ratio: float = 0.45
+    stroke_circle_max_area_error: float = 0.45
+    circle_min_diameter: int = 3
+    circle_max_aspect_error: float = 0.22
+    circle_max_area_error: float = 0.35
+    stroke_min_length: float = 4.0
+    stroke_min_length_width_ratio: float = 3.0
+    quad_min_fill_ratio: float = 0.35
+    quad_max_fill_error: float = 0.28
+    rect_max_fill_error: float = 0.08
+    rounded_rect_max_fill_error: float = 0.30
+
+
 def detect_primitive_anchors(
     mask: BinaryMask,
     *,
     min_area: int = 8,
     classifier_model: dict[str, tuple[float, ...]] | None = None,
     scoring: ScoringConfig | None = None,
+    thresholds: AnchorThresholdConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
     """Detect simple primitive anchors from a binary mask."""
 
@@ -33,6 +52,7 @@ def detect_primitive_anchors(
         candidates = primitive_candidates_for_component(
             component,
             classifier_model=classifier_model,
+            thresholds=thresholds,
         )
         if candidates:
             anchors.append(choose_best_anchor(candidates, scoring=scoring))
@@ -73,31 +93,33 @@ def primitive_candidates_for_component(
     component: MaskComponent,
     *,
     classifier_model: dict[str, tuple[float, ...]] | None = None,
+    thresholds: AnchorThresholdConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
     """Generate plausible simple-shape candidates for one component."""
 
+    thresholds = thresholds or AnchorThresholdConfig()
     candidates: list[AnchorCandidate] = []
-    stroke_circle = _stroke_circle_candidate(component)
+    stroke_circle = _stroke_circle_candidate(component, thresholds)
     if stroke_circle is not None:
         candidates.append(stroke_circle)
 
-    circle = _circle_candidate(component)
+    circle = _circle_candidate(component, thresholds)
     if circle is not None:
         candidates.append(circle)
 
-    stroke = _stroke_candidate(component)
+    stroke = _stroke_candidate(component, thresholds)
     if stroke is not None:
         candidates.append(stroke)
 
-    rect = _rect_candidate(component)
+    rect = _rect_candidate(component, thresholds)
     if rect is not None:
         candidates.append(rect)
 
-    rounded_rect = _rounded_rect_candidate(component)
+    rounded_rect = _rounded_rect_candidate(component, thresholds)
     if rounded_rect is not None:
         candidates.append(rounded_rect)
 
-    quad = _quad_candidate(component)
+    quad = _quad_candidate(component, thresholds)
     if quad is not None:
         candidates.append(quad)
 
@@ -135,22 +157,28 @@ def _with_classifier_prior(
     )
 
 
-def _stroke_circle_candidate(component: MaskComponent) -> AnchorCandidate | None:
+def _stroke_circle_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
     width = component.width
     height = component.height
     diameter = max(width, height)
-    if diameter < 6:
+    if diameter < thresholds.stroke_circle_min_diameter:
         return None
 
     aspect_error = abs(width - height) / diameter
-    if aspect_error > 0.18:
+    if aspect_error > thresholds.stroke_circle_max_aspect_error:
         return None
 
     center = component.centroid
     distances = [Point(x, y).distance_to(center) for x, y in component.pixels]
     inner_radius = min(distances)
     outer_radius = max(distances)
-    if outer_radius <= 0 or inner_radius / outer_radius < 0.45:
+    if (
+        outer_radius <= 0
+        or inner_radius / outer_radius < thresholds.stroke_circle_min_inner_ratio
+    ):
         return None
 
     stroke_width = outer_radius - inner_radius + 1
@@ -161,7 +189,7 @@ def _stroke_circle_candidate(component: MaskComponent) -> AnchorCandidate | None
     if expected_area <= 0:
         return None
     area_error = abs(component.area - expected_area) / expected_area
-    if area_error > 0.45:
+    if area_error > thresholds.stroke_circle_max_area_error:
         return None
 
     radius = (inner_radius + outer_radius) / 2
@@ -180,21 +208,24 @@ def _stroke_circle_candidate(component: MaskComponent) -> AnchorCandidate | None
     return enrich_anchor_metrics(candidate)
 
 
-def _circle_candidate(component: MaskComponent) -> AnchorCandidate | None:
+def _circle_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
     width = component.width
     height = component.height
     diameter = max(width, height)
-    if diameter < 3:
+    if diameter < thresholds.circle_min_diameter:
         return None
 
     aspect_error = abs(width - height) / diameter
-    if aspect_error > 0.22:
+    if aspect_error > thresholds.circle_max_aspect_error:
         return None
 
     radius = sqrt(component.area / pi)
     expected_area = pi * (diameter / 2) ** 2
     area_error = abs(component.area - expected_area) / expected_area
-    if area_error > 0.35:
+    if area_error > thresholds.circle_max_area_error:
         return None
 
     center = component.centroid
@@ -209,7 +240,10 @@ def _circle_candidate(component: MaskComponent) -> AnchorCandidate | None:
     return enrich_anchor_metrics(candidate)
 
 
-def _stroke_candidate(component: MaskComponent) -> AnchorCandidate | None:
+def _stroke_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
     axis = _principal_axis(component)
     if axis is None:
         return None
@@ -217,7 +251,10 @@ def _stroke_candidate(component: MaskComponent) -> AnchorCandidate | None:
     center, direction, min_major, max_major, min_minor, max_minor = axis
     length = max_major - min_major + 1
     stroke_width = max(max_minor - min_minor + 1, 1.0)
-    if length < 4 or length / stroke_width < 3.0:
+    if (
+        length < thresholds.stroke_min_length
+        or length / stroke_width < thresholds.stroke_min_length_width_ratio
+    ):
         return None
 
     dx, dy = direction
@@ -297,10 +334,16 @@ def _principal_axis(
     )
 
 
-def _quad_candidate(component: MaskComponent) -> AnchorCandidate | None:
+def _quad_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
     if component.width < 3 or component.height < 3:
         return None
-    if component.area < component.width * component.height * 0.35:
+    if (
+        component.area
+        < component.width * component.height * thresholds.quad_min_fill_ratio
+    ):
         return None
 
     spans = component.row_spans()
@@ -318,7 +361,7 @@ def _quad_candidate(component: MaskComponent) -> AnchorCandidate | None:
         )
     )
     fill_error = _scanline_quad_fill_error(component, quad)
-    if fill_error > 0.28:
+    if fill_error > thresholds.quad_max_fill_error:
         return None
 
     candidate = AnchorCandidate(
@@ -331,13 +374,16 @@ def _quad_candidate(component: MaskComponent) -> AnchorCandidate | None:
     return enrich_anchor_metrics(candidate)
 
 
-def _rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
+def _rect_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
     if component.width < 3 or component.height < 3:
         return None
 
     expected_area = component.width * component.height
     fill_error = 1.0 - component.area / expected_area
-    if fill_error > 0.08:
+    if fill_error > thresholds.rect_max_fill_error:
         return None
 
     min_x, min_y, max_x, max_y = component.bounds
@@ -366,7 +412,10 @@ def _rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
     return enrich_anchor_metrics(candidate)
 
 
-def _rounded_rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
+def _rounded_rect_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
     if component.width < 6 or component.height < 5:
         return None
 
@@ -392,7 +441,7 @@ def _rounded_rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
 
     expected_area = component.width * component.height
     fill_error = 1.0 - component.area / expected_area
-    if fill_error > 0.30:
+    if fill_error > thresholds.rounded_rect_max_fill_error:
         return None
 
     min_x, min_y, max_x, max_y = component.bounds

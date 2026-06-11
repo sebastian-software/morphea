@@ -43,6 +43,19 @@ VECTORIZE_DEFAULT_CONFIG = {
     "node_complexity_weight": 0.015,
     "parameter_complexity_weight": 0.01,
     "simple_shape_bonus_weight": 1.0,
+    "stroke_circle_min_diameter": 6,
+    "stroke_circle_max_aspect_error": 0.18,
+    "stroke_circle_min_inner_ratio": 0.45,
+    "stroke_circle_max_area_error": 0.45,
+    "circle_min_diameter": 3,
+    "circle_max_aspect_error": 0.22,
+    "circle_max_area_error": 0.35,
+    "stroke_min_length": 4.0,
+    "stroke_min_length_width_ratio": 3.0,
+    "quad_min_fill_ratio": 0.35,
+    "quad_max_fill_error": 0.28,
+    "rect_max_fill_error": 0.08,
+    "rounded_rect_max_fill_error": 0.30,
 }
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
 SEGMENT_CONFIG_DEFAULTS = {
@@ -141,6 +154,11 @@ def main(argv: list[str] | None = None) -> None:
     vectorize.add_argument("--node-complexity-weight", type=float)
     vectorize.add_argument("--parameter-complexity-weight", type=float)
     vectorize.add_argument("--simple-shape-bonus-weight", type=float)
+    vectorize.add_argument("--circle-max-aspect-error", type=float)
+    vectorize.add_argument("--circle-max-area-error", type=float)
+    vectorize.add_argument("--stroke-min-length-width-ratio", type=float)
+    vectorize.add_argument("--quad-max-fill-error", type=float)
+    vectorize.add_argument("--rect-max-fill-error", type=float)
     vectorize.add_argument(
         "--config",
         type=Path,
@@ -166,6 +184,11 @@ def main(argv: list[str] | None = None) -> None:
     profile.add_argument("--node-complexity-weight", type=float)
     profile.add_argument("--parameter-complexity-weight", type=float)
     profile.add_argument("--simple-shape-bonus-weight", type=float)
+    profile.add_argument("--circle-max-aspect-error", type=float)
+    profile.add_argument("--circle-max-area-error", type=float)
+    profile.add_argument("--stroke-min-length-width-ratio", type=float)
+    profile.add_argument("--quad-max-fill-error", type=float)
+    profile.add_argument("--rect-max-fill-error", type=float)
     profile.add_argument(
         "--config",
         type=Path,

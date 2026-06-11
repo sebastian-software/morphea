@@ -11,6 +11,7 @@ from curve.anchors import (
     choose_best_anchor,
 )
 from curve.detection import (
+    AnchorThresholdConfig,
     detect_cutout_strokes,
     detect_primitive_anchors,
     primitive_candidates_for_component,
@@ -88,6 +89,7 @@ from curve.rendering import render_manifest_image, write_manifest_preview
 __all__ = [
     "AnchorCandidate",
     "AnchorKind",
+    "AnchorThresholdConfig",
     "BinaryMask",
     "CircleAnchor",
     "ColorMask",

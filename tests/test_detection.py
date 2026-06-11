@@ -1,7 +1,7 @@
 import unittest
 
 from curve.anchors import AnchorKind
-from curve.detection import detect_primitive_anchors
+from curve.detection import AnchorThresholdConfig, detect_primitive_anchors
 from curve.detection import detect_cutout_strokes
 from curve.masks import BinaryMask, connected_components
 
@@ -45,6 +45,28 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].kind, AnchorKind.CIRCLE)
         self.assertIn("circle_roundness_error", anchors[0].metrics)
 
+    def test_circle_threshold_config_can_reject_loose_circle_candidate(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...###...",
+                "..#####..",
+                ".#######.",
+                "#########",
+                "#########",
+                "#########",
+                ".#######.",
+                "..#####..",
+                "...###...",
+            )
+        )
+
+        anchors = detect_primitive_anchors(
+            mask,
+            thresholds=AnchorThresholdConfig(circle_max_area_error=0.01),
+        )
+
+        self.assertNotEqual(anchors[0].kind, AnchorKind.CIRCLE)
+
     def test_circle_ring_is_detected_as_stroke_circle_anchor(self):
         mask = BinaryMask.from_rows(
             (
@@ -86,6 +108,23 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].stroke.width_samples, (2.0,))
         self.assertEqual(anchors[0].stroke.cap_style, "butt")
         self.assertEqual(anchors[0].stroke.join_style, "round")
+
+    def test_stroke_threshold_config_can_require_longer_thin_shapes(self):
+        mask = BinaryMask.from_rows(
+            (
+                "............",
+                ".##########.",
+                ".##########.",
+                "............",
+            )
+        )
+
+        anchors = detect_primitive_anchors(
+            mask,
+            thresholds=AnchorThresholdConfig(stroke_min_length_width_ratio=10.0),
+        )
+
+        self.assertNotEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
 
     def test_straight_diagonal_component_is_detected_as_stroke(self):
         mask = BinaryMask.from_rows(

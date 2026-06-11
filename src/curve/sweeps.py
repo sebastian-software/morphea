@@ -24,6 +24,19 @@ VECTORIZE_CONFIG_KEYS = {
     "node_complexity_weight",
     "parameter_complexity_weight",
     "simple_shape_bonus_weight",
+    "stroke_circle_min_diameter",
+    "stroke_circle_max_aspect_error",
+    "stroke_circle_min_inner_ratio",
+    "stroke_circle_max_area_error",
+    "circle_min_diameter",
+    "circle_max_aspect_error",
+    "circle_max_area_error",
+    "stroke_min_length",
+    "stroke_min_length_width_ratio",
+    "quad_min_fill_ratio",
+    "quad_max_fill_error",
+    "rect_max_fill_error",
+    "rounded_rect_max_fill_error",
 }
 
 
