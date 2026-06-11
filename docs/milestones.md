@@ -87,10 +87,13 @@ Implemented so far:
   connected components before oversized components are deferred.
 - image component scanning checks `timeout_seconds` during traversal and avoids
   retaining pixel sets for oversized deferred components.
+- `connected_components` and the bounded image component scanner use a
+  bytearray-backed occupancy grid during BFS while preserving the public
+  `BinaryMask` / `MaskComponent` API.
 
 Remaining:
 
-- faster array-backed component extraction.
+- broader raster hot-loop profiling and optimization beyond component BFS.
 
 ## M2: Primitive Anchor Detection V2
 
