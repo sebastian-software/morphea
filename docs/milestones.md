@@ -336,6 +336,9 @@ Implemented so far:
   from the flat-color baseline
 - flat-color segment proposals split connected components by default and can
   mark oversized components as `deferred` via `max_component_area`
+- segment configs accept future MLX runtime knobs for model path, score
+  threshold, mask count, and runtime timeout while preserving the explicit
+  not-configured failure path
 - `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed
 
@@ -546,7 +549,7 @@ Remaining:
 
 ## M11: Productized Research CLI
 
-Status: started.
+Status: implemented for the current research baseline.
 
 Purpose: make the research loop pleasant enough to use repeatedly.
 
@@ -593,6 +596,8 @@ Implemented so far:
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - segment configs include component splitting and `max_component_area`
+- segment configs include future MLX model/runtime knobs without requiring the
+  MLX backend to be installed
 - vectorize scoring weights for raster error, quality error, complexity, and
   simple-shape bonus
 - vectorize anchor threshold config for circle/ring, stroke, quad, rect, and
@@ -612,7 +617,8 @@ Implemented so far:
 
 Remaining:
 
-- richer config files for future local-AI segmenter model/runtime options.
+- add new schema entries when future milestones introduce new commands or real
+  MLX model execution.
 
 ## Commit Discipline
 

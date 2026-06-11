@@ -214,6 +214,10 @@ Supported fields:
 - `max_component_area`
 - `split_components`: default `true`, emits connected-component proposals
   instead of one proposal per color mask
+- `mlx_model_path`
+- `mlx_score_threshold`
+- `mlx_max_masks`
+- `mlx_timeout_seconds`
 
 CLI arguments override values loaded from the config file.
 
