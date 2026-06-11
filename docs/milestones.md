@@ -413,6 +413,8 @@ Remaining:
 
 ## M10: Curated Real-Image Suite
 
+Status: started.
+
 Purpose: keep the system honest against actual target images.
 
 Deliverables:
@@ -434,6 +436,22 @@ Acceptance criteria:
 - Each curated image has a documented expected-shape checklist.
 - CLI can produce SVG, manifest, and report for each image within runtime
   limits.
+
+Implemented so far:
+
+- `docs/real-images/suite.json` for local real-image metadata without checking
+  large binaries into git.
+- `curve curated-check suite.json -o report.json` for suite validation.
+- optional `--run` mode using each case's bounded `recommended_config`.
+- per-case `output.svg`, `manifest.json`, and `config.json` artifacts via
+  `--output-dir`.
+- expectation checks for anchor kinds and scene group kinds.
+
+Remaining:
+
+- broaden the suite beyond `terminaro-tweaked.png`.
+- fixed regression run snapshots for important commits/configurations.
+- visual preview/report rendering for curated cases.
 
 ## M11: Productized Research CLI
 

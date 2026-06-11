@@ -95,3 +95,18 @@ Run the current structure-preserving refinement baseline:
 ```sh
 PYTHONPATH=src python3 -m curve.cli refine runs/manifest.json -o runs/refined-manifest.json
 ```
+
+Validate the curated real-image suite metadata:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json -o runs/curated-report.json
+```
+
+Run existing local source images from the suite with their bounded configs:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
+  -o runs/curated-report.json \
+  --output-dir runs/curated \
+  --run
+```

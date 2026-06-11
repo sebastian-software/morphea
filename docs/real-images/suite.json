@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "description": "Curated local real-image regression suite. Source images stay outside git; this file records paths, bounded configs, and semantic expectations.",
+  "cases": [
+    {
+      "id": "terminaro-tweaked",
+      "source": "/Users/sebastian/Desktop/terminaro-tweaked.png",
+      "notes": [
+        "Real generated illustration with transparent background, anti-aliased palette drift, strong primitive anchors, cut-out-looking white strokes, and a perspective table grid.",
+        "This case should remain bounded: always run with max_size, max_colors, max_component_area, and timeout_seconds until M1/M2 performance work is stronger."
+      ],
+      "recommended_config": {
+        "min_area": 12,
+        "color_tolerance": 18,
+        "max_size": 256,
+        "max_colors": 10,
+        "max_component_area": 12000,
+        "timeout_seconds": 8
+      },
+      "expectations": [
+        {
+          "id": "gold-circle-anchors",
+          "kind": "circle",
+          "min_count": 5,
+          "description": "Three center dots plus two shoulder brooches should stay true circles."
+        },
+        {
+          "id": "table-perspective-quads",
+          "kind": "quad",
+          "min_count": 8,
+          "description": "Table tiles should be editable perspective quads, not noisy polygons."
+        },
+        {
+          "id": "table-grid-group",
+          "group_kind": "perspective_grid",
+          "min_count": 1,
+          "description": "Detected table quads should be grouped as a perspective grid."
+        },
+        {
+          "id": "smooth-stroke-anchors",
+          "kind": "stroke_polyline",
+          "min_count": 8,
+          "description": "Clean line-like regions should remain editable strokes."
+        }
+      ]
+    }
+  ]
+}

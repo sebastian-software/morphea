@@ -53,6 +53,25 @@ Result:
   - `palette_quantized` with max 10 colors
   - `color_mask_deferred` for a large near-white region
 
+Curated suite entry:
+
+- Defined in `docs/real-images/suite.json`.
+- Uses the same bounded config as the M1 run.
+- Checks minimum semantic expectations for:
+  - circle anchors
+  - table quad anchors
+  - one perspective grid group
+  - smooth stroke anchors
+
+Suite command:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
+  -o runs/curated-report.json \
+  --output-dir runs/curated \
+  --run
+```
+
 Earlier unbounded behavior:
 
 Temporary command attempted outside the repo:
