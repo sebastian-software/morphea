@@ -64,12 +64,14 @@ def anchors_to_svg(
 
 def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None) -> str:
     style = style or SvgStyle()
+    fill = anchor.color or style.fill
+    stroke = anchor.color or style.stroke
     if anchor.kind == AnchorKind.CIRCLE and anchor.circle is not None:
         return (
             f'<circle cx="{_fmt(anchor.circle.center.x)}" '
             f'cy="{_fmt(anchor.circle.center.y)}" '
             f'r="{_fmt(anchor.circle.radius)}" '
-            f'fill="{escape(style.fill)}" />'
+            f'fill="{escape(fill)}" />'
         )
 
     if anchor.kind == AnchorKind.STROKE_CIRCLE and anchor.circle is not None:
@@ -78,7 +80,7 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
             f'<circle cx="{_fmt(anchor.circle.center.x)}" '
             f'cy="{_fmt(anchor.circle.center.y)}" '
             f'r="{_fmt(anchor.circle.radius)}" fill="none" '
-            f'stroke="{escape(style.stroke)}" stroke-width="{_fmt(width)}" />'
+            f'stroke="{escape(stroke)}" stroke-width="{_fmt(width)}" />'
         )
 
     if anchor.kind in {AnchorKind.STROKE_PATH, AnchorKind.STROKE_POLYLINE}:
@@ -88,14 +90,14 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
         path = _polyline_path(points)
         width = _stroke_width(anchor)
         return (
-            f'<path d="{path}" fill="none" stroke="{escape(style.stroke)}" '
+            f'<path d="{path}" fill="none" stroke="{escape(stroke)}" '
             f'stroke-width="{_fmt(width)}" stroke-linecap="round" '
             f'stroke-linejoin="round" />'
         )
 
     if anchor.kind == AnchorKind.QUAD and anchor.quad is not None:
         points = " ".join(_point_pair(point) for point in anchor.quad.corners)
-        return f'<polygon points="{points}" fill="{escape(style.fill)}" />'
+        return f'<polygon points="{points}" fill="{escape(fill)}" />'
 
     return _unsupported_anchor(anchor)
 
@@ -131,4 +133,3 @@ def _fmt(value: float) -> str:
     if rounded == int(rounded):
         return str(int(rounded))
     return f"{rounded:.3f}".rstrip("0").rstrip(".")
-

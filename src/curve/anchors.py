@@ -56,6 +56,7 @@ class AnchorCandidate:
     raster_error: float
     node_count: int
     parameter_count: int
+    color: str | None = None
     circle: CircleAnchor | None = None
     stroke: StrokeAnchor | None = None
     quad: QuadAnchor | None = None
@@ -259,6 +260,7 @@ def enrich_anchor_metrics(candidate: AnchorCandidate) -> AnchorCandidate:
         raster_error=candidate.raster_error,
         node_count=candidate.node_count,
         parameter_count=candidate.parameter_count,
+        color=candidate.color,
         circle=candidate.circle,
         stroke=candidate.stroke,
         quad=candidate.quad,
@@ -279,4 +281,3 @@ def _quad_area(corners: tuple[Point, Point, Point, Point]) -> float:
         area += point.x * next_point.y
         area -= next_point.x * point.y
     return abs(area) / 2
-
