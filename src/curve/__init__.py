@@ -29,6 +29,13 @@ from curve.synthetic import SyntheticSample, generate_synthetic_sample
 from curve.runs import VectorizeRun, create_run_dir, render_markdown_report, write_vectorize_run
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
+from curve.segmenters import (
+    FlatColorSegmenter,
+    MlxSamSegmenter,
+    SegmentProposal,
+    Segmenter,
+    proposals_to_manifest,
+)
 
 __all__ = [
     "AnchorCandidate",
@@ -37,10 +44,14 @@ __all__ = [
     "CircleAnchor",
     "ColorMask",
     "DatasetSplit",
+    "FlatColorSegmenter",
     "MaskComponent",
+    "MlxSamSegmenter",
     "Point",
     "QuadAnchor",
     "Scene",
+    "SegmentProposal",
+    "Segmenter",
     "StrokeAnchor",
     "SvgStyle",
     "SyntheticSample",
@@ -58,6 +69,7 @@ __all__ = [
     "generate_synthetic_sample",
     "generate_synthetic_dataset",
     "primitive_candidates_for_component",
+    "proposals_to_manifest",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
     "scene_from_mask",
