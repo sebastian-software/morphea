@@ -202,6 +202,9 @@ Implemented so far:
 - vectorize run directories include `debug.svg`.
 - reports, eval summaries, and sweep summaries include layer counts.
 - scene manifests include `parallel_stroke_group` entries for grouped strokes.
+- scene manifests include `same_color_fragment_group` entries that identify
+  same-color merge candidates instead of leaving fragmentation as only a scalar
+  penalty.
 
 ## M4: Reports, Metrics, and Experiment Runs
 

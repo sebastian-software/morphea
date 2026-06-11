@@ -86,9 +86,11 @@ Cut-out export policy fields:
 
 Group fields:
 
-- `kind`: for example `perspective_grid` or `parallel_stroke_group`
+- `kind`: for example `perspective_grid`, `parallel_stroke_group`, or
+  `same_color_fragment_group`
 - `anchor_indexes`
 - `metrics`
+- `color`: present for `same_color_fragment_group`
 - `row_count`: present for `perspective_grid`
 - `column_count`: present for `perspective_grid`
 
