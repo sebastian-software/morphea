@@ -387,6 +387,8 @@ def _scale_stroke(stroke: StrokeAnchor | None, factor: float) -> StrokeAnchor | 
         width_samples=tuple(width * factor for width in stroke.width_samples),
         is_cutout=stroke.is_cutout,
         parallel_group_id=stroke.parallel_group_id,
+        cap_style=stroke.cap_style,
+        join_style=stroke.join_style,
     )
 
 

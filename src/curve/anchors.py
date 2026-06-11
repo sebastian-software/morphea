@@ -43,6 +43,8 @@ class StrokeAnchor:
     width_samples: tuple[float, ...]
     is_cutout: bool = False
     parallel_group_id: str | None = None
+    cap_style: str = "round"
+    join_style: str = "round"
 
 
 @dataclass(frozen=True)

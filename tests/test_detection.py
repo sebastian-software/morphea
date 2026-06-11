@@ -84,6 +84,8 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
         self.assertIn("line_smoothness_error", anchors[0].metrics)
         self.assertEqual(anchors[0].stroke.width_samples, (2.0,))
+        self.assertEqual(anchors[0].stroke.cap_style, "butt")
+        self.assertEqual(anchors[0].stroke.join_style, "round")
 
     def test_straight_diagonal_component_is_detected_as_stroke(self):
         mask = BinaryMask.from_rows(

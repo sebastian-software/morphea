@@ -215,15 +215,20 @@ def _stroke_candidate(component: MaskComponent) -> AnchorCandidate | None:
         Point(center.x + dx * min_major, center.y + dy * min_major),
         Point(center.x + dx * max_major, center.y + dy * max_major),
     )
-    width_samples = (float(stroke_width),)
-
     coverage = min(component.area / (length * stroke_width), 1.0)
+    width_samples = (float(stroke_width),)
+    cap_style = "butt" if coverage >= 0.85 else "round"
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=abs(1.0 - coverage) * 0.1,
         node_count=2,
         parameter_count=5,
-        stroke=StrokeAnchor(centerline=centerline, width_samples=width_samples),
+        stroke=StrokeAnchor(
+            centerline=centerline,
+            width_samples=width_samples,
+            cap_style=cap_style,
+            join_style="round",
+        ),
     )
     return enrich_anchor_metrics(candidate)
 

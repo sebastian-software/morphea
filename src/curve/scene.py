@@ -115,10 +115,12 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
         points = anchor.stroke.centerline
         path = _polyline_path(points)
         width = _stroke_width(anchor)
+        cap = escape(anchor.stroke.cap_style)
+        join = escape(anchor.stroke.join_style)
         return (
             f'<path d="{path}" fill="none" stroke="{escape(stroke)}" '
-            f'stroke-width="{_fmt(width)}" stroke-linecap="round" '
-            f'stroke-linejoin="round" />'
+            f'stroke-width="{_fmt(width)}" stroke-linecap="{cap}" '
+            f'stroke-linejoin="{join}" />'
         )
 
     if anchor.kind == AnchorKind.QUAD and anchor.quad is not None:
@@ -151,6 +153,8 @@ def anchor_to_manifest(anchor: AnchorCandidate) -> dict[str, object]:
             ],
             "width_samples": list(anchor.stroke.width_samples),
             "is_cutout": anchor.stroke.is_cutout,
+            "cap_style": anchor.stroke.cap_style,
+            "join_style": anchor.stroke.join_style,
         }
     if anchor.quad is not None:
         data["quad"] = {

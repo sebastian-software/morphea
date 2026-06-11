@@ -1,9 +1,10 @@
 import unittest
 
 from curve.masks import BinaryMask
-from curve.anchors import AnchorCandidate, AnchorKind
+from curve.anchors import AnchorCandidate, AnchorKind, Point, StrokeAnchor
 from curve.scene import (
     SCENE_MANIFEST_SCHEMA_VERSION,
+    Scene,
     SvgStyle,
     scene_from_mask,
     scene_metrics_to_manifest,
@@ -47,7 +48,30 @@ class SceneExportTests(unittest.TestCase):
         self.assertIn("<path ", svg)
         self.assertIn('fill="none"', svg)
         self.assertIn('stroke="#ffffff"', svg)
-        self.assertIn('stroke-linecap="round"', svg)
+        self.assertIn('stroke-linecap="butt"', svg)
+
+    def test_stroke_manifest_and_svg_preserve_cap_and_join_styles(self):
+        anchor = AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            stroke=StrokeAnchor(
+                centerline=(Point(1, 2), Point(8, 2), Point(10, 4)),
+                width_samples=(2.0,),
+                cap_style="square",
+                join_style="miter",
+            ),
+        )
+        scene = Scene(width=12, height=8, anchors=(anchor,))
+
+        svg = scene.to_svg()
+        manifest = scene.to_manifest()
+
+        self.assertIn('stroke-linecap="square"', svg)
+        self.assertIn('stroke-linejoin="miter"', svg)
+        self.assertEqual(manifest["anchors"][0]["stroke"]["cap_style"], "square")
+        self.assertEqual(manifest["anchors"][0]["stroke"]["join_style"], "miter")
 
     def test_circle_ring_exports_editable_svg_stroke_circle(self):
         mask = BinaryMask.from_rows(
