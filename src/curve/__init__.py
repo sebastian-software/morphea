@@ -48,6 +48,7 @@ from curve.segmenters import (
     Segmenter,
     proposals_to_manifest,
 )
+from curve.self_learning import harvest_pseudo_labels
 
 __all__ = [
     "AnchorCandidate",
@@ -87,6 +88,7 @@ __all__ = [
     "flat_color_masks_from_image",
     "generate_synthetic_sample",
     "generate_synthetic_dataset",
+    "harvest_pseudo_labels",
     "primitive_candidates_for_component",
     "load_centroid_model",
     "proposals_to_manifest",

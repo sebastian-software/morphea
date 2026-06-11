@@ -11,6 +11,7 @@ from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_vectorize_run
+from curve.self_learning import harvest_pseudo_labels
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -113,6 +114,15 @@ def main(argv: list[str] | None = None) -> None:
     train.add_argument("dataset", type=Path)
     train.add_argument("-o", "--output", type=Path, required=True)
 
+    harvest = subcommands.add_parser(
+        "harvest",
+        help="Collect high-confidence pseudo-labels from vectorize runs.",
+    )
+    harvest.add_argument("run_root", type=Path)
+    harvest.add_argument("-o", "--output", type=Path, required=True)
+    harvest.add_argument("--max-run-diagnostics", type=int, default=0)
+    harvest.add_argument("--max-classifier-prior-error", type=float, default=0.0)
+
     args = parser.parse_args(argv)
     if args.command == "vectorize":
         config = {
@@ -188,6 +198,16 @@ def main(argv: list[str] | None = None) -> None:
         print(
             f"trained {model['model_type']} with {model['train_examples']} examples"
         )
+        return
+
+    if args.command == "harvest":
+        result = harvest_pseudo_labels(
+            run_root=args.run_root,
+            output=args.output,
+            max_run_diagnostics=args.max_run_diagnostics,
+            max_classifier_prior_error=args.max_classifier_prior_error,
+        )
+        print(f"harvested {result['pseudo_label_count']} pseudo-labels")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")

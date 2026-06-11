@@ -1,0 +1,92 @@
+import json
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
+
+from curve.cli import main
+from curve.self_learning import harvest_pseudo_labels
+
+
+class SelfLearningTests(unittest.TestCase):
+    def test_harvest_pseudo_labels_accepts_clean_run_anchors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(run_root=root, output=output)
+
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["pseudo_labels"][0]["kind"], "circle")
+            self.assertTrue(output.exists())
+
+    def test_harvest_rejects_runs_with_warning_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "warning",
+                diagnostics=[{"level": "warning", "code": "component_deferred"}],
+                classifier_error=0.0,
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(run_root=root, output=output)
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+            self.assertEqual(result["rejected_runs"][0]["reason"], "too_many_run_diagnostics")
+
+    def test_harvest_filters_high_classifier_prior_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(root, "mismatch", diagnostics=[], classifier_error=0.35)
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(run_root=root, output=output)
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+
+    def test_harvest_cli_writes_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
+            output = Path(temp_dir) / "pseudo.json"
+
+            with redirect_stdout(StringIO()):
+                main(["harvest", str(root), "-o", str(output)])
+
+            result = json.loads(output.read_text())
+            self.assertEqual(result["pseudo_label_count"], 1)
+
+
+def _write_manifest(
+    root: Path,
+    run_name: str,
+    *,
+    diagnostics: list[dict[str, object]],
+    classifier_error: float,
+) -> None:
+    run_dir = root / run_name
+    run_dir.mkdir(parents=True)
+    (run_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "anchors": [
+                    {
+                        "kind": "circle",
+                        "color": "#dd2222",
+                        "metrics": {"classifier_prior_error": classifier_error},
+                    }
+                ],
+                "diagnostics": diagnostics,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+if __name__ == "__main__":
+    unittest.main()
+
