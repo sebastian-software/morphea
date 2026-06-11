@@ -28,6 +28,14 @@ class Scene:
     def to_svg(self, style: SvgStyle | None = None) -> str:
         return anchors_to_svg(self.anchors, self.width, self.height, style=style)
 
+    def to_manifest(self) -> dict[str, object]:
+        return {
+            "width": self.width,
+            "height": self.height,
+            "anchor_count": len(self.anchors),
+            "anchors": [anchor_to_manifest(anchor) for anchor in self.anchors],
+        }
+
 
 def scene_from_mask(mask: BinaryMask, *, min_area: int = 8) -> Scene:
     return Scene(
@@ -100,6 +108,40 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
         return f'<polygon points="{points}" fill="{escape(fill)}" />'
 
     return _unsupported_anchor(anchor)
+
+
+def anchor_to_manifest(anchor: AnchorCandidate) -> dict[str, object]:
+    data: dict[str, object] = {
+        "kind": anchor.kind.value,
+        "color": anchor.color,
+        "raster_error": anchor.raster_error,
+        "node_count": anchor.node_count,
+        "parameter_count": anchor.parameter_count,
+        "metrics": dict(sorted(anchor.metrics.items())),
+    }
+    if anchor.circle is not None:
+        data["circle"] = {
+            "cx": anchor.circle.center.x,
+            "cy": anchor.circle.center.y,
+            "r": anchor.circle.radius,
+        }
+    if anchor.stroke is not None:
+        data["stroke"] = {
+            "centerline": [
+                {"x": point.x, "y": point.y}
+                for point in anchor.stroke.centerline
+            ],
+            "width_samples": list(anchor.stroke.width_samples),
+            "is_cutout": anchor.stroke.is_cutout,
+        }
+    if anchor.quad is not None:
+        data["quad"] = {
+            "corners": [
+                {"x": point.x, "y": point.y}
+                for point in anchor.quad.corners
+            ]
+        }
+    return data
 
 
 def _polyline_path(points: tuple[Point, ...]) -> str:

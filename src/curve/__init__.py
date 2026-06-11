@@ -12,7 +12,14 @@ from curve.anchors import (
 from curve.detection import detect_primitive_anchors, primitive_candidates_for_component
 from curve.images import ColorMask, flat_color_masks_from_image, scene_from_flat_color_image
 from curve.masks import BinaryMask, MaskComponent, connected_components
-from curve.scene import Scene, SvgStyle, anchor_to_svg_element, anchors_to_svg, scene_from_mask
+from curve.scene import (
+    Scene,
+    SvgStyle,
+    anchor_to_manifest,
+    anchor_to_svg_element,
+    anchors_to_svg,
+    scene_from_mask,
+)
 
 __all__ = [
     "AnchorCandidate",
@@ -26,6 +33,7 @@ __all__ = [
     "Scene",
     "StrokeAnchor",
     "SvgStyle",
+    "anchor_to_manifest",
     "anchor_to_svg_element",
     "anchors_to_svg",
     "choose_best_anchor",

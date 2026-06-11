@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import json
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -14,6 +15,7 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"
             output_path = Path(temp_dir) / "output.svg"
+            manifest_path = Path(temp_dir) / "output.json"
             image = Image.new("RGB", (24, 16), "white")
             draw = ImageDraw.Draw(image)
             draw.ellipse((2, 2, 10, 10), fill="#dd2222")
@@ -24,11 +26,17 @@ class CliTests(unittest.TestCase):
                 main(["vectorize", str(input_path), "-o", str(output_path)])
 
             svg = output_path.read_text(encoding="utf-8")
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertIn("<svg", svg)
             self.assertIn("<circle ", svg)
             self.assertIn("<path ", svg)
             self.assertIn('fill="#dd2222"', svg)
             self.assertIn('stroke="#003366"', svg)
+            self.assertEqual(manifest["anchor_count"], 2)
+            self.assertEqual(
+                [anchor["kind"] for anchor in manifest["anchors"]],
+                ["stroke_polyline", "circle"],
+            )
 
 
 if __name__ == "__main__":
