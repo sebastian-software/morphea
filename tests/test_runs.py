@@ -8,7 +8,9 @@ from PIL import Image, ImageDraw
 from curve.images import scene_from_flat_color_image
 from curve.runs import (
     create_run_dir,
+    render_html_report,
     render_markdown_report,
+    write_html_report,
     write_markdown_report,
     write_vectorize_run,
 )
@@ -37,6 +39,7 @@ class RunWriterTests(unittest.TestCase):
             self.assertTrue(run.manifest_path.exists())
             self.assertTrue(run.config_path.exists())
             self.assertTrue(run.report_path.exists())
+            self.assertTrue(run.html_report_path.exists())
             self.assertTrue(run.preview_path.exists())
             self.assertTrue(run.debug_svg_path.exists())
             manifest = json.loads(run.manifest_path.read_text())
@@ -46,6 +49,10 @@ class RunWriterTests(unittest.TestCase):
             self.assertIn(
                 "`raster_l1_error`",
                 run.report_path.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "Curve Vectorize Report",
+                run.html_report_path.read_text(encoding="utf-8"),
             )
 
     def test_render_markdown_report_summarizes_anchor_types(self):
@@ -75,6 +82,32 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
         self.assertIn("`raster_l1_error`: 0.2", report)
+
+    def test_render_html_report_summarizes_anchor_types(self):
+        report = render_html_report(
+            manifest={
+                "width": 10,
+                "height": 10,
+                "anchor_count": 2,
+                "anchors": [{"kind": "circle"}, {"kind": "circle"}],
+                "layers": [{"name": "filled_primitives", "anchor_count": 2}],
+                "diagnostics": [{"level": "warning", "code": "component_deferred"}],
+                "groups": [],
+                "metrics": {
+                    "editability_score": 0.8,
+                    "fragmentation_penalty": 0.1,
+                    "raster_l1_error": 0.2,
+                },
+            },
+            config={"command": "vectorize"},
+        )
+
+        self.assertIn("<h1>Curve Vectorize Report</h1>", report)
+        self.assertIn("<code>circle</code>", report)
+        self.assertIn("<td>2</td>", report)
+        self.assertIn("<code>filled_primitives</code>", report)
+        self.assertIn("<td>component_deferred</td>", report)
+        self.assertIn("<code>raster_l1_error</code>", report)
 
     def test_write_markdown_report_reads_manifest_and_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -109,6 +142,41 @@ class RunWriterTests(unittest.TestCase):
             self.assertTrue(output.exists())
             self.assertIn("`circle`: 1", report)
             self.assertIn('"min_area": 8', output.read_text(encoding="utf-8"))
+
+    def test_write_html_report_reads_manifest_and_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = Path(temp_dir) / "manifest.json"
+            config = Path(temp_dir) / "config.json"
+            output = Path(temp_dir) / "report.html"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "width": 16,
+                        "height": 16,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "circle"}],
+                        "layers": [],
+                        "groups": [],
+                        "diagnostics": [],
+                        "metrics": {"editability_score": 1.0},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps({"command": "vectorize", "min_area": 8}),
+                encoding="utf-8",
+            )
+
+            report = write_html_report(
+                manifest=manifest,
+                config=config,
+                output=output,
+            )
+
+            self.assertTrue(output.exists())
+            self.assertIn("<code>circle</code>", report)
+            self.assertIn("&quot;min_area&quot;: 8", output.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

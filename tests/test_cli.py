@@ -400,6 +400,33 @@ class CliTests(unittest.TestCase):
                 output.read_text(encoding="utf-8"),
             )
 
+    def test_report_cli_writes_html_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = Path(temp_dir) / "manifest.json"
+            output = Path(temp_dir) / "report.html"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "width": 12,
+                        "height": 12,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "quad"}],
+                        "layers": [],
+                        "groups": [],
+                        "diagnostics": [],
+                        "metrics": {"editability_score": 0.5},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["report", str(manifest), "-o", str(output)])
+
+            html = output.read_text(encoding="utf-8")
+            self.assertIn("<h1>Curve Vectorize Report</h1>", html)
+            self.assertIn("<code>quad</code>", html)
+
 
 if __name__ == "__main__":
     unittest.main()

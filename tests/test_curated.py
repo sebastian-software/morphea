@@ -99,6 +99,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "debug.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "manifest.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "report.md").exists())
+            self.assertTrue((output_dir / "simple-circle" / "report.html").exists())
             self.assertTrue((output_dir / "simple-circle" / "preview.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             manifest = json.loads(

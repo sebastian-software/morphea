@@ -6,6 +6,7 @@ import json
 import shutil
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from html import escape
 from pathlib import Path
 
 from PIL import Image
@@ -21,6 +22,7 @@ class VectorizeRun:
     manifest_path: Path
     config_path: Path
     report_path: Path
+    html_report_path: Path
     preview_path: Path
     debug_svg_path: Path
     input_path: Path
@@ -57,6 +59,7 @@ def write_vectorize_run(
     manifest_path = run_dir / "manifest.json"
     config_path = run_dir / "config.json"
     report_path = run_dir / "report.md"
+    html_report_path = run_dir / "report.html"
     preview_path = run_dir / "preview.png"
     debug_svg_path = run_dir / "debug.svg"
 
@@ -82,6 +85,10 @@ def write_vectorize_run(
         render_markdown_report(manifest=manifest, config=config),
         encoding="utf-8",
     )
+    html_report_path.write_text(
+        render_html_report(manifest=manifest, config=config),
+        encoding="utf-8",
+    )
     preview.save(preview_path)
 
     return VectorizeRun(
@@ -90,6 +97,7 @@ def write_vectorize_run(
         manifest_path=manifest_path,
         config_path=config_path,
         report_path=report_path,
+        html_report_path=html_report_path,
         preview_path=preview_path,
         debug_svg_path=debug_svg_path,
         input_path=copied_input,
@@ -107,6 +115,23 @@ def write_markdown_report(
     if config is not None:
         config_data = json.loads(Path(config).read_text(encoding="utf-8"))
     report = render_markdown_report(manifest=manifest_data, config=config_data)
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(report, encoding="utf-8")
+    return report
+
+
+def write_html_report(
+    *,
+    manifest: str | Path,
+    output: str | Path,
+    config: str | Path | None = None,
+) -> str:
+    manifest_data = json.loads(Path(manifest).read_text(encoding="utf-8"))
+    config_data: dict[str, object] = {}
+    if config is not None:
+        config_data = json.loads(Path(config).read_text(encoding="utf-8"))
+    report = render_html_report(manifest=manifest_data, config=config_data)
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report, encoding="utf-8")
@@ -172,6 +197,115 @@ def render_markdown_report(
     lines.append(json.dumps(config, indent=2, sort_keys=True))
     lines.append("```")
     return "\n".join(lines) + "\n"
+
+
+def render_html_report(
+    *,
+    manifest: dict[str, object],
+    config: dict[str, object],
+) -> str:
+    anchors = list(manifest.get("anchors", []))
+    diagnostics = list(manifest.get("diagnostics", []))
+    groups = list(manifest.get("groups", []))
+    layers = list(manifest.get("layers", []))
+    metrics = dict(manifest.get("metrics", {}))
+    anchor_counts = _counts(anchor.get("kind") for anchor in anchors)
+    lines = [
+        "<!doctype html>",
+        '<html lang="en">',
+        "<head>",
+        '  <meta charset="utf-8">',
+        "  <title>Curve Vectorize Report</title>",
+        "  <style>",
+        "    body{font-family:system-ui,sans-serif;margin:32px;max-width:980px}",
+        "    table{border-collapse:collapse;width:100%;margin:16px 0}",
+        "    th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}",
+        "    th{background:#f4f4f4}",
+        "    code,pre{background:#f7f7f7;padding:2px 4px}",
+        "    pre{padding:12px;overflow:auto}",
+        "  </style>",
+        "</head>",
+        "<body>",
+        "  <h1>Curve Vectorize Report</h1>",
+        "  <h2>Summary</h2>",
+        "  <ul>",
+        f"    <li>Size: {escape(str(manifest.get('width')))} x {escape(str(manifest.get('height')))}</li>",
+        f"    <li>Anchors: {escape(str(manifest.get('anchor_count', len(anchors))))}</li>",
+        f"    <li>Layers: {len(layers)}</li>",
+        f"    <li>Groups: {len(groups)}</li>",
+        f"    <li>Diagnostics: {len(diagnostics)}</li>",
+        f"    <li>Editability score: {escape(str(metrics.get('editability_score', 'n/a')))}</li>",
+        f"    <li>Fragmentation penalty: {escape(str(metrics.get('fragmentation_penalty', 'n/a')))}</li>",
+        "  </ul>",
+        "  <h2>Anchor Types</h2>",
+        _html_table(("Kind", "Count"), anchor_counts.items()),
+        "  <h2>Layers</h2>",
+        _html_table(
+            ("Layer", "Anchors"),
+            ((layer.get("name"), layer.get("anchor_count", 0)) for layer in layers),
+        )
+        if layers
+        else "  <p>none</p>",
+        "  <h2>Diagnostics</h2>",
+        _html_table(
+            ("Level", "Code"),
+            (
+                (diagnostic.get("level", "info"), diagnostic.get("code", "unknown"))
+                for diagnostic in diagnostics
+            ),
+        )
+        if diagnostics
+        else "  <p>none</p>",
+        "  <h2>Metrics</h2>",
+        _html_table(
+            ("Metric", "Value"),
+            (
+                (
+                    key,
+                    json.dumps(value, sort_keys=True)
+                    if isinstance(value, dict)
+                    else value,
+                )
+                for key, value in sorted(metrics.items())
+            ),
+        )
+        if metrics
+        else "  <p>none</p>",
+        "  <h2>Config</h2>",
+        f"  <pre>{escape(json.dumps(config, indent=2, sort_keys=True))}</pre>",
+        "</body>",
+        "</html>",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _html_table(
+    headers: tuple[str, str],
+    rows: object,
+) -> str:
+    body = [
+        "  <table>",
+        "    <thead>",
+        "      <tr>"
+        f"<th>{escape(str(headers[0]))}</th>"
+        f"<th>{escape(str(headers[1]))}</th>"
+        "</tr>",
+        "    </thead>",
+        "    <tbody>",
+    ]
+    row_count = 0
+    for left, right in rows:
+        row_count += 1
+        body.append(
+            "      <tr>"
+            f"<td><code>{escape(str(left))}</code></td>"
+            f"<td>{escape(str(right))}</td>"
+            "</tr>"
+        )
+    if row_count == 0:
+        body.append("      <tr><td colspan=\"2\">none</td></tr>")
+    body.extend(["    </tbody>", "  </table>"])
+    return "\n".join(body)
 
 
 def _counts(values: object) -> dict[str, int]:

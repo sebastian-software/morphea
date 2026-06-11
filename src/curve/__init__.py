@@ -35,7 +35,9 @@ from curve.synthetic import SyntheticSample, generate_synthetic_sample
 from curve.runs import (
     VectorizeRun,
     create_run_dir,
+    render_html_report,
     render_markdown_report,
+    write_html_report,
     write_markdown_report,
     write_vectorize_run,
 )
@@ -175,8 +177,8 @@ __all__ = [
     "scene_from_mask",
     "split_counts",
     "render_markdown_report",
+    "render_html_report",
     "render_curated_snapshot",
-    "write_markdown_report",
     "render_eval_markdown",
     "render_manifest_image",
     "render_snapshot_comparison",
@@ -186,6 +188,8 @@ __all__ = [
     "retrain_centroid_classifier",
     "run_sweep",
     "write_manifest_preview",
+    "write_html_report",
+    "write_markdown_report",
     "write_vectorize_run",
     "write_eval_summary",
     "train_centroid_classifier",

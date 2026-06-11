@@ -21,7 +21,12 @@ from curve.mlx_classifier import (
     train_mlx_transformer_classifier,
 )
 from curve.profiling import profile_vectorize
-from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
+from curve.runs import (
+    create_run_dir,
+    write_html_report,
+    write_markdown_report,
+    write_vectorize_run,
+)
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
@@ -279,11 +284,17 @@ def main(argv: list[str] | None = None) -> None:
 
     report = subcommands.add_parser(
         "report",
-        help="Render a Markdown report from an existing vectorize manifest.",
+        help="Render a report from an existing vectorize manifest.",
     )
     report.add_argument("manifest", type=Path)
     report.add_argument("-o", "--output", type=Path, required=True)
     report.add_argument("--config", type=Path)
+    report.add_argument(
+        "--format",
+        choices=("markdown", "html"),
+        default=None,
+        help="Report format. Defaults to html for .html output, otherwise markdown.",
+    )
 
     train = subcommands.add_parser(
         "train",
@@ -552,11 +563,21 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "report":
-        write_markdown_report(
-            manifest=args.manifest,
-            output=args.output,
-            config=args.config,
+        report_format = args.format or (
+            "html" if args.output.suffix.lower() == ".html" else "markdown"
         )
+        if report_format == "html":
+            write_html_report(
+                manifest=args.manifest,
+                output=args.output,
+                config=args.config,
+            )
+        else:
+            write_markdown_report(
+                manifest=args.manifest,
+                output=args.output,
+                config=args.config,
+            )
         print(f"wrote report {args.output}")
         return
 
