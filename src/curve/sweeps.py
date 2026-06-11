@@ -84,6 +84,7 @@ def run_sweep(
             config=effective_config,
         )
         manifest = scene.to_manifest()
+        metrics = dict(manifest.get("metrics", {}))
         run_results.append(
             {
                 "id": run_id,
@@ -91,6 +92,8 @@ def run_sweep(
                 "anchor_count": manifest["anchor_count"],
                 "group_count": len(manifest["groups"]),
                 "diagnostic_count": len(manifest["diagnostics"]),
+                "editability_score": metrics.get("editability_score"),
+                "fragmentation_penalty": metrics.get("fragmentation_penalty"),
             }
         )
 

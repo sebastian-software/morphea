@@ -14,16 +14,20 @@ def evaluate_runs(run_root: str | Path) -> dict[str, object]:
         anchors = list(manifest.get("anchors", []))
         diagnostics = list(manifest.get("diagnostics", []))
         groups = list(manifest.get("groups", []))
+        metrics = dict(manifest.get("metrics", {}))
         run_summaries.append(
             {
                 "run": manifest_path.parent.name,
                 "anchor_count": manifest.get("anchor_count", len(anchors)),
                 "group_count": len(groups),
                 "diagnostic_count": len(diagnostics),
+                "editability_score": metrics.get("editability_score"),
+                "fragmentation_penalty": metrics.get("fragmentation_penalty"),
                 "anchor_types": _counts(anchor.get("kind") for anchor in anchors),
                 "diagnostic_codes": _counts(
                     diagnostic.get("code") for diagnostic in diagnostics
                 ),
+                "metrics": metrics,
             }
         )
 
@@ -65,6 +69,10 @@ def render_eval_markdown(summary: dict[str, object]) -> str:
         lines.append(f"- Anchors: {run['anchor_count']}")
         lines.append(f"- Groups: {run['group_count']}")
         lines.append(f"- Diagnostics: {run['diagnostic_count']}")
+        lines.append(f"- Editability score: {run.get('editability_score', 'n/a')}")
+        lines.append(
+            f"- Fragmentation penalty: {run.get('fragmentation_penalty', 'n/a')}"
+        )
         lines.append("")
     return "\n".join(lines)
 
@@ -75,4 +83,3 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
-

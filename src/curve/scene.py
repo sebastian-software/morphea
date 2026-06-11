@@ -38,14 +38,20 @@ class Scene:
         return anchors_to_svg(self.anchors, self.width, self.height, style=style)
 
     def to_manifest(self) -> dict[str, object]:
+        groups = scene_groups_to_manifest(self.anchors)
         return {
             "schema_version": SCENE_MANIFEST_SCHEMA_VERSION,
             "width": self.width,
             "height": self.height,
             "anchor_count": len(self.anchors),
             "anchors": [anchor_to_manifest(anchor) for anchor in self.anchors],
-            "groups": scene_groups_to_manifest(self.anchors),
+            "groups": groups,
             "diagnostics": list(self.diagnostics),
+            "metrics": scene_metrics_to_manifest(
+                self.anchors,
+                groups=groups,
+                diagnostics=self.diagnostics,
+            ),
         }
 
 
@@ -179,6 +185,80 @@ def scene_groups_to_manifest(
             },
         }
     ]
+
+
+def scene_metrics_to_manifest(
+    anchors: tuple[AnchorCandidate, ...],
+    *,
+    groups: list[dict[str, object]] | None = None,
+    diagnostics: tuple[dict[str, object], ...] = (),
+) -> dict[str, object]:
+    anchor_count = len(anchors)
+    node_count = sum(anchor.node_count for anchor in anchors)
+    parameter_count = sum(anchor.parameter_count for anchor in anchors)
+    simple_shape_count = sum(1 for anchor in anchors if anchor.is_simple_shape)
+    generic_path_count = sum(1 for anchor in anchors if anchor.kind == AnchorKind.CUBIC_PATH)
+    cutout_count = sum(
+        1
+        for anchor in anchors
+        if anchor.stroke is not None and anchor.stroke.is_cutout
+    )
+    simple_shape_ratio = (
+        simple_shape_count / anchor_count
+        if anchor_count
+        else 1.0
+    )
+    fragmentation_penalty = _fragmentation_penalty(anchors)
+    diagnostic_penalty = min(
+        sum(1 for diagnostic in diagnostics if diagnostic.get("level") == "warning")
+        * 0.05,
+        0.5,
+    )
+    editability_score = max(
+        0.0,
+        min(
+            1.0,
+            simple_shape_ratio
+            - fragmentation_penalty
+            - diagnostic_penalty
+            - min(generic_path_count * 0.04, 0.4),
+        ),
+    )
+    return {
+        "shape_count": anchor_count,
+        "node_count": node_count,
+        "parameter_count": parameter_count,
+        "simple_shape_count": simple_shape_count,
+        "generic_path_count": generic_path_count,
+        "cutout_anchor_count": cutout_count,
+        "group_count": len(groups or []),
+        "simple_shape_ratio": round(simple_shape_ratio, 6),
+        "fragmentation_penalty": round(fragmentation_penalty, 6),
+        "diagnostic_penalty": round(diagnostic_penalty, 6),
+        "editability_score": round(editability_score, 6),
+        "color_fragment_counts": _color_fragment_counts(anchors),
+    }
+
+
+def _color_fragment_counts(
+    anchors: tuple[AnchorCandidate, ...],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for anchor in anchors:
+        if anchor.color is None:
+            continue
+        counts[anchor.color] = counts.get(anchor.color, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
+    if not anchors:
+        return 0.0
+    excess_fragments = sum(
+        max(0, count - 1)
+        for count in _color_fragment_counts(anchors).values()
+    )
+    return min(excess_fragments / max(len(anchors), 1) * 0.5, 0.5)
 
 
 def _polyline_path(points: tuple[Point, ...]) -> str:

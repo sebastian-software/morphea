@@ -1,7 +1,13 @@
 import unittest
 
 from curve.masks import BinaryMask
-from curve.scene import SCENE_MANIFEST_SCHEMA_VERSION, SvgStyle, scene_from_mask
+from curve.anchors import AnchorCandidate, AnchorKind
+from curve.scene import (
+    SCENE_MANIFEST_SCHEMA_VERSION,
+    SvgStyle,
+    scene_from_mask,
+    scene_metrics_to_manifest,
+)
 
 
 class SceneExportTests(unittest.TestCase):
@@ -109,6 +115,44 @@ class SceneExportTests(unittest.TestCase):
         self.assertIn(
             "perspective_grid_consistency_error",
             manifest["groups"][0]["metrics"],
+        )
+        self.assertIn("editability_score", manifest["metrics"])
+
+    def test_scene_metrics_penalize_same_color_fragmentation(self):
+        clean = (
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                color="#dd2222",
+            ),
+        )
+        fragmented = (
+            AnchorCandidate(
+                kind=AnchorKind.CUBIC_PATH,
+                raster_error=0.0,
+                node_count=8,
+                parameter_count=12,
+                color="#dd2222",
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.CUBIC_PATH,
+                raster_error=0.0,
+                node_count=8,
+                parameter_count=12,
+                color="#dd2222",
+            ),
+        )
+
+        clean_metrics = scene_metrics_to_manifest(clean)
+        fragmented_metrics = scene_metrics_to_manifest(fragmented)
+
+        self.assertEqual(clean_metrics["fragmentation_penalty"], 0.0)
+        self.assertGreater(fragmented_metrics["fragmentation_penalty"], 0.0)
+        self.assertGreater(
+            clean_metrics["editability_score"],
+            fragmented_metrics["editability_score"],
         )
 
 

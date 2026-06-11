@@ -18,6 +18,7 @@ class EvalTests(unittest.TestCase):
 
             self.assertEqual(summary["run_count"], 1)
             self.assertEqual(summary["runs"][0]["anchor_count"], 2)
+            self.assertEqual(summary["runs"][0]["editability_score"], 0.75)
             self.assertEqual(summary["runs"][0]["anchor_types"]["circle"], 1)
             self.assertEqual(
                 summary["runs"][0]["diagnostic_codes"]["component_deferred"],
@@ -54,6 +55,7 @@ class EvalTests(unittest.TestCase):
 
         self.assertIn("### run-a", markdown)
         self.assertIn("- Anchors: 2", markdown)
+        self.assertIn("- Editability score: n/a", markdown)
 
     def test_eval_cli_writes_summary(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -81,6 +83,10 @@ def _write_run_manifest(root: Path, name: str) -> Path:
                 ],
                 "groups": [{"kind": "perspective_grid"}],
                 "diagnostics": [{"code": "component_deferred"}],
+                "metrics": {
+                    "editability_score": 0.75,
+                    "fragmentation_penalty": 0.2,
+                },
             }
         ),
         encoding="utf-8",
@@ -90,4 +96,3 @@ def _write_run_manifest(root: Path, name: str) -> Path:
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -25,6 +25,7 @@ from curve.scene import (
     anchors_to_svg,
     scene_from_mask,
     scene_groups_to_manifest,
+    scene_metrics_to_manifest,
 )
 from curve.synthetic import SyntheticSample, generate_synthetic_sample
 from curve.runs import (
@@ -112,6 +113,7 @@ __all__ = [
     "predict_label",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
+    "scene_metrics_to_manifest",
     "scene_from_mask",
     "split_counts",
     "render_markdown_report",

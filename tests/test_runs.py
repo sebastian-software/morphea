@@ -49,6 +49,10 @@ class RunWriterTests(unittest.TestCase):
                 "anchors": [{"kind": "circle"}, {"kind": "circle"}],
                 "diagnostics": [{"level": "warning", "code": "component_deferred"}],
                 "groups": [],
+                "metrics": {
+                    "editability_score": 0.8,
+                    "fragmentation_penalty": 0.1,
+                },
             },
             config={"command": "vectorize"},
         )
@@ -56,6 +60,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("# Curve Vectorize Report", report)
         self.assertIn("`circle`: 2", report)
         self.assertIn("`warning` `component_deferred`", report)
+        self.assertIn("- Editability score: 0.8", report)
+        self.assertIn("`fragmentation_penalty`: 0.1", report)
 
     def test_write_markdown_report_reads_manifest_and_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -71,6 +77,7 @@ class RunWriterTests(unittest.TestCase):
                         "anchors": [{"kind": "circle"}],
                         "groups": [],
                         "diagnostics": [],
+                        "metrics": {"editability_score": 1.0},
                     }
                 ),
                 encoding="utf-8",

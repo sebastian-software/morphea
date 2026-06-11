@@ -103,6 +103,7 @@ def render_markdown_report(
     anchors = list(manifest.get("anchors", []))
     diagnostics = list(manifest.get("diagnostics", []))
     groups = list(manifest.get("groups", []))
+    metrics = dict(manifest.get("metrics", {}))
     lines = [
         "# Curve Vectorize Report",
         "",
@@ -112,6 +113,8 @@ def render_markdown_report(
         f"- Anchors: {manifest.get('anchor_count', len(anchors))}",
         f"- Groups: {len(groups)}",
         f"- Diagnostics: {len(diagnostics)}",
+        f"- Editability score: {metrics.get('editability_score', 'n/a')}",
+        f"- Fragmentation penalty: {metrics.get('fragmentation_penalty', 'n/a')}",
         "",
         "## Anchor Types",
         "",
@@ -125,6 +128,16 @@ def render_markdown_report(
             code = diagnostic.get("code", "unknown")
             level = diagnostic.get("level", "info")
             lines.append(f"- `{level}` `{code}`")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Metrics", ""])
+    if metrics:
+        for key, value in sorted(metrics.items()):
+            if isinstance(value, dict):
+                lines.append(f"- `{key}`: `{json.dumps(value, sort_keys=True)}`")
+            else:
+                lines.append(f"- `{key}`: {value}")
     else:
         lines.append("- none")
 
