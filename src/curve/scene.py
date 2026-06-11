@@ -212,6 +212,8 @@ def anchor_to_manifest_with_index(
         "export_policy": {
             "editable": anchor.is_simple_shape,
             "debug_label": _debug_label(anchor, anchor_id),
+            "cutout_strategy": _cutout_strategy(anchor),
+            "mask_eligible": _cutout_mask_eligible(anchor),
         },
         "raster_error": anchor.raster_error,
         "node_count": anchor.node_count,
@@ -356,6 +358,12 @@ def scene_metrics_to_manifest(
         "simple_shape_count": simple_shape_count,
         "generic_path_count": generic_path_count,
         "cutout_anchor_count": cutout_count,
+        "cutout_overlay_count": sum(
+            1 for anchor in anchors if _cutout_strategy(anchor) == "overlay_stroke"
+        ),
+        "negative_mask_candidate_count": sum(
+            1 for anchor in anchors if _cutout_mask_eligible(anchor)
+        ),
         "group_count": len(groups or []),
         "simple_shape_ratio": round(simple_shape_ratio, 6),
         "fragmentation_penalty": round(fragmentation_penalty, 6),
@@ -424,6 +432,16 @@ def _anchor_fitting_stage(anchor: AnchorCandidate) -> str:
     if anchor.kind == AnchorKind.CUBIC_PATH:
         return "fallback_path"
     return "primitive_fit"
+
+
+def _cutout_strategy(anchor: AnchorCandidate) -> str | None:
+    if anchor.stroke is not None and anchor.stroke.is_cutout:
+        return "overlay_stroke"
+    return None
+
+
+def _cutout_mask_eligible(anchor: AnchorCandidate) -> bool:
+    return bool(anchor.stroke is not None and anchor.stroke.is_cutout)
 
 
 def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]:

@@ -277,6 +277,27 @@ class SceneExportTests(unittest.TestCase):
             {"cutout_overlays": [1], "filled_primitives": [0]},
         )
 
+    def test_cutout_manifest_records_overlay_and_mask_candidate_policy(self):
+        anchor = AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            stroke=StrokeAnchor(
+                centerline=(Point(1, 1), Point(8, 1)),
+                width_samples=(2.0,),
+                is_cutout=True,
+            ),
+        )
+
+        manifest = Scene(width=10, height=4, anchors=(anchor,)).to_manifest()
+        export_policy = manifest["anchors"][0]["export_policy"]
+
+        self.assertEqual(export_policy["cutout_strategy"], "overlay_stroke")
+        self.assertTrue(export_policy["mask_eligible"])
+        self.assertEqual(manifest["metrics"]["cutout_overlay_count"], 1)
+        self.assertEqual(manifest["metrics"]["negative_mask_candidate_count"], 1)
+
     def test_debug_svg_includes_anchor_ids_bounds_and_labels(self):
         mask = BinaryMask.from_rows(
             (
