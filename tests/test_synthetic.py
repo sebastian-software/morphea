@@ -69,6 +69,33 @@ class SyntheticGeneratorTests(unittest.TestCase):
         self.assertEqual(len(parallel), 3)
         self.assertEqual(len(sample.scene.anchors), 17)
 
+    def test_logo_synthetic_sample_adds_logo_like_composition(self):
+        sample = generate_synthetic_sample(
+            seed=13,
+            width=96,
+            height=96,
+            difficulty="logo",
+        )
+
+        logo_elements = [
+            anchor.metrics.get("logo_element")
+            for anchor in sample.scene.anchors
+            if "logo_element" in anchor.metrics
+        ]
+        kinds = {
+            anchor.kind
+            for anchor in sample.scene.anchors
+            if "logo_element" in anchor.metrics
+        }
+
+        self.assertEqual(len(sample.scene.anchors), 18)
+        self.assertEqual(
+            set(logo_elements),
+            {"accent_dot", "diagonal_stroke", "mark_ring", "wordmark_bar"},
+        )
+        self.assertIn(AnchorKind.STROKE_CIRCLE, kinds)
+        self.assertIn(AnchorKind.ROUNDED_RECT, kinds)
+
     def test_unknown_synthetic_difficulty_fails(self):
         with self.assertRaisesRegex(ValueError, "unsupported synthetic difficulty"):
             generate_synthetic_sample(seed=1, difficulty="unknown")
@@ -101,6 +128,40 @@ class SyntheticGeneratorTests(unittest.TestCase):
             self.assertTrue((output / "train" / "sample-0000.json").exists())
             self.assertTrue((output / "test" / "sample-0001.png").exists())
             self.assertTrue((output / "test" / "sample-0001.json").exists())
+
+    def test_generate_cli_accepts_logo_difficulty(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "generate",
+                        "-o",
+                        temp_dir,
+                        "--count",
+                        "1",
+                        "--seed",
+                        "30",
+                        "--difficulty",
+                        "logo",
+                        "--val-count",
+                        "0",
+                        "--test-count",
+                        "0",
+                    ]
+                )
+
+            manifest = json.loads(
+                (Path(temp_dir) / "train" / "sample-0000.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(manifest["difficulty"], "logo")
+            self.assertTrue(
+                any(
+                    "logo_element" in anchor.get("metrics", {})
+                    for anchor in manifest["anchors"]
+                )
+            )
 
 
 if __name__ == "__main__":

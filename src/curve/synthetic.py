@@ -54,7 +54,7 @@ def generate_synthetic_sample(
     height: int = 96,
     difficulty: str = "basic",
 ) -> SyntheticSample:
-    if difficulty not in {"basic", "dense"}:
+    if difficulty not in {"basic", "dense", "logo"}:
         msg = f"unsupported synthetic difficulty: {difficulty}"
         raise ValueError(msg)
 
@@ -76,6 +76,8 @@ def generate_synthetic_sample(
     anchors.append(_draw_cutout_stroke(draw, width, height))
     if difficulty == "dense":
         anchors.extend(_draw_parallel_stroke_group(draw, rng, width, height))
+    if difficulty == "logo":
+        anchors.extend(_draw_logo_composition(draw, rng, width, height))
 
     return SyntheticSample(
         scene=Scene(width=width, height=height, anchors=tuple(anchors)),
@@ -469,6 +471,111 @@ def _draw_parallel_stroke_group(
             )
         )
     return tuple(anchors)
+
+
+def _draw_logo_composition(
+    draw: ImageDraw.ImageDraw,
+    rng: Random,
+    width: int,
+    height: int,
+) -> tuple[AnchorCandidate, ...]:
+    brand_color = rng.choice(("#003366", "#c99700", "#dd2222"))
+    accent_color = rng.choice([color for color in PALETTE if color != brand_color])
+    center = Point(width * 0.22, height * 0.22)
+    ring_radius = max(7.0, min(width, height) * 0.095)
+    ring_width = max(2, int(min(width, height) * 0.035))
+    draw.ellipse(
+        (
+            center.x - ring_radius,
+            center.y - ring_radius,
+            center.x + ring_radius,
+            center.y + ring_radius,
+        ),
+        outline=brand_color,
+        width=ring_width,
+    )
+    dot_radius = max(2.0, ring_radius * 0.28)
+    dot_center = Point(center.x + ring_radius * 0.62, center.y - ring_radius * 0.58)
+    draw.ellipse(
+        (
+            dot_center.x - dot_radius,
+            dot_center.y - dot_radius,
+            dot_center.x + dot_radius,
+            dot_center.y + dot_radius,
+        ),
+        fill=accent_color,
+    )
+    stroke_start = Point(center.x - ring_radius * 0.72, center.y + ring_radius * 0.72)
+    stroke_end = Point(center.x + ring_radius * 1.25, center.y - ring_radius * 0.85)
+    draw.line(
+        (stroke_start.x, stroke_start.y, stroke_end.x, stroke_end.y),
+        fill=accent_color,
+        width=max(2, ring_width - 1),
+    )
+    word_x0 = width * 0.38
+    word_y0 = height * 0.16
+    word_x1 = width * 0.84
+    word_y1 = height * 0.29
+    word_radius = max(2.0, min(width, height) * 0.025)
+    draw.rounded_rectangle(
+        (word_x0, word_y0, word_x1, word_y1),
+        radius=word_radius,
+        fill=brand_color,
+    )
+    return (
+        AnchorCandidate(
+            kind=AnchorKind.STROKE_CIRCLE,
+            raster_error=0.0,
+            node_count=1,
+            parameter_count=4,
+            color=brand_color,
+            circle=CircleAnchor(center=center, radius=ring_radius),
+            stroke=StrokeAnchor(
+                centerline=(),
+                width_samples=(float(ring_width),),
+                cap_style="round",
+                join_style="round",
+            ),
+            metrics={"logo_element": "mark_ring"},
+        ),
+        AnchorCandidate(
+            kind=AnchorKind.CIRCLE,
+            raster_error=0.0,
+            node_count=1,
+            parameter_count=3,
+            color=accent_color,
+            circle=CircleAnchor(center=dot_center, radius=dot_radius),
+            metrics={"logo_element": "accent_dot"},
+        ),
+        AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            color=accent_color,
+            stroke=StrokeAnchor(
+                centerline=(stroke_start, stroke_end),
+                width_samples=(float(max(2, ring_width - 1)),),
+                cap_style="round",
+                join_style="round",
+            ),
+            metrics={"logo_element": "diagonal_stroke"},
+        ),
+        AnchorCandidate(
+            kind=AnchorKind.ROUNDED_RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=5,
+            color=brand_color,
+            quad=QuadAnchor(
+                corners=_axis_aligned_corners(word_x0, word_y0, word_x1, word_y1)
+            ),
+            metrics={
+                "corner_radius": float(word_radius),
+                "logo_element": "wordmark_bar",
+            },
+        ),
+    )
 
 
 def _quadratic_bezier(start: Point, control: Point, end: Point, t: float) -> Point:
