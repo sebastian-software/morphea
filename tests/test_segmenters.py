@@ -1,9 +1,13 @@
 import tempfile
 import unittest
+import json
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from curve.cli import main
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
@@ -36,6 +40,57 @@ class SegmenterTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
             MlxSamSegmenter().propose("missing.png")
 
+    def test_segment_cli_writes_flat_color_manifest_from_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_two_color_image()
+            output = root / "segments.json"
+            config = root / "segment-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "segmenter": "flat_color",
+                        "min_area": 4,
+                        "color_tolerance": 0.0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "segment",
+                        str(image_path),
+                        "-o",
+                        str(output),
+                        "--config",
+                        str(config),
+                    ]
+                )
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["schema_version"], 1)
+            self.assertEqual(manifest["config"]["segmenter"], "flat_color")
+            self.assertEqual(manifest["proposal_count"], 2)
+            self.assertEqual(manifest["proposals"][0]["status"], "proposed")
+
+    def test_segment_cli_reports_mlx_sam_not_configured(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "segments.json"
+
+            with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
+                main(
+                    [
+                        "segment",
+                        str(_write_two_color_image()),
+                        "-o",
+                        str(output),
+                        "--segmenter",
+                        "mlx_sam",
+                    ]
+                )
+
 
 def _write_two_color_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -54,4 +109,3 @@ _TEMP_DIRS: list[tempfile.TemporaryDirectory] = []
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -13,6 +13,11 @@ from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
+from curve.segmenters import (
+    FlatColorSegmenter,
+    MlxSamSegmenter,
+    proposals_to_manifest,
+)
 from curve.self_learning import (
     apply_review_file,
     compare_retraining,
@@ -34,6 +39,13 @@ VECTORIZE_DEFAULT_CONFIG = {
     "classifier_model": None,
 }
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
+SEGMENT_CONFIG_DEFAULTS = {
+    "segmenter": "flat_color",
+    "min_area": 8,
+    "color_tolerance": 0.0,
+    "max_size": None,
+    "max_colors": None,
+}
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
     "pseudo_dataset",
@@ -144,6 +156,19 @@ def main(argv: list[str] | None = None) -> None:
     eval_parser.add_argument("run_root", type=Path)
     eval_parser.add_argument("-o", "--output", type=Path, required=True)
     eval_parser.add_argument("--markdown", type=Path)
+
+    segment = subcommands.add_parser(
+        "segment",
+        help="Write segment proposals for an input image.",
+    )
+    segment.add_argument("input", type=Path)
+    segment.add_argument("-o", "--output", type=Path, required=True)
+    segment.add_argument("--segmenter", choices=("flat_color", "mlx_sam"))
+    segment.add_argument("--min-area", type=int)
+    segment.add_argument("--color-tolerance", type=float)
+    segment.add_argument("--max-size", type=int)
+    segment.add_argument("--max-colors", type=int)
+    segment.add_argument("--config", type=Path)
 
     report = subcommands.add_parser(
         "report",
@@ -323,6 +348,24 @@ def main(argv: list[str] | None = None) -> None:
         print(f"evaluated {summary['run_count']} runs")
         return
 
+    if args.command == "segment":
+        segment_config = _resolved_segment_config(args)
+        proposals = _segmenter_from_config(segment_config).propose(args.input)
+        manifest = {
+            "schema_version": 1,
+            "input": str(args.input),
+            "config": segment_config,
+            "proposal_count": len(proposals),
+            "proposals": proposals_to_manifest(proposals),
+        }
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        print(f"wrote {len(proposals)} segment proposals")
+        return
+
     if args.command == "report":
         write_markdown_report(
             manifest=args.manifest,
@@ -464,6 +507,19 @@ def _resolved_train_config(args: argparse.Namespace) -> dict[str, Path]:
     return config
 
 
+def _resolved_segment_config(args: argparse.Namespace) -> dict[str, object]:
+    config = dict(SEGMENT_CONFIG_DEFAULTS)
+    if args.config is not None:
+        loaded = _load_segment_config(args.config)
+        config.update(loaded)
+
+    for key in SEGMENT_CONFIG_DEFAULTS:
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    return config
+
+
 def _resolved_compare_training_config(args: argparse.Namespace) -> dict[str, Path]:
     config = _load_path_config(
         args.config,
@@ -495,6 +551,41 @@ def _load_vectorize_config(path: Path) -> dict[str, object]:
         msg = f"unsupported vectorize config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     return loaded
+
+
+def _load_segment_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("segment config must be a JSON object")
+    unknown = sorted(set(loaded) - set(SEGMENT_CONFIG_DEFAULTS))
+    if unknown:
+        msg = f"unsupported segment config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    return loaded
+
+
+def _segmenter_from_config(
+    config: dict[str, object],
+) -> FlatColorSegmenter | MlxSamSegmenter:
+    segmenter = config.get("segmenter")
+    if segmenter == "flat_color":
+        return FlatColorSegmenter(
+            min_area=int(config["min_area"]),
+            color_tolerance=float(config["color_tolerance"]),
+            max_size=(
+                int(config["max_size"])
+                if config.get("max_size") is not None
+                else None
+            ),
+            max_colors=(
+                int(config["max_colors"])
+                if config.get("max_colors") is not None
+                else None
+            ),
+        )
+    if segmenter == "mlx_sam":
+        return MlxSamSegmenter()
+    raise ValueError(f"unsupported segmenter: {segmenter}")
 
 
 def _load_path_config(
