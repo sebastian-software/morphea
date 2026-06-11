@@ -290,6 +290,8 @@ Implemented so far:
 - cut-out-like white overlay strokes with editable stroke metadata
 - preview/SVG coverage for generated `arc`, `rect`, and `rounded_rect`
   manifests
+- `basic` and `dense` difficulty tiers; `dense` adds labeled parallel stroke
+  groups while preserving deterministic seed behavior
 
 ## M6: Local MLX Segmentation Layer
 

@@ -106,6 +106,20 @@ Supported fields match current runtime knobs:
 
 CLI arguments override values loaded from the config file.
 
+## Synthetic Dataset v1
+
+Written by `curve generate`.
+
+`dataset.json` records:
+
+- `count`, `seed`, `width`, `height`
+- `difficulty`: currently `basic` or `dense`
+- `splits`
+- `samples`
+
+Each generated sample manifest also includes `seed` and `difficulty` so a
+single PNG/JSON pair is reproducible outside the dataset index.
+
 ## Primitive Classifier Model v1
 
 Written by `curve train`.
