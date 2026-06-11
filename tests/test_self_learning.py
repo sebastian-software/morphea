@@ -331,6 +331,45 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["delta"]["train_examples"], 1)
 
+    def test_compare_training_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            output = root / "compare.json"
+            config = root / "compare-training.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=92,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "base_dataset": str(base_dir / "dataset.json"),
+                        "pseudo_dataset": str(pseudo_dir / "dataset.json"),
+                        "output": str(output),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["compare-training", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["delta"]["train_examples"], 1)
+
 
 def _write_manifest(
     root: Path,

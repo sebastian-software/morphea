@@ -32,6 +32,13 @@ VECTORIZE_DEFAULT_CONFIG = {
     "timeout_seconds": None,
     "classifier_model": None,
 }
+TRAIN_CONFIG_KEYS = {"dataset", "output"}
+COMPARE_TRAINING_CONFIG_KEYS = {
+    "base_dataset",
+    "pseudo_dataset",
+    "validation_dataset",
+    "output",
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -149,8 +156,9 @@ def main(argv: list[str] | None = None) -> None:
         "train",
         help="Train a primitive classifier from a generated dataset.json.",
     )
-    train.add_argument("dataset", type=Path)
-    train.add_argument("-o", "--output", type=Path, required=True)
+    train.add_argument("dataset", type=Path, nargs="?")
+    train.add_argument("-o", "--output", type=Path)
+    train.add_argument("--config", type=Path)
 
     harvest = subcommands.add_parser(
         "harvest",
@@ -188,10 +196,11 @@ def main(argv: list[str] | None = None) -> None:
         "compare-training",
         help="Compare baseline classifier training against pseudo-label augmentation.",
     )
-    compare_training.add_argument("base_dataset", type=Path)
-    compare_training.add_argument("--pseudo-dataset", type=Path, required=True)
+    compare_training.add_argument("base_dataset", type=Path, nargs="?")
+    compare_training.add_argument("--pseudo-dataset", type=Path)
     compare_training.add_argument("--validation-dataset", type=Path)
-    compare_training.add_argument("-o", "--output", type=Path, required=True)
+    compare_training.add_argument("-o", "--output", type=Path)
+    compare_training.add_argument("--config", type=Path)
 
     refine = subcommands.add_parser(
         "refine",
@@ -312,7 +321,11 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "train":
-        model = train_centroid_classifier(args.dataset, output=args.output)
+        train_config = _resolved_train_config(args)
+        model = train_centroid_classifier(
+            train_config["dataset"],
+            output=train_config["output"],
+        )
         print(
             f"trained {model['model_type']} with {model['train_examples']} examples"
         )
@@ -355,11 +368,12 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "compare-training":
+        compare_config = _resolved_compare_training_config(args)
         result = compare_retraining(
-            base_dataset=args.base_dataset,
-            pseudo_dataset=args.pseudo_dataset,
-            validation_dataset=args.validation_dataset,
-            output=args.output,
+            base_dataset=compare_config["base_dataset"],
+            pseudo_dataset=compare_config["pseudo_dataset"],
+            validation_dataset=compare_config.get("validation_dataset"),
+            output=compare_config["output"],
         )
         print(
             "compared "
@@ -416,6 +430,38 @@ def _resolved_vectorize_config(args: argparse.Namespace) -> dict[str, object]:
     return config
 
 
+def _resolved_train_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(args.config, TRAIN_CONFIG_KEYS, "train")
+    if args.dataset is not None:
+        config["dataset"] = args.dataset
+    if args.output is not None:
+        config["output"] = args.output
+    _require_config_paths(config, ("dataset", "output"), "train")
+    return config
+
+
+def _resolved_compare_training_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(
+        args.config,
+        COMPARE_TRAINING_CONFIG_KEYS,
+        "compare-training",
+    )
+    if args.base_dataset is not None:
+        config["base_dataset"] = args.base_dataset
+    if args.pseudo_dataset is not None:
+        config["pseudo_dataset"] = args.pseudo_dataset
+    if args.validation_dataset is not None:
+        config["validation_dataset"] = args.validation_dataset
+    if args.output is not None:
+        config["output"] = args.output
+    _require_config_paths(
+        config,
+        ("base_dataset", "pseudo_dataset", "output"),
+        "compare-training",
+    )
+    return config
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -425,6 +471,38 @@ def _load_vectorize_config(path: Path) -> dict[str, object]:
         msg = f"unsupported vectorize config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     return loaded
+
+
+def _load_path_config(
+    path: Path | None,
+    allowed_keys: set[str],
+    name: str,
+) -> dict[str, Path]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError(f"{name} config must be a JSON object")
+    unknown = sorted(set(loaded) - allowed_keys)
+    if unknown:
+        msg = f"unsupported {name} config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    return {
+        key: Path(str(value))
+        for key, value in loaded.items()
+        if value is not None
+    }
+
+
+def _require_config_paths(
+    config: dict[str, Path],
+    required: tuple[str, ...],
+    name: str,
+) -> None:
+    missing = [key for key in required if key not in config]
+    if missing:
+        msg = f"{name} requires: {', '.join(missing)}"
+        raise ValueError(msg)
 
 
 if __name__ == "__main__":

@@ -110,6 +110,36 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(model["train_examples"], 28)
             self.assertIn("ranking_evaluation", model)
 
+    def test_train_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=21,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            root = Path(temp_dir)
+            model_path = root / "model.json"
+            config = root / "train-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "dataset": str(root / "dataset.json"),
+                        "output": str(model_path),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["train", "--config", str(config)])
+
+            model = json.loads(model_path.read_text(encoding="utf-8"))
+            self.assertEqual(model["train_examples"], 28)
+
     def test_classifier_ranking_compares_heuristic_and_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             generate_synthetic_dataset(
