@@ -118,20 +118,30 @@ def _flat_color_masks_result(
     pixels_by_color: dict[Rgb, set[tuple[int, int]]] = {}
     palette: list[Rgb] = []
     inferred_background = background or image.getpixel((0, 0))[:3]
+    source_pixels = _image_pixels(image)
+    quantized_pixels = (
+        _image_pixels(quantized_rgb)
+        if quantized_rgb is not None
+        else None
+    )
 
-    for y in range(height):
-        for x in range(width):
-            red, green, blue, alpha = image.getpixel((x, y))
-            if alpha == 0:
-                continue
-            color = quantized_rgb.getpixel((x, y)) if quantized_rgb is not None else (red, green, blue)
-            if _color_distance(color, inferred_background) <= color_tolerance:
-                continue
-            bucket = _nearest_palette_color(color, palette, color_tolerance)
-            if bucket is None:
-                bucket = color
-                palette.append(bucket)
-            pixels_by_color.setdefault(bucket, set()).add((x, y))
+    for index, source_pixel in enumerate(source_pixels):
+        red, green, blue, alpha = source_pixel
+        if alpha == 0:
+            continue
+        color = (
+            quantized_pixels[index]
+            if quantized_pixels is not None
+            else (red, green, blue)
+        )
+        if _color_distance(color, inferred_background) <= color_tolerance:
+            continue
+        bucket = _nearest_palette_color(color, palette, color_tolerance)
+        if bucket is None:
+            bucket = color
+            palette.append(bucket)
+        y, x = divmod(index, width)
+        pixels_by_color.setdefault(bucket, set()).add((x, y))
 
     masks: list[ColorMask] = []
     for color, pixels in pixels_by_color.items():
@@ -419,6 +429,13 @@ def _indexed_mask(mask: BinaryMask) -> tuple[bytearray, tuple[int, ...]]:
 
 def _pixel_from_index(index: int, width: int) -> tuple[int, int]:
     return index % width, index // width
+
+
+def _image_pixels(image: Image.Image) -> list[tuple[int, ...]]:
+    get_flattened_data = getattr(image, "get_flattened_data", None)
+    if get_flattened_data is not None:
+        return list(get_flattened_data())
+    return list(image.getdata())
 
 
 def _scale_anchor(anchor: AnchorCandidate, analysis_scale: float) -> AnchorCandidate:
