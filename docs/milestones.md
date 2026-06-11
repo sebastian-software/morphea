@@ -471,10 +471,11 @@ Implemented so far:
   rendered raster L1 error
 - weighted refinement objective using both raster L1 and edge-error diagnostics
   via `--raster-l1-weight` and `--raster-edge-weight`
+- structure-preserving local optimizer for quad-like primitives (`rect`,
+  `rounded_rect`, `quad`) using bounded translation and scale parameter steps
 
 Remaining:
 
-- broader parameter-adjusting local optimizer beyond circle radius
 - optional differentiable backend behind the same interface
 
 ## M10: Curated Real-Image Suite

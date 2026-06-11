@@ -252,3 +252,8 @@ The local metric optimizer uses a weighted objective of raster L1 and raster
 edge error. Optimizer metadata stores initial/final L1, edge, and combined
 objective values so geometry changes can be judged against visual edge quality,
 not only average pixel color.
+
+`optimizer.optimized_parameter_kinds` lists primitive kinds whose parameters
+changed during the local pass. The current local backend can adjust circle
+radii and quad-like corner parameters while preserving the original primitive
+kind.
