@@ -85,6 +85,8 @@ Implemented so far:
 - transparent-background regression fixture.
 - large color masks emit `color_mask_split_for_components` and are split into
   connected components before oversized components are deferred.
+- image component scanning checks `timeout_seconds` during traversal and avoids
+  retaining pixel sets for oversized deferred components.
 
 Remaining:
 
