@@ -51,6 +51,12 @@ Markdown report:
 PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --run-dir runs
 ```
 
+Summarize run directories:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli eval runs -o runs/summary.json --markdown runs/summary.md
+```
+
 Generate labeled synthetic flat-color samples:
 
 ```sh

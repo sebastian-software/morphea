@@ -199,6 +199,7 @@ Implemented so far:
 - `config.json`
 - `report.md`
 - report summaries for anchor types and diagnostics
+- `curve eval` JSON/Markdown summaries over run directories
 
 ## M5: Synthetic Dataset Generator
 
