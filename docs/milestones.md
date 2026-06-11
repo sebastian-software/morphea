@@ -421,10 +421,11 @@ Implemented so far:
 - output pseudo-label index with source manifest provenance
 - human-editable review queue via `curve review`
 - accepted/rejected/pending split via `curve apply-review`
+- accepted reviewed pseudo-labels can be merged into a classifier-compatible
+  train split via `curve merge-labels`
 
 Remaining:
 
-- pseudo-label fine-tuning dataset merge
 - retraining comparison against fixed validation suite
 
 ## M9: Differentiable and Local Refinement
@@ -544,6 +545,7 @@ Implemented so far:
 - `curve eval`
 - `curve report`
 - `curve sweep`
+- `curve merge-labels`
 - schema-v1 sweep configs
 - schema-v1 scene manifests
 - `sweep-summary.json` experiment metadata
