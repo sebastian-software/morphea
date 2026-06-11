@@ -17,6 +17,7 @@ detail.
 
 See [docs/plan.md](docs/plan.md) and [docs/adr](docs/adr) for the current
 implementation direction and accepted architecture decisions.
+See [docs/schema.md](docs/schema.md) for the current output schema contracts.
 
 ## Development
 

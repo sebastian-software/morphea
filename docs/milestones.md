@@ -491,13 +491,13 @@ Implemented so far:
 - `curve report`
 - `curve sweep`
 - schema-v1 sweep configs
+- schema-v1 scene manifests
 - `sweep-summary.json` experiment metadata
 
 Remaining:
 
 - richer config files for preprocessing, segmenters, thresholds, scoring,
   and training.
-- explicit stable manifest/run schema documentation.
 - comparison views across commits/configs beyond the first JSON summary.
 
 ## Commit Discipline
