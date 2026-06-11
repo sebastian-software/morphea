@@ -83,11 +83,12 @@ Implemented so far:
 - manifest `diagnostics` entries.
 - bounded `terminaro-tweaked.png` run completes under an external timeout.
 - transparent-background regression fixture.
+- large color masks emit `color_mask_split_for_components` and are split into
+  connected components before oversized components are deferred.
 
 Remaining:
 
 - faster array-backed component extraction.
-- more nuanced ROI splitting instead of full color-mask deferral.
 
 ## M2: Primitive Anchor Detection V2
 

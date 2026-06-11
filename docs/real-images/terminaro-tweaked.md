@@ -42,16 +42,17 @@ Result:
 
 - Completed successfully under an external 15 second timeout.
 - Wrote SVG and JSON manifest.
-- Produced 51 anchors:
+- Produced 60 anchors:
   - 16 `quad`
-  - 15 `stroke_polyline`
-  - 15 `cubic_path`
+  - 23 `stroke_polyline`
+  - 16 `cubic_path`
   - 5 `circle`
 - Reported one `perspective_grid` group for the table quads.
 - Diagnostics included:
   - `image_resized_for_analysis` from 1254 x 1254 to 256 x 256
   - `palette_quantized` with max 10 colors
-  - `color_mask_deferred` for a large near-white region
+  - `color_mask_split_for_components` for a large near-white region
+  - `component_deferred` for the remaining oversized component
 
 Curated suite entry:
 
