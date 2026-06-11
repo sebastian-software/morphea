@@ -164,6 +164,11 @@ def main(argv: list[str] | None = None) -> None:
     refine.add_argument("--backend", default="local_metric")
     refine.add_argument("--max-iterations", type=int, default=0)
     refine.add_argument("--timeout-seconds", type=float)
+    refine.add_argument(
+        "--source-image",
+        type=Path,
+        help="Optional source image used for structure-preserving local metrics.",
+    )
 
     curated_check = subcommands.add_parser(
         "curated-check",
@@ -315,6 +320,7 @@ def main(argv: list[str] | None = None) -> None:
                 backend=args.backend,
                 max_iterations=args.max_iterations,
                 timeout_seconds=args.timeout_seconds,
+                source_image=args.source_image,
             ),
         )
         print(f"refined {len(result.get('anchors', []))} anchors")
