@@ -257,6 +257,7 @@ Implemented so far:
 - `report.md`
 - `report.html`
 - report summaries for anchor types and diagnostics
+- report summaries for scene groups, including same-color fragment groups
 - `curve eval` JSON/Markdown summaries over run directories
 - scene-level `metrics` in manifests
 - `editability_score`
