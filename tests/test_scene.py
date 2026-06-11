@@ -183,9 +183,17 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(manifest["schema_version"], SCENE_MANIFEST_SCHEMA_VERSION)
         self.assertEqual(manifest["groups"][0]["kind"], "perspective_grid")
         self.assertEqual(manifest["groups"][0]["anchor_indexes"], [0, 1])
+        self.assertEqual(manifest["groups"][0]["row_count"], 1)
+        self.assertEqual(manifest["groups"][0]["column_count"], 2)
         self.assertIn(
             "perspective_grid_consistency_error",
             manifest["groups"][0]["metrics"],
+        )
+        self.assertEqual(
+            manifest["groups"][0]["metrics"]["vanishing_line_diagnostics"][
+                "horizontal_edge_pairs"
+            ],
+            2,
         )
         self.assertIn("editability_score", manifest["metrics"])
 

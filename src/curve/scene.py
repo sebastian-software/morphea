@@ -257,15 +257,25 @@ def scene_groups_to_manifest(
         if anchor.kind == AnchorKind.QUAD and anchor.quad is not None
     ]
     if len(quad_indexes) >= 2:
-        quads = [anchors[index].quad for index in quad_indexes]
+        quads = tuple(
+            quad
+            for index in quad_indexes
+            if (quad := anchors[index].quad) is not None
+        )
+        grid_summary = _quad_grid_summary(quads)
         groups.append(
             {
                 "kind": AnchorKind.PERSPECTIVE_GRID.value,
                 "anchor_indexes": quad_indexes,
+                "row_count": grid_summary["row_count"],
+                "column_count": grid_summary["column_count"],
                 "metrics": {
                     "perspective_grid_consistency_error": perspective_grid_consistency_error(
-                        tuple(quad for quad in quads if quad is not None)
-                    )
+                        quads
+                    ),
+                    "vanishing_line_diagnostics": grid_summary[
+                        "vanishing_line_diagnostics"
+                    ],
                 },
             }
         )
@@ -382,6 +392,116 @@ def _color_fragment_counts(
             continue
         counts[anchor.color] = counts.get(anchor.color, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _quad_grid_summary(
+    quads: tuple[object, ...],
+) -> dict[str, object]:
+    centers = [_quad_center(quad) for quad in quads if hasattr(quad, "corners")]
+    if not centers:
+        return {
+            "row_count": 0,
+            "column_count": 0,
+            "vanishing_line_diagnostics": _vanishing_line_diagnostics(quads),
+        }
+    widths = [
+        _quad_axis_span(quad, axis="x")
+        for quad in quads
+        if hasattr(quad, "corners")
+    ]
+    heights = [
+        _quad_axis_span(quad, axis="y")
+        for quad in quads
+        if hasattr(quad, "corners")
+    ]
+    row_tolerance = max(1.0, mean(heights) * 0.6) if heights else 1.0
+    column_tolerance = max(1.0, mean(widths) * 0.6) if widths else 1.0
+    return {
+        "row_count": _cluster_count([center.y for center in centers], row_tolerance),
+        "column_count": _cluster_count(
+            [center.x for center in centers],
+            column_tolerance,
+        ),
+        "vanishing_line_diagnostics": _vanishing_line_diagnostics(quads),
+    }
+
+
+def _quad_center(quad: object) -> Point:
+    corners = getattr(quad, "corners")
+    return Point(
+        mean(point.x for point in corners),
+        mean(point.y for point in corners),
+    )
+
+
+def _quad_axis_span(quad: object, *, axis: str) -> float:
+    corners = getattr(quad, "corners")
+    values = [getattr(point, axis) for point in corners]
+    return max(values) - min(values)
+
+
+def _cluster_count(values: list[float], tolerance: float) -> int:
+    if not values:
+        return 0
+    clusters = 1
+    current = sorted(values)[0]
+    for value in sorted(values)[1:]:
+        if abs(value - current) > tolerance:
+            clusters += 1
+            current = value
+        else:
+            current = (current + value) / 2
+    return clusters
+
+
+def _vanishing_line_diagnostics(quads: tuple[object, ...]) -> dict[str, object]:
+    horizontal_pairs = 0
+    vertical_pairs = 0
+    finite_intersections = 0
+    for quad in quads:
+        if not hasattr(quad, "corners"):
+            continue
+        corners = getattr(quad, "corners")
+        if len(corners) != 4:
+            continue
+        top = (corners[0], corners[1])
+        right = (corners[1], corners[2])
+        bottom = (corners[3], corners[2])
+        left = (corners[0], corners[3])
+        horizontal_pairs += 1
+        vertical_pairs += 1
+        if _line_intersection(top, bottom) is not None:
+            finite_intersections += 1
+        if _line_intersection(left, right) is not None:
+            finite_intersections += 1
+    return {
+        "horizontal_edge_pairs": horizontal_pairs,
+        "vertical_edge_pairs": vertical_pairs,
+        "finite_intersection_count": finite_intersections,
+    }
+
+
+def _line_intersection(
+    first: tuple[Point, Point],
+    second: tuple[Point, Point],
+) -> Point | None:
+    p1, p2 = first
+    p3, p4 = second
+    denominator = (
+        (p1.x - p2.x) * (p3.y - p4.y)
+        - (p1.y - p2.y) * (p3.x - p4.x)
+    )
+    if abs(denominator) < 1e-9:
+        return None
+    px = (
+        (p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x)
+        - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)
+    ) / denominator
+    py = (
+        (p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y)
+        - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)
+    ) / denominator
+    return Point(px, py)
 
 
 def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
