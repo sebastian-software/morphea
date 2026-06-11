@@ -65,6 +65,15 @@ class RefinementTests(unittest.TestCase):
                 result["refinement"]["optimizer"]["final_raster_l1_error"],
                 result["refinement"]["optimizer"]["initial_raster_l1_error"],
             )
+            self.assertIn(
+                "final_raster_edge_error",
+                result["refinement"]["optimizer"],
+            )
+            self.assertLess(
+                result["refinement"]["optimizer"]["final_objective"],
+                result["refinement"]["optimizer"]["initial_objective"],
+            )
+            self.assertIn("refinement_objective", result["metrics"])
             self.assertEqual(
                 result["anchors"][0]["metrics"]["refinement_radius_delta"],
                 1.0,
@@ -88,11 +97,14 @@ class RefinementTests(unittest.TestCase):
                         "2",
                         "--source-image",
                         str(source),
+                        "--raster-edge-weight",
+                        "0.5",
                     ]
                 )
 
             result = json.loads(output.read_text())
             self.assertTrue(result["refinement"]["optimizer"]["attempted"])
+            self.assertEqual(result["refinement"]["raster_edge_weight"], 0.5)
 
     def test_unknown_refinement_backend_fails(self):
         with tempfile.TemporaryDirectory() as temp_dir:

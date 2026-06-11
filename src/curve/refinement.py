@@ -19,6 +19,8 @@ class RefinementConfig:
     max_iterations: int = 0
     timeout_seconds: float | None = None
     source_image: str | Path | None = None
+    raster_l1_weight: float = 1.0
+    raster_edge_weight: float = 0.25
 
 
 def refine_manifest(
@@ -49,6 +51,8 @@ def refine_manifest(
             max_iterations=config.max_iterations,
             started_at=started_at,
             timeout_seconds=config.timeout_seconds,
+            raster_l1_weight=config.raster_l1_weight,
+            raster_edge_weight=config.raster_edge_weight,
         )
 
     refined_anchors = []
@@ -73,6 +77,8 @@ def refine_manifest(
         "source_image": (
             str(config.source_image) if config.source_image is not None else None
         ),
+        "raster_l1_weight": config.raster_l1_weight,
+        "raster_edge_weight": config.raster_edge_weight,
         "structure_preserving": True,
         "optimizer": optimizer_metrics,
     }
@@ -89,6 +95,8 @@ def _optimize_circle_radii(
     max_iterations: int,
     started_at: float,
     timeout_seconds: float | None,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
 ) -> tuple[dict[str, object], dict[str, object]]:
     result = deepcopy(data)
     if not source_image.exists():
@@ -96,8 +104,14 @@ def _optimize_circle_radii(
         raise FileNotFoundError(msg)
 
     with Image.open(source_image) as source:
-        current_error = _manifest_l1_error(result, source)
-        initial_error = current_error
+        current_metrics = _manifest_raster_metrics(
+            result,
+            source,
+            raster_l1_weight=raster_l1_weight,
+            raster_edge_weight=raster_edge_weight,
+        )
+        current_error = current_metrics["objective"]
+        initial_metrics = current_metrics
         iterations = 0
         timeout_reached = False
         for _ in range(max_iterations):
@@ -117,7 +131,13 @@ def _optimize_circle_radii(
                 for delta in (-1.0, 1.0):
                     candidate_radius = max(0.5, base_radius + delta)
                     candidate = _with_circle_radius(result, anchor, candidate_radius)
-                    candidate_error = _manifest_l1_error(candidate, source)
+                    candidate_metrics = _manifest_raster_metrics(
+                        candidate,
+                        source,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    candidate_error = candidate_metrics["objective"]
                     if candidate_error < best_error:
                         best_error = candidate_error
                         best_radius = candidate_radius
@@ -132,27 +152,52 @@ def _optimize_circle_radii(
                     )
                     anchor["metrics"] = metrics
                     current_error = best_error
+                    current_metrics = _manifest_raster_metrics(
+                        result,
+                        source,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
                     improved = True
             iterations += 1
             if not improved:
                 break
 
     metrics = dict(result.get("metrics", {}))
-    metrics["raster_l1_error"] = current_error
+    metrics["raster_l1_error"] = current_metrics["raster_l1_error"]
+    metrics["raster_edge_error"] = current_metrics["raster_edge_error"]
+    metrics["refinement_objective"] = current_metrics["objective"]
     result["metrics"] = metrics
     return result, {
         "attempted": True,
         "iterations": iterations,
-        "initial_raster_l1_error": initial_error,
-        "final_raster_l1_error": current_error,
+        "objective": "weighted_raster_l1_plus_edge",
+        "initial_raster_l1_error": initial_metrics["raster_l1_error"],
+        "final_raster_l1_error": current_metrics["raster_l1_error"],
+        "initial_raster_edge_error": initial_metrics["raster_edge_error"],
+        "final_raster_edge_error": current_metrics["raster_edge_error"],
+        "initial_objective": initial_metrics["objective"],
+        "final_objective": current_metrics["objective"],
         "timeout_reached": timeout_reached,
     }
 
 
-def _manifest_l1_error(manifest: dict[str, object], source: Image.Image) -> float:
+def _manifest_raster_metrics(
+    manifest: dict[str, object],
+    source: Image.Image,
+    *,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> dict[str, float]:
     rendered = render_manifest_image(manifest)
     metrics = raster_fidelity_metrics(source=source, rendered=rendered)
-    return float(metrics["raster_l1_error"])
+    l1_error = float(metrics["raster_l1_error"])
+    edge_error = float(metrics["raster_edge_error"])
+    return {
+        "raster_l1_error": l1_error,
+        "raster_edge_error": edge_error,
+        "objective": (l1_error * raster_l1_weight) + (edge_error * raster_edge_weight),
+    }
 
 
 def _with_circle_radius(

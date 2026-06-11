@@ -211,6 +211,8 @@ def main(argv: list[str] | None = None) -> None:
     refine.add_argument("--backend", default="local_metric")
     refine.add_argument("--max-iterations", type=int, default=0)
     refine.add_argument("--timeout-seconds", type=float)
+    refine.add_argument("--raster-l1-weight", type=float, default=1.0)
+    refine.add_argument("--raster-edge-weight", type=float, default=0.25)
     refine.add_argument(
         "--source-image",
         type=Path,
@@ -391,6 +393,8 @@ def main(argv: list[str] | None = None) -> None:
                 max_iterations=args.max_iterations,
                 timeout_seconds=args.timeout_seconds,
                 source_image=args.source_image,
+                raster_l1_weight=args.raster_l1_weight,
+                raster_edge_weight=args.raster_edge_weight,
             ),
         )
         print(f"refined {len(result.get('anchors', []))} anchors")
