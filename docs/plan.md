@@ -6,6 +6,8 @@ Curve is a local research prototype for raster-to-SVG vectorization. Its
 primary target is not to clone visually dense tracing tools. It should produce
 fewer, more meaningful, directly editable SVG shapes.
 
+For the expanded milestone roadmap, see [milestones.md](milestones.md).
+
 The first implementation priority is simple geometry. Circles, smooth lines,
 strokes, arcs, rectangles, perspective quads, trapezoids, parallelograms, and
 regular grid or tile structures must be detected and stabilized before generic
@@ -88,4 +90,3 @@ Golden cases for the first implementation:
 - White hair and clothing cut-outs are modeled as smooth overlay strokes.
 - A simple shape candidate beats a more pixel-close but jittery path when
   fidelity remains acceptable.
-
