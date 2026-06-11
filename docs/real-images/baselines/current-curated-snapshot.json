@@ -2,13 +2,13 @@
   "case_count": 3,
   "cases": [
     {
-      "anchor_count": 54,
+      "anchor_count": 61,
       "anchor_kind_counts": {
         "arc": 9,
         "circle": 5,
         "cubic_path": 5,
         "quad": 19,
-        "stroke_polyline": 16
+        "stroke_polyline": 23
       },
       "config": {
         "color_tolerance": 18,
@@ -27,7 +27,7 @@
           "ok": true
         },
         {
-          "actual_count": 16,
+          "actual_count": 23,
           "id": "smooth-stroke-anchors",
           "min_count": 12,
           "ok": true
@@ -56,37 +56,37 @@
           "#1e334a": 10,
           "#d0b383": 8,
           "#efe7df": 22,
-          "#ffffff": 14
+          "#ffffff": 21
         },
-        "cutout_anchor_count": 14,
-        "cutout_overlay_count": 14,
+        "cutout_anchor_count": 21,
+        "cutout_overlay_count": 21,
         "diagnostic_penalty": 0.0,
-        "editability_score": 0.244444,
-        "fragmentation_penalty": 0.462963,
+        "editability_score": 0.25082,
+        "fragmentation_penalty": 0.467213,
         "generic_path_count": 5,
         "group_count": 6,
-        "negative_mask_candidate_count": 14,
-        "node_count": 641,
-        "parameter_count": 1303,
-        "reserved_simple_shape_area": 1743291.399503,
+        "negative_mask_candidate_count": 21,
+        "node_count": 655,
+        "parameter_count": 1338,
+        "reserved_simple_shape_area": 1748884.514984,
         "reserved_simple_shape_area_ratio": 1.0,
-        "reserved_simple_shape_count": 49,
-        "shape_count": 54,
-        "simple_shape_count": 49,
-        "simple_shape_ratio": 0.907407
+        "reserved_simple_shape_count": 56,
+        "shape_count": 61,
+        "simple_shape_count": 56,
+        "simple_shape_ratio": 0.918033
       },
       "ok": true,
       "source_exists": true,
       "status": "checked"
     },
     {
-      "anchor_count": 52,
+      "anchor_count": 57,
       "anchor_kind_counts": {
         "arc": 11,
         "circle": 5,
         "cubic_path": 8,
         "quad": 15,
-        "stroke_polyline": 13
+        "stroke_polyline": 18
       },
       "config": {
         "color_tolerance": 18,
@@ -105,7 +105,7 @@
           "ok": true
         },
         {
-          "actual_count": 13,
+          "actual_count": 18,
           "id": "smooth-stroke-anchors",
           "min_count": 8,
           "ok": true
@@ -135,24 +135,24 @@
           "#b67f13": 8,
           "#ebe1d7": 7,
           "#f7f2ee": 15,
-          "#ffffff": 9
+          "#ffffff": 14
         },
-        "cutout_anchor_count": 9,
-        "cutout_overlay_count": 9,
+        "cutout_anchor_count": 14,
+        "cutout_overlay_count": 14,
         "diagnostic_penalty": 0.0,
-        "editability_score": 0.074231,
-        "fragmentation_penalty": 0.451923,
+        "editability_score": 0.083509,
+        "fragmentation_penalty": 0.45614,
         "generic_path_count": 8,
         "group_count": 7,
-        "negative_mask_candidate_count": 9,
-        "node_count": 842,
-        "parameter_count": 1702,
-        "reserved_simple_shape_area": 1722640.211533,
+        "negative_mask_candidate_count": 14,
+        "node_count": 852,
+        "parameter_count": 1727,
+        "reserved_simple_shape_area": 1726798.4507,
         "reserved_simple_shape_area_ratio": 1.0,
-        "reserved_simple_shape_count": 44,
-        "shape_count": 52,
-        "simple_shape_count": 44,
-        "simple_shape_ratio": 0.846154
+        "reserved_simple_shape_count": 49,
+        "shape_count": 57,
+        "simple_shape_count": 49,
+        "simple_shape_ratio": 0.859649
       },
       "ok": true,
       "source_exists": true,
