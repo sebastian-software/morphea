@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from curve.images import scene_from_flat_color_image
+from curve.synthetic import generate_synthetic_sample
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -71,7 +72,17 @@ def main(argv: list[str] | None = None) -> None:
         help="Do not write a JSON recognition manifest.",
     )
 
-    for name in ("generate", "train", "eval"):
+    generate = subcommands.add_parser(
+        "generate",
+        help="Generate synthetic flat-color primitive training samples.",
+    )
+    generate.add_argument("-o", "--output-dir", type=Path, required=True)
+    generate.add_argument("--count", type=int, default=1)
+    generate.add_argument("--seed", type=int, default=1)
+    generate.add_argument("--width", type=int, default=96)
+    generate.add_argument("--height", type=int, default=96)
+
+    for name in ("train", "eval"):
         subcommands.add_parser(name, help=f"{name} command placeholder.")
 
     args = parser.parse_args(argv)
@@ -95,6 +106,18 @@ def main(argv: list[str] | None = None) -> None:
                 encoding="utf-8",
             )
         print(f"wrote {args.output} with {len(scene.anchors)} anchors")
+        return
+
+    if args.command == "generate":
+        for index in range(args.count):
+            seed = args.seed + index
+            sample = generate_synthetic_sample(
+                seed=seed,
+                width=args.width,
+                height=args.height,
+            )
+            sample.write(args.output_dir, f"sample-{index:04d}")
+        print(f"wrote {args.count} synthetic samples to {args.output_dir}")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")

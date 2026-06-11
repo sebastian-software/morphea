@@ -25,6 +25,7 @@ from curve.scene import (
     scene_from_mask,
     scene_groups_to_manifest,
 )
+from curve.synthetic import SyntheticSample, generate_synthetic_sample
 
 __all__ = [
     "AnchorCandidate",
@@ -38,6 +39,7 @@ __all__ = [
     "Scene",
     "StrokeAnchor",
     "SvgStyle",
+    "SyntheticSample",
     "anchor_to_manifest",
     "anchor_to_svg_element",
     "anchors_to_svg",
@@ -46,6 +48,7 @@ __all__ = [
     "detect_cutout_strokes",
     "detect_primitive_anchors",
     "flat_color_masks_from_image",
+    "generate_synthetic_sample",
     "primitive_candidates_for_component",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
