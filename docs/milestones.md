@@ -528,11 +528,13 @@ Implemented so far:
 - second documented curated case:
   `chatgpt-image-2026-06-11`, covering the opaque white-background version of
   the Greek-figures/table illustration.
+- checked-in deterministic baseline snapshot at
+  `docs/real-images/baselines/current-curated-snapshot.json`.
 
 Remaining:
 
-- checked-in baseline snapshots once the real-image suite is broader and the
-  current detector behavior is intentionally frozen.
+- add additional real-image families beyond the current Greek-figures/table
+  image family.
 
 ## M11: Productized Research CLI
 

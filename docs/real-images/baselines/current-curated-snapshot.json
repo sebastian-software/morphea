@@ -1,0 +1,149 @@
+{
+  "case_count": 2,
+  "cases": [
+    {
+      "anchor_count": 54,
+      "anchor_kind_counts": {
+        "circle": 5,
+        "cubic_path": 11,
+        "quad": 19,
+        "stroke_polyline": 19
+      },
+      "config": {
+        "color_tolerance": 18,
+        "max_colors": 10,
+        "max_component_area": 12000,
+        "max_size": 256,
+        "min_area": 12,
+        "timeout_seconds": 8
+      },
+      "diagnostic_count": 2,
+      "expectations": [
+        {
+          "actual_count": 5,
+          "id": "gold-circle-anchors",
+          "min_count": 5,
+          "ok": true
+        },
+        {
+          "actual_count": 19,
+          "id": "smooth-stroke-anchors",
+          "min_count": 12,
+          "ok": true
+        },
+        {
+          "actual_count": 1,
+          "id": "table-grid-group",
+          "min_count": 1,
+          "ok": true
+        },
+        {
+          "actual_count": 19,
+          "id": "table-perspective-quads",
+          "min_count": 12,
+          "ok": true
+        }
+      ],
+      "group_kind_counts": {
+        "perspective_grid": 1
+      },
+      "id": "chatgpt-image-2026-06-11",
+      "metrics": {
+        "color_fragment_counts": {
+          "#1e334a": 10,
+          "#d0b383": 8,
+          "#efe7df": 22,
+          "#ffffff": 14
+        },
+        "cutout_anchor_count": 14,
+        "diagnostic_penalty": 0.0,
+        "editability_score": 0.0,
+        "fragmentation_penalty": 0.462963,
+        "generic_path_count": 11,
+        "group_count": 1,
+        "node_count": 4453,
+        "parameter_count": 8930,
+        "shape_count": 54,
+        "simple_shape_count": 43,
+        "simple_shape_ratio": 0.796296
+      },
+      "ok": true,
+      "source_exists": true,
+      "status": "checked"
+    },
+    {
+      "anchor_count": 60,
+      "anchor_kind_counts": {
+        "circle": 5,
+        "cubic_path": 16,
+        "quad": 16,
+        "stroke_polyline": 23
+      },
+      "config": {
+        "color_tolerance": 18,
+        "max_colors": 10,
+        "max_component_area": 12000,
+        "max_size": 256,
+        "min_area": 12,
+        "timeout_seconds": 8
+      },
+      "diagnostic_count": 4,
+      "expectations": [
+        {
+          "actual_count": 5,
+          "id": "gold-circle-anchors",
+          "min_count": 5,
+          "ok": true
+        },
+        {
+          "actual_count": 23,
+          "id": "smooth-stroke-anchors",
+          "min_count": 8,
+          "ok": true
+        },
+        {
+          "actual_count": 1,
+          "id": "table-grid-group",
+          "min_count": 1,
+          "ok": true
+        },
+        {
+          "actual_count": 16,
+          "id": "table-perspective-quads",
+          "min_count": 8,
+          "ok": true
+        }
+      ],
+      "group_kind_counts": {
+        "perspective_grid": 1
+      },
+      "id": "terminaro-tweaked",
+      "metrics": {
+        "color_fragment_counts": {
+          "#002554": 13,
+          "#b68524": 8,
+          "#f1eae3": 21,
+          "#fefefe": 7,
+          "#ffffff": 11
+        },
+        "cutout_anchor_count": 11,
+        "diagnostic_penalty": 0.05,
+        "editability_score": 0.0,
+        "fragmentation_penalty": 0.458333,
+        "generic_path_count": 16,
+        "group_count": 1,
+        "node_count": 4741,
+        "parameter_count": 9510,
+        "shape_count": 60,
+        "simple_shape_count": 44,
+        "simple_shape_ratio": 0.733333
+      },
+      "ok": true,
+      "source_exists": true,
+      "status": "checked"
+    }
+  ],
+  "ok": true,
+  "schema_version": 1,
+  "suite": "docs/real-images/suite.json"
+}
