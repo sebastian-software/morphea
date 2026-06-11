@@ -84,6 +84,32 @@ class SceneExportTests(unittest.TestCase):
         self.assertIn('fill="#d0a21a"', svg)
         self.assertNotIn("unsupported anchor", svg)
 
+    def test_multiple_quads_are_reported_as_grid_group(self):
+        tile = BinaryMask.from_rows(
+            (
+                "....####....",
+                "...######...",
+                "..########..",
+                ".##########.",
+                "############",
+            )
+        )
+        shifted_pixels = {(x + 16, y) for x, y in tile.pixels}
+        mask = BinaryMask(
+            width=28,
+            height=5,
+            pixels=tile.pixels | frozenset(shifted_pixels),
+        )
+
+        manifest = scene_from_mask(mask).to_manifest()
+
+        self.assertEqual(manifest["groups"][0]["kind"], "perspective_grid")
+        self.assertEqual(manifest["groups"][0]["anchor_indexes"], [0, 1])
+        self.assertIn(
+            "perspective_grid_consistency_error",
+            manifest["groups"][0]["metrics"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

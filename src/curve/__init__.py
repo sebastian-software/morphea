@@ -23,6 +23,7 @@ from curve.scene import (
     anchor_to_svg_element,
     anchors_to_svg,
     scene_from_mask,
+    scene_groups_to_manifest,
 )
 
 __all__ = [
@@ -47,5 +48,6 @@ __all__ = [
     "flat_color_masks_from_image",
     "primitive_candidates_for_component",
     "scene_from_flat_color_image",
+    "scene_groups_to_manifest",
     "scene_from_mask",
 ]

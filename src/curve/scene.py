@@ -7,7 +7,12 @@ from html import escape
 from statistics import mean
 from typing import Iterable
 
-from curve.anchors import AnchorCandidate, AnchorKind, Point
+from curve.anchors import (
+    AnchorCandidate,
+    AnchorKind,
+    Point,
+    perspective_grid_consistency_error,
+)
 from curve.detection import detect_primitive_anchors
 from curve.masks import BinaryMask
 
@@ -34,6 +39,7 @@ class Scene:
             "height": self.height,
             "anchor_count": len(self.anchors),
             "anchors": [anchor_to_manifest(anchor) for anchor in self.anchors],
+            "groups": scene_groups_to_manifest(self.anchors),
         }
 
 
@@ -142,6 +148,31 @@ def anchor_to_manifest(anchor: AnchorCandidate) -> dict[str, object]:
             ]
         }
     return data
+
+
+def scene_groups_to_manifest(
+    anchors: tuple[AnchorCandidate, ...],
+) -> list[dict[str, object]]:
+    quad_indexes = [
+        index
+        for index, anchor in enumerate(anchors)
+        if anchor.kind == AnchorKind.QUAD and anchor.quad is not None
+    ]
+    if len(quad_indexes) < 2:
+        return []
+
+    quads = [anchors[index].quad for index in quad_indexes]
+    return [
+        {
+            "kind": AnchorKind.PERSPECTIVE_GRID.value,
+            "anchor_indexes": quad_indexes,
+            "metrics": {
+                "perspective_grid_consistency_error": perspective_grid_consistency_error(
+                    tuple(quad for quad in quads if quad is not None)
+                )
+            },
+        }
+    ]
 
 
 def _polyline_path(points: tuple[Point, ...]) -> str:
