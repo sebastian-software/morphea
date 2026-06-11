@@ -39,6 +39,7 @@ from curve.runs import (
 )
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
+from curve.profiling import profile_vectorize
 from curve.comparison import (
     compare_snapshots,
     render_snapshot_comparison,
@@ -139,6 +140,7 @@ __all__ = [
     "merge_reviewed_pseudo_label_dataset",
     "proposals_to_manifest",
     "predict_label",
+    "profile_vectorize",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
     "scene_layers_to_manifest",

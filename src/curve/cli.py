@@ -12,6 +12,7 @@ from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
+from curve.profiling import profile_vectorize
 from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
 from curve.segmenters import (
     FlatColorSegmenter,
@@ -131,6 +132,26 @@ def main(argv: list[str] | None = None) -> None:
         help="Optional primitive classifier model JSON used as a ranking prior.",
     )
     vectorize.add_argument(
+        "--config",
+        type=Path,
+        help="Optional JSON config for vectorize runtime knobs.",
+    )
+
+    profile = subcommands.add_parser(
+        "profile",
+        help="Measure bounded vectorize runtime for an input image.",
+    )
+    profile.add_argument("input", type=Path)
+    profile.add_argument("-o", "--output", type=Path, required=True)
+    profile.add_argument("--repeats", type=int, default=1)
+    profile.add_argument("--min-area", type=int, default=None)
+    profile.add_argument("--color-tolerance", type=float, default=None)
+    profile.add_argument("--max-size", type=int)
+    profile.add_argument("--max-colors", type=int)
+    profile.add_argument("--max-component-area", type=int)
+    profile.add_argument("--timeout-seconds", type=float)
+    profile.add_argument("--classifier-model", type=Path)
+    profile.add_argument(
         "--config",
         type=Path,
         help="Optional JSON config for vectorize runtime knobs.",
@@ -323,6 +344,21 @@ def main(argv: list[str] | None = None) -> None:
                 encoding="utf-8",
             )
         print(f"wrote {args.output} with {len(scene.anchors)} anchors")
+        return
+
+    if args.command == "profile":
+        profile_config = _resolved_vectorize_config(args)
+        report = profile_vectorize(
+            args.input,
+            output=args.output,
+            repeats=args.repeats,
+            config=profile_config,
+        )
+        print(
+            "profiled "
+            f"{report['repeat_count']} runs; "
+            f"mean={report['summary']['mean_elapsed_seconds']:.6f}s"
+        )
         return
 
     if args.command == "generate":
