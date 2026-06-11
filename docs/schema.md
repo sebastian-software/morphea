@@ -21,6 +21,7 @@ Top-level fields:
 - `anchors`: editable primitive candidates
 - `groups`: semantic groups such as `perspective_grid`
 - `diagnostics`: non-fatal preprocessing/runtime diagnostics
+- `metrics`: scene-level editability and quality metrics
 
 Anchor fields:
 
@@ -31,6 +32,21 @@ Anchor fields:
 - `parameter_count`
 - `metrics`
 - geometry payload, one of `circle`, `stroke`, or `quad`
+
+Scene metrics:
+
+- `shape_count`
+- `node_count`
+- `parameter_count`
+- `simple_shape_count`
+- `generic_path_count`
+- `cutout_anchor_count`
+- `group_count`
+- `simple_shape_ratio`
+- `fragmentation_penalty`
+- `diagnostic_penalty`
+- `editability_score`
+- `color_fragment_counts`
 
 ## Sweep Summary v1
 
@@ -43,3 +59,6 @@ Top-level fields:
 - `input`: source input image
 - `run_count`
 - `runs`: per-run summaries with anchor/group/diagnostic counts
+
+Each run summary also carries `editability_score` and
+`fragmentation_penalty` when the manifest contains scene metrics.

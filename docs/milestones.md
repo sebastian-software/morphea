@@ -200,6 +200,12 @@ Implemented so far:
 - `report.md`
 - report summaries for anchor types and diagnostics
 - `curve eval` JSON/Markdown summaries over run directories
+- scene-level `metrics` in manifests
+- `editability_score`
+- `fragmentation_penalty`
+- node, parameter, simple-shape, generic-path, cut-out, and color-fragment
+  counts
+- metrics surfaced in reports, eval summaries, and sweep summaries
 
 ## M5: Synthetic Dataset Generator
 
