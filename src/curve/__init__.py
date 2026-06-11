@@ -39,6 +39,11 @@ from curve.runs import (
 )
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
+from curve.comparison import (
+    compare_snapshots,
+    render_snapshot_comparison,
+    render_snapshot_comparison_markdown,
+)
 from curve.classifier import (
     FEATURE_NAMES,
     TrainingExample,
@@ -126,6 +131,7 @@ __all__ = [
     "harvest_pseudo_labels",
     "centroids_from_examples",
     "compare_retraining",
+    "compare_snapshots",
     "primitive_candidates_for_component",
     "load_centroid_model",
     "load_curated_suite",
@@ -144,6 +150,8 @@ __all__ = [
     "write_markdown_report",
     "render_eval_markdown",
     "render_manifest_image",
+    "render_snapshot_comparison",
+    "render_snapshot_comparison_markdown",
     "render_sweep_markdown",
     "refine_manifest",
     "run_sweep",

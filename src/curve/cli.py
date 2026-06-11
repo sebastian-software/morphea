@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from curve.classifier import train_centroid_classifier
+from curve.comparison import compare_snapshots
 from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
@@ -202,6 +203,15 @@ def main(argv: list[str] | None = None) -> None:
     compare_training.add_argument("-o", "--output", type=Path)
     compare_training.add_argument("--config", type=Path)
 
+    compare_snapshots_parser = subcommands.add_parser(
+        "compare-snapshots",
+        help="Compare two saved experiment JSON snapshots.",
+    )
+    compare_snapshots_parser.add_argument("before", type=Path)
+    compare_snapshots_parser.add_argument("after", type=Path)
+    compare_snapshots_parser.add_argument("-o", "--output", type=Path, required=True)
+    compare_snapshots_parser.add_argument("--markdown", type=Path)
+
     refine = subcommands.add_parser(
         "refine",
         help="Apply a structure-preserving refinement backend to a manifest.",
@@ -382,6 +392,16 @@ def main(argv: list[str] | None = None) -> None:
             f"{result['baseline']['train_examples']} baseline examples with "
             f"{result['augmented']['train_examples']} augmented examples"
         )
+        return
+
+    if args.command == "compare-snapshots":
+        result = compare_snapshots(
+            args.before,
+            args.after,
+            output=args.output,
+            markdown=args.markdown,
+        )
+        print(f"compared {result['item_count']} snapshot items")
         return
 
     if args.command == "refine":
