@@ -398,6 +398,7 @@ Files:
 - `manifest.json`
 - `config.json`
 - `report.md`
+- `report.html`
 - `preview.png`
 - `debug.svg`
 

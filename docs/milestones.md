@@ -248,6 +248,7 @@ Implemented so far:
 - `manifest.json`
 - `config.json`
 - `report.md`
+- `report.html`
 - report summaries for anchor types and diagnostics
 - `curve eval` JSON/Markdown summaries over run directories
 - scene-level `metrics` in manifests
@@ -259,6 +260,7 @@ Implemented so far:
   counts
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - deterministic manifest preview renderer for current primitive types
+- `curve report` can render Markdown or HTML from an existing manifest
 - optional Markdown comparison reports for config sweeps
 
 ## M5: Synthetic Dataset Generator
@@ -547,7 +549,7 @@ Implemented so far:
 - `curve curated-check suite.json -o report.json` for suite validation.
 - optional `--run` mode using each case's bounded `recommended_config`.
 - per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
-  `report.md`, and `preview.png` artifacts via `--output-dir`.
+  `report.md`, `report.html`, and `preview.png` artifacts via `--output-dir`.
 - curated artifacts are written through the same run writer as vectorize runs,
   including input copies and raster-fidelity metrics.
 - expectation checks for anchor kinds and scene group kinds.
