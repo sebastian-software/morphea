@@ -96,6 +96,8 @@ Implemented so far:
   neighbor tuples in the hot loop.
 - flat-color mask extraction scans image buffers sequentially via Pillow pixel
   data instead of calling `getpixel` for every pixel.
+- flat-color mask extraction stores linear pixel indexes during palette
+  grouping and materializes `(x, y)` coordinates only for retained masks.
 - `curve profile input.png -o profile.json` records bounded vectorize timings,
   anchor counts, diagnostics, and min/mean/max elapsed summaries for repeated
   runs.
