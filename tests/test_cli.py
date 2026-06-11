@@ -66,6 +66,84 @@ class CliTests(unittest.TestCase):
             self.assertEqual(manifest["anchor_count"], 1)
             self.assertEqual(manifest["anchors"][0]["kind"], "circle")
 
+    def test_vectorize_reads_runtime_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            config_path = Path(temp_dir) / "vectorize.json"
+            image = Image.new("RGB", (16, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+            draw.point(((7, 3), (8, 12)), fill="#e02a2a")
+            image.save(input_path)
+            config_path.write_text(
+                json.dumps({"color_tolerance": 18, "min_area": 8}),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertEqual(manifest["anchor_count"], 1)
+
+    def test_vectorize_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            config_path = Path(temp_dir) / "vectorize.json"
+            image = Image.new("RGB", (16, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+            image.save(input_path)
+            config_path.write_text(json.dumps({"min_area": 999}), encoding="utf-8")
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                        "--min-area",
+                        "8",
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertEqual(manifest["anchor_count"], 1)
+
+    def test_vectorize_config_rejects_unknown_keys(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            config_path = Path(temp_dir) / "vectorize.json"
+            Image.new("RGB", (8, 8), "white").save(input_path)
+            config_path.write_text(json.dumps({"unknown": 1}), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "unsupported vectorize config keys"):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                    ]
+                )
+
     def test_vectorize_manifest_includes_cutout_strokes(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

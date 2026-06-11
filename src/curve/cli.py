@@ -22,6 +22,17 @@ from curve.refinement import RefinementConfig, refine_manifest
 from curve.sweeps import run_sweep
 
 
+VECTORIZE_DEFAULT_CONFIG = {
+    "min_area": 8,
+    "color_tolerance": 0.0,
+    "max_size": None,
+    "max_colors": None,
+    "max_component_area": None,
+    "timeout_seconds": None,
+    "classifier_model": None,
+}
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="curve",
@@ -44,13 +55,13 @@ def main(argv: list[str] | None = None) -> None:
     vectorize.add_argument(
         "--min-area",
         type=int,
-        default=8,
+        default=None,
         help="Minimum exact-color component area to consider.",
     )
     vectorize.add_argument(
         "--color-tolerance",
         type=float,
-        default=0.0,
+        default=None,
         help="RGB distance for grouping near-flat colors into one mask.",
     )
     vectorize.add_argument(
@@ -97,6 +108,11 @@ def main(argv: list[str] | None = None) -> None:
         "--classifier-model",
         type=Path,
         help="Optional primitive classifier model JSON used as a ranking prior.",
+    )
+    vectorize.add_argument(
+        "--config",
+        type=Path,
+        help="Optional JSON config for vectorize runtime knobs.",
     )
 
     generate = subcommands.add_parser(
@@ -208,28 +224,18 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
+        vectorize_config = _resolved_vectorize_config(args)
         config = {
             "command": "vectorize",
             "input": str(args.input),
             "output": str(args.output),
             "debug_svg": str(args.debug_svg) if args.debug_svg else None,
-            "min_area": args.min_area,
-            "color_tolerance": args.color_tolerance,
-            "max_size": args.max_size,
-            "max_colors": args.max_colors,
-            "max_component_area": args.max_component_area,
-            "timeout_seconds": args.timeout_seconds,
-            "classifier_model": str(args.classifier_model) if args.classifier_model else None,
+            "config": str(args.config) if args.config else None,
+            **vectorize_config,
         }
         scene = scene_from_flat_color_image(
             args.input,
-            min_area=args.min_area,
-            color_tolerance=args.color_tolerance,
-            max_size=args.max_size,
-            max_colors=args.max_colors,
-            max_component_area=args.max_component_area,
-            timeout_seconds=args.timeout_seconds,
-            classifier_model=args.classifier_model,
+            **vectorize_config,
         )
         if args.run_dir is not None:
             run_dir = create_run_dir(args.run_dir)
@@ -361,7 +367,29 @@ def main(argv: list[str] | None = None) -> None:
         print(f"ran {result['run_count']} sweep runs")
         return
 
-    print(f"curve {args.command}: pipeline implementation pending")
+
+def _resolved_vectorize_config(args: argparse.Namespace) -> dict[str, object]:
+    config = dict(VECTORIZE_DEFAULT_CONFIG)
+    if args.config is not None:
+        loaded = _load_vectorize_config(args.config)
+        config.update(loaded)
+
+    for key in VECTORIZE_DEFAULT_CONFIG:
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = str(value) if key == "classifier_model" else value
+    return config
+
+
+def _load_vectorize_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("vectorize config must be a JSON object")
+    unknown = sorted(set(loaded) - set(VECTORIZE_DEFAULT_CONFIG))
+    if unknown:
+        msg = f"unsupported vectorize config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    return loaded
 
 
 if __name__ == "__main__":
