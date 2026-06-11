@@ -64,3 +64,68 @@ def harvest_pseudo_labels(
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
 
+
+def create_review_file(
+    *,
+    pseudo_labels: str | Path,
+    output: str | Path,
+) -> dict[str, object]:
+    source = json.loads(Path(pseudo_labels).read_text(encoding="utf-8"))
+    review_items = []
+    for index, label in enumerate(source.get("pseudo_labels", [])):
+        review_items.append(
+            {
+                "id": f"review-{index:05d}",
+                "decision": "pending",
+                "reason": "",
+                "label": label,
+            }
+        )
+    review = {
+        "source": str(pseudo_labels),
+        "review_count": len(review_items),
+        "items": review_items,
+    }
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(review, indent=2, sort_keys=True), encoding="utf-8")
+    return review
+
+
+def apply_review_file(
+    *,
+    review: str | Path,
+    output: str | Path,
+) -> dict[str, object]:
+    review_data = json.loads(Path(review).read_text(encoding="utf-8"))
+    accepted = []
+    rejected = []
+    pending = []
+    for item in review_data.get("items", []):
+        decision = item.get("decision")
+        if decision == "accept":
+            accepted.append(item["label"])
+        elif decision == "reject":
+            rejected.append(
+                {
+                    "id": item.get("id"),
+                    "reason": item.get("reason", ""),
+                    "label": item.get("label"),
+                }
+            )
+        else:
+            pending.append(item.get("id"))
+
+    result = {
+        "accepted_count": len(accepted),
+        "rejected_count": len(rejected),
+        "pending_count": len(pending),
+        "accepted": accepted,
+        "rejected": rejected,
+        "pending": pending,
+        "source_review": str(review),
+    }
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    return result

@@ -48,7 +48,7 @@ from curve.segmenters import (
     Segmenter,
     proposals_to_manifest,
 )
-from curve.self_learning import harvest_pseudo_labels
+from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 
 __all__ = [
     "AnchorCandidate",
@@ -73,10 +73,12 @@ __all__ = [
     "VectorizeRun",
     "anchor_to_manifest",
     "anchor_to_svg_element",
+    "apply_review_file",
     "anchors_to_svg",
     "choose_best_anchor",
     "connected_components",
     "create_run_dir",
+    "create_review_file",
     "classifier_prior_error",
     "detect_cutout_strokes",
     "detect_primitive_anchors",

@@ -6,7 +6,7 @@ from io import StringIO
 from pathlib import Path
 
 from curve.cli import main
-from curve.self_learning import harvest_pseudo_labels
+from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 
 
 class SelfLearningTests(unittest.TestCase):
@@ -60,6 +60,78 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(output.read_text())
             self.assertEqual(result["pseudo_label_count"], 1)
 
+    def test_create_review_file_marks_labels_pending(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pseudo = Path(temp_dir) / "pseudo.json"
+            pseudo.write_text(
+                json.dumps({"pseudo_labels": [{"kind": "circle"}]}),
+                encoding="utf-8",
+            )
+            output = Path(temp_dir) / "review.json"
+
+            review = create_review_file(pseudo_labels=pseudo, output=output)
+
+            self.assertEqual(review["review_count"], 1)
+            self.assertEqual(review["items"][0]["decision"], "pending")
+            self.assertTrue(output.exists())
+
+    def test_apply_review_file_splits_accept_reject_pending(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review = Path(temp_dir) / "review.json"
+            review.write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "id": "review-00000",
+                                "decision": "accept",
+                                "label": {"kind": "circle"},
+                            },
+                            {
+                                "id": "review-00001",
+                                "decision": "reject",
+                                "reason": "wrong type",
+                                "label": {"kind": "quad"},
+                            },
+                            {
+                                "id": "review-00002",
+                                "decision": "pending",
+                                "label": {"kind": "stroke_polyline"},
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = Path(temp_dir) / "accepted.json"
+
+            result = apply_review_file(review=review, output=output)
+
+            self.assertEqual(result["accepted_count"], 1)
+            self.assertEqual(result["rejected_count"], 1)
+            self.assertEqual(result["pending_count"], 1)
+
+    def test_review_cli_roundtrip(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pseudo = Path(temp_dir) / "pseudo.json"
+            pseudo.write_text(
+                json.dumps({"pseudo_labels": [{"kind": "circle"}]}),
+                encoding="utf-8",
+            )
+            review = Path(temp_dir) / "review.json"
+            accepted = Path(temp_dir) / "accepted.json"
+
+            with redirect_stdout(StringIO()):
+                main(["review", str(pseudo), "-o", str(review)])
+            data = json.loads(review.read_text())
+            data["items"][0]["decision"] = "accept"
+            review.write_text(json.dumps(data), encoding="utf-8")
+            with redirect_stdout(StringIO()):
+                main(["apply-review", str(review), "-o", str(accepted)])
+
+            result = json.loads(accepted.read_text())
+            self.assertEqual(result["accepted_count"], 1)
+
 
 def _write_manifest(
     root: Path,
@@ -89,4 +161,3 @@ def _write_manifest(
 
 if __name__ == "__main__":
     unittest.main()
-

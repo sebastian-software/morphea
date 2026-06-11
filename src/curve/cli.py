@@ -11,7 +11,7 @@ from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_vectorize_run
-from curve.self_learning import harvest_pseudo_labels
+from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -123,6 +123,20 @@ def main(argv: list[str] | None = None) -> None:
     harvest.add_argument("--max-run-diagnostics", type=int, default=0)
     harvest.add_argument("--max-classifier-prior-error", type=float, default=0.0)
 
+    review = subcommands.add_parser(
+        "review",
+        help="Create a human-editable review queue from harvested pseudo-labels.",
+    )
+    review.add_argument("pseudo_labels", type=Path)
+    review.add_argument("-o", "--output", type=Path, required=True)
+
+    apply_review = subcommands.add_parser(
+        "apply-review",
+        help="Apply accept/reject decisions from a review file.",
+    )
+    apply_review.add_argument("review", type=Path)
+    apply_review.add_argument("-o", "--output", type=Path, required=True)
+
     args = parser.parse_args(argv)
     if args.command == "vectorize":
         config = {
@@ -208,6 +222,22 @@ def main(argv: list[str] | None = None) -> None:
             max_classifier_prior_error=args.max_classifier_prior_error,
         )
         print(f"harvested {result['pseudo_label_count']} pseudo-labels")
+        return
+
+    if args.command == "review":
+        review_result = create_review_file(
+            pseudo_labels=args.pseudo_labels,
+            output=args.output,
+        )
+        print(f"created review queue with {review_result['review_count']} items")
+        return
+
+    if args.command == "apply-review":
+        reviewed = apply_review_file(
+            review=args.review,
+            output=args.output,
+        )
+        print(f"accepted {reviewed['accepted_count']} reviewed pseudo-labels")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")
