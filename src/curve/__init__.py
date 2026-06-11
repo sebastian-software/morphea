@@ -49,6 +49,7 @@ from curve.segmenters import (
     proposals_to_manifest,
 )
 from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
+from curve.refinement import RefinementConfig, refine_manifest
 
 __all__ = [
     "AnchorCandidate",
@@ -63,6 +64,7 @@ __all__ = [
     "MlxSamSegmenter",
     "Point",
     "QuadAnchor",
+    "RefinementConfig",
     "Scene",
     "SegmentProposal",
     "Segmenter",
@@ -101,6 +103,7 @@ __all__ = [
     "split_counts",
     "render_markdown_report",
     "render_eval_markdown",
+    "refine_manifest",
     "write_vectorize_run",
     "write_eval_summary",
     "train_centroid_classifier",

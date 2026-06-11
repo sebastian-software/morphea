@@ -12,6 +12,7 @@ from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_vectorize_run
 from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
+from curve.refinement import RefinementConfig, refine_manifest
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -137,6 +138,16 @@ def main(argv: list[str] | None = None) -> None:
     apply_review.add_argument("review", type=Path)
     apply_review.add_argument("-o", "--output", type=Path, required=True)
 
+    refine = subcommands.add_parser(
+        "refine",
+        help="Apply a structure-preserving refinement backend to a manifest.",
+    )
+    refine.add_argument("manifest", type=Path)
+    refine.add_argument("-o", "--output", type=Path, required=True)
+    refine.add_argument("--backend", default="local_metric")
+    refine.add_argument("--max-iterations", type=int, default=0)
+    refine.add_argument("--timeout-seconds", type=float)
+
     args = parser.parse_args(argv)
     if args.command == "vectorize":
         config = {
@@ -238,6 +249,19 @@ def main(argv: list[str] | None = None) -> None:
             output=args.output,
         )
         print(f"accepted {reviewed['accepted_count']} reviewed pseudo-labels")
+        return
+
+    if args.command == "refine":
+        result = refine_manifest(
+            manifest=args.manifest,
+            output=args.output,
+            config=RefinementConfig(
+                backend=args.backend,
+                max_iterations=args.max_iterations,
+                timeout_seconds=args.timeout_seconds,
+            ),
+        )
+        print(f"refined {len(result.get('anchors', []))} anchors")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")
