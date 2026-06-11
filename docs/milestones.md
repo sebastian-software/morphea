@@ -534,6 +534,9 @@ Implemented so far:
   via `--raster-l1-weight` and `--raster-edge-weight`
 - structure-preserving local optimizer for quad-like primitives (`rect`,
   `rounded_rect`, `quad`) using bounded translation and scale parameter steps
+- structure-preserving local optimizer for stroke-like primitives
+  (`stroke_polyline`, `stroke_path`, `arc`) using bounded centerline
+  translation and stroke-width steps
 - recognized optional differentiable backend names (`differentiable`, `diffvg`)
   behind the same `curve refine --backend ...` interface, with an explicit
   not-installed/not-configured failure path until a renderer is wired

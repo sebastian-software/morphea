@@ -486,5 +486,5 @@ not only average pixel color.
 
 `optimizer.optimized_parameter_kinds` lists primitive kinds whose parameters
 changed during the local pass. The current local backend can adjust circle
-radii and quad-like corner parameters while preserving the original primitive
-kind.
+radii, quad-like corner parameters, and stroke/arc centerline or width samples
+while preserving the original primitive kind.
