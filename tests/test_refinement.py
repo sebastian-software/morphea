@@ -8,7 +8,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from curve.cli import main
-from curve.refinement import RefinementConfig, refine_manifest
+from curve.refinement import (
+    RefinementConfig,
+    available_refinement_backends,
+    refine_manifest,
+)
 
 
 class RefinementTests(unittest.TestCase):
@@ -144,8 +148,25 @@ class RefinementTests(unittest.TestCase):
                 refine_manifest(
                     manifest=manifest,
                     output=Path(temp_dir) / "refined.json",
-                    config=RefinementConfig(backend="diffvg"),
+                    config=RefinementConfig(backend="unknown"),
                 )
+
+    def test_optional_differentiable_backend_reports_not_configured(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = _write_manifest(Path(temp_dir))
+
+            with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
+                refine_manifest(
+                    manifest=manifest,
+                    output=Path(temp_dir) / "refined.json",
+                    config=RefinementConfig(backend="differentiable"),
+                )
+
+    def test_available_refinement_backends_lists_optional_diffvg(self):
+        backends = available_refinement_backends()
+
+        self.assertIn("local_metric", backends["local"])
+        self.assertIn("diffvg", backends["optional"])
 
 
 def _write_manifest(root: Path) -> Path:

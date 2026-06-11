@@ -13,9 +13,13 @@ from PIL import Image
 from curve.rendering import raster_fidelity_metrics, render_manifest_image
 
 
+LOCAL_REFINEMENT_BACKEND = "local_metric"
+OPTIONAL_DIFFERENTIABLE_BACKENDS = ("differentiable", "diffvg")
+
+
 @dataclass(frozen=True)
 class RefinementConfig:
-    backend: str = "local_metric"
+    backend: str = LOCAL_REFINEMENT_BACKEND
     max_iterations: int = 0
     timeout_seconds: float | None = None
     source_image: str | Path | None = None
@@ -30,7 +34,9 @@ def refine_manifest(
     config: RefinementConfig | None = None,
 ) -> dict[str, object]:
     config = config or RefinementConfig()
-    if config.backend != "local_metric":
+    if config.backend in OPTIONAL_DIFFERENTIABLE_BACKENDS:
+        _raise_differentiable_backend_unavailable(config.backend)
+    if config.backend != LOCAL_REFINEMENT_BACKEND:
         msg = f"unsupported refinement backend: {config.backend}"
         raise ValueError(msg)
 
@@ -86,6 +92,21 @@ def refine_manifest(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
+
+
+def available_refinement_backends() -> dict[str, object]:
+    return {
+        "local": [LOCAL_REFINEMENT_BACKEND],
+        "optional": list(OPTIONAL_DIFFERENTIABLE_BACKENDS),
+    }
+
+
+def _raise_differentiable_backend_unavailable(backend: str) -> None:
+    msg = (
+        f"refinement backend {backend!r} is not installed/configured yet; "
+        "install and wire a differentiable renderer before using this backend"
+    )
+    raise RuntimeError(msg)
 
 
 def _optimize_local_geometry(

@@ -85,7 +85,13 @@ from curve.self_learning import (
     merge_reviewed_pseudo_label_dataset,
     retrain_centroid_classifier,
 )
-from curve.refinement import RefinementConfig, refine_manifest
+from curve.refinement import (
+    LOCAL_REFINEMENT_BACKEND,
+    OPTIONAL_DIFFERENTIABLE_BACKENDS,
+    RefinementConfig,
+    available_refinement_backends,
+    refine_manifest,
+)
 from curve.curated import (
     check_curated_suite,
     load_curated_suite,
@@ -109,6 +115,8 @@ __all__ = [
     "MLX_MODEL_TYPE",
     "MlxClassifierTrainingConfig",
     "Point",
+    "LOCAL_REFINEMENT_BACKEND",
+    "OPTIONAL_DIFFERENTIABLE_BACKENDS",
     "QuadAnchor",
     "RefinementConfig",
     "SCENE_MANIFEST_SCHEMA_VERSION",
@@ -127,6 +135,7 @@ __all__ = [
     "anchors_from_dataset",
     "apply_review_file",
     "anchors_to_svg",
+    "available_refinement_backends",
     "choose_best_anchor",
     "connected_components",
     "create_run_dir",
