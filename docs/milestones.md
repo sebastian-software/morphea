@@ -317,6 +317,8 @@ Implemented so far:
   manifests
 - `basic` and `dense` difficulty tiers; `dense` adds labeled parallel stroke
   groups while preserving deterministic seed behavior
+- `logo` difficulty tier adds simple logo-like compositions with a ring mark,
+  accent dot, diagonal stroke, and rounded wordmark bar
 
 ## M6: Local MLX Segmentation Layer
 
