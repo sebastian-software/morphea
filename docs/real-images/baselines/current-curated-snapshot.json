@@ -1,5 +1,5 @@
 {
-  "case_count": 2,
+  "case_count": 3,
   "cases": [
     {
       "anchor_count": 54,
@@ -137,6 +137,67 @@
         "shape_count": 60,
         "simple_shape_count": 44,
         "simple_shape_ratio": 0.733333
+      },
+      "ok": true,
+      "source_exists": true,
+      "status": "checked"
+    },
+    {
+      "anchor_count": 178,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "cubic_path": 79,
+        "quad": 4,
+        "stroke_polyline": 94
+      },
+      "config": {
+        "color_tolerance": 10,
+        "max_colors": 8,
+        "max_component_area": 12000,
+        "max_size": 768,
+        "min_area": 8,
+        "timeout_seconds": 5
+      },
+      "diagnostic_count": 2,
+      "expectations": [
+        {
+          "actual_count": 1,
+          "id": "radio-circle-anchor",
+          "min_count": 1,
+          "ok": true
+        },
+        {
+          "actual_count": 94,
+          "id": "text-stroke-fragments",
+          "min_count": 10,
+          "ok": true
+        }
+      ],
+      "group_kind_counts": {
+        "perspective_grid": 1
+      },
+      "id": "ui-radio-acceptance-screenshot",
+      "metrics": {
+        "color_fragment_counts": {
+          "#000000": 126,
+          "#0f0f0f": 9,
+          "#474747": 9,
+          "#8c8c8c": 15,
+          "#c0c0c0": 11,
+          "#e6e6e6": 5,
+          "#f8f8f8": 3
+        },
+        "cutout_anchor_count": 0,
+        "diagnostic_penalty": 0.0,
+        "editability_score": 0.0,
+        "fragmentation_penalty": 0.480337,
+        "generic_path_count": 79,
+        "group_count": 1,
+        "node_count": 1956,
+        "parameter_count": 4007,
+        "shape_count": 178,
+        "simple_shape_count": 99,
+        "simple_shape_ratio": 0.55618
       },
       "ok": true,
       "source_exists": true,

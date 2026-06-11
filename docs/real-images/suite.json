@@ -85,6 +85,36 @@
           "description": "Clean line-like regions should remain editable strokes."
         }
       ]
+    },
+    {
+      "id": "ui-radio-acceptance-screenshot",
+      "source": "/Users/sebastian/Desktop/Bildschirmfoto 2026-05-29 um 23.19.25.png",
+      "notes": [
+        "Real UI screenshot with black text, anti-aliased glyphs, and a small unselected radio button.",
+        "This case is a different family from the Greek-figures/table images: it stresses text fragmentation, tiny UI strokes, and simple circular controls in a mostly white interface."
+      ],
+      "recommended_config": {
+        "min_area": 8,
+        "color_tolerance": 10,
+        "max_size": 768,
+        "max_colors": 8,
+        "max_component_area": 12000,
+        "timeout_seconds": 5
+      },
+      "expectations": [
+        {
+          "id": "radio-circle-anchor",
+          "kind": "circle",
+          "min_count": 1,
+          "description": "The unselected radio control should produce at least one true circle anchor at this analysis scale."
+        },
+        {
+          "id": "text-stroke-fragments",
+          "kind": "stroke_polyline",
+          "min_count": 10,
+          "description": "Anti-aliased text and UI strokes should remain bounded as editable stroke-like primitives rather than hanging the pipeline."
+        }
+      ]
     }
   ]
 }

@@ -507,7 +507,7 @@ Remaining:
 
 ## M10: Curated Real-Image Suite
 
-Status: started.
+Status: implemented for the current curated baseline.
 
 Purpose: keep the system honest against actual target images.
 
@@ -547,13 +547,15 @@ Implemented so far:
 - second documented curated case:
   `chatgpt-image-2026-06-11`, covering the opaque white-background version of
   the Greek-figures/table illustration.
+- third documented curated case:
+  `ui-radio-acceptance-screenshot`, adding a text-heavy UI screenshot family
+  with a small radio-circle control and bounded text-fragment expectations.
 - checked-in deterministic baseline snapshot at
   `docs/real-images/baselines/current-curated-snapshot.json`.
 
 Remaining:
 
-- add additional real-image families beyond the current Greek-figures/table
-  image family.
+- add more families as new representative local images become available.
 
 ## M11: Productized Research CLI
 
