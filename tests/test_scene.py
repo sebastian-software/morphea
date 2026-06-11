@@ -8,6 +8,7 @@ from curve.scene import (
     SvgStyle,
     scene_from_mask,
     scene_layers_to_manifest,
+    scene_groups_to_manifest,
     scene_metrics_to_manifest,
 )
 
@@ -357,6 +358,7 @@ class SceneExportTests(unittest.TestCase):
 
         clean_metrics = scene_metrics_to_manifest(clean)
         fragmented_metrics = scene_metrics_to_manifest(fragmented)
+        fragment_groups = scene_groups_to_manifest(fragmented)
 
         self.assertEqual(clean_metrics["fragmentation_penalty"], 0.0)
         self.assertGreater(fragmented_metrics["fragmentation_penalty"], 0.0)
@@ -364,6 +366,10 @@ class SceneExportTests(unittest.TestCase):
             clean_metrics["editability_score"],
             fragmented_metrics["editability_score"],
         )
+        self.assertEqual(fragment_groups[0]["kind"], "same_color_fragment_group")
+        self.assertEqual(fragment_groups[0]["color"], "#dd2222")
+        self.assertEqual(fragment_groups[0]["anchor_indexes"], [0, 1])
+        self.assertTrue(fragment_groups[0]["metrics"]["merge_candidate"])
 
 
 if __name__ == "__main__":

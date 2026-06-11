@@ -305,6 +305,33 @@ def scene_groups_to_manifest(
             }
         )
 
+    color_groups: dict[str, list[int]] = {}
+    for index, anchor in enumerate(anchors):
+        if anchor.color is None:
+            continue
+        color_groups.setdefault(anchor.color, []).append(index)
+
+    for color, indexes in sorted(color_groups.items()):
+        if len(indexes) < 2:
+            continue
+        groups.append(
+            {
+                "kind": "same_color_fragment_group",
+                "id": f"color-{color.removeprefix('#')}",
+                "color": color,
+                "anchor_indexes": indexes,
+                "metrics": {
+                    "fragment_count": len(indexes),
+                    "merge_candidate": True,
+                    "generic_path_count": sum(
+                        1
+                        for index in indexes
+                        if anchors[index].kind == AnchorKind.CUBIC_PATH
+                    ),
+                },
+            }
+        )
+
     return groups
 
 
