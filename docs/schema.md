@@ -91,6 +91,10 @@ Each run summary also carries `editability_score`, `fragmentation_penalty`,
 `raster_l1_error`, and `raster_edge_error` when the manifest contains those
 metrics.
 
+`curve sweep --markdown summary.md` writes a Markdown comparison view ranked by
+editability score and raster error. It is derived from `sweep-summary.json` and
+does not change the JSON schema.
+
 ## Vectorize Config v1
 
 Read by `curve vectorize --config`.

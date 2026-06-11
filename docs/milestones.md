@@ -248,6 +248,7 @@ Implemented so far:
   counts
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - deterministic manifest preview renderer for current primitive types
+- optional Markdown comparison reports for config sweeps
 
 ## M5: Synthetic Dataset Generator
 
@@ -554,6 +555,7 @@ Implemented so far:
 - `curve sweep`
 - `curve merge-labels`
 - `curve vectorize --config config.json` for repeatable runtime knob files
+- `curve sweep --markdown summary.md` for scan-friendly config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests
 - `sweep-summary.json` experiment metadata
@@ -562,7 +564,7 @@ Remaining:
 
 - richer config files for segmenters, thresholds, scoring, and training beyond
   the first vectorize runtime config.
-- comparison views across commits/configs beyond the first JSON summary.
+- comparison views across commits beyond config-level sweep summaries.
 
 ## Commit Discipline
 

@@ -48,6 +48,12 @@ Run:
 PYTHONPATH=src python3 -m curve.cli sweep sweep.json -o runs/sweep
 ```
 
+Optional Markdown comparison:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli sweep sweep.json -o runs/sweep --markdown runs/sweep.md
+```
+
 Output:
 
 - `runs/sweep/<run-id>/output.svg`
@@ -57,6 +63,9 @@ Output:
 - `runs/sweep/<run-id>/preview.png`
 - `runs/sweep/<run-id>/debug.svg`
 - `runs/sweep/sweep-summary.json`
+- optional `runs/sweep.md`
 
 The summary includes editability metrics and the first raster-fidelity fields
 from each run manifest, including `raster_l1_error` and `raster_edge_error`.
+The Markdown comparison ranks runs by editability score and raster error and
+links each row back to its run directory.
