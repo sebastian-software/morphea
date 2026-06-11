@@ -92,6 +92,8 @@ Implemented so far:
   `BinaryMask` / `MaskComponent` API.
 - component BFS scans neighbors inline instead of allocating per-pixel
   neighbor tuples in the hot loop.
+- flat-color mask extraction scans image buffers sequentially via Pillow pixel
+  data instead of calling `getpixel` for every pixel.
 - `curve profile input.png -o profile.json` records bounded vectorize timings,
   anchor counts, diagnostics, and min/mean/max elapsed summaries for repeated
   runs.
