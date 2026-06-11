@@ -7,8 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from curve.images import scene_from_flat_color_image
-from curve.rendering import write_manifest_preview
-from curve.runs import render_markdown_report
+from curve.runs import write_vectorize_run
 
 
 VECTORIZE_CONFIG_KEYS = {
@@ -133,22 +132,24 @@ def _check_curated_case(
     )
     if output_dir is not None:
         case_dir = output_dir / case["id"]
-        case_dir.mkdir(parents=True, exist_ok=True)
-        (case_dir / "output.svg").write_text(scene.to_svg(), encoding="utf-8")
-        (case_dir / "debug.svg").write_text(scene.to_debug_svg(), encoding="utf-8")
-        (case_dir / "manifest.json").write_text(
-            json.dumps(manifest, indent=2, sort_keys=True),
-            encoding="utf-8",
+        vectorize_run = write_vectorize_run(
+            run_dir=case_dir,
+            input_path=source,
+            scene=scene,
+            config={
+                "command": "curated-check",
+                "case_id": case["id"],
+                **config,
+            },
         )
-        (case_dir / "config.json").write_text(
-            json.dumps(config, indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
-        (case_dir / "report.md").write_text(
-            render_markdown_report(manifest=manifest, config=config),
-            encoding="utf-8",
-        )
-        write_manifest_preview(manifest=manifest, output=case_dir / "preview.png")
+        result["artifacts"] = {
+            "run_dir": str(vectorize_run.run_dir),
+            "manifest": str(vectorize_run.manifest_path),
+            "preview": str(vectorize_run.preview_path),
+            "report": str(vectorize_run.report_path),
+            "debug_svg": str(vectorize_run.debug_svg_path),
+            "input": str(vectorize_run.input_path),
+        }
     return result
 
 

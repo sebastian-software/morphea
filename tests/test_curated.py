@@ -93,7 +93,16 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "manifest.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "report.md").exists())
             self.assertTrue((output_dir / "simple-circle" / "preview.png").exists())
-            self.assertEqual(json.loads(output.read_text())["case_count"], 1)
+            self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
+            manifest = json.loads(
+                (output_dir / "simple-circle" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertIn("raster_l1_error", manifest["metrics"])
+            report = json.loads(output.read_text())
+            self.assertEqual(report["case_count"], 1)
+            self.assertIn("artifacts", report["cases"][0])
 
     def test_curated_check_cli_writes_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
