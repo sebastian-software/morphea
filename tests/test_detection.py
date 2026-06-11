@@ -1,0 +1,100 @@
+import unittest
+
+from curve.anchors import AnchorKind
+from curve.detection import detect_primitive_anchors
+from curve.masks import BinaryMask, connected_components
+
+
+class MaskComponentTests(unittest.TestCase):
+    def test_connected_components_splits_separate_shapes(self):
+        mask = BinaryMask.from_rows(
+            (
+                "##....",
+                "##....",
+                "....##",
+                "....##",
+            )
+        )
+
+        components = connected_components(mask)
+
+        self.assertEqual(len(components), 2)
+        self.assertEqual([component.area for component in components], [4, 4])
+
+
+class PrimitiveDetectionTests(unittest.TestCase):
+    def test_filled_dot_is_detected_as_circle_anchor(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...###...",
+                "..#####..",
+                ".#######.",
+                "#########",
+                "#########",
+                "#########",
+                ".#######.",
+                "..#####..",
+                "...###...",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.CIRCLE)
+        self.assertIn("circle_roundness_error", anchors[0].metrics)
+
+    def test_straight_horizontal_component_is_detected_as_stroke(self):
+        mask = BinaryMask.from_rows(
+            (
+                "............",
+                ".##########.",
+                ".##########.",
+                "............",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertIn("line_smoothness_error", anchors[0].metrics)
+        self.assertEqual(anchors[0].stroke.width_samples, (2.0,))
+
+    def test_perspective_tile_is_detected_as_quad_anchor(self):
+        mask = BinaryMask.from_rows(
+            (
+                "....####....",
+                "...######...",
+                "..########..",
+                ".##########.",
+                "############",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.QUAD)
+        self.assertIn("quad_edge_straightness_error", anchors[0].metrics)
+
+    def test_simple_quad_anchor_beats_generic_path_for_tile(self):
+        mask = BinaryMask.from_rows(
+            (
+                "..######..",
+                ".########.",
+                "##########",
+                "##########",
+                ".########.",
+            )
+        )
+
+        anchor = detect_primitive_anchors(mask)[0]
+
+        self.assertEqual(anchor.kind, AnchorKind.QUAD)
+        self.assertLess(anchor.node_count, 8)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
