@@ -57,6 +57,7 @@ from curve.segmenters import (
 from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.curated import check_curated_suite, load_curated_suite
+from curve.sweeps import load_sweep_config, run_sweep
 
 __all__ = [
     "AnchorCandidate",
@@ -104,6 +105,7 @@ __all__ = [
     "primitive_candidates_for_component",
     "load_centroid_model",
     "load_curated_suite",
+    "load_sweep_config",
     "proposals_to_manifest",
     "predict_label",
     "scene_from_flat_color_image",
@@ -114,6 +116,7 @@ __all__ = [
     "write_markdown_report",
     "render_eval_markdown",
     "refine_manifest",
+    "run_sweep",
     "write_vectorize_run",
     "write_eval_summary",
     "train_centroid_classifier",

@@ -14,6 +14,7 @@ from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
 from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 from curve.refinement import RefinementConfig, refine_manifest
+from curve.sweeps import run_sweep
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -174,6 +175,13 @@ def main(argv: list[str] | None = None) -> None:
         help="Run each existing source image with its recommended config.",
     )
 
+    sweep = subcommands.add_parser(
+        "sweep",
+        help="Run a config-driven vectorize sweep.",
+    )
+    sweep.add_argument("config", type=Path)
+    sweep.add_argument("-o", "--output-dir", type=Path, required=True)
+
     args = parser.parse_args(argv)
     if args.command == "vectorize":
         config = {
@@ -307,6 +315,11 @@ def main(argv: list[str] | None = None) -> None:
             run=args.run,
         )
         print(f"checked {result['case_count']} curated cases")
+        return
+
+    if args.command == "sweep":
+        result = run_sweep(args.config, output_dir=args.output_dir)
+        print(f"ran {result['run_count']} sweep runs")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")
