@@ -70,3 +70,9 @@ Train the current primitive-classifier baseline:
 ```sh
 PYTHONPATH=src python3 -m curve.cli train runs/synthetic/dataset.json -o runs/model.json
 ```
+
+Use a trained classifier as an optional vectorize ranking prior:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --classifier-model runs/model.json
+```

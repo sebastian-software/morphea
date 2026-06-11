@@ -324,11 +324,12 @@ Implemented so far:
 - `curve train dataset.json -o model.json`
 - train/val/test evaluation sections in model artifact
 - confusion matrix output
+- optional `--classifier-model` prior during `curve vectorize`
+- `classifier_prior_error` metric in candidate manifests
 
 Remaining:
 
 - replace or augment centroid baseline with small MLX Transformer
-- integrate classifier confidence into candidate ranking
 - compare classifier-assisted ranking against heuristic-only ranking
 
 ## M8: Self-Learning Loop
