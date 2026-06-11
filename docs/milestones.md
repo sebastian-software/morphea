@@ -500,10 +500,14 @@ Implemented so far:
   via `--raster-l1-weight` and `--raster-edge-weight`
 - structure-preserving local optimizer for quad-like primitives (`rect`,
   `rounded_rect`, `quad`) using bounded translation and scale parameter steps
+- recognized optional differentiable backend names (`differentiable`, `diffvg`)
+  behind the same `curve refine --backend ...` interface, with an explicit
+  not-installed/not-configured failure path until a renderer is wired
 
 Remaining:
 
-- optional differentiable backend behind the same interface
+- wire a real differentiable renderer behind the recognized optional backend
+  names.
 
 ## M10: Curated Real-Image Suite
 

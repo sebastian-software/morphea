@@ -402,6 +402,12 @@ and confidence labels for inspection.
 
 Written by `curve refine`.
 
+Recognized backends:
+
+- `local_metric`: active structure-preserving local optimizer
+- `differentiable` and `diffvg`: optional differentiable-renderer backend names
+  that currently fail with an explicit not-installed/not-configured error
+
 Top-level `refinement` fields:
 
 - `backend`
