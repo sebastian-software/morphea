@@ -17,6 +17,9 @@ from curve.detection import detect_primitive_anchors
 from curve.masks import BinaryMask
 
 
+SCENE_MANIFEST_SCHEMA_VERSION = 1
+
+
 @dataclass(frozen=True)
 class SvgStyle:
     fill: str = "#0b2d5f"
@@ -36,6 +39,7 @@ class Scene:
 
     def to_manifest(self) -> dict[str, object]:
         return {
+            "schema_version": SCENE_MANIFEST_SCHEMA_VERSION,
             "width": self.width,
             "height": self.height,
             "anchor_count": len(self.anchors),

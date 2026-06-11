@@ -17,6 +17,7 @@ from curve.detection import (
 from curve.images import ColorMask, flat_color_masks_from_image, scene_from_flat_color_image
 from curve.masks import BinaryMask, MaskComponent, connected_components
 from curve.scene import (
+    SCENE_MANIFEST_SCHEMA_VERSION,
     Scene,
     SvgStyle,
     anchor_to_manifest,
@@ -73,6 +74,7 @@ __all__ = [
     "Point",
     "QuadAnchor",
     "RefinementConfig",
+    "SCENE_MANIFEST_SCHEMA_VERSION",
     "Scene",
     "SegmentProposal",
     "Segmenter",

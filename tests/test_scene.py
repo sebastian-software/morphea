@@ -1,7 +1,7 @@
 import unittest
 
 from curve.masks import BinaryMask
-from curve.scene import SvgStyle, scene_from_mask
+from curve.scene import SCENE_MANIFEST_SCHEMA_VERSION, SvgStyle, scene_from_mask
 
 
 class SceneExportTests(unittest.TestCase):
@@ -103,6 +103,7 @@ class SceneExportTests(unittest.TestCase):
 
         manifest = scene_from_mask(mask).to_manifest()
 
+        self.assertEqual(manifest["schema_version"], SCENE_MANIFEST_SCHEMA_VERSION)
         self.assertEqual(manifest["groups"][0]["kind"], "perspective_grid")
         self.assertEqual(manifest["groups"][0]["anchor_indexes"], [0, 1])
         self.assertIn(
