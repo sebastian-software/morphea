@@ -82,10 +82,11 @@ Layer fields:
 
 Cut-out export policy fields:
 
-- `cutout_strategy`: currently `overlay_stroke` for editable white/near-background
-  cut-out strokes
-- `mask_eligible`: whether the anchor can be migrated to a future negative-mask
-  export path without losing the semantic cut-out intent
+- `cutout_strategy`: `overlay_stroke` by default for editable
+  white/near-background cut-out strokes; SVG export can also use
+  `negative_mask` to keep cut-out strokes editable inside an SVG mask.
+- `mask_eligible`: whether the anchor can be exported through the
+  negative-mask path without losing the semantic cut-out intent.
 
 Group fields:
 
