@@ -67,7 +67,11 @@ from curve.self_learning import (
     merge_reviewed_pseudo_label_dataset,
 )
 from curve.refinement import RefinementConfig, refine_manifest
-from curve.curated import check_curated_suite, load_curated_suite
+from curve.curated import (
+    check_curated_suite,
+    load_curated_suite,
+    render_curated_snapshot,
+)
 from curve.sweeps import load_sweep_config, render_sweep_markdown, run_sweep
 from curve.rendering import render_manifest_image, write_manifest_preview
 
@@ -132,6 +136,7 @@ __all__ = [
     "scene_from_mask",
     "split_counts",
     "render_markdown_report",
+    "render_curated_snapshot",
     "write_markdown_report",
     "render_eval_markdown",
     "render_manifest_image",

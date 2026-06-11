@@ -63,6 +63,7 @@ def check_curated_suite(
     output: str | Path | None = None,
     output_dir: str | Path | None = None,
     run: bool = False,
+    snapshot: str | Path | None = None,
 ) -> dict[str, Any]:
     """Validate a curated suite and optionally run bounded vectorization."""
 
@@ -88,7 +89,32 @@ def check_curated_suite(
             json.dumps(report, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+    if snapshot is not None:
+        snapshot_path = Path(snapshot)
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_path.write_text(
+            json.dumps(render_curated_snapshot(report), indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
     return report
+
+
+def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
+    """Render a deterministic summary suitable for regression diffs."""
+
+    return {
+        "schema_version": 1,
+        "suite": report.get("suite"),
+        "case_count": report.get("case_count", 0),
+        "ok": report.get("ok", False),
+        "cases": [
+            _case_snapshot(case)
+            for case in sorted(
+                report.get("cases", []),
+                key=lambda item: str(item.get("id", "")),
+            )
+        ],
+    }
 
 
 def _check_curated_case(
@@ -125,8 +151,16 @@ def _check_curated_case(
         {
             "status": "checked",
             "ok": all(item["ok"] for item in expectation_results),
+            "config": config,
             "anchor_count": manifest["anchor_count"],
+            "anchor_kind_counts": _counts(
+                anchor.get("kind") for anchor in manifest.get("anchors", [])
+            ),
+            "group_kind_counts": _counts(
+                group.get("kind") for group in manifest.get("groups", [])
+            ),
             "diagnostic_count": len(manifest["diagnostics"]),
+            "metrics": dict(sorted(manifest.get("metrics", {}).items())),
             "expectations": expectation_results,
         }
     )
@@ -185,6 +219,46 @@ def _check_expectation(
 
 def _vectorize_config(config: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in config.items() if key in VECTORIZE_CONFIG_KEYS}
+
+
+def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
+    snapshot: dict[str, Any] = {
+        "id": case.get("id"),
+        "status": case.get("status"),
+        "ok": case.get("ok", False),
+        "source_exists": case.get("source_exists", False),
+        "expectations": [
+            {
+                "id": expectation.get("id"),
+                "ok": expectation.get("ok", False),
+                "actual_count": expectation.get("actual_count", 0),
+                "min_count": expectation.get("min_count", 1),
+            }
+            for expectation in sorted(
+                case.get("expectations", []),
+                key=lambda item: str(item.get("id", "")),
+            )
+        ],
+    }
+    for key in (
+        "config",
+        "anchor_count",
+        "anchor_kind_counts",
+        "group_kind_counts",
+        "diagnostic_count",
+        "metrics",
+    ):
+        if key in case:
+            snapshot[key] = case[key]
+    return snapshot
+
+
+def _counts(values: object) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _validate_expectation(

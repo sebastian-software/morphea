@@ -214,6 +214,11 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Run each existing source image with its recommended config.",
     )
+    curated_check.add_argument(
+        "--snapshot",
+        type=Path,
+        help="Write a deterministic regression snapshot JSON.",
+    )
 
     sweep = subcommands.add_parser(
         "sweep",
@@ -359,6 +364,7 @@ def main(argv: list[str] | None = None) -> None:
             output=args.output,
             output_dir=args.output_dir,
             run=args.run,
+            snapshot=args.snapshot,
         )
         print(f"checked {result['case_count']} curated cases")
         return
