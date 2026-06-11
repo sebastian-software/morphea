@@ -90,6 +90,8 @@ Implemented so far:
 - `connected_components` and the bounded image component scanner use a
   bytearray-backed occupancy grid during BFS while preserving the public
   `BinaryMask` / `MaskComponent` API.
+- component BFS scans neighbors inline instead of allocating per-pixel
+  neighbor tuples in the hot loop.
 - `curve profile input.png -o profile.json` records bounded vectorize timings,
   anchor counts, diagnostics, and min/mean/max elapsed summaries for repeated
   runs.
