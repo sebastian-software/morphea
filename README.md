@@ -1,0 +1,26 @@
+# Curve
+
+Curve is a local research prototype for semantic-first raster-to-SVG
+vectorization.
+
+The primary goal is not pixel-perfect tracing. The primary goal is editable
+SVG structure: simple, stable primitives first, then more complex organic
+detail.
+
+## Current Focus
+
+- Detect simple visual anchors before generic fitting.
+- Prefer true circles, strokes, arcs, rectangles, and perspective quads over
+  noisy path approximations.
+- Penalize fragmented layers when a simpler editable shape explains the image.
+- Treat cut-out-looking lines as editable strokes in v1.
+
+See [docs/plan.md](docs/plan.md) and [docs/adr](docs/adr) for the current
+implementation direction and accepted architecture decisions.
+
+## Development
+
+```sh
+python3 -m unittest discover -s tests
+```
+
