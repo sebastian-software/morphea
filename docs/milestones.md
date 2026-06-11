@@ -276,6 +276,8 @@ Implemented so far:
 
 ## M7: Primitive Classifier Training
 
+Status: started.
+
 Purpose: train the first local model that helps choose semantic primitive type.
 
 Model target:
@@ -314,6 +316,20 @@ Acceptance criteria:
 - Classifier improves candidate selection on synthetic validation data compared
   with heuristic-only ranking.
 - Low-confidence predictions degrade safely to deterministic geometry.
+
+Implemented so far:
+
+- feature extraction from generated ground-truth manifests
+- trainable centroid primitive-classifier baseline
+- `curve train dataset.json -o model.json`
+- train/val/test evaluation sections in model artifact
+- confusion matrix output
+
+Remaining:
+
+- replace or augment centroid baseline with small MLX Transformer
+- integrate classifier confidence into candidate ranking
+- compare classifier-assisted ranking against heuristic-only ranking
 
 ## M8: Self-Learning Loop
 

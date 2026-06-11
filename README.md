@@ -64,3 +64,9 @@ PYTHONPATH=src python3 -m curve.cli generate -o runs/synthetic --count 10 --seed
 ```
 
 Generation writes `dataset.json` plus split folders (`train`, `val`, `test`).
+
+Train the current primitive-classifier baseline:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli train runs/synthetic/dataset.json -o runs/model.json
+```
