@@ -112,6 +112,7 @@ def render_markdown_report(
     anchors = list(manifest.get("anchors", []))
     diagnostics = list(manifest.get("diagnostics", []))
     groups = list(manifest.get("groups", []))
+    layers = list(manifest.get("layers", []))
     metrics = dict(manifest.get("metrics", {}))
     lines = [
         "# Curve Vectorize Report",
@@ -120,6 +121,7 @@ def render_markdown_report(
         "",
         f"- Size: {manifest.get('width')} x {manifest.get('height')}",
         f"- Anchors: {manifest.get('anchor_count', len(anchors))}",
+        f"- Layers: {len(layers)}",
         f"- Groups: {len(groups)}",
         f"- Diagnostics: {len(diagnostics)}",
         f"- Editability score: {metrics.get('editability_score', 'n/a')}",
@@ -130,6 +132,13 @@ def render_markdown_report(
     ]
     for kind, count in _counts(anchor.get("kind") for anchor in anchors).items():
         lines.append(f"- `{kind}`: {count}")
+
+    lines.extend(["", "## Layers", ""])
+    if layers:
+        for layer in layers:
+            lines.append(f"- `{layer.get('name')}`: {layer.get('anchor_count', 0)}")
+    else:
+        lines.append("- none")
 
     lines.extend(["", "## Diagnostics", ""])
     if diagnostics:

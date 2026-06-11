@@ -14,11 +14,13 @@ def evaluate_runs(run_root: str | Path) -> dict[str, object]:
         anchors = list(manifest.get("anchors", []))
         diagnostics = list(manifest.get("diagnostics", []))
         groups = list(manifest.get("groups", []))
+        layers = list(manifest.get("layers", []))
         metrics = dict(manifest.get("metrics", {}))
         run_summaries.append(
             {
                 "run": manifest_path.parent.name,
                 "anchor_count": manifest.get("anchor_count", len(anchors)),
+                "layer_count": len(layers),
                 "group_count": len(groups),
                 "diagnostic_count": len(diagnostics),
                 "editability_score": metrics.get("editability_score"),
@@ -67,6 +69,7 @@ def render_eval_markdown(summary: dict[str, object]) -> str:
         lines.append(f"### {run['run']}")
         lines.append("")
         lines.append(f"- Anchors: {run['anchor_count']}")
+        lines.append(f"- Layers: {run.get('layer_count', 0)}")
         lines.append(f"- Groups: {run['group_count']}")
         lines.append(f"- Diagnostics: {run['diagnostic_count']}")
         lines.append(f"- Editability score: {run.get('editability_score', 'n/a')}")

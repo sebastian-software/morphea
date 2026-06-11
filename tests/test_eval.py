@@ -18,6 +18,7 @@ class EvalTests(unittest.TestCase):
 
             self.assertEqual(summary["run_count"], 1)
             self.assertEqual(summary["runs"][0]["anchor_count"], 2)
+            self.assertEqual(summary["runs"][0]["layer_count"], 1)
             self.assertEqual(summary["runs"][0]["editability_score"], 0.75)
             self.assertEqual(summary["runs"][0]["anchor_types"]["circle"], 1)
             self.assertEqual(
@@ -55,6 +56,7 @@ class EvalTests(unittest.TestCase):
 
         self.assertIn("### run-a", markdown)
         self.assertIn("- Anchors: 2", markdown)
+        self.assertIn("- Layers: 0", markdown)
         self.assertIn("- Editability score: n/a", markdown)
 
     def test_eval_cli_writes_summary(self):
@@ -82,6 +84,7 @@ def _write_run_manifest(root: Path, name: str) -> Path:
                     {"kind": "stroke_polyline"},
                 ],
                 "groups": [{"kind": "perspective_grid"}],
+                "layers": [{"name": "filled_primitives", "anchor_indexes": [0, 1]}],
                 "diagnostics": [{"code": "component_deferred"}],
                 "metrics": {
                     "editability_score": 0.75,

@@ -43,6 +43,7 @@ class SweepTests(unittest.TestCase):
 
             self.assertEqual(summary["schema_version"], 1)
             self.assertEqual(summary["run_count"], 2)
+            self.assertIn("layer_count", summary["runs"][0])
             self.assertIn("editability_score", summary["runs"][0])
             self.assertIn("fragmentation_penalty", summary["runs"][0])
             self.assertTrue((output_dir / "baseline" / "manifest.json").exists())

@@ -7,6 +7,7 @@ from curve.scene import (
     Scene,
     SvgStyle,
     scene_from_mask,
+    scene_layers_to_manifest,
     scene_metrics_to_manifest,
 )
 
@@ -166,6 +167,36 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(anchor["provenance"]["source"], "primitive_anchor_detection")
         self.assertTrue(anchor["export_policy"]["editable"])
         self.assertGreater(anchor["confidence"], 0.0)
+        self.assertEqual(manifest["layers"][0]["name"], "filled_primitives")
+        self.assertEqual(manifest["layers"][0]["anchor_indexes"], [0])
+
+    def test_scene_layers_group_anchor_indexes_by_layer(self):
+        anchors = (
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                stroke=StrokeAnchor(
+                    centerline=(Point(0, 0), Point(4, 0)),
+                    width_samples=(1.0,),
+                    is_cutout=True,
+                ),
+            ),
+        )
+
+        layers = scene_layers_to_manifest(anchors)
+
+        self.assertEqual(
+            {layer["name"]: layer["anchor_indexes"] for layer in layers},
+            {"cutout_overlays": [1], "filled_primitives": [0]},
+        )
 
     def test_debug_svg_includes_anchor_ids_bounds_and_labels(self):
         mask = BinaryMask.from_rows(

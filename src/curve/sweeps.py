@@ -90,6 +90,7 @@ def run_sweep(
                 "id": run_id,
                 "run_dir": str(vectorize_run.run_dir),
                 "anchor_count": manifest["anchor_count"],
+                "layer_count": len(manifest["layers"]),
                 "group_count": len(manifest["groups"]),
                 "diagnostic_count": len(manifest["diagnostics"]),
                 "editability_score": metrics.get("editability_score"),

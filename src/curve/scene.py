@@ -47,6 +47,7 @@ class Scene:
 
     def to_manifest(self) -> dict[str, object]:
         groups = scene_groups_to_manifest(self.anchors)
+        layers = scene_layers_to_manifest(self.anchors)
         return {
             "schema_version": SCENE_MANIFEST_SCHEMA_VERSION,
             "width": self.width,
@@ -56,6 +57,7 @@ class Scene:
                 anchor_to_manifest_with_index(anchor, index=index)
                 for index, anchor in enumerate(self.anchors)
             ],
+            "layers": layers,
             "groups": groups,
             "diagnostics": list(self.diagnostics),
             "metrics": scene_metrics_to_manifest(
@@ -254,6 +256,22 @@ def scene_groups_to_manifest(
                 )
             },
         }
+    ]
+
+
+def scene_layers_to_manifest(
+    anchors: tuple[AnchorCandidate, ...],
+) -> list[dict[str, object]]:
+    layer_indexes: dict[str, list[int]] = {}
+    for index, anchor in enumerate(anchors):
+        layer_indexes.setdefault(_anchor_layer(anchor), []).append(index)
+    return [
+        {
+            "name": name,
+            "anchor_indexes": indexes,
+            "anchor_count": len(indexes),
+        }
+        for name, indexes in sorted(layer_indexes.items())
     ]
 
 

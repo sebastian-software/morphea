@@ -49,6 +49,7 @@ class RunWriterTests(unittest.TestCase):
                 "height": 10,
                 "anchor_count": 2,
                 "anchors": [{"kind": "circle"}, {"kind": "circle"}],
+                "layers": [{"name": "filled_primitives", "anchor_count": 2}],
                 "diagnostics": [{"level": "warning", "code": "component_deferred"}],
                 "groups": [],
                 "metrics": {
@@ -61,6 +62,8 @@ class RunWriterTests(unittest.TestCase):
 
         self.assertIn("# Curve Vectorize Report", report)
         self.assertIn("`circle`: 2", report)
+        self.assertIn("- Layers: 1", report)
+        self.assertIn("`filled_primitives`: 2", report)
         self.assertIn("`warning` `component_deferred`", report)
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
