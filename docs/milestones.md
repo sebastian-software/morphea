@@ -188,6 +188,11 @@ Implemented so far:
   counts per semantic layer.
 - simple anchors are marked as reserved by `simple_shape_anchor`.
 - cut-out strokes are assigned to a `cutout_overlays` layer.
+- cut-out export policy records the current `overlay_stroke` strategy and
+  whether the anchor is eligible for a future negative-mask export path.
+- scene metrics include `cutout_overlay_count` and
+  `negative_mask_candidate_count` so reports can distinguish current overlays
+  from mask-ready cut-out semantics.
 - `curve vectorize --debug-svg` writes an inspectable SVG with anchor ids,
   bounds, and confidence labels.
 - vectorize run directories include `debug.svg`.

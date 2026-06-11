@@ -58,6 +58,8 @@ Scene metrics:
 - `simple_shape_count`
 - `generic_path_count`
 - `cutout_anchor_count`
+- `cutout_overlay_count`
+- `negative_mask_candidate_count`
 - `group_count`
 - `simple_shape_ratio`
 - `fragmentation_penalty`
@@ -74,6 +76,13 @@ Layer fields:
 - `name`
 - `anchor_indexes`
 - `anchor_count`
+
+Cut-out export policy fields:
+
+- `cutout_strategy`: currently `overlay_stroke` for editable white/near-background
+  cut-out strokes
+- `mask_eligible`: whether the anchor can be migrated to a future negative-mask
+  export path without losing the semantic cut-out intent
 
 ## Sweep Summary v1
 
