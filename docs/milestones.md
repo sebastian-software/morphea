@@ -469,10 +469,11 @@ Implemented so far:
 - optional `--source-image` refinement input
 - first structure-preserving local optimizer for circle radius adjustment using
   rendered raster L1 error
+- weighted refinement objective using both raster L1 and edge-error diagnostics
+  via `--raster-l1-weight` and `--raster-edge-weight`
 
 Remaining:
 
-- refinement-specific use of the full raster diagnostics beyond L1 selection
 - broader parameter-adjusting local optimizer beyond circle radius
 - optional differentiable backend behind the same interface
 

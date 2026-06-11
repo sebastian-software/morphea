@@ -232,3 +232,23 @@ manifests compare it with the copied input and store bounded raster-fidelity
 metrics.
 `debug.svg` keeps the editable geometry but wraps each anchor with ids, bounds,
 and confidence labels for inspection.
+
+## Refinement Metadata v1
+
+Written by `curve refine`.
+
+Top-level `refinement` fields:
+
+- `backend`
+- `max_iterations`
+- `timeout_seconds`
+- `source_image`
+- `raster_l1_weight`
+- `raster_edge_weight`
+- `structure_preserving`
+- `optimizer`
+
+The local metric optimizer uses a weighted objective of raster L1 and raster
+edge error. Optimizer metadata stores initial/final L1, edge, and combined
+objective values so geometry changes can be judged against visual edge quality,
+not only average pixel color.
