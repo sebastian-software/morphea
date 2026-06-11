@@ -334,6 +334,8 @@ Remaining:
 
 ## M8: Self-Learning Loop
 
+Status: started.
+
 Purpose: turn the pipeline into an iteration engine.
 
 Deliverables:
@@ -359,6 +361,19 @@ Acceptance criteria:
 - The system can collect its own high-confidence examples from real images.
 - Retraining produces measurable improvement without using external vectorizer
   outputs as labels.
+
+Implemented so far:
+
+- `curve harvest` pseudo-label collection from run manifests
+- run-level warning-diagnostic filter
+- anchor-level `classifier_prior_error` filter
+- output pseudo-label index with source manifest provenance
+
+Remaining:
+
+- human review accept/reject workflow
+- pseudo-label fine-tuning dataset merge
+- retraining comparison against fixed validation suite
 
 ## M9: Differentiable and Local Refinement
 

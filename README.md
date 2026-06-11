@@ -76,3 +76,9 @@ Use a trained classifier as an optional vectorize ranking prior:
 ```sh
 PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --classifier-model runs/model.json
 ```
+
+Harvest high-confidence pseudo-labels from run manifests:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json
+```
