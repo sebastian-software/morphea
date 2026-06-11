@@ -11,6 +11,7 @@ from curve.anchors import (
     AnchorCandidate,
     AnchorKind,
     Point,
+    parallel_spacing_error,
     perspective_grid_consistency_error,
     quality_metric_error,
 )
@@ -247,26 +248,52 @@ def anchor_to_manifest_with_index(
 def scene_groups_to_manifest(
     anchors: tuple[AnchorCandidate, ...],
 ) -> list[dict[str, object]]:
+    groups: list[dict[str, object]] = []
     quad_indexes = [
         index
         for index, anchor in enumerate(anchors)
         if anchor.kind == AnchorKind.QUAD and anchor.quad is not None
     ]
-    if len(quad_indexes) < 2:
-        return []
+    if len(quad_indexes) >= 2:
+        quads = [anchors[index].quad for index in quad_indexes]
+        groups.append(
+            {
+                "kind": AnchorKind.PERSPECTIVE_GRID.value,
+                "anchor_indexes": quad_indexes,
+                "metrics": {
+                    "perspective_grid_consistency_error": perspective_grid_consistency_error(
+                        tuple(quad for quad in quads if quad is not None)
+                    )
+                },
+            }
+        )
 
-    quads = [anchors[index].quad for index in quad_indexes]
-    return [
-        {
-            "kind": AnchorKind.PERSPECTIVE_GRID.value,
-            "anchor_indexes": quad_indexes,
-            "metrics": {
-                "perspective_grid_consistency_error": perspective_grid_consistency_error(
-                    tuple(quad for quad in quads if quad is not None)
-                )
-            },
-        }
-    ]
+    parallel_groups: dict[str, list[int]] = {}
+    for index, anchor in enumerate(anchors):
+        if anchor.stroke is None or anchor.stroke.parallel_group_id is None:
+            continue
+        parallel_groups.setdefault(anchor.stroke.parallel_group_id, []).append(index)
+
+    for group_id, indexes in sorted(parallel_groups.items()):
+        if len(indexes) < 2:
+            continue
+        centerlines = [
+            anchors[index].stroke.centerline
+            for index in indexes
+            if anchors[index].stroke is not None
+        ]
+        groups.append(
+            {
+                "kind": "parallel_stroke_group",
+                "id": group_id,
+                "anchor_indexes": indexes,
+                "metrics": {
+                    "parallel_spacing_error": parallel_spacing_error(centerlines)
+                },
+            }
+        )
+
+    return groups
 
 
 def scene_layers_to_manifest(

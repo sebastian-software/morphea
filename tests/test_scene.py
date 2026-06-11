@@ -189,6 +189,39 @@ class SceneExportTests(unittest.TestCase):
         )
         self.assertIn("editability_score", manifest["metrics"])
 
+    def test_parallel_strokes_are_reported_as_group(self):
+        anchors = (
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                stroke=StrokeAnchor(
+                    centerline=(Point(0, 0), Point(10, 0)),
+                    width_samples=(2.0,),
+                    parallel_group_id="parallel-a",
+                ),
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                stroke=StrokeAnchor(
+                    centerline=(Point(0, 4), Point(10, 4)),
+                    width_samples=(2.0,),
+                    parallel_group_id="parallel-a",
+                ),
+            ),
+        )
+
+        manifest = Scene(width=12, height=8, anchors=anchors).to_manifest()
+
+        self.assertEqual(manifest["groups"][0]["kind"], "parallel_stroke_group")
+        self.assertEqual(manifest["groups"][0]["id"], "parallel-a")
+        self.assertEqual(manifest["groups"][0]["anchor_indexes"], [0, 1])
+        self.assertIn("parallel_spacing_error", manifest["groups"][0]["metrics"])
+
     def test_manifest_explains_anchor_layer_reservation_and_provenance(self):
         mask = BinaryMask.from_rows(
             (
