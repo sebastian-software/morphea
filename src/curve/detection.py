@@ -91,6 +91,10 @@ def primitive_candidates_for_component(
     if rect is not None:
         candidates.append(rect)
 
+    rounded_rect = _rounded_rect_candidate(component)
+    if rounded_rect is not None:
+        candidates.append(rounded_rect)
+
     quad = _quad_candidate(component)
     if quad is not None:
         candidates.append(quad)
@@ -358,6 +362,59 @@ def _rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
         metrics={"rect_fill_error": fill_error},
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _rounded_rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
+    if component.width < 6 or component.height < 5:
+        return None
+
+    spans = component.row_spans()
+    if len(spans) < 5:
+        return None
+
+    widths = [right - left + 1 for _, left, right in spans]
+    max_width = max(widths)
+    min_width = min(widths)
+    if max_width < component.width - 1:
+        return None
+    if max_width - min_width < 2:
+        return None
+
+    mid_width = widths[len(widths) // 2]
+    if mid_width < max_width - 1:
+        return None
+    if widths[0] >= mid_width - 1 or widths[-1] >= mid_width - 1:
+        return None
+    if abs(widths[0] - widths[-1]) > 1:
+        return None
+
+    expected_area = component.width * component.height
+    fill_error = 1.0 - component.area / expected_area
+    if fill_error > 0.30:
+        return None
+
+    min_x, min_y, max_x, max_y = component.bounds
+    corner_radius = max(1.0, (max_width - min(widths[0], widths[-1])) / 2)
+    quad = QuadAnchor(
+        corners=(
+            Point(min_x, min_y),
+            Point(max_x, min_y),
+            Point(max_x, max_y),
+            Point(min_x, max_y),
+        )
+    )
+    candidate = AnchorCandidate(
+        kind=AnchorKind.ROUNDED_RECT,
+        raster_error=fill_error,
+        node_count=4,
+        parameter_count=5,
+        quad=quad,
+        metrics={
+            "corner_radius": float(corner_radius),
+            "rounded_rect_fill_error": fill_error,
+        },
+    )
+    return candidate
 
 
 def _scanline_quad_fill_error(component: MaskComponent, quad: QuadAnchor) -> float:

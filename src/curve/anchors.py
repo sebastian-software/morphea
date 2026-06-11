@@ -223,10 +223,27 @@ def simple_shape_priority_bonus(candidate: AnchorCandidate) -> float:
 def semantic_anchor_score(candidate: AnchorCandidate) -> float:
     """Lower is better; semantic quality dominates small raster differences."""
 
-    quality_error = sum(candidate.metrics.values())
+    quality_error = quality_metric_error(candidate.metrics)
     complexity = 0.015 * candidate.node_count + 0.01 * candidate.parameter_count
     bonus = simple_shape_priority_bonus(candidate)
     return candidate.raster_error + quality_error + complexity - bonus
+
+
+def quality_metric_error(metrics: dict[str, float]) -> float:
+    """Return the score contribution from metrics that represent errors."""
+
+    return sum(
+        value
+        for name, value in metrics.items()
+        if _is_quality_error_metric(name)
+    )
+
+
+def _is_quality_error_metric(name: str) -> bool:
+    return (
+        name.endswith("_error")
+        or name in {"stroke_width_variance", "classifier_prior_error"}
+    )
 
 
 def choose_best_anchor(candidates: Iterable[AnchorCandidate]) -> AnchorCandidate:

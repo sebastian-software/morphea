@@ -12,6 +12,7 @@ from curve.anchors import (
     AnchorKind,
     Point,
     perspective_grid_consistency_error,
+    quality_metric_error,
 )
 from curve.detection import detect_primitive_anchors
 from curve.masks import BinaryMask
@@ -379,9 +380,7 @@ def _anchor_layer(anchor: AnchorCandidate) -> str:
 
 
 def _anchor_confidence(anchor: AnchorCandidate) -> float:
-    metric_error = sum(
-        value for value in anchor.metrics.values() if isinstance(value, (int, float))
-    )
+    metric_error = quality_metric_error(anchor.metrics)
     score = 1.0 - min(anchor.raster_error + metric_error * 0.1, 1.0)
     if not anchor.is_simple_shape:
         score -= 0.2

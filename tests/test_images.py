@@ -131,6 +131,16 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertEqual(scene.anchors[0].color, "#003366")
         self.assertEqual(scene.to_manifest()["anchors"][0]["layer"], "filled_primitives")
 
+    def test_compact_rounded_rectangle_vectorizes_as_rounded_rect(self):
+        image_path = _write_rounded_rect_image()
+
+        scene = scene_from_flat_color_image(image_path)
+
+        self.assertEqual(len(scene.anchors), 1)
+        self.assertEqual(scene.anchors[0].kind, AnchorKind.ROUNDED_RECT)
+        self.assertEqual(scene.anchors[0].color, "#c99700")
+        self.assertIn("corner_radius", scene.anchors[0].metrics)
+
 
 def _write_fixture_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -236,6 +246,17 @@ def _write_rect_image() -> Path:
     image = Image.new("RGB", (18, 14), "white")
     draw = ImageDraw.Draw(image)
     draw.rectangle((4, 3, 13, 10), fill="#003366")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_rounded_rect_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "rounded-rect.png"
+    image = Image.new("RGB", (18, 14), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle((3, 3, 14, 10), radius=2, fill="#c99700")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path

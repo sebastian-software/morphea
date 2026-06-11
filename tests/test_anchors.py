@@ -15,6 +15,7 @@ from curve.anchors import (
     parallel_spacing_error,
     perspective_grid_consistency_error,
     quad_corner_consistency_error,
+    quality_metric_error,
     simple_shape_priority_bonus,
     stroke_width_variance,
 )
@@ -115,6 +116,19 @@ class AnchorMetricTests(unittest.TestCase):
             perspective_grid_consistency_error(inconsistent),
         )
 
+    def test_quality_metric_error_ignores_descriptive_metrics(self):
+        self.assertAlmostEqual(
+            quality_metric_error(
+                {
+                    "corner_radius": 3.0,
+                    "grid_row": 1.0,
+                    "rounded_rect_fill_error": 0.2,
+                    "stroke_width_variance": 0.1,
+                }
+            ),
+            0.3,
+        )
+
 
 class AnchorRankingTests(unittest.TestCase):
     def test_simple_shape_candidate_beats_jittery_path_with_small_fidelity_gain(self):
@@ -150,4 +164,3 @@ class AnchorRankingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

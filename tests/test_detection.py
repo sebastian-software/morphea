@@ -129,6 +129,25 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].parameter_count, 4)
         self.assertIn("rect_fill_error", anchors[0].metrics)
 
+    def test_filled_rounded_block_is_detected_as_rounded_rect(self):
+        mask = BinaryMask.from_rows(
+            (
+                "..########..",
+                ".##########.",
+                "############",
+                "############",
+                ".##########.",
+                "..########..",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.ROUNDED_RECT)
+        self.assertEqual(anchors[0].parameter_count, 5)
+        self.assertIn("corner_radius", anchors[0].metrics)
+
     def test_perspective_tile_is_detected_as_quad_anchor(self):
         mask = BinaryMask.from_rows(
             (
