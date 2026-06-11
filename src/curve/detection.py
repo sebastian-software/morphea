@@ -10,6 +10,7 @@ from curve.anchors import (
     CircleAnchor,
     Point,
     QuadAnchor,
+    ScoringConfig,
     StrokeAnchor,
     choose_best_anchor,
     enrich_anchor_metrics,
@@ -23,6 +24,7 @@ def detect_primitive_anchors(
     *,
     min_area: int = 8,
     classifier_model: dict[str, tuple[float, ...]] | None = None,
+    scoring: ScoringConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
     """Detect simple primitive anchors from a binary mask."""
 
@@ -33,7 +35,7 @@ def detect_primitive_anchors(
             classifier_model=classifier_model,
         )
         if candidates:
-            anchors.append(choose_best_anchor(candidates))
+            anchors.append(choose_best_anchor(candidates, scoring=scoring))
     return tuple(anchors)
 
 

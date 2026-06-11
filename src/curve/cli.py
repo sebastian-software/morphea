@@ -38,6 +38,11 @@ VECTORIZE_DEFAULT_CONFIG = {
     "max_component_area": None,
     "timeout_seconds": None,
     "classifier_model": None,
+    "raster_error_weight": 1.0,
+    "quality_error_weight": 1.0,
+    "node_complexity_weight": 0.015,
+    "parameter_complexity_weight": 0.01,
+    "simple_shape_bonus_weight": 1.0,
 }
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
 SEGMENT_CONFIG_DEFAULTS = {
@@ -131,6 +136,11 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         help="Optional primitive classifier model JSON used as a ranking prior.",
     )
+    vectorize.add_argument("--raster-error-weight", type=float)
+    vectorize.add_argument("--quality-error-weight", type=float)
+    vectorize.add_argument("--node-complexity-weight", type=float)
+    vectorize.add_argument("--parameter-complexity-weight", type=float)
+    vectorize.add_argument("--simple-shape-bonus-weight", type=float)
     vectorize.add_argument(
         "--config",
         type=Path,
@@ -151,6 +161,11 @@ def main(argv: list[str] | None = None) -> None:
     profile.add_argument("--max-component-area", type=int)
     profile.add_argument("--timeout-seconds", type=float)
     profile.add_argument("--classifier-model", type=Path)
+    profile.add_argument("--raster-error-weight", type=float)
+    profile.add_argument("--quality-error-weight", type=float)
+    profile.add_argument("--node-complexity-weight", type=float)
+    profile.add_argument("--parameter-complexity-weight", type=float)
+    profile.add_argument("--simple-shape-bonus-weight", type=float)
     profile.add_argument(
         "--config",
         type=Path,

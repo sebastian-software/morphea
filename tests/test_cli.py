@@ -228,6 +228,47 @@ class CliTests(unittest.TestCase):
             self.assertTrue((run_dirs[0] / "report.md").exists())
             self.assertTrue((run_dirs[0] / "debug.svg").exists())
 
+    def test_vectorize_config_accepts_scoring_weights(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_path = root / "input.png"
+            output_path = root / "ignored.svg"
+            run_root = root / "runs"
+            config_path = root / "vectorize-config.json"
+            image = Image.new("RGB", (24, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((2, 2, 10, 10), fill="#dd2222")
+            image.save(input_path)
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "min_area": 4,
+                        "simple_shape_bonus_weight": 2.0,
+                        "node_complexity_weight": 0.02,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--run-dir",
+                        str(run_root),
+                        "--config",
+                        str(config_path),
+                    ]
+                )
+
+            run_dir = next(run_root.iterdir())
+            config = json.loads((run_dir / "config.json").read_text(encoding="utf-8"))
+            self.assertEqual(config["simple_shape_bonus_weight"], 2.0)
+            self.assertEqual(config["node_complexity_weight"], 0.02)
+
     def test_vectorize_can_write_debug_svg(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

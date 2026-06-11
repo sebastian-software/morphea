@@ -23,6 +23,15 @@ class AnchorKind(StrEnum):
 
 
 @dataclass(frozen=True)
+class ScoringConfig:
+    raster_error_weight: float = 1.0
+    quality_error_weight: float = 1.0
+    node_complexity_weight: float = 0.015
+    parameter_complexity_weight: float = 0.01
+    simple_shape_bonus_weight: float = 1.0
+
+
+@dataclass(frozen=True)
 class Point:
     x: float
     y: float
@@ -220,13 +229,25 @@ def simple_shape_priority_bonus(candidate: AnchorCandidate) -> float:
     return 0.15
 
 
-def semantic_anchor_score(candidate: AnchorCandidate) -> float:
+def semantic_anchor_score(
+    candidate: AnchorCandidate,
+    config: ScoringConfig | None = None,
+) -> float:
     """Lower is better; semantic quality dominates small raster differences."""
 
+    config = config or ScoringConfig()
     quality_error = quality_metric_error(candidate.metrics)
-    complexity = 0.015 * candidate.node_count + 0.01 * candidate.parameter_count
+    complexity = (
+        config.node_complexity_weight * candidate.node_count
+        + config.parameter_complexity_weight * candidate.parameter_count
+    )
     bonus = simple_shape_priority_bonus(candidate)
-    return candidate.raster_error + quality_error + complexity - bonus
+    return (
+        config.raster_error_weight * candidate.raster_error
+        + config.quality_error_weight * quality_error
+        + complexity
+        - config.simple_shape_bonus_weight * bonus
+    )
 
 
 def quality_metric_error(metrics: dict[str, float]) -> float:
@@ -246,14 +267,21 @@ def _is_quality_error_metric(name: str) -> bool:
     )
 
 
-def choose_best_anchor(candidates: Iterable[AnchorCandidate]) -> AnchorCandidate:
+def choose_best_anchor(
+    candidates: Iterable[AnchorCandidate],
+    *,
+    scoring: ScoringConfig | None = None,
+) -> AnchorCandidate:
     """Choose the semantic-first anchor candidate."""
 
     candidates = list(candidates)
     if not candidates:
         msg = "choose_best_anchor requires at least one candidate"
         raise ValueError(msg)
-    return min(candidates, key=semantic_anchor_score)
+    return min(
+        candidates,
+        key=lambda candidate: semantic_anchor_score(candidate, scoring),
+    )
 
 
 def enrich_anchor_metrics(candidate: AnchorCandidate) -> AnchorCandidate:

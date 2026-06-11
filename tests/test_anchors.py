@@ -6,6 +6,7 @@ from curve.anchors import (
     CircleAnchor,
     Point,
     QuadAnchor,
+    ScoringConfig,
     StrokeAnchor,
     choose_best_anchor,
     circle_roundness_error,
@@ -17,6 +18,7 @@ from curve.anchors import (
     quad_corner_consistency_error,
     quality_metric_error,
     simple_shape_priority_bonus,
+    semantic_anchor_score,
     stroke_width_variance,
 )
 
@@ -150,6 +152,33 @@ class AnchorRankingTests(unittest.TestCase):
         )
 
         self.assertIs(choose_best_anchor((circle, path)), circle)
+
+    def test_scoring_config_can_change_simple_shape_priority_weight(self):
+        circle = AnchorCandidate(
+            kind=AnchorKind.CIRCLE,
+            raster_error=0.08,
+            node_count=1,
+            parameter_count=3,
+            circle=CircleAnchor(center=Point(0, 0), radius=10),
+        )
+        path = AnchorCandidate(
+            kind=AnchorKind.CUBIC_PATH,
+            raster_error=0.0,
+            node_count=1,
+            parameter_count=3,
+        )
+
+        neutral = ScoringConfig(simple_shape_bonus_weight=0.0)
+        semantic = ScoringConfig(simple_shape_bonus_weight=1.0)
+
+        self.assertLess(
+            semantic_anchor_score(circle, semantic),
+            semantic_anchor_score(path, semantic),
+        )
+        self.assertLess(
+            semantic_anchor_score(path, neutral),
+            semantic_anchor_score(circle, neutral),
+        )
 
     def test_stroke_priority_bonus_exists_for_stroke_circle(self):
         stroke_circle = AnchorCandidate(

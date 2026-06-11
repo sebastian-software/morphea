@@ -9,7 +9,14 @@ from time import monotonic
 
 from PIL import Image
 
-from curve.anchors import AnchorCandidate, CircleAnchor, Point, QuadAnchor, StrokeAnchor
+from curve.anchors import (
+    AnchorCandidate,
+    CircleAnchor,
+    Point,
+    QuadAnchor,
+    ScoringConfig,
+    StrokeAnchor,
+)
 from curve.classifier import load_centroid_model
 from curve.detection import detect_cutout_strokes, detect_primitive_anchors
 from curve.masks import BinaryMask, MaskComponent
@@ -152,6 +159,11 @@ def scene_from_flat_color_image(
     max_component_area: int | None = None,
     timeout_seconds: float | None = None,
     classifier_model: str | Path | None = None,
+    raster_error_weight: float = 1.0,
+    quality_error_weight: float = 1.0,
+    node_complexity_weight: float = 0.015,
+    parameter_complexity_weight: float = 0.01,
+    simple_shape_bonus_weight: float = 1.0,
 ) -> Scene:
     mask_result = _flat_color_masks_result(
         path,
@@ -169,6 +181,13 @@ def scene_from_flat_color_image(
         load_centroid_model(classifier_model)
         if classifier_model is not None
         else None
+    )
+    scoring = ScoringConfig(
+        raster_error_weight=raster_error_weight,
+        quality_error_weight=quality_error_weight,
+        node_complexity_weight=node_complexity_weight,
+        parameter_complexity_weight=parameter_complexity_weight,
+        simple_shape_bonus_weight=simple_shape_bonus_weight,
     )
     for color_mask in color_masks:
         if max_component_area is not None and len(color_mask.mask.pixels) > max_component_area:
@@ -205,6 +224,7 @@ def scene_from_flat_color_image(
                 component_mask,
                 min_area=min_area,
                 classifier_model=loaded_classifier,
+                scoring=scoring,
             ):
                 anchors.append(_scale_anchor(_with_color(anchor, color_mask.color), mask_result.scale))
             for anchor in detect_cutout_strokes(component_mask):

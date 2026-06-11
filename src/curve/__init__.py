@@ -6,6 +6,7 @@ from curve.anchors import (
     CircleAnchor,
     Point,
     QuadAnchor,
+    ScoringConfig,
     StrokeAnchor,
     choose_best_anchor,
 )
@@ -99,6 +100,7 @@ __all__ = [
     "QuadAnchor",
     "RefinementConfig",
     "SCENE_MANIFEST_SCHEMA_VERSION",
+    "ScoringConfig",
     "Scene",
     "SegmentProposal",
     "Segmenter",
