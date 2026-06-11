@@ -64,6 +64,28 @@ class CliTests(unittest.TestCase):
             self.assertEqual(manifest["anchor_count"], 1)
             self.assertEqual(manifest["anchors"][0]["kind"], "circle")
 
+    def test_vectorize_manifest_includes_cutout_strokes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            image = Image.new("RGB", (18, 9), "white")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((2, 2, 15, 6), fill="#003366")
+            draw.rectangle((6, 4, 11, 4), fill="white")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(["vectorize", str(input_path), "-o", str(output_path)])
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            cutouts = [
+                anchor
+                for anchor in manifest["anchors"]
+                if anchor.get("stroke", {}).get("is_cutout")
+            ]
+            self.assertEqual(len(cutouts), 1)
+            self.assertEqual(cutouts[0]["color"], "#ffffff")
+
 
 if __name__ == "__main__":
     unittest.main()

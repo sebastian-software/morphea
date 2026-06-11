@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 from curve.anchors import AnchorCandidate
-from curve.detection import detect_primitive_anchors
+from curve.detection import detect_cutout_strokes, detect_primitive_anchors
 from curve.masks import BinaryMask
 from curve.scene import Scene
 
@@ -90,6 +90,7 @@ def scene_from_flat_color_image(
         height = color_mask.mask.height
         for anchor in detect_primitive_anchors(color_mask.mask, min_area=min_area):
             anchors.append(_with_color(anchor, color_mask.color))
+        anchors.extend(detect_cutout_strokes(color_mask.mask))
     return Scene(width=width, height=height, anchors=tuple(anchors))
 
 

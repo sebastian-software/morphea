@@ -9,7 +9,11 @@ from curve.anchors import (
     StrokeAnchor,
     choose_best_anchor,
 )
-from curve.detection import detect_primitive_anchors, primitive_candidates_for_component
+from curve.detection import (
+    detect_cutout_strokes,
+    detect_primitive_anchors,
+    primitive_candidates_for_component,
+)
 from curve.images import ColorMask, flat_color_masks_from_image, scene_from_flat_color_image
 from curve.masks import BinaryMask, MaskComponent, connected_components
 from curve.scene import (
@@ -38,6 +42,7 @@ __all__ = [
     "anchors_to_svg",
     "choose_best_anchor",
     "connected_components",
+    "detect_cutout_strokes",
     "detect_primitive_anchors",
     "flat_color_masks_from_image",
     "primitive_candidates_for_component",

@@ -42,6 +42,21 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
         self.assertEqual(scene.anchors[0].color, "#dd2222")
 
+    def test_white_gap_inside_flat_shape_exports_cutout_stroke(self):
+        image_path = _write_cutout_gap_image()
+
+        scene = scene_from_flat_color_image(image_path)
+        svg = scene.to_svg()
+        cutouts = [
+            anchor
+            for anchor in scene.anchors
+            if anchor.stroke is not None and anchor.stroke.is_cutout
+        ]
+
+        self.assertEqual(len(cutouts), 1)
+        self.assertEqual(cutouts[0].color, "#ffffff")
+        self.assertIn('stroke="#ffffff"', svg)
+
 
 def _write_fixture_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -78,6 +93,18 @@ def _write_near_flat_circle_image() -> Path:
         ),
         fill="#e02a2a",
     )
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_cutout_gap_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "cutout-gap.png"
+    image = Image.new("RGB", (18, 9), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((2, 2, 15, 6), fill="#003366")
+    draw.rectangle((6, 4, 11, 4), fill="white")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path

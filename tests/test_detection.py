@@ -2,6 +2,7 @@ import unittest
 
 from curve.anchors import AnchorKind
 from curve.detection import detect_primitive_anchors
+from curve.detection import detect_cutout_strokes
 from curve.masks import BinaryMask, connected_components
 
 
@@ -139,6 +140,43 @@ class PrimitiveDetectionTests(unittest.TestCase):
 
         self.assertEqual(anchor.kind, AnchorKind.QUAD)
         self.assertLess(anchor.node_count, 8)
+
+
+class CutoutDetectionTests(unittest.TestCase):
+    def test_horizontal_gap_inside_component_becomes_cutout_stroke(self):
+        mask = BinaryMask.from_rows(
+            (
+                "############",
+                "############",
+                "###......###",
+                "############",
+                "############",
+            )
+        )
+
+        cutouts = detect_cutout_strokes(mask, min_length=4)
+
+        self.assertEqual(len(cutouts), 1)
+        self.assertEqual(cutouts[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertEqual(cutouts[0].color, "#ffffff")
+        self.assertTrue(cutouts[0].stroke.is_cutout)
+        self.assertEqual(cutouts[0].stroke.width_samples, (1.0,))
+
+    def test_large_hole_is_not_treated_as_thin_cutout_stroke(self):
+        mask = BinaryMask.from_rows(
+            (
+                "############",
+                "############",
+                "###......###",
+                "###......###",
+                "###......###",
+                "###......###",
+                "############",
+                "############",
+            )
+        )
+
+        self.assertEqual(detect_cutout_strokes(mask, min_length=4), ())
 
 
 if __name__ == "__main__":

@@ -28,6 +28,36 @@ def detect_primitive_anchors(mask: BinaryMask, *, min_area: int = 8) -> tuple[An
     return tuple(anchors)
 
 
+def detect_cutout_strokes(
+    mask: BinaryMask,
+    *,
+    min_length: int = 4,
+    max_thickness: int = 3,
+    color: str = "#ffffff",
+) -> tuple[AnchorCandidate, ...]:
+    """Detect simple background gaps inside filled components as overlay strokes."""
+
+    cutouts: list[AnchorCandidate] = []
+    for component in connected_components(mask, min_area=min_length):
+        cutouts.extend(
+            _horizontal_cutout_strokes(
+                component,
+                min_length=min_length,
+                max_thickness=max_thickness,
+                color=color,
+            )
+        )
+        cutouts.extend(
+            _vertical_cutout_strokes(
+                component,
+                min_length=min_length,
+                max_thickness=max_thickness,
+                color=color,
+            )
+        )
+    return tuple(cutouts)
+
+
 def primitive_candidates_for_component(
     component: MaskComponent,
 ) -> tuple[AnchorCandidate, ...]:
@@ -280,3 +310,174 @@ def _scanline_quad_fill_error(component: MaskComponent, quad: QuadAnchor) -> flo
     if expected == 0:
         return 1.0
     return (missing + extra) / expected
+
+
+def _horizontal_cutout_strokes(
+    component: MaskComponent,
+    *,
+    min_length: int,
+    max_thickness: int,
+    color: str,
+) -> tuple[AnchorCandidate, ...]:
+    min_x, min_y, max_x, max_y = component.bounds
+    runs: list[tuple[int, int, int]] = []
+    for y in range(min_y + 1, max_y):
+        x = min_x + 1
+        while x < max_x:
+            if (x, y) in component.pixels:
+                x += 1
+                continue
+            start = x
+            while x < max_x and (x, y) not in component.pixels:
+                x += 1
+            end = x - 1
+            if (
+                end - start + 1 >= min_length
+                and (start - 1, y) in component.pixels
+                and (end + 1, y) in component.pixels
+                and _has_component_neighbor_above_and_below(component, start, end, y)
+            ):
+                runs.append((y, start, end))
+    return _group_horizontal_runs(
+        runs,
+        min_length=min_length,
+        max_thickness=max_thickness,
+        color=color,
+    )
+
+
+def _vertical_cutout_strokes(
+    component: MaskComponent,
+    *,
+    min_length: int,
+    max_thickness: int,
+    color: str,
+) -> tuple[AnchorCandidate, ...]:
+    min_x, min_y, max_x, max_y = component.bounds
+    runs: list[tuple[int, int, int]] = []
+    for x in range(min_x + 1, max_x):
+        y = min_y + 1
+        while y < max_y:
+            if (x, y) in component.pixels:
+                y += 1
+                continue
+            start = y
+            while y < max_y and (x, y) not in component.pixels:
+                y += 1
+            end = y - 1
+            if (
+                end - start + 1 >= min_length
+                and (x, start - 1) in component.pixels
+                and (x, end + 1) in component.pixels
+                and _has_component_neighbor_left_and_right(component, x, start, end)
+            ):
+                runs.append((x, start, end))
+    return _group_vertical_runs(
+        runs,
+        min_length=min_length,
+        max_thickness=max_thickness,
+        color=color,
+    )
+
+
+def _group_horizontal_runs(
+    runs: list[tuple[int, int, int]],
+    *,
+    min_length: int,
+    max_thickness: int,
+    color: str,
+) -> tuple[AnchorCandidate, ...]:
+    grouped: list[list[tuple[int, int, int]]] = []
+    for run in runs:
+        y, start, end = run
+        if grouped:
+            previous_y, previous_start, previous_end = grouped[-1][-1]
+            if y == previous_y + 1 and _overlap_length(start, end, previous_start, previous_end) >= min_length:
+                grouped[-1].append(run)
+                continue
+        grouped.append([run])
+    candidates: list[AnchorCandidate] = []
+    for group in grouped:
+        thickness = len(group)
+        start = round(sum(run[1] for run in group) / thickness)
+        end = round(sum(run[2] for run in group) / thickness)
+        length = end - start + 1
+        if thickness > max_thickness or length < min_length or thickness / length > 0.35:
+            continue
+        y = sum(run[0] for run in group) / thickness
+        candidates.append(_cutout_candidate(Point(start, y), Point(end, y), thickness, color))
+    return tuple(candidates)
+
+
+def _group_vertical_runs(
+    runs: list[tuple[int, int, int]],
+    *,
+    min_length: int,
+    max_thickness: int,
+    color: str,
+) -> tuple[AnchorCandidate, ...]:
+    grouped: list[list[tuple[int, int, int]]] = []
+    for run in runs:
+        x, start, end = run
+        if grouped:
+            previous_x, previous_start, previous_end = grouped[-1][-1]
+            if x == previous_x + 1 and _overlap_length(start, end, previous_start, previous_end) >= min_length:
+                grouped[-1].append(run)
+                continue
+        grouped.append([run])
+    candidates: list[AnchorCandidate] = []
+    for group in grouped:
+        thickness = len(group)
+        start = round(sum(run[1] for run in group) / thickness)
+        end = round(sum(run[2] for run in group) / thickness)
+        length = end - start + 1
+        if thickness > max_thickness or length < min_length or thickness / length > 0.35:
+            continue
+        x = sum(run[0] for run in group) / thickness
+        candidates.append(_cutout_candidate(Point(x, start), Point(x, end), thickness, color))
+    return tuple(candidates)
+
+
+def _cutout_candidate(start: Point, end: Point, width: float, color: str) -> AnchorCandidate:
+    candidate = AnchorCandidate(
+        kind=AnchorKind.STROKE_POLYLINE,
+        raster_error=0.0,
+        node_count=2,
+        parameter_count=5,
+        color=color,
+        stroke=StrokeAnchor(
+            centerline=(start, end),
+            width_samples=(float(width),),
+            is_cutout=True,
+        ),
+    )
+    return enrich_anchor_metrics(candidate)
+
+
+def _has_component_neighbor_above_and_below(
+    component: MaskComponent,
+    start: int,
+    end: int,
+    y: int,
+) -> bool:
+    mid = (start + end) // 2
+    return (mid, y - 1) in component.pixels and (mid, y + 1) in component.pixels
+
+
+def _has_component_neighbor_left_and_right(
+    component: MaskComponent,
+    x: int,
+    start: int,
+    end: int,
+) -> bool:
+    mid = (start + end) // 2
+    return (x - 1, mid) in component.pixels and (x + 1, mid) in component.pixels
+
+
+def _overlap_length(
+    first_start: int,
+    first_end: int,
+    second_start: int,
+    second_end: int,
+) -> int:
+    return max(0, min(first_end, second_end) - max(first_start, second_start) + 1)
