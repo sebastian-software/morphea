@@ -152,6 +152,8 @@ Acceptance criteria:
 
 ## M4: Reports, Metrics, and Experiment Runs
 
+Status: started.
+
 Purpose: make every iteration measurable.
 
 Deliverables:
@@ -187,6 +189,16 @@ Acceptance criteria:
 - A run can be inspected without rerunning the pipeline.
 - Reports show where failures originate: palette, segmentation, fitting,
   cleanup, scoring, or export.
+
+Implemented so far:
+
+- timestamped vectorize run directories via `--run-dir`
+- input copy
+- `output.svg`
+- `manifest.json`
+- `config.json`
+- `report.md`
+- report summaries for anchor types and diagnostics
 
 ## M5: Synthetic Dataset Generator
 

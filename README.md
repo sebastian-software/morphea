@@ -44,6 +44,13 @@ component detection:
 PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --color-tolerance 18
 ```
 
+Write a timestamped run directory with input copy, SVG, manifest, config, and
+Markdown report:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --run-dir runs
+```
+
 Generate labeled synthetic flat-color samples:
 
 ```sh
