@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Protocol
 
 from curve.images import ColorMask, flat_color_masks_from_image
+from curve.masks import MaskComponent, connected_components
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,8 @@ class FlatColorSegmenter:
     color_tolerance: float = 0.0
     max_size: int | None = None
     max_colors: int | None = None
+    max_component_area: int | None = None
+    split_components: bool = True
     source: str = "flat_color"
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
@@ -43,10 +46,32 @@ class FlatColorSegmenter:
             max_size=self.max_size,
             max_colors=self.max_colors,
         )
-        return tuple(
-            _proposal_from_color_mask(index, self.source, color_mask)
-            for index, color_mask in enumerate(masks)
-        )
+        proposals: list[SegmentProposal] = []
+        for color_mask in masks:
+            if self.split_components:
+                for component in connected_components(
+                    color_mask.mask,
+                    min_area=self.min_area,
+                ):
+                    proposals.append(
+                        _proposal_from_component(
+                            len(proposals),
+                            self.source,
+                            color_mask.color,
+                            component,
+                            max_component_area=self.max_component_area,
+                        )
+                    )
+                continue
+            proposals.append(
+                _proposal_from_color_mask(
+                    len(proposals),
+                    self.source,
+                    color_mask,
+                    max_component_area=self.max_component_area,
+                )
+            )
+        return tuple(proposals)
 
 
 @dataclass(frozen=True)
@@ -79,10 +104,13 @@ def _proposal_from_color_mask(
     index: int,
     source: str,
     color_mask: ColorMask,
+    *,
+    max_component_area: int | None,
 ) -> SegmentProposal:
     pixels = color_mask.mask.pixels
     xs = [x for x, _ in pixels]
     ys = [y for _, y in pixels]
+    status = _proposal_status(len(pixels), max_component_area)
     return SegmentProposal(
         id=f"{source}-{index:04d}",
         source=source,
@@ -90,5 +118,30 @@ def _proposal_from_color_mask(
         color=color_mask.color,
         bounds=(min(xs), min(ys), max(xs), max(ys)),
         area=len(pixels),
+        status=status,
     )
 
+
+def _proposal_from_component(
+    index: int,
+    source: str,
+    color: str,
+    component: MaskComponent,
+    *,
+    max_component_area: int | None,
+) -> SegmentProposal:
+    return SegmentProposal(
+        id=f"{source}-{index:04d}",
+        source=source,
+        confidence=1.0,
+        color=color,
+        bounds=component.bounds,
+        area=component.area,
+        status=_proposal_status(component.area, max_component_area),
+    )
+
+
+def _proposal_status(area: int, max_component_area: int | None) -> str:
+    if max_component_area is not None and area > max_component_area:
+        return "deferred"
+    return "proposed"

@@ -27,6 +27,26 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(proposals[0].status, "proposed")
         self.assertGreater(proposals[0].area, 0)
 
+    def test_flat_color_segmenter_splits_same_color_components(self):
+        image_path = _write_same_color_component_image()
+
+        proposals = FlatColorSegmenter(min_area=4).propose(image_path)
+
+        self.assertEqual(len(proposals), 2)
+        self.assertEqual({proposal.color for proposal in proposals}, {"#dd2222"})
+        self.assertTrue(all(proposal.status == "proposed" for proposal in proposals))
+
+    def test_flat_color_segmenter_marks_oversized_components_deferred(self):
+        image_path = _write_same_color_component_image()
+
+        proposals = FlatColorSegmenter(
+            min_area=4,
+            max_component_area=12,
+        ).propose(image_path)
+
+        self.assertEqual(len(proposals), 2)
+        self.assertIn("deferred", {proposal.status for proposal in proposals})
+
     def test_proposals_to_manifest_is_json_ready(self):
         image_path = _write_two_color_image()
         proposals = FlatColorSegmenter().propose(image_path)
@@ -52,6 +72,8 @@ class SegmenterTests(unittest.TestCase):
                         "segmenter": "flat_color",
                         "min_area": 4,
                         "color_tolerance": 0.0,
+                        "max_component_area": 10,
+                        "split_components": True,
                     }
                 ),
                 encoding="utf-8",
@@ -72,8 +94,10 @@ class SegmenterTests(unittest.TestCase):
             manifest = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(manifest["schema_version"], 1)
             self.assertEqual(manifest["config"]["segmenter"], "flat_color")
+            self.assertEqual(manifest["config"]["max_component_area"], 10)
+            self.assertTrue(manifest["config"]["split_components"])
             self.assertEqual(manifest["proposal_count"], 2)
-            self.assertEqual(manifest["proposals"][0]["status"], "proposed")
+            self.assertEqual(manifest["proposals"][0]["status"], "deferred")
 
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -99,6 +123,18 @@ def _write_two_color_image() -> Path:
     draw = ImageDraw.Draw(image)
     draw.rectangle((2, 2, 6, 6), fill="#dd2222")
     draw.rectangle((12, 2, 16, 6), fill="#003366")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_same_color_component_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "same-color-components.png"
+    image = Image.new("RGB", (24, 12), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((2, 2, 6, 6), fill="#dd2222")
+    draw.rectangle((14, 2, 20, 8), fill="#dd2222")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path

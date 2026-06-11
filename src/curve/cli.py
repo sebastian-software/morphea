@@ -65,6 +65,8 @@ SEGMENT_CONFIG_DEFAULTS = {
     "color_tolerance": 0.0,
     "max_size": None,
     "max_colors": None,
+    "max_component_area": None,
+    "split_components": True,
 }
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
@@ -235,6 +237,18 @@ def main(argv: list[str] | None = None) -> None:
     segment.add_argument("--color-tolerance", type=float)
     segment.add_argument("--max-size", type=int)
     segment.add_argument("--max-colors", type=int)
+    segment.add_argument("--max-component-area", type=int)
+    segment.add_argument(
+        "--split-components",
+        dest="split_components",
+        action="store_true",
+        default=None,
+    )
+    segment.add_argument(
+        "--no-split-components",
+        dest="split_components",
+        action="store_false",
+    )
     segment.add_argument("--config", type=Path)
 
     report = subcommands.add_parser(
@@ -741,6 +755,12 @@ def _segmenter_from_config(
                 if config.get("max_colors") is not None
                 else None
             ),
+            max_component_area=(
+                int(config["max_component_area"])
+                if config.get("max_component_area") is not None
+                else None
+            ),
+            split_components=bool(config["split_components"]),
         )
     if segmenter == "mlx_sam":
         return MlxSamSegmenter()
