@@ -275,8 +275,12 @@ Implemented so far:
 - labeled PNG + JSON manifest pairs
 - `dataset.json` index
 - deterministic `train` / `val` / `test` split folders
-- core primitive ground truth for circles, circle strokes, line strokes, and
-  quads
+- core primitive ground truth for circles, point dots, circle strokes, line
+  strokes, curved strokes, arc strokes, rects, rounded rects, quads, and
+  perspective tile grids
+- cut-out-like white overlay strokes with editable stroke metadata
+- preview/SVG coverage for generated `arc`, `rect`, and `rounded_rect`
+  manifests
 
 ## M6: Local MLX Segmentation Layer
 

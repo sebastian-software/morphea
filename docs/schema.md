@@ -27,7 +27,8 @@ Top-level fields:
 Anchor fields:
 
 - `id`
-- `kind`: primitive kind, for example `circle`, `stroke_polyline`, `quad`
+- `kind`: primitive kind, for example `circle`, `stroke_circle`,
+  `stroke_polyline`, `stroke_path`, `arc`, `rect`, `rounded_rect`, or `quad`
 - `color`: source color as hex when available
 - `layer`
 - `confidence`
