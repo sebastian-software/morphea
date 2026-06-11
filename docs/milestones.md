@@ -150,6 +150,8 @@ Implemented so far:
 - sparse curved stroke components can classify as editable `arc` anchors with a
   three-point centerline when their bow is large enough to beat a straight
   stroke interpretation.
+- diagonal and freeform thin interior gaps can be detected as editable cut-out
+  overlay strokes when they are enclosed by the host shape.
 - compact filled axis-aligned rectangles classify as `rect` and stay in the
   `filled_primitives` scene layer.
 - simple rounded-rectangle silhouettes classify as `rounded_rect`; descriptive
