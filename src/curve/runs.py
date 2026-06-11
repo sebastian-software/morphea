@@ -78,6 +78,23 @@ def write_vectorize_run(
     )
 
 
+def write_markdown_report(
+    *,
+    manifest: str | Path,
+    output: str | Path,
+    config: str | Path | None = None,
+) -> str:
+    manifest_data = json.loads(Path(manifest).read_text(encoding="utf-8"))
+    config_data: dict[str, object] = {}
+    if config is not None:
+        config_data = json.loads(Path(config).read_text(encoding="utf-8"))
+    report = render_markdown_report(manifest=manifest_data, config=config_data)
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(report, encoding="utf-8")
+    return report
+
+
 def render_markdown_report(
     *,
     manifest: dict[str, object],
@@ -123,4 +140,3 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
-

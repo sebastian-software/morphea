@@ -6,7 +6,12 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from curve.images import scene_from_flat_color_image
-from curve.runs import create_run_dir, render_markdown_report, write_vectorize_run
+from curve.runs import (
+    create_run_dir,
+    render_markdown_report,
+    write_markdown_report,
+    write_vectorize_run,
+)
 
 
 class RunWriterTests(unittest.TestCase):
@@ -52,7 +57,39 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("`circle`: 2", report)
         self.assertIn("`warning` `component_deferred`", report)
 
+    def test_write_markdown_report_reads_manifest_and_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = Path(temp_dir) / "manifest.json"
+            config = Path(temp_dir) / "config.json"
+            output = Path(temp_dir) / "report.md"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "width": 16,
+                        "height": 16,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "circle"}],
+                        "groups": [],
+                        "diagnostics": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps({"command": "vectorize", "min_area": 8}),
+                encoding="utf-8",
+            )
+
+            report = write_markdown_report(
+                manifest=manifest,
+                config=config,
+                output=output,
+            )
+
+            self.assertTrue(output.exists())
+            self.assertIn("`circle`: 1", report)
+            self.assertIn('"min_area": 8', output.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()
-

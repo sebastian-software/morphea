@@ -26,7 +26,13 @@ from curve.scene import (
     scene_groups_to_manifest,
 )
 from curve.synthetic import SyntheticSample, generate_synthetic_sample
-from curve.runs import VectorizeRun, create_run_dir, render_markdown_report, write_vectorize_run
+from curve.runs import (
+    VectorizeRun,
+    create_run_dir,
+    render_markdown_report,
+    write_markdown_report,
+    write_vectorize_run,
+)
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
 from curve.classifier import (
@@ -105,6 +111,7 @@ __all__ = [
     "scene_from_mask",
     "split_counts",
     "render_markdown_report",
+    "write_markdown_report",
     "render_eval_markdown",
     "refine_manifest",
     "write_vectorize_run",

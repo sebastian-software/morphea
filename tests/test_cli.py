@@ -186,6 +186,32 @@ class CliTests(unittest.TestCase):
                 manifest["anchors"][0]["metrics"],
             )
 
+    def test_report_cli_writes_markdown_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = Path(temp_dir) / "manifest.json"
+            output = Path(temp_dir) / "report.md"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "width": 12,
+                        "height": 12,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "quad"}],
+                        "groups": [],
+                        "diagnostics": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["report", str(manifest), "-o", str(output)])
+
+            self.assertIn(
+                "`quad`: 1",
+                output.read_text(encoding="utf-8"),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

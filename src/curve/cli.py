@@ -11,7 +11,7 @@ from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
-from curve.runs import create_run_dir, write_vectorize_run
+from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
 from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 from curve.refinement import RefinementConfig, refine_manifest
 
@@ -108,6 +108,14 @@ def main(argv: list[str] | None = None) -> None:
     eval_parser.add_argument("run_root", type=Path)
     eval_parser.add_argument("-o", "--output", type=Path, required=True)
     eval_parser.add_argument("--markdown", type=Path)
+
+    report = subcommands.add_parser(
+        "report",
+        help="Render a Markdown report from an existing vectorize manifest.",
+    )
+    report.add_argument("manifest", type=Path)
+    report.add_argument("-o", "--output", type=Path, required=True)
+    report.add_argument("--config", type=Path)
 
     train = subcommands.add_parser(
         "train",
@@ -234,6 +242,15 @@ def main(argv: list[str] | None = None) -> None:
             markdown=args.markdown,
         )
         print(f"evaluated {summary['run_count']} runs")
+        return
+
+    if args.command == "report":
+        write_markdown_report(
+            manifest=args.manifest,
+            output=args.output,
+            config=args.config,
+        )
+        print(f"wrote report {args.output}")
         return
 
     if args.command == "train":
