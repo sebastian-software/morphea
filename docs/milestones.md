@@ -455,11 +455,14 @@ Implemented so far:
 - `local_metric` backend
 - structure-preserving manifest output
 - refinement metadata and per-anchor metrics
+- optional `--source-image` refinement input
+- first structure-preserving local optimizer for circle radius adjustment using
+  rendered raster L1 error
 
 Remaining:
 
-- robust raster renderer diagnostics
-- parameter-adjusting local optimizer
+- refinement-specific use of the full raster diagnostics beyond L1 selection
+- broader parameter-adjusting local optimizer beyond circle radius
 - optional differentiable backend behind the same interface
 
 ## M10: Curated Real-Image Suite
