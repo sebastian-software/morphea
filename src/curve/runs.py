@@ -25,6 +25,9 @@ class VectorizeRun:
     html_report_path: Path
     preview_path: Path
     debug_svg_path: Path
+    anchors_path: Path
+    palette_path: Path
+    mask_summary_path: Path
     input_path: Path
 
 
@@ -62,6 +65,9 @@ def write_vectorize_run(
     html_report_path = run_dir / "report.html"
     preview_path = run_dir / "preview.png"
     debug_svg_path = run_dir / "debug.svg"
+    anchors_path = run_dir / "anchors.json"
+    palette_path = run_dir / "palette.json"
+    mask_summary_path = run_dir / "mask-summary.json"
 
     manifest = scene.to_manifest()
     preview = render_manifest_image(manifest)
@@ -73,6 +79,18 @@ def write_vectorize_run(
 
     svg_path.write_text(scene.to_svg(), encoding="utf-8")
     debug_svg_path.write_text(scene.to_debug_svg(), encoding="utf-8")
+    anchors_path.write_text(
+        json.dumps(_anchors_artifact(manifest), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    palette_path.write_text(
+        json.dumps(_palette_artifact(manifest), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    mask_summary_path.write_text(
+        json.dumps(_mask_summary_artifact(manifest), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     manifest_path.write_text(
         json.dumps(manifest, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -100,6 +118,9 @@ def write_vectorize_run(
         html_report_path=html_report_path,
         preview_path=preview_path,
         debug_svg_path=debug_svg_path,
+        anchors_path=anchors_path,
+        palette_path=palette_path,
+        mask_summary_path=mask_summary_path,
         input_path=copied_input,
     )
 
@@ -339,6 +360,70 @@ def _group_report_details(group: dict[str, object]) -> str:
     if group.get("color") is not None:
         details = f"{details}, color {group.get('color')}"
     return details
+
+
+def _anchors_artifact(manifest: dict[str, object]) -> dict[str, object]:
+    anchors = list(manifest.get("anchors", []))
+    return {
+        "schema_version": 1,
+        "anchor_count": len(anchors),
+        "anchors": anchors,
+    }
+
+
+def _palette_artifact(manifest: dict[str, object]) -> dict[str, object]:
+    entries: dict[str, dict[str, object]] = {}
+    for anchor in manifest.get("anchors", []):
+        if not isinstance(anchor, dict):
+            continue
+        color = str(anchor.get("color") or "none")
+        entry = entries.setdefault(
+            color,
+            {
+                "color": color,
+                "anchor_count": 0,
+                "kinds": {},
+                "layers": {},
+            },
+        )
+        entry["anchor_count"] = int(entry["anchor_count"]) + 1
+        _increment_count(entry["kinds"], str(anchor.get("kind")))
+        _increment_count(entry["layers"], str(anchor.get("layer")))
+    palette = sorted(entries.values(), key=lambda entry: str(entry["color"]))
+    return {
+        "schema_version": 1,
+        "color_count": len(palette),
+        "colors": palette,
+    }
+
+
+def _mask_summary_artifact(manifest: dict[str, object]) -> dict[str, object]:
+    masks: list[dict[str, object]] = []
+    for anchor in manifest.get("anchors", []):
+        if not isinstance(anchor, dict):
+            continue
+        reserved = anchor.get("reserved", {})
+        bounds = reserved.get("bounds", []) if isinstance(reserved, dict) else []
+        masks.append(
+            {
+                "anchor_id": anchor.get("id"),
+                "kind": anchor.get("kind"),
+                "color": anchor.get("color"),
+                "layer": anchor.get("layer"),
+                "bounds": bounds,
+                "source": "reserved_bounds",
+            }
+        )
+    return {
+        "schema_version": 1,
+        "mask_count": len(masks),
+        "masks": masks,
+    }
+
+
+def _increment_count(counts: object, key: str) -> None:
+    if isinstance(counts, dict):
+        counts[key] = int(counts.get(key, 0)) + 1
 
 
 def _counts(values: object) -> dict[str, int]:

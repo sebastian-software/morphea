@@ -42,10 +42,21 @@ class RunWriterTests(unittest.TestCase):
             self.assertTrue(run.html_report_path.exists())
             self.assertTrue(run.preview_path.exists())
             self.assertTrue(run.debug_svg_path.exists())
+            self.assertTrue(run.anchors_path.exists())
+            self.assertTrue(run.palette_path.exists())
+            self.assertTrue(run.mask_summary_path.exists())
             manifest = json.loads(run.manifest_path.read_text())
             self.assertEqual(manifest["anchor_count"], 1)
             self.assertIn("raster_l1_error", manifest["metrics"])
             self.assertIn("raster_edge_error", manifest["metrics"])
+            anchors = json.loads(run.anchors_path.read_text(encoding="utf-8"))
+            palette = json.loads(run.palette_path.read_text(encoding="utf-8"))
+            masks = json.loads(run.mask_summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(anchors["anchor_count"], 1)
+            self.assertEqual(palette["colors"][0]["color"], "#dd2222")
+            self.assertEqual(palette["colors"][0]["kinds"], {"circle": 1})
+            self.assertEqual(masks["mask_count"], 1)
+            self.assertEqual(masks["masks"][0]["source"], "reserved_bounds")
             self.assertIn(
                 "`raster_l1_error`",
                 run.report_path.read_text(encoding="utf-8"),
