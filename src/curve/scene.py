@@ -407,7 +407,7 @@ def scene_metrics_to_manifest(
     )
     canvas_area = (width or 0) * (height or 0)
     reserved_simple_shape_area_ratio = (
-        reserved_simple_shape_area / canvas_area
+        min(reserved_simple_shape_area / canvas_area, 1.0)
         if canvas_area > 0
         else 0.0
     )

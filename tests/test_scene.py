@@ -303,6 +303,28 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(manifest["metrics"]["reserved_simple_shape_area"], 28.0)
         self.assertEqual(manifest["metrics"]["reserved_simple_shape_area_ratio"], 0.07)
 
+    def test_scene_reservation_area_ratio_is_capped(self):
+        anchors = (
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                circle=CircleAnchor(center=Point(4, 4), radius=4),
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                circle=CircleAnchor(center=Point(5, 5), radius=4),
+            ),
+        )
+
+        manifest = Scene(width=8, height=8, anchors=anchors).to_manifest()
+
+        self.assertEqual(manifest["metrics"]["reserved_simple_shape_area_ratio"], 1.0)
+
     def test_scene_layers_group_anchor_indexes_by_layer(self):
         anchors = (
             AnchorCandidate(
