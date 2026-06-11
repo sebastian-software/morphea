@@ -334,6 +334,8 @@ Implemented so far:
 - manifest-ready proposal serialization
 - `curve segment input.png -o proposals.json` writes segment proposal manifests
   from the flat-color baseline
+- flat-color segment proposals split connected components by default and can
+  mark oversized components as `deferred` via `max_component_area`
 - `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed
 
@@ -590,6 +592,7 @@ Implemented so far:
   comparisons
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve segment --config segment.json` for repeatable segment proposal runs
+- segment configs include component splitting and `max_component_area`
 - vectorize scoring weights for raster error, quality error, complexity, and
   simple-shape bonus
 - vectorize anchor threshold config for circle/ring, stroke, quad, rect, and
@@ -606,8 +609,7 @@ Implemented so far:
 
 Remaining:
 
-- richer config files for broader segmenter options beyond the current
-  vectorize/training/scoring/threshold runtime configs.
+- richer config files for future local-AI segmenter model/runtime options.
 - direct git-aware automation for checking out commits and generating the
   snapshots that `compare-git-snapshots` consumes.
 

@@ -211,6 +211,9 @@ Supported fields:
 - `color_tolerance`
 - `max_size`
 - `max_colors`
+- `max_component_area`
+- `split_components`: default `true`, emits connected-component proposals
+  instead of one proposal per color mask
 
 CLI arguments override values loaded from the config file.
 
