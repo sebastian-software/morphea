@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from curve.images import scene_from_flat_color_image
+from curve.rendering import write_manifest_preview
+from curve.runs import render_markdown_report
 
 
 VECTORIZE_CONFIG_KEYS = {
@@ -141,6 +143,11 @@ def _check_curated_case(
             json.dumps(config, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+        (case_dir / "report.md").write_text(
+            render_markdown_report(manifest=manifest, config=config),
+            encoding="utf-8",
+        )
+        write_manifest_preview(manifest=manifest, output=case_dir / "preview.png")
     return result
 
 

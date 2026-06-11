@@ -90,6 +90,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue(result["cases"][0]["expectations"][0]["ok"])
             self.assertTrue((output_dir / "simple-circle" / "output.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "manifest.json").exists())
+            self.assertTrue((output_dir / "simple-circle" / "report.md").exists())
+            self.assertTrue((output_dir / "simple-circle" / "preview.png").exists())
             self.assertEqual(json.loads(output.read_text())["case_count"], 1)
 
     def test_curated_check_cli_writes_report(self):
