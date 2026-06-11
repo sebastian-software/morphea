@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from curve.cli import main
-from curve.sweeps import load_sweep_config, run_sweep
+from curve.sweeps import load_sweep_config, render_sweep_markdown, run_sweep
 
 
 class SweepTests(unittest.TestCase):
@@ -52,20 +52,70 @@ class SweepTests(unittest.TestCase):
             self.assertTrue((output_dir / "tolerant" / "report.md").exists())
             self.assertTrue((output_dir / "sweep-summary.json").exists())
 
+    def test_run_sweep_can_write_markdown_comparison(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_input_image(root)
+            config = _write_sweep_config(root, image_path)
+            output_dir = root / "runs"
+            markdown = root / "sweep.md"
+
+            run_sweep(config, output_dir=output_dir, markdown=markdown)
+
+            self.assertTrue(markdown.exists())
+            text = markdown.read_text(encoding="utf-8")
+            self.assertIn("# Curve Sweep Summary", text)
+            self.assertIn("| Rank | Run | Editability |", text)
+
+    def test_render_sweep_markdown_ranks_by_editability_then_raster_error(self):
+        markdown = render_sweep_markdown(
+            {
+                "run_count": 2,
+                "input": "input.png",
+                "runs": [
+                    {
+                        "id": "low",
+                        "run_dir": "/tmp/low",
+                        "editability_score": 0.5,
+                        "raster_l1_error": 0.0,
+                    },
+                    {
+                        "id": "high",
+                        "run_dir": "/tmp/high",
+                        "editability_score": 0.9,
+                        "raster_l1_error": 0.5,
+                    },
+                ],
+            }
+        )
+
+        self.assertLess(markdown.index("`high`"), markdown.index("`low`"))
+
     def test_sweep_cli_runs_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             image_path = _write_input_image(root)
             config = _write_sweep_config(root, image_path)
             output_dir = root / "runs"
+            markdown = root / "summary.md"
 
             with redirect_stdout(StringIO()):
-                main(["sweep", str(config), "-o", str(output_dir)])
+                main(
+                    [
+                        "sweep",
+                        str(config),
+                        "-o",
+                        str(output_dir),
+                        "--markdown",
+                        str(markdown),
+                    ]
+                )
 
             summary = json.loads(
                 (output_dir / "sweep-summary.json").read_text(encoding="utf-8")
             )
             self.assertEqual(summary["run_count"], 2)
+            self.assertTrue(markdown.exists())
 
 
 def _write_input_image(root: Path) -> Path:

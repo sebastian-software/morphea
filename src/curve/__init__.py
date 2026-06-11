@@ -68,7 +68,7 @@ from curve.self_learning import (
 )
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.curated import check_curated_suite, load_curated_suite
-from curve.sweeps import load_sweep_config, run_sweep
+from curve.sweeps import load_sweep_config, render_sweep_markdown, run_sweep
 from curve.rendering import render_manifest_image, write_manifest_preview
 
 __all__ = [
@@ -135,6 +135,7 @@ __all__ = [
     "write_markdown_report",
     "render_eval_markdown",
     "render_manifest_image",
+    "render_sweep_markdown",
     "refine_manifest",
     "run_sweep",
     "write_manifest_preview",

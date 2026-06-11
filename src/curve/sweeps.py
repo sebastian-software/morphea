@@ -55,6 +55,7 @@ def run_sweep(
     sweep_config: str | Path,
     *,
     output_dir: str | Path,
+    markdown: str | Path | None = None,
 ) -> dict[str, Any]:
     config_path = Path(sweep_config)
     config = load_sweep_config(config_path)
@@ -111,7 +112,55 @@ def run_sweep(
         json.dumps(summary, indent=2, sort_keys=True),
         encoding="utf-8",
     )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(render_sweep_markdown(summary), encoding="utf-8")
     return summary
+
+
+def render_sweep_markdown(summary: dict[str, Any]) -> str:
+    runs = list(summary.get("runs", []))
+    ranked = sorted(
+        runs,
+        key=lambda run: (
+            -(float(run.get("editability_score") or 0.0)),
+            float(run.get("raster_l1_error") or 1.0),
+            str(run.get("id", "")),
+        ),
+    )
+    lines = [
+        "# Curve Sweep Summary",
+        "",
+        f"- Runs: {summary.get('run_count', len(runs))}",
+        f"- Input: `{summary.get('input', '')}`",
+        "",
+        "## Ranked Runs",
+        "",
+        "| Rank | Run | Editability | Raster L1 | Edge Error | Anchors | Diagnostics |",
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for rank, run in enumerate(ranked, start=1):
+        lines.append(
+            "| "
+            f"{rank} | `{run.get('id')}` | "
+            f"{_fmt(run.get('editability_score'))} | "
+            f"{_fmt(run.get('raster_l1_error'))} | "
+            f"{_fmt(run.get('raster_edge_error'))} | "
+            f"{run.get('anchor_count', 'n/a')} | "
+            f"{run.get('diagnostic_count', 'n/a')} |"
+        )
+
+    lines.extend(["", "## Run Directories", ""])
+    for run in runs:
+        lines.append(f"- `{run.get('id')}`: `{run.get('run_dir')}`")
+    return "\n".join(lines) + "\n"
+
+
+def _fmt(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{value:.6g}"
+    return "n/a"
 
 
 def _vectorize_config(config: dict[str, Any]) -> dict[str, Any]:

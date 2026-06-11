@@ -221,6 +221,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     sweep.add_argument("config", type=Path)
     sweep.add_argument("-o", "--output-dir", type=Path, required=True)
+    sweep.add_argument("--markdown", type=Path)
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
@@ -363,7 +364,11 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "sweep":
-        result = run_sweep(args.config, output_dir=args.output_dir)
+        result = run_sweep(
+            args.config,
+            output_dir=args.output_dir,
+            markdown=args.markdown,
+        )
         print(f"ran {result['run_count']} sweep runs")
         return
 
