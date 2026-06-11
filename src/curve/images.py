@@ -103,9 +103,14 @@ def _flat_color_masks_result(
             }
         )
 
+    width, height = image.size
+    pixels_by_color: dict[Rgb, set[tuple[int, int]]] = {}
+    palette: list[Rgb] = []
+    inferred_background = background or _infer_background_color(image)
+    flattened_rgb = _flatten_rgba_image(image, inferred_background)
     quantized_rgb = None
     if max_colors is not None:
-        quantized_rgb = image.convert("RGB").quantize(colors=max_colors).convert("RGB")
+        quantized_rgb = flattened_rgb.quantize(colors=max_colors).convert("RGB")
         diagnostics.append(
             {
                 "level": "info",
@@ -114,25 +119,27 @@ def _flat_color_masks_result(
             }
         )
 
-    width, height = image.size
-    pixels_by_color: dict[Rgb, set[tuple[int, int]]] = {}
-    palette: list[Rgb] = []
-    inferred_background = background or image.getpixel((0, 0))[:3]
     source_pixels = _image_pixels(image)
+    flattened_pixels = _image_pixels(flattened_rgb)
     quantized_pixels = (
         _image_pixels(quantized_rgb)
         if quantized_rgb is not None
         else None
     )
+    transparent_pixel_count = 0
+    partial_alpha_pixel_count = 0
 
     for index, source_pixel in enumerate(source_pixels):
-        red, green, blue, alpha = source_pixel
+        _, _, _, alpha = source_pixel
         if alpha == 0:
+            transparent_pixel_count += 1
             continue
+        if alpha < 255:
+            partial_alpha_pixel_count += 1
         color = (
             quantized_pixels[index]
             if quantized_pixels is not None
-            else (red, green, blue)
+            else flattened_pixels[index]
         )
         if _color_distance(color, inferred_background) <= color_tolerance:
             continue
@@ -142,6 +149,24 @@ def _flat_color_masks_result(
             palette.append(bucket)
         y, x = divmod(index, width)
         pixels_by_color.setdefault(bucket, set()).add((x, y))
+
+    if transparent_pixel_count:
+        diagnostics.append(
+            {
+                "level": "info",
+                "code": "transparent_pixels_ignored",
+                "pixel_count": transparent_pixel_count,
+            }
+        )
+    if partial_alpha_pixel_count:
+        diagnostics.append(
+            {
+                "level": "info",
+                "code": "partial_alpha_flattened",
+                "pixel_count": partial_alpha_pixel_count,
+                "background": _hex_color(inferred_background),
+            }
+        )
 
     masks: list[ColorMask] = []
     for color, pixels in pixels_by_color.items():
@@ -160,6 +185,18 @@ def _flat_color_masks_result(
         scale=scale,
         diagnostics=tuple(diagnostics),
     )
+
+
+def _infer_background_color(image: Image.Image) -> Rgb:
+    red, green, blue, alpha = image.getpixel((0, 0))
+    if alpha == 0:
+        return (255, 255, 255)
+    return (red, green, blue)
+
+
+def _flatten_rgba_image(image: Image.Image, background: Rgb) -> Image.Image:
+    backdrop = Image.new("RGBA", image.size, (*background, 255))
+    return Image.alpha_composite(backdrop, image).convert("RGB")
 
 
 def scene_from_flat_color_image(

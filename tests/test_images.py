@@ -120,6 +120,20 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertEqual(len(scene.anchors), 1)
         self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
         self.assertEqual(scene.anchors[0].color, "#dd2222")
+        self.assertEqual(scene.diagnostics[0]["code"], "transparent_pixels_ignored")
+
+    def test_partial_alpha_pixels_are_flattened_before_grouping(self):
+        image_path = _write_partial_alpha_circle_image()
+
+        scene = scene_from_flat_color_image(image_path)
+
+        self.assertEqual(len(scene.anchors), 1)
+        self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
+        self.assertEqual(scene.anchors[0].color, "#ee9090")
+        self.assertEqual(
+            [diagnostic["code"] for diagnostic in scene.diagnostics],
+            ["transparent_pixels_ignored", "partial_alpha_flattened"],
+        )
 
     def test_compact_filled_rectangle_vectorizes_as_rect(self):
         image_path = _write_rect_image()
@@ -223,6 +237,17 @@ def _write_transparent_circle_image() -> Path:
     image = Image.new("RGBA", (16, 16), (38, 69, 201, 0))
     draw = ImageDraw.Draw(image)
     draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_partial_alpha_circle_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "partial-alpha-circle.png"
+    image = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((3, 3, 12, 12), fill=(221, 34, 34, 128))
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
