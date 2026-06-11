@@ -35,6 +35,29 @@ class DatasetTests(unittest.TestCase):
             self.assertTrue((Path(temp_dir) / "val" / "sample-0002.json").exists())
             self.assertTrue((Path(temp_dir) / "test" / "sample-0003.json").exists())
 
+    def test_generate_synthetic_dataset_applies_dense_difficulty_to_samples(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            index = generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=1,
+                seed=200,
+                width=64,
+                height=64,
+                difficulty="dense",
+                val_count=0,
+                test_count=0,
+            )
+
+            manifest = json.loads(
+                (Path(temp_dir) / index["samples"][0]["manifest"]).read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            self.assertEqual(index["difficulty"], "dense")
+            self.assertEqual(manifest["difficulty"], "dense")
+            self.assertEqual(manifest["anchor_count"], 17)
+
     def test_generate_cli_writes_dataset_index(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             with redirect_stdout(StringIO()):
@@ -65,4 +88,3 @@ class DatasetTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

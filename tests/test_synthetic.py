@@ -48,7 +48,30 @@ class SyntheticGeneratorTests(unittest.TestCase):
 
             self.assertTrue(image_path.exists())
             self.assertEqual(manifest["seed"], 11)
+            self.assertEqual(manifest["difficulty"], "basic")
             self.assertEqual(manifest["anchor_count"], 14)
+
+    def test_dense_synthetic_sample_adds_parallel_stroke_group(self):
+        sample = generate_synthetic_sample(
+            seed=12,
+            width=96,
+            height=96,
+            difficulty="dense",
+        )
+
+        parallel = [
+            anchor
+            for anchor in sample.scene.anchors
+            if anchor.stroke is not None
+            and anchor.stroke.parallel_group_id == "synthetic-parallel-0"
+        ]
+
+        self.assertEqual(len(parallel), 3)
+        self.assertEqual(len(sample.scene.anchors), 17)
+
+    def test_unknown_synthetic_difficulty_fails(self):
+        with self.assertRaisesRegex(ValueError, "unsupported synthetic difficulty"):
+            generate_synthetic_sample(seed=1, difficulty="unknown")
 
     def test_generate_cli_writes_numbered_samples(self):
         with tempfile.TemporaryDirectory() as temp_dir:

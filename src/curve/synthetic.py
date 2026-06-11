@@ -29,6 +29,7 @@ class SyntheticSample:
     scene: Scene
     image: Image.Image
     seed: int
+    difficulty: str = "basic"
 
     def write(self, output_dir: str | Path, name: str) -> tuple[Path, Path]:
         output = Path(output_dir)
@@ -38,6 +39,7 @@ class SyntheticSample:
         self.image.save(image_path)
         manifest = self.scene.to_manifest()
         manifest["seed"] = self.seed
+        manifest["difficulty"] = self.difficulty
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True),
             encoding="utf-8",
@@ -50,7 +52,12 @@ def generate_synthetic_sample(
     seed: int,
     width: int = 96,
     height: int = 96,
+    difficulty: str = "basic",
 ) -> SyntheticSample:
+    if difficulty not in {"basic", "dense"}:
+        msg = f"unsupported synthetic difficulty: {difficulty}"
+        raise ValueError(msg)
+
     rng = Random(seed)
     image = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(image)
@@ -67,11 +74,14 @@ def generate_synthetic_sample(
     anchors.append(_draw_quad(draw, rng, width, height))
     anchors.extend(_draw_tile_grid(draw, rng, width, height))
     anchors.append(_draw_cutout_stroke(draw, width, height))
+    if difficulty == "dense":
+        anchors.extend(_draw_parallel_stroke_group(draw, rng, width, height))
 
     return SyntheticSample(
         scene=Scene(width=width, height=height, anchors=tuple(anchors)),
         image=image,
         seed=seed,
+        difficulty=difficulty,
     )
 
 
@@ -424,6 +434,41 @@ def _draw_cutout_stroke(
         ),
         metrics={"cutout_anchor_error": 0.0},
     )
+
+
+def _draw_parallel_stroke_group(
+    draw: ImageDraw.ImageDraw,
+    rng: Random,
+    width: int,
+    height: int,
+) -> tuple[AnchorCandidate, ...]:
+    stroke_width = rng.randint(2, 3)
+    color = rng.choice(PALETTE)
+    group_id = "synthetic-parallel-0"
+    anchors: list[AnchorCandidate] = []
+    for index in range(3):
+        y = height * (0.12 + index * 0.055)
+        start = Point(width * 0.10, y)
+        end = Point(width * 0.44, y + height * 0.025)
+        draw.line((start.x, start.y, end.x, end.y), fill=color, width=stroke_width)
+        anchors.append(
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                color=color,
+                stroke=StrokeAnchor(
+                    centerline=(start, end),
+                    width_samples=(float(stroke_width),),
+                    parallel_group_id=group_id,
+                    cap_style="round",
+                    join_style="round",
+                ),
+                metrics={"synthetic_dense_parallel_index": float(index)},
+            )
+        )
+    return tuple(anchors)
 
 
 def _quadratic_bezier(start: Point, control: Point, end: Point, t: float) -> Point:

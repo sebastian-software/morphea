@@ -43,7 +43,12 @@ def generate_synthetic_dataset(
 
     for index in range(count):
         sample_seed = seed + index
-        sample = generate_synthetic_sample(seed=sample_seed, width=width, height=height)
+        sample = generate_synthetic_sample(
+            seed=sample_seed,
+            width=width,
+            height=height,
+            difficulty=difficulty,
+        )
         split = _split_for_index(index, splits)
         sample_dir = output_dir / split
         image_path, manifest_path = sample.write(sample_dir, f"sample-{index:04d}")
@@ -84,4 +89,3 @@ def _split_for_index(index: int, splits: DatasetSplit) -> str:
     if index < splits.train + splits.val:
         return "val"
     return "test"
-
