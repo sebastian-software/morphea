@@ -602,6 +602,9 @@ Implemented so far:
 - `curve compare-git-snapshots before_ref after_ref --path snapshot.json` for
   comparing the same checked-in snapshot file across git refs without changing
   the working tree
+- `curve snapshot-git-ref ref --suite suite.json -o snapshot.json` for
+  generating curated snapshots from a detached temporary worktree without
+  checking out the current working tree
 - `curve sweep --markdown summary.md` for scan-friendly config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests
@@ -610,8 +613,6 @@ Implemented so far:
 Remaining:
 
 - richer config files for future local-AI segmenter model/runtime options.
-- direct git-aware automation for checking out commits and generating the
-  snapshots that `compare-git-snapshots` consumes.
 
 ## Commit Discipline
 

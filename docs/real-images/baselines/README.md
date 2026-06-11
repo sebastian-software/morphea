@@ -24,5 +24,16 @@ PYTHONPATH=src python3 -m curve.cli compare-snapshots \
   --markdown /private/tmp/curve-curated-comparison.md
 ```
 
+Generate a snapshot from a git ref without checking out the current working
+tree:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli snapshot-git-ref HEAD \
+  --suite docs/real-images/suite.json \
+  -o /private/tmp/curve-head-curated-snapshot.json \
+  --report /private/tmp/curve-head-curated-report.json \
+  --output-dir /private/tmp/curve-head-curated-runs
+```
+
 Update the checked-in snapshot only when a detector behavior change is
 intentional and the semantic expectations still pass.

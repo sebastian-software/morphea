@@ -342,6 +342,13 @@ configurations.
 the same checked-in snapshot file from two git refs with `git show` and does
 not modify the current working tree.
 
+`curve snapshot-git-ref REF --suite suite.json -o snapshot.json` creates a
+temporary detached git worktree for `REF`, runs `curve curated-check` inside
+that worktree, and writes a normal Curated Snapshot v1 file to the requested
+output path. The snapshot file intentionally stays compatible with
+`curve compare-snapshots`; git metadata is returned by the command result but
+is not embedded into the deterministic snapshot.
+
 ## Run Directory v1
 
 Written by `curve vectorize --run-dir` and by each `curve sweep` run.
