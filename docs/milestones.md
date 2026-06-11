@@ -147,6 +147,9 @@ Implemented so far:
 - quad edge/corner metrics and perspective grid consistency metric.
 - stroke payloads preserve `cap_style` and `join_style`.
 - straight high-coverage stroke components classify as `butt` caps.
+- sparse curved stroke components can classify as editable `arc` anchors with a
+  three-point centerline when their bow is large enough to beat a straight
+  stroke interpretation.
 - compact filled axis-aligned rectangles classify as `rect` and stay in the
   `filled_primitives` scene layer.
 - simple rounded-rectangle silhouettes classify as `rounded_rect`; descriptive
