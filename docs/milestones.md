@@ -455,6 +455,8 @@ Remaining:
 
 ## M11: Productized Research CLI
 
+Status: started.
+
 Purpose: make the research loop pleasant enough to use repeatedly.
 
 Deliverables:
@@ -479,6 +481,24 @@ Acceptance criteria:
 
 - A user can run a full experiment without editing Python code.
 - Results from different commits/configs can be compared.
+
+Implemented so far:
+
+- `curve generate`
+- `curve train`
+- `curve vectorize`
+- `curve eval`
+- `curve report`
+- `curve sweep`
+- schema-v1 sweep configs
+- `sweep-summary.json` experiment metadata
+
+Remaining:
+
+- richer config files for preprocessing, segmenters, thresholds, scoring,
+  and training.
+- explicit stable manifest/run schema documentation.
+- comparison views across commits/configs beyond the first JSON summary.
 
 ## Commit Discipline
 

@@ -57,6 +57,12 @@ Summarize run directories:
 PYTHONPATH=src python3 -m curve.cli eval runs -o runs/summary.json --markdown runs/summary.md
 ```
 
+Render a report from an existing manifest and optional config:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli report runs/manifest.json -o runs/report.md --config runs/config.json
+```
+
 Generate labeled synthetic flat-color samples:
 
 ```sh
@@ -109,4 +115,10 @@ PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
   -o runs/curated-report.json \
   --output-dir runs/curated \
   --run
+```
+
+Run a config-driven vectorize sweep:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli sweep sweep.json -o runs/sweep
 ```
