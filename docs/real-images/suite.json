@@ -43,6 +43,48 @@
           "description": "Clean line-like regions should remain editable strokes."
         }
       ]
+    },
+    {
+      "id": "chatgpt-image-2026-06-11",
+      "source": "/Users/sebastian/Downloads/ChatGPT Image 11. Juni 2026, 20_46_25.png",
+      "notes": [
+        "Original generated illustration before the transparent-background real-image tweak. This keeps the suite honest against anti-aliased RGB drift on an opaque white background.",
+        "Use bounded preprocessing so this case remains a fast semantic-regression check for circles, strokes, and the perspective table grid."
+      ],
+      "recommended_config": {
+        "min_area": 12,
+        "color_tolerance": 18,
+        "max_size": 256,
+        "max_colors": 10,
+        "max_component_area": 12000,
+        "timeout_seconds": 8
+      },
+      "expectations": [
+        {
+          "id": "gold-circle-anchors",
+          "kind": "circle",
+          "min_count": 5,
+          "description": "Three center dots plus two shoulder brooches should stay true circles."
+        },
+        {
+          "id": "table-perspective-quads",
+          "kind": "quad",
+          "min_count": 12,
+          "description": "Table tiles should be editable perspective quads, not noisy polygons."
+        },
+        {
+          "id": "table-grid-group",
+          "group_kind": "perspective_grid",
+          "min_count": 1,
+          "description": "Detected table quads should be grouped as a perspective grid."
+        },
+        {
+          "id": "smooth-stroke-anchors",
+          "kind": "stroke_polyline",
+          "min_count": 12,
+          "description": "Clean line-like regions should remain editable strokes."
+        }
+      ]
     }
   ]
 }

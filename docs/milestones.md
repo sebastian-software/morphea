@@ -525,10 +525,12 @@ Implemented so far:
 - expectation checks for anchor kinds and scene group kinds.
 - deterministic `curve curated-check --snapshot snapshot.json` regression
   summaries for important commits/configurations.
+- second documented curated case:
+  `chatgpt-image-2026-06-11`, covering the opaque white-background version of
+  the Greek-figures/table illustration.
 
 Remaining:
 
-- broaden the suite beyond `terminaro-tweaked.png`.
 - checked-in baseline snapshots once the real-image suite is broader and the
   current detector behavior is intentionally frozen.
 
