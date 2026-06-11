@@ -149,6 +149,23 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
         self.assertLess(anchors[0].metrics["line_smoothness_error"], 0.01)
 
+    def test_thin_curved_component_is_detected_as_arc(self):
+        mask = BinaryMask.from_rows(
+            (
+                ".....#.....",
+                "...##.##...",
+                "..#.....#..",
+                ".#.......#.",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask, min_area=8)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.ARC)
+        self.assertEqual(len(anchors[0].stroke.centerline), 3)
+        self.assertIn("arc_bow_ratio", anchors[0].metrics)
+
     def test_filled_axis_aligned_block_is_detected_as_rect(self):
         mask = BinaryMask.from_rows(
             (

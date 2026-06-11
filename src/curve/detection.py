@@ -107,6 +107,10 @@ def primitive_candidates_for_component(
     if circle is not None:
         candidates.append(circle)
 
+    arc = _arc_candidate(component, thresholds)
+    if arc is not None:
+        candidates.append(arc)
+
     stroke = _stroke_candidate(component, thresholds)
     if stroke is not None:
         candidates.append(stroke)
@@ -278,6 +282,84 @@ def _stroke_candidate(
         ),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _arc_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
+    width = component.width
+    height = component.height
+    chord_length = max(width, height) - 1
+    if chord_length < thresholds.stroke_min_length or min(width, height) < 3:
+        return None
+
+    density = component.area / max(width * height, 1)
+    if density > 0.45:
+        return None
+
+    start, end = _arc_endpoints(component)
+    if start.distance_to(end) < thresholds.stroke_min_length:
+        return None
+
+    control = max(
+        (Point(x, y) for x, y in component.pixels),
+        key=lambda point: _point_line_distance(point, start, end),
+    )
+    bow = _point_line_distance(control, start, end)
+    bow_ratio = bow / max(start.distance_to(end), 1.0)
+    if bow < max(1.0, min(width, height) * 0.25) or bow_ratio < 0.12:
+        return None
+
+    stroke_width = max(
+        1.0,
+        round(component.area / max(start.distance_to(end), 1.0) * 0.75),
+    )
+    return AnchorCandidate(
+        kind=AnchorKind.ARC,
+        raster_error=max(0.0, 0.12 - bow_ratio),
+        node_count=3,
+        parameter_count=6,
+        stroke=StrokeAnchor(
+            centerline=(start, control, end),
+            width_samples=(float(stroke_width),),
+            cap_style="round",
+            join_style="round",
+        ),
+        metrics={
+            "arc_bow_ratio": bow_ratio,
+            "stroke_width_variance": 0.0,
+        },
+    )
+
+
+def _arc_endpoints(component: MaskComponent) -> tuple[Point, Point]:
+    min_x, min_y, max_x, max_y = component.bounds
+    if component.width >= component.height:
+        left = [y for x, y in component.pixels if x == min_x]
+        right = [y for x, y in component.pixels if x == max_x]
+        return (
+            Point(min_x, sum(left) / len(left)),
+            Point(max_x, sum(right) / len(right)),
+        )
+    top = [x for x, y in component.pixels if y == min_y]
+    bottom = [x for x, y in component.pixels if y == max_y]
+    return (
+        Point(sum(top) / len(top), min_y),
+        Point(sum(bottom) / len(bottom), max_y),
+    )
+
+
+def _point_line_distance(point: Point, start: Point, end: Point) -> float:
+    dx = end.x - start.x
+    dy = end.y - start.y
+    denominator = hypot(dx, dy)
+    if denominator == 0:
+        return point.distance_to(start)
+    return (
+        abs(dy * point.x - dx * point.y + end.x * start.y - end.y * start.x)
+        / denominator
+    )
 
 
 def _principal_axis(
