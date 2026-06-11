@@ -62,3 +62,19 @@ Top-level fields:
 
 Each run summary also carries `editability_score` and
 `fragmentation_penalty` when the manifest contains scene metrics.
+
+## Run Directory v1
+
+Written by `curve vectorize --run-dir` and by each `curve sweep` run.
+
+Files:
+
+- `input/<source-name>` when the source image exists
+- `output.svg`
+- `manifest.json`
+- `config.json`
+- `report.md`
+- `preview.png`
+
+`preview.png` is rendered deterministically from `manifest.json`; it is a
+debug artifact for inspection and future raster-fidelity metrics.

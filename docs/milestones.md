@@ -195,6 +195,7 @@ Implemented so far:
 - timestamped vectorize run directories via `--run-dir`
 - input copy
 - `output.svg`
+- `preview.png`
 - `manifest.json`
 - `config.json`
 - `report.md`
@@ -206,6 +207,7 @@ Implemented so far:
 - node, parameter, simple-shape, generic-path, cut-out, and color-fragment
   counts
 - metrics surfaced in reports, eval summaries, and sweep summaries
+- deterministic manifest preview renderer for current primitive types
 
 ## M5: Synthetic Dataset Generator
 
