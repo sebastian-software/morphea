@@ -82,10 +82,10 @@ Implemented so far:
 - `--timeout-seconds` internal partial-run cutoff.
 - manifest `diagnostics` entries.
 - bounded `terminaro-tweaked.png` run completes under an external timeout.
+- transparent-background regression fixture.
 
 Remaining:
 
-- explicit transparent-background regression fixture.
 - faster array-backed component extraction.
 - more nuanced ROI splitting instead of full color-mask deferral.
 
