@@ -584,6 +584,9 @@ Implemented so far:
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - `curve compare-snapshots before.json after.json` for comparing saved
   summaries from different commits/configurations
+- `curve compare-git-snapshots before_ref after_ref --path snapshot.json` for
+  comparing the same checked-in snapshot file across git refs without changing
+  the working tree
 - `curve sweep --markdown summary.md` for scan-friendly config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests
@@ -594,7 +597,7 @@ Remaining:
 - richer config files for segmenters, thresholds, and scoring beyond the first
   vectorize/training runtime configs.
 - direct git-aware automation for checking out commits and generating the
-  snapshots that `compare-snapshots` consumes.
+  snapshots that `compare-git-snapshots` consumes.
 
 ## Commit Discipline
 

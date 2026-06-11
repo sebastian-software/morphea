@@ -271,7 +271,7 @@ candidate ranking unchanged before a heavier retraining backend is introduced.
 
 ## Snapshot Comparison v1
 
-Written by `curve compare-snapshots`.
+Written by `curve compare-snapshots` and `curve compare-git-snapshots`.
 
 Top-level fields:
 
@@ -283,6 +283,7 @@ Top-level fields:
 - `added_ids`
 - `removed_ids`
 - `items`
+- `git`: present for `compare-git-snapshots`
 
 Each item records the shared `id`, `changed_metric_count`, and numeric
 `metric_deltas`. Deltas use flattened metric paths, for example
@@ -292,6 +293,10 @@ not treated as numeric metrics.
 `curve compare-snapshots --markdown comparison.md` writes a scan-friendly table
 for reviewing differences between saved reports from different commits or
 configurations.
+
+`curve compare-git-snapshots before_ref after_ref --path snapshot.json` reads
+the same checked-in snapshot file from two git refs with `git show` and does
+not modify the current working tree.
 
 ## Run Directory v1
 
