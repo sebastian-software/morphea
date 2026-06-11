@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from curve.classifier import (
+    FEATURE_NAMES,
     TrainingExample,
     anchors_from_dataset,
     centroids_from_examples,
@@ -141,6 +142,79 @@ def compare_retraining(
         encoding="utf-8",
     )
     return result
+
+
+def retrain_centroid_classifier(
+    *,
+    base_dataset: str | Path,
+    pseudo_dataset: str | Path,
+    output: str | Path,
+    validation_dataset: str | Path | None = None,
+    comparison_output: str | Path | None = None,
+) -> dict[str, object]:
+    """Train and persist an augmented centroid model from reviewed labels."""
+
+    validation_source = validation_dataset or base_dataset
+    baseline_train = examples_from_dataset(base_dataset, splits=("train",))
+    pseudo_train = examples_from_dataset(pseudo_dataset, splits=("train",))
+    train_examples = baseline_train + pseudo_train
+    centroids = centroids_from_examples(train_examples)
+
+    model = {
+        "model_type": "centroid_primitive_classifier",
+        "feature_names": list(FEATURE_NAMES),
+        "classes": sorted(centroids),
+        "centroids": {
+            label: list(values)
+            for label, values in sorted(centroids.items())
+        },
+        "train_examples": len(train_examples),
+        "source_datasets": {
+            "base_dataset": str(base_dataset),
+            "pseudo_dataset": str(pseudo_dataset),
+            "validation_dataset": str(validation_source),
+        },
+        "augmentation": {
+            "base_train_examples": len(baseline_train),
+            "pseudo_train_examples": len(pseudo_train),
+        },
+        "evaluation": {
+            "val": evaluate_classifier(
+                centroids,
+                examples_from_dataset(validation_source, splits=("val",)),
+            ),
+            "test": evaluate_classifier(
+                centroids,
+                examples_from_dataset(validation_source, splits=("test",)),
+            ),
+        },
+        "ranking_evaluation": {
+            "val": evaluate_classifier_ranking(
+                centroids,
+                anchors_from_dataset(validation_source, splits=("val",)),
+            ),
+            "test": evaluate_classifier_ranking(
+                centroids,
+                anchors_from_dataset(validation_source, splits=("test",)),
+            ),
+        },
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(model, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    if comparison_output is not None:
+        compare_retraining(
+            base_dataset=base_dataset,
+            pseudo_dataset=pseudo_dataset,
+            validation_dataset=validation_dataset,
+            output=comparison_output,
+        )
+
+    return model
 
 
 def merge_reviewed_pseudo_label_dataset(

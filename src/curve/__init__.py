@@ -76,6 +76,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    retrain_centroid_classifier,
 )
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.curated import (
@@ -162,6 +163,7 @@ __all__ = [
     "render_snapshot_comparison_markdown",
     "render_sweep_markdown",
     "refine_manifest",
+    "retrain_centroid_classifier",
     "run_sweep",
     "write_manifest_preview",
     "write_vectorize_run",

@@ -25,6 +25,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    retrain_centroid_classifier,
 )
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.sweeps import run_sweep
@@ -70,6 +71,13 @@ COMPARE_TRAINING_CONFIG_KEYS = {
     "pseudo_dataset",
     "validation_dataset",
     "output",
+}
+RETRAIN_CONFIG_KEYS = {
+    "base_dataset",
+    "pseudo_dataset",
+    "validation_dataset",
+    "output",
+    "comparison_output",
 }
 
 
@@ -286,6 +294,17 @@ def main(argv: list[str] | None = None) -> None:
     compare_training.add_argument("--validation-dataset", type=Path)
     compare_training.add_argument("-o", "--output", type=Path)
     compare_training.add_argument("--config", type=Path)
+
+    retrain = subcommands.add_parser(
+        "retrain",
+        help="Train an augmented classifier from base and reviewed pseudo-label datasets.",
+    )
+    retrain.add_argument("base_dataset", type=Path, nargs="?")
+    retrain.add_argument("--pseudo-dataset", type=Path)
+    retrain.add_argument("--validation-dataset", type=Path)
+    retrain.add_argument("-o", "--output", type=Path)
+    retrain.add_argument("--comparison-output", type=Path)
+    retrain.add_argument("--config", type=Path)
 
     compare_snapshots_parser = subcommands.add_parser(
         "compare-snapshots",
@@ -527,6 +546,20 @@ def main(argv: list[str] | None = None) -> None:
         )
         return
 
+    if args.command == "retrain":
+        retrain_config = _resolved_retrain_config(args)
+        model = retrain_centroid_classifier(
+            base_dataset=retrain_config["base_dataset"],
+            pseudo_dataset=retrain_config["pseudo_dataset"],
+            validation_dataset=retrain_config.get("validation_dataset"),
+            output=retrain_config["output"],
+            comparison_output=retrain_config.get("comparison_output"),
+        )
+        print(
+            f"retrained {model['model_type']} with {model['train_examples']} examples"
+        )
+        return
+
     if args.command == "compare-snapshots":
         result = compare_snapshots(
             args.before,
@@ -640,6 +673,30 @@ def _resolved_compare_training_config(args: argparse.Namespace) -> dict[str, Pat
         config,
         ("base_dataset", "pseudo_dataset", "output"),
         "compare-training",
+    )
+    return config
+
+
+def _resolved_retrain_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(
+        args.config,
+        RETRAIN_CONFIG_KEYS,
+        "retrain",
+    )
+    if args.base_dataset is not None:
+        config["base_dataset"] = args.base_dataset
+    if args.pseudo_dataset is not None:
+        config["pseudo_dataset"] = args.pseudo_dataset
+    if args.validation_dataset is not None:
+        config["validation_dataset"] = args.validation_dataset
+    if args.output is not None:
+        config["output"] = args.output
+    if args.comparison_output is not None:
+        config["comparison_output"] = args.comparison_output
+    _require_config_paths(
+        config,
+        ("base_dataset", "pseudo_dataset", "output"),
+        "retrain",
     )
     return config
 

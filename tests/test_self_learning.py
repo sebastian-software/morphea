@@ -14,6 +14,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    retrain_centroid_classifier,
 )
 
 
@@ -369,6 +370,93 @@ class SelfLearningTests(unittest.TestCase):
 
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["delta"]["train_examples"], 1)
+
+    def test_retrain_centroid_classifier_writes_augmented_model(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            model_path = root / "model.json"
+            compare_path = root / "compare.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=93,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+
+            model = retrain_centroid_classifier(
+                base_dataset=base_dir / "dataset.json",
+                pseudo_dataset=pseudo_dir / "dataset.json",
+                output=model_path,
+                comparison_output=compare_path,
+            )
+
+            self.assertTrue(model_path.exists())
+            self.assertTrue(compare_path.exists())
+            self.assertEqual(model["augmentation"]["pseudo_train_examples"], 1)
+            self.assertEqual(
+                model["train_examples"],
+                model["augmentation"]["base_train_examples"] + 1,
+            )
+            self.assertIn("evaluation", model)
+            self.assertIn("ranking_evaluation", model)
+            self.assertEqual(
+                model["source_datasets"]["pseudo_dataset"],
+                str(pseudo_dir / "dataset.json"),
+            )
+
+    def test_retrain_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            model_path = root / "model.json"
+            compare_path = root / "compare.json"
+            config = root / "retrain.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=94,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "base_dataset": str(base_dir / "dataset.json"),
+                        "pseudo_dataset": str(pseudo_dir / "dataset.json"),
+                        "output": str(model_path),
+                        "comparison_output": str(compare_path),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["retrain", "--config", str(config)])
+
+            model = json.loads(model_path.read_text(encoding="utf-8"))
+            comparison = json.loads(compare_path.read_text(encoding="utf-8"))
+            self.assertEqual(model["augmentation"]["pseudo_train_examples"], 1)
+            self.assertEqual(comparison["delta"]["train_examples"], 1)
 
 
 def _write_manifest(
