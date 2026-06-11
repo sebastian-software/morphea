@@ -95,6 +95,35 @@ metrics.
 editability score and raster error. It is derived from `sweep-summary.json` and
 does not change the JSON schema.
 
+## Curated Snapshot v1
+
+Written by `curve curated-check --snapshot snapshot.json`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `suite`: source curated suite path
+- `case_count`
+- `ok`
+- `cases`: deterministic per-case summaries sorted by case id
+
+Case snapshot fields:
+
+- `id`
+- `status`
+- `ok`
+- `source_exists`
+- `expectations`: sorted expectation outcomes with actual/minimum counts
+- `config`: bounded vectorize config when the case was run
+- `anchor_count`
+- `anchor_kind_counts`
+- `group_kind_counts`
+- `diagnostic_count`
+- `metrics`: run metrics such as editability and raster-fidelity values
+
+Snapshots avoid timestamps and run-directory paths so they can be diffed across
+commits and configurations.
+
 ## Vectorize Config v1
 
 Read by `curve vectorize --config`.

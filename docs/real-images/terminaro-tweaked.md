@@ -70,8 +70,13 @@ Suite command:
 PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
   -o runs/curated-report.json \
   --output-dir runs/curated \
+  --snapshot runs/curated-snapshot.json \
   --run
 ```
+
+The snapshot file is deterministic and meant for commit/config regression
+diffs. It records expectation results, anchor/group kind counts, and metrics
+without timestamps.
 
 Earlier unbounded behavior:
 

@@ -510,11 +510,14 @@ Implemented so far:
 - curated artifacts are written through the same run writer as vectorize runs,
   including input copies and raster-fidelity metrics.
 - expectation checks for anchor kinds and scene group kinds.
+- deterministic `curve curated-check --snapshot snapshot.json` regression
+  summaries for important commits/configurations.
 
 Remaining:
 
 - broaden the suite beyond `terminaro-tweaked.png`.
-- fixed regression run snapshots for important commits/configurations.
+- checked-in baseline snapshots once the real-image suite is broader and the
+  current detector behavior is intentionally frozen.
 
 ## M11: Productized Research CLI
 
