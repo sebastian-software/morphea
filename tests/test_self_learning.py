@@ -20,6 +20,7 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertEqual(result["pseudo_label_count"], 1)
             self.assertEqual(result["pseudo_labels"][0]["kind"], "circle")
+            self.assertEqual(result["pseudo_labels"][0]["run_metrics"]["editability_score"], 1.0)
             self.assertTrue(output.exists())
 
     def test_harvest_rejects_runs_with_warning_diagnostics(self):
@@ -48,6 +49,54 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertEqual(result["pseudo_label_count"], 0)
 
+    def test_harvest_rejects_low_editability_runs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "low-editability",
+                diagnostics=[],
+                classifier_error=0.0,
+                editability_score=0.4,
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                min_editability_score=0.75,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+            self.assertEqual(
+                result["rejected_runs"][0]["reason"],
+                "editability_score_too_low",
+            )
+
+    def test_harvest_rejects_high_fragmentation_runs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "fragmented",
+                diagnostics=[],
+                classifier_error=0.0,
+                fragmentation_penalty=0.35,
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                max_fragmentation_penalty=0.2,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+            self.assertEqual(
+                result["rejected_runs"][0]["reason"],
+                "fragmentation_penalty_too_high",
+            )
+
     def test_harvest_cli_writes_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
@@ -55,10 +104,22 @@ class SelfLearningTests(unittest.TestCase):
             output = Path(temp_dir) / "pseudo.json"
 
             with redirect_stdout(StringIO()):
-                main(["harvest", str(root), "-o", str(output)])
+                main(
+                    [
+                        "harvest",
+                        str(root),
+                        "-o",
+                        str(output),
+                        "--min-editability-score",
+                        "0.8",
+                        "--max-fragmentation-penalty",
+                        "0.25",
+                    ]
+                )
 
             result = json.loads(output.read_text())
             self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["filters"]["min_editability_score"], 0.8)
 
     def test_create_review_file_marks_labels_pending(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -139,6 +200,8 @@ def _write_manifest(
     *,
     diagnostics: list[dict[str, object]],
     classifier_error: float,
+    editability_score: float = 1.0,
+    fragmentation_penalty: float = 0.0,
 ) -> None:
     run_dir = root / run_name
     run_dir.mkdir(parents=True)
@@ -153,6 +216,10 @@ def _write_manifest(
                     }
                 ],
                 "diagnostics": diagnostics,
+                "metrics": {
+                    "editability_score": editability_score,
+                    "fragmentation_penalty": fragmentation_penalty,
+                },
             }
         ),
         encoding="utf-8",

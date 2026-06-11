@@ -133,6 +133,8 @@ def main(argv: list[str] | None = None) -> None:
     harvest.add_argument("-o", "--output", type=Path, required=True)
     harvest.add_argument("--max-run-diagnostics", type=int, default=0)
     harvest.add_argument("--max-classifier-prior-error", type=float, default=0.0)
+    harvest.add_argument("--min-editability-score", type=float, default=0.0)
+    harvest.add_argument("--max-fragmentation-penalty", type=float, default=1.0)
 
     review = subcommands.add_parser(
         "review",
@@ -274,6 +276,8 @@ def main(argv: list[str] | None = None) -> None:
             output=args.output,
             max_run_diagnostics=args.max_run_diagnostics,
             max_classifier_prior_error=args.max_classifier_prior_error,
+            min_editability_score=args.min_editability_score,
+            max_fragmentation_penalty=args.max_fragmentation_penalty,
         )
         print(f"harvested {result['pseudo_label_count']} pseudo-labels")
         return

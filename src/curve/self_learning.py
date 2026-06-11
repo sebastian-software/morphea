@@ -12,6 +12,8 @@ def harvest_pseudo_labels(
     output: str | Path,
     max_run_diagnostics: int = 0,
     max_classifier_prior_error: float = 0.0,
+    min_editability_score: float = 0.0,
+    max_fragmentation_penalty: float = 1.0,
 ) -> dict[str, object]:
     root = Path(run_root)
     records: list[dict[str, object]] = []
@@ -33,6 +35,29 @@ def harvest_pseudo_labels(
                 }
             )
             continue
+        run_metrics = dict(manifest.get("metrics", {}))
+        editability_score = float(run_metrics.get("editability_score", 1.0))
+        if editability_score < min_editability_score:
+            rejected_runs.append(
+                {
+                    "run": manifest_path.parent.name,
+                    "reason": "editability_score_too_low",
+                    "editability_score": editability_score,
+                    "min_editability_score": min_editability_score,
+                }
+            )
+            continue
+        fragmentation_penalty = float(run_metrics.get("fragmentation_penalty", 0.0))
+        if fragmentation_penalty > max_fragmentation_penalty:
+            rejected_runs.append(
+                {
+                    "run": manifest_path.parent.name,
+                    "reason": "fragmentation_penalty_too_high",
+                    "fragmentation_penalty": fragmentation_penalty,
+                    "max_fragmentation_penalty": max_fragmentation_penalty,
+                }
+            )
+            continue
 
         for index, anchor in enumerate(manifest.get("anchors", [])):
             metrics = anchor.get("metrics", {})
@@ -46,6 +71,7 @@ def harvest_pseudo_labels(
                     "kind": anchor.get("kind"),
                     "color": anchor.get("color"),
                     "metrics": metrics,
+                    "run_metrics": run_metrics,
                     "source_manifest": str(manifest_path),
                 }
             )
@@ -57,6 +83,8 @@ def harvest_pseudo_labels(
         "filters": {
             "max_run_diagnostics": max_run_diagnostics,
             "max_classifier_prior_error": max_classifier_prior_error,
+            "min_editability_score": min_editability_score,
+            "max_fragmentation_penalty": max_fragmentation_penalty,
         },
     }
     output = Path(output)
