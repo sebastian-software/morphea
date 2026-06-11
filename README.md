@@ -36,3 +36,10 @@ PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg
 This path currently targets non-antialiased flat-color fixtures. It detects and
 exports the first base forms: circles/dots, straight stroke components, and
 perspective quad tiles.
+
+For simple anti-aliased or near-flat images, group close colors before
+component detection:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --color-tolerance 18
+```

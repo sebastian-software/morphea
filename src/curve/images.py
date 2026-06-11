@@ -27,16 +27,19 @@ def flat_color_masks_from_image(
     *,
     background: Rgb | None = None,
     min_area: int = 8,
+    color_tolerance: float = 0.0,
 ) -> tuple[ColorMask, ...]:
-    """Group an image into exact-color binary masks.
+    """Group an image into flat-color binary masks.
 
-    This intentionally targets flat-color fixtures first. Anti-aliased and
-    quantized image handling belongs in a later preprocessing layer.
+    With the default tolerance this groups exact colors. A positive tolerance
+    merges nearby RGB values into the first compatible palette bucket, which is
+    enough for simple anti-aliased flat-color fixtures.
     """
 
     image = Image.open(path).convert("RGBA")
     width, height = image.size
     pixels_by_color: dict[Rgb, set[tuple[int, int]]] = {}
+    palette: list[Rgb] = []
     inferred_background = background or image.getpixel((0, 0))[:3]
 
     for y in range(height):
@@ -45,9 +48,13 @@ def flat_color_masks_from_image(
             if alpha == 0:
                 continue
             color = (red, green, blue)
-            if color == inferred_background:
+            if _color_distance(color, inferred_background) <= color_tolerance:
                 continue
-            pixels_by_color.setdefault(color, set()).add((x, y))
+            bucket = _nearest_palette_color(color, palette, color_tolerance)
+            if bucket is None:
+                bucket = color
+                palette.append(bucket)
+            pixels_by_color.setdefault(bucket, set()).add((x, y))
 
     masks: list[ColorMask] = []
     for color, pixels in pixels_by_color.items():
@@ -67,11 +74,13 @@ def scene_from_flat_color_image(
     *,
     background: Rgb | None = None,
     min_area: int = 8,
+    color_tolerance: float = 0.0,
 ) -> Scene:
     color_masks = flat_color_masks_from_image(
         path,
         background=background,
         min_area=min_area,
+        color_tolerance=color_tolerance,
     )
     anchors: list[AnchorCandidate] = []
     width = 0
@@ -101,3 +110,32 @@ def _with_color(anchor: AnchorCandidate, color: str) -> AnchorCandidate:
 def _hex_color(color: Rgb) -> str:
     return f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
 
+
+def _nearest_palette_color(
+    color: Rgb,
+    palette: list[Rgb],
+    tolerance: float,
+) -> Rgb | None:
+    if tolerance <= 0:
+        return color if color in palette else None
+
+    matches = [
+        (candidate, _color_distance(color, candidate))
+        for candidate in palette
+    ]
+    matches = [
+        (candidate, distance)
+        for candidate, distance in matches
+        if distance <= tolerance
+    ]
+    if not matches:
+        return None
+    return min(matches, key=lambda match: match[1])[0]
+
+
+def _color_distance(left: Rgb, right: Rgb) -> float:
+    return (
+        (left[0] - right[0]) ** 2
+        + (left[1] - right[1]) ** 2
+        + (left[2] - right[2]) ** 2
+    ) ** 0.5

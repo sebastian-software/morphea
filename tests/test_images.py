@@ -30,6 +30,18 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertIn('stroke="#003366"', svg)
         self.assertIn('fill="#c99700"', svg)
 
+    def test_color_tolerance_groups_near_flat_circle_edges(self):
+        image_path = _write_near_flat_circle_image()
+
+        strict_masks = flat_color_masks_from_image(image_path)
+        tolerant_masks = flat_color_masks_from_image(image_path, color_tolerance=18)
+        scene = scene_from_flat_color_image(image_path, color_tolerance=18)
+
+        self.assertGreater(len(strict_masks), len(tolerant_masks))
+        self.assertEqual(len(tolerant_masks), 1)
+        self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
+        self.assertEqual(scene.anchors[0].color, "#dd2222")
+
 
 def _write_fixture_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -47,6 +59,29 @@ def _write_fixture_image() -> Path:
 _TEMP_DIRS: list[tempfile.TemporaryDirectory] = []
 
 
+def _write_near_flat_circle_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "near-flat-circle.png"
+    image = Image.new("RGB", (16, 16), "white")
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+    draw.point(
+        (
+            (7, 3),
+            (8, 3),
+            (3, 7),
+            (3, 8),
+            (12, 7),
+            (12, 8),
+            (7, 12),
+            (8, 12),
+        ),
+        fill="#e02a2a",
+    )
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
 if __name__ == "__main__":
     unittest.main()
-

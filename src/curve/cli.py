@@ -35,6 +35,12 @@ def main(argv: list[str] | None = None) -> None:
         help="Minimum exact-color component area to consider.",
     )
     vectorize.add_argument(
+        "--color-tolerance",
+        type=float,
+        default=0.0,
+        help="RGB distance for grouping near-flat colors into one mask.",
+    )
+    vectorize.add_argument(
         "--manifest",
         type=Path,
         help="Output JSON manifest path. Defaults to output path with .json suffix.",
@@ -50,7 +56,11 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
-        scene = scene_from_flat_color_image(args.input, min_area=args.min_area)
+        scene = scene_from_flat_color_image(
+            args.input,
+            min_area=args.min_area,
+            color_tolerance=args.color_tolerance,
+        )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(scene.to_svg(), encoding="utf-8")
         if not args.no_manifest:
