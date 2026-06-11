@@ -28,6 +28,7 @@ from curve.scene import (
 from curve.synthetic import SyntheticSample, generate_synthetic_sample
 from curve.runs import VectorizeRun, create_run_dir, render_markdown_report, write_vectorize_run
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
+from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
 
 __all__ = [
     "AnchorCandidate",
@@ -35,6 +36,7 @@ __all__ = [
     "BinaryMask",
     "CircleAnchor",
     "ColorMask",
+    "DatasetSplit",
     "MaskComponent",
     "Point",
     "QuadAnchor",
@@ -54,10 +56,12 @@ __all__ = [
     "evaluate_runs",
     "flat_color_masks_from_image",
     "generate_synthetic_sample",
+    "generate_synthetic_dataset",
     "primitive_candidates_for_component",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
     "scene_from_mask",
+    "split_counts",
     "render_markdown_report",
     "render_eval_markdown",
     "write_vectorize_run",

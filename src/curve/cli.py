@@ -6,10 +6,10 @@ import argparse
 import json
 from pathlib import Path
 
+from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_vectorize_run
-from curve.synthetic import generate_synthetic_sample
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -88,6 +88,9 @@ def main(argv: list[str] | None = None) -> None:
     generate.add_argument("--seed", type=int, default=1)
     generate.add_argument("--width", type=int, default=96)
     generate.add_argument("--height", type=int, default=96)
+    generate.add_argument("--difficulty", default="basic")
+    generate.add_argument("--val-count", type=int, default=1)
+    generate.add_argument("--test-count", type=int, default=1)
 
     eval_parser = subcommands.add_parser(
         "eval",
@@ -145,14 +148,16 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "generate":
-        for index in range(args.count):
-            seed = args.seed + index
-            sample = generate_synthetic_sample(
-                seed=seed,
-                width=args.width,
-                height=args.height,
-            )
-            sample.write(args.output_dir, f"sample-{index:04d}")
+        generate_synthetic_dataset(
+            output_dir=args.output_dir,
+            count=args.count,
+            seed=args.seed,
+            width=args.width,
+            height=args.height,
+            difficulty=args.difficulty,
+            val_count=args.val_count,
+            test_count=args.test_count,
+        )
         print(f"wrote {args.count} synthetic samples to {args.output_dir}")
         return
 

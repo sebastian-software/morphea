@@ -48,16 +48,19 @@ class SyntheticGeneratorTests(unittest.TestCase):
                         "64",
                         "--height",
                         "64",
+                        "--val-count",
+                        "0",
+                        "--test-count",
+                        "1",
                     ]
                 )
 
             output = Path(temp_dir)
-            self.assertTrue((output / "sample-0000.png").exists())
-            self.assertTrue((output / "sample-0000.json").exists())
-            self.assertTrue((output / "sample-0001.png").exists())
-            self.assertTrue((output / "sample-0001.json").exists())
+            self.assertTrue((output / "train" / "sample-0000.png").exists())
+            self.assertTrue((output / "train" / "sample-0000.json").exists())
+            self.assertTrue((output / "test" / "sample-0001.png").exists())
+            self.assertTrue((output / "test" / "sample-0001.json").exists())
 
 
 if __name__ == "__main__":
     unittest.main()
-
