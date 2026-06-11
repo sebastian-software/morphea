@@ -6,7 +6,9 @@ from io import StringIO
 from pathlib import Path
 
 from curve.classifier import (
+    anchors_from_dataset,
     classifier_prior_error,
+    evaluate_classifier_ranking,
     examples_from_dataset,
     features_from_anchor,
     load_centroid_model,
@@ -45,8 +47,10 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
 
             examples = examples_from_dataset(Path(temp_dir) / "dataset.json")
+            anchors = anchors_from_dataset(Path(temp_dir) / "dataset.json")
 
             self.assertEqual(len(examples), 14)
+            self.assertEqual(len(anchors), 14)
             self.assertEqual({example.label for example in examples}, {
                 "arc",
                 "circle",
@@ -80,6 +84,11 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(model["model_type"], "centroid_primitive_classifier")
             self.assertIn("circle", model["classes"])
             self.assertIn("val", model["evaluation"])
+            self.assertIn("val", model["ranking_evaluation"])
+            self.assertGreaterEqual(
+                model["ranking_evaluation"]["val"]["classifier_accuracy"],
+                model["ranking_evaluation"]["val"]["heuristic_accuracy"],
+            )
 
     def test_train_cli_writes_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -99,6 +108,34 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
             model = json.loads(model_path.read_text())
             self.assertEqual(model["train_examples"], 28)
+            self.assertIn("ranking_evaluation", model)
+
+    def test_classifier_ranking_compares_heuristic_and_prior(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=40,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            dataset = Path(temp_dir) / "dataset.json"
+            model_path = Path(temp_dir) / "model.json"
+            train_centroid_classifier(dataset, output=model_path)
+
+            ranking = evaluate_classifier_ranking(
+                load_centroid_model(model_path),
+                anchors_from_dataset(dataset, splits=("val",)),
+            )
+
+            self.assertEqual(ranking["examples"], 14)
+            self.assertGreaterEqual(
+                ranking["classifier_accuracy"],
+                ranking["heuristic_accuracy"],
+            )
+            self.assertGreater(ranking["changed_decisions"], 0)
 
     def test_load_model_and_score_matching_candidate(self):
         with tempfile.TemporaryDirectory() as temp_dir:
