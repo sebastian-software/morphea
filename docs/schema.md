@@ -140,6 +140,30 @@ Supported fields match current runtime knobs:
 
 CLI arguments override values loaded from the config file.
 
+## Training Config v1
+
+Read by `curve train --config`.
+
+Supported fields:
+
+- `dataset`
+- `output`
+
+CLI arguments override values loaded from the config file.
+
+## Training Comparison Config v1
+
+Read by `curve compare-training --config`.
+
+Supported fields:
+
+- `base_dataset`
+- `pseudo_dataset`
+- `validation_dataset`
+- `output`
+
+CLI arguments override values loaded from the config file.
+
 ## Synthetic Dataset v1
 
 Written by `curve generate`.

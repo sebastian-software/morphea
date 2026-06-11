@@ -562,6 +562,9 @@ Implemented so far:
 - `curve merge-labels`
 - `curve compare-training`
 - `curve vectorize --config config.json` for repeatable runtime knob files
+- `curve train --config train.json` for repeatable classifier training inputs
+- `curve compare-training --config compare.json` for repeatable retraining
+  comparisons
 - `curve sweep --markdown summary.md` for scan-friendly config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests
@@ -569,8 +572,8 @@ Implemented so far:
 
 Remaining:
 
-- richer config files for segmenters, thresholds, scoring, and training beyond
-  the first vectorize runtime config.
+- richer config files for segmenters, thresholds, and scoring beyond the first
+  vectorize/training runtime configs.
 - comparison views across commits beyond config-level sweep summaries.
 
 ## Commit Discipline
