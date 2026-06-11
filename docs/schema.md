@@ -232,6 +232,24 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## MLX Training Config v1
+
+Read by `curve train-mlx --config`.
+
+Supported fields:
+
+- `dataset`
+- `output`
+- `epochs`
+- `hidden_dim`
+- `num_heads`
+- `num_layers`
+- `learning_rate`
+- `allow_unavailable`: when true, writes a fallback artifact if MLX is not
+  installed locally
+
+CLI arguments override values loaded from the config file.
+
 ## Training Comparison Config v1
 
 Read by `curve compare-training --config`.
@@ -275,11 +293,12 @@ single PNG/JSON pair is reproducible outside the dataset index.
 
 ## Primitive Classifier Model v1
 
-Written by `curve train` and `curve retrain`.
+Written by `curve train`, `curve retrain`, and `curve train-mlx`.
 
 Top-level fields:
 
-- `model_type`: currently `centroid_primitive_classifier`
+- `model_type`: currently `centroid_primitive_classifier` or
+  `mlx_transformer_primitive_classifier`
 - `feature_names`
 - `classes`
 - `centroids`
@@ -291,6 +310,12 @@ Top-level fields:
 - `evaluation`: direct classifier accuracy/confusion for validation/test splits
 - `ranking_evaluation`: heuristic-only versus classifier-prior candidate
   ranking comparison for validation/test splits
+
+`curve train-mlx` writes `backend`, `backend_available`, `status`,
+`training_config`, `fallback_model_type`, and `fallback_centroids`. The fallback
+centroids keep the artifact usable as a deterministic `--classifier-model`
+prior when MLX is not installed or while Transformer weight training is still
+being expanded.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. Its centroid

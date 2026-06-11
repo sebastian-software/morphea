@@ -392,16 +392,22 @@ Implemented so far:
 - feature extraction from generated ground-truth manifests
 - trainable centroid primitive-classifier baseline
 - `curve train dataset.json -o model.json`
+- `curve train-mlx dataset.json -o model.json` for the optional MLX
+  Transformer classifier path
 - train/val/test evaluation sections in model artifact
 - confusion matrix output
 - optional `--classifier-model` prior during `curve vectorize`
 - `classifier_prior_error` metric in candidate manifests
 - `curve train` writes `ranking_evaluation` comparing heuristic-only candidate
   ranking with classifier-prior-assisted ranking on validation/test splits
+- `curve train-mlx --allow-unavailable` writes a deterministic artifact with
+  MLX backend status plus centroid fallback weights, so the training pipeline
+  remains runnable when MLX is not installed locally
 
 Remaining:
 
-- replace or augment centroid baseline with small MLX Transformer
+- replace the current MLX training hook metadata with real Transformer weight
+  optimization once MLX is installed in the local environment
 
 ## M8: Self-Learning Loop
 
@@ -582,6 +588,7 @@ Implemented so far:
 
 - `curve generate`
 - `curve train`
+- `curve train-mlx`
 - `curve vectorize`
 - `curve profile`
 - `curve eval`
