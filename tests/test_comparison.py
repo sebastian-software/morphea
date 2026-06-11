@@ -1,14 +1,17 @@
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from curve.cli import main
 from curve.comparison import (
     compare_git_snapshots,
     compare_snapshots,
+    generate_git_curated_snapshot,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
 )
@@ -192,6 +195,119 @@ class SnapshotComparisonTests(unittest.TestCase):
                 result["git"]["snapshot_path"],
                 "docs/real-images/baselines/current-curated-snapshot.json",
             )
+
+    def test_generate_git_curated_snapshot_uses_isolated_worktree(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            output = root / "snapshot.json"
+            report = root / "report.json"
+            calls: list[dict[str, object]] = []
+
+            def fake_run(
+                command,
+                *,
+                cwd,
+                check,
+                capture_output,
+                text,
+                timeout,
+                env=None,
+            ):
+                calls.append(
+                    {
+                        "command": command,
+                        "cwd": cwd,
+                        "check": check,
+                        "timeout": timeout,
+                        "env": env,
+                    }
+                )
+                if command[:3] == ["git", "rev-parse", "--show-toplevel"]:
+                    return subprocess.CompletedProcess(
+                        command,
+                        0,
+                        stdout=str(Path("/repo")) + "\n",
+                        stderr="",
+                    )
+                if "curated-check" in command:
+                    output.write_text(
+                        json.dumps(
+                            {
+                                "schema_version": 1,
+                                "case_count": 1,
+                                "ok": True,
+                                "cases": [{"id": "case-a"}],
+                            }
+                        ),
+                        encoding="utf-8",
+                    )
+                    report.write_text(json.dumps({"case_count": 1}), encoding="utf-8")
+                return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+            with patch("curve.comparison.subprocess.run", side_effect=fake_run):
+                result = generate_git_curated_snapshot(
+                    "HEAD",
+                    suite=suite,
+                    output=output,
+                    report=report,
+                    repo="/repo",
+                    timeout_seconds=42,
+                )
+
+            commands = [call["command"] for call in calls]
+            curated_command = next(command for command in commands if "curated-check" in command)
+            self.assertEqual(result["git"]["ref"], "HEAD")
+            self.assertEqual(result["case_count"], 1)
+            self.assertEqual(result["snapshot"], str(output))
+            self.assertIn("--run", curated_command)
+            self.assertIn(str(output), curated_command)
+            self.assertEqual(
+                [call["timeout"] for call in calls if "curated-check" in call["command"]],
+                [42],
+            )
+            curated_env = next(call["env"] for call in calls if "curated-check" in call["command"])
+            self.assertIsNotNone(curated_env)
+            self.assertIn("worktree/src", curated_env["PYTHONPATH"])
+            self.assertTrue(
+                any(command[:3] == ["git", "worktree", "add"] for command in commands)
+            )
+            self.assertTrue(
+                any(command[:3] == ["git", "worktree", "remove"] for command in commands)
+            )
+
+    def test_snapshot_git_ref_cli_delegates_to_generator(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "snapshot.json"
+
+            with patch("curve.cli.generate_git_curated_snapshot") as generate:
+                generate.return_value = {
+                    "git": {"ref": "HEAD"},
+                    "case_count": 2,
+                    "snapshot": str(output),
+                }
+                with redirect_stdout(StringIO()):
+                    main(
+                        [
+                            "snapshot-git-ref",
+                            "HEAD",
+                            "--suite",
+                            "docs/real-images/suite.json",
+                            "-o",
+                            str(output),
+                            "--timeout-seconds",
+                            "7",
+                            "--no-run",
+                        ]
+                    )
+
+            generate.assert_called_once()
+            _, kwargs = generate.call_args
+            self.assertEqual(kwargs["suite"], Path("docs/real-images/suite.json"))
+            self.assertEqual(kwargs["output"], output)
+            self.assertEqual(kwargs["timeout_seconds"], 7)
+            self.assertFalse(kwargs["run"])
 
 
 if __name__ == "__main__":

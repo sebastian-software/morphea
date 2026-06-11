@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
+import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -79,6 +83,92 @@ def compare_git_snapshots(
             encoding="utf-8",
         )
     return comparison
+
+
+def generate_git_curated_snapshot(
+    ref: str,
+    *,
+    suite: str | Path,
+    output: str | Path,
+    report: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    repo: str | Path = ".",
+    run: bool = True,
+    timeout_seconds: float = 120.0,
+) -> dict[str, Any]:
+    """Generate a curated snapshot for a git ref in an isolated worktree."""
+
+    repo_path = Path(repo)
+    repo_root = _git_repo_root(repo_path)
+    suite_arg = _suite_arg_for_worktree(suite, repo_root)
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path = Path(report) if report is not None else None
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+    if output_dir is not None:
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory(prefix="curve-git-snapshot-") as temp_dir:
+        worktree = Path(temp_dir) / "worktree"
+        _run_subprocess(
+            ["git", "worktree", "add", "--detach", str(worktree), ref],
+            cwd=repo_root,
+            timeout=30,
+        )
+        try:
+            generated_report = report_path or Path(temp_dir) / "report.json"
+            command = [
+                sys.executable,
+                "-m",
+                "curve.cli",
+                "curated-check",
+                str(suite_arg),
+                "-o",
+                str(generated_report),
+                "--snapshot",
+                str(output_path),
+            ]
+            if output_dir is not None:
+                command.extend(["--output-dir", str(output_dir)])
+            if run:
+                command.append("--run")
+            _run_subprocess(
+                command,
+                cwd=worktree,
+                timeout=timeout_seconds,
+                env=_worktree_python_env(worktree),
+            )
+        finally:
+            _run_subprocess(
+                ["git", "worktree", "remove", "--force", str(worktree)],
+                cwd=repo_root,
+                timeout=30,
+                check=False,
+            )
+            if worktree.exists():
+                shutil.rmtree(worktree, ignore_errors=True)
+
+    snapshot = json.loads(output_path.read_text(encoding="utf-8"))
+    if not isinstance(snapshot, dict):
+        raise ValueError(f"generated snapshot at {output_path} must be a JSON object")
+    result = {
+        "schema_version": 1,
+        "git": {
+            "repo": str(repo_root),
+            "ref": ref,
+            "suite": str(suite),
+        },
+        "snapshot": str(output_path),
+        "run": run,
+        "case_count": snapshot.get("case_count", 0),
+        "ok": snapshot.get("ok", False),
+    }
+    if report_path is not None:
+        result["report"] = str(report_path)
+    if output_dir is not None:
+        result["output_dir"] = str(output_dir)
+    return result
 
 
 def render_snapshot_comparison(
@@ -216,15 +306,58 @@ def _id_list(values: Any) -> str:
 
 
 def _git_show_json(repo: str | Path, ref: str, snapshot_path: str) -> dict[str, Any]:
-    result = subprocess.run(
+    result = _run_subprocess(
         ["git", "show", f"{ref}:{snapshot_path}"],
         cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
         timeout=5,
     )
     data = json.loads(result.stdout)
     if not isinstance(data, dict):
         raise ValueError(f"snapshot at {ref}:{snapshot_path} must be a JSON object")
     return data
+
+
+def _git_repo_root(repo: str | Path) -> Path:
+    result = _run_subprocess(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=repo,
+        timeout=5,
+    )
+    return Path(result.stdout.strip())
+
+
+def _suite_arg_for_worktree(suite: str | Path, repo_root: Path) -> Path:
+    suite_path = Path(suite)
+    if not suite_path.is_absolute():
+        return suite_path
+    try:
+        return suite_path.relative_to(repo_root)
+    except ValueError:
+        return suite_path
+
+
+def _worktree_python_env(worktree: Path) -> dict[str, str]:
+    env = dict(os.environ)
+    src_path = str(worktree / "src")
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing}" if existing else src_path
+    return env
+
+
+def _run_subprocess(
+    command: list[str],
+    *,
+    cwd: str | Path,
+    timeout: float,
+    check: bool = True,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=cwd,
+        check=check,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=env,
+    )

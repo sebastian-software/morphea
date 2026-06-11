@@ -7,7 +7,11 @@ import json
 from pathlib import Path
 
 from curve.classifier import train_centroid_classifier
-from curve.comparison import compare_git_snapshots, compare_snapshots
+from curve.comparison import (
+    compare_git_snapshots,
+    compare_snapshots,
+    generate_git_curated_snapshot,
+)
 from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
@@ -345,6 +349,24 @@ def main(argv: list[str] | None = None) -> None:
     compare_git_snapshots_parser.add_argument("--markdown", type=Path)
     compare_git_snapshots_parser.add_argument("--repo", type=Path, default=Path("."))
 
+    snapshot_git_ref = subcommands.add_parser(
+        "snapshot-git-ref",
+        help="Generate a curated snapshot for a git ref in an isolated worktree.",
+    )
+    snapshot_git_ref.add_argument("ref")
+    snapshot_git_ref.add_argument("--suite", type=Path, required=True)
+    snapshot_git_ref.add_argument("-o", "--output", type=Path, required=True)
+    snapshot_git_ref.add_argument("--report", type=Path)
+    snapshot_git_ref.add_argument("--output-dir", type=Path)
+    snapshot_git_ref.add_argument("--repo", type=Path, default=Path("."))
+    snapshot_git_ref.add_argument("--timeout-seconds", type=float, default=120.0)
+    snapshot_git_ref.add_argument(
+        "--no-run",
+        dest="run",
+        action="store_false",
+        default=True,
+    )
+
     refine = subcommands.add_parser(
         "refine",
         help="Apply a structure-preserving refinement backend to a manifest.",
@@ -594,6 +616,23 @@ def main(argv: list[str] | None = None) -> None:
             repo=args.repo,
         )
         print(f"compared {result['item_count']} git snapshot items")
+        return
+
+    if args.command == "snapshot-git-ref":
+        result = generate_git_curated_snapshot(
+            args.ref,
+            suite=args.suite,
+            output=args.output,
+            report=args.report,
+            output_dir=args.output_dir,
+            repo=args.repo,
+            run=args.run,
+            timeout_seconds=args.timeout_seconds,
+        )
+        print(
+            f"generated git snapshot for {result['git']['ref']} with "
+            f"{result['case_count']} cases"
+        )
         return
 
     if args.command == "refine":

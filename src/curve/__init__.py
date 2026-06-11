@@ -45,6 +45,7 @@ from curve.profiling import profile_vectorize
 from curve.comparison import (
     compare_git_snapshots,
     compare_snapshots,
+    generate_git_curated_snapshot,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
 )
@@ -135,6 +136,7 @@ __all__ = [
     "flat_color_masks_from_image",
     "generate_synthetic_sample",
     "generate_synthetic_dataset",
+    "generate_git_curated_snapshot",
     "harvest_pseudo_labels",
     "centroids_from_examples",
     "compare_git_snapshots",
