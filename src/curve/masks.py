@@ -104,10 +104,15 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
             x = index % mask.width
             y = index // mask.width
             pixels.append((x, y))
-            for neighbor in _neighbor_indexes8(index, mask.width, mask.height):
-                if grid[neighbor]:
-                    grid[neighbor] = 0
-                    queue.append(neighbor)
+            for neighbor_y in range(max(0, y - 1), min(mask.height, y + 2)):
+                row_offset = neighbor_y * mask.width
+                for neighbor_x in range(max(0, x - 1), min(mask.width, x + 2)):
+                    if neighbor_x == x and neighbor_y == y:
+                        continue
+                    neighbor = row_offset + neighbor_x
+                    if grid[neighbor]:
+                        grid[neighbor] = 0
+                        queue.append(neighbor)
         if len(pixels) >= min_area:
             components.append(MaskComponent(frozenset(pixels)))
 
@@ -122,19 +127,6 @@ def _indexed_mask(mask: BinaryMask) -> tuple[bytearray, tuple[int, ...]]:
         grid[index] = 1
         indexes.append(index)
     return grid, tuple(indexes)
-
-
-def _neighbor_indexes8(index: int, width: int, height: int) -> tuple[int, ...]:
-    x = index % width
-    y = index // width
-    neighbors: list[int] = []
-    for neighbor_y in range(max(0, y - 1), min(height, y + 2)):
-        row_offset = neighbor_y * width
-        for neighbor_x in range(max(0, x - 1), min(width, x + 2)):
-            if neighbor_x == x and neighbor_y == y:
-                continue
-            neighbors.append(row_offset + neighbor_x)
-    return tuple(neighbors)
 
 
 def _neighbors4(x: int, y: int) -> tuple[Pixel, Pixel, Pixel, Pixel]:
