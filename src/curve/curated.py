@@ -135,6 +135,7 @@ def _check_curated_case(
         case_dir = output_dir / case["id"]
         case_dir.mkdir(parents=True, exist_ok=True)
         (case_dir / "output.svg").write_text(scene.to_svg(), encoding="utf-8")
+        (case_dir / "debug.svg").write_text(scene.to_debug_svg(), encoding="utf-8")
         (case_dir / "manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True),
             encoding="utf-8",

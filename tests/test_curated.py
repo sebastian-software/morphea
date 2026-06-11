@@ -89,6 +89,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(result["cases"][0]["status"], "checked")
             self.assertTrue(result["cases"][0]["expectations"][0]["ok"])
             self.assertTrue((output_dir / "simple-circle" / "output.svg").exists())
+            self.assertTrue((output_dir / "simple-circle" / "debug.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "manifest.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "report.md").exists())
             self.assertTrue((output_dir / "simple-circle" / "preview.png").exists())

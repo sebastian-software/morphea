@@ -481,8 +481,8 @@ Implemented so far:
   large binaries into git.
 - `curve curated-check suite.json -o report.json` for suite validation.
 - optional `--run` mode using each case's bounded `recommended_config`.
-- per-case `output.svg`, `manifest.json`, `config.json`, `report.md`, and
-  `preview.png` artifacts via `--output-dir`.
+- per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
+  `report.md`, and `preview.png` artifacts via `--output-dir`.
 - expectation checks for anchor kinds and scene group kinds.
 
 Remaining:
