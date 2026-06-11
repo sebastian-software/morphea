@@ -9,6 +9,7 @@ from time import monotonic
 from PIL import Image
 
 from curve.anchors import AnchorCandidate, CircleAnchor, Point, QuadAnchor, StrokeAnchor
+from curve.classifier import load_centroid_model
 from curve.detection import detect_cutout_strokes, detect_primitive_anchors
 from curve.masks import BinaryMask, MaskComponent, connected_components
 from curve.scene import Scene
@@ -149,6 +150,7 @@ def scene_from_flat_color_image(
     max_colors: int | None = None,
     max_component_area: int | None = None,
     timeout_seconds: float | None = None,
+    classifier_model: str | Path | None = None,
 ) -> Scene:
     mask_result = _flat_color_masks_result(
         path,
@@ -162,6 +164,11 @@ def scene_from_flat_color_image(
     anchors: list[AnchorCandidate] = []
     diagnostics = list(mask_result.diagnostics)
     started_at = monotonic()
+    loaded_classifier = (
+        load_centroid_model(classifier_model)
+        if classifier_model is not None
+        else None
+    )
     for color_mask in color_masks:
         if max_component_area is not None and len(color_mask.mask.pixels) > max_component_area:
             diagnostics.append(
@@ -205,7 +212,11 @@ def scene_from_flat_color_image(
                 continue
 
             component_mask = _mask_from_component(color_mask.mask, component)
-            for anchor in detect_primitive_anchors(component_mask, min_area=min_area):
+            for anchor in detect_primitive_anchors(
+                component_mask,
+                min_area=min_area,
+                classifier_model=loaded_classifier,
+            ):
                 anchors.append(_scale_anchor(_with_color(anchor, color_mask.color), mask_result.scale))
             for anchor in detect_cutout_strokes(component_mask):
                 anchors.append(_scale_anchor(anchor, mask_result.scale))

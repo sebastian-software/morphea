@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from math import dist
 from pathlib import Path
 
+from curve.anchors import AnchorCandidate
+
 
 FEATURE_NAMES = (
     "node_count",
@@ -68,6 +70,36 @@ def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
     )
 
 
+def features_from_candidate(candidate: AnchorCandidate) -> tuple[float, ...]:
+    anchor: dict[str, object] = {
+        "kind": candidate.kind.value,
+        "node_count": candidate.node_count,
+        "parameter_count": candidate.parameter_count,
+    }
+    if candidate.circle is not None:
+        anchor["circle"] = {
+            "cx": candidate.circle.center.x,
+            "cy": candidate.circle.center.y,
+            "r": candidate.circle.radius,
+        }
+    if candidate.stroke is not None:
+        anchor["stroke"] = {
+            "centerline": [
+                {"x": point.x, "y": point.y}
+                for point in candidate.stroke.centerline
+            ],
+            "width_samples": list(candidate.stroke.width_samples),
+        }
+    if candidate.quad is not None:
+        anchor["quad"] = {
+            "corners": [
+                {"x": point.x, "y": point.y}
+                for point in candidate.quad.corners
+            ]
+        }
+    return features_from_anchor(anchor)
+
+
 def examples_from_dataset(
     dataset_json: str | Path,
     *,
@@ -119,6 +151,27 @@ def train_centroid_classifier(
     return model
 
 
+def load_centroid_model(model_json: str | Path) -> dict[str, tuple[float, ...]]:
+    model = json.loads(Path(model_json).read_text(encoding="utf-8"))
+    if model.get("model_type") != "centroid_primitive_classifier":
+        msg = "unsupported classifier model type"
+        raise ValueError(msg)
+    return {
+        label: tuple(values)
+        for label, values in model.get("centroids", {}).items()
+    }
+
+
+def classifier_prior_error(
+    centroids: dict[str, tuple[float, ...]],
+    candidate: AnchorCandidate,
+) -> float:
+    if not centroids:
+        return 0.0
+    predicted = predict_label(centroids, features_from_candidate(candidate))
+    return 0.0 if predicted == candidate.kind.value else 0.35
+
+
 def predict_label(
     centroids: dict[str, tuple[float, ...]],
     features: tuple[float, ...],
@@ -158,4 +211,3 @@ def _centroids(examples: tuple[TrainingExample, ...]) -> dict[str, tuple[float, 
             for index in range(len(FEATURE_NAMES))
         )
     return centroids
-

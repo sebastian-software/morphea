@@ -14,15 +14,24 @@ from curve.anchors import (
     choose_best_anchor,
     enrich_anchor_metrics,
 )
+from curve.classifier import classifier_prior_error
 from curve.masks import BinaryMask, MaskComponent, connected_components
 
 
-def detect_primitive_anchors(mask: BinaryMask, *, min_area: int = 8) -> tuple[AnchorCandidate, ...]:
+def detect_primitive_anchors(
+    mask: BinaryMask,
+    *,
+    min_area: int = 8,
+    classifier_model: dict[str, tuple[float, ...]] | None = None,
+) -> tuple[AnchorCandidate, ...]:
     """Detect simple primitive anchors from a binary mask."""
 
     anchors: list[AnchorCandidate] = []
     for component in connected_components(mask, min_area=min_area):
-        candidates = primitive_candidates_for_component(component)
+        candidates = primitive_candidates_for_component(
+            component,
+            classifier_model=classifier_model,
+        )
         if candidates:
             anchors.append(choose_best_anchor(candidates))
     return tuple(anchors)
@@ -60,6 +69,8 @@ def detect_cutout_strokes(
 
 def primitive_candidates_for_component(
     component: MaskComponent,
+    *,
+    classifier_model: dict[str, tuple[float, ...]] | None = None,
 ) -> tuple[AnchorCandidate, ...]:
     """Generate plausible simple-shape candidates for one component."""
 
@@ -87,7 +98,31 @@ def primitive_candidates_for_component(
         parameter_count=max(8, min(component.area * 2, len(component.boundary_pixels) * 2)),
     )
     candidates.append(fallback)
+    if classifier_model is not None:
+        return tuple(_with_classifier_prior(candidate, classifier_model) for candidate in candidates)
     return tuple(candidates)
+
+
+def _with_classifier_prior(
+    candidate: AnchorCandidate,
+    classifier_model: dict[str, tuple[float, ...]],
+) -> AnchorCandidate:
+    metrics = dict(candidate.metrics)
+    metrics["classifier_prior_error"] = classifier_prior_error(
+        classifier_model,
+        candidate,
+    )
+    return AnchorCandidate(
+        kind=candidate.kind,
+        raster_error=candidate.raster_error,
+        node_count=candidate.node_count,
+        parameter_count=candidate.parameter_count,
+        color=candidate.color,
+        circle=candidate.circle,
+        stroke=candidate.stroke,
+        quad=candidate.quad,
+        metrics=metrics,
+    )
 
 
 def _stroke_circle_candidate(component: MaskComponent) -> AnchorCandidate | None:

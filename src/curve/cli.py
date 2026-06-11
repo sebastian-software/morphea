@@ -79,6 +79,11 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         help="Write a timestamped experiment run directory under this root.",
     )
+    vectorize.add_argument(
+        "--classifier-model",
+        type=Path,
+        help="Optional primitive classifier model JSON used as a ranking prior.",
+    )
 
     generate = subcommands.add_parser(
         "generate",
@@ -120,6 +125,7 @@ def main(argv: list[str] | None = None) -> None:
             "max_colors": args.max_colors,
             "max_component_area": args.max_component_area,
             "timeout_seconds": args.timeout_seconds,
+            "classifier_model": str(args.classifier_model) if args.classifier_model else None,
         }
         scene = scene_from_flat_color_image(
             args.input,
@@ -129,6 +135,7 @@ def main(argv: list[str] | None = None) -> None:
             max_colors=args.max_colors,
             max_component_area=args.max_component_area,
             timeout_seconds=args.timeout_seconds,
+            classifier_model=args.classifier_model,
         )
         if args.run_dir is not None:
             run_dir = create_run_dir(args.run_dir)

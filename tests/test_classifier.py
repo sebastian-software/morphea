@@ -6,12 +6,15 @@ from io import StringIO
 from pathlib import Path
 
 from curve.classifier import (
+    classifier_prior_error,
     examples_from_dataset,
     features_from_anchor,
+    load_centroid_model,
     train_centroid_classifier,
 )
 from curve.cli import main
 from curve.dataset import generate_synthetic_dataset
+from curve.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
 
 
 class PrimitiveClassifierTests(unittest.TestCase):
@@ -93,7 +96,30 @@ class PrimitiveClassifierTests(unittest.TestCase):
             model = json.loads(model_path.read_text())
             self.assertEqual(model["train_examples"], 8)
 
+    def test_load_model_and_score_matching_candidate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=30,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            model_path = Path(temp_dir) / "model.json"
+            train_centroid_classifier(Path(temp_dir) / "dataset.json", output=model_path)
+            centroids = load_centroid_model(model_path)
+            candidate = AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                circle=CircleAnchor(center=Point(10, 10), radius=6),
+            )
+
+            self.assertEqual(classifier_prior_error(centroids, candidate), 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
-

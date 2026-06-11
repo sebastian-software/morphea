@@ -8,6 +8,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from curve.cli import main
+from curve.dataset import generate_synthetic_dataset
+from curve.classifier import train_centroid_classifier
 
 
 class CliTests(unittest.TestCase):
@@ -145,6 +147,44 @@ class CliTests(unittest.TestCase):
             self.assertTrue((run_dirs[0] / "manifest.json").exists())
             self.assertTrue((run_dirs[0] / "config.json").exists())
             self.assertTrue((run_dirs[0] / "report.md").exists())
+
+    def test_vectorize_accepts_classifier_model_prior(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=Path(temp_dir) / "dataset",
+                count=4,
+                seed=40,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            model_path = Path(temp_dir) / "model.json"
+            train_centroid_classifier(Path(temp_dir) / "dataset" / "dataset.json", output=model_path)
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            image = Image.new("RGB", (24, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((2, 2, 10, 10), fill="#dd2222")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--classifier-model",
+                        str(model_path),
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertIn(
+                "classifier_prior_error",
+                manifest["anchors"][0]["metrics"],
+            )
 
 
 if __name__ == "__main__":
