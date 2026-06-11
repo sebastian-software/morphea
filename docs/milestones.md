@@ -373,6 +373,8 @@ Implemented so far:
 - `curve harvest` pseudo-label collection from run manifests
 - run-level warning-diagnostic filter
 - anchor-level `classifier_prior_error` filter
+- run-level `editability_score` minimum filter
+- run-level `fragmentation_penalty` maximum filter
 - output pseudo-label index with source manifest provenance
 - human-editable review queue via `curve review`
 - accepted/rejected/pending split via `curve apply-review`

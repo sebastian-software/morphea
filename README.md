@@ -90,6 +90,14 @@ Harvest high-confidence pseudo-labels from run manifests:
 PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json
 ```
 
+Filter harvested labels by scene quality:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json \
+  --min-editability-score 0.8 \
+  --max-fragmentation-penalty 0.2
+```
+
 Create and apply a human review queue:
 
 ```sh
