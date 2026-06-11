@@ -368,6 +368,8 @@ Implemented so far:
 - manifest-ready proposal serialization
 - `curve segment input.png -o proposals.json` writes segment proposal manifests
   from the flat-color baseline
+- segment proposal manifests include backend availability/status metadata so
+  flat-color and future MLX runs can be compared explicitly.
 - flat-color segment proposals split connected components by default and can
   mark oversized components as `deferred` via `max_component_area`
 - segment configs accept future MLX runtime knobs for model path, score

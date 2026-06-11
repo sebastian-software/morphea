@@ -211,6 +211,7 @@ Top-level fields:
 - `schema_version`: currently `1`
 - `input`
 - `config`
+- `backend`: segmenter availability/status metadata
 - `proposal_count`
 - `proposals`
 
@@ -224,8 +225,9 @@ Proposal fields:
 - `area`
 - `status`
 
-MLX SAM currently has an explicit not-configured error path. It will write the
-same proposal schema once the local model runtime is installed.
+`backend` records `source`, `backend_available`, `status`, and an optional
+`reason`. MLX SAM currently has an explicit not-configured error path. It will
+write the same proposal schema once the local model runtime is installed.
 
 ## Segment Config v1
 
