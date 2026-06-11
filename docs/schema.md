@@ -140,6 +140,45 @@ Supported fields match current runtime knobs:
 
 CLI arguments override values loaded from the config file.
 
+## Segment Proposal Manifest v1
+
+Written by `curve segment`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `input`
+- `config`
+- `proposal_count`
+- `proposals`
+
+Proposal fields:
+
+- `id`
+- `source`: for example `flat_color` or `mlx_sam`
+- `confidence`
+- `color`
+- `bounds`
+- `area`
+- `status`
+
+MLX SAM currently has an explicit not-configured error path. It will write the
+same proposal schema once the local model runtime is installed.
+
+## Segment Config v1
+
+Read by `curve segment --config`.
+
+Supported fields:
+
+- `segmenter`: currently `flat_color` or `mlx_sam`
+- `min_area`
+- `color_tolerance`
+- `max_size`
+- `max_colors`
+
+CLI arguments override values loaded from the config file.
+
 ## Training Config v1
 
 Read by `curve train --config`.

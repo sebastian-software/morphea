@@ -328,6 +328,10 @@ Implemented so far:
 - `FlatColorSegmenter` baseline
 - `MlxSamSegmenter` adapter placeholder with explicit not-configured error
 - manifest-ready proposal serialization
+- `curve segment input.png -o proposals.json` writes segment proposal manifests
+  from the flat-color baseline
+- `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
+  until the local MLX/SAM runtime is installed
 
 ## M7: Primitive Classifier Training
 
@@ -560,6 +564,7 @@ Implemented so far:
 - `curve vectorize`
 - `curve eval`
 - `curve report`
+- `curve segment`
 - `curve sweep`
 - `curve merge-labels`
 - `curve compare-training`
@@ -567,6 +572,7 @@ Implemented so far:
 - `curve train --config train.json` for repeatable classifier training inputs
 - `curve compare-training --config compare.json` for repeatable retraining
   comparisons
+- `curve segment --config segment.json` for repeatable segment proposal runs
 - `curve compare-snapshots before.json after.json` for comparing saved
   summaries from different commits/configurations
 - `curve sweep --markdown summary.md` for scan-friendly config comparisons
