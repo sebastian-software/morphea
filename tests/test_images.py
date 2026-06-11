@@ -97,6 +97,14 @@ class FlatColorImageTests(unittest.TestCase):
             [AnchorKind.CIRCLE, AnchorKind.CIRCLE],
         )
 
+    def test_timeout_can_stop_during_component_scanning(self):
+        image_path = _write_large_circle_image()
+
+        scene = scene_from_flat_color_image(image_path, timeout_seconds=0)
+
+        self.assertEqual(scene.anchors, ())
+        self.assertEqual(scene.diagnostics[0]["code"], "timeout_reached")
+
     def test_max_colors_quantizes_palette_before_grouping(self):
         image_path = _write_multi_red_circle_image()
 

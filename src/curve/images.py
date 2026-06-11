@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic
@@ -11,7 +12,7 @@ from PIL import Image
 from curve.anchors import AnchorCandidate, CircleAnchor, Point, QuadAnchor, StrokeAnchor
 from curve.classifier import load_centroid_model
 from curve.detection import detect_cutout_strokes, detect_primitive_anchors
-from curve.masks import BinaryMask, MaskComponent, connected_components
+from curve.masks import BinaryMask, MaskComponent
 from curve.scene import Scene
 
 
@@ -181,34 +182,23 @@ def scene_from_flat_color_image(
                     "message": "color mask exceeded component limit and was split into bounded components",
                 }
             )
-        for component in connected_components(color_mask.mask, min_area=min_area):
-            if _deadline_exceeded(started_at, timeout_seconds):
-                diagnostics.append(
-                    {
-                        "level": "warning",
-                        "code": "timeout_reached",
-                        "timeout_seconds": timeout_seconds,
-                        "message": "stopped before all color components were processed",
-                    }
-                )
-                return Scene(
-                    width=mask_result.width,
-                    height=mask_result.height,
-                    anchors=tuple(anchors),
-                    diagnostics=tuple(diagnostics),
-                )
-            if max_component_area is not None and component.area > max_component_area:
-                diagnostics.append(
-                    {
-                        "level": "warning",
-                        "code": "component_deferred",
-                        "color": color_mask.color,
-                        "area": component.area,
-                        "max_component_area": max_component_area,
-                        "bounds": list(component.bounds),
-                    }
-                )
-                continue
+        component_result = _bounded_connected_components(
+            color_mask.mask,
+            min_area=min_area,
+            max_component_area=max_component_area,
+            started_at=started_at,
+            timeout_seconds=timeout_seconds,
+            color=color_mask.color,
+        )
+        diagnostics.extend(component_result.diagnostics)
+        if component_result.timed_out:
+            return Scene(
+                width=mask_result.width,
+                height=mask_result.height,
+                anchors=tuple(anchors),
+                diagnostics=tuple(diagnostics),
+            )
+        for component in component_result.components:
 
             component_mask = _mask_from_component(color_mask.mask, component)
             for anchor in detect_primitive_anchors(
@@ -224,6 +214,97 @@ def scene_from_flat_color_image(
         height=mask_result.height,
         anchors=tuple(anchors),
         diagnostics=tuple(diagnostics),
+    )
+
+
+@dataclass(frozen=True)
+class ComponentScanResult:
+    components: tuple[MaskComponent, ...]
+    diagnostics: tuple[dict[str, object], ...]
+    timed_out: bool = False
+
+
+def _bounded_connected_components(
+    mask: BinaryMask,
+    *,
+    min_area: int,
+    max_component_area: int | None,
+    started_at: float,
+    timeout_seconds: float | None,
+    color: str,
+) -> ComponentScanResult:
+    unseen = set(mask.pixels)
+    components: list[MaskComponent] = []
+    diagnostics: list[dict[str, object]] = []
+
+    while unseen:
+        if _deadline_exceeded(started_at, timeout_seconds):
+            diagnostics.append(_timeout_diagnostic(timeout_seconds))
+            return ComponentScanResult(
+                components=_sort_components(components),
+                diagnostics=tuple(diagnostics),
+                timed_out=True,
+            )
+
+        start = unseen.pop()
+        queue: deque[tuple[int, int]] = deque([start])
+        pixels = {start}
+        area = 0
+        min_x = max_x = start[0]
+        min_y = max_y = start[1]
+        store_pixels = True
+
+        while queue:
+            if area % 512 == 0 and _deadline_exceeded(started_at, timeout_seconds):
+                diagnostics.append(_timeout_diagnostic(timeout_seconds))
+                return ComponentScanResult(
+                    components=_sort_components(components),
+                    diagnostics=tuple(diagnostics),
+                    timed_out=True,
+                )
+
+            x, y = queue.popleft()
+            area += 1
+            min_x = min(min_x, x)
+            max_x = max(max_x, x)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y)
+            if max_component_area is not None and area > max_component_area:
+                store_pixels = False
+                pixels.clear()
+
+            for neighbor in _neighbors8(x, y):
+                if neighbor in unseen:
+                    unseen.remove(neighbor)
+                    queue.append(neighbor)
+                    if store_pixels:
+                        pixels.add(neighbor)
+
+        if area < min_area:
+            continue
+        if max_component_area is not None and area > max_component_area:
+            diagnostics.append(
+                {
+                    "level": "warning",
+                    "code": "component_deferred",
+                    "color": color,
+                    "area": area,
+                    "max_component_area": max_component_area,
+                    "bounds": [min_x, min_y, max_x, max_y],
+                }
+            )
+            continue
+        components.append(MaskComponent(frozenset(pixels)))
+
+    return ComponentScanResult(
+        components=_sort_components(components),
+        diagnostics=tuple(diagnostics),
+    )
+
+
+def _sort_components(components: list[MaskComponent]) -> tuple[MaskComponent, ...]:
+    return tuple(
+        sorted(components, key=lambda component: component.area, reverse=True)
     )
 
 
@@ -247,6 +328,28 @@ def _mask_from_component(mask: BinaryMask, component: MaskComponent) -> BinaryMa
 
 def _deadline_exceeded(started_at: float, timeout_seconds: float | None) -> bool:
     return timeout_seconds is not None and monotonic() - started_at >= timeout_seconds
+
+
+def _timeout_diagnostic(timeout_seconds: float | None) -> dict[str, object]:
+    return {
+        "level": "warning",
+        "code": "timeout_reached",
+        "timeout_seconds": timeout_seconds,
+        "message": "stopped before all color components were processed",
+    }
+
+
+def _neighbors8(x: int, y: int) -> tuple[tuple[int, int], ...]:
+    return (
+        (x - 1, y - 1),
+        (x, y - 1),
+        (x + 1, y - 1),
+        (x - 1, y),
+        (x + 1, y),
+        (x - 1, y + 1),
+        (x, y + 1),
+        (x + 1, y + 1),
+    )
 
 
 def _scale_anchor(anchor: AnchorCandidate, analysis_scale: float) -> AnchorCandidate:
