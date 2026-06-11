@@ -33,6 +33,7 @@ from curve.segmenters import (
     proposals_to_manifest,
     segmenter_backend_status,
 )
+from curve.scene import SvgStyle
 from curve.self_learning import (
     apply_review_file,
     compare_retraining,
@@ -186,6 +187,12 @@ def main(argv: list[str] | None = None) -> None:
         "--classifier-model",
         type=Path,
         help="Optional primitive classifier model JSON used as a ranking prior.",
+    )
+    vectorize.add_argument(
+        "--cutout-export",
+        choices=("overlay_stroke", "negative_mask"),
+        default="overlay_stroke",
+        help="Export cut-outs as visible overlay strokes or as an editable SVG mask.",
     )
     vectorize.add_argument("--raster-error-weight", type=float)
     vectorize.add_argument("--quality-error-weight", type=float)
@@ -478,6 +485,7 @@ def main(argv: list[str] | None = None) -> None:
             "output": str(args.output),
             "debug_svg": str(args.debug_svg) if args.debug_svg else None,
             "config": str(args.config) if args.config else None,
+            "cutout_export": args.cutout_export,
             **vectorize_config,
         }
         scene = scene_from_flat_color_image(
@@ -496,7 +504,10 @@ def main(argv: list[str] | None = None) -> None:
             return
 
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(scene.to_svg(), encoding="utf-8")
+        args.output.write_text(
+            scene.to_svg(SvgStyle(cutout_strategy=args.cutout_export)),
+            encoding="utf-8",
+        )
         if args.debug_svg is not None:
             args.debug_svg.parent.mkdir(parents=True, exist_ok=True)
             args.debug_svg.write_text(scene.to_debug_svg(), encoding="utf-8")

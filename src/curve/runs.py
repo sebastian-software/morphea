@@ -12,7 +12,7 @@ from pathlib import Path
 from PIL import Image
 
 from curve.rendering import raster_fidelity_metrics, render_manifest_image
-from curve.scene import Scene
+from curve.scene import Scene, SvgStyle
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,11 @@ def write_vectorize_run(
                 raster_fidelity_metrics(source=source, rendered=preview)
             )
 
-    svg_path.write_text(scene.to_svg(), encoding="utf-8")
+    cutout_export = str(config.get("cutout_export", "overlay_stroke"))
+    svg_path.write_text(
+        scene.to_svg(SvgStyle(cutout_strategy=cutout_export)),
+        encoding="utf-8",
+    )
     debug_svg_path.write_text(scene.to_debug_svg(), encoding="utf-8")
     anchors_path.write_text(
         json.dumps(_anchors_artifact(manifest), indent=2, sort_keys=True),

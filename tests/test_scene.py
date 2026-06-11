@@ -374,6 +374,40 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(manifest["metrics"]["cutout_overlay_count"], 1)
         self.assertEqual(manifest["metrics"]["negative_mask_candidate_count"], 1)
 
+    def test_negative_mask_cutout_export_uses_editable_mask_strokes(self):
+        fill = AnchorCandidate(
+            kind=AnchorKind.RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=4,
+            color="#003366",
+            quad=QuadAnchor(
+                corners=(Point(1, 1), Point(9, 1), Point(9, 5), Point(1, 5)),
+            ),
+        )
+        cutout = AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            color="#ffffff",
+            stroke=StrokeAnchor(
+                centerline=(Point(2, 3), Point(8, 3)),
+                width_samples=(1.0,),
+                is_cutout=True,
+            ),
+        )
+
+        svg = Scene(width=10, height=6, anchors=(fill, cutout)).to_svg(
+            SvgStyle(cutout_strategy="negative_mask")
+        )
+
+        self.assertIn('<mask id="curve-cutout-mask"', svg)
+        self.assertIn('mask="url(#curve-cutout-mask)"', svg)
+        self.assertIn('stroke="black"', svg)
+        self.assertIn('fill="#003366"', svg)
+        self.assertNotIn('stroke="#ffffff"', svg)
+
     def test_debug_svg_includes_anchor_ids_bounds_and_labels(self):
         mask = BinaryMask.from_rows(
             (

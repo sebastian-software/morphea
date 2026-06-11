@@ -27,6 +27,7 @@ class SvgStyle:
     fill: str = "#0b2d5f"
     stroke: str = "#0b2d5f"
     background: str | None = None
+    cutout_strategy: str = "overlay_stroke"
 
 
 @dataclass(frozen=True)
@@ -88,6 +89,7 @@ def anchors_to_svg(
     style: SvgStyle | None = None,
 ) -> str:
     style = style or SvgStyle()
+    anchor_tuple = tuple(anchors)
     lines = [
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" '
@@ -99,8 +101,13 @@ def anchors_to_svg(
             f'<rect x="0" y="0" width="{width}" height="{height}" '
             f'fill="{escape(style.background)}" />'
         )
-    for anchor in anchors:
-        lines.append(f"  {anchor_to_svg_element(anchor, style)}")
+    if style.cutout_strategy == "negative_mask" and any(
+        _cutout_mask_eligible(anchor) for anchor in anchor_tuple
+    ):
+        lines.extend(_negative_cutout_mask_elements(anchor_tuple, width, height, style))
+    else:
+        for anchor in anchor_tuple:
+            lines.append(f"  {anchor_to_svg_element(anchor, style)}")
     lines.append("</svg>")
     return "\n".join(lines)
 
@@ -136,10 +143,15 @@ def anchors_to_debug_svg(
     return "\n".join(lines)
 
 
-def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None) -> str:
+def anchor_to_svg_element(
+    anchor: AnchorCandidate,
+    style: SvgStyle | None = None,
+    *,
+    color_override: str | None = None,
+) -> str:
     style = style or SvgStyle()
-    fill = anchor.color or style.fill
-    stroke = anchor.color or style.stroke
+    fill = color_override or anchor.color or style.fill
+    stroke = color_override or anchor.color or style.stroke
     if anchor.kind == AnchorKind.CIRCLE and anchor.circle is not None:
         return (
             f'<circle cx="{_fmt(anchor.circle.center.x)}" '
@@ -185,6 +197,31 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
         return f'<polygon points="{points}" fill="{escape(fill)}" />'
 
     return _unsupported_anchor(anchor)
+
+
+def _negative_cutout_mask_elements(
+    anchors: tuple[AnchorCandidate, ...],
+    width: int,
+    height: int,
+    style: SvgStyle,
+) -> list[str]:
+    mask_id = "curve-cutout-mask"
+    lines = [
+        "  <defs>",
+        f'    <mask id="{mask_id}" maskUnits="userSpaceOnUse">',
+        f'      <rect x="0" y="0" width="{width}" height="{height}" fill="white" />',
+    ]
+    for anchor in anchors:
+        if _cutout_mask_eligible(anchor):
+            lines.append(
+                f"      {anchor_to_svg_element(anchor, style, color_override='black')}"
+            )
+    lines.extend(["    </mask>", "  </defs>", f'  <g mask="url(#{mask_id})">'])
+    for anchor in anchors:
+        if not _cutout_mask_eligible(anchor):
+            lines.append(f"    {anchor_to_svg_element(anchor, style)}")
+    lines.append("  </g>")
+    return lines
 
 
 def anchor_to_manifest(anchor: AnchorCandidate) -> dict[str, object]:

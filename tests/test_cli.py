@@ -166,6 +166,39 @@ class CliTests(unittest.TestCase):
             self.assertEqual(len(cutouts), 1)
             self.assertEqual(cutouts[0]["color"], "#ffffff")
 
+    def test_vectorize_can_export_cutouts_as_negative_mask(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            image = Image.new("RGB", (18, 9), "white")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((2, 2, 15, 6), fill="#003366")
+            draw.rectangle((6, 4, 11, 4), fill="white")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--cutout-export",
+                        "negative_mask",
+                    ]
+                )
+
+            svg = output_path.read_text(encoding="utf-8")
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertIn('<mask id="curve-cutout-mask"', svg)
+            self.assertIn('mask="url(#curve-cutout-mask)"', svg)
+            self.assertIn('stroke="black"', svg)
+            self.assertNotIn('stroke="#ffffff"', svg)
+            self.assertEqual(
+                manifest["metrics"]["negative_mask_candidate_count"],
+                1,
+            )
+
     def test_vectorize_writes_runtime_diagnostics(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

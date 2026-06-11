@@ -66,6 +66,33 @@ class RunWriterTests(unittest.TestCase):
                 run.html_report_path.read_text(encoding="utf-8"),
             )
 
+    def test_write_vectorize_run_applies_negative_mask_export_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            image = Image.new("RGB", (18, 9), "white")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((2, 2, 15, 6), fill="#003366")
+            draw.rectangle((6, 4, 11, 4), fill="white")
+            image.save(input_path)
+
+            scene = scene_from_flat_color_image(input_path)
+            run_dir = create_run_dir(Path(temp_dir) / "runs")
+            run = write_vectorize_run(
+                run_dir=run_dir,
+                input_path=input_path,
+                scene=scene,
+                config={
+                    "command": "vectorize",
+                    "min_area": 8,
+                    "cutout_export": "negative_mask",
+                },
+            )
+
+            svg = run.svg_path.read_text(encoding="utf-8")
+            self.assertIn('<mask id="curve-cutout-mask"', svg)
+            self.assertIn('mask="url(#curve-cutout-mask)"', svg)
+            self.assertNotIn('stroke="#ffffff"', svg)
+
     def test_render_markdown_report_summarizes_anchor_types(self):
         report = render_markdown_report(
             manifest={
