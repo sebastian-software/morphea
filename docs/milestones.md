@@ -149,6 +149,8 @@ Implemented so far:
   metrics such as `corner_radius` are excluded from candidate error scoring.
 - anchors with a shared `parallel_group_id` are exposed as
   `parallel_stroke_group` scene groups with `parallel_spacing_error`.
+- perspective-grid scene groups expose row/column counts and
+  `vanishing_line_diagnostics` derived from quad edge pairs.
 
 ## M3: Scene Graph and Layer Semantics
 

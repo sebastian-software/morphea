@@ -84,6 +84,19 @@ Cut-out export policy fields:
 - `mask_eligible`: whether the anchor can be migrated to a future negative-mask
   export path without losing the semantic cut-out intent
 
+Group fields:
+
+- `kind`: for example `perspective_grid` or `parallel_stroke_group`
+- `anchor_indexes`
+- `metrics`
+- `row_count`: present for `perspective_grid`
+- `column_count`: present for `perspective_grid`
+
+`perspective_grid.metrics.vanishing_line_diagnostics` records how many
+horizontal and vertical edge pairs were inspected and how many finite
+intersections were found. This keeps perspective-grid regularity visible even
+before a full vanishing-point solver is introduced.
+
 ## Sweep Summary v1
 
 Written by `curve sweep` as `sweep-summary.json`.
