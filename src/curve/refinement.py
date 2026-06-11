@@ -189,6 +189,60 @@ def _optimize_local_geometry(
                         improved = True
                     continue
 
+                if kind in {"stroke_polyline", "stroke_path", "arc"}:
+                    base_centerline = _stroke_centerline(anchor)
+                    if base_centerline is None:
+                        continue
+                    base_widths = _stroke_width_samples(anchor)
+                    best_centerline = base_centerline
+                    best_widths = base_widths
+                    for candidate_centerline, candidate_widths in _stroke_variants(
+                        base_centerline,
+                        base_widths,
+                    ):
+                        candidate = _with_stroke_geometry(
+                            result,
+                            anchor,
+                            candidate_centerline,
+                            candidate_widths,
+                        )
+                        candidate_error = _manifest_objective(
+                            candidate,
+                            source,
+                            raster_l1_weight=raster_l1_weight,
+                            raster_edge_weight=raster_edge_weight,
+                        )
+                        if candidate_error < best_error:
+                            best_error = candidate_error
+                            best_centerline = candidate_centerline
+                            best_widths = candidate_widths
+                    if best_error < current_error:
+                        stroke = anchor.get("stroke")
+                        if not isinstance(stroke, dict):
+                            continue
+                        stroke["centerline"] = _manifest_points(best_centerline)
+                        stroke["width_samples"] = list(best_widths)
+                        metrics = dict(anchor.get("metrics", {}))
+                        metrics["refinement_stroke_centerline_delta"] = (
+                            metrics.get("refinement_stroke_centerline_delta", 0.0)
+                            + _centerline_delta(base_centerline, best_centerline)
+                        )
+                        metrics["refinement_stroke_width_delta"] = (
+                            metrics.get("refinement_stroke_width_delta", 0.0)
+                            + _width_delta(base_widths, best_widths)
+                        )
+                        anchor["metrics"] = metrics
+                        current_error = best_error
+                        current_metrics = _manifest_raster_metrics(
+                            result,
+                            source,
+                            raster_l1_weight=raster_l1_weight,
+                            raster_edge_weight=raster_edge_weight,
+                        )
+                        optimized_kinds.add(kind)
+                        improved = True
+                    continue
+
                 if kind not in {"rect", "rounded_rect", "quad"}:
                     continue
                 base_corners = _quad_corners(anchor)
@@ -327,6 +381,75 @@ def _with_quad_corners(
     return candidate
 
 
+def _with_stroke_geometry(
+    manifest: dict[str, object],
+    anchor: dict[str, object],
+    centerline: tuple[tuple[float, float], ...],
+    width_samples: tuple[float, ...],
+) -> dict[str, object]:
+    candidate = dict(manifest)
+    candidate_anchors = []
+    for candidate_anchor in manifest.get("anchors", []):
+        if candidate_anchor is anchor:
+            changed = dict(anchor)
+            stroke = dict(changed.get("stroke", {}))
+            stroke["centerline"] = _manifest_points(centerline)
+            stroke["width_samples"] = list(width_samples)
+            changed["stroke"] = stroke
+            candidate_anchors.append(changed)
+        else:
+            candidate_anchors.append(candidate_anchor)
+    candidate["anchors"] = candidate_anchors
+    return candidate
+
+
+def _stroke_centerline(
+    anchor: dict[str, object],
+) -> tuple[tuple[float, float], ...] | None:
+    stroke = anchor.get("stroke")
+    if not isinstance(stroke, dict):
+        return None
+    points = stroke.get("centerline")
+    if not isinstance(points, list) or len(points) < 2:
+        return None
+    parsed = []
+    for point in points:
+        if not isinstance(point, dict):
+            return None
+        parsed.append((float(point.get("x", 0.0)), float(point.get("y", 0.0))))
+    return tuple(parsed)
+
+
+def _stroke_width_samples(anchor: dict[str, object]) -> tuple[float, ...]:
+    stroke = anchor.get("stroke")
+    if not isinstance(stroke, dict):
+        return (1.0,)
+    samples = stroke.get("width_samples")
+    if not isinstance(samples, list) or not samples:
+        return (1.0,)
+    return tuple(max(0.5, float(sample)) for sample in samples)
+
+
+def _stroke_variants(
+    centerline: tuple[tuple[float, float], ...],
+    width_samples: tuple[float, ...],
+) -> tuple[
+    tuple[tuple[tuple[float, float], ...], tuple[float, ...]],
+    ...,
+]:
+    variants = []
+    for dx, dy in ((-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0)):
+        variants.append((tuple((x + dx, y + dy) for x, y in centerline), width_samples))
+    for delta in (-1.0, 1.0):
+        variants.append(
+            (
+                centerline,
+                tuple(max(0.5, sample + delta) for sample in width_samples),
+            )
+        )
+    return tuple(variants)
+
+
 def _quad_corners(anchor: dict[str, object]) -> tuple[tuple[float, float], ...] | None:
     quad = anchor.get("quad")
     if not isinstance(quad, dict):
@@ -369,6 +492,12 @@ def _manifest_corners(
     return [{"x": x, "y": y} for x, y in corners]
 
 
+def _manifest_points(
+    points: tuple[tuple[float, float], ...],
+) -> list[dict[str, float]]:
+    return [{"x": x, "y": y} for x, y in points]
+
+
 def _corner_delta(
     before: tuple[tuple[float, float], ...],
     after: tuple[tuple[float, float], ...],
@@ -376,6 +505,23 @@ def _corner_delta(
     return sum(
         ((after_x - before_x) ** 2 + (after_y - before_y) ** 2) ** 0.5
         for (before_x, before_y), (after_x, after_y) in zip(before, after, strict=True)
+    )
+
+
+def _centerline_delta(
+    before: tuple[tuple[float, float], ...],
+    after: tuple[tuple[float, float], ...],
+) -> float:
+    return sum(
+        ((after_x - before_x) ** 2 + (after_y - before_y) ** 2) ** 0.5
+        for (before_x, before_y), (after_x, after_y) in zip(before, after, strict=True)
+    )
+
+
+def _width_delta(before: tuple[float, ...], after: tuple[float, ...]) -> float:
+    return sum(
+        abs(after_width - before_width)
+        for before_width, after_width in zip(before, after, strict=True)
     )
 
 
