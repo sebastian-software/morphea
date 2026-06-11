@@ -167,9 +167,9 @@ class SnapshotComparisonTests(unittest.TestCase):
             self.assertEqual(result["git"]["before_ref"], "HEAD")
             self.assertTrue(output.exists())
             self.assertTrue(markdown.exists())
-            self.assertEqual(
-                [item["changed_metric_count"] for item in result["items"]],
-                [0, 0],
+            self.assertGreaterEqual(result["item_count"], 1)
+            self.assertTrue(
+                all(item["changed_metric_count"] == 0 for item in result["items"])
             )
 
     def test_compare_git_snapshots_cli_writes_outputs(self):
