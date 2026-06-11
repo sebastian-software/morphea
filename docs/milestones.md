@@ -237,6 +237,8 @@ Implemented so far:
 
 - deterministic `curve generate`
 - labeled PNG + JSON manifest pairs
+- `dataset.json` index
+- deterministic `train` / `val` / `test` split folders
 - core primitive ground truth for circles, circle strokes, line strokes, and
   quads
 

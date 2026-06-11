@@ -62,3 +62,5 @@ Generate labeled synthetic flat-color samples:
 ```sh
 PYTHONPATH=src python3 -m curve.cli generate -o runs/synthetic --count 10 --seed 1
 ```
+
+Generation writes `dataset.json` plus split folders (`train`, `val`, `test`).
