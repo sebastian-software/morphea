@@ -12,6 +12,7 @@ from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
     proposals_to_manifest,
+    segmenter_backend_status,
 )
 
 
@@ -68,6 +69,18 @@ class SegmenterTests(unittest.TestCase):
                 timeout_seconds=3.5,
             ).propose("missing.png")
 
+    def test_segmenter_backend_status_reports_availability(self):
+        flat = segmenter_backend_status(FlatColorSegmenter())
+        mlx = segmenter_backend_status(
+            MlxSamSegmenter(model_path="models/sam.mlx", max_masks=12)
+        )
+
+        self.assertTrue(flat["backend_available"])
+        self.assertEqual(flat["status"], "available")
+        self.assertFalse(mlx["backend_available"])
+        self.assertEqual(mlx["status"], "not_configured")
+        self.assertEqual(mlx["model_path"], "models/sam.mlx")
+
     def test_segment_cli_writes_flat_color_manifest_from_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -102,6 +115,8 @@ class SegmenterTests(unittest.TestCase):
             manifest = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(manifest["schema_version"], 1)
             self.assertEqual(manifest["config"]["segmenter"], "flat_color")
+            self.assertTrue(manifest["backend"]["backend_available"])
+            self.assertEqual(manifest["backend"]["source"], "flat_color")
             self.assertEqual(manifest["config"]["max_component_area"], 10)
             self.assertTrue(manifest["config"]["split_components"])
             self.assertEqual(manifest["proposal_count"], 2)

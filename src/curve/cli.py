@@ -31,6 +31,7 @@ from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
     proposals_to_manifest,
+    segmenter_backend_status,
 )
 from curve.self_learning import (
     apply_review_file,
@@ -549,11 +550,13 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.command == "segment":
         segment_config = _resolved_segment_config(args)
-        proposals = _segmenter_from_config(segment_config).propose(args.input)
+        segmenter = _segmenter_from_config(segment_config)
+        proposals = segmenter.propose(args.input)
         manifest = {
             "schema_version": 1,
             "input": str(args.input),
             "config": segment_config,
+            "backend": segmenter_backend_status(segmenter),
             "proposal_count": len(proposals),
             "proposals": proposals_to_manifest(proposals),
         }

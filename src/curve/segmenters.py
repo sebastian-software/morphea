@@ -95,6 +95,35 @@ class MlxSamSegmenter:
         raise RuntimeError(msg)
 
 
+def segmenter_backend_status(
+    segmenter: Segmenter,
+) -> dict[str, object]:
+    if isinstance(segmenter, FlatColorSegmenter):
+        return {
+            "source": segmenter.source,
+            "backend_available": True,
+            "status": "available",
+            "reason": None,
+        }
+    if isinstance(segmenter, MlxSamSegmenter):
+        return {
+            "source": segmenter.source,
+            "backend_available": False,
+            "status": "not_configured",
+            "reason": "MLX SAM segmenter runtime is not installed/configured",
+            "model_path": segmenter.model_path,
+            "score_threshold": segmenter.score_threshold,
+            "max_masks": segmenter.max_masks,
+            "timeout_seconds": segmenter.timeout_seconds,
+        }
+    return {
+        "source": getattr(segmenter, "source", "unknown"),
+        "backend_available": False,
+        "status": "unknown",
+        "reason": "unrecognized segmenter implementation",
+    }
+
+
 def proposals_to_manifest(
     proposals: tuple[SegmentProposal, ...],
 ) -> list[dict[str, object]]:
