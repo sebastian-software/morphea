@@ -378,6 +378,8 @@ Remaining:
 
 ## M9: Differentiable and Local Refinement
 
+Status: started.
+
 Purpose: improve geometry after a good semantic initialization exists.
 
 Deliverables:
@@ -394,6 +396,20 @@ Acceptance criteria:
 
 - Refinement improves raster diagnostics without destroying editability.
 - A true circle does not become a noisy path just to gain tiny pixel fidelity.
+
+Implemented so far:
+
+- `RefinementConfig`
+- `curve refine manifest.json -o refined.json`
+- `local_metric` backend
+- structure-preserving manifest output
+- refinement metadata and per-anchor metrics
+
+Remaining:
+
+- robust raster renderer diagnostics
+- parameter-adjusting local optimizer
+- optional differentiable backend behind the same interface
 
 ## M10: Curated Real-Image Suite
 

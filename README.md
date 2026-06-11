@@ -89,3 +89,9 @@ Create and apply a human review queue:
 PYTHONPATH=src python3 -m curve.cli review runs/pseudo-labels.json -o runs/review.json
 PYTHONPATH=src python3 -m curve.cli apply-review runs/review.json -o runs/accepted-labels.json
 ```
+
+Run the current structure-preserving refinement baseline:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli refine runs/manifest.json -o runs/refined-manifest.json
+```
