@@ -62,6 +62,10 @@ Scene metrics:
 - `fragmentation_penalty`
 - `diagnostic_penalty`
 - `editability_score`
+- `raster_l1_error`: average normalized RGB error for run-directory previews
+- `raster_alpha_error`: average normalized alpha error for run-directory previews
+- `raster_edge_error`: normalized luminance-edge mismatch for run-directory previews
+- `raster_size_match`: whether the source image and rendered preview sizes matched
 - `color_fragment_counts`
 
 Layer fields:
@@ -82,8 +86,9 @@ Top-level fields:
 - `run_count`
 - `runs`: per-run summaries with anchor/group/diagnostic counts
 
-Each run summary also carries `editability_score` and
-`fragmentation_penalty` when the manifest contains scene metrics.
+Each run summary also carries `editability_score`, `fragmentation_penalty`,
+`raster_l1_error`, and `raster_edge_error` when the manifest contains those
+metrics.
 
 ## Run Directory v1
 
@@ -99,7 +104,8 @@ Files:
 - `preview.png`
 - `debug.svg`
 
-`preview.png` is rendered deterministically from `manifest.json`; it is a
-debug artifact for inspection and future raster-fidelity metrics.
+`preview.png` is rendered deterministically from `manifest.json`; run-directory
+manifests compare it with the copied input and store bounded raster-fidelity
+metrics.
 `debug.svg` keeps the editable geometry but wraps each anchor with ids, bounds,
 and confidence labels for inspection.

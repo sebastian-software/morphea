@@ -239,6 +239,8 @@ Implemented so far:
 - scene-level `metrics` in manifests
 - `editability_score`
 - `fragmentation_penalty`
+- run-directory raster fidelity metrics: `raster_l1_error`,
+  `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
 - node, parameter, simple-shape, generic-path, cut-out, and color-fragment
   counts
 - metrics surfaced in reports, eval summaries, and sweep summaries

@@ -54,4 +54,9 @@ Output:
 - `runs/sweep/<run-id>/manifest.json`
 - `runs/sweep/<run-id>/config.json`
 - `runs/sweep/<run-id>/report.md`
+- `runs/sweep/<run-id>/preview.png`
+- `runs/sweep/<run-id>/debug.svg`
 - `runs/sweep/sweep-summary.json`
+
+The summary includes editability metrics and the first raster-fidelity fields
+from each run manifest, including `raster_l1_error` and `raster_edge_error`.
