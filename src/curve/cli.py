@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from curve.images import scene_from_flat_color_image
+from curve.runs import create_run_dir, write_vectorize_run
 from curve.synthetic import generate_synthetic_sample
 
 
@@ -71,6 +72,11 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Do not write a JSON recognition manifest.",
     )
+    vectorize.add_argument(
+        "--run-dir",
+        type=Path,
+        help="Write a timestamped experiment run directory under this root.",
+    )
 
     generate = subcommands.add_parser(
         "generate",
@@ -87,6 +93,17 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
+        config = {
+            "command": "vectorize",
+            "input": str(args.input),
+            "output": str(args.output),
+            "min_area": args.min_area,
+            "color_tolerance": args.color_tolerance,
+            "max_size": args.max_size,
+            "max_colors": args.max_colors,
+            "max_component_area": args.max_component_area,
+            "timeout_seconds": args.timeout_seconds,
+        }
         scene = scene_from_flat_color_image(
             args.input,
             min_area=args.min_area,
@@ -96,6 +113,17 @@ def main(argv: list[str] | None = None) -> None:
             max_component_area=args.max_component_area,
             timeout_seconds=args.timeout_seconds,
         )
+        if args.run_dir is not None:
+            run_dir = create_run_dir(args.run_dir)
+            run = write_vectorize_run(
+                run_dir=run_dir,
+                input_path=args.input,
+                scene=scene,
+                config=config,
+            )
+            print(f"wrote run {run.run_dir} with {len(scene.anchors)} anchors")
+            return
+
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(scene.to_svg(), encoding="utf-8")
         if not args.no_manifest:

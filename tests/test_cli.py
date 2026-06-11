@@ -116,6 +116,36 @@ class CliTests(unittest.TestCase):
             self.assertIn("image_resized_for_analysis", codes)
             self.assertIn("color_mask_deferred", codes)
 
+    def test_vectorize_can_write_run_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "ignored.svg"
+            run_root = Path(temp_dir) / "runs"
+            image = Image.new("RGB", (24, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((2, 2, 10, 10), fill="#dd2222")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--run-dir",
+                        str(run_root),
+                    ]
+                )
+
+            run_dirs = list(run_root.iterdir())
+            self.assertEqual(len(run_dirs), 1)
+            self.assertTrue((run_dirs[0] / "input" / "input.png").exists())
+            self.assertTrue((run_dirs[0] / "output.svg").exists())
+            self.assertTrue((run_dirs[0] / "manifest.json").exists())
+            self.assertTrue((run_dirs[0] / "config.json").exists())
+            self.assertTrue((run_dirs[0] / "report.md").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
