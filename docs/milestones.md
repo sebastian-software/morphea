@@ -430,10 +430,13 @@ Implemented so far:
 - accepted/rejected/pending split via `curve apply-review`
 - accepted reviewed pseudo-labels can be merged into a classifier-compatible
   train split via `curve merge-labels`
+- `curve compare-training` compares baseline classifier training against
+  reviewed pseudo-label augmentation on a fixed validation/test dataset
 
 Remaining:
 
-- retraining comparison against fixed validation suite
+- replace comparison-only reporting with a true retraining/fine-tuning loop
+  once the next classifier backend exists.
 
 ## M9: Differentiable and Local Refinement
 
@@ -557,6 +560,7 @@ Implemented so far:
 - `curve report`
 - `curve sweep`
 - `curve merge-labels`
+- `curve compare-training`
 - `curve vectorize --config config.json` for repeatable runtime knob files
 - `curve sweep --markdown summary.md` for scan-friendly config comparisons
 - schema-v1 sweep configs

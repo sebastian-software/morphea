@@ -169,6 +169,26 @@ Top-level fields:
 - `ranking_evaluation`: heuristic-only versus classifier-prior candidate
   ranking comparison for validation/test splits
 
+## Training Comparison v1
+
+Written by `curve compare-training`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `base_dataset`
+- `pseudo_dataset`
+- `validation_dataset`
+- `baseline`: centroid classifier summary trained only on base train examples
+- `augmented`: centroid classifier summary trained on base plus reviewed
+  pseudo-label train examples
+- `delta`: training-count and accuracy changes from baseline to augmented
+
+Both `baseline` and `augmented` include validation/test `evaluation` and
+`ranking_evaluation` sections using the same validation dataset. The report is
+intended to show whether reviewed pseudo-labels improve, degrade, or leave
+candidate ranking unchanged before a heavier retraining backend is introduced.
+
 ## Run Directory v1
 
 Written by `curve vectorize --run-dir` and by each `curve sweep` run.
