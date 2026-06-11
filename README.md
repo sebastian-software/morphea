@@ -52,6 +52,12 @@ Markdown report:
 PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --run-dir runs
 ```
 
+Write a debug SVG with anchor ids, bounds, and labels:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --debug-svg debug.svg
+```
+
 Summarize run directories:
 
 ```sh

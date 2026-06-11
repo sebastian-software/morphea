@@ -137,6 +137,8 @@ Implemented so far:
 
 ## M3: Scene Graph and Layer Semantics
 
+Status: started.
+
 Purpose: move from a list of anchors to a coherent editable vector scene.
 
 Deliverables:
@@ -162,6 +164,16 @@ Acceptance criteria:
 - Manifest can explain why each output element exists.
 - Same-color fragmentation is penalized and visible in reports.
 - Cut-outs remain editable and do not silently become unstructured holes.
+
+Implemented so far:
+
+- anchor manifests include stable ids, layer names, confidence, reservation
+  bounds, provenance, and export policy metadata.
+- simple anchors are marked as reserved by `simple_shape_anchor`.
+- cut-out strokes are assigned to a `cutout_overlays` layer.
+- `curve vectorize --debug-svg` writes an inspectable SVG with anchor ids,
+  bounds, and confidence labels.
+- vectorize run directories include `debug.svg`.
 
 ## M4: Reports, Metrics, and Experiment Runs
 

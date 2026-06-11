@@ -25,8 +25,14 @@ Top-level fields:
 
 Anchor fields:
 
+- `id`
 - `kind`: primitive kind, for example `circle`, `stroke_polyline`, `quad`
 - `color`: source color as hex when available
+- `layer`
+- `confidence`
+- `reserved`: reserved bounds and reason
+- `provenance`: source stage and fitting stage
+- `export_policy`: editability and debug label metadata
 - `raster_error`
 - `node_count`
 - `parameter_count`
@@ -83,6 +89,9 @@ Files:
 - `config.json`
 - `report.md`
 - `preview.png`
+- `debug.svg`
 
 `preview.png` is rendered deterministically from `manifest.json`; it is a
 debug artifact for inspection and future raster-fidelity metrics.
+`debug.svg` keeps the editable geometry but wraps each anchor with ids, bounds,
+and confidence labels for inspection.
