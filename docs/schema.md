@@ -56,6 +56,9 @@ Scene metrics:
 - `node_count`
 - `parameter_count`
 - `simple_shape_count`
+- `reserved_simple_shape_count`
+- `reserved_simple_shape_area`
+- `reserved_simple_shape_area_ratio`
 - `generic_path_count`
 - `cutout_anchor_count`
 - `cutout_overlay_count`
@@ -86,8 +89,8 @@ Cut-out export policy fields:
 
 Group fields:
 
-- `kind`: for example `perspective_grid`, `parallel_stroke_group`, or
-  `same_color_fragment_group`
+- `kind`: for example `perspective_grid`, `parallel_stroke_group`,
+  `same_color_fragment_group`, or `primitive_anchor_reservation`
 - `anchor_indexes`
 - `metrics`
 - `color`: present for `same_color_fragment_group`

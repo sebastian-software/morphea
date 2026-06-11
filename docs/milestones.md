@@ -153,6 +153,8 @@ Implemented so far:
   `parallel_stroke_group` scene groups with `parallel_spacing_error`.
 - perspective-grid scene groups expose row/column counts and
   `vanishing_line_diagnostics` derived from quad edge pairs.
+- reserved simple-shape anchors are exposed as a
+  `primitive_anchor_reservation` scene group with reserved bounds area.
 
 ## M3: Scene Graph and Layer Semantics
 
@@ -194,6 +196,9 @@ Implemented so far:
 - cut-out strokes are assigned to a `cutout_overlays` layer.
 - cut-out export policy records the current `overlay_stroke` strategy and
   whether the anchor is eligible for a future negative-mask export path.
+- scene metrics expose reserved simple-shape count, reserved bounds area, and
+  reserved area ratio so later fitting can be audited against primitive
+  reservations.
 - scene metrics include `cutout_overlay_count` and
   `negative_mask_candidate_count` so reports can distinguish current overlays
   from mask-ready cut-out semantics.
