@@ -95,6 +95,23 @@ metrics.
 editability score and raster error. It is derived from `sweep-summary.json` and
 does not change the JSON schema.
 
+## Profile Report v1
+
+Written by `curve profile`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `input`
+- `repeat_count`
+- `config`: effective vectorize runtime config
+- `runs`
+- `summary`
+
+Each run records `index`, `elapsed_seconds`, `anchor_count`,
+`diagnostic_count`, and `diagnostic_codes`. The summary records min/mean/max
+elapsed seconds across all repeats.
+
 ## Curated Snapshot v1
 
 Written by `curve curated-check --snapshot snapshot.json`.

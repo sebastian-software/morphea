@@ -90,10 +90,14 @@ Implemented so far:
 - `connected_components` and the bounded image component scanner use a
   bytearray-backed occupancy grid during BFS while preserving the public
   `BinaryMask` / `MaskComponent` API.
+- `curve profile input.png -o profile.json` records bounded vectorize timings,
+  anchor counts, diagnostics, and min/mean/max elapsed summaries for repeated
+  runs.
 
 Remaining:
 
-- broader raster hot-loop profiling and optimization beyond component BFS.
+- broader raster hot-loop optimization beyond measured component BFS/profile
+  reports.
 
 ## M2: Primitive Anchor Detection V2
 
@@ -562,6 +566,7 @@ Implemented so far:
 - `curve generate`
 - `curve train`
 - `curve vectorize`
+- `curve profile`
 - `curve eval`
 - `curve report`
 - `curve segment`
