@@ -233,11 +233,13 @@ def _bounded_connected_components(
     timeout_seconds: float | None,
     color: str,
 ) -> ComponentScanResult:
-    unseen = set(mask.pixels)
+    grid, seeds = _indexed_mask(mask)
     components: list[MaskComponent] = []
     diagnostics: list[dict[str, object]] = []
 
-    while unseen:
+    for start in seeds:
+        if not grid[start]:
+            continue
         if _deadline_exceeded(started_at, timeout_seconds):
             diagnostics.append(_timeout_diagnostic(timeout_seconds))
             return ComponentScanResult(
@@ -246,12 +248,14 @@ def _bounded_connected_components(
                 timed_out=True,
             )
 
-        start = unseen.pop()
-        queue: deque[tuple[int, int]] = deque([start])
-        pixels = {start}
+        grid[start] = 0
+        queue: deque[int] = deque([start])
+        pixel_indexes: list[int] = []
         area = 0
-        min_x = max_x = start[0]
-        min_y = max_y = start[1]
+        start_x = start % mask.width
+        start_y = start // mask.width
+        min_x = max_x = start_x
+        min_y = max_y = start_y
         store_pixels = True
 
         while queue:
@@ -263,22 +267,24 @@ def _bounded_connected_components(
                     timed_out=True,
                 )
 
-            x, y = queue.popleft()
+            index = queue.popleft()
+            x = index % mask.width
+            y = index // mask.width
             area += 1
             min_x = min(min_x, x)
             max_x = max(max_x, x)
             min_y = min(min_y, y)
             max_y = max(max_y, y)
+            if store_pixels:
+                pixel_indexes.append(index)
             if max_component_area is not None and area > max_component_area:
                 store_pixels = False
-                pixels.clear()
+                pixel_indexes.clear()
 
-            for neighbor in _neighbors8(x, y):
-                if neighbor in unseen:
-                    unseen.remove(neighbor)
+            for neighbor in _neighbor_indexes8(index, mask.width, mask.height):
+                if grid[neighbor]:
+                    grid[neighbor] = 0
                     queue.append(neighbor)
-                    if store_pixels:
-                        pixels.add(neighbor)
 
         if area < min_area:
             continue
@@ -294,7 +300,11 @@ def _bounded_connected_components(
                 }
             )
             continue
-        components.append(MaskComponent(frozenset(pixels)))
+        components.append(
+            MaskComponent(
+                frozenset(_pixel_from_index(index, mask.width) for index in pixel_indexes)
+            )
+        )
 
     return ComponentScanResult(
         components=_sort_components(components),
@@ -339,17 +349,31 @@ def _timeout_diagnostic(timeout_seconds: float | None) -> dict[str, object]:
     }
 
 
-def _neighbors8(x: int, y: int) -> tuple[tuple[int, int], ...]:
-    return (
-        (x - 1, y - 1),
-        (x, y - 1),
-        (x + 1, y - 1),
-        (x - 1, y),
-        (x + 1, y),
-        (x - 1, y + 1),
-        (x, y + 1),
-        (x + 1, y + 1),
-    )
+def _indexed_mask(mask: BinaryMask) -> tuple[bytearray, tuple[int, ...]]:
+    grid = bytearray(mask.width * mask.height)
+    indexes: list[int] = []
+    for x, y in mask.pixels:
+        index = y * mask.width + x
+        grid[index] = 1
+        indexes.append(index)
+    return grid, tuple(indexes)
+
+
+def _neighbor_indexes8(index: int, width: int, height: int) -> tuple[int, ...]:
+    x = index % width
+    y = index // width
+    neighbors: list[int] = []
+    for neighbor_y in range(max(0, y - 1), min(height, y + 2)):
+        row_offset = neighbor_y * width
+        for neighbor_x in range(max(0, x - 1), min(width, x + 2)):
+            if neighbor_x == x and neighbor_y == y:
+                continue
+            neighbors.append(row_offset + neighbor_x)
+    return tuple(neighbors)
+
+
+def _pixel_from_index(index: int, width: int) -> tuple[int, int]:
+    return index % width, index // width
 
 
 def _scale_anchor(anchor: AnchorCandidate, analysis_scale: float) -> AnchorCandidate:

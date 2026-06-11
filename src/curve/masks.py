@@ -89,19 +89,24 @@ class MaskComponent:
 
 
 def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskComponent, ...]:
-    unseen = set(mask.pixels)
+    grid, seeds = _indexed_mask(mask)
     components: list[MaskComponent] = []
 
-    while unseen:
-        start = unseen.pop()
-        pixels = {start}
-        queue: deque[Pixel] = deque([start])
+    for seed in seeds:
+        if not grid[seed]:
+            continue
+
+        grid[seed] = 0
+        pixels: list[Pixel] = []
+        queue: deque[int] = deque([seed])
         while queue:
-            x, y = queue.popleft()
-            for neighbor in _neighbors8(x, y):
-                if neighbor in unseen:
-                    unseen.remove(neighbor)
-                    pixels.add(neighbor)
+            index = queue.popleft()
+            x = index % mask.width
+            y = index // mask.width
+            pixels.append((x, y))
+            for neighbor in _neighbor_indexes8(index, mask.width, mask.height):
+                if grid[neighbor]:
+                    grid[neighbor] = 0
                     queue.append(neighbor)
         if len(pixels) >= min_area:
             components.append(MaskComponent(frozenset(pixels)))
@@ -109,19 +114,28 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
     return tuple(sorted(components, key=lambda component: component.area, reverse=True))
 
 
+def _indexed_mask(mask: BinaryMask) -> tuple[bytearray, tuple[int, ...]]:
+    grid = bytearray(mask.width * mask.height)
+    indexes: list[int] = []
+    for x, y in mask.pixels:
+        index = y * mask.width + x
+        grid[index] = 1
+        indexes.append(index)
+    return grid, tuple(indexes)
+
+
+def _neighbor_indexes8(index: int, width: int, height: int) -> tuple[int, ...]:
+    x = index % width
+    y = index // width
+    neighbors: list[int] = []
+    for neighbor_y in range(max(0, y - 1), min(height, y + 2)):
+        row_offset = neighbor_y * width
+        for neighbor_x in range(max(0, x - 1), min(width, x + 2)):
+            if neighbor_x == x and neighbor_y == y:
+                continue
+            neighbors.append(row_offset + neighbor_x)
+    return tuple(neighbors)
+
+
 def _neighbors4(x: int, y: int) -> tuple[Pixel, Pixel, Pixel, Pixel]:
     return ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))
-
-
-def _neighbors8(x: int, y: int) -> tuple[Pixel, ...]:
-    return (
-        (x - 1, y - 1),
-        (x, y - 1),
-        (x + 1, y - 1),
-        (x - 1, y),
-        (x + 1, y),
-        (x - 1, y + 1),
-        (x, y + 1),
-        (x + 1, y + 1),
-    )
-
