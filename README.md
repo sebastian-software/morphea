@@ -82,3 +82,10 @@ Harvest high-confidence pseudo-labels from run manifests:
 ```sh
 PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json
 ```
+
+Create and apply a human review queue:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli review runs/pseudo-labels.json -o runs/review.json
+PYTHONPATH=src python3 -m curve.cli apply-review runs/review.json -o runs/accepted-labels.json
+```

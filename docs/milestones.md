@@ -368,10 +368,11 @@ Implemented so far:
 - run-level warning-diagnostic filter
 - anchor-level `classifier_prior_error` filter
 - output pseudo-label index with source manifest provenance
+- human-editable review queue via `curve review`
+- accepted/rejected/pending split via `curve apply-review`
 
 Remaining:
 
-- human review accept/reject workflow
 - pseudo-label fine-tuning dataset merge
 - retraining comparison against fixed validation suite
 
