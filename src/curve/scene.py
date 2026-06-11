@@ -66,6 +66,8 @@ class Scene:
                 self.anchors,
                 groups=groups,
                 diagnostics=self.diagnostics,
+                width=self.width,
+                height=self.height,
             ),
         }
 
@@ -332,6 +334,28 @@ def scene_groups_to_manifest(
             }
         )
 
+    reservation_indexes = [
+        index
+        for index, anchor in enumerate(anchors)
+        if _reservation_reason(anchor) == "simple_shape_anchor"
+    ]
+    if reservation_indexes:
+        groups.append(
+            {
+                "kind": "primitive_anchor_reservation",
+                "anchor_indexes": reservation_indexes,
+                "metrics": {
+                    "reserved_anchor_count": len(reservation_indexes),
+                    "reserved_bounds_area": round(
+                        _reserved_bounds_area(
+                            tuple(anchors[index] for index in reservation_indexes)
+                        ),
+                        6,
+                    ),
+                },
+            }
+        )
+
     return groups
 
 
@@ -356,6 +380,8 @@ def scene_metrics_to_manifest(
     *,
     groups: list[dict[str, object]] | None = None,
     diagnostics: tuple[dict[str, object], ...] = (),
+    width: int | None = None,
+    height: int | None = None,
 ) -> dict[str, object]:
     anchor_count = len(anchors)
     node_count = sum(anchor.node_count for anchor in anchors)
@@ -366,6 +392,24 @@ def scene_metrics_to_manifest(
         1
         for anchor in anchors
         if anchor.stroke is not None and anchor.stroke.is_cutout
+    )
+    reserved_simple_shape_count = sum(
+        1
+        for anchor in anchors
+        if _reservation_reason(anchor) == "simple_shape_anchor"
+    )
+    reserved_simple_shape_area = _reserved_bounds_area(
+        tuple(
+            anchor
+            for anchor in anchors
+            if _reservation_reason(anchor) == "simple_shape_anchor"
+        )
+    )
+    canvas_area = (width or 0) * (height or 0)
+    reserved_simple_shape_area_ratio = (
+        reserved_simple_shape_area / canvas_area
+        if canvas_area > 0
+        else 0.0
     )
     simple_shape_ratio = (
         simple_shape_count / anchor_count
@@ -393,6 +437,12 @@ def scene_metrics_to_manifest(
         "node_count": node_count,
         "parameter_count": parameter_count,
         "simple_shape_count": simple_shape_count,
+        "reserved_simple_shape_count": reserved_simple_shape_count,
+        "reserved_simple_shape_area": round(reserved_simple_shape_area, 6),
+        "reserved_simple_shape_area_ratio": round(
+            reserved_simple_shape_area_ratio,
+            6,
+        ),
         "generic_path_count": generic_path_count,
         "cutout_anchor_count": cutout_count,
         "cutout_overlay_count": sum(
@@ -539,6 +589,14 @@ def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
         for count in _color_fragment_counts(anchors).values()
     )
     return min(excess_fragments / max(len(anchors), 1) * 0.5, 0.5)
+
+
+def _reserved_bounds_area(anchors: tuple[AnchorCandidate, ...]) -> float:
+    area = 0.0
+    for anchor in anchors:
+        min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+        area += max(0.0, max_x - min_x) * max(0.0, max_y - min_y)
+    return area
 
 
 def _anchor_layer(anchor: AnchorCandidate) -> str:

@@ -1,7 +1,14 @@
 import unittest
 
 from curve.masks import BinaryMask
-from curve.anchors import AnchorCandidate, AnchorKind, Point, QuadAnchor, StrokeAnchor
+from curve.anchors import (
+    AnchorCandidate,
+    AnchorKind,
+    CircleAnchor,
+    Point,
+    QuadAnchor,
+    StrokeAnchor,
+)
 from curve.scene import (
     SCENE_MANIFEST_SCHEMA_VERSION,
     Scene,
@@ -257,6 +264,44 @@ class SceneExportTests(unittest.TestCase):
         self.assertGreater(anchor["confidence"], 0.0)
         self.assertEqual(manifest["layers"][0]["name"], "filled_primitives")
         self.assertEqual(manifest["layers"][0]["anchor_indexes"], [0])
+
+    def test_scene_reservation_metrics_expose_simple_shape_area(self):
+        circle = AnchorCandidate(
+            kind=AnchorKind.CIRCLE,
+            raster_error=0.0,
+            node_count=1,
+            parameter_count=3,
+            circle=CircleAnchor(center=Point(5, 5), radius=2),
+        )
+        rect = AnchorCandidate(
+            kind=AnchorKind.RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=4,
+            quad=QuadAnchor(
+                corners=(Point(10, 10), Point(14, 10), Point(14, 13), Point(10, 13)),
+            ),
+        )
+        fallback = AnchorCandidate(
+            kind=AnchorKind.CUBIC_PATH,
+            raster_error=0.0,
+            node_count=8,
+            parameter_count=12,
+        )
+
+        manifest = Scene(width=20, height=20, anchors=(circle, rect, fallback)).to_manifest()
+        reservation_group = [
+            group
+            for group in manifest["groups"]
+            if group["kind"] == "primitive_anchor_reservation"
+        ][0]
+
+        self.assertEqual(reservation_group["anchor_indexes"], [0, 1])
+        self.assertEqual(reservation_group["metrics"]["reserved_anchor_count"], 2)
+        self.assertEqual(reservation_group["metrics"]["reserved_bounds_area"], 28.0)
+        self.assertEqual(manifest["metrics"]["reserved_simple_shape_count"], 2)
+        self.assertEqual(manifest["metrics"]["reserved_simple_shape_area"], 28.0)
+        self.assertEqual(manifest["metrics"]["reserved_simple_shape_area_ratio"], 0.07)
 
     def test_scene_layers_group_anchor_indexes_by_layer(self):
         anchors = (
