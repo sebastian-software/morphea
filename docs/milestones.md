@@ -440,11 +440,17 @@ Implemented so far:
   train split via `curve merge-labels`
 - `curve compare-training` compares baseline classifier training against
   reviewed pseudo-label augmentation on a fixed validation/test dataset
+- `curve retrain` writes an augmented primitive classifier model from base plus
+  reviewed pseudo-label train examples, including source-dataset provenance and
+  validation/test evaluation metrics
+- `curve retrain --config retrain.json` supports repeatable self-learning
+  retraining runs and can optionally write the comparison report next to the
+  model
 
 Remaining:
 
-- replace comparison-only reporting with a true retraining/fine-tuning loop
-  once the next classifier backend exists.
+- replace the centroid retraining backend with MLX fine-tuning once the next
+  classifier backend exists.
 
 ## M9: Differentiable and Local Refinement
 
@@ -577,10 +583,12 @@ Implemented so far:
 - `curve sweep`
 - `curve merge-labels`
 - `curve compare-training`
+- `curve retrain`
 - `curve vectorize --config config.json` for repeatable runtime knob files
 - `curve train --config train.json` for repeatable classifier training inputs
 - `curve compare-training --config compare.json` for repeatable retraining
   comparisons
+- `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - vectorize scoring weights for raster error, quality error, complexity, and
   simple-shape bonus

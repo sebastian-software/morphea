@@ -238,6 +238,20 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Retrain Config v1
+
+Read by `curve retrain --config`.
+
+Supported fields:
+
+- `base_dataset`
+- `pseudo_dataset`
+- `validation_dataset`
+- `output`
+- `comparison_output`
+
+CLI arguments override values loaded from the config file.
+
 ## Synthetic Dataset v1
 
 Written by `curve generate`.
@@ -254,7 +268,7 @@ single PNG/JSON pair is reproducible outside the dataset index.
 
 ## Primitive Classifier Model v1
 
-Written by `curve train`.
+Written by `curve train` and `curve retrain`.
 
 Top-level fields:
 
@@ -263,9 +277,18 @@ Top-level fields:
 - `classes`
 - `centroids`
 - `train_examples`
+- `source_datasets`: present for `curve retrain`, recording base,
+  pseudo-label, and validation dataset paths
+- `augmentation`: present for `curve retrain`, recording base and reviewed
+  pseudo-label train example counts
 - `evaluation`: direct classifier accuracy/confusion for validation/test splits
 - `ranking_evaluation`: heuristic-only versus classifier-prior candidate
   ranking comparison for validation/test splits
+
+`curve retrain` persists the augmented model so it can be used as a
+`--classifier-model` prior in later vectorize/profile runs. Its centroid
+backend is intentionally explicit; a future MLX-backed classifier can keep the
+same high-level source/evaluation fields while changing `model_type`.
 
 ## Training Comparison v1
 
