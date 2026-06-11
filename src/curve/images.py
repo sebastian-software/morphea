@@ -104,7 +104,7 @@ def _flat_color_masks_result(
         )
 
     width, height = image.size
-    pixels_by_color: dict[Rgb, set[tuple[int, int]]] = {}
+    pixel_indexes_by_color: dict[Rgb, list[int]] = {}
     palette: list[Rgb] = []
     inferred_background = background or _infer_background_color(image)
     flattened_rgb = _flatten_rgba_image(image, inferred_background)
@@ -147,8 +147,7 @@ def _flat_color_masks_result(
         if bucket is None:
             bucket = color
             palette.append(bucket)
-        y, x = divmod(index, width)
-        pixels_by_color.setdefault(bucket, set()).add((x, y))
+        pixel_indexes_by_color.setdefault(bucket, []).append(index)
 
     if transparent_pixel_count:
         diagnostics.append(
@@ -169,13 +168,19 @@ def _flat_color_masks_result(
         )
 
     masks: list[ColorMask] = []
-    for color, pixels in pixels_by_color.items():
-        if len(pixels) < min_area:
+    for color, indexes in pixel_indexes_by_color.items():
+        if len(indexes) < min_area:
             continue
         masks.append(
             ColorMask(
                 color=_hex_color(color),
-                mask=BinaryMask(width=width, height=height, pixels=frozenset(pixels)),
+                mask=BinaryMask(
+                    width=width,
+                    height=height,
+                    pixels=frozenset(
+                        _pixel_from_index(index, width) for index in indexes
+                    ),
+                ),
             )
         )
     return ImageMaskResult(
