@@ -61,6 +61,29 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertIn("line_smoothness_error", anchors[0].metrics)
         self.assertEqual(anchors[0].stroke.width_samples, (2.0,))
 
+    def test_straight_diagonal_component_is_detected_as_stroke(self):
+        mask = BinaryMask.from_rows(
+            (
+                "#..........",
+                ".#.........",
+                "..#........",
+                "...#.......",
+                "....#......",
+                ".....#.....",
+                "......#....",
+                ".......#...",
+                "........#..",
+                ".........#.",
+                "..........#",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertLess(anchors[0].metrics["line_smoothness_error"], 0.01)
+
     def test_perspective_tile_is_detected_as_quad_anchor(self):
         mask = BinaryMask.from_rows(
             (
@@ -97,4 +120,3 @@ class PrimitiveDetectionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

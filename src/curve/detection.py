@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from math import pi, sqrt
+from math import hypot, pi, sqrt
 
 from curve.anchors import (
     AnchorCandidate,
@@ -86,30 +86,24 @@ def _circle_candidate(component: MaskComponent) -> AnchorCandidate | None:
 
 
 def _stroke_candidate(component: MaskComponent) -> AnchorCandidate | None:
-    width = component.width
-    height = component.height
-    long_side = max(width, height)
-    short_side = min(width, height)
-    if long_side < 4 or short_side == 0:
-        return None
-    if long_side / short_side < 3.0:
+    axis = _principal_axis(component)
+    if axis is None:
         return None
 
-    min_x, min_y, max_x, max_y = component.bounds
-    if width >= height:
-        centerline = (
-            Point(min_x, (min_y + max_y) / 2),
-            Point(max_x, (min_y + max_y) / 2),
-        )
-        width_samples = (float(height),)
-    else:
-        centerline = (
-            Point((min_x + max_x) / 2, min_y),
-            Point((min_x + max_x) / 2, max_y),
-        )
-        width_samples = (float(width),)
+    center, direction, min_major, max_major, min_minor, max_minor = axis
+    length = max_major - min_major + 1
+    stroke_width = max(max_minor - min_minor + 1, 1.0)
+    if length < 4 or length / stroke_width < 3.0:
+        return None
 
-    coverage = component.area / (width * height)
+    dx, dy = direction
+    centerline = (
+        Point(center.x + dx * min_major, center.y + dy * min_major),
+        Point(center.x + dx * max_major, center.y + dy * max_major),
+    )
+    width_samples = (float(stroke_width),)
+
+    coverage = min(component.area / (length * stroke_width), 1.0)
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=abs(1.0 - coverage) * 0.1,
@@ -118,6 +112,60 @@ def _stroke_candidate(component: MaskComponent) -> AnchorCandidate | None:
         stroke=StrokeAnchor(centerline=centerline, width_samples=width_samples),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _principal_axis(
+    component: MaskComponent,
+) -> tuple[Point, tuple[float, float], float, float, float, float] | None:
+    if component.area < 2:
+        return None
+
+    center = component.centroid
+    xx = 0.0
+    yy = 0.0
+    xy = 0.0
+    for x, y in component.pixels:
+        centered_x = x - center.x
+        centered_y = y - center.y
+        xx += centered_x * centered_x
+        yy += centered_y * centered_y
+        xy += centered_x * centered_y
+
+    if xx == 0 and yy == 0:
+        return None
+
+    if xy == 0:
+        direction = (1.0, 0.0) if xx >= yy else (0.0, 1.0)
+    else:
+        trace = xx + yy
+        determinant = xx * yy - xy * xy
+        eigenvalue = trace / 2 + sqrt(max((trace / 2) ** 2 - determinant, 0.0))
+        dx = xy
+        dy = eigenvalue - xx
+        length = hypot(dx, dy)
+        if length == 0:
+            direction = (1.0, 0.0)
+        else:
+            direction = (dx / length, dy / length)
+
+    dx, dy = direction
+    minor = (-dy, dx)
+    major_projections: list[float] = []
+    minor_projections: list[float] = []
+    for x, y in component.pixels:
+        centered_x = x - center.x
+        centered_y = y - center.y
+        major_projections.append(centered_x * dx + centered_y * dy)
+        minor_projections.append(centered_x * minor[0] + centered_y * minor[1])
+
+    return (
+        center,
+        direction,
+        min(major_projections),
+        max(major_projections),
+        min(minor_projections),
+        max(minor_projections),
+    )
 
 
 def _quad_candidate(component: MaskComponent) -> AnchorCandidate | None:
@@ -183,4 +231,3 @@ def _scanline_quad_fill_error(component: MaskComponent, quad: QuadAnchor) -> flo
     if expected == 0:
         return 1.0
     return (missing + extra) / expected
-
