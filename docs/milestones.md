@@ -169,11 +169,14 @@ Implemented so far:
 
 - anchor manifests include stable ids, layer names, confidence, reservation
   bounds, provenance, and export policy metadata.
+- scene manifests include a top-level `layers` section with anchor indexes and
+  counts per semantic layer.
 - simple anchors are marked as reserved by `simple_shape_anchor`.
 - cut-out strokes are assigned to a `cutout_overlays` layer.
 - `curve vectorize --debug-svg` writes an inspectable SVG with anchor ids,
   bounds, and confidence labels.
 - vectorize run directories include `debug.svg`.
+- reports, eval summaries, and sweep summaries include layer counts.
 
 ## M4: Reports, Metrics, and Experiment Runs
 

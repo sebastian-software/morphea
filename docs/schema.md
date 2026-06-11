@@ -19,6 +19,7 @@ Top-level fields:
 - `height`: source image height
 - `anchor_count`: number of recognized anchors
 - `anchors`: editable primitive candidates
+- `layers`: anchor indexes grouped by semantic layer
 - `groups`: semantic groups such as `perspective_grid`
 - `diagnostics`: non-fatal preprocessing/runtime diagnostics
 - `metrics`: scene-level editability and quality metrics
@@ -61,6 +62,12 @@ Scene metrics:
 - `diagnostic_penalty`
 - `editability_score`
 - `color_fragment_counts`
+
+Layer fields:
+
+- `name`
+- `anchor_indexes`
+- `anchor_count`
 
 ## Sweep Summary v1
 
