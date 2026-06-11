@@ -94,6 +94,8 @@ Remaining:
 
 ## M2: Primitive Anchor Detection V2
 
+Status: started.
+
 Purpose: make simple forms robust enough to be trusted before generic fitting.
 
 Deliverables:
@@ -124,6 +126,14 @@ Acceptance criteria:
 - Perspective table tiles export as quads and are grouped as a grid.
 - Simple shape candidates beat noisier path candidates unless fidelity breaks
   materially.
+
+Implemented so far:
+
+- circle/ring metrics for roundness and stroke width.
+- stroke width, smoothness, cut-out error metrics.
+- quad edge/corner metrics and perspective grid consistency metric.
+- stroke payloads preserve `cap_style` and `join_style`.
+- straight high-coverage stroke components classify as `butt` caps.
 
 ## M3: Scene Graph and Layer Semantics
 

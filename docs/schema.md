@@ -33,6 +33,14 @@ Anchor fields:
 - `metrics`
 - geometry payload, one of `circle`, `stroke`, or `quad`
 
+Stroke payload fields:
+
+- `centerline`
+- `width_samples`
+- `is_cutout`
+- `cap_style`
+- `join_style`
+
 Scene metrics:
 
 - `shape_count`
