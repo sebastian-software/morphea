@@ -548,14 +548,15 @@ Implemented so far:
 - `curve report`
 - `curve sweep`
 - `curve merge-labels`
+- `curve vectorize --config config.json` for repeatable runtime knob files
 - schema-v1 sweep configs
 - schema-v1 scene manifests
 - `sweep-summary.json` experiment metadata
 
 Remaining:
 
-- richer config files for preprocessing, segmenters, thresholds, scoring,
-  and training.
+- richer config files for segmenters, thresholds, scoring, and training beyond
+  the first vectorize runtime config.
 - comparison views across commits/configs beyond the first JSON summary.
 
 ## Commit Discipline

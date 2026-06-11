@@ -90,6 +90,22 @@ Each run summary also carries `editability_score`, `fragmentation_penalty`,
 `raster_l1_error`, and `raster_edge_error` when the manifest contains those
 metrics.
 
+## Vectorize Config v1
+
+Read by `curve vectorize --config`.
+
+Supported fields match current runtime knobs:
+
+- `min_area`
+- `color_tolerance`
+- `max_size`
+- `max_colors`
+- `max_component_area`
+- `timeout_seconds`
+- `classifier_model`
+
+CLI arguments override values loaded from the config file.
+
 ## Primitive Classifier Model v1
 
 Written by `curve train`.
