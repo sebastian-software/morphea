@@ -58,7 +58,12 @@ from curve.segmenters import (
     Segmenter,
     proposals_to_manifest,
 )
-from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
+from curve.self_learning import (
+    apply_review_file,
+    create_review_file,
+    harvest_pseudo_labels,
+    merge_reviewed_pseudo_label_dataset,
+)
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.curated import check_curated_suite, load_curated_suite
 from curve.sweeps import load_sweep_config, run_sweep
@@ -113,6 +118,7 @@ __all__ = [
     "load_centroid_model",
     "load_curated_suite",
     "load_sweep_config",
+    "merge_reviewed_pseudo_label_dataset",
     "proposals_to_manifest",
     "predict_label",
     "scene_from_flat_color_image",

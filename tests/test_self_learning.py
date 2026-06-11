@@ -6,7 +6,13 @@ from io import StringIO
 from pathlib import Path
 
 from curve.cli import main
-from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
+from curve.classifier import examples_from_dataset
+from curve.self_learning import (
+    apply_review_file,
+    create_review_file,
+    harvest_pseudo_labels,
+    merge_reviewed_pseudo_label_dataset,
+)
 
 
 class SelfLearningTests(unittest.TestCase):
@@ -20,6 +26,7 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertEqual(result["pseudo_label_count"], 1)
             self.assertEqual(result["pseudo_labels"][0]["kind"], "circle")
+            self.assertEqual(result["pseudo_labels"][0]["anchor"]["kind"], "circle")
             self.assertEqual(result["pseudo_labels"][0]["run_metrics"]["editability_score"], 1.0)
             self.assertTrue(output.exists())
 
@@ -192,6 +199,61 @@ class SelfLearningTests(unittest.TestCase):
 
             result = json.loads(accepted.read_text())
             self.assertEqual(result["accepted_count"], 1)
+
+    def test_merge_reviewed_pseudo_labels_writes_trainable_dataset(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            runs = root / "runs"
+            _write_manifest(runs, "clean", diagnostics=[], classifier_error=0.0)
+            pseudo = root / "pseudo.json"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "dataset"
+
+            harvest_pseudo_labels(run_root=runs, output=pseudo)
+            review = create_review_file(pseudo_labels=pseudo, output=root / "review.json")
+            review["items"][0]["decision"] = "accept"
+            (root / "review.json").write_text(json.dumps(review), encoding="utf-8")
+            apply_review_file(review=root / "review.json", output=reviewed)
+
+            dataset = merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=output_dir,
+            )
+            examples = examples_from_dataset(output_dir / "dataset.json")
+
+            self.assertEqual(dataset["count"], 1)
+            self.assertTrue((output_dir / "train" / "pseudo-00000.json").exists())
+            self.assertEqual(len(examples), 1)
+            self.assertEqual(examples[0].label, "circle")
+
+    def test_merge_labels_cli_writes_dataset(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            reviewed = root / "reviewed.json"
+            reviewed.write_text(
+                json.dumps(
+                    {
+                        "accepted": [
+                            {
+                                "kind": "circle",
+                                "anchor": {
+                                    "kind": "circle",
+                                    "node_count": 1,
+                                    "parameter_count": 3,
+                                    "circle": {"cx": 5, "cy": 5, "r": 3},
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output_dir = root / "dataset"
+
+            with redirect_stdout(StringIO()):
+                main(["merge-labels", str(reviewed), "-o", str(output_dir)])
+
+            self.assertTrue((output_dir / "dataset.json").exists())
 
 
 def _write_manifest(

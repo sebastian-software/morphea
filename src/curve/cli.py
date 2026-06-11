@@ -12,7 +12,12 @@ from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
-from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
+from curve.self_learning import (
+    apply_review_file,
+    create_review_file,
+    harvest_pseudo_labels,
+    merge_reviewed_pseudo_label_dataset,
+)
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.sweeps import run_sweep
 
@@ -154,6 +159,13 @@ def main(argv: list[str] | None = None) -> None:
     )
     apply_review.add_argument("review", type=Path)
     apply_review.add_argument("-o", "--output", type=Path, required=True)
+
+    merge_labels = subcommands.add_parser(
+        "merge-labels",
+        help="Convert accepted reviewed pseudo-labels into a trainable dataset.",
+    )
+    merge_labels.add_argument("reviewed_labels", type=Path)
+    merge_labels.add_argument("-o", "--output-dir", type=Path, required=True)
 
     refine = subcommands.add_parser(
         "refine",
@@ -310,6 +322,14 @@ def main(argv: list[str] | None = None) -> None:
             output=args.output,
         )
         print(f"accepted {reviewed['accepted_count']} reviewed pseudo-labels")
+        return
+
+    if args.command == "merge-labels":
+        dataset = merge_reviewed_pseudo_label_dataset(
+            reviewed_labels=args.reviewed_labels,
+            output_dir=args.output_dir,
+        )
+        print(f"merged {dataset['count']} reviewed labels")
         return
 
     if args.command == "refine":

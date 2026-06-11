@@ -70,6 +70,7 @@ def harvest_pseudo_labels(
                     "anchor_index": index,
                     "kind": anchor.get("kind"),
                     "color": anchor.get("color"),
+                    "anchor": anchor,
                     "metrics": metrics,
                     "run_metrics": run_metrics,
                     "source_manifest": str(manifest_path),
@@ -91,6 +92,91 @@ def harvest_pseudo_labels(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
+
+
+def merge_reviewed_pseudo_label_dataset(
+    *,
+    reviewed_labels: str | Path,
+    output_dir: str | Path,
+) -> dict[str, object]:
+    reviewed = json.loads(Path(reviewed_labels).read_text(encoding="utf-8"))
+    output = Path(output_dir)
+    train_dir = output / "train"
+    train_dir.mkdir(parents=True, exist_ok=True)
+    samples: list[dict[str, object]] = []
+
+    for index, label in enumerate(reviewed.get("accepted", [])):
+        anchor = _anchor_from_label(label)
+        manifest = {
+            "schema_version": 1,
+            "width": label.get("width"),
+            "height": label.get("height"),
+            "anchor_count": 1,
+            "anchors": [anchor],
+            "diagnostics": [],
+            "groups": [],
+            "layers": [],
+            "metrics": {},
+            "source_manifest": label.get("source_manifest"),
+            "source_anchor_index": label.get("anchor_index"),
+        }
+        manifest_name = f"pseudo-{index:05d}.json"
+        manifest_path = train_dir / manifest_name
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        samples.append(
+            {
+                "id": f"pseudo-{index:05d}",
+                "seed": None,
+                "split": "train",
+                "difficulty": "pseudo_label",
+                "image": None,
+                "manifest": str(manifest_path.relative_to(output)),
+                "source_manifest": label.get("source_manifest"),
+                "source_anchor_index": label.get("anchor_index"),
+            }
+        )
+
+    dataset = {
+        "count": len(samples),
+        "seed": None,
+        "width": None,
+        "height": None,
+        "difficulty": "pseudo_label",
+        "splits": {"train": len(samples), "val": 0, "test": 0},
+        "samples": samples,
+        "source_reviewed_labels": str(reviewed_labels),
+    }
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "dataset.json").write_text(
+        json.dumps(dataset, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return dataset
+
+
+def _anchor_from_label(label: dict[str, object]) -> dict[str, object]:
+    embedded_anchor = label.get("anchor")
+    if isinstance(embedded_anchor, dict):
+        return embedded_anchor
+
+    source_manifest = label.get("source_manifest")
+    anchor_index = label.get("anchor_index")
+    if isinstance(source_manifest, str) and isinstance(anchor_index, int):
+        manifest_path = Path(source_manifest)
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            anchors = manifest.get("anchors", [])
+            if 0 <= anchor_index < len(anchors):
+                return anchors[anchor_index]
+
+    return {
+        "kind": label.get("kind"),
+        "color": label.get("color"),
+        "metrics": dict(label.get("metrics", {})),
+    }
 
 
 def create_review_file(
