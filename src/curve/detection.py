@@ -34,6 +34,10 @@ def primitive_candidates_for_component(
     """Generate plausible simple-shape candidates for one component."""
 
     candidates: list[AnchorCandidate] = []
+    stroke_circle = _stroke_circle_candidate(component)
+    if stroke_circle is not None:
+        candidates.append(stroke_circle)
+
     circle = _circle_candidate(component)
     if circle is not None:
         candidates.append(circle)
@@ -54,6 +58,51 @@ def primitive_candidates_for_component(
     )
     candidates.append(fallback)
     return tuple(candidates)
+
+
+def _stroke_circle_candidate(component: MaskComponent) -> AnchorCandidate | None:
+    width = component.width
+    height = component.height
+    diameter = max(width, height)
+    if diameter < 6:
+        return None
+
+    aspect_error = abs(width - height) / diameter
+    if aspect_error > 0.18:
+        return None
+
+    center = component.centroid
+    distances = [Point(x, y).distance_to(center) for x, y in component.pixels]
+    inner_radius = min(distances)
+    outer_radius = max(distances)
+    if outer_radius <= 0 or inner_radius / outer_radius < 0.45:
+        return None
+
+    stroke_width = outer_radius - inner_radius + 1
+    if stroke_width <= 0:
+        return None
+
+    expected_area = pi * (outer_radius**2 - inner_radius**2)
+    if expected_area <= 0:
+        return None
+    area_error = abs(component.area - expected_area) / expected_area
+    if area_error > 0.45:
+        return None
+
+    radius = (inner_radius + outer_radius) / 2
+    candidate = AnchorCandidate(
+        kind=AnchorKind.STROKE_CIRCLE,
+        raster_error=area_error + aspect_error,
+        node_count=1,
+        parameter_count=4,
+        circle=CircleAnchor(
+            center=center,
+            radius=radius,
+            samples=tuple(Point(x, y) for x, y in component.boundary_pixels),
+        ),
+        stroke=StrokeAnchor(centerline=(), width_samples=(stroke_width,)),
+    )
+    return enrich_anchor_metrics(candidate)
 
 
 def _circle_candidate(component: MaskComponent) -> AnchorCandidate | None:

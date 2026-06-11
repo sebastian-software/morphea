@@ -44,6 +44,29 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].kind, AnchorKind.CIRCLE)
         self.assertIn("circle_roundness_error", anchors[0].metrics)
 
+    def test_circle_ring_is_detected_as_stroke_circle_anchor(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...#######...",
+                "..#########..",
+                ".####...####.",
+                "###.......###",
+                "##.........##",
+                "##.........##",
+                "##.........##",
+                "###.......###",
+                ".####...####.",
+                "..#########..",
+                "...#######...",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_CIRCLE)
+        self.assertGreater(anchors[0].stroke.width_samples[0], 1)
+
     def test_straight_horizontal_component_is_detected_as_stroke(self):
         mask = BinaryMask.from_rows(
             (

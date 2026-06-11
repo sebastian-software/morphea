@@ -43,6 +43,30 @@ class SceneExportTests(unittest.TestCase):
         self.assertIn('stroke="#ffffff"', svg)
         self.assertIn('stroke-linecap="round"', svg)
 
+    def test_circle_ring_exports_editable_svg_stroke_circle(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...#######...",
+                "..#########..",
+                ".####...####.",
+                "###.......###",
+                "##.........##",
+                "##.........##",
+                "##.........##",
+                "###.......###",
+                ".####...####.",
+                "..#########..",
+                "...#######...",
+            )
+        )
+
+        svg = scene_from_mask(mask).to_svg(SvgStyle(stroke="#c99700"))
+
+        self.assertIn("<circle ", svg)
+        self.assertIn('fill="none"', svg)
+        self.assertIn('stroke="#c99700"', svg)
+        self.assertIn("stroke-width=", svg)
+
     def test_perspective_quad_exports_editable_svg_polygon(self):
         mask = BinaryMask.from_rows(
             (
@@ -63,4 +87,3 @@ class SceneExportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
