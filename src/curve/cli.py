@@ -332,6 +332,9 @@ def main(argv: list[str] | None = None) -> None:
     harvest.add_argument("--max-classifier-prior-error", type=float, default=0.0)
     harvest.add_argument("--min-editability-score", type=float, default=0.0)
     harvest.add_argument("--max-fragmentation-penalty", type=float, default=1.0)
+    harvest.add_argument("--max-raster-l1-error", type=float, default=1.0)
+    harvest.add_argument("--max-raster-edge-error", type=float, default=1.0)
+    harvest.add_argument("--max-anchor-quality-error", type=float, default=1.0)
 
     review = subcommands.add_parser(
         "review",
@@ -613,6 +616,9 @@ def main(argv: list[str] | None = None) -> None:
             max_classifier_prior_error=args.max_classifier_prior_error,
             min_editability_score=args.min_editability_score,
             max_fragmentation_penalty=args.max_fragmentation_penalty,
+            max_raster_l1_error=args.max_raster_l1_error,
+            max_raster_edge_error=args.max_raster_edge_error,
+            max_anchor_quality_error=args.max_anchor_quality_error,
         )
         print(f"harvested {result['pseudo_label_count']} pseudo-labels")
         return

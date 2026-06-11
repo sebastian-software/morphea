@@ -24,6 +24,9 @@ def harvest_pseudo_labels(
     max_classifier_prior_error: float = 0.0,
     min_editability_score: float = 0.0,
     max_fragmentation_penalty: float = 1.0,
+    max_raster_l1_error: float = 1.0,
+    max_raster_edge_error: float = 1.0,
+    max_anchor_quality_error: float = 1.0,
 ) -> dict[str, object]:
     root = Path(run_root)
     records: list[dict[str, object]] = []
@@ -68,11 +71,36 @@ def harvest_pseudo_labels(
                 }
             )
             continue
+        raster_l1_error = float(run_metrics.get("raster_l1_error", 0.0))
+        if raster_l1_error > max_raster_l1_error:
+            rejected_runs.append(
+                {
+                    "run": manifest_path.parent.name,
+                    "reason": "raster_l1_error_too_high",
+                    "raster_l1_error": raster_l1_error,
+                    "max_raster_l1_error": max_raster_l1_error,
+                }
+            )
+            continue
+        raster_edge_error = float(run_metrics.get("raster_edge_error", 0.0))
+        if raster_edge_error > max_raster_edge_error:
+            rejected_runs.append(
+                {
+                    "run": manifest_path.parent.name,
+                    "reason": "raster_edge_error_too_high",
+                    "raster_edge_error": raster_edge_error,
+                    "max_raster_edge_error": max_raster_edge_error,
+                }
+            )
+            continue
 
         for index, anchor in enumerate(manifest.get("anchors", [])):
             metrics = anchor.get("metrics", {})
             prior_error = float(metrics.get("classifier_prior_error", 0.0))
             if prior_error > max_classifier_prior_error:
+                continue
+            quality_error = _anchor_quality_error(metrics)
+            if quality_error > max_anchor_quality_error:
                 continue
             records.append(
                 {
@@ -82,6 +110,7 @@ def harvest_pseudo_labels(
                     "color": anchor.get("color"),
                     "anchor": anchor,
                     "metrics": metrics,
+                    "anchor_quality_error": quality_error,
                     "run_metrics": run_metrics,
                     "source_manifest": str(manifest_path),
                 }
@@ -96,12 +125,27 @@ def harvest_pseudo_labels(
             "max_classifier_prior_error": max_classifier_prior_error,
             "min_editability_score": min_editability_score,
             "max_fragmentation_penalty": max_fragmentation_penalty,
+            "max_raster_l1_error": max_raster_l1_error,
+            "max_raster_edge_error": max_raster_edge_error,
+            "max_anchor_quality_error": max_anchor_quality_error,
         },
     }
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
+
+
+def _anchor_quality_error(metrics: object) -> float:
+    if not isinstance(metrics, dict):
+        return 0.0
+    total = 0.0
+    for key, value in metrics.items():
+        if key == "classifier_prior_error":
+            continue
+        if key.endswith("_error") or key == "stroke_width_variance":
+            total += float(value)
+    return total
 
 
 def compare_retraining(

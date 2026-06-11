@@ -107,6 +107,51 @@ class SelfLearningTests(unittest.TestCase):
                 "fragmentation_penalty_too_high",
             )
 
+    def test_harvest_rejects_high_raster_error_runs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "bad-raster",
+                diagnostics=[],
+                classifier_error=0.0,
+                raster_l1_error=0.42,
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                max_raster_l1_error=0.1,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+            self.assertEqual(
+                result["rejected_runs"][0]["reason"],
+                "raster_l1_error_too_high",
+            )
+
+    def test_harvest_filters_unstable_anchor_metrics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "jittery-anchor",
+                diagnostics=[],
+                classifier_error=0.0,
+                anchor_metrics={"line_smoothness_error": 0.4},
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                max_anchor_quality_error=0.1,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+            self.assertEqual(result["filters"]["max_anchor_quality_error"], 0.1)
+
     def test_harvest_cli_writes_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
@@ -124,12 +169,17 @@ class SelfLearningTests(unittest.TestCase):
                         "0.8",
                         "--max-fragmentation-penalty",
                         "0.25",
+                        "--max-raster-edge-error",
+                        "0.5",
+                        "--max-anchor-quality-error",
+                        "0.25",
                     ]
                 )
 
             result = json.loads(output.read_text())
             self.assertEqual(result["pseudo_label_count"], 1)
             self.assertEqual(result["filters"]["min_editability_score"], 0.8)
+            self.assertEqual(result["filters"]["max_raster_edge_error"], 0.5)
 
     def test_create_review_file_marks_labels_pending(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -467,9 +517,15 @@ def _write_manifest(
     classifier_error: float,
     editability_score: float = 1.0,
     fragmentation_penalty: float = 0.0,
+    raster_l1_error: float = 0.0,
+    raster_edge_error: float = 0.0,
+    anchor_metrics: dict[str, float] | None = None,
 ) -> None:
     run_dir = root / run_name
     run_dir.mkdir(parents=True)
+    metrics = {"classifier_prior_error": classifier_error}
+    if anchor_metrics is not None:
+        metrics.update(anchor_metrics)
     (run_dir / "manifest.json").write_text(
         json.dumps(
             {
@@ -477,13 +533,15 @@ def _write_manifest(
                     {
                         "kind": "circle",
                         "color": "#dd2222",
-                        "metrics": {"classifier_prior_error": classifier_error},
+                        "metrics": metrics,
                     }
                 ],
                 "diagnostics": diagnostics,
                 "metrics": {
                     "editability_score": editability_score,
                     "fragmentation_penalty": fragmentation_penalty,
+                    "raster_l1_error": raster_l1_error,
+                    "raster_edge_error": raster_edge_error,
                 },
             }
         ),
