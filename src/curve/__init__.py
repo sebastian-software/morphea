@@ -29,6 +29,15 @@ from curve.synthetic import SyntheticSample, generate_synthetic_sample
 from curve.runs import VectorizeRun, create_run_dir, render_markdown_report, write_vectorize_run
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
+from curve.classifier import (
+    FEATURE_NAMES,
+    TrainingExample,
+    evaluate_classifier,
+    examples_from_dataset,
+    features_from_anchor,
+    predict_label,
+    train_centroid_classifier,
+)
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
@@ -44,6 +53,7 @@ __all__ = [
     "CircleAnchor",
     "ColorMask",
     "DatasetSplit",
+    "FEATURE_NAMES",
     "FlatColorSegmenter",
     "MaskComponent",
     "MlxSamSegmenter",
@@ -55,6 +65,7 @@ __all__ = [
     "StrokeAnchor",
     "SvgStyle",
     "SyntheticSample",
+    "TrainingExample",
     "VectorizeRun",
     "anchor_to_manifest",
     "anchor_to_svg_element",
@@ -65,11 +76,15 @@ __all__ = [
     "detect_cutout_strokes",
     "detect_primitive_anchors",
     "evaluate_runs",
+    "evaluate_classifier",
+    "examples_from_dataset",
+    "features_from_anchor",
     "flat_color_masks_from_image",
     "generate_synthetic_sample",
     "generate_synthetic_dataset",
     "primitive_candidates_for_component",
     "proposals_to_manifest",
+    "predict_label",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
     "scene_from_mask",
@@ -78,4 +93,5 @@ __all__ = [
     "render_eval_markdown",
     "write_vectorize_run",
     "write_eval_summary",
+    "train_centroid_classifier",
 ]

@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from curve.classifier import train_centroid_classifier
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
@@ -100,7 +101,12 @@ def main(argv: list[str] | None = None) -> None:
     eval_parser.add_argument("-o", "--output", type=Path, required=True)
     eval_parser.add_argument("--markdown", type=Path)
 
-    subcommands.add_parser("train", help="train command placeholder.")
+    train = subcommands.add_parser(
+        "train",
+        help="Train a primitive classifier from a generated dataset.json.",
+    )
+    train.add_argument("dataset", type=Path)
+    train.add_argument("-o", "--output", type=Path, required=True)
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
@@ -168,6 +174,13 @@ def main(argv: list[str] | None = None) -> None:
             markdown=args.markdown,
         )
         print(f"evaluated {summary['run_count']} runs")
+        return
+
+    if args.command == "train":
+        model = train_centroid_classifier(args.dataset, output=args.output)
+        print(
+            f"trained {model['model_type']} with {model['train_examples']} examples"
+        )
         return
 
     print(f"curve {args.command}: pipeline implementation pending")
