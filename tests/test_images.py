@@ -84,6 +84,15 @@ class FlatColorImageTests(unittest.TestCase):
 
         self.assertEqual(len(masks), 1)
 
+    def test_transparent_background_is_ignored(self):
+        image_path = _write_transparent_circle_image()
+
+        scene = scene_from_flat_color_image(image_path)
+
+        self.assertEqual(len(scene.anchors), 1)
+        self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
+        self.assertEqual(scene.anchors[0].color, "#dd2222")
+
 
 def _write_fixture_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -155,6 +164,17 @@ def _write_multi_red_circle_image() -> Path:
     draw = ImageDraw.Draw(image)
     draw.ellipse((3, 3, 14, 14), fill="#dd2222")
     draw.arc((3, 3, 14, 14), start=0, end=180, fill="#d91f1f", width=2)
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_transparent_circle_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "transparent-circle.png"
+    image = Image.new("RGBA", (16, 16), (38, 69, 201, 0))
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((3, 3, 12, 12), fill="#dd2222")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
