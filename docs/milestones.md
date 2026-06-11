@@ -567,6 +567,8 @@ Implemented so far:
 - `curve train --config train.json` for repeatable classifier training inputs
 - `curve compare-training --config compare.json` for repeatable retraining
   comparisons
+- `curve compare-snapshots before.json after.json` for comparing saved
+  summaries from different commits/configurations
 - `curve sweep --markdown summary.md` for scan-friendly config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests
@@ -576,7 +578,8 @@ Remaining:
 
 - richer config files for segmenters, thresholds, and scoring beyond the first
   vectorize/training runtime configs.
-- comparison views across commits beyond config-level sweep summaries.
+- direct git-aware automation for checking out commits and generating the
+  snapshots that `compare-snapshots` consumes.
 
 ## Commit Discipline
 

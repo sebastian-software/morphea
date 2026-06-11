@@ -213,6 +213,30 @@ Both `baseline` and `augmented` include validation/test `evaluation` and
 intended to show whether reviewed pseudo-labels improve, degrade, or leave
 candidate ranking unchanged before a heavier retraining backend is introduced.
 
+## Snapshot Comparison v1
+
+Written by `curve compare-snapshots`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `before`
+- `after`
+- `item_kind`: `cases`, `runs`, or `root`
+- `item_count`
+- `added_ids`
+- `removed_ids`
+- `items`
+
+Each item records the shared `id`, `changed_metric_count`, and numeric
+`metric_deltas`. Deltas use flattened metric paths, for example
+`metrics.editability_score` or `anchor_kind_counts.quad`. Boolean fields are
+not treated as numeric metrics.
+
+`curve compare-snapshots --markdown comparison.md` writes a scan-friendly table
+for reviewing differences between saved reports from different commits or
+configurations.
+
 ## Run Directory v1
 
 Written by `curve vectorize --run-dir` and by each `curve sweep` run.
