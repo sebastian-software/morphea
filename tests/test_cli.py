@@ -116,7 +116,8 @@ class CliTests(unittest.TestCase):
             manifest = json.loads(output_path.with_suffix(".json").read_text())
             codes = [diagnostic["code"] for diagnostic in manifest["diagnostics"]]
             self.assertIn("image_resized_for_analysis", codes)
-            self.assertIn("color_mask_deferred", codes)
+            self.assertIn("color_mask_split_for_components", codes)
+            self.assertIn("component_deferred", codes)
 
     def test_vectorize_can_write_run_directory(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -173,15 +173,14 @@ def scene_from_flat_color_image(
         if max_component_area is not None and len(color_mask.mask.pixels) > max_component_area:
             diagnostics.append(
                 {
-                    "level": "warning",
-                    "code": "color_mask_deferred",
+                    "level": "info",
+                    "code": "color_mask_split_for_components",
                     "color": color_mask.color,
                     "area": len(color_mask.mask.pixels),
                     "max_component_area": max_component_area,
-                    "message": "color mask was too large to split within current runtime limits",
+                    "message": "color mask exceeded component limit and was split into bounded components",
                 }
             )
-            continue
         for component in connected_components(color_mask.mask, min_area=min_area):
             if _deadline_exceeded(started_at, timeout_seconds):
                 diagnostics.append(

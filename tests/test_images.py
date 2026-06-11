@@ -68,14 +68,34 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertGreater(scene.anchors[0].circle.radius, 10)
         self.assertEqual(scene.diagnostics[0]["code"], "image_resized_for_analysis")
 
-    def test_max_component_area_defers_large_masks(self):
+    def test_max_component_area_defers_large_components_after_mask_split(self):
         image_path = _write_large_circle_image()
 
         scene = scene_from_flat_color_image(image_path, max_component_area=20)
 
         self.assertEqual(scene.anchors, ())
-        self.assertEqual(scene.diagnostics[0]["code"], "color_mask_deferred")
+        self.assertEqual(scene.diagnostics[0]["code"], "color_mask_split_for_components")
         self.assertEqual(scene.diagnostics[0]["color"], "#dd2222")
+        self.assertEqual(scene.diagnostics[1]["code"], "component_deferred")
+
+    def test_large_color_mask_can_still_emit_small_components(self):
+        image_path = _write_two_small_same_color_dots()
+
+        scene = scene_from_flat_color_image(
+            image_path,
+            min_area=4,
+            max_component_area=30,
+        )
+
+        self.assertEqual(len(scene.anchors), 2)
+        self.assertEqual(
+            [diagnostic["code"] for diagnostic in scene.diagnostics],
+            ["color_mask_split_for_components"],
+        )
+        self.assertEqual(
+            [anchor.kind for anchor in scene.anchors],
+            [AnchorKind.CIRCLE, AnchorKind.CIRCLE],
+        )
 
     def test_max_colors_quantizes_palette_before_grouping(self):
         image_path = _write_multi_red_circle_image()
@@ -175,6 +195,18 @@ def _write_transparent_circle_image() -> Path:
     image = Image.new("RGBA", (16, 16), (38, 69, 201, 0))
     draw = ImageDraw.Draw(image)
     draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_two_small_same_color_dots() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "two-small-dots.png"
+    image = Image.new("RGB", (22, 10), "white")
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((2, 2, 7, 7), fill="#dd2222")
+    draw.ellipse((14, 2, 19, 7), fill="#dd2222")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
