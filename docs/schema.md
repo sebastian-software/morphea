@@ -248,6 +248,30 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Pseudo-Label Harvest v1
+
+Written by `curve harvest`.
+
+Top-level fields:
+
+- `pseudo_label_count`
+- `pseudo_labels`
+- `rejected_runs`
+- `filters`
+
+`filters` records the active quality gates:
+
+- `max_run_diagnostics`
+- `max_classifier_prior_error`
+- `min_editability_score`
+- `max_fragmentation_penalty`
+- `max_raster_l1_error`
+- `max_raster_edge_error`
+- `max_anchor_quality_error`
+
+Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
+metrics, run metrics, and `source_manifest` provenance.
+
 ## Training Config v1
 
 Read by `curve train --config`.

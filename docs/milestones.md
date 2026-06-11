@@ -478,6 +478,8 @@ Implemented so far:
 - anchor-level `classifier_prior_error` filter
 - run-level `editability_score` minimum filter
 - run-level `fragmentation_penalty` maximum filter
+- run-level `raster_l1_error` and `raster_edge_error` maximum filters
+- anchor-level aggregate quality filter for unstable simple-shape metrics
 - output pseudo-label index with source manifest provenance
 - human-editable review queue via `curve review`
 - accepted/rejected/pending split via `curve apply-review`
