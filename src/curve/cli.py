@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
 from curve.runs import create_run_dir, write_vectorize_run
 from curve.synthetic import generate_synthetic_sample
@@ -88,8 +89,15 @@ def main(argv: list[str] | None = None) -> None:
     generate.add_argument("--width", type=int, default=96)
     generate.add_argument("--height", type=int, default=96)
 
-    for name in ("train", "eval"):
-        subcommands.add_parser(name, help=f"{name} command placeholder.")
+    eval_parser = subcommands.add_parser(
+        "eval",
+        help="Summarize vectorize run directories.",
+    )
+    eval_parser.add_argument("run_root", type=Path)
+    eval_parser.add_argument("-o", "--output", type=Path, required=True)
+    eval_parser.add_argument("--markdown", type=Path)
+
+    subcommands.add_parser("train", help="train command placeholder.")
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
@@ -146,6 +154,15 @@ def main(argv: list[str] | None = None) -> None:
             )
             sample.write(args.output_dir, f"sample-{index:04d}")
         print(f"wrote {args.count} synthetic samples to {args.output_dir}")
+        return
+
+    if args.command == "eval":
+        summary = write_eval_summary(
+            run_root=args.run_root,
+            output=args.output,
+            markdown=args.markdown,
+        )
+        print(f"evaluated {summary['run_count']} runs")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")
