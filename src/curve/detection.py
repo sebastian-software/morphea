@@ -86,6 +86,14 @@ def detect_cutout_strokes(
                 color=color,
             )
         )
+        cutouts.extend(
+            _freeform_cutout_strokes(
+                component,
+                min_length=min_length,
+                max_thickness=max_thickness,
+                color=color,
+            )
+        )
     return tuple(cutouts)
 
 
@@ -707,20 +715,121 @@ def _group_vertical_runs(
     return tuple(candidates)
 
 
+def _freeform_cutout_strokes(
+    component: MaskComponent,
+    *,
+    min_length: int,
+    max_thickness: int,
+    color: str,
+) -> tuple[AnchorCandidate, ...]:
+    min_x, min_y, max_x, max_y = component.bounds
+    if max_x - min_x < min_length or max_y - min_y < 3:
+        return ()
+
+    gap_pixels = frozenset(
+        (x, y)
+        for y in range(min_y + 1, max_y)
+        for x in range(min_x + 1, max_x)
+        if (x, y) not in component.pixels
+    )
+    if not gap_pixels:
+        return ()
+
+    gap_mask = BinaryMask(width=max_x + 1, height=max_y + 1, pixels=gap_pixels)
+    candidates: list[AnchorCandidate] = []
+    for gap in connected_components(gap_mask, min_area=min_length):
+        candidate = _freeform_cutout_candidate(
+            gap,
+            host_bounds=component.bounds,
+            min_length=min_length,
+            max_thickness=max_thickness,
+            color=color,
+        )
+        if candidate is not None:
+            candidates.append(candidate)
+    return tuple(candidates)
+
+
+def _freeform_cutout_candidate(
+    component: MaskComponent,
+    *,
+    host_bounds: tuple[int, int, int, int],
+    min_length: int,
+    max_thickness: int,
+    color: str,
+) -> AnchorCandidate | None:
+    if _touches_bounds(component, host_bounds):
+        return None
+
+    axis = _principal_axis(component)
+    if axis is None:
+        return None
+
+    center, direction, min_major, max_major, min_minor, max_minor = axis
+    length = max_major - min_major + 1
+    stroke_width = max(max_minor - min_minor + 1, 1.0)
+    if length < min_length or stroke_width > max_thickness:
+        return None
+
+    dx, dy = direction
+    start = Point(center.x + dx * min_major, center.y + dy * min_major)
+    end = Point(center.x + dx * max_major, center.y + dy * max_major)
+    if _is_axis_aligned(start, end):
+        return None
+
+    control = max(
+        (Point(x, y) for x, y in component.pixels),
+        key=lambda point: _point_line_distance(point, start, end),
+    )
+    bow = _point_line_distance(control, start, end)
+    centerline = (
+        (start, control, end)
+        if bow >= max(1.0, stroke_width * 0.75)
+        else (start, end)
+    )
+    return _cutout_centerline_candidate(centerline, stroke_width, color)
+
+
 def _cutout_candidate(start: Point, end: Point, width: float, color: str) -> AnchorCandidate:
+    return _cutout_centerline_candidate((start, end), width, color)
+
+
+def _cutout_centerline_candidate(
+    centerline: tuple[Point, ...],
+    width: float,
+    color: str,
+) -> AnchorCandidate:
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=0.0,
-        node_count=2,
-        parameter_count=5,
+        node_count=len(centerline),
+        parameter_count=max(5, len(centerline) * 2 + 1),
         color=color,
         stroke=StrokeAnchor(
-            centerline=(start, end),
+            centerline=centerline,
             width_samples=(float(width),),
             is_cutout=True,
         ),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _touches_bounds(
+    component: MaskComponent,
+    bounds: tuple[int, int, int, int],
+) -> bool:
+    min_x, min_y, max_x, max_y = bounds
+    return any(
+        x <= min_x or x >= max_x or y <= min_y or y >= max_y
+        for x, y in component.pixels
+    )
+
+
+def _is_axis_aligned(start: Point, end: Point) -> bool:
+    dx = abs(end.x - start.x)
+    dy = abs(end.y - start.y)
+    length = max(start.distance_to(end), 1.0)
+    return dx / length < 0.18 or dy / length < 0.18
 
 
 def _has_component_neighbor_above_and_below(

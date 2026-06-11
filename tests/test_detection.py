@@ -258,6 +258,31 @@ class CutoutDetectionTests(unittest.TestCase):
         self.assertTrue(cutouts[0].stroke.is_cutout)
         self.assertEqual(cutouts[0].stroke.width_samples, (1.0,))
 
+    def test_diagonal_gap_inside_component_becomes_cutout_stroke(self):
+        mask = BinaryMask.from_rows(
+            (
+                "############",
+                "############",
+                "##.#########",
+                "###.########",
+                "####.#######",
+                "#####.######",
+                "######.#####",
+                "############",
+                "############",
+            )
+        )
+
+        cutouts = detect_cutout_strokes(mask, min_length=4)
+
+        self.assertEqual(len(cutouts), 1)
+        self.assertEqual(cutouts[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertTrue(cutouts[0].stroke.is_cutout)
+        self.assertEqual(cutouts[0].color, "#ffffff")
+        start, end = cutouts[0].stroke.centerline[:2]
+        self.assertGreater(abs(end.x - start.x), 0)
+        self.assertGreater(abs(end.y - start.y), 0)
+
     def test_large_hole_is_not_treated_as_thin_cutout_stroke(self):
         mask = BinaryMask.from_rows(
             (
