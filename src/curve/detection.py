@@ -87,6 +87,10 @@ def primitive_candidates_for_component(
     if stroke is not None:
         candidates.append(stroke)
 
+    rect = _rect_candidate(component)
+    if rect is not None:
+        candidates.append(rect)
+
     quad = _quad_candidate(component)
     if quad is not None:
         candidates.append(quad)
@@ -317,6 +321,41 @@ def _quad_candidate(component: MaskComponent) -> AnchorCandidate | None:
         node_count=4,
         parameter_count=8,
         quad=quad,
+    )
+    return enrich_anchor_metrics(candidate)
+
+
+def _rect_candidate(component: MaskComponent) -> AnchorCandidate | None:
+    if component.width < 3 or component.height < 3:
+        return None
+
+    expected_area = component.width * component.height
+    fill_error = 1.0 - component.area / expected_area
+    if fill_error > 0.08:
+        return None
+
+    min_x, min_y, max_x, max_y = component.bounds
+    for y, left, right in component.row_spans():
+        if y < min_y or y > max_y:
+            return None
+        if abs(left - min_x) > 1 or abs(right - max_x) > 1:
+            return None
+
+    quad = QuadAnchor(
+        corners=(
+            Point(min_x, min_y),
+            Point(max_x, min_y),
+            Point(max_x, max_y),
+            Point(min_x, max_y),
+        )
+    )
+    candidate = AnchorCandidate(
+        kind=AnchorKind.RECT,
+        raster_error=fill_error,
+        node_count=4,
+        parameter_count=4,
+        quad=quad,
+        metrics={"rect_fill_error": fill_error},
     )
     return enrich_anchor_metrics(candidate)
 

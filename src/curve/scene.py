@@ -368,9 +368,12 @@ def _anchor_layer(anchor: AnchorCandidate) -> str:
         AnchorKind.ARC,
     }:
         return "strokes"
-    if anchor.kind == AnchorKind.QUAD:
-        return "filled_primitives"
-    if anchor.kind == AnchorKind.CIRCLE:
+    if anchor.kind in {
+        AnchorKind.CIRCLE,
+        AnchorKind.RECT,
+        AnchorKind.ROUNDED_RECT,
+        AnchorKind.QUAD,
+    }:
         return "filled_primitives"
     return "generic_paths"
 

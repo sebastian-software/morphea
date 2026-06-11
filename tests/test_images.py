@@ -121,6 +121,16 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
         self.assertEqual(scene.anchors[0].color, "#dd2222")
 
+    def test_compact_filled_rectangle_vectorizes_as_rect(self):
+        image_path = _write_rect_image()
+
+        scene = scene_from_flat_color_image(image_path)
+
+        self.assertEqual(len(scene.anchors), 1)
+        self.assertEqual(scene.anchors[0].kind, AnchorKind.RECT)
+        self.assertEqual(scene.anchors[0].color, "#003366")
+        self.assertEqual(scene.to_manifest()["anchors"][0]["layer"], "filled_primitives")
+
 
 def _write_fixture_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()
@@ -215,6 +225,17 @@ def _write_two_small_same_color_dots() -> Path:
     draw = ImageDraw.Draw(image)
     draw.ellipse((2, 2, 7, 7), fill="#dd2222")
     draw.ellipse((14, 2, 19, 7), fill="#dd2222")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_rect_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "rect.png"
+    image = Image.new("RGB", (18, 14), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((4, 3, 13, 10), fill="#003366")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
