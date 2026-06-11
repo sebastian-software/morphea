@@ -24,3 +24,15 @@ implementation direction and accepted architecture decisions.
 python3 -m unittest discover -s tests
 ```
 
+## First Usable Path
+
+The current CLI can vectorize exact flat-color images into editable SVG
+primitives:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg
+```
+
+This path currently targets non-antialiased flat-color fixtures. It detects and
+exports the first base forms: circles/dots, straight stroke components, and
+perspective quad tiles.
