@@ -415,6 +415,9 @@ Files:
 - `output.svg`
 - `manifest.json`
 - `config.json`
+- `anchors.json`
+- `palette.json`
+- `mask-summary.json`
 - `report.md`
 - `report.html`
 - `preview.png`
@@ -423,6 +426,11 @@ Files:
 `preview.png` is rendered deterministically from `manifest.json`; run-directory
 manifests compare it with the copied input and store bounded raster-fidelity
 metrics.
+
+`anchors.json` stores the manifest anchor list as a standalone inspection file.
+`palette.json` groups anchors by source color with kind and layer counts.
+`mask-summary.json` records one source-mask proxy per anchor using the reserved
+bounds that later stages should not fragment.
 `debug.svg` keeps the editable geometry but wraps each anchor with ids, bounds,
 and confidence labels for inspection.
 

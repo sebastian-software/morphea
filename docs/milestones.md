@@ -266,6 +266,9 @@ Implemented so far:
 - `preview.png`
 - `manifest.json`
 - `config.json`
+- `anchors.json`
+- `palette.json`
+- `mask-summary.json`
 - `report.md`
 - `report.html`
 - report summaries for anchor types and diagnostics
