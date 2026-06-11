@@ -4,6 +4,7 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from curve.classifier import (
     anchors_from_dataset,
@@ -17,6 +18,11 @@ from curve.classifier import (
 from curve.cli import main
 from curve.dataset import generate_synthetic_dataset
 from curve.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
+from curve.mlx_classifier import (
+    MLX_MODEL_TYPE,
+    MlxClassifierTrainingConfig,
+    train_mlx_transformer_classifier,
+)
 
 
 class PrimitiveClassifierTests(unittest.TestCase):
@@ -139,6 +145,97 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
             model = json.loads(model_path.read_text(encoding="utf-8"))
             self.assertEqual(model["train_examples"], 28)
+
+    def test_train_mlx_requires_backend_by_default(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=22,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+
+            with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+                with self.assertRaisesRegex(RuntimeError, "MLX primitive classifier"):
+                    train_mlx_transformer_classifier(
+                        Path(temp_dir) / "dataset.json",
+                        output=Path(temp_dir) / "mlx-model.json",
+                    )
+
+    def test_train_mlx_can_write_unavailable_fallback_artifact(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=23,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            model_path = Path(temp_dir) / "mlx-model.json"
+
+            with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+                model = train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=model_path,
+                    config=MlxClassifierTrainingConfig(
+                        epochs=3,
+                        hidden_dim=16,
+                        num_heads=2,
+                        allow_unavailable=True,
+                    ),
+                )
+            centroids = load_centroid_model(model_path)
+
+            self.assertTrue(model_path.exists())
+            self.assertEqual(model["model_type"], MLX_MODEL_TYPE)
+            self.assertEqual(model["status"], "unavailable")
+            self.assertEqual(model["training_config"]["epochs"], 3)
+            self.assertIn("circle", model["fallback_centroids"])
+            self.assertIn("circle", centroids)
+            self.assertIn("ranking_evaluation", model)
+
+    def test_train_mlx_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=24,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            root = Path(temp_dir)
+            model_path = root / "mlx-model.json"
+            config = root / "train-mlx.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "dataset": str(root / "dataset.json"),
+                        "output": str(model_path),
+                        "epochs": 2,
+                        "hidden_dim": 12,
+                        "num_heads": 2,
+                        "num_layers": 1,
+                        "learning_rate": 0.002,
+                        "allow_unavailable": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+                with redirect_stdout(StringIO()):
+                    main(["train-mlx", "--config", str(config)])
+
+            model = json.loads(model_path.read_text(encoding="utf-8"))
+            self.assertEqual(model["model_type"], MLX_MODEL_TYPE)
+            self.assertEqual(model["training_config"]["learning_rate"], 0.002)
 
     def test_classifier_ranking_compares_heuristic_and_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:

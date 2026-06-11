@@ -16,6 +16,10 @@ from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
+from curve.mlx_classifier import (
+    MlxClassifierTrainingConfig,
+    train_mlx_transformer_classifier,
+)
 from curve.profiling import profile_vectorize
 from curve.runs import create_run_dir, write_markdown_report, write_vectorize_run
 from curve.segmenters import (
@@ -63,6 +67,16 @@ VECTORIZE_DEFAULT_CONFIG = {
     "rounded_rect_max_fill_error": 0.30,
 }
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
+TRAIN_MLX_CONFIG_KEYS = {
+    "dataset",
+    "output",
+    "epochs",
+    "hidden_dim",
+    "num_heads",
+    "num_layers",
+    "learning_rate",
+    "allow_unavailable",
+}
 SEGMENT_CONFIG_DEFAULTS = {
     "segmenter": "flat_color",
     "min_area": 8,
@@ -278,6 +292,24 @@ def main(argv: list[str] | None = None) -> None:
     train.add_argument("dataset", type=Path, nargs="?")
     train.add_argument("-o", "--output", type=Path)
     train.add_argument("--config", type=Path)
+
+    train_mlx = subcommands.add_parser(
+        "train-mlx",
+        help="Train the optional MLX Transformer primitive classifier.",
+    )
+    train_mlx.add_argument("dataset", type=Path, nargs="?")
+    train_mlx.add_argument("-o", "--output", type=Path)
+    train_mlx.add_argument("--epochs", type=int)
+    train_mlx.add_argument("--hidden-dim", type=int)
+    train_mlx.add_argument("--num-heads", type=int)
+    train_mlx.add_argument("--num-layers", type=int)
+    train_mlx.add_argument("--learning-rate", type=float)
+    train_mlx.add_argument(
+        "--allow-unavailable",
+        action="store_true",
+        help="Write a fallback artifact when MLX is not installed.",
+    )
+    train_mlx.add_argument("--config", type=Path)
 
     harvest = subcommands.add_parser(
         "harvest",
@@ -539,6 +571,19 @@ def main(argv: list[str] | None = None) -> None:
         )
         return
 
+    if args.command == "train-mlx":
+        train_config, mlx_config = _resolved_train_mlx_config(args)
+        model = train_mlx_transformer_classifier(
+            train_config["dataset"],
+            output=train_config["output"],
+            config=mlx_config,
+        )
+        print(
+            f"trained {model['model_type']} with {model['train_examples']} examples "
+            f"(status={model['status']})"
+        )
+        return
+
     if args.command == "harvest":
         result = harvest_pseudo_labels(
             run_root=args.run_root,
@@ -703,6 +748,37 @@ def _resolved_train_config(args: argparse.Namespace) -> dict[str, Path]:
     return config
 
 
+def _resolved_train_mlx_config(
+    args: argparse.Namespace,
+) -> tuple[dict[str, Path], MlxClassifierTrainingConfig]:
+    config = _load_train_mlx_config(args.config)
+    if args.dataset is not None:
+        config["dataset"] = args.dataset
+    if args.output is not None:
+        config["output"] = args.output
+    for key in ("epochs", "hidden_dim", "num_heads", "num_layers", "learning_rate"):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    if args.allow_unavailable:
+        config["allow_unavailable"] = True
+    _require_config_paths(config, ("dataset", "output"), "train-mlx")
+    return (
+        {
+            "dataset": Path(config["dataset"]),
+            "output": Path(config["output"]),
+        },
+        MlxClassifierTrainingConfig(
+            epochs=int(config.get("epochs", 25)),
+            hidden_dim=int(config.get("hidden_dim", 32)),
+            num_heads=int(config.get("num_heads", 4)),
+            num_layers=int(config.get("num_layers", 1)),
+            learning_rate=float(config.get("learning_rate", 0.001)),
+            allow_unavailable=bool(config.get("allow_unavailable", False)),
+        ),
+    )
+
+
 def _resolved_segment_config(args: argparse.Namespace) -> dict[str, object]:
     config = dict(SEGMENT_CONFIG_DEFAULTS)
     if args.config is not None:
@@ -782,6 +858,23 @@ def _load_segment_config(path: Path) -> dict[str, object]:
         msg = f"unsupported segment config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     return loaded
+
+
+def _load_train_mlx_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("train-mlx config must be a JSON object")
+    unknown = sorted(set(loaded) - TRAIN_MLX_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported train-mlx config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("dataset", "output"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
 
 
 def _segmenter_from_config(

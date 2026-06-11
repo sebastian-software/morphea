@@ -208,6 +208,12 @@ def centroids_from_examples(
 
 def load_centroid_model(model_json: str | Path) -> dict[str, tuple[float, ...]]:
     model = json.loads(Path(model_json).read_text(encoding="utf-8"))
+    if model.get("model_type") == "mlx_transformer_primitive_classifier":
+        fallback = model.get("fallback_centroids", {})
+        return {
+            label: tuple(values)
+            for label, values in fallback.items()
+        }
     if model.get("model_type") != "centroid_primitive_classifier":
         msg = "unsupported classifier model type"
         raise ValueError(msg)

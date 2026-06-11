@@ -64,6 +64,12 @@ from curve.classifier import (
     predict_label,
     train_centroid_classifier,
 )
+from curve.mlx_classifier import (
+    MLX_MODEL_TYPE,
+    MlxClassifierTrainingConfig,
+    is_mlx_available,
+    train_mlx_transformer_classifier,
+)
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
@@ -100,6 +106,8 @@ __all__ = [
     "FlatColorSegmenter",
     "MaskComponent",
     "MlxSamSegmenter",
+    "MLX_MODEL_TYPE",
+    "MlxClassifierTrainingConfig",
     "Point",
     "QuadAnchor",
     "RefinementConfig",
@@ -146,6 +154,7 @@ __all__ = [
     "load_centroid_model",
     "load_curated_suite",
     "load_sweep_config",
+    "is_mlx_available",
     "merge_reviewed_pseudo_label_dataset",
     "proposals_to_manifest",
     "predict_label",
@@ -171,4 +180,5 @@ __all__ = [
     "write_vectorize_run",
     "write_eval_summary",
     "train_centroid_classifier",
+    "train_mlx_transformer_classifier",
 ]
