@@ -154,6 +154,11 @@ Supported fields match current runtime knobs:
 - `max_component_area`
 - `timeout_seconds`
 - `classifier_model`
+- `raster_error_weight`
+- `quality_error_weight`
+- `node_complexity_weight`
+- `parameter_complexity_weight`
+- `simple_shape_bonus_weight`
 
 CLI arguments override values loaded from the config file.
 

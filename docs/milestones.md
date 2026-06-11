@@ -582,6 +582,8 @@ Implemented so far:
 - `curve compare-training --config compare.json` for repeatable retraining
   comparisons
 - `curve segment --config segment.json` for repeatable segment proposal runs
+- vectorize scoring weights for raster error, quality error, complexity, and
+  simple-shape bonus
 - `curve compare-snapshots before.json after.json` for comparing saved
   summaries from different commits/configurations
 - `curve compare-git-snapshots before_ref after_ref --path snapshot.json` for
@@ -594,8 +596,8 @@ Implemented so far:
 
 Remaining:
 
-- richer config files for segmenters, thresholds, and scoring beyond the first
-  vectorize/training runtime configs.
+- richer config files for anchor thresholds and broader segmenter options
+  beyond the current vectorize/training/scoring runtime configs.
 - direct git-aware automation for checking out commits and generating the
   snapshots that `compare-git-snapshots` consumes.
 
