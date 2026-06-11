@@ -41,6 +41,8 @@ Acceptance evidence:
 
 ## M1: Real-Image Preprocessing and Runtime Control
 
+Status: in progress.
+
 Purpose: make real generated images tractable before adding heavier ML.
 
 Why this matters: real images contain antialiasing, palette drift, transparent
@@ -71,6 +73,21 @@ Acceptance criteria:
 - Manifest reports major palette groups and skipped/deferred regions clearly.
 - Large background/transparent areas do not become vector candidates.
 - Tests include at least one antialiased and one transparent-background fixture.
+
+Implemented so far:
+
+- `--max-size` analysis resize with anchor coordinate scaling.
+- `--max-colors` palette quantization.
+- `--max-component-area` color-mask/component deferral diagnostics.
+- `--timeout-seconds` internal partial-run cutoff.
+- manifest `diagnostics` entries.
+- bounded `terminaro-tweaked.png` run completes under an external timeout.
+
+Remaining:
+
+- explicit transparent-background regression fixture.
+- faster array-backed component extraction.
+- more nuanced ROI splitting instead of full color-mask deferral.
 
 ## M2: Primitive Anchor Detection V2
 
@@ -375,4 +392,3 @@ Continue using small Conventional Commits:
 
 Each milestone should land in multiple small commits when it naturally splits
 into docs, core logic, CLI, tests, and reporting.
-

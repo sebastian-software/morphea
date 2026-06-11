@@ -24,6 +24,37 @@ Observed via local inspection:
 
 ## Current Prototype Behavior
 
+Updated M1 bounded run:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli vectorize \
+  /Users/sebastian/Desktop/terminaro-tweaked.png \
+  -o /tmp/curve-terminaro-m1/terminaro.svg \
+  --color-tolerance 18 \
+  --max-size 256 \
+  --max-colors 10 \
+  --max-component-area 12000 \
+  --timeout-seconds 8 \
+  --min-area 12
+```
+
+Result:
+
+- Completed successfully under an external 15 second timeout.
+- Wrote SVG and JSON manifest.
+- Produced 51 anchors:
+  - 16 `quad`
+  - 15 `stroke_polyline`
+  - 15 `cubic_path`
+  - 5 `circle`
+- Reported one `perspective_grid` group for the table quads.
+- Diagnostics included:
+  - `image_resized_for_analysis` from 1254 x 1254 to 256 x 256
+  - `palette_quantized` with max 10 colors
+  - `color_mask_deferred` for a large near-white region
+
+Earlier unbounded behavior:
+
 Temporary command attempted outside the repo:
 
 ```sh
@@ -91,4 +122,3 @@ Secondary anchors:
 - M6 and M7 should add MLX segment proposals and primitive classification.
 - M8 should allow high-confidence anchors from this image class to enter a
   reviewed self-learning loop.
-
