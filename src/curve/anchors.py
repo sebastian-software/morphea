@@ -16,6 +16,7 @@ class AnchorKind(StrEnum):
     STROKE_POLYLINE = "stroke_polyline"
     RECT = "rect"
     ROUNDED_RECT = "rounded_rect"
+    ARC = "arc"
     QUAD = "quad"
     PERSPECTIVE_GRID = "perspective_grid"
     CUBIC_PATH = "cubic_path"
@@ -73,6 +74,7 @@ class AnchorCandidate:
             AnchorKind.STROKE_POLYLINE,
             AnchorKind.RECT,
             AnchorKind.ROUNDED_RECT,
+            AnchorKind.ARC,
             AnchorKind.QUAD,
             AnchorKind.PERSPECTIVE_GRID,
         }
@@ -210,6 +212,7 @@ def simple_shape_priority_bonus(candidate: AnchorCandidate) -> float:
         AnchorKind.STROKE_POLYLINE,
         AnchorKind.RECT,
         AnchorKind.ROUNDED_RECT,
+        AnchorKind.ARC,
         AnchorKind.QUAD,
         AnchorKind.PERSPECTIVE_GRID,
     }:

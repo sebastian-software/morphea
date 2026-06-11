@@ -1,7 +1,7 @@
 import unittest
 
 from curve.masks import BinaryMask
-from curve.anchors import AnchorCandidate, AnchorKind, Point, StrokeAnchor
+from curve.anchors import AnchorCandidate, AnchorKind, Point, QuadAnchor, StrokeAnchor
 from curve.scene import (
     SCENE_MANIFEST_SCHEMA_VERSION,
     Scene,
@@ -73,6 +73,52 @@ class SceneExportTests(unittest.TestCase):
         self.assertIn('stroke-linejoin="miter"', svg)
         self.assertEqual(manifest["anchors"][0]["stroke"]["cap_style"], "square")
         self.assertEqual(manifest["anchors"][0]["stroke"]["join_style"], "miter")
+
+    def test_arc_exports_as_editable_svg_stroke(self):
+        anchor = AnchorCandidate(
+            kind=AnchorKind.ARC,
+            raster_error=0.0,
+            node_count=3,
+            parameter_count=6,
+            stroke=StrokeAnchor(
+                centerline=(Point(2, 8), Point(6, 4), Point(10, 8)),
+                width_samples=(2.0,),
+            ),
+        )
+        scene = Scene(width=12, height=12, anchors=(anchor,))
+
+        svg = scene.to_svg()
+
+        self.assertIn("<path ", svg)
+        self.assertIn('stroke-linecap="round"', svg)
+        self.assertIn('stroke-linejoin="round"', svg)
+
+    def test_rect_and_rounded_rect_export_as_svg_rects(self):
+        rect = AnchorCandidate(
+            kind=AnchorKind.RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=4,
+            quad=QuadAnchor(
+                corners=(Point(2, 3), Point(8, 3), Point(8, 7), Point(2, 7)),
+            ),
+        )
+        rounded = AnchorCandidate(
+            kind=AnchorKind.ROUNDED_RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=5,
+            quad=QuadAnchor(
+                corners=(Point(3, 9), Point(10, 9), Point(10, 13), Point(3, 13)),
+            ),
+            metrics={"corner_radius": 2.0},
+        )
+        scene = Scene(width=14, height=16, anchors=(rect, rounded))
+
+        svg = scene.to_svg()
+
+        self.assertIn('<rect x="2" y="3" width="6" height="4" rx="0" ry="0"', svg)
+        self.assertIn('<rect x="3" y="9" width="7" height="4" rx="2" ry="2"', svg)
 
     def test_circle_ring_exports_editable_svg_stroke_circle(self):
         mask = BinaryMask.from_rows(

@@ -59,7 +59,7 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
             width=_stroke_width(anchor),
         )
         return
-    if kind in {"stroke_path", "stroke_polyline"} and "stroke" in anchor:
+    if kind in {"stroke_path", "stroke_polyline", "arc"} and "stroke" in anchor:
         points = [
             (float(point["x"]), float(point["y"]))
             for point in anchor["stroke"].get("centerline", [])
@@ -67,7 +67,7 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         if len(points) >= 2:
             draw.line(points, fill=color, width=_stroke_width(anchor), joint="curve")
         return
-    if kind == "quad" and "quad" in anchor:
+    if kind in {"rect", "rounded_rect", "quad"} and "quad" in anchor:
         points = [
             (float(point["x"]), float(point["y"]))
             for point in anchor["quad"].get("corners", [])

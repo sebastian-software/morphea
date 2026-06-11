@@ -46,11 +46,15 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
             examples = examples_from_dataset(Path(temp_dir) / "dataset.json")
 
-            self.assertEqual(len(examples), 4)
+            self.assertEqual(len(examples), 14)
             self.assertEqual({example.label for example in examples}, {
+                "arc",
                 "circle",
                 "quad",
+                "rect",
+                "rounded_rect",
                 "stroke_circle",
+                "stroke_path",
                 "stroke_polyline",
             })
 
@@ -94,7 +98,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 main(["train", str(Path(temp_dir) / "dataset.json"), "-o", str(model_path)])
 
             model = json.loads(model_path.read_text())
-            self.assertEqual(model["train_examples"], 8)
+            self.assertEqual(model["train_examples"], 28)
 
     def test_load_model_and_score_matching_candidate(self):
         with tempfile.TemporaryDirectory() as temp_dir:

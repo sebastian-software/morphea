@@ -153,7 +153,7 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
             f'stroke="{escape(stroke)}" stroke-width="{_fmt(width)}" />'
         )
 
-    if anchor.kind in {AnchorKind.STROKE_PATH, AnchorKind.STROKE_POLYLINE}:
+    if anchor.kind in {AnchorKind.STROKE_PATH, AnchorKind.STROKE_POLYLINE, AnchorKind.ARC}:
         if anchor.stroke is None:
             return _unsupported_anchor(anchor)
         points = anchor.stroke.centerline
@@ -165,6 +165,15 @@ def anchor_to_svg_element(anchor: AnchorCandidate, style: SvgStyle | None = None
             f'<path d="{path}" fill="none" stroke="{escape(stroke)}" '
             f'stroke-width="{_fmt(width)}" stroke-linecap="{cap}" '
             f'stroke-linejoin="{join}" />'
+        )
+
+    if anchor.kind in {AnchorKind.RECT, AnchorKind.ROUNDED_RECT} and anchor.quad is not None:
+        min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+        radius = anchor.metrics.get("corner_radius", 0.0)
+        return (
+            f'<rect x="{_fmt(min_x)}" y="{_fmt(min_y)}" '
+            f'width="{_fmt(max_x - min_x)}" height="{_fmt(max_y - min_y)}" '
+            f'rx="{_fmt(radius)}" ry="{_fmt(radius)}" fill="{escape(fill)}" />'
         )
 
     if anchor.kind == AnchorKind.QUAD and anchor.quad is not None:
@@ -352,7 +361,12 @@ def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
 def _anchor_layer(anchor: AnchorCandidate) -> str:
     if anchor.stroke is not None and anchor.stroke.is_cutout:
         return "cutout_overlays"
-    if anchor.kind in {AnchorKind.STROKE_CIRCLE, AnchorKind.STROKE_POLYLINE, AnchorKind.STROKE_PATH}:
+    if anchor.kind in {
+        AnchorKind.STROKE_CIRCLE,
+        AnchorKind.STROKE_POLYLINE,
+        AnchorKind.STROKE_PATH,
+        AnchorKind.ARC,
+    }:
         return "strokes"
     if anchor.kind == AnchorKind.QUAD:
         return "filled_primitives"

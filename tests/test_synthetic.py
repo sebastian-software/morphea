@@ -19,7 +19,25 @@ class SyntheticGeneratorTests(unittest.TestCase):
         self.assertIn(AnchorKind.CIRCLE, kinds)
         self.assertIn(AnchorKind.STROKE_CIRCLE, kinds)
         self.assertIn(AnchorKind.STROKE_POLYLINE, kinds)
+        self.assertIn(AnchorKind.STROKE_PATH, kinds)
+        self.assertIn(AnchorKind.ARC, kinds)
+        self.assertIn(AnchorKind.RECT, kinds)
+        self.assertIn(AnchorKind.ROUNDED_RECT, kinds)
         self.assertIn(AnchorKind.QUAD, kinds)
+        self.assertGreaterEqual(
+            sum(1 for anchor in sample.scene.anchors if anchor.kind == AnchorKind.QUAD),
+            5,
+        )
+        self.assertTrue(
+            any(
+                anchor.circle is not None and anchor.circle.radius <= 4
+                for anchor in sample.scene.anchors
+                if anchor.kind == AnchorKind.CIRCLE
+            )
+        )
+        self.assertTrue(
+            any(anchor.stroke is not None and anchor.stroke.is_cutout for anchor in sample.scene.anchors)
+        )
 
     def test_synthetic_sample_write_outputs_png_and_manifest(self):
         sample = generate_synthetic_sample(seed=11, width=64, height=64)
@@ -30,7 +48,7 @@ class SyntheticGeneratorTests(unittest.TestCase):
 
             self.assertTrue(image_path.exists())
             self.assertEqual(manifest["seed"], 11)
-            self.assertEqual(manifest["anchor_count"], 4)
+            self.assertEqual(manifest["anchor_count"], 14)
 
     def test_generate_cli_writes_numbered_samples(self):
         with tempfile.TemporaryDirectory() as temp_dir:
