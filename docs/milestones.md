@@ -141,6 +141,8 @@ Implemented so far:
   `filled_primitives` scene layer.
 - simple rounded-rectangle silhouettes classify as `rounded_rect`; descriptive
   metrics such as `corner_radius` are excluded from candidate error scoring.
+- anchors with a shared `parallel_group_id` are exposed as
+  `parallel_stroke_group` scene groups with `parallel_spacing_error`.
 
 ## M3: Scene Graph and Layer Semantics
 
@@ -184,6 +186,7 @@ Implemented so far:
   bounds, and confidence labels.
 - vectorize run directories include `debug.svg`.
 - reports, eval summaries, and sweep summaries include layer counts.
+- scene manifests include `parallel_stroke_group` entries for grouped strokes.
 
 ## M4: Reports, Metrics, and Experiment Runs
 

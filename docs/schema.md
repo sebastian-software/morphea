@@ -20,7 +20,8 @@ Top-level fields:
 - `anchor_count`: number of recognized anchors
 - `anchors`: editable primitive candidates
 - `layers`: anchor indexes grouped by semantic layer
-- `groups`: semantic groups such as `perspective_grid`
+- `groups`: semantic groups such as `perspective_grid` and
+  `parallel_stroke_group`
 - `diagnostics`: non-fatal preprocessing/runtime diagnostics
 - `metrics`: scene-level editability and quality metrics
 
