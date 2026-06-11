@@ -501,13 +501,14 @@ Implemented so far:
 - optional `--run` mode using each case's bounded `recommended_config`.
 - per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
   `report.md`, and `preview.png` artifacts via `--output-dir`.
+- curated artifacts are written through the same run writer as vectorize runs,
+  including input copies and raster-fidelity metrics.
 - expectation checks for anchor kinds and scene group kinds.
 
 Remaining:
 
 - broaden the suite beyond `terminaro-tweaked.png`.
 - fixed regression run snapshots for important commits/configurations.
-- visual preview/report rendering for curated cases.
 
 ## M11: Productized Research CLI
 
