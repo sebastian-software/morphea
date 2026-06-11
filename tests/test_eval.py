@@ -20,6 +20,7 @@ class EvalTests(unittest.TestCase):
             self.assertEqual(summary["runs"][0]["anchor_count"], 2)
             self.assertEqual(summary["runs"][0]["layer_count"], 1)
             self.assertEqual(summary["runs"][0]["editability_score"], 0.75)
+            self.assertEqual(summary["runs"][0]["raster_l1_error"], 0.12)
             self.assertEqual(summary["runs"][0]["anchor_types"]["circle"], 1)
             self.assertEqual(
                 summary["runs"][0]["diagnostic_codes"]["component_deferred"],
@@ -58,6 +59,7 @@ class EvalTests(unittest.TestCase):
         self.assertIn("- Anchors: 2", markdown)
         self.assertIn("- Layers: 0", markdown)
         self.assertIn("- Editability score: n/a", markdown)
+        self.assertIn("- Raster L1 error: n/a", markdown)
 
     def test_eval_cli_writes_summary(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -89,6 +91,8 @@ def _write_run_manifest(root: Path, name: str) -> Path:
                 "metrics": {
                     "editability_score": 0.75,
                     "fragmentation_penalty": 0.2,
+                    "raster_l1_error": 0.12,
+                    "raster_edge_error": 0.08,
                 },
             }
         ),

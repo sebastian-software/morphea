@@ -83,7 +83,7 @@ def run_sweep(
             scene=scene,
             config=effective_config,
         )
-        manifest = scene.to_manifest()
+        manifest = json.loads(vectorize_run.manifest_path.read_text(encoding="utf-8"))
         metrics = dict(manifest.get("metrics", {}))
         run_results.append(
             {
@@ -95,6 +95,8 @@ def run_sweep(
                 "diagnostic_count": len(manifest["diagnostics"]),
                 "editability_score": metrics.get("editability_score"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
+                "raster_l1_error": metrics.get("raster_l1_error"),
+                "raster_edge_error": metrics.get("raster_edge_error"),
             }
         )
 

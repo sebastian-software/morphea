@@ -2,7 +2,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from curve.rendering import render_manifest_image, write_manifest_preview
+from PIL import Image
+
+from curve.rendering import (
+    raster_fidelity_metrics,
+    render_manifest_image,
+    write_manifest_preview,
+)
 
 
 class RenderingTests(unittest.TestCase):
@@ -95,6 +101,20 @@ class RenderingTests(unittest.TestCase):
 
             self.assertEqual(path, output)
             self.assertTrue(output.exists())
+
+    def test_raster_fidelity_metrics_report_pixel_and_edge_error(self):
+        source = Image.new("RGBA", (4, 4), "white")
+        rendered = Image.new("RGBA", (4, 4), "white")
+
+        identical = raster_fidelity_metrics(source=source, rendered=rendered)
+        rendered.putpixel((1, 1), (0, 0, 0, 255))
+        changed = raster_fidelity_metrics(source=source, rendered=rendered)
+
+        self.assertTrue(identical["raster_size_match"])
+        self.assertEqual(identical["raster_l1_error"], 0.0)
+        self.assertEqual(identical["raster_edge_error"], 0.0)
+        self.assertGreater(changed["raster_l1_error"], 0.0)
+        self.assertGreater(changed["raster_edge_error"], 0.0)
 
 
 if __name__ == "__main__":

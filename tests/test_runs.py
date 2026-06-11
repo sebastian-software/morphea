@@ -41,6 +41,12 @@ class RunWriterTests(unittest.TestCase):
             self.assertTrue(run.debug_svg_path.exists())
             manifest = json.loads(run.manifest_path.read_text())
             self.assertEqual(manifest["anchor_count"], 1)
+            self.assertIn("raster_l1_error", manifest["metrics"])
+            self.assertIn("raster_edge_error", manifest["metrics"])
+            self.assertIn(
+                "`raster_l1_error`",
+                run.report_path.read_text(encoding="utf-8"),
+            )
 
     def test_render_markdown_report_summarizes_anchor_types(self):
         report = render_markdown_report(
@@ -55,6 +61,7 @@ class RunWriterTests(unittest.TestCase):
                 "metrics": {
                     "editability_score": 0.8,
                     "fragmentation_penalty": 0.1,
+                    "raster_l1_error": 0.2,
                 },
             },
             config={"command": "vectorize"},
@@ -67,6 +74,7 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("`warning` `component_deferred`", report)
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
+        self.assertIn("`raster_l1_error`: 0.2", report)
 
     def test_write_markdown_report_reads_manifest_and_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:

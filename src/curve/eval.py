@@ -25,6 +25,9 @@ def evaluate_runs(run_root: str | Path) -> dict[str, object]:
                 "diagnostic_count": len(diagnostics),
                 "editability_score": metrics.get("editability_score"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
+                "raster_l1_error": metrics.get("raster_l1_error"),
+                "raster_alpha_error": metrics.get("raster_alpha_error"),
+                "raster_edge_error": metrics.get("raster_edge_error"),
                 "anchor_types": _counts(anchor.get("kind") for anchor in anchors),
                 "diagnostic_codes": _counts(
                     diagnostic.get("code") for diagnostic in diagnostics
@@ -76,6 +79,8 @@ def render_eval_markdown(summary: dict[str, object]) -> str:
         lines.append(
             f"- Fragmentation penalty: {run.get('fragmentation_penalty', 'n/a')}"
         )
+        lines.append(f"- Raster L1 error: {run.get('raster_l1_error', 'n/a')}")
+        lines.append(f"- Raster edge error: {run.get('raster_edge_error', 'n/a')}")
         lines.append("")
     return "\n".join(lines)
 

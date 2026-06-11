@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from curve.rendering import write_manifest_preview
+from PIL import Image
+
+from curve.rendering import raster_fidelity_metrics, render_manifest_image
 from curve.scene import Scene
 
 
@@ -59,6 +61,13 @@ def write_vectorize_run(
     debug_svg_path = run_dir / "debug.svg"
 
     manifest = scene.to_manifest()
+    preview = render_manifest_image(manifest)
+    if input_path.exists():
+        with Image.open(input_path) as source:
+            manifest.setdefault("metrics", {}).update(
+                raster_fidelity_metrics(source=source, rendered=preview)
+            )
+
     svg_path.write_text(scene.to_svg(), encoding="utf-8")
     debug_svg_path.write_text(scene.to_debug_svg(), encoding="utf-8")
     manifest_path.write_text(
@@ -73,7 +82,7 @@ def write_vectorize_run(
         render_markdown_report(manifest=manifest, config=config),
         encoding="utf-8",
     )
-    write_manifest_preview(manifest=manifest, output=preview_path)
+    preview.save(preview_path)
 
     return VectorizeRun(
         run_dir=run_dir,

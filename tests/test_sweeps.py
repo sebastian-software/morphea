@@ -46,6 +46,8 @@ class SweepTests(unittest.TestCase):
             self.assertIn("layer_count", summary["runs"][0])
             self.assertIn("editability_score", summary["runs"][0])
             self.assertIn("fragmentation_penalty", summary["runs"][0])
+            self.assertIn("raster_l1_error", summary["runs"][0])
+            self.assertIn("raster_edge_error", summary["runs"][0])
             self.assertTrue((output_dir / "baseline" / "manifest.json").exists())
             self.assertTrue((output_dir / "tolerant" / "report.md").exists())
             self.assertTrue((output_dir / "sweep-summary.json").exists())

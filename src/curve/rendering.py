@@ -35,6 +35,44 @@ def write_manifest_preview(
     return output_path
 
 
+def raster_fidelity_metrics(
+    *,
+    source: Image.Image,
+    rendered: Image.Image,
+) -> dict[str, object]:
+    """Compare a rendered preview with its source image using bounded metrics."""
+
+    source_rgba = source.convert("RGBA")
+    rendered_rgba = rendered.convert("RGBA")
+    size_matches = source_rgba.size == rendered_rgba.size
+    if not size_matches:
+        rendered_rgba = rendered_rgba.resize(source_rgba.size, Image.Resampling.NEAREST)
+
+    source_pixels = source_rgba.tobytes()
+    rendered_pixels = rendered_rgba.tobytes()
+    pixel_count = max(len(source_pixels) // 4, 1)
+
+    rgb_error = 0.0
+    alpha_error = 0.0
+    for index in range(0, len(source_pixels), 4):
+        rgb_error += (
+            abs(source_pixels[index] - rendered_pixels[index])
+            + abs(source_pixels[index + 1] - rendered_pixels[index + 1])
+            + abs(source_pixels[index + 2] - rendered_pixels[index + 2])
+        )
+        alpha_error += abs(source_pixels[index + 3] - rendered_pixels[index + 3])
+
+    return {
+        "raster_size_match": size_matches,
+        "raster_l1_error": round(rgb_error / (pixel_count * 3 * 255), 6),
+        "raster_alpha_error": round(alpha_error / (pixel_count * 255), 6),
+        "raster_edge_error": round(
+            _edge_l1_error(source_rgba, rendered_rgba),
+            6,
+        ),
+    }
+
+
 def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
     color = _rgba(str(anchor.get("color") or "#0b2d5f"))
     kind = anchor.get("kind")
@@ -74,6 +112,43 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         ]
         if len(points) >= 3:
             draw.polygon(points, fill=color)
+
+
+def _edge_l1_error(source: Image.Image, rendered: Image.Image) -> float:
+    width, height = source.size
+    if width < 2 or height < 2:
+        return 0.0
+
+    source_luma = _luma_values(source)
+    rendered_luma = _luma_values(rendered)
+    error = 0.0
+    count = 0
+    for y in range(height - 1):
+        row = y * width
+        next_row = (y + 1) * width
+        for x in range(width - 1):
+            index = row + x
+            source_edge = (
+                abs(source_luma[index] - source_luma[index + 1])
+                + abs(source_luma[index] - source_luma[next_row + x])
+            )
+            rendered_edge = (
+                abs(rendered_luma[index] - rendered_luma[index + 1])
+                + abs(rendered_luma[index] - rendered_luma[next_row + x])
+            )
+            error += abs(source_edge - rendered_edge)
+            count += 1
+    return error / (count * 510)
+
+
+def _luma_values(image: Image.Image) -> list[float]:
+    pixels = image.tobytes()
+    return [
+        pixels[index] * 0.299
+        + pixels[index + 1] * 0.587
+        + pixels[index + 2] * 0.114
+        for index in range(0, len(pixels), 4)
+    ]
 
 
 def _stroke_width(anchor: dict[str, Any]) -> int:
