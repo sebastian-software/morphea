@@ -50,6 +50,7 @@ from curve.segmenters import (
 )
 from curve.self_learning import apply_review_file, create_review_file, harvest_pseudo_labels
 from curve.refinement import RefinementConfig, refine_manifest
+from curve.curated import check_curated_suite, load_curated_suite
 
 __all__ = [
     "AnchorCandidate",
@@ -82,6 +83,7 @@ __all__ = [
     "create_run_dir",
     "create_review_file",
     "classifier_prior_error",
+    "check_curated_suite",
     "detect_cutout_strokes",
     "detect_primitive_anchors",
     "evaluate_runs",
@@ -95,6 +97,7 @@ __all__ = [
     "harvest_pseudo_labels",
     "primitive_candidates_for_component",
     "load_centroid_model",
+    "load_curated_suite",
     "proposals_to_manifest",
     "predict_label",
     "scene_from_flat_color_image",

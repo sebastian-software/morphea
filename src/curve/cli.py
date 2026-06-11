@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from curve.classifier import train_centroid_classifier
+from curve.curated import check_curated_suite
 from curve.dataset import generate_synthetic_dataset
 from curve.eval import write_eval_summary
 from curve.images import scene_from_flat_color_image
@@ -148,6 +149,23 @@ def main(argv: list[str] | None = None) -> None:
     refine.add_argument("--max-iterations", type=int, default=0)
     refine.add_argument("--timeout-seconds", type=float)
 
+    curated_check = subcommands.add_parser(
+        "curated-check",
+        help="Validate a curated real-image suite and optionally run it.",
+    )
+    curated_check.add_argument("suite", type=Path)
+    curated_check.add_argument("-o", "--output", type=Path, required=True)
+    curated_check.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory for per-case SVG, manifest, and config artifacts.",
+    )
+    curated_check.add_argument(
+        "--run",
+        action="store_true",
+        help="Run each existing source image with its recommended config.",
+    )
+
     args = parser.parse_args(argv)
     if args.command == "vectorize":
         config = {
@@ -262,6 +280,16 @@ def main(argv: list[str] | None = None) -> None:
             ),
         )
         print(f"refined {len(result.get('anchors', []))} anchors")
+        return
+
+    if args.command == "curated-check":
+        result = check_curated_suite(
+            args.suite,
+            output=args.output,
+            output_dir=args.output_dir,
+            run=args.run,
+        )
+        print(f"checked {result['case_count']} curated cases")
         return
 
     print(f"curve {args.command}: pipeline implementation pending")
