@@ -137,6 +137,8 @@ Implemented so far:
 - quad edge/corner metrics and perspective grid consistency metric.
 - stroke payloads preserve `cap_style` and `join_style`.
 - straight high-coverage stroke components classify as `butt` caps.
+- compact filled axis-aligned rectangles classify as `rect` and stay in the
+  `filled_primitives` scene layer.
 
 ## M3: Scene Graph and Layer Semantics
 
