@@ -83,6 +83,8 @@ Implemented so far:
 - manifest `diagnostics` entries.
 - bounded `terminaro-tweaked.png` run completes under an external timeout.
 - transparent-background regression fixture.
+- transparent pixels are ignored with diagnostics, and partial-alpha pixels are
+  flattened onto the inferred or configured background before color grouping.
 - large color masks emit `color_mask_split_for_components` and are split into
   connected components before oversized components are deferred.
 - image component scanning checks `timeout_seconds` during traversal and avoids
