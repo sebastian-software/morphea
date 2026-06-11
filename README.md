@@ -43,3 +43,9 @@ component detection:
 ```sh
 PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --color-tolerance 18
 ```
+
+Generate labeled synthetic flat-color samples:
+
+```sh
+PYTHONPATH=src python3 -m curve.cli generate -o runs/synthetic --count 10 --seed 1
+```

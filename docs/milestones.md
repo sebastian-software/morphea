@@ -190,6 +190,8 @@ Acceptance criteria:
 
 ## M5: Synthetic Dataset Generator
 
+Status: started.
+
 Purpose: create reliable labels for training and evaluation.
 
 Scope:
@@ -217,6 +219,13 @@ Acceptance criteria:
 - Generator can create thousands of labeled flat-color examples.
 - The deterministic pipeline can be benchmarked against known ground truth.
 - Failures are reproducible from seed/config.
+
+Implemented so far:
+
+- deterministic `curve generate`
+- labeled PNG + JSON manifest pairs
+- core primitive ground truth for circles, circle strokes, line strokes, and
+  quads
 
 ## M6: Local MLX Segmentation Layer
 
