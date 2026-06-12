@@ -236,7 +236,13 @@ def _promoted_occluded_rect_fragments(
     color = fragments[0].color
     if color is None or any(fragment.color != color for fragment in fragments):
         return None
-    if any(not _axis_aligned_rect_fragment(fragment) for fragment in fragments):
+    # Straight occluders slice a rect into axis-aligned rect fragments, but a
+    # curved occluder leaves curve-edged quads; both promote back to the rect.
+    if any(
+        not _axis_aligned_rect_fragment(fragment)
+        and not (fragment.kind == AnchorKind.QUAD and fragment.quad is not None)
+        for fragment in fragments
+    ):
         return None
 
     merge_plan = _same_color_merge_plan(fragments, list(range(len(fragments))))
@@ -246,8 +252,6 @@ def _promoted_occluded_rect_fragments(
     combined_area = _bounds_area(combined_bounds)
     fragment_area = sum(_bounds_area(_anchor_bounds(fragment)) for fragment in fragments)
     occluded_area = max(combined_area - fragment_area, 0.0)
-    if occluded_area <= 0.0:
-        return None
 
     occluders = [
         anchor
@@ -262,9 +266,17 @@ def _promoted_occluded_rect_fragments(
         _bounds_intersection_area(_anchor_bounds(anchor), combined_bounds)
         for anchor in occluders
     )
-    occlusion_coverage = min(occluder_area / occluded_area, 1.0)
-    if occlusion_coverage < 0.6:
-        return None
+    if occluded_area > 0.0:
+        occlusion_coverage = min(occluder_area / occluded_area, 1.0)
+        if occlusion_coverage < 0.6:
+            return None
+    else:
+        # Curve-cut fragments have overlapping bounding boxes, so the box
+        # arithmetic reports no occluded area; require a meaningful occluder
+        # footprint inside the combined bounds instead.
+        occlusion_coverage = 1.0
+        if combined_area <= 0.0 or occluder_area < combined_area * 0.04:
+            return None
 
     min_x, min_y, max_x, max_y = combined_bounds
     return AnchorCandidate(
@@ -691,7 +703,7 @@ def _auto_parallel_stroke_groups(
     for index, anchor in enumerate(anchors):
         if anchor.stroke is None or anchor.stroke.parallel_group_id is not None:
             continue
-        if anchor.kind != AnchorKind.STROKE_POLYLINE:
+        if anchor.kind not in {AnchorKind.STROKE_POLYLINE, AnchorKind.ARC}:
             continue
         if anchor.stroke.is_cutout or len(anchor.stroke.centerline) < 2:
             continue

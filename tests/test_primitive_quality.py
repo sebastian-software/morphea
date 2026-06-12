@@ -249,6 +249,36 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertIn('stroke="#ffffff"', svg)
                 self.assertIn(" C ", svg)
 
+    def test_curve_compositions_keep_groups_and_kinds(self):
+        report = check_primitive_quality(
+            cases=(
+                "composition_parallel_arcs",
+                "composition_curve_group",
+                "composition_curve_crossing_rect",
+            ),
+        )
+
+        self.assertTrue(report["ok"])
+        by_id = {case["id"]: case for case in report["cases"]}
+        self.assertEqual(
+            by_id["composition_parallel_arcs"]["anchor_kind_counts"],
+            {"arc": 2},
+        )
+        self.assertEqual(
+            [
+                match["expected_kind"]
+                for match in by_id["composition_parallel_arcs"]["group_matches"]
+            ],
+            ["parallel_stroke_group"],
+        )
+        self.assertEqual(
+            by_id["composition_curve_group"]["anchor_kind_counts"],
+            {"stroke_path": 2},
+        )
+        crossing = by_id["composition_curve_crossing_rect"]
+        self.assertEqual(crossing["anchor_kind_counts"]["rect"], 1)
+        self.assertEqual(crossing["anchor_kind_counts"]["stroke_path"], 1)
+
     def test_antialiased_curves_do_not_fragment(self):
         report = check_primitive_quality(
             cases=(
@@ -531,6 +561,13 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "drift_curve": 3,
                 "transparent_arc": 3,
                 "transparent_curve": 3,
+                "composition_arc_circle": 3,
+                "composition_arc_rect": 3,
+                "composition_curve_crossing_rect": 3,
+                "composition_curve_touching_circle": 3,
+                "composition_ellipse_stroke": 3,
+                "composition_parallel_arcs": 3,
+                "composition_curve_group": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

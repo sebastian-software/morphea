@@ -676,6 +676,18 @@ def _stroke_candidate(
         and _axis_aligned_filled_rect_component(component)
     ):
         return None
+    # A wide, compact, nearly full block is a filled shape fragment (for
+    # example a rect sliced by a curved occluder), not a stroke.
+    if stroke_width > 8.0 and coverage >= 0.85 and length / stroke_width < 4.0:
+        return None
+    # A wide wedge whose cross width swings along its length is a curve-cut
+    # fill fragment, not a constant-width stroke.
+    if stroke_width > 8.0 and len(centerline) == 2:
+        quarter = _cross_width_at(component, centerline, 0.25)
+        three_quarter = _cross_width_at(component, centerline, 0.75)
+        reference = max(quarter, three_quarter, 1.0)
+        if abs(quarter - three_quarter) / reference > 0.4:
+            return None
     # A straight-stroke story that covers less than 45% of its own oriented
     # box is not a stroke; curved bands belong to arc or stroke_path.
     if len(centerline) == 2 and coverage < 0.45:
@@ -713,6 +725,32 @@ def _stroke_candidate(
         stroke=stroke,
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _cross_width_at(
+    component: MaskComponent,
+    centerline: tuple[Point, ...],
+    fraction: float,
+) -> float:
+    start = centerline[0]
+    end = centerline[-1]
+    dx = end.x - start.x
+    dy = end.y - start.y
+    length = hypot(dx, dy)
+    if length <= 0:
+        return 1.0
+    dx /= length
+    dy /= length
+    anchor_x = start.x + dx * length * fraction
+    anchor_y = start.y + dy * length * fraction
+    spans = [
+        abs((x - anchor_x) * -dy + (y - anchor_y) * dx)
+        for x, y in component.pixels
+        if abs((x - anchor_x) * dx + (y - anchor_y) * dy) <= 1.5
+    ]
+    if not spans:
+        return 1.0
+    return max(spans) * 2 + 1
 
 
 def _straight_stroke_cap_style(

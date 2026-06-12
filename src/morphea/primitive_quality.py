@@ -912,6 +912,287 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _composition_spec(case_id, "composition_arc_circle", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_arc_circle",
+                "base",
+                (
+                    _arc_primitive("arc", (32, 26, 18, -150, -30, 3)),
+                    _circle_primitive("circle", (24, 40, 40, 56), color="#dd2222"),
+                ),
+            ),
+            (
+                "composition_arc_circle_left",
+                "left",
+                (
+                    _arc_primitive("arc", (40, 24, 16, -150, -30, 3)),
+                    _circle_primitive("circle", (8, 38, 26, 56), color="#dd2222"),
+                ),
+            ),
+            (
+                "composition_arc_circle_small",
+                "small",
+                (
+                    _arc_primitive("arc", (30, 22, 14, -150, -30, 3)),
+                    _circle_primitive("circle", (40, 42, 54, 56), color="#dd2222"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_arc_rect", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_arc_rect",
+                "base",
+                (
+                    _arc_primitive("arc", (32, 24, 17, -150, -30, 3)),
+                    _rect_primitive("rect", (14, 38, 50, 56), color="#c99700"),
+                ),
+            ),
+            (
+                "composition_arc_rect_side",
+                "side",
+                (
+                    _arc_primitive("arc", (22, 26, 15, -150, -30, 3)),
+                    _rect_primitive("rect", (40, 12, 58, 52), color="#c99700"),
+                ),
+            ),
+            (
+                "composition_arc_rect_low",
+                "low",
+                (
+                    _arc_primitive("arc", (32, 52, 18, -145, -35, 3)),
+                    _rect_primitive("rect", (12, 6, 52, 22), color="#c99700"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "composition_curve_crossing_rect",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "primitive_contact_pair",
+                    "anchor_count": 2,
+                    "relation": "overlapping",
+                    "separation_policy": "separate_by_color",
+                },
+            ),
+        )
+        for case_id, variant, primitives in (
+            (
+                "composition_curve_crossing_rect",
+                "base",
+                (
+                    _rect_primitive("rect", (12, 20, 52, 44)),
+                    _curve_primitive(
+                        "curve",
+                        ((6, 40), (24, 14), (44, 46), (58, 22)),
+                        3,
+                        color="#dd2222",
+                    ),
+                ),
+            ),
+            (
+                "composition_curve_crossing_rect_high",
+                "high",
+                (
+                    _rect_primitive("rect", (12, 26, 52, 50)),
+                    _curve_primitive(
+                        "curve",
+                        ((6, 46), (24, 20), (44, 52), (58, 28)),
+                        3,
+                        color="#dd2222",
+                    ),
+                ),
+            ),
+            (
+                "composition_curve_crossing_rect_wide",
+                "wide",
+                (
+                    _rect_primitive("rect", (8, 22, 56, 46)),
+                    _curve_primitive(
+                        "curve",
+                        ((4, 42), (22, 14), (44, 50), (60, 22)),
+                        3,
+                        color="#dd2222",
+                    ),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "composition_curve_touching_circle",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "primitive_contact_pair",
+                    "anchor_count": 2,
+                    # The contact relation works on anchor bounds; a bowed
+                    # curve whose endpoint touches the circle always has
+                    # overlapping bounds.
+                    "relation": "overlapping",
+                    "separation_policy": "separate_by_color",
+                },
+            ),
+        )
+        for case_id, variant, primitives in (
+            (
+                "composition_curve_touching_circle",
+                "base",
+                (
+                    _circle_primitive("circle", (44, 24, 60, 40), color=BLUE),
+                    _curve_primitive(
+                        "curve",
+                        ((6, 44), (18, 18), (32, 44), (44, 32)),
+                        3,
+                        color="#dd2222",
+                    ),
+                ),
+            ),
+            (
+                "composition_curve_touching_circle_low",
+                "low",
+                (
+                    _circle_primitive("circle", (44, 38, 60, 54), color=BLUE),
+                    _curve_primitive(
+                        "curve",
+                        ((6, 52), (18, 26), (32, 52), (44, 46)),
+                        3,
+                        color="#dd2222",
+                    ),
+                ),
+            ),
+            (
+                "composition_curve_touching_circle_left",
+                "left",
+                (
+                    _circle_primitive("circle", (4, 24, 20, 40), color=BLUE),
+                    _curve_primitive(
+                        "curve",
+                        ((20, 32), (32, 16), (44, 48), (58, 30)),
+                        3,
+                        color="#dd2222",
+                    ),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_ellipse_stroke", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_ellipse_stroke",
+                "base",
+                (
+                    _ellipse_primitive("ellipse", (8, 10, 50, 32)),
+                    _stroke_primitive("stroke", (12, 48, 52, 48), 4, color="#dd2222"),
+                ),
+            ),
+            (
+                "composition_ellipse_stroke_vertical",
+                "vertical",
+                (
+                    _ellipse_primitive("ellipse", (8, 18, 32, 54)),
+                    _stroke_primitive("stroke", (48, 12, 48, 52), 4, color="#dd2222"),
+                ),
+            ),
+            (
+                "composition_ellipse_stroke_wide",
+                "wide",
+                (
+                    _ellipse_primitive("ellipse", (6, 36, 58, 56)),
+                    _stroke_primitive("stroke", (10, 16, 54, 16), 4, color="#dd2222"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "composition_parallel_arcs",
+            variant,
+            primitives,
+            ({"kind": "parallel_stroke_group", "anchor_count": len(primitives)},),
+        )
+        for case_id, variant, primitives in (
+            (
+                "composition_parallel_arcs",
+                "base",
+                (
+                    _arc_primitive("outer", (32, 38, 22, -150, -30, 3)),
+                    _arc_primitive("inner", (32, 38, 13, -150, -30, 3)),
+                ),
+            ),
+            (
+                "composition_parallel_arcs_tight",
+                "tight",
+                (
+                    _arc_primitive("outer", (32, 40, 24, -145, -35, 3)),
+                    _arc_primitive("inner", (32, 40, 16, -145, -35, 3)),
+                ),
+            ),
+            (
+                "composition_parallel_arcs_three",
+                "three",
+                (
+                    _arc_primitive("outer", (32, 44, 26, -140, -40, 3)),
+                    _arc_primitive("middle", (32, 44, 18, -140, -40, 3)),
+                    _arc_primitive("inner", (32, 44, 10, -140, -40, 3)),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "composition_curve_group",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "same_color_fragment_group",
+                    "anchor_count": len(primitives),
+                    "color": BLUE,
+                },
+            ),
+        )
+        for case_id, variant, primitives in (
+            (
+                "composition_curve_group",
+                "base",
+                (
+                    _curve_primitive("top", ((8, 22), (24, 4), (36, 32), (56, 8)), 3),
+                    _curve_primitive("bottom", ((8, 52), (24, 34), (36, 62), (56, 38)), 3),
+                ),
+            ),
+            (
+                "composition_curve_group_waves",
+                "waves",
+                (
+                    _curve_primitive("top", ((6, 20), (18, 8), (32, 28), (46, 8), (58, 20)), 3),
+                    _curve_primitive("bottom", ((6, 48), (18, 36), (32, 56), (46, 36), (58, 48)), 3),
+                ),
+            ),
+            (
+                "composition_curve_group_mixed",
+                "mixed",
+                (
+                    _curve_primitive("s", ((8, 24), (24, 4), (36, 38), (56, 12)), 3),
+                    _curve_primitive("low", ((8, 56), (24, 40), (36, 62), (56, 44)), 3),
+                ),
+            ),
+        )
+    )
+    specs.extend(
         _curved_cutout_spec(case_id, family, variant, host, arc, extra, config)
         for case_id, family, variant, host, arc, extra, config in (
             ("cutout_curve_rect", "cutout_curve_rect", "base",
@@ -1380,15 +1661,17 @@ def _draw_smooth_curve(
     controls: CurveControls,
     width: int,
     cap: str,
+    *,
+    color: str = BLUE,
 ) -> None:
     points = list(_bezier_samples(controls, steps=64))
-    draw.line(points, fill=BLUE, width=width, joint="curve")
+    draw.line(points, fill=color, width=width, joint="curve")
     half = width / 2
     if cap == "round":
         for point in (points[0], points[-1]):
             draw.ellipse(
                 (point[0] - half, point[1] - half, point[0] + half - 1, point[1] + half - 1),
-                fill=BLUE,
+                fill=color,
             )
     elif cap == "square":
         for end, inner in ((points[0], points[1]), (points[-1], points[-2])):
@@ -1408,7 +1691,7 @@ def _draw_smooth_curve(
                     (tip[0] - normal[0], tip[1] - normal[1]),
                     (end[0] - normal[0], end[1] - normal[1]),
                 ],
-                fill=BLUE,
+                fill=color,
             )
 
 
@@ -1938,8 +2221,12 @@ def _composition_spec(
     compare_cutout_exports: bool = False,
 ) -> PrimitiveSpec:
     first = primitives[0]
-    max_l1 = 0.08 if "ring" in family else 0.025
-    max_edge = 0.06 if "ring" in family else 0.03
+    has_curves = any(
+        primitive.geometry_type in {"arc", "stroke_path"}
+        for primitive in primitives
+    )
+    max_l1 = 0.08 if "ring" in family else (0.035 if has_curves else 0.025)
+    max_edge = 0.06 if "ring" in family else (0.045 if has_curves else 0.03)
     return PrimitiveSpec(
         id=case_id,
         family=family,
@@ -2148,6 +2435,89 @@ def _quad_primitive(
     )
 
 
+def _arc_primitive(
+    primitive_id: str,
+    arc: ArcParams,
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    cx, cy, radius, start_deg, end_deg, width = arc
+    start = _arc_point_xy(cx, cy, radius, start_deg)
+    end = _arc_point_xy(cx, cy, radius, end_deg)
+    apex = _arc_point_xy(cx, cy, radius, (start_deg + end_deg) / 2)
+    chord_mid = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
+    bow = hypot(apex[0] - chord_mid[0], apex[1] - chord_mid[1])
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("arc",),
+        geometry_type="arc",
+        geometry={
+            "start": start,
+            "end": end,
+            "apex": apex,
+            "bow": bow,
+            "bow_direction": _bow_direction(apex, chord_mid),
+            "width": float(width),
+            "draw": ("arc_line", arc, color),
+        },
+        color=color,
+        coordinate_tolerance=2.5,
+        min_bbox_iou=0.66,
+    )
+
+
+def _curve_primitive(
+    primitive_id: str,
+    controls: CurveControls,
+    width: int,
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    samples = _bezier_samples(controls, steps=32)
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("stroke_path",),
+        geometry_type="stroke_path",
+        geometry={
+            "curve_samples": samples,
+            "start": samples[0],
+            "end": samples[-1],
+            "width": float(width),
+            "width_tolerance": 1.5,
+            "cap_style": "round",
+            "max_control_points": CURVE_MAX_CONTROL_POINTS,
+            "draw": ("smooth_curve", controls, width, color),
+        },
+        color=color,
+        coordinate_tolerance=2.75,
+        min_bbox_iou=0.62,
+    )
+
+
+def _ellipse_primitive(
+    primitive_id: str,
+    box: tuple[int, int, int, int],
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    x0, y0, x1, y1 = box
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("ellipse",),
+        geometry_type="ellipse",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "rx": (x1 - x0) / 2,
+            "ry": (y1 - y0) / 2,
+            "draw": ("ellipse_fill", box),
+        },
+        color=color,
+        coordinate_tolerance=1.75,
+        min_bbox_iou=0.85,
+    )
+
+
 def _cutout_stroke_primitive(
     primitive_id: str,
     line: tuple[int, int, int, int],
@@ -2213,6 +2583,11 @@ def _draw_expected_primitives(
         elif kind == "arc_line":
             _, arc, color = draw_instruction
             _draw_arc_line(draw, arc, color)
+        elif kind == "smooth_curve":
+            _, controls, width, color = draw_instruction
+            _draw_smooth_curve(draw, controls, width, "round", color=color)
+        elif kind == "ellipse_fill":
+            draw.ellipse(draw_instruction[1], fill=primitive.color)
 
 
 def _draw_arc_line(
