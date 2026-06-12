@@ -128,6 +128,9 @@ Implemented so far:
 - connected-component BFS now also fills boundary-pixel hints, including
   bounded image scans, so circle/ring/stroke candidate generation can reuse
   scanner-derived boundaries instead of rescanning retained components.
+- freeform cut-out gap detection uses a local interior-gap component scanner
+  for temporary background gaps, avoiding the heavier generic
+  `connected_components` hint path during real-image profiling.
 
 Remaining:
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from math import hypot, pi, sqrt
 
@@ -987,18 +988,8 @@ def _freeform_cutout_strokes(
     if max_x - min_x < min_length or max_y - min_y < 3:
         return ()
 
-    gap_pixels = frozenset(
-        (x, y)
-        for y in range(min_y + 1, max_y)
-        for x in range(min_x + 1, max_x)
-        if (x, y) not in component.pixels
-    )
-    if not gap_pixels:
-        return ()
-
-    gap_mask = BinaryMask(width=max_x + 1, height=max_y + 1, pixels=gap_pixels)
     candidates: list[AnchorCandidate] = []
-    for gap in connected_components(gap_mask, min_area=min_length):
+    for gap in _interior_gap_components(component, min_area=min_length):
         candidate = _freeform_cutout_candidate(
             gap,
             host_bounds=component.bounds,
@@ -1009,6 +1000,132 @@ def _freeform_cutout_strokes(
         if candidate is not None:
             candidates.append(candidate)
     return tuple(candidates)
+
+
+def _interior_gap_components(
+    component: MaskComponent,
+    *,
+    min_area: int,
+) -> tuple[MaskComponent, ...]:
+    min_x, min_y, max_x, max_y = component.bounds
+    interior_width = max_x - min_x - 1
+    interior_height = max_y - min_y - 1
+    if interior_width <= 0 or interior_height <= 0:
+        return ()
+
+    host_pixels = component.pixels
+    grid = bytearray(interior_width * interior_height)
+    seeds: list[int] = []
+    for local_y, y in enumerate(range(min_y + 1, max_y)):
+        row_offset = local_y * interior_width
+        for local_x, x in enumerate(range(min_x + 1, max_x)):
+            if (x, y) in host_pixels:
+                continue
+            index = row_offset + local_x
+            grid[index] = 1
+            seeds.append(index)
+
+    components: list[MaskComponent] = []
+    for seed in seeds:
+        if not grid[seed]:
+            continue
+        grid[seed] = 0
+        pixels: list[tuple[int, int]] = []
+        local_start_x = seed % interior_width
+        local_start_y = seed // interior_width
+        start_x = min_x + 1 + local_start_x
+        start_y = min_y + 1 + local_start_y
+        component_min_x = component_max_x = start_x
+        component_min_y = component_max_y = start_y
+        sum_x = 0
+        sum_y = 0
+        queue: deque[int] = deque([seed])
+        while queue:
+            index = queue.popleft()
+            local_x = index % interior_width
+            local_y = index // interior_width
+            x = min_x + 1 + local_x
+            y = min_y + 1 + local_y
+            pixels.append((x, y))
+            sum_x += x
+            sum_y += y
+            if x < component_min_x:
+                component_min_x = x
+            elif x > component_max_x:
+                component_max_x = x
+            if y < component_min_y:
+                component_min_y = y
+            elif y > component_max_y:
+                component_max_y = y
+            _enqueue_local_neighbors8(
+                grid,
+                queue,
+                x=local_x,
+                y=local_y,
+                width=interior_width,
+                height=interior_height,
+            )
+        if len(pixels) >= min_area:
+            area = len(pixels)
+            components.append(
+                MaskComponent(
+                    frozenset(pixels),
+                    bounds_hint=(
+                        component_min_x,
+                        component_min_y,
+                        component_max_x,
+                        component_max_y,
+                    ),
+                    centroid_hint=Point(sum_x / area, sum_y / area),
+                )
+            )
+
+    return tuple(sorted(components, key=lambda item: item.area, reverse=True))
+
+
+def _enqueue_local_neighbors8(
+    grid: bytearray,
+    queue: deque[int],
+    *,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+) -> None:
+    can_left = x > 0
+    can_right = x < width - 1
+    can_up = y > 0
+    can_down = y < height - 1
+    index = y * width + x
+
+    if can_up:
+        top = index - width
+        if grid[top]:
+            grid[top] = 0
+            queue.append(top)
+        if can_left and grid[top - 1]:
+            grid[top - 1] = 0
+            queue.append(top - 1)
+        if can_right and grid[top + 1]:
+            grid[top + 1] = 0
+            queue.append(top + 1)
+    if can_left and grid[index - 1]:
+        grid[index - 1] = 0
+        queue.append(index - 1)
+    if can_right and grid[index + 1]:
+        grid[index + 1] = 0
+        queue.append(index + 1)
+    if can_down:
+        bottom = index + width
+        if grid[bottom]:
+            grid[bottom] = 0
+            queue.append(bottom)
+        if can_left and grid[bottom - 1]:
+            grid[bottom - 1] = 0
+            queue.append(bottom - 1)
+        if can_right and grid[bottom + 1]:
+            grid[bottom + 1] = 0
+            queue.append(bottom + 1)
 
 
 def _freeform_cutout_candidate(
