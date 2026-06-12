@@ -414,6 +414,8 @@ Current evidence:
 
 ### PQ9: Real-Image Promotion
 
+Status: implemented as an explicit curated-to-primitive family map.
+
 Purpose: move from synthetic confidence to representative real examples only
 when the supporting primitive families are green.
 
@@ -431,6 +433,14 @@ Exit criteria:
 - Curated expectations are explainable by fixture-backed behavior.
 - Real-image failures create new primitive/composition fixtures before detector
   changes.
+
+Current evidence:
+
+- [real-images/primitive-family-map.md](real-images/primitive-family-map.md)
+  maps each curated real-image expectation to the primitive fixture families
+  that must stay green first.
+- curated smoke remains secondary to `primitive-check`; broad metric regressions
+  should produce a primitive fixture before detector scoring changes.
 
 ### PQ10: Honest Basic Gallery
 

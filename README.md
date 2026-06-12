@@ -176,6 +176,8 @@ morphea sweep sweep.json -o runs/sweep --markdown runs/sweep.md
 - [Milestones](docs/milestones.md): implemented baselines and roadmap.
 - [Primitive quality roadmap](docs/primitive-quality-roadmap.md): step-by-step
   gates for primary forms and primitive compositions.
+- [Real-image primitive family map](docs/real-images/primitive-family-map.md):
+  curated expectations mapped back to primitive fixture families.
 - [Schema](docs/schema.md): manifests, reports, status files, and command
   schemas.
 - [Sweeps](docs/sweeps.md): config-driven experiment comparisons.
