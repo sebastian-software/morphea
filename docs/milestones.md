@@ -106,6 +106,8 @@ Implemented so far:
   summaries for repeated runs.
 - component BFS in both generic masks and bounded image scanning uses direct
   8-neighbor index checks instead of nested per-pixel neighbor range loops.
+- boundary-pixel detection and centroid calculation avoid repeated generator
+  passes and per-pixel neighbor tuple allocation.
 
 Remaining:
 
