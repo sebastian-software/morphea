@@ -106,6 +106,8 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "adjacent_different_color_rects": 3,
                 "adjacent_same_color_rects_merge": 3,
                 "adjacent_small_gap_rects": 3,
+                "cutout_diagonal_gap": 3,
+                "cutout_horizontal_gap": 3,
             },
         )
 

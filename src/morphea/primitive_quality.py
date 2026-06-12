@@ -527,6 +527,64 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ),
         )
     )
+    specs.extend(
+        _composition_spec(case_id, "cutout_horizontal_gap", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "cutout_horizontal_gap_center",
+                "center",
+                (
+                    _rect_primitive("fill", (8, 20, 56, 44)),
+                    _cutout_stroke_primitive("cutout", (18, 32, 46, 32), 1),
+                ),
+            ),
+            (
+                "cutout_horizontal_gap_top",
+                "top",
+                (
+                    _rect_primitive("fill", (10, 14, 54, 40)),
+                    _cutout_stroke_primitive("cutout", (20, 24, 44, 24), 1),
+                ),
+            ),
+            (
+                "cutout_horizontal_gap_bottom",
+                "bottom",
+                (
+                    _rect_primitive("fill", (10, 24, 54, 50)),
+                    _cutout_stroke_primitive("cutout", (20, 40, 44, 40), 1),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "cutout_diagonal_gap", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "cutout_diagonal_gap_down",
+                "down",
+                (
+                    _rect_primitive("fill", (8, 14, 56, 50)),
+                    _cutout_stroke_primitive("cutout", (22, 24, 38, 40), 1, tolerance=2.25),
+                ),
+            ),
+            (
+                "cutout_diagonal_gap_up",
+                "up",
+                (
+                    _rect_primitive("fill", (8, 14, 56, 50)),
+                    _cutout_stroke_primitive("cutout", (22, 40, 38, 24), 1, tolerance=2.25),
+                ),
+            ),
+            (
+                "cutout_diagonal_gap_short",
+                "short",
+                (
+                    _rect_primitive("fill", (12, 16, 52, 48)),
+                    _cutout_stroke_primitive("cutout", (26, 26, 38, 38), 1, tolerance=2.25),
+                ),
+            ),
+        )
+    )
     return tuple(specs)
 
 
@@ -1037,6 +1095,33 @@ def _ring_primitive(
     )
 
 
+def _cutout_stroke_primitive(
+    primitive_id: str,
+    line: tuple[int, int, int, int],
+    width: int,
+    *,
+    tolerance: float = 1.75,
+) -> ExpectedPrimitive:
+    primitive = _stroke_primitive(
+        primitive_id,
+        line,
+        width,
+        color="#ffffff",
+        tolerance=tolerance,
+    )
+    geometry = dict(primitive.geometry)
+    geometry["is_cutout"] = True
+    return ExpectedPrimitive(
+        id=primitive.id,
+        expected_kinds=primitive.expected_kinds,
+        geometry_type=primitive.geometry_type,
+        geometry=geometry,
+        color=primitive.color,
+        coordinate_tolerance=primitive.coordinate_tolerance,
+        min_bbox_iou=0.7,
+    )
+
+
 def _expected_line_centerline(
     line: tuple[int, int, int, int],
     width: int,
@@ -1523,6 +1608,17 @@ def _anchor_contract_failures(
             )
         )
     failures.extend(_geometry_failures(expected_spec, anchor))
+    expected_cutout = expected_spec.geometry.get("is_cutout")
+    if expected_cutout is not None:
+        stroke = anchor.get("stroke")
+        actual_cutout = isinstance(stroke, dict) and bool(stroke.get("is_cutout"))
+        if actual_cutout != bool(expected_cutout):
+            failures.append(
+                _failure(
+                    "geometry_drift",
+                    f"expected is_cutout {bool(expected_cutout)}, got {actual_cutout}",
+                )
+            )
     return failures, bbox_iou
 
 

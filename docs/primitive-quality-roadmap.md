@@ -298,6 +298,9 @@ Remaining:
 
 ### PQ6: Cut-Outs, Holes, and Negative Space
 
+Status: implemented for editable thin horizontal and diagonal cut-out stroke
+fixtures.
+
 Purpose: make white/near-background interior marks editable without treating
 every hole as a destructive topology problem.
 
@@ -322,6 +325,19 @@ Exit criteria:
 - Thin cut-outs become editable strokes.
 - Large holes do not masquerade as thin cut-out strokes.
 - Export strategy does not change the semantic manifest unexpectedly.
+
+Current evidence:
+
+- horizontal and diagonal white interior gaps are checked as `stroke_polyline`
+  anchors with `stroke.is_cutout=true`.
+- each cut-out fixture family has 3 deterministic variants.
+- focused detector tests already cover the negative case where a large hole must
+  not become a thin cut-out stroke.
+
+Remaining:
+
+- add fixture-level `negative_mask` vs `overlay_stroke` export comparisons after
+  the homepage gallery can expose both SVG outputs cleanly.
 
 ### PQ7: Repeated Structures and Groups
 
