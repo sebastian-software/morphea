@@ -158,6 +158,18 @@ anchor-type counts. Diagnostic data includes both raw `diagnostic_codes` and
 stage-oriented `diagnostic_stage_counts` using the same stage buckets as
 Markdown/HTML run reports.
 
+## Eval Config v1
+
+Read by `curve eval --config`.
+
+Supported fields:
+
+- `run_root`
+- `output`
+- `markdown`: optional Markdown summary path
+
+CLI arguments override values loaded from the config file.
+
 ## Profile Report v1
 
 Written by `curve profile`.

@@ -698,6 +698,7 @@ Implemented so far:
 - `curve train --config train.json` for repeatable classifier training inputs
 - `curve eval-classifier --config eval-classifier.json` for repeatable
   classifier evaluation reports
+- `curve eval --config eval.json` for repeatable run-directory summaries
 - `curve harvest --config harvest.json` for repeatable pseudo-label quality
   gates
 - `curve review --config review.json` and `curve apply-review --config
