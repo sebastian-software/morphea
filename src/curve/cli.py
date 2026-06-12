@@ -39,6 +39,7 @@ from curve.self_learning import (
     apply_review_file,
     compare_retraining,
     create_review_file,
+    gate_training_comparison,
     harvest_curated_pseudo_labels,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
@@ -110,6 +111,15 @@ COMPARE_TRAINING_CONFIG_KEYS = {
     "validation_dataset",
     "output",
     "markdown",
+}
+TRAINING_GATE_CONFIG_KEYS = {
+    "comparison",
+    "output",
+    "markdown",
+    "min_train_examples_delta",
+    "min_best_accuracy_delta",
+    "max_worst_accuracy_drop",
+    "allow_unchanged",
 }
 RETRAIN_CONFIG_KEYS = {
     "base_dataset",
@@ -463,6 +473,19 @@ def main(argv: list[str] | None = None) -> None:
     compare_training.add_argument("-o", "--output", type=Path)
     compare_training.add_argument("--markdown", type=Path)
     compare_training.add_argument("--config", type=Path)
+
+    training_gate = subcommands.add_parser(
+        "training-gate",
+        help="Decide whether a training comparison is safe to accept.",
+    )
+    training_gate.add_argument("comparison", type=Path, nargs="?")
+    training_gate.add_argument("-o", "--output", type=Path)
+    training_gate.add_argument("--markdown", type=Path)
+    training_gate.add_argument("--min-train-examples-delta", type=int)
+    training_gate.add_argument("--min-best-accuracy-delta", type=float)
+    training_gate.add_argument("--max-worst-accuracy-drop", type=float)
+    training_gate.add_argument("--allow-unchanged", action="store_true")
+    training_gate.add_argument("--config", type=Path)
 
     retrain = subcommands.add_parser(
         "retrain",
@@ -826,6 +849,20 @@ def main(argv: list[str] | None = None) -> None:
         )
         return
 
+    if args.command == "training-gate":
+        gate_config = _resolved_training_gate_config(args)
+        result = gate_training_comparison(
+            comparison=gate_config["comparison"],
+            output=gate_config["output"],
+            markdown=gate_config.get("markdown"),
+            min_train_examples_delta=int(gate_config["min_train_examples_delta"]),
+            min_best_accuracy_delta=float(gate_config["min_best_accuracy_delta"]),
+            max_worst_accuracy_drop=float(gate_config["max_worst_accuracy_drop"]),
+            allow_unchanged=bool(gate_config["allow_unchanged"]),
+        )
+        print(f"training gate decision: {result['decision']}")
+        return
+
     if args.command == "retrain":
         retrain_config = _resolved_retrain_config(args)
         model = retrain_centroid_classifier(
@@ -1060,6 +1097,41 @@ def _resolved_compare_training_config(args: argparse.Namespace) -> dict[str, Pat
         ("base_dataset", "pseudo_dataset", "output"),
         "compare-training",
     )
+    return config
+
+
+def _resolved_training_gate_config(args: argparse.Namespace) -> dict[str, object]:
+    config: dict[str, object] = {
+        "min_train_examples_delta": 1,
+        "min_best_accuracy_delta": 0.0,
+        "max_worst_accuracy_drop": 0.0,
+        "allow_unchanged": False,
+    }
+    config.update(
+        _load_training_gate_config(args.config)
+        if args.config is not None
+        else {}
+    )
+    if args.comparison is not None:
+        config["comparison"] = args.comparison
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    for key in (
+        "min_train_examples_delta",
+        "min_best_accuracy_delta",
+        "max_worst_accuracy_drop",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    if args.allow_unchanged:
+        config["allow_unchanged"] = True
+    _require_config_paths(config, ("comparison", "output"), "training-gate")
+    for key in ("comparison", "output", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
     return config
 
 
@@ -1335,6 +1407,21 @@ def _load_harvest_curated_config(path: Path) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("suite", "run_root", "output", "curated_report", "snapshot", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_training_gate_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("training-gate config must be a JSON object")
+    unknown = sorted(set(loaded) - TRAINING_GATE_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported training-gate config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("comparison", "output", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

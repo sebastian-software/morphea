@@ -251,11 +251,11 @@ def render_harvest_markdown(report: dict[str, object]) -> str:
         )
     lines.extend(
         [
-        "",
-        "## Filters",
-        "",
-        "| Gate | Value |",
-        "| --- | ---: |",
+            "",
+            "## Filters",
+            "",
+            "| Gate | Value |",
+            "| --- | ---: |",
         ]
     )
     for key in sorted(filters):
@@ -382,6 +382,138 @@ def compare_retraining(
             encoding="utf-8",
         )
     return result
+
+
+def gate_training_comparison(
+    *,
+    comparison: str | Path,
+    output: str | Path,
+    markdown: str | Path | None = None,
+    min_train_examples_delta: int = 1,
+    min_best_accuracy_delta: float = 0.0,
+    max_worst_accuracy_drop: float = 0.0,
+    allow_unchanged: bool = False,
+) -> dict[str, object]:
+    report = json.loads(Path(comparison).read_text(encoding="utf-8"))
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    reasons: list[str] = []
+    reject = False
+    manual_review = False
+
+    train_delta = summary.get("train_examples_delta")
+    if not isinstance(train_delta, int) or train_delta < min_train_examples_delta:
+        reject = True
+        reasons.append("train_examples_delta_below_min")
+
+    best_delta = summary.get("best_accuracy_delta")
+    if not isinstance(best_delta, (int, float)):
+        manual_review = True
+        reasons.append("missing_best_accuracy_delta")
+    elif float(best_delta) < min_best_accuracy_delta:
+        reject = True
+        reasons.append("best_accuracy_delta_below_min")
+
+    worst_delta = summary.get("worst_accuracy_delta")
+    if not isinstance(worst_delta, (int, float)):
+        manual_review = True
+        reasons.append("missing_worst_accuracy_delta")
+    elif float(worst_delta) < -max_worst_accuracy_drop:
+        reject = True
+        reasons.append("worst_accuracy_delta_below_tolerance")
+
+    status = summary.get("status")
+    if status == "regressed":
+        reject = True
+        reasons.append("comparison_status_regressed")
+    elif status == "mixed":
+        manual_review = True
+        reasons.append("comparison_status_mixed")
+    elif status == "unchanged" and not allow_unchanged:
+        manual_review = True
+        reasons.append("comparison_status_unchanged")
+    elif status not in {"improved", "unchanged", "mixed", "regressed"}:
+        manual_review = True
+        reasons.append("comparison_status_insufficient")
+
+    if reject:
+        decision = "reject"
+    elif manual_review:
+        decision = "manual_review"
+    else:
+        decision = "accept"
+
+    result = {
+        "schema_version": 1,
+        "comparison": str(comparison),
+        "decision": decision,
+        "accepted": decision == "accept",
+        "reasons": reasons,
+        "gates": {
+            "min_train_examples_delta": min_train_examples_delta,
+            "min_best_accuracy_delta": min_best_accuracy_delta,
+            "max_worst_accuracy_drop": max_worst_accuracy_drop,
+            "allow_unchanged": allow_unchanged,
+        },
+        "summary": summary,
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(render_training_gate_markdown(result), encoding="utf-8")
+    return result
+
+
+def render_training_gate_markdown(result: dict[str, object]) -> str:
+    gates = result.get("gates", {})
+    if not isinstance(gates, dict):
+        gates = {}
+    summary = result.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    reasons = result.get("reasons", [])
+    if not isinstance(reasons, list):
+        reasons = []
+    lines = [
+        "# Curve Training Gate",
+        "",
+        f"- Decision: `{result.get('decision', 'n/a')}`",
+        f"- Accepted: `{result.get('accepted', False)}`",
+        f"- Comparison: `{result.get('comparison', 'n/a')}`",
+        f"- Comparison status: `{summary.get('status', 'n/a')}`",
+        f"- Train example delta: {_fmt_metric(summary.get('train_examples_delta'))}",
+        f"- Best accuracy delta: {_fmt_metric(summary.get('best_accuracy_delta'))}",
+        f"- Worst accuracy delta: {_fmt_metric(summary.get('worst_accuracy_delta'))}",
+        "",
+        "## Gates",
+        "",
+        "| Gate | Value |",
+        "| --- | ---: |",
+    ]
+    for key in sorted(gates):
+        lines.append(f"| `{key}` | {_fmt_gate_value(gates.get(key))} |")
+    lines.extend(
+        [
+            "",
+            "## Reasons",
+            "",
+            ", ".join(f"`{reason}`" for reason in reasons) if reasons else "n/a",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _fmt_gate_value(value: object) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    return _fmt_metric(value)
 
 
 def retrain_centroid_classifier(

@@ -14,12 +14,14 @@ from curve.self_learning import (
     apply_review_file,
     compare_retraining,
     create_review_file,
+    gate_training_comparison,
     harvest_curated_pseudo_labels,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
     render_apply_review_markdown,
     render_harvest_markdown,
     render_review_markdown,
+    render_training_gate_markdown,
     render_training_comparison_markdown,
     retrain_centroid_classifier,
 )
@@ -964,6 +966,154 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["delta"]["train_examples"], 1)
             self.assertTrue(markdown.exists())
 
+    def test_training_gate_accepts_improved_comparison(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            comparison = Path(temp_dir) / "compare.json"
+            output = Path(temp_dir) / "gate.json"
+            _write_training_comparison(
+                comparison,
+                status="improved",
+                train_delta=2,
+                best_delta=0.2,
+                worst_delta=0.0,
+            )
+
+            result = gate_training_comparison(
+                comparison=comparison,
+                output=output,
+            )
+
+            self.assertEqual(result["decision"], "accept")
+            self.assertTrue(result["accepted"])
+            self.assertEqual(result["reasons"], [])
+            self.assertTrue(output.exists())
+
+    def test_training_gate_rejects_regression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            comparison = Path(temp_dir) / "compare.json"
+            output = Path(temp_dir) / "gate.json"
+            _write_training_comparison(
+                comparison,
+                status="regressed",
+                train_delta=1,
+                best_delta=-0.1,
+                worst_delta=-0.2,
+            )
+
+            result = gate_training_comparison(
+                comparison=comparison,
+                output=output,
+            )
+
+            self.assertEqual(result["decision"], "reject")
+            self.assertFalse(result["accepted"])
+            self.assertIn("comparison_status_regressed", result["reasons"])
+            self.assertIn("worst_accuracy_delta_below_tolerance", result["reasons"])
+
+    def test_training_gate_marks_mixed_comparison_for_review(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            comparison = Path(temp_dir) / "compare.json"
+            output = Path(temp_dir) / "gate.json"
+            _write_training_comparison(
+                comparison,
+                status="mixed",
+                train_delta=1,
+                best_delta=0.2,
+                worst_delta=0.0,
+            )
+
+            result = gate_training_comparison(
+                comparison=comparison,
+                output=output,
+            )
+
+            self.assertEqual(result["decision"], "manual_review")
+            self.assertFalse(result["accepted"])
+            self.assertIn("comparison_status_mixed", result["reasons"])
+
+    def test_render_training_gate_markdown_summarizes_decision(self):
+        markdown = render_training_gate_markdown(
+            {
+                "comparison": "compare.json",
+                "decision": "reject",
+                "accepted": False,
+                "reasons": ["worst_accuracy_delta_below_tolerance"],
+                "gates": {"max_worst_accuracy_drop": 0.0},
+                "summary": {
+                    "status": "regressed",
+                    "train_examples_delta": 1,
+                    "best_accuracy_delta": -0.1,
+                    "worst_accuracy_delta": -0.2,
+                },
+            }
+        )
+
+        self.assertIn("# Curve Training Gate", markdown)
+        self.assertIn("- Decision: `reject`", markdown)
+        self.assertIn("`worst_accuracy_delta_below_tolerance`", markdown)
+
+    def test_training_gate_cli_writes_json_and_markdown(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            comparison = Path(temp_dir) / "compare.json"
+            output = Path(temp_dir) / "gate.json"
+            markdown = Path(temp_dir) / "gate.md"
+            _write_training_comparison(
+                comparison,
+                status="improved",
+                train_delta=1,
+                best_delta=0.05,
+                worst_delta=0.0,
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "training-gate",
+                        str(comparison),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["decision"], "accept")
+            self.assertIn(
+                "# Curve Training Gate",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_training_gate_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            comparison = Path(temp_dir) / "compare.json"
+            output = Path(temp_dir) / "gate.json"
+            config = Path(temp_dir) / "training-gate.json"
+            _write_training_comparison(
+                comparison,
+                status="unchanged",
+                train_delta=1,
+                best_delta=0.0,
+                worst_delta=0.0,
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "comparison": str(comparison),
+                        "output": str(output),
+                        "allow_unchanged": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["training-gate", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["decision"], "accept")
+            self.assertTrue(result["gates"]["allow_unchanged"])
+
     def test_retrain_centroid_classifier_writes_augmented_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -1107,6 +1257,30 @@ def _write_reviewed_circle(path: Path) -> None:
                         },
                     }
                 ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_training_comparison(
+    path: Path,
+    *,
+    status: str,
+    train_delta: int,
+    best_delta: float | None,
+    worst_delta: float | None,
+) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "summary": {
+                    "status": status,
+                    "train_examples_delta": train_delta,
+                    "best_accuracy_delta": best_delta,
+                    "worst_accuracy_delta": worst_delta,
+                },
             }
         ),
         encoding="utf-8",
