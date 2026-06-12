@@ -154,6 +154,7 @@ def compare_retraining(
     pseudo_dataset: str | Path,
     output: str | Path,
     validation_dataset: str | Path | None = None,
+    markdown: str | Path | None = None,
 ) -> dict[str, object]:
     """Compare baseline training against reviewed pseudo-label augmentation."""
 
@@ -187,6 +188,13 @@ def compare_retraining(
         json.dumps(result, indent=2, sort_keys=True),
         encoding="utf-8",
     )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_training_comparison_markdown(result),
+            encoding="utf-8",
+        )
     return result
 
 
@@ -481,6 +489,82 @@ def _training_comparison_model(
             ),
         },
     }
+
+
+def render_training_comparison_markdown(report: dict[str, object]) -> str:
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    lines = [
+        "# Curve Training Comparison",
+        "",
+        f"- Base dataset: `{report.get('base_dataset')}`",
+        f"- Pseudo dataset: `{report.get('pseudo_dataset')}`",
+        f"- Validation dataset: `{report.get('validation_dataset')}`",
+        f"- Status: `{summary.get('status', 'n/a')}`",
+        f"- Train example delta: {_fmt_metric(summary.get('train_examples_delta'))}",
+        f"- Best accuracy delta: {_fmt_metric(summary.get('best_accuracy_delta'))}",
+        f"- Worst accuracy delta: {_fmt_metric(summary.get('worst_accuracy_delta'))}",
+        "",
+        "| Split | Baseline accuracy | Augmented accuracy | Delta | "
+        "Baseline rank | Augmented rank | Rank delta |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    baseline = report.get("baseline", {})
+    augmented = report.get("augmented", {})
+    delta = report.get("delta", {})
+    for split in ("val", "test"):
+        lines.append(
+            "| "
+            f"`{split}` | "
+            f"{_fmt_metric(_split_metric_for_markdown(baseline, 'evaluation', split, 'accuracy'))} | "
+            f"{_fmt_metric(_split_metric_for_markdown(augmented, 'evaluation', split, 'accuracy'))} | "
+            f"{_fmt_metric(_delta_for_markdown(delta, 'evaluation', split))} | "
+            f"{_fmt_metric(_split_metric_for_markdown(baseline, 'ranking_evaluation', split, 'classifier_accuracy'))} | "
+            f"{_fmt_metric(_split_metric_for_markdown(augmented, 'ranking_evaluation', split, 'classifier_accuracy'))} | "
+            f"{_fmt_metric(_delta_for_markdown(delta, 'ranking_evaluation', split, 'classifier_accuracy'))} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _split_metric_for_markdown(
+    report: object,
+    section: str,
+    split: str,
+    metric: str,
+) -> object:
+    if not isinstance(report, dict):
+        return None
+    return _split_metric(report, section, split, metric)
+
+
+def _delta_for_markdown(
+    delta: object,
+    section: str,
+    split: str,
+    metric: str | None = None,
+) -> object:
+    if not isinstance(delta, dict):
+        return None
+    section_data = delta.get(section, {})
+    if not isinstance(section_data, dict):
+        return None
+    split_data = section_data.get(split)
+    if metric is None:
+        return split_data
+    if not isinstance(split_data, dict):
+        return None
+    return split_data.get(metric)
+
+
+def _fmt_metric(value: object) -> str:
+    if isinstance(value, bool) or value is None:
+        return "n/a"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    return str(value)
 
 
 def _training_comparison_delta(

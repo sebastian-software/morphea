@@ -14,6 +14,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    render_training_comparison_markdown,
     retrain_centroid_classifier,
 )
 
@@ -500,6 +501,28 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["summary"]["train_examples_delta"], 1)
             self.assertGreater(result["summary"]["metric_count"], 0)
 
+    def test_render_training_comparison_markdown_summarizes_verdict(self):
+        markdown = render_training_comparison_markdown(
+            {
+                "base_dataset": "base/dataset.json",
+                "pseudo_dataset": "pseudo/dataset.json",
+                "validation_dataset": "base/dataset.json",
+                "summary": {
+                    "status": "improved",
+                    "train_examples_delta": 2,
+                    "best_accuracy_delta": 0.1,
+                    "worst_accuracy_delta": 0.0,
+                },
+                "baseline": {"evaluation": {"val": {"accuracy": 0.5}}},
+                "augmented": {"evaluation": {"val": {"accuracy": 0.6}}},
+                "delta": {"evaluation": {"val": 0.1}},
+            }
+        )
+
+        self.assertIn("# Curve Training Comparison", markdown)
+        self.assertIn("- Status: `improved`", markdown)
+        self.assertIn("| `val` | 0.5 | 0.6 | 0.1 |", markdown)
+
     def test_compare_training_cli_writes_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -539,6 +562,49 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["summary"]["train_examples_delta"], 1)
             self.assertIn("best_accuracy_delta", result["summary"])
 
+    def test_compare_training_cli_writes_markdown_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            output = root / "compare.json"
+            markdown = root / "compare.md"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=95,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-training",
+                        str(base_dir / "dataset.json"),
+                        "--pseudo-dataset",
+                        str(pseudo_dir / "dataset.json"),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                    ]
+                )
+
+            self.assertTrue(output.exists())
+            self.assertIn(
+                "# Curve Training Comparison",
+                markdown.read_text(encoding="utf-8"),
+            )
+
     def test_compare_training_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -546,6 +612,7 @@ class SelfLearningTests(unittest.TestCase):
             pseudo_dir = root / "pseudo"
             reviewed = root / "reviewed.json"
             output = root / "compare.json"
+            markdown = root / "compare.md"
             config = root / "compare-training.json"
             generate_synthetic_dataset(
                 output_dir=base_dir,
@@ -567,6 +634,7 @@ class SelfLearningTests(unittest.TestCase):
                         "base_dataset": str(base_dir / "dataset.json"),
                         "pseudo_dataset": str(pseudo_dir / "dataset.json"),
                         "output": str(output),
+                        "markdown": str(markdown),
                     }
                 ),
                 encoding="utf-8",
@@ -577,6 +645,7 @@ class SelfLearningTests(unittest.TestCase):
 
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["delta"]["train_examples"], 1)
+            self.assertTrue(markdown.exists())
 
     def test_retrain_centroid_classifier_writes_augmented_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:

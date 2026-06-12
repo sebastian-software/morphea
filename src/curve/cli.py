@@ -107,6 +107,7 @@ COMPARE_TRAINING_CONFIG_KEYS = {
     "pseudo_dataset",
     "validation_dataset",
     "output",
+    "markdown",
 }
 RETRAIN_CONFIG_KEYS = {
     "base_dataset",
@@ -429,6 +430,7 @@ def main(argv: list[str] | None = None) -> None:
     compare_training.add_argument("--pseudo-dataset", type=Path)
     compare_training.add_argument("--validation-dataset", type=Path)
     compare_training.add_argument("-o", "--output", type=Path)
+    compare_training.add_argument("--markdown", type=Path)
     compare_training.add_argument("--config", type=Path)
 
     retrain = subcommands.add_parser(
@@ -752,6 +754,7 @@ def main(argv: list[str] | None = None) -> None:
             pseudo_dataset=compare_config["pseudo_dataset"],
             validation_dataset=compare_config.get("validation_dataset"),
             output=compare_config["output"],
+            markdown=compare_config.get("markdown"),
         )
         print(
             "compared "
@@ -987,6 +990,8 @@ def _resolved_compare_training_config(args: argparse.Namespace) -> dict[str, Pat
         config["validation_dataset"] = args.validation_dataset
     if args.output is not None:
         config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
     _require_config_paths(
         config,
         ("base_dataset", "pseudo_dataset", "output"),

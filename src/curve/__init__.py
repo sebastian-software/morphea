@@ -88,6 +88,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    render_training_comparison_markdown,
     retrain_centroid_classifier,
 )
 from curve.refinement import (
@@ -192,6 +193,7 @@ __all__ = [
     "render_snapshot_comparison",
     "render_snapshot_comparison_markdown",
     "render_sweep_markdown",
+    "render_training_comparison_markdown",
     "refine_manifest",
     "retrain_centroid_classifier",
     "run_sweep",
