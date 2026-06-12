@@ -356,6 +356,7 @@ Supported fields:
 - `model`
 - `dataset`
 - `output`
+- `markdown`: optional Markdown report path
 - `splits`: optional non-empty array of dataset split names, defaulting to
   `["val", "test"]`
 
@@ -463,7 +464,8 @@ same high-level source/evaluation fields while changing `model_type`.
 
 ## Classifier Evaluation Report v1
 
-Written by `curve eval-classifier`.
+Written by `curve eval-classifier`. `--markdown report.md` writes a
+scan-friendly table view derived from the JSON report.
 
 Top-level fields:
 
