@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import tempfile
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from math import hypot
 from pathlib import Path
 from statistics import mean
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from PIL import Image, ImageDraw
 
@@ -28,6 +29,8 @@ class PrimitiveSpec:
     geometry_type: str
     geometry: Geometry
     draw: DrawFunction
+    family: str | None = None
+    variant: str = "fixed"
     width: int = 64
     height: int = 64
     background: str = "#ffffff"
@@ -149,26 +152,41 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
 def check_primitive_quality(
     *,
     output_dir: str | Path | None = None,
+    cases: Iterable[str] = (),
+    filter_pattern: str | None = None,
 ) -> dict[str, Any]:
+    requested_cases = tuple(cases)
     output_root = Path(output_dir) if output_dir is not None else None
     if output_root is not None:
         output_root.mkdir(parents=True, exist_ok=True)
+    specs = _selected_specs(
+        primitive_specs(),
+        requested_cases=requested_cases,
+        filter_pattern=filter_pattern,
+    )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_root = Path(temp_dir)
-        cases = [
+        case_results = [
             _run_case(spec, output_root=output_root, temp_root=temp_root)
-            for spec in primitive_specs()
+            for spec in specs
         ]
 
-    failed = [case for case in cases if not case["ok"]]
+    failed = [case for case in case_results if not case["ok"]]
+    family_summaries = _family_summaries(case_results)
     return {
         "schema_version": 1,
-        "case_count": len(cases),
-        "passed_count": len(cases) - len(failed),
+        "case_count": len(case_results),
+        "passed_count": len(case_results) - len(failed),
         "failed_count": len(failed),
-        "ok": not failed,
-        "cases": cases,
+        "ok": bool(case_results) and not failed,
+        "selected_case_ids": [case["id"] for case in case_results],
+        "family_summaries": family_summaries,
+        "selection": {
+            "cases": list(requested_cases),
+            "filter": filter_pattern,
+        },
+        "cases": case_results,
     }
 
 
@@ -177,8 +195,14 @@ def write_primitive_quality_report(
     output: str | Path,
     output_dir: str | Path | None = None,
     markdown: str | Path | None = None,
+    cases: Iterable[str] = (),
+    filter_pattern: str | None = None,
 ) -> dict[str, Any]:
-    report = check_primitive_quality(output_dir=output_dir)
+    report = check_primitive_quality(
+        output_dir=output_dir,
+        cases=cases,
+        filter_pattern=filter_pattern,
+    )
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -201,13 +225,32 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
         f"- Failed: {report.get('failed_count', 0)}",
         f"- OK: `{str(report.get('ok', False)).lower()}`",
         "",
+        "| Family | Cases | Passed | Failed |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for family in report.get("family_summaries", []):
+        lines.append(
+            "| "
+            f"`{family.get('family')}` | "
+            f"{family.get('case_count', 0)} | "
+            f"{family.get('passed_count', 0)} | "
+            f"{family.get('failed_count', 0)} |"
+        )
+    lines.extend(
+        [
+            "",
         "| Case | OK | Actual | L1 | Edge | IoU | Failures |",
         "| --- | ---: | --- | ---: | ---: | ---: | --- |",
-    ]
+        ]
+    )
     for case in report.get("cases", []):
         metrics = case.get("metrics", {})
         geometry = case.get("geometry", {})
         failures = case.get("failures", [])
+        failure_categories = case.get("failure_categories", [])
+        failure_text = "; ".join(failures) if failures else "n/a"
+        if failure_categories:
+            failure_text = f"{', '.join(failure_categories)}: {failure_text}"
         lines.append(
             "| "
             f"`{case.get('id')}` | "
@@ -216,9 +259,53 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
             f"{metrics.get('raster_l1_error', 'n/a')} | "
             f"{metrics.get('raster_edge_error', 'n/a')} | "
             f"{geometry.get('bbox_iou', 'n/a')} | "
-            f"{'; '.join(failures) if failures else 'n/a'} |"
+            f"{failure_text} |"
         )
     return "\n".join(lines) + "\n"
+
+
+def _selected_specs(
+    specs: tuple[PrimitiveSpec, ...],
+    *,
+    requested_cases: tuple[str, ...],
+    filter_pattern: str | None,
+) -> tuple[PrimitiveSpec, ...]:
+    selected = specs
+    if requested_cases:
+        requested = set(requested_cases)
+        selected = tuple(
+            spec
+            for spec in selected
+            if spec.id in requested or _spec_family(spec) in requested
+        )
+    if filter_pattern:
+        selected = tuple(
+            spec
+            for spec in selected
+            if fnmatch(spec.id, filter_pattern)
+            or fnmatch(_spec_family(spec), filter_pattern)
+        )
+    return selected
+
+
+def _family_summaries(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_family: dict[str, list[dict[str, Any]]] = {}
+    for case in cases:
+        by_family.setdefault(str(case.get("family", case.get("id"))), []).append(case)
+    summaries = []
+    for family in sorted(by_family):
+        family_cases = by_family[family]
+        failed = [case for case in family_cases if not case["ok"]]
+        summaries.append(
+            {
+                "family": family,
+                "case_count": len(family_cases),
+                "passed_count": len(family_cases) - len(failed),
+                "failed_count": len(failed),
+                "ok": not failed,
+            }
+        )
+    return summaries
 
 
 def _run_case(
@@ -277,18 +364,30 @@ def _evaluate_case(
     metrics: dict[str, Any],
 ) -> dict[str, Any]:
     anchors = list(manifest.get("anchors", []))
-    failures: list[str] = []
+    failure_details: list[dict[str, str]] = []
     if len(anchors) > spec.max_anchor_count:
-        failures.append(
-            f"anchor_count {len(anchors)} exceeds {spec.max_anchor_count}"
+        failure_details.append(
+            _failure(
+                "wrong_count",
+                f"anchor_count {len(anchors)} exceeds {spec.max_anchor_count}",
+            )
         )
     if not anchors:
-        failures.append("no anchors detected")
-        return _case_result(spec, None, metrics, failures, bbox_iou=0.0, anchor_count=0)
+        failure_details.append(_failure("wrong_count", "no anchors detected"))
+        return _case_result(
+            spec,
+            None,
+            metrics,
+            failure_details,
+            bbox_iou=0.0,
+            anchor_count=0,
+        )
 
     for anchor in anchors:
         if anchor.get("kind") == "cubic_path":
-            failures.append("unexpected cubic_path fallback")
+            failure_details.append(
+                _failure("fallback_path", "unexpected cubic_path fallback")
+            )
         bounds = _anchor_visual_bounds(anchor)
         if _bounds_outside_canvas(
             bounds,
@@ -296,43 +395,61 @@ def _evaluate_case(
             height=spec.height,
             tolerance=spec.coordinate_tolerance,
         ):
-            failures.append(
-                f"anchor bounds outside canvas: {_rounded_bounds(bounds)}"
+            failure_details.append(
+                _failure(
+                    "bounds_escape",
+                    f"anchor bounds outside canvas: {_rounded_bounds(bounds)}",
+                )
             )
 
     anchor = anchors[0]
     actual_kind = str(anchor.get("kind"))
     if actual_kind not in spec.expected_kinds:
-        failures.append(
-            "expected kind "
-            f"{'/'.join(spec.expected_kinds)}, got {actual_kind}"
+        failure_details.append(
+            _failure(
+                "wrong_kind",
+                "expected kind "
+                f"{'/'.join(spec.expected_kinds)}, got {actual_kind}",
+            )
         )
     if str(anchor.get("color")) != spec.color:
-        failures.append(f"expected color {spec.color}, got {anchor.get('color')}")
+        failure_details.append(
+            _failure("color_drift", f"expected color {spec.color}, got {anchor.get('color')}")
+        )
     if not bool(metrics.get("raster_size_match", False)):
-        failures.append("rendered size does not match source")
+        failure_details.append(
+            _failure("visual_drift", "rendered size does not match source")
+        )
     if float(metrics.get("raster_l1_error", 1.0)) > spec.max_raster_l1_error:
-        failures.append(
-            "raster_l1_error "
-            f"{metrics.get('raster_l1_error')} exceeds {spec.max_raster_l1_error}"
+        failure_details.append(
+            _failure(
+                "visual_drift",
+                "raster_l1_error "
+                f"{metrics.get('raster_l1_error')} exceeds {spec.max_raster_l1_error}",
+            )
         )
     if float(metrics.get("raster_edge_error", 1.0)) > spec.max_raster_edge_error:
-        failures.append(
-            "raster_edge_error "
-            f"{metrics.get('raster_edge_error')} exceeds {spec.max_raster_edge_error}"
+        failure_details.append(
+            _failure(
+                "visual_drift",
+                "raster_edge_error "
+                f"{metrics.get('raster_edge_error')} exceeds {spec.max_raster_edge_error}",
+            )
         )
 
     expected_bounds = _expected_visual_bounds(spec)
     actual_bounds = _anchor_visual_bounds(anchor)
     bbox_iou = _bbox_iou(expected_bounds, actual_bounds)
     if bbox_iou < spec.min_bbox_iou:
-        failures.append(f"bbox_iou {bbox_iou} below {spec.min_bbox_iou}")
-    failures.extend(_geometry_failures(spec, anchor))
+        failure_details.append(
+            _failure("geometry_drift", f"bbox_iou {bbox_iou} below {spec.min_bbox_iou}")
+        )
+    failure_details.extend(_geometry_failures(spec, anchor))
     return _case_result(
         spec,
         anchor,
         metrics,
-        failures,
+        failure_details,
         bbox_iou=bbox_iou,
         anchor_count=len(anchors),
     )
@@ -342,14 +459,18 @@ def _case_result(
     spec: PrimitiveSpec,
     anchor: dict[str, Any] | None,
     metrics: dict[str, Any],
-    failures: list[str],
+    failure_details: list[dict[str, str]],
     *,
     bbox_iou: float,
     anchor_count: int,
 ) -> dict[str, Any]:
+    failures = [failure["message"] for failure in failure_details]
+    categories = sorted({failure["category"] for failure in failure_details})
     return {
         "id": spec.id,
-        "ok": not failures,
+        "family": _spec_family(spec),
+        "variant": spec.variant,
+        "ok": not failure_details,
         "expected_kinds": list(spec.expected_kinds),
         "actual_kind": anchor.get("kind") if anchor is not None else None,
         "anchor_count": anchor_count,
@@ -363,11 +484,14 @@ def _case_result(
             ),
             "bbox_iou": round(bbox_iou, 6),
         },
+        "geometry_diff": _geometry_diff(spec, anchor),
         "failures": failures,
+        "failure_categories": categories,
+        "failure_details": failure_details,
     }
 
 
-def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
+def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
     if spec.geometry_type == "quad":
         return _quad_failures(spec, anchor)
     if spec.geometry_type == "circle":
@@ -376,13 +500,13 @@ def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]
         return _circle_failures(spec, anchor) + _stroke_width_failures(spec, anchor)
     if spec.geometry_type == "stroke":
         return _stroke_failures(spec, anchor)
-    return [f"unsupported geometry contract {spec.geometry_type}"]
+    return [_failure("geometry_drift", f"unsupported geometry contract {spec.geometry_type}")]
 
 
-def _quad_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
+def _quad_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
     quad = anchor.get("quad")
     if not isinstance(quad, dict):
-        return ["missing quad geometry"]
+        return [_failure("geometry_drift", "missing quad geometry")]
     actual = tuple(
         (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
         for point in quad.get("corners", [])
@@ -391,30 +515,38 @@ def _quad_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
         (float(x), float(y)) for x, y in spec.geometry["corners"]
     )
     if len(actual) != len(expected):
-        return [f"expected {len(expected)} corners, got {len(actual)}"]
+        return [
+            _failure("geometry_drift", f"expected {len(expected)} corners, got {len(actual)}")
+        ]
     failures = []
     for index, (left, right) in enumerate(zip(actual, expected, strict=True)):
         if _point_distance(left, right) > spec.coordinate_tolerance:
             failures.append(
-                f"corner {index} distance "
-                f"{round(_point_distance(left, right), 6)} exceeds "
-                f"{spec.coordinate_tolerance}"
+                _failure(
+                    "geometry_drift",
+                    f"corner {index} distance "
+                    f"{round(_point_distance(left, right), 6)} exceeds "
+                    f"{spec.coordinate_tolerance}",
+                )
             )
     return failures
 
 
-def _circle_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
+def _circle_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
     circle = anchor.get("circle")
     if not isinstance(circle, dict):
-        return ["missing circle geometry"]
+        return [_failure("geometry_drift", "missing circle geometry")]
     failures = []
     for key in ("cx", "cy", "r"):
         actual = float(circle.get(key, 0.0))
         expected = float(spec.geometry[key])
         if abs(actual - expected) > spec.coordinate_tolerance:
             failures.append(
-                f"{key} delta {round(abs(actual - expected), 6)} exceeds "
-                f"{spec.coordinate_tolerance}"
+                _failure(
+                    "geometry_drift",
+                    f"{key} delta {round(abs(actual - expected), 6)} exceeds "
+                    f"{spec.coordinate_tolerance}",
+                )
             )
     return failures
 
@@ -422,24 +554,27 @@ def _circle_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
 def _stroke_width_failures(
     spec: PrimitiveSpec,
     anchor: dict[str, Any],
-) -> list[str]:
+) -> list[dict[str, str]]:
     stroke = anchor.get("stroke")
     if not isinstance(stroke, dict):
-        return ["missing stroke geometry"]
+        return [_failure("geometry_drift", "missing stroke geometry")]
     actual = _stroke_width(anchor)
     expected = float(spec.geometry["width"])
     if abs(actual - expected) > spec.coordinate_tolerance:
         return [
-            f"stroke width delta {round(abs(actual - expected), 6)} exceeds "
-            f"{spec.coordinate_tolerance}"
+            _failure(
+                "geometry_drift",
+                f"stroke width delta {round(abs(actual - expected), 6)} exceeds "
+                f"{spec.coordinate_tolerance}",
+            )
         ]
     return []
 
 
-def _stroke_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
+def _stroke_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
     stroke = anchor.get("stroke")
     if not isinstance(stroke, dict):
-        return ["missing stroke geometry"]
+        return [_failure("geometry_drift", "missing stroke geometry")]
     actual = tuple(
         (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
         for point in stroke.get("centerline", [])
@@ -449,12 +584,20 @@ def _stroke_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[str]:
     )
     failures = []
     if len(actual) != len(expected):
-        failures.append(f"expected {len(expected)} centerline points, got {len(actual)}")
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"expected {len(expected)} centerline points, got {len(actual)}",
+            )
+        )
     elif _oriented_line_error(actual, expected) > spec.coordinate_tolerance:
         failures.append(
-            "centerline endpoint distance "
-            f"{round(_oriented_line_error(actual, expected), 6)} exceeds "
-            f"{spec.coordinate_tolerance}"
+            _failure(
+                "geometry_drift",
+                "centerline endpoint distance "
+                f"{round(_oriented_line_error(actual, expected), 6)} exceeds "
+                f"{spec.coordinate_tolerance}",
+            )
         )
     failures.extend(_stroke_width_failures(spec, anchor))
     return failures
@@ -575,3 +718,90 @@ def _oriented_line_error(
 
 def _rounded_bounds(bounds: tuple[float, float, float, float]) -> list[float]:
     return [round(value, 6) for value in bounds]
+
+
+def _geometry_diff(
+    spec: PrimitiveSpec,
+    anchor: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "expected": {
+            "kinds": list(spec.expected_kinds),
+            "type": spec.geometry_type,
+            "geometry": _rounded_geometry(spec.geometry),
+        },
+        "actual": _actual_geometry(anchor),
+    }
+
+
+def _actual_geometry(anchor: dict[str, Any] | None) -> dict[str, Any] | None:
+    if anchor is None:
+        return None
+    circle = anchor.get("circle")
+    if isinstance(circle, dict):
+        return {
+            "kind": anchor.get("kind"),
+            "type": "circle",
+            "geometry": {
+                "cx": round(float(circle.get("cx", 0.0)), 6),
+                "cy": round(float(circle.get("cy", 0.0)), 6),
+                "r": round(float(circle.get("r", 0.0)), 6),
+                "width": round(_stroke_width(anchor), 6)
+                if anchor.get("kind") == "stroke_circle"
+                else None,
+            },
+        }
+    quad = anchor.get("quad")
+    if isinstance(quad, dict):
+        return {
+            "kind": anchor.get("kind"),
+            "type": "quad",
+            "geometry": {
+                "corners": _rounded_points(
+                    (
+                        (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
+                        for point in quad.get("corners", [])
+                    )
+                )
+            },
+        }
+    stroke = anchor.get("stroke")
+    if isinstance(stroke, dict):
+        return {
+            "kind": anchor.get("kind"),
+            "type": "stroke",
+            "geometry": {
+                "centerline": _rounded_points(
+                    (
+                        (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
+                        for point in stroke.get("centerline", [])
+                    )
+                ),
+                "width": round(_stroke_width(anchor), 6),
+            },
+        }
+    return {"kind": anchor.get("kind"), "type": "unknown", "geometry": {}}
+
+
+def _rounded_geometry(geometry: Geometry) -> Geometry:
+    rounded: Geometry = {}
+    for key, value in geometry.items():
+        if isinstance(value, tuple):
+            rounded[key] = _rounded_points(value)
+        elif isinstance(value, float | int):
+            rounded[key] = round(float(value), 6)
+        else:
+            rounded[key] = value
+    return rounded
+
+
+def _rounded_points(points: Iterable[tuple[float, float]]) -> list[list[float]]:
+    return [[round(float(x), 6), round(float(y), 6)] for x, y in points]
+
+
+def _spec_family(spec: PrimitiveSpec) -> str:
+    return spec.family or spec.id
+
+
+def _failure(category: str, message: str) -> dict[str, str]:
+    return {"category": category, "message": message}

@@ -20,6 +20,7 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertTrue(report["ok"])
             self.assertEqual(report["case_count"], 9)
             self.assertEqual(report["failed_count"], 0)
+            self.assertEqual(report["selection"], {"cases": [], "filter": None})
             actual_kinds = {
                 case["id"]: case["actual_kind"]
                 for case in report["cases"]
@@ -32,10 +33,32 @@ class PrimitiveQualityTests(unittest.TestCase):
             root = Path(temp_dir)
             for case in report["cases"]:
                 case_dir = root / case["id"]
+                self.assertIn("family", case)
+                self.assertIn("variant", case)
+                self.assertIn("geometry_diff", case)
+                self.assertIn("failure_categories", case)
+                self.assertIn("failure_details", case)
                 self.assertTrue((case_dir / "input.png").exists())
                 self.assertTrue((case_dir / "output.svg").exists())
                 self.assertTrue((case_dir / "manifest.json").exists())
                 self.assertTrue((case_dir / "preview.png").exists())
+
+    def test_primitive_quality_harness_filters_cases(self):
+        report = check_primitive_quality(cases=("filled_square",))
+
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["case_count"], 1)
+        self.assertEqual(report["selected_case_ids"], ["filled_square"])
+        self.assertEqual(report["selection"], {"cases": ["filled_square"], "filter": None})
+
+    def test_primitive_quality_harness_filters_by_pattern(self):
+        report = check_primitive_quality(filter_pattern="*_stroke")
+
+        self.assertTrue(report["ok"])
+        self.assertEqual(
+            report["selected_case_ids"],
+            ["horizontal_stroke", "vertical_stroke", "diagonal_stroke"],
+        )
 
     def test_primitive_quality_markdown_summarizes_failures(self):
         markdown = render_primitive_quality_markdown(
@@ -49,6 +72,7 @@ class PrimitiveQualityTests(unittest.TestCase):
                         "id": "filled_square",
                         "ok": False,
                         "actual_kind": "cubic_path",
+                        "failure_categories": ["fallback_path"],
                         "metrics": {
                             "raster_l1_error": 0.2,
                             "raster_edge_error": 0.1,
@@ -89,6 +113,47 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertTrue((artifact_dir / "filled_square" / "output.svg").exists())
             self.assertIn("primitive cases", stdout.getvalue())
 
+    def test_primitive_check_cli_filters_cases(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "primitive-report.json"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "primitive-check",
+                        "-o",
+                        str(output),
+                        "--case",
+                        "filled_square",
+                    ]
+                )
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertTrue(report["ok"])
+            self.assertEqual(report["selected_case_ids"], ["filled_square"])
+
+    def test_primitive_check_cli_exits_nonzero_for_empty_selection(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "primitive-report.json"
+
+            with self.assertRaises(SystemExit) as raised:
+                with redirect_stdout(StringIO()):
+                    main(
+                        [
+                            "primitive-check",
+                            "-o",
+                            str(output),
+                            "--filter",
+                            "does-not-match",
+                        ]
+                    )
+
+            self.assertEqual(raised.exception.code, 1)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertFalse(report["ok"])
+            self.assertEqual(report["case_count"], 0)
+
     def test_primitive_check_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -102,6 +167,7 @@ class PrimitiveQualityTests(unittest.TestCase):
                         "output": str(output),
                         "output_dir": str(artifact_dir),
                         "markdown": str(markdown),
+                        "case": "filled_square",
                     }
                 ),
                 encoding="utf-8",
@@ -111,7 +177,8 @@ class PrimitiveQualityTests(unittest.TestCase):
                 main(["primitive-check", "--config", str(config)])
 
             report = json.loads(output.read_text(encoding="utf-8"))
-            self.assertEqual(report["case_count"], 9)
+            self.assertEqual(report["case_count"], 1)
+            self.assertEqual(report["selection"]["cases"], ["filled_square"])
             self.assertTrue(markdown.exists())
 
 

@@ -230,7 +230,7 @@ REFINEMENT_GATE_CONFIG_KEYS = {
 }
 STATUS_CONFIG_KEYS = {"output", "markdown", "mlx_sam_model_path"}
 REPORT_CONFIG_KEYS = {"manifest", "output", "config", "format"}
-PRIMITIVE_CHECK_CONFIG_KEYS = {"output", "output_dir", "markdown"}
+PRIMITIVE_CHECK_CONFIG_KEYS = {"output", "output_dir", "markdown", "case", "filter"}
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
@@ -777,6 +777,16 @@ def main(argv: list[str] | None = None) -> None:
         help="Optional directory for per-case input, SVG, manifest, and preview artifacts.",
     )
     primitive_check.add_argument("--markdown", type=Path)
+    primitive_check.add_argument(
+        "--case",
+        action="append",
+        default=None,
+        help="Run only a specific primitive case or family. May be repeated.",
+    )
+    primitive_check.add_argument(
+        "--filter",
+        help="Run cases whose id or family matches a shell-style pattern.",
+    )
     primitive_check.add_argument("--config", type=Path)
 
     curated_check = subcommands.add_parser(
@@ -1307,12 +1317,16 @@ def main(argv: list[str] | None = None) -> None:
             output=primitive_config["output"],
             output_dir=primitive_config.get("output_dir"),
             markdown=primitive_config.get("markdown"),
+            cases=primitive_config.get("case", ()),
+            filter_pattern=primitive_config.get("filter"),
         )
         print(
             "checked "
             f"{result['case_count']} primitive cases "
             f"({result['failed_count']} failed)"
         )
+        if not result["ok"]:
+            raise SystemExit(1)
         return
 
     if args.command == "curated-check":
@@ -2059,10 +2073,18 @@ def _resolved_primitive_check_config(args: argparse.Namespace) -> dict[str, obje
         config["output_dir"] = args.output_dir
     if args.markdown is not None:
         config["markdown"] = args.markdown
+    if args.case is not None:
+        config["case"] = args.case
+    if args.filter is not None:
+        config["filter"] = args.filter
     _require_config_paths(config, ("output",), "primitive-check")
     for key in ("output", "output_dir", "markdown"):
         if config.get(key) is not None:
             config[key] = Path(str(config[key]))
+    if isinstance(config.get("case"), str):
+        config["case"] = [config["case"]]
+    elif config.get("case") is None:
+        config["case"] = []
     return config
 
 
@@ -2418,6 +2440,8 @@ def _load_primitive_check_config(path: Path | None) -> dict[str, object]:
     for key in ("output", "output_dir", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
+    if "case" in config and isinstance(config["case"], str):
+        config["case"] = [config["case"]]
     return config
 
 

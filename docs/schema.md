@@ -221,19 +221,28 @@ Top-level fields:
 - `passed_count`
 - `failed_count`
 - `ok`
+- `selected_case_ids`: ids selected by `--case`/`--filter`
+- `family_summaries`: pass/fail counts grouped by fixture family
+- `selection`: requested case ids and filter pattern
 - `cases`: fixed primitive fixture results
 
 Each case records:
 
 - `id`
+- `family`
+- `variant`
 - `expected_kinds`
 - `actual_kind`
 - `anchor_count`
 - `metrics`: includes `raster_l1_error`, `raster_edge_error`,
   `raster_alpha_error`, and `raster_size_match`
 - `geometry`: expected bounds, actual bounds, and `bbox_iou`
+- `geometry_diff`: compact expected-vs-actual semantic geometry
 - `failures`: contract failures such as wrong kind, fallback path, loose
   coordinates, out-of-canvas bounds, or visual round-trip regression
+- `failure_categories`: stable categories such as `wrong_kind`, `wrong_count`,
+  `geometry_drift`, `visual_drift`, `fallback_path`, and `bounds_escape`
+- `failure_details`: category/message pairs for machine-readable diagnostics
 - `artifacts`: present when `--output-dir` is used; includes input PNG,
   output SVG, debug SVG, manifest JSON, and rendered preview PNG
 
@@ -251,6 +260,8 @@ Supported fields:
 - `output`
 - `output_dir`: optional per-case artifact root
 - `markdown`: optional Markdown summary path
+- `case`: optional case or family id, or a list of ids
+- `filter`: optional shell-style pattern matched against case id or family
 
 CLI arguments override values loaded from the config file.
 

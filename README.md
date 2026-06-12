@@ -68,6 +68,8 @@ Run the primitive round-trip quality gate:
 morphea primitive-check -o runs/primitive-quality.json \
   --output-dir runs/primitive-quality \
   --markdown runs/primitive-quality.md
+
+morphea primitive-check -o /tmp/square.json --case filled_square
 ```
 
 Vectorize an image into editable SVG primitives:
