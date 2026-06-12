@@ -17,6 +17,8 @@ def token_transformer_embedding(
     heads: int,
     layers: int,
     raster_grid_size: int = 4,
+    projection_scale: tuple[float, ...] | None = None,
+    projection_bias: tuple[float, ...] | None = None,
 ) -> tuple[float, ...]:
     """Encode geometric features and pooled RGBA crop tokens into one vector."""
 
@@ -32,7 +34,13 @@ def token_transformer_embedding(
         return tuple(0.0 for _ in range(hidden_dim))
 
     hidden = [
-        _project_token(token, token_index=index, hidden_dim=hidden_dim)
+        _project_token(
+            token,
+            token_index=index,
+            hidden_dim=hidden_dim,
+            projection_scale=projection_scale,
+            projection_bias=projection_bias,
+        )
         for index, token in enumerate(tokens)
     ]
     for layer_index in range(layers):
@@ -112,15 +120,28 @@ def _project_token(
     *,
     token_index: int,
     hidden_dim: int,
+    projection_scale: tuple[float, ...] | None,
+    projection_bias: tuple[float, ...] | None,
 ) -> tuple[float, ...]:
     position = (token_index + 1) / 64
-    return tuple(
-        tanh(
+    projected: list[float] = []
+    for hidden_index in range(hidden_dim):
+        value = tanh(
             token[hidden_index % len(token)] * (1.0 + (hidden_index % 5) * 0.2)
             + position * ((hidden_index % 3) - 1)
         )
-        for hidden_index in range(hidden_dim)
-    )
+        if (
+            projection_scale is not None
+            and projection_bias is not None
+            and hidden_index < len(projection_scale)
+            and hidden_index < len(projection_bias)
+        ):
+            value = tanh(
+                value * projection_scale[hidden_index]
+                + projection_bias[hidden_index]
+            )
+        projected.append(value)
+    return tuple(projected)
 
 
 def _self_attention_layer(

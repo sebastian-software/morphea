@@ -452,6 +452,12 @@ def _train_token_transformer(
     config: MlxClassifierTrainingConfig,
 ) -> dict[str, Any]:
     label_to_index = {label: index for index, label in enumerate(labels)}
+    projection = _learn_token_projection_calibration(
+        train_examples,
+        raster_examples,
+        labels,
+        config,
+    )
     rows = []
     for example, raster_example in zip(train_examples, raster_examples):
         if (
@@ -468,6 +474,8 @@ def _train_token_transformer(
                     hidden_dim=config.hidden_dim,
                     heads=config.num_heads,
                     layers=config.num_layers,
+                    projection_scale=tuple(projection["scale"]),
+                    projection_bias=tuple(projection["bias"]),
                 ),
                 label_to_index[example.label],
             )
@@ -478,6 +486,7 @@ def _train_token_transformer(
             "labels": list(labels),
             "tokenization": _token_transformer_tokenization(config),
             "encoder": _token_transformer_encoder_config(config),
+            "projection_calibration": projection,
             "parameter_count": 0,
             "weights": [],
             "bias": [],
@@ -501,7 +510,9 @@ def _train_token_transformer(
         "labels": list(labels),
         "tokenization": _token_transformer_tokenization(config),
         "encoder": _token_transformer_encoder_config(config),
-        "parameter_count": len(labels) * (config.hidden_dim + 1),
+        "projection_calibration": projection,
+        "parameter_count": len(labels) * (config.hidden_dim + 1)
+        + config.hidden_dim * 2,
         "normalization": {
             "mean": list(means),
             "scale": list(scales),
@@ -533,8 +544,68 @@ def _token_transformer_encoder_config(
         "num_heads": config.num_heads,
         "num_layers": config.num_layers,
         "attention": "scaled_dot_product_self_attention",
-        "projection": "deterministic_feature_rgba_v1",
+        "projection": "learned_calibrated_feature_rgba_v1",
         "pooling": "mean_token_pool",
+    }
+
+
+def _learn_token_projection_calibration(
+    train_examples: tuple[TrainingExample, ...],
+    raster_examples: tuple[RasterTrainingExample, ...],
+    labels: list[str],
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    grouped: dict[str, list[tuple[float, ...]]] = {label: [] for label in labels}
+    for example, raster_example in zip(train_examples, raster_examples):
+        if example.label not in grouped or raster_example.label != example.label:
+            continue
+        grouped[example.label].append(
+            token_transformer_embedding(
+                example.features,
+                raster_example.crop_tokens,
+                crop_size=config.crop_size,
+                hidden_dim=config.hidden_dim,
+                heads=config.num_heads,
+                layers=config.num_layers,
+            )
+        )
+    rows = [row for group in grouped.values() for row in group]
+    if not rows:
+        return {
+            "strategy": "between_class_encoder_output_calibration",
+            "scale": [1.0 for _ in range(config.hidden_dim)],
+            "bias": [0.0 for _ in range(config.hidden_dim)],
+            "trained_examples": 0,
+        }
+
+    global_mean = [
+        sum(row[index] for row in rows) / len(rows)
+        for index in range(config.hidden_dim)
+    ]
+    scale: list[float] = []
+    bias: list[float] = []
+    for index in range(config.hidden_dim):
+        class_means = [
+            sum(row[index] for row in group) / len(group)
+            for group in grouped.values()
+            if group
+        ]
+        if not class_means:
+            scale.append(1.0)
+            bias.append(0.0)
+            continue
+        between = (
+            sum(abs(value - global_mean[index]) for value in class_means)
+            / len(class_means)
+        )
+        multiplier = min(1.5, between * 2.0)
+        scale.append(1.0 + multiplier)
+        bias.append(-global_mean[index] * min(0.5, multiplier))
+    return {
+        "strategy": "between_class_encoder_output_calibration",
+        "scale": scale,
+        "bias": bias,
+        "trained_examples": len(rows),
     }
 
 

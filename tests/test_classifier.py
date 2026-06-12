@@ -478,6 +478,18 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(transformer["encoder"]["num_heads"], 4)
             self.assertEqual(transformer["encoder"]["num_layers"], 1)
             self.assertEqual(transformer["tokenization"]["raster_token_count"], 16)
+            self.assertEqual(
+                transformer["projection_calibration"]["strategy"],
+                "between_class_encoder_output_calibration",
+            )
+            self.assertEqual(
+                len(transformer["projection_calibration"]["scale"]),
+                32,
+            )
+            self.assertEqual(
+                len(transformer["projection_calibration"]["bias"]),
+                32,
+            )
             self.assertEqual(len(transformer["loss_history"]), 1)
             self.assertGreater(transformer["parameter_count"], 0)
 
@@ -524,6 +536,10 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(classifier["classifier_backend"], "mlx_feature_head")
             self.assertIsInstance(classifier["feature_raster_fusion"], dict)
             self.assertIsInstance(classifier["token_transformer"], dict)
+            self.assertEqual(
+                classifier["token_transformer"]["projection_calibration"]["strategy"],
+                "between_class_encoder_output_calibration",
+            )
             self.assertIn(predicted, classifier["labels"])
 
     def test_mlx_feature_head_can_predict_with_raster_tokens(self):
@@ -634,6 +650,11 @@ class PrimitiveClassifierTests(unittest.TestCase):
                     "hidden_dim": 3,
                     "num_heads": 1,
                     "num_layers": 1,
+                },
+                "projection_calibration": {
+                    "scale": (1.0, 1.0, 1.0),
+                    "bias": (0.0, 0.0, 0.0),
+                    "strategy": "test_projection",
                 },
             },
         }

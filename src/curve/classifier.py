@@ -816,6 +816,7 @@ def _loaded_token_transformer(
     hidden_dim = encoder.get("hidden_dim")
     heads = encoder.get("num_heads")
     layers = encoder.get("num_layers")
+    projection = _loaded_token_projection(transformer, hidden_dim)
     if (
         not isinstance(crop_size, int)
         or crop_size <= 0
@@ -851,6 +852,7 @@ def _loaded_token_transformer(
             "num_heads": heads,
             "num_layers": layers,
         },
+        "projection_calibration": projection,
     }
 
 
@@ -876,6 +878,11 @@ def _token_transformer_logits(
     hidden_dim = encoder.get("hidden_dim")
     heads = encoder.get("num_heads")
     layers = encoder.get("num_layers")
+    projection = transformer.get("projection_calibration", {})
+    if not isinstance(projection, dict):
+        projection = {}
+    projection_scale = projection.get("scale")
+    projection_bias = projection.get("bias")
     if (
         not isinstance(crop_size, int)
         or not isinstance(raster_grid_size, int)
@@ -892,6 +899,16 @@ def _token_transformer_logits(
         heads=heads,
         layers=layers,
         raster_grid_size=raster_grid_size,
+        projection_scale=(
+            projection_scale
+            if isinstance(projection_scale, tuple)
+            else None
+        ),
+        projection_bias=(
+            projection_bias
+            if isinstance(projection_bias, tuple)
+            else None
+        ),
     )
     mean = normalization.get("mean", ())
     scale = normalization.get("scale", ())
@@ -918,6 +935,39 @@ def _token_transformer_logits(
         )
         for class_index in range(len(bias))
     ]
+
+
+def _loaded_token_projection(
+    transformer: dict[str, object],
+    hidden_dim: object,
+) -> dict[str, object]:
+    if not isinstance(hidden_dim, int) or hidden_dim <= 0:
+        return {
+            "scale": (),
+            "bias": (),
+            "strategy": "identity_fallback",
+        }
+    projection = transformer.get("projection_calibration")
+    if not isinstance(projection, dict):
+        return {
+            "scale": tuple(1.0 for _ in range(hidden_dim)),
+            "bias": tuple(0.0 for _ in range(hidden_dim)),
+            "strategy": "identity_fallback",
+        }
+    scale = _vector(projection.get("scale", []))
+    bias = _vector(projection.get("bias", []))
+    if len(scale) != hidden_dim or len(bias) != hidden_dim:
+        return {
+            "scale": tuple(1.0 for _ in range(hidden_dim)),
+            "bias": tuple(0.0 for _ in range(hidden_dim)),
+            "strategy": "identity_fallback",
+        }
+    return {
+        "scale": tuple(scale),
+        "bias": tuple(bias),
+        "strategy": str(projection.get("strategy", "")),
+        "trained_examples": projection.get("trained_examples"),
+    }
 
 
 def _loaded_feature_raster_fusion(
