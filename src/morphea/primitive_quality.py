@@ -24,6 +24,14 @@ DrawFunction = Callable[[ImageDraw.ImageDraw], None]
 SourceFunction = Callable[[], Image.Image]
 BLUE = "#003366"
 
+CURVE_ANCHOR_KINDS = (
+    "arc",
+    "stroke_path",
+    "ellipse",
+    "stroke_ellipse",
+    "cubic_path",
+)
+
 
 @dataclass(frozen=True)
 class ExpectedPrimitive:
@@ -1476,6 +1484,7 @@ def check_primitive_quality(
 
     failed = [case for case in case_results if not case["ok"]]
     family_summaries = _family_summaries(case_results)
+    anchor_kind_counts = _aggregated_anchor_kind_counts(case_results)
     return {
         "schema_version": 1,
         "case_count": len(case_results),
@@ -1484,6 +1493,11 @@ def check_primitive_quality(
         "ok": bool(case_results) and not failed,
         "selected_case_ids": [case["id"] for case in case_results],
         "family_summaries": family_summaries,
+        "anchor_kind_counts": anchor_kind_counts,
+        "curve_anchor_kind_counts": {
+            kind: anchor_kind_counts.get(kind, 0)
+            for kind in CURVE_ANCHOR_KINDS
+        },
         "selection": {
             "cases": list(requested_cases),
             "filter": filter_pattern,
@@ -1594,6 +1608,19 @@ def _selected_specs(
             or fnmatch(_spec_family(spec), filter_pattern)
         )
     return selected
+
+
+def _aggregated_anchor_kind_counts(
+    cases: list[dict[str, Any]],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for case in cases:
+        case_counts = case.get("anchor_kind_counts", {})
+        if not isinstance(case_counts, dict):
+            continue
+        for kind, count in case_counts.items():
+            counts[str(kind)] = counts.get(str(kind), 0) + int(count)
+    return dict(sorted(counts.items()))
 
 
 def _family_summaries(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1930,11 +1957,20 @@ def _evaluate_case(
         failure_details,
         bbox_iou=bbox_iou,
         anchor_count=len(anchors),
+        anchor_kind_counts=_anchor_kind_counts(anchors),
         matches=match_result["matches"],
         unmatched_expected=match_result["unmatched_expected"],
         unexpected_actual=match_result["unexpected_actual"],
         group_matches=group_result["matches"],
     )
+
+
+def _anchor_kind_counts(anchors: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for anchor in anchors:
+        kind = str(anchor.get("kind"))
+        counts[kind] = counts.get(kind, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _case_result(
@@ -1945,6 +1981,7 @@ def _case_result(
     *,
     bbox_iou: float,
     anchor_count: int,
+    anchor_kind_counts: dict[str, int],
     matches: list[dict[str, Any]],
     unmatched_expected: list[dict[str, Any]],
     unexpected_actual: list[dict[str, Any]],
@@ -1960,6 +1997,7 @@ def _case_result(
         "expected_kinds": list(spec.expected_kinds),
         "actual_kind": anchor.get("kind") if anchor is not None else None,
         "anchor_count": anchor_count,
+        "anchor_kind_counts": anchor_kind_counts,
         "metrics": metrics,
         "geometry": {
             "expected_bounds": _rounded_bounds(_expected_visual_bounds(spec)),

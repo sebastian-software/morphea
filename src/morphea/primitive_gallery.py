@@ -135,6 +135,7 @@ def render_full_gallery_html(
         <p class="eyebrow">Primitive quality gallery</p>
         <h1>{report.get("case_count", 0)} deterministic round-trip cases</h1>
         <p class="lede">Every card is generated from a passing <code>primitive-check</code> artifact. Bitmap and SVG are shown in the same fixed viewport so geometry drift is visible.</p>
+        <p class="lede">{_curve_coverage_text(report)}</p>
       </div>
     </header>
 
@@ -270,6 +271,26 @@ def _render_hero_case(case: dict[str, Any], homepage_path: Path) -> str:
                   <span>edge {_metric_text(metrics, "raster_edge_error")}</span>
                 </p>
               </article>"""
+
+
+def _curve_coverage_text(report: dict[str, Any]) -> str:
+    curve_counts = report.get("curve_anchor_kind_counts", {})
+    curve_counts = curve_counts if isinstance(curve_counts, dict) else {}
+    present = {
+        str(kind): int(count)
+        for kind, count in curve_counts.items()
+        if int(count) > 0
+    }
+    if not present:
+        return (
+            "No freeform curve coverage yet: arcs, smooth stroke paths, "
+            "ellipses, and organic paths are tracked by the freeform arc "
+            "quality roadmap."
+        )
+    summary = ", ".join(
+        f"{kind}: {count}" for kind, count in sorted(present.items())
+    )
+    return f"Freeform curve anchors in passing cases — {summary}."
 
 
 def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:

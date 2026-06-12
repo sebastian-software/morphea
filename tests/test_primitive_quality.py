@@ -55,6 +55,34 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertTrue((case_dir / "manifest.json").exists())
                 self.assertTrue((case_dir / "preview.png").exists())
 
+    def test_primitive_quality_report_counts_anchor_kinds(self):
+        report = check_primitive_quality(
+            cases=("filled_square", "composition_square_plus_circle_a"),
+        )
+
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["anchor_kind_counts"]["rect"], 2)
+        self.assertEqual(report["anchor_kind_counts"]["circle"], 1)
+        self.assertEqual(
+            report["curve_anchor_kind_counts"],
+            {
+                "arc": 0,
+                "stroke_path": 0,
+                "ellipse": 0,
+                "stroke_ellipse": 0,
+                "cubic_path": 0,
+            },
+        )
+        case_counts = {
+            case["id"]: case["anchor_kind_counts"]
+            for case in report["cases"]
+        }
+        self.assertEqual(case_counts["filled_square"], {"rect": 1})
+        self.assertEqual(
+            case_counts["composition_square_plus_circle_a"],
+            {"circle": 1, "rect": 1},
+        )
+
     def test_primitive_quality_harness_filters_cases(self):
         report = check_primitive_quality(cases=("filled_square",))
 
