@@ -370,9 +370,11 @@ primitive type without manually editing nested anchor payloads. `issues` is a
 free-form string list for structured human notes such as `wrong_primitive_type`,
 `bad_cutout`, or `bad_stroke`.
 
-`curve apply-review` writes accepted, rejected, and pending splits. Accepted
-labels include a `review` provenance object and apply `corrected_kind` to both
-the top-level label kind and embedded anchor kind when present.
+`curve apply-review` writes accepted, rejected, and pending splits.
+`curve apply-review --markdown accepted.md` writes a scan-friendly decision
+summary next to the JSON artifact. Accepted labels include a `review`
+provenance object and apply `corrected_kind` to both the top-level label kind
+and embedded anchor kind when present.
 
 ## Review Config v1
 
@@ -394,6 +396,7 @@ Supported fields:
 
 - `review`
 - `output`
+- `markdown`: optional Markdown decision summary path
 
 CLI arguments override values loaded from the config file.
 

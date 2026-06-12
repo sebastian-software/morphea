@@ -548,6 +548,8 @@ Implemented so far:
 - `curve review --markdown review.md` writes a scan-friendly queue summary
   while keeping accept/reject decisions in JSON
 - accepted/rejected/pending split via `curve apply-review`
+- `curve apply-review --markdown accepted.md` writes a scan-friendly decision
+  summary for accepted, rejected, and pending labels
 - review items support `corrected_kind` and structured issue tags for wrong
   primitive type, cut-out, and stroke-behavior feedback
 - accepted reviewed pseudo-labels can be merged into a classifier-compatible
@@ -735,6 +737,8 @@ Implemented so far:
 - `curve review --config review.json` and `curve apply-review --config
   apply-review.json` for repeatable human-review queue processing
 - `curve review --markdown review.md` for scan-friendly review queue summaries
+- `curve apply-review --markdown accepted.md` for scan-friendly review decision
+  summaries
 - `curve merge-labels --config merge-labels.json` for repeatable reviewed-label
   dataset export
 - `curve compare-training --config compare.json` for repeatable retraining
