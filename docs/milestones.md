@@ -181,6 +181,9 @@ Implemented so far:
 - stroke-polyline candidates keep straight strokes as two-point editable
   centerlines, but add a conservative control point when the component visibly
   deviates from the principal-axis line.
+- curved stroke and arc candidates record local `width_samples` at centerline
+  support points instead of collapsing every editable stroke to one global
+  width.
 - sparse curved stroke components can classify as editable `arc` anchors with a
   three-point centerline when their bow is large enough to beat a straight
   stroke interpretation.

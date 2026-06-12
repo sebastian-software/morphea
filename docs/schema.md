@@ -46,7 +46,8 @@ Anchor fields:
 Stroke payload fields:
 
 - `centerline`
-- `width_samples`
+- `width_samples`: one global width for straight two-point strokes, or local
+  support-point widths for curved stroke/arc centerlines
 - `is_cutout`
 - `cap_style`
 - `join_style`
