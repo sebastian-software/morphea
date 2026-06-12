@@ -43,6 +43,11 @@ class RefinementTests(unittest.TestCase):
                 result["anchors"][0]["metrics"]["refinement_iterations"],
                 3.0,
             )
+            self.assertEqual(
+                result["refinement"]["optimizer"]["stopped_reason"],
+                "not_attempted",
+            )
+            self.assertIn("elapsed_seconds", result["refinement"]["optimizer"])
             self.assertTrue(output.exists())
 
     def test_refine_cli_writes_output(self):
@@ -88,6 +93,10 @@ class RefinementTests(unittest.TestCase):
                 result["refinement"]["optimizer"]["initial_objective"],
             )
             self.assertIn("refinement_objective", result["metrics"])
+            self.assertIn(
+                result["refinement"]["optimizer"]["stopped_reason"],
+                {"converged", "max_iterations"},
+            )
             self.assertTrue(
                 result["refinement"]["structure_audit"]["editability_preserved"]
             )
@@ -197,6 +206,25 @@ class RefinementTests(unittest.TestCase):
                     output=Path(temp_dir) / "refined.json",
                     config=RefinementConfig(backend="unknown"),
                 )
+
+    def test_refinement_rejects_unbounded_or_invalid_limits(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = _write_manifest(Path(temp_dir))
+            invalid_configs = [
+                RefinementConfig(max_iterations=-1),
+                RefinementConfig(timeout_seconds=0),
+                RefinementConfig(raster_l1_weight=-0.1),
+                RefinementConfig(raster_l1_weight=0.0, raster_edge_weight=0.0),
+            ]
+
+            for config in invalid_configs:
+                with self.subTest(config=config):
+                    with self.assertRaises(ValueError):
+                        refine_manifest(
+                            manifest=manifest,
+                            output=Path(temp_dir) / "refined.json",
+                            config=config,
+                        )
 
     def test_optional_differentiable_backend_reports_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:

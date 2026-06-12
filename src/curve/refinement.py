@@ -34,6 +34,7 @@ def refine_manifest(
     config: RefinementConfig | None = None,
 ) -> dict[str, object]:
     config = config or RefinementConfig()
+    _validate_refinement_config(config)
     if config.backend in OPTIONAL_DIFFERENTIABLE_BACKENDS:
         _raise_differentiable_backend_unavailable(config.backend)
     if config.backend != LOCAL_REFINEMENT_BACKEND:
@@ -49,6 +50,7 @@ def refine_manifest(
         "initial_raster_l1_error": None,
         "final_raster_l1_error": None,
         "timeout_reached": False,
+        "stopped_reason": "not_attempted",
     }
     if config.source_image is not None and config.max_iterations > 0:
         optimized_data, optimizer_metrics = _optimize_local_geometry(
@@ -64,6 +66,8 @@ def refine_manifest(
     source_anchors = list(data.get("anchors", []))
     optimized_anchors = list(optimized_data.get("anchors", []))
     structure_audit = _refinement_structure_audit(source_anchors, optimized_anchors)
+    optimizer_metrics = dict(optimizer_metrics)
+    optimizer_metrics["elapsed_seconds"] = round(monotonic() - started_at, 6)
     refined_anchors = []
     for anchor in optimized_data.get("anchors", []):
         refined = dict(anchor)
@@ -103,6 +107,17 @@ def available_refinement_backends() -> dict[str, object]:
         "local": [LOCAL_REFINEMENT_BACKEND],
         "optional": list(OPTIONAL_DIFFERENTIABLE_BACKENDS),
     }
+
+
+def _validate_refinement_config(config: RefinementConfig) -> None:
+    if config.max_iterations < 0:
+        raise ValueError("refinement max_iterations must be non-negative")
+    if config.timeout_seconds is not None and config.timeout_seconds <= 0:
+        raise ValueError("refinement timeout_seconds must be positive")
+    if config.raster_l1_weight < 0 or config.raster_edge_weight < 0:
+        raise ValueError("refinement raster weights must be non-negative")
+    if config.raster_l1_weight == 0 and config.raster_edge_weight == 0:
+        raise ValueError("at least one refinement raster weight must be positive")
 
 
 def _refinement_structure_audit(
@@ -183,13 +198,19 @@ def _optimize_local_geometry(
         initial_metrics = current_metrics
         iterations = 0
         timeout_reached = False
+        stopped_reason = "max_iterations"
         optimized_kinds: set[str] = set()
         for _ in range(max_iterations):
             if _deadline_exceeded(started_at, timeout_seconds):
                 timeout_reached = True
+                stopped_reason = "timeout"
                 break
             improved = False
             for anchor in result.get("anchors", []):
+                if _deadline_exceeded(started_at, timeout_seconds):
+                    timeout_reached = True
+                    stopped_reason = "timeout"
+                    break
                 if not isinstance(anchor, dict):
                     continue
                 kind = str(anchor.get("kind"))
@@ -201,6 +222,10 @@ def _optimize_local_geometry(
                     base_radius = float(circle.get("r", 0.0))
                     best_radius = base_radius
                     for delta in (-1.0, 1.0):
+                        if _deadline_exceeded(started_at, timeout_seconds):
+                            timeout_reached = True
+                            stopped_reason = "timeout"
+                            break
                         candidate_radius = max(0.5, base_radius + delta)
                         candidate = _with_circle_radius(
                             result,
@@ -216,6 +241,8 @@ def _optimize_local_geometry(
                         if candidate_error < best_error:
                             best_error = candidate_error
                             best_radius = candidate_radius
+                    if timeout_reached:
+                        break
                     if best_error < current_error:
                         old_radius = float(circle.get("r", best_radius))
                         circle["r"] = best_radius
@@ -248,6 +275,10 @@ def _optimize_local_geometry(
                         base_centerline,
                         base_widths,
                     ):
+                        if _deadline_exceeded(started_at, timeout_seconds):
+                            timeout_reached = True
+                            stopped_reason = "timeout"
+                            break
                         candidate = _with_stroke_geometry(
                             result,
                             anchor,
@@ -264,6 +295,8 @@ def _optimize_local_geometry(
                             best_error = candidate_error
                             best_centerline = candidate_centerline
                             best_widths = candidate_widths
+                    if timeout_reached:
+                        break
                     if best_error < current_error:
                         stroke = anchor.get("stroke")
                         if not isinstance(stroke, dict):
@@ -298,6 +331,10 @@ def _optimize_local_geometry(
                     continue
                 best_corners = base_corners
                 for candidate_corners in _quad_corner_variants(base_corners):
+                    if _deadline_exceeded(started_at, timeout_seconds):
+                        timeout_reached = True
+                        stopped_reason = "timeout"
+                        break
                     candidate = _with_quad_corners(
                         result,
                         anchor,
@@ -312,6 +349,8 @@ def _optimize_local_geometry(
                     if candidate_error < best_error:
                         best_error = candidate_error
                         best_corners = candidate_corners
+                if timeout_reached:
+                    break
                 if best_error < current_error:
                     quad = anchor.get("quad")
                     if not isinstance(quad, dict):
@@ -333,7 +372,10 @@ def _optimize_local_geometry(
                     optimized_kinds.add(kind)
                     improved = True
             iterations += 1
+            if timeout_reached:
+                break
             if not improved:
+                stopped_reason = "converged"
                 break
 
     metrics = dict(result.get("metrics", {}))
@@ -353,6 +395,7 @@ def _optimize_local_geometry(
         "final_objective": current_metrics["objective"],
         "optimized_parameter_kinds": sorted(optimized_kinds),
         "timeout_reached": timeout_reached,
+        "stopped_reason": stopped_reason,
     }
 
 
