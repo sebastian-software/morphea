@@ -902,8 +902,8 @@ Recognized backends:
 
 - `local_metric`: active structure-preserving local optimizer
 - `differentiable`: active built-in soft-raster gradient backend, currently
-  scoped to structure-preserving circle-radius and quad-like transform
-  refinement
+  scoped to structure-preserving circle-radius, quad-like transform, and
+  stroke-like transform refinement
 - `diffvg`: optional external differentiable-renderer backend name that fails
   with an explicit not-installed/not-configured error until the adapter is
   wired
@@ -932,10 +932,11 @@ objective values so geometry changes can be judged against visual edge quality,
 not only average pixel color.
 The differentiable backend uses a soft primitive rasterizer with an analytic
 radius-gradient step for editable circle anchors and bounded soft-objective
-translation/scale gradients for quad-like anchors. Its optimizer metadata
-records `renderer: soft_raster_primitives`, `renderer_primitive_kinds`, soft
-objective deltas, optimized parameter kinds, timeout state, and the same hard
-raster L1/edge metrics used by gates and reports.
+translation/scale gradients for quad-like anchors plus translation/width
+gradients for stroke-like anchors. Its optimizer metadata records
+`renderer: soft_raster_primitives`, `renderer_primitive_kinds`, soft objective
+deltas, optimized parameter kinds, timeout state, and the same hard raster
+L1/edge metrics used by gates and reports.
 
 `max_iterations` must be non-negative, `timeout_seconds` must be positive when
 set, and raster objective weights must be non-negative with at least one
