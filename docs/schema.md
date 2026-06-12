@@ -721,10 +721,12 @@ available MLX package. When MLX is available, status is `trained` and
 `weight_format`, `architecture`, `transformer_status`, `normalization`,
 `weights`, `bias`, `loss_history`, `crop_token_spec`, and
 `crop_token_summary`. `crop_token_spec` records the square RGBA token shape and
-normalization range derived from anchor crops in the source dataset. The
-fallback centroids keep the artifact usable as a deterministic
-`--classifier-model` prior when MLX is not installed or while the full
-raster-crop Transformer encoder is still being expanded.
+normalization range derived from anchor crops in the source dataset.
+`raster_token_mixer` stores a first trainable attention-style block over those
+tokens, including head count, embedding names, weights, bias, normalization,
+and loss history. The fallback centroids keep the artifact usable as a
+deterministic `--classifier-model` prior when MLX is not installed or while the
+full raster-crop Transformer encoder is still being expanded.
 When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
 uses the serialized MLX feature-head weights for prediction; malformed or
 unavailable MLX artifacts degrade to `fallback_centroids`.

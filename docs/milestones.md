@@ -507,15 +507,18 @@ Implemented so far:
   from synthetic dataset images and manifests.
 - `curve train-mlx --crop-size N` records the raster token size, token shape,
   channel order, and crop-token summary in the MLX training artifact.
+- available MLX training artifacts include `raster_token_mixer_v1`, a
+  trainable attention-style pooling block over RGBA crop tokens with its own
+  normalized weights, bias, and loss history.
 - `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
   serialized weights as the candidate-ranking prior, while malformed or
   unavailable MLX artifacts degrade to centroid fallback weights.
 
 Remaining:
 
-- replace the current MLX feature-head optimizer with the full small
-  Transformer attention block over the now-available RGBA crop tokens plus
-  geometric features.
+- replace the current feature-head plus raster-token mixer with a full small
+  Transformer encoder that fuses RGBA crop-token attention and geometric
+  features in one trainable runtime model.
 
 ## M8: Self-Learning Loop
 
