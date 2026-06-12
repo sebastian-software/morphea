@@ -212,6 +212,10 @@ report from the same suite check result, including case status, failed
 expectations, key anchor/group counts, key metrics, and per-case artifact
 directories when `--output-dir` is used.
 
+`curve curated-check --config curated-check.json` accepts `suite`, `output`,
+`output_dir`, `run`, `snapshot`, and `markdown`. CLI arguments override matching
+config values, and `run` must be a boolean when provided in JSON.
+
 Curated suite expectations support three mutually exclusive check types:
 `kind` with `min_count`, `group_kind` with `min_count`, or `metric` with
 `min_value` and/or `max_value`. Metric expectations read top-level manifest

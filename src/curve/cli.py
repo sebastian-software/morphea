@@ -205,6 +205,14 @@ HARVEST_CURATED_DEFAULT_CONFIG = {
 REVIEW_CONFIG_KEYS = {"pseudo_labels", "output", "markdown"}
 APPLY_REVIEW_CONFIG_KEYS = {"review", "output", "markdown"}
 MERGE_LABELS_CONFIG_KEYS = {"reviewed_labels", "output_dir"}
+CURATED_CHECK_CONFIG_KEYS = {
+    "suite",
+    "output",
+    "output_dir",
+    "run",
+    "snapshot",
+    "markdown",
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -694,8 +702,8 @@ def main(argv: list[str] | None = None) -> None:
         "curated-check",
         help="Validate a curated real-image suite and optionally run it.",
     )
-    curated_check.add_argument("suite", type=Path)
-    curated_check.add_argument("-o", "--output", type=Path, required=True)
+    curated_check.add_argument("suite", type=Path, nargs="?")
+    curated_check.add_argument("-o", "--output", type=Path)
     curated_check.add_argument(
         "--output-dir",
         type=Path,
@@ -712,6 +720,7 @@ def main(argv: list[str] | None = None) -> None:
         help="Write a deterministic regression snapshot JSON.",
     )
     curated_check.add_argument("--markdown", type=Path)
+    curated_check.add_argument("--config", type=Path)
 
     sweep = subcommands.add_parser(
         "sweep",
@@ -1157,13 +1166,14 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "curated-check":
+        curated_config = _resolved_curated_check_config(args)
         result = check_curated_suite(
-            args.suite,
-            output=args.output,
-            output_dir=args.output_dir,
-            run=args.run,
-            snapshot=args.snapshot,
-            markdown=args.markdown,
+            curated_config["suite"],
+            output=curated_config["output"],
+            output_dir=curated_config.get("output_dir"),
+            run=bool(curated_config.get("run", False)),
+            snapshot=curated_config.get("snapshot"),
+            markdown=curated_config.get("markdown"),
         )
         print(f"checked {result['case_count']} curated cases")
         return
@@ -1658,6 +1668,28 @@ def _resolved_merge_labels_config(args: argparse.Namespace) -> dict[str, Path]:
     return config
 
 
+def _resolved_curated_check_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_curated_check_config(args.config)
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.output is not None:
+        config["output"] = args.output
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.run:
+        config["run"] = True
+    if args.snapshot is not None:
+        config["snapshot"] = args.snapshot
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("suite", "output"), "curated-check")
+    for key in ("suite", "output", "output_dir", "snapshot", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    config["run"] = bool(config.get("run", False))
+    return config
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -1698,6 +1730,25 @@ def _load_train_mlx_config(path: Path | None) -> dict[str, object]:
     for key in ("dataset", "output"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_curated_check_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("curated-check config must be a JSON object")
+    unknown = sorted(set(loaded) - CURATED_CHECK_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported curated-check config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("suite", "output", "output_dir", "snapshot", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    if "run" in config and not isinstance(config["run"], bool):
+        raise ValueError("curated-check run must be a boolean")
     return config
 
 

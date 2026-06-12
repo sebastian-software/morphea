@@ -798,6 +798,8 @@ Implemented so far:
 - `docs/real-images/suite.json` for local real-image metadata without checking
   large binaries into git.
 - `curve curated-check suite.json -o report.json` for suite validation.
+- `curve curated-check --config curated-check.json` for repeatable real-image
+  suite validation inputs.
 - optional `--run` mode using each case's bounded `recommended_config`.
 - per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
   `report.md`, `report.html`, and `preview.png` artifacts via `--output-dir`.
@@ -908,6 +910,8 @@ Implemented so far:
 - `curve status -o status.json --markdown status.md` for a single
   machine-readable report of segmenter, classifier, and refinement backend
   availability/blockers
+- `curve curated-check --config curated-check.json` for repeatable curated
+  real-image suite validation
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - `curve segment --markdown proposals.md` for scan-friendly segment proposal
   reports

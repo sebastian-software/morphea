@@ -397,6 +397,58 @@ class CuratedSuiteTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_curated_check_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "missing.png"
+            suite_path = root / "suite.json"
+            output = root / "report.json"
+            snapshot = root / "snapshot.json"
+            markdown = root / "report.md"
+            config = root / "curated-check.json"
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "missing-image",
+                                "source": str(source),
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "suite": str(suite_path),
+                        "output": str(output),
+                        "snapshot": str(snapshot),
+                        "markdown": str(markdown),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["curated-check", "--config", str(config)])
+
+            self.assertEqual(
+                json.loads(output.read_text(encoding="utf-8"))["case_count"],
+                1,
+            )
+            self.assertTrue(snapshot.exists())
+            self.assertIn("# Curve Curated Check", markdown.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()
