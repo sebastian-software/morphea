@@ -65,6 +65,7 @@ from curve.classifier import (
     features_from_candidate,
     load_centroid_model,
     predict_label,
+    render_classifier_evaluation_markdown,
     train_centroid_classifier,
 )
 from curve.mlx_classifier import (
@@ -181,6 +182,7 @@ __all__ = [
     "render_markdown_report",
     "render_html_report",
     "render_curated_snapshot",
+    "render_classifier_evaluation_markdown",
     "render_eval_markdown",
     "render_manifest_image",
     "render_snapshot_comparison",

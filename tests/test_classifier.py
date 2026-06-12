@@ -331,6 +331,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             dataset = Path(temp_dir) / "dataset.json"
             model_path = Path(temp_dir) / "model.json"
             report_path = Path(temp_dir) / "classifier-eval.json"
+            markdown_path = Path(temp_dir) / "classifier-eval.md"
             train_centroid_classifier(dataset, output=model_path)
 
             with redirect_stdout(StringIO()):
@@ -341,6 +342,8 @@ class PrimitiveClassifierTests(unittest.TestCase):
                         str(dataset),
                         "-o",
                         str(report_path),
+                        "--markdown",
+                        str(markdown_path),
                         "--splits",
                         "test",
                     ]
@@ -350,6 +353,10 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(report["splits"], ["test"])
             self.assertIn("test", report["evaluation"])
             self.assertIn("test", report["ranking_evaluation"])
+            self.assertIn(
+                "# Curve Classifier Evaluation",
+                markdown_path.read_text(encoding="utf-8"),
+            )
 
     def test_eval_classifier_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -366,6 +373,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             dataset = root / "dataset.json"
             model_path = root / "model.json"
             report_path = root / "classifier-eval.json"
+            markdown_path = root / "classifier-eval.md"
             config = root / "eval-classifier.json"
             train_centroid_classifier(dataset, output=model_path)
             config.write_text(
@@ -374,6 +382,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                         "model": str(model_path),
                         "dataset": str(dataset),
                         "output": str(report_path),
+                        "markdown": str(markdown_path),
                         "splits": ["val"],
                     }
                 ),
@@ -386,6 +395,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["splits"], ["val"])
             self.assertIn("val", report["evaluation"])
+            self.assertTrue(markdown_path.exists())
 
     def test_load_model_and_score_matching_candidate(self):
         with tempfile.TemporaryDirectory() as temp_dir:

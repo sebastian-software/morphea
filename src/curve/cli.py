@@ -75,7 +75,7 @@ VECTORIZE_DEFAULT_CONFIG = {
 }
 CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
-EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "splits"}
+EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "markdown", "splits"}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
     "output",
@@ -339,6 +339,7 @@ def main(argv: list[str] | None = None) -> None:
     eval_classifier.add_argument("model", type=Path, nargs="?")
     eval_classifier.add_argument("dataset", type=Path, nargs="?")
     eval_classifier.add_argument("-o", "--output", type=Path)
+    eval_classifier.add_argument("--markdown", type=Path)
     eval_classifier.add_argument(
         "--splits",
         nargs="+",
@@ -646,6 +647,7 @@ def main(argv: list[str] | None = None) -> None:
             eval_config["model"],
             eval_config["dataset"],
             output=eval_config["output"],
+            markdown=eval_config.get("markdown"),
             splits=tuple(eval_config["splits"]),
         )
         print(
@@ -844,6 +846,8 @@ def _resolved_eval_classifier_config(args: argparse.Namespace) -> dict[str, obje
         config["dataset"] = args.dataset
     if args.output is not None:
         config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
     if args.splits is not None:
         config["splits"] = list(args.splits)
     _require_config_paths(config, ("model", "dataset", "output"), "eval-classifier")
@@ -851,6 +855,9 @@ def _resolved_eval_classifier_config(args: argparse.Namespace) -> dict[str, obje
         "model": Path(config["model"]),
         "dataset": Path(config["dataset"]),
         "output": Path(config["output"]),
+        "markdown": (
+            Path(config["markdown"]) if config.get("markdown") is not None else None
+        ),
         "splits": _normalized_splits(config.get("splits", ["val", "test"])),
     }
 
@@ -999,7 +1006,7 @@ def _load_eval_classifier_config(path: Path | None) -> dict[str, object]:
         msg = f"unsupported eval-classifier config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     config = dict(loaded)
-    for key in ("model", "dataset", "output"):
+    for key in ("model", "dataset", "output", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     if "splits" in config:

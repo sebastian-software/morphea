@@ -211,6 +211,7 @@ def evaluate_classifier_model(
     dataset_json: str | Path,
     *,
     output: str | Path | None = None,
+    markdown: str | Path | None = None,
     splits: tuple[str, ...] = ("val", "test"),
 ) -> dict[str, object]:
     model_path = Path(model_json)
@@ -247,7 +248,73 @@ def evaluate_classifier_model(
             json.dumps(report, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_classifier_evaluation_markdown(report),
+            encoding="utf-8",
+        )
     return report
+
+
+def render_classifier_evaluation_markdown(report: dict[str, object]) -> str:
+    lines = [
+        "# Curve Classifier Evaluation",
+        "",
+        f"- Model: `{report.get('model')}`",
+        f"- Dataset: `{report.get('dataset')}`",
+        f"- Model type: `{report.get('model_type')}`",
+        "",
+        "| Split | Examples | Accuracy | Heuristic | Classifier | Improvement | Changed |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    evaluation = report.get("evaluation", {})
+    ranking = report.get("ranking_evaluation", {})
+    for split in report.get("splits", []):
+        direct = evaluation.get(split, {}) if isinstance(evaluation, dict) else {}
+        rank = ranking.get(split, {}) if isinstance(ranking, dict) else {}
+        lines.append(
+            "| "
+            f"`{split}` | "
+            f"{_fmt_number(direct.get('examples'))} | "
+            f"{_fmt_number(direct.get('accuracy'))} | "
+            f"{_fmt_number(rank.get('heuristic_accuracy'))} | "
+            f"{_fmt_number(rank.get('classifier_accuracy'))} | "
+            f"{_fmt_number(rank.get('accuracy_improvement'))} | "
+            f"{_fmt_number(rank.get('changed_decisions'))} |"
+        )
+
+    lines.extend(["", "## Confusion", ""])
+    for split in report.get("splits", []):
+        direct = evaluation.get(split, {}) if isinstance(evaluation, dict) else {}
+        confusion = direct.get("confusion", {}) if isinstance(direct, dict) else {}
+        lines.append(f"### {split}")
+        if not confusion:
+            lines.append("")
+            lines.append("No confusion entries.")
+            lines.append("")
+            continue
+        for label, predicted in sorted(confusion.items()):
+            if not isinstance(predicted, dict):
+                continue
+            cells = ", ".join(
+                f"{target}: {count}"
+                for target, count in sorted(predicted.items())
+            )
+            lines.append(f"- `{label}` -> {cells}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _fmt_number(value: object) -> str:
+    if isinstance(value, bool):
+        return "n/a"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    return "n/a"
 
 
 def centroids_from_examples(
