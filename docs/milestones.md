@@ -515,6 +515,14 @@ Implemented so far:
   attention embeddings. Runtime prediction prefers this learned fusion when
   crop tokens are available and falls back to the older feature/mixer logits
   when it is missing or malformed.
+- available MLX training artifacts now include `mlx_token_transformer_v1`, a
+  serialized small token encoder that pools RGBA crops into raster tokens,
+  combines them with geometric feature tokens, runs scaled dot-product
+  self-attention layers, and trains a classifier head on the pooled encoder
+  embedding.
+- runtime classifier loading prefers valid `mlx_token_transformer_v1` logits
+  when crop tokens are available, then falls back through feature/raster fusion,
+  raster-token mixer, feature head, and centroid fallback.
 - `curve eval-classifier` uses RGBA crop-token examples for direct
   accuracy/confusion when evaluating a valid MLX raster-token mixer artifact.
 - `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
@@ -526,9 +534,9 @@ Implemented so far:
 
 Remaining:
 
-- replace deterministic raster attention pooling with a full small Transformer
-  encoder over crop tokens and feature tokens, then serialize/runtime-load that
-  encoder instead of only the current learned fusion head.
+- move the deterministic encoder projection inside `mlx_token_transformer_v1`
+  to end-to-end learned MLX attention/projection weights once local MLX
+  execution is available in the target environment.
 
 ## M8: Self-Learning Loop
 
