@@ -7,6 +7,7 @@ from curve.detection import (
     _fit_circle_from_boundary,
     _stroke_polyline_centerline,
     _stroke_width_samples_along_centerline,
+    detect_cutout_strokes_for_component,
     detect_primitive_anchors,
 )
 from curve.detection import detect_cutout_strokes
@@ -432,6 +433,30 @@ class CutoutDetectionTests(unittest.TestCase):
         self.assertEqual(cutouts[0].kind, AnchorKind.STROKE_POLYLINE)
         self.assertTrue(cutouts[0].stroke.is_cutout)
         self.assertEqual(cutouts[0].color, "#ffffff")
+        start, end = cutouts[0].stroke.centerline[:2]
+        self.assertGreater(abs(end.x - start.x), 0)
+        self.assertGreater(abs(end.y - start.y), 0)
+
+    def test_component_cutout_detection_uses_existing_component(self):
+        mask = BinaryMask.from_rows(
+            (
+                "############",
+                "############",
+                "##.#########",
+                "###.########",
+                "####.#######",
+                "#####.######",
+                "######.#####",
+                "############",
+                "############",
+            )
+        )
+        component = connected_components(mask)[0]
+
+        cutouts = detect_cutout_strokes_for_component(component, min_length=4)
+
+        self.assertEqual(len(cutouts), 1)
+        self.assertTrue(cutouts[0].stroke.is_cutout)
         start, end = cutouts[0].stroke.centerline[:2]
         self.assertGreater(abs(end.x - start.x), 0)
         self.assertGreater(abs(end.y - start.y), 0)

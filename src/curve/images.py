@@ -27,7 +27,7 @@ from curve.classifier import (
 )
 from curve.detection import (
     AnchorThresholdConfig,
-    detect_cutout_strokes,
+    detect_cutout_strokes_for_component,
     detect_primitive_anchors,
     primitive_candidates_for_component,
 )
@@ -341,7 +341,7 @@ def scene_from_flat_color_image(
                 thresholds=thresholds,
             ):
                 anchors.append(_scale_anchor(_with_color(anchor, color_mask.color), mask_result.scale))
-            for anchor in detect_cutout_strokes(component_mask):
+            for anchor in detect_cutout_strokes_for_component(component):
                 anchors.append(_scale_anchor(anchor, mask_result.scale))
     anchors.extend(
         _neutral_composite_circle_anchors(

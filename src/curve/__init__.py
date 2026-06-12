@@ -13,6 +13,7 @@ from curve.anchors import (
 from curve.detection import (
     AnchorThresholdConfig,
     detect_cutout_strokes,
+    detect_cutout_strokes_for_component,
     detect_primitive_anchors,
     primitive_candidates_for_component,
 )
@@ -193,6 +194,7 @@ __all__ = [
     "check_curated_suite",
     "component_raster_tokens",
     "detect_cutout_strokes",
+    "detect_cutout_strokes_for_component",
     "detect_primitive_anchors",
     "evaluate_runs",
     "evaluate_classifier",

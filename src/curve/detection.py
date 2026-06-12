@@ -73,29 +73,50 @@ def detect_cutout_strokes(
     cutouts: list[AnchorCandidate] = []
     for component in connected_components(mask, min_area=min_length):
         cutouts.extend(
-            _horizontal_cutout_strokes(
+            detect_cutout_strokes_for_component(
                 component,
                 min_length=min_length,
                 max_thickness=max_thickness,
                 color=color,
             )
         )
-        cutouts.extend(
-            _vertical_cutout_strokes(
-                component,
-                min_length=min_length,
-                max_thickness=max_thickness,
-                color=color,
-            )
+    return tuple(cutouts)
+
+
+def detect_cutout_strokes_for_component(
+    component: MaskComponent,
+    *,
+    min_length: int = 4,
+    max_thickness: int = 3,
+    color: str = "#ffffff",
+) -> tuple[AnchorCandidate, ...]:
+    """Detect background-gap strokes inside one already-isolated component."""
+
+    cutouts: list[AnchorCandidate] = []
+    cutouts.extend(
+        _horizontal_cutout_strokes(
+            component,
+            min_length=min_length,
+            max_thickness=max_thickness,
+            color=color,
         )
-        cutouts.extend(
-            _freeform_cutout_strokes(
-                component,
-                min_length=min_length,
-                max_thickness=max_thickness,
-                color=color,
-            )
+    )
+    cutouts.extend(
+        _vertical_cutout_strokes(
+            component,
+            min_length=min_length,
+            max_thickness=max_thickness,
+            color=color,
         )
+    )
+    cutouts.extend(
+        _freeform_cutout_strokes(
+            component,
+            min_length=min_length,
+            max_thickness=max_thickness,
+            color=color,
+        )
+    )
     return tuple(cutouts)
 
 
