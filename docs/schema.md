@@ -555,10 +555,14 @@ Top-level fields:
 - `comparison_summary`: copied training comparison summary
 - `gate`: copied gate decision, accepted flag, and reasons
 - `model`: compact model summary when retraining was accepted
+- `curated_validation`: optional fixed-suite validation summary when
+  `curated_suite` is configured
 
 `curve self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label
-augmentation.
+augmentation. When `curated_suite` is configured and retraining is accepted,
+the cycle runs `curve curated-check` with the accepted model as
+`classifier_model` and writes curated validation artifacts.
 
 ## Self-Learning Config v1
 
@@ -569,6 +573,10 @@ Supported fields:
 - `base_dataset`
 - `reviewed_labels`
 - `validation_dataset`
+- `curated_suite`
+- `curated_output_dir`
+- `curated_report`
+- `curated_snapshot`
 - `output_dir`
 - `markdown`: optional cycle Markdown summary path
 - `min_train_examples_delta`

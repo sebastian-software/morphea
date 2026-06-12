@@ -570,6 +570,9 @@ Implemented so far:
 - `curve self-learn base/dataset.json --reviewed-labels reviewed.json -o cycle`
   runs merge-labels, compare-training, training-gate, and accepted-gate
   retraining as one repeatable reviewed-label cycle
+- `curve self-learn --curated-suite suite.json` validates an accepted
+  retrained model against the fixed curated real-image suite by passing the
+  model as `classifier_model`; skipped gates do not pretend validation ran
 - `curve retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
@@ -762,7 +765,7 @@ Implemented so far:
 - `curve training-gate --config training-gate.json` for repeatable retraining
   acceptance decisions
 - `curve self-learn --config self-learn.json` for repeatable reviewed-label
-  self-learning cycles
+  self-learning cycles, including optional curated-suite validation
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve refine --config refine.json` for repeatable bounded refinement runs
 - `curve segment --config segment.json` for repeatable segment proposal runs
