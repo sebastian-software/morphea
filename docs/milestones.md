@@ -723,9 +723,8 @@ Implemented so far:
 
 Remaining:
 
-- add true end-to-end MLX fine-tuning of attention/projection weights once the
-  local MLX runtime path moves beyond serialized encoder-head training and
-  projection calibration.
+- extend the reviewed-label MLX retraining path from end-to-end token
+  projection/head training to full attention-weight backpropagation.
 
 ## M9: Differentiable and Local Refinement
 
