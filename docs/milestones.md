@@ -320,8 +320,8 @@ Implemented so far:
 - `report.html`
 - report summaries for anchor types and diagnostics
 - report summaries group diagnostics by pipeline stage so failures can be
-  attributed to preprocessing, palette, segmentation, runtime, or unknown
-  sources.
+  attributed to preprocessing, palette, segmentation, fitting, cleanup,
+  scoring, export, runtime, or unknown sources.
 - report summaries for scene groups, including same-color fragment groups
 - report summaries include same-color merge actions when present.
 - `curve eval` JSON/Markdown summaries over run directories

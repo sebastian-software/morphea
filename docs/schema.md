@@ -892,8 +892,9 @@ bounds that later stages should not fragment.
 and confidence labels for inspection.
 
 Markdown and HTML reports include a pipeline-stage diagnostic summary derived
-from manifest diagnostic codes. Current stage buckets are `preprocessing`,
-`palette`, `segmentation`, `runtime`, and `unknown`.
+from manifest diagnostic codes or an explicit diagnostic `stage` field. Current
+stage buckets are `preprocessing`, `palette`, `segmentation`, `fitting`,
+`cleanup`, `scoring`, `export`, `runtime`, and `unknown`.
 
 ## Refinement Metadata v1
 
