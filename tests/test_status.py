@@ -60,6 +60,55 @@ class RuntimeStatusTests(unittest.TestCase):
                 written["blocked_backends"],
             )
 
+    def test_collect_runtime_status_treats_json_adapter_as_available(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_path = root / "sam-proposals.json"
+            model_path.write_text(json.dumps({"proposals": []}), encoding="utf-8")
+
+            with (
+                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                patch(
+                    "curve.status.mlx_classifier_runtime_status",
+                    return_value={
+                        "backend": "mlx",
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                    },
+                ),
+                patch(
+                    "curve.status.available_refinement_backends",
+                    return_value={
+                        "local": ["local_metric"],
+                        "optional": [],
+                        "details": {
+                            "local_metric": {
+                                "backend_available": True,
+                                "status": "available",
+                                "reason": None,
+                            },
+                        },
+                    },
+                ),
+            ):
+                result = collect_runtime_status(mlx_sam_model_path=model_path)
+
+            mlx_sam = result["segmenters"]["mlx_sam"]
+            self.assertEqual(mlx_sam["status"], "json_adapter_available")
+            self.assertTrue(mlx_sam["backend_available"])
+            self.assertEqual(mlx_sam["adapter"], "json_proposals")
+            self.assertNotIn(
+                {
+                    "area": "segmenter",
+                    "backend": "mlx_sam",
+                    "status": "json_adapter_available",
+                    "available": True,
+                    "reason": None,
+                },
+                result["blocked_backends"],
+            )
+
     def test_runtime_status_markdown_summarizes_backends(self):
         markdown = render_runtime_status_markdown(
             {

@@ -15,6 +15,9 @@ from curve.segmenters import (
 )
 
 
+AVAILABLE_STATUSES = {"available", "json_adapter_available", "trained"}
+
+
 def collect_runtime_status(
     *,
     output: str | Path | None = None,
@@ -119,7 +122,7 @@ def _blocked_backend_rows(status: dict[str, Any]) -> list[dict[str, Any]]:
     return [
         row
         for row in _status_rows(status)
-        if not row["available"] or row["status"] not in {"available"}
+        if not row["available"] or row["status"] not in AVAILABLE_STATUSES
     ]
 
 
