@@ -79,6 +79,31 @@ class EvalTests(unittest.TestCase):
             summary = json.loads(output.read_text())
             self.assertEqual(summary["run_count"], 1)
 
+    def test_eval_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_run_manifest(root, "run-a")
+            output = Path(temp_dir) / "summary.json"
+            markdown = Path(temp_dir) / "summary.md"
+            config = Path(temp_dir) / "eval.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "run_root": str(root),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["eval", "--config", str(config)])
+
+            summary = json.loads(output.read_text())
+            self.assertEqual(summary["run_count"], 1)
+            self.assertTrue(markdown.exists())
+
 
 def _write_run_manifest(root: Path, name: str) -> Path:
     run_dir = root / name

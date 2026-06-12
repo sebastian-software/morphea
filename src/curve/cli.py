@@ -75,6 +75,7 @@ VECTORIZE_DEFAULT_CONFIG = {
 }
 CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
+EVAL_CONFIG_KEYS = {"run_root", "output", "markdown"}
 EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "markdown", "splits"}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
@@ -283,9 +284,10 @@ def main(argv: list[str] | None = None) -> None:
         "eval",
         help="Summarize vectorize run directories.",
     )
-    eval_parser.add_argument("run_root", type=Path)
-    eval_parser.add_argument("-o", "--output", type=Path, required=True)
+    eval_parser.add_argument("run_root", type=Path, nargs="?")
+    eval_parser.add_argument("-o", "--output", type=Path)
     eval_parser.add_argument("--markdown", type=Path)
+    eval_parser.add_argument("--config", type=Path)
 
     segment = subcommands.add_parser(
         "segment",
@@ -599,10 +601,11 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "eval":
+        eval_config = _resolved_eval_config(args)
         summary = write_eval_summary(
-            run_root=args.run_root,
-            output=args.output,
-            markdown=args.markdown,
+            run_root=eval_config["run_root"],
+            output=eval_config["output"],
+            markdown=eval_config.get("markdown"),
         )
         print(f"evaluated {summary['run_count']} runs")
         return
@@ -879,6 +882,18 @@ def _resolved_train_config(args: argparse.Namespace) -> dict[str, Path]:
     if args.output is not None:
         config["output"] = args.output
     _require_config_paths(config, ("dataset", "output"), "train")
+    return config
+
+
+def _resolved_eval_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(args.config, EVAL_CONFIG_KEYS, "eval")
+    if args.run_root is not None:
+        config["run_root"] = args.run_root
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("run_root", "output"), "eval")
     return config
 
 
