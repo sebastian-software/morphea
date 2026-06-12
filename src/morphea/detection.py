@@ -196,11 +196,21 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
             Point(max_x, max_y),
             Point(min_x, max_y),
         )
-    points = _downsampled_outline(outline, maximum=ORGANIC_FALLBACK_MAX_NODES)
+    # Smooth away pixel staircase noise, then keep nodes where the curvature
+    # is (tips, lobes) instead of spreading them uniformly along the contour.
+    smoothed = _smoothed_closed_outline(outline, window=2)
+    points = _simplified_closed_outline(
+        smoothed,
+        maximum=ORGANIC_FALLBACK_MAX_NODES,
+    )
     smoothness = _curvature_jitter(points + points[:2])
+    # Rank as if the outline used its full node budget: a compact fit must
+    # not make the generic fallback cheaper against semantic candidates.
+    saved_nodes = ORGANIC_FALLBACK_MAX_NODES - len(points)
+    rank_penalty = ORGANIC_FALLBACK_RANK_PENALTY + saved_nodes * 0.035
     return AnchorCandidate(
         kind=AnchorKind.CUBIC_PATH,
-        raster_error=ORGANIC_FALLBACK_RANK_PENALTY,
+        raster_error=rank_penalty,
         node_count=len(points),
         parameter_count=len(points) * 2,
         path=PathAnchor(points=points, closed=True),
@@ -243,17 +253,88 @@ def _traced_outline(component: MaskComponent) -> tuple[Point, ...] | None:
     return tuple(contour) if len(contour) > 3 else None
 
 
-def _downsampled_outline(
+def _smoothed_closed_outline(
+    outline: tuple[Point, ...],
+    *,
+    window: int,
+) -> tuple[Point, ...]:
+    """Circular moving average; removes staircase jitter before fitting."""
+
+    count = len(outline)
+    if count < window * 2 + 3:
+        return outline
+    smoothed = []
+    for index in range(count):
+        xs = 0.0
+        ys = 0.0
+        for offset in range(-window, window + 1):
+            point = outline[(index + offset) % count]
+            xs += point.x
+            ys += point.y
+        size = window * 2 + 1
+        smoothed.append(Point(xs / size, ys / size))
+    return tuple(smoothed)
+
+
+def _simplified_closed_outline(
     outline: tuple[Point, ...],
     *,
     maximum: int,
 ) -> tuple[Point, ...]:
-    if len(outline) <= maximum:
+    """Curvature-adaptive closed-contour simplification (Douglas-Peucker).
+
+    Splits the loop at its two most distant points and simplifies each half,
+    raising the tolerance until the node budget holds. Tips survive because
+    they are the farthest-from-chord points the algorithm keeps first.
+    """
+
+    count = len(outline)
+    if count <= 4:
         return outline
-    return tuple(
-        outline[round(len(outline) * index / maximum) % len(outline)]
-        for index in range(maximum)
+    anchor_a = max(
+        range(count),
+        key=lambda index: outline[index].distance_to(outline[0]),
     )
+    anchor_b = max(
+        range(count),
+        key=lambda index: outline[index].distance_to(outline[anchor_a]),
+    )
+    first, second = sorted((anchor_a, anchor_b))
+    half_one = outline[first : second + 1]
+    half_two = outline[second:] + outline[: first + 1]
+
+    tolerance = 0.6
+    for _ in range(12):
+        kept_one = _rdp(half_one, tolerance)
+        kept_two = _rdp(half_two, tolerance)
+        # Halves share their endpoints; drop the duplicates when joining.
+        points = tuple(kept_one[:-1] + kept_two[:-1])
+        if 4 <= len(points) <= maximum:
+            return points
+        if len(points) < 4:
+            tolerance /= 1.5
+        else:
+            tolerance *= 1.4
+    return points[:maximum] if len(points) > maximum else points
+
+
+def _rdp(points: tuple[Point, ...], tolerance: float) -> tuple[Point, ...]:
+    if len(points) < 3:
+        return points
+    start = points[0]
+    end = points[-1]
+    farthest_index = 0
+    farthest = 0.0
+    for index in range(1, len(points) - 1):
+        distance = _point_line_distance(points[index], start, end)
+        if distance > farthest:
+            farthest = distance
+            farthest_index = index
+    if farthest <= tolerance:
+        return (start, end)
+    left = _rdp(points[: farthest_index + 1], tolerance)
+    right = _rdp(points[farthest_index:], tolerance)
+    return left[:-1] + right
 
 
 def _with_classifier_prior(

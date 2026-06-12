@@ -1571,7 +1571,13 @@ def _closed_smooth_path(points: tuple[Point, ...]) -> str:
 def catmull_rom_segments_closed(
     points: tuple[Point, ...],
 ) -> list[tuple[Point, Point, Point]]:
-    """Closed-loop Catmull-Rom control pairs wrapping around the outline."""
+    """Closed-loop centripetal Catmull-Rom control pairs around the outline.
+
+    Curvature-adaptive simplification leaves nodes at very uneven spacing
+    (tight around tips, sparse along flat arcs). The uniform parameterization
+    overshoots there; the centripetal one stays inside the hull and keeps
+    tips sharp.
+    """
 
     count = len(points)
     segments: list[tuple[Point, Point, Point]] = []
@@ -1580,10 +1586,34 @@ def catmull_rom_segments_closed(
         p1 = points[index]
         p2 = points[(index + 1) % count]
         p3 = points[(index + 2) % count]
-        control1 = Point(p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6)
-        control2 = Point(p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6)
-        segments.append((control1, control2, p2))
+        segments.append((*_centripetal_controls(p0, p1, p2, p3), p2))
     return segments
+
+
+def _centripetal_controls(
+    p0: Point,
+    p1: Point,
+    p2: Point,
+    p3: Point,
+) -> tuple[Point, Point]:
+    d1 = max(p1.distance_to(p0), 1e-4) ** 0.5
+    d2 = max(p2.distance_to(p1), 1e-4) ** 0.5
+    d3 = max(p3.distance_to(p2), 1e-4) ** 0.5
+    scale_one = 3 * d1 * (d1 + d2)
+    scale_two = 3 * d3 * (d3 + d2)
+    control1 = Point(
+        (d1 * d1 * p2.x - d2 * d2 * p0.x + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1.x)
+        / scale_one,
+        (d1 * d1 * p2.y - d2 * d2 * p0.y + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1.y)
+        / scale_one,
+    )
+    control2 = Point(
+        (d3 * d3 * p1.x - d2 * d2 * p3.x + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2.x)
+        / scale_two,
+        (d3 * d3 * p1.y - d2 * d2 * p3.y + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2.y)
+        / scale_two,
+    )
+    return control1, control2
 
 
 def _smooth_curve_path(points: tuple[Point, ...]) -> str:

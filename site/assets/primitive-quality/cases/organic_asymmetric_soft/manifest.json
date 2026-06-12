@@ -15,7 +15,7 @@
       "layer": "generic_paths",
       "metrics": {
         "path_node_count": 16.0,
-        "path_smoothness": 0.8918946716019229,
+        "path_smoothness": 0.7900490113914759,
         "semantic_anchor_score": 0.91,
         "simple_shape_priority_bonus": 0.0
       },
@@ -27,68 +27,68 @@
         "node_count": 16,
         "points": [
           {
-            "x": 34,
-            "y": 8
+            "x": 36.0,
+            "y": 8.4
           },
           {
-            "x": 40,
-            "y": 11
+            "x": 40.4,
+            "y": 11.0
           },
           {
-            "x": 44,
-            "y": 18
+            "x": 45.2,
+            "y": 21.0
           },
           {
-            "x": 49,
-            "y": 25
+            "x": 51.8,
+            "y": 27.0
           },
           {
-            "x": 54,
-            "y": 31
+            "x": 54.0,
+            "y": 32.0
           },
           {
-            "x": 52,
-            "y": 37
+            "x": 51.0,
+            "y": 37.2
           },
           {
-            "x": 45,
-            "y": 39
+            "x": 40.0,
+            "y": 39.8
           },
           {
-            "x": 38,
-            "y": 41
+            "x": 34.0,
+            "y": 46.6
           },
           {
-            "x": 33,
-            "y": 47
+            "x": 30.0,
+            "y": 47.6
           },
           {
-            "x": 27,
-            "y": 45
+            "x": 27.2,
+            "y": 45.0
           },
           {
-            "x": 26,
-            "y": 38
+            "x": 24.8,
+            "y": 36.2
           },
           {
-            "x": 20,
-            "y": 34
+            "x": 17.0,
+            "y": 32.6
           },
           {
-            "x": 15,
-            "y": 30
+            "x": 15.0,
+            "y": 28.0
           },
           {
-            "x": 18,
-            "y": 23
+            "x": 17.0,
+            "y": 24.2
           },
           {
-            "x": 25,
-            "y": 20
+            "x": 24.6,
+            "y": 19.8
           },
           {
-            "x": 28,
-            "y": 13
+            "x": 30.4,
+            "y": 10.4
           }
         ]
       },
@@ -99,21 +99,21 @@
       "raster_error": 0.35,
       "reserved": {
         "bounds": [
-          15,
-          8,
-          54,
-          47
+          15.0,
+          8.4,
+          54.0,
+          47.6
         ],
         "reason": "generic_fallback"
       },
       "source_mask": {
         "bounds": [
-          15,
-          8,
-          54,
-          47
+          15.0,
+          8.4,
+          54.0,
+          47.6
         ],
-        "bounds_area": 1521,
+        "bounds_area": 1528.8,
         "id": "mask-0000",
         "source": "reserved_bounds"
       }
@@ -156,8 +156,8 @@
     "node_count": 16,
     "parameter_count": 32,
     "raster_alpha_error": 0.0,
-    "raster_edge_error": 0.01755,
-    "raster_l1_error": 0.012109,
+    "raster_edge_error": 0.017761,
+    "raster_l1_error": 0.011719,
     "raster_size_match": true,
     "reserved_simple_shape_area": 0.0,
     "reserved_simple_shape_area_ratio": 0.0,
@@ -166,11 +166,11 @@
     "simple_shape_count": 0,
     "simple_shape_ratio": 0.0,
     "svg_alpha_error": 0.0,
-    "svg_raster_edge_error": 0.018684,
-    "svg_raster_l1_error": 0.016244,
+    "svg_raster_edge_error": 0.017678,
+    "svg_raster_l1_error": 0.01505,
     "svg_render_size_match": true,
-    "svg_vs_preview_edge_error": 0.014214,
-    "svg_vs_preview_l1_error": 0.01042
+    "svg_vs_preview_edge_error": 0.014266,
+    "svg_vs_preview_l1_error": 0.010248
   },
   "schema_version": 1,
   "width": 64

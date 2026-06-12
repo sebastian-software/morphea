@@ -3,10 +3,10 @@
   "anchors": [
     {
       "color": "#003366",
-      "confidence": 0.45,
+      "confidence": 0.275,
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:cubic_path:0.45",
+        "debug_label": "anchor-0000:cubic_path:0.275",
         "editable": false,
         "mask_eligible": false
       },
@@ -14,81 +14,61 @@
       "kind": "cubic_path",
       "layer": "generic_paths",
       "metrics": {
-        "path_node_count": 16.0,
-        "path_smoothness": 0.5264158000028799,
+        "path_node_count": 11.0,
+        "path_smoothness": 0.6107481293808124,
         "semantic_anchor_score": 0.91,
         "simple_shape_priority_bonus": 0.0
       },
-      "node_count": 16,
-      "parameter_count": 32,
+      "node_count": 11,
+      "parameter_count": 22,
       "path": {
         "closed": true,
         "fallback_reason": "organic_boundary_fit",
-        "node_count": 16,
+        "node_count": 11,
         "points": [
           {
-            "x": 30,
-            "y": 11
+            "x": 37.0,
+            "y": 12.4
           },
           {
-            "x": 37,
-            "y": 12
+            "x": 43.2,
+            "y": 24.0
           },
           {
-            "x": 41,
-            "y": 19
+            "x": 52.0,
+            "y": 31.0
           },
           {
-            "x": 46,
-            "y": 26
+            "x": 51.8,
+            "y": 39.0
           },
           {
-            "x": 52,
-            "y": 31
+            "x": 45.0,
+            "y": 43.8
           },
           {
-            "x": 53,
-            "y": 38
+            "x": 36.0,
+            "y": 47.0
           },
           {
-            "x": 46,
-            "y": 43
+            "x": 15.0,
+            "y": 46.2
           },
           {
-            "x": 39,
-            "y": 46
+            "x": 12.0,
+            "y": 40.0
           },
           {
-            "x": 31,
-            "y": 47
+            "x": 17.6,
+            "y": 29.0
           },
           {
-            "x": 24,
-            "y": 47
+            "x": 19.4,
+            "y": 17.0
           },
           {
-            "x": 17,
-            "y": 47
-          },
-          {
-            "x": 12,
-            "y": 42
-          },
-          {
-            "x": 14,
-            "y": 35
-          },
-          {
-            "x": 18,
-            "y": 28
-          },
-          {
-            "x": 18,
-            "y": 20
-          },
-          {
-            "x": 23,
-            "y": 14
+            "x": 29.0,
+            "y": 11.6
           }
         ]
       },
@@ -96,24 +76,24 @@
         "fitting": "fallback_path",
         "source": "primitive_anchor_detection"
       },
-      "raster_error": 0.35,
+      "raster_error": 0.525,
       "reserved": {
         "bounds": [
-          12,
-          11,
-          53,
-          47
+          12.0,
+          11.6,
+          52.0,
+          47.0
         ],
         "reason": "generic_fallback"
       },
       "source_mask": {
         "bounds": [
-          12,
-          11,
-          53,
-          47
+          12.0,
+          11.6,
+          52.0,
+          47.0
         ],
-        "bounds_area": 1476,
+        "bounds_area": 1416.0,
         "id": "mask-0000",
         "source": "reserved_bounds"
       }
@@ -153,11 +133,11 @@
     "generic_path_count": 1,
     "group_count": 0,
     "negative_mask_candidate_count": 0,
-    "node_count": 16,
-    "parameter_count": 32,
+    "node_count": 11,
+    "parameter_count": 22,
     "raster_alpha_error": 0.0,
-    "raster_edge_error": 0.017761,
-    "raster_l1_error": 0.012695,
+    "raster_edge_error": 0.015858,
+    "raster_l1_error": 0.010156,
     "raster_size_match": true,
     "reserved_simple_shape_area": 0.0,
     "reserved_simple_shape_area_ratio": 0.0,
@@ -166,11 +146,11 @@
     "simple_shape_count": 0,
     "simple_shape_ratio": 0.0,
     "svg_alpha_error": 0.0,
-    "svg_raster_edge_error": 0.018444,
-    "svg_raster_l1_error": 0.015813,
+    "svg_raster_edge_error": 0.016147,
+    "svg_raster_l1_error": 0.013473,
     "svg_render_size_match": true,
-    "svg_vs_preview_edge_error": 0.014792,
-    "svg_vs_preview_l1_error": 0.011185
+    "svg_vs_preview_edge_error": 0.01206,
+    "svg_vs_preview_l1_error": 0.008842
   },
   "schema_version": 1,
   "width": 64
