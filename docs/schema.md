@@ -347,6 +347,20 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Classifier Evaluation Config v1
+
+Read by `curve eval-classifier --config`.
+
+Supported fields:
+
+- `model`
+- `dataset`
+- `output`
+- `splits`: optional non-empty array of dataset split names, defaulting to
+  `["val", "test"]`
+
+CLI arguments override values loaded from the config file.
+
 ## MLX Training Config v1
 
 Read by `curve train-mlx --config`.
