@@ -748,6 +748,8 @@ Top-level fields:
 - `dataset`
 - `model_type`
 - `classifier_backend`: `centroid`, `mlx_feature_head`, or `centroid_fallback`
+- `uses_raster_tokens`: true when direct evaluation uses stored RGBA crop-token
+  inputs for an MLX raster-token mixer
 - `feature_names`
 - `classes`
 - `splits`
@@ -755,9 +757,11 @@ Top-level fields:
 - `ranking_evaluation`: heuristic-only versus classifier-prior ranking by
   requested split
 
-The command can evaluate centroid models and MLX fallback artifacts because it
-loads models through the same deterministic `--classifier-model` path used by
-vectorization.
+The command can evaluate centroid models, MLX fallback artifacts, and
+`mlx_feature_head_v1` artifacts. When a valid `raster_token_mixer_v1` is
+present, direct accuracy/confusion use RGBA crop tokens from the dataset;
+candidate-ranking evaluation remains feature-based until vectorize candidates
+carry runtime crop tokens.
 
 ## Training Comparison v1
 
