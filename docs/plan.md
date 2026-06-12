@@ -9,6 +9,8 @@ fewer, more meaningful, directly editable SVG shapes.
 For the expanded milestone roadmap, see [milestones.md](milestones.md).
 Key architecture decisions live in [adr](adr/), including primitive-first
 fitting and the reviewed pseudo-label self-learning loop.
+For the curved/freeform follow-up quality track, see
+[freeform-arc-quality-roadmap.md](freeform-arc-quality-roadmap.md).
 
 The first implementation priority is simple geometry. Circles, smooth lines,
 strokes, arcs, rectangles, perspective quads, trapezoids, parallelograms, and
