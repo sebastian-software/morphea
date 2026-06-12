@@ -330,6 +330,64 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _antialiased_arc_spec(case_id, variant, arc)
+        for case_id, variant, arc in (
+            ("antialiased_arc", "base", (32, 40, 20, -150, -30, 3)),
+            ("antialiased_arc_steep", "steep", (32, 36, 17, -166, -14, 3)),
+            ("antialiased_arc_thick", "thick", (32, 40, 19, -150, -30, 6)),
+        )
+    )
+    specs.extend(
+        _antialiased_curve_spec(case_id, variant, controls, width)
+        for case_id, variant, controls, width in (
+            ("antialiased_curve_s", "s", ((8, 44), (28, 10), (36, 54), (56, 20)), 3),
+            ("antialiased_curve_wave", "wave", ((6, 32), (18, 14), (32, 50), (46, 14), (58, 32)), 3),
+            ("antialiased_curve_quadratic", "quadratic", ((8, 46), (32, 10), (56, 46)), 3),
+        )
+    )
+    specs.extend(
+        _drift_curve_spec(case_id, variant, controls, width, drift)
+        for case_id, variant, controls, width, drift in (
+            (
+                "drift_curve_s",
+                "s",
+                ((8, 44), (28, 10), (36, 54), (56, 20)),
+                3,
+                (((16, 33), "#07396c"), ((32, 32), "#002f61"), ((48, 28), "#0b3868")),
+            ),
+            (
+                "drift_curve_quadratic",
+                "quadratic",
+                ((8, 46), (32, 10), (56, 46)),
+                3,
+                (((14, 38), "#083a6d"), ((32, 28), "#003064"), ((50, 38), "#0a3766")),
+            ),
+            (
+                "drift_curve_wave",
+                "wave",
+                ((6, 32), (18, 14), (32, 50), (46, 14), (58, 32)),
+                3,
+                (((14, 22), "#073a6b"), ((32, 40), "#013263"), ((50, 22), "#0c3969")),
+            ),
+        )
+    )
+    specs.extend(
+        _transparent_arc_spec(case_id, variant, arc)
+        for case_id, variant, arc in (
+            ("transparent_arc", "base", (32, 40, 20, -150, -30, 3)),
+            ("transparent_arc_small", "small", (30, 38, 17, -150, -30, 3)),
+            ("transparent_arc_thick", "thick", (32, 40, 19, -150, -30, 6)),
+        )
+    )
+    specs.extend(
+        _transparent_curve_spec(case_id, variant, controls, width)
+        for case_id, variant, controls, width in (
+            ("transparent_curve_s", "s", ((8, 44), (28, 10), (36, 54), (56, 20)), 3),
+            ("transparent_curve_wave", "wave", ((6, 32), (18, 14), (32, 50), (46, 14), (58, 32)), 3),
+            ("transparent_curve_diagonal", "diagonal", ((10, 54), (24, 40), (44, 34), (54, 10)), 3),
+        )
+    )
+    specs.extend(
         _antialiased_circle_spec(case_id, variant, box)
         for case_id, variant, box in (
             ("antialiased_circle", "base", (18, 18, 46, 46)),
@@ -1526,6 +1584,155 @@ def _antialiased_ellipse_spec(
         max_raster_l1_error=0.055,
         max_raster_edge_error=0.035,
         min_bbox_iou=0.86,
+    )
+
+
+def _antialiased_arc_spec(
+    case_id: str,
+    variant: str,
+    arc: ArcParams,
+) -> PrimitiveSpec:
+    base = _arc_spec(case_id, "antialiased_arc", variant, arc)
+    return replace(
+        base,
+        draw=lambda draw: None,
+        source_factory=lambda arc=arc: _antialiased_source(
+            lambda draw, scale: _draw_circular_arc(
+                draw,
+                _scaled_arc(arc, scale),
+            )
+        ),
+        vectorize_config={"max_colors": 2},
+        color_tolerance=45.0,
+        coordinate_tolerance=3.0,
+        max_raster_l1_error=0.035,
+        max_raster_edge_error=0.035,
+        max_svg_raster_l1_error=0.045,
+        max_svg_raster_edge_error=0.045,
+        max_svg_vs_preview_l1_error=0.025,
+        min_bbox_iou=0.7,
+    )
+
+
+def _scaled_arc(arc: ArcParams, scale: int) -> ArcParams:
+    cx, cy, radius, start_deg, end_deg, width = arc
+    return (cx * scale, cy * scale, radius * scale, start_deg, end_deg, width * scale)
+
+
+def _antialiased_curve_spec(
+    case_id: str,
+    variant: str,
+    controls: CurveControls,
+    width: int,
+) -> PrimitiveSpec:
+    base = _smooth_curve_spec(case_id, "antialiased_curve", variant, controls, width, "round")
+    return replace(
+        base,
+        draw=lambda draw: None,
+        source_factory=lambda controls=controls, width=width: _antialiased_source(
+            lambda draw, scale: _draw_smooth_curve(
+                draw,
+                tuple((x * scale, y * scale) for x, y in controls),
+                width * scale,
+                "round",
+            )
+        ),
+        vectorize_config={"max_colors": 2},
+        color_tolerance=45.0,
+        coordinate_tolerance=3.0,
+        max_raster_l1_error=0.035,
+        max_raster_edge_error=0.04,
+        max_svg_raster_l1_error=0.045,
+        max_svg_raster_edge_error=0.05,
+        max_svg_vs_preview_l1_error=0.025,
+        min_bbox_iou=0.66,
+    )
+
+
+def _drift_curve_spec(
+    case_id: str,
+    variant: str,
+    controls: CurveControls,
+    width: int,
+    drift_pixels: tuple[tuple[tuple[int, int], str], ...],
+) -> PrimitiveSpec:
+    base = _smooth_curve_spec(case_id, "drift_curve", variant, controls, width, "round")
+
+    def _source(
+        controls: CurveControls = controls,
+        width: int = width,
+        drift_pixels: tuple = drift_pixels,
+    ) -> Image.Image:
+        image = Image.new("RGB", (64, 64), "#ffffff")
+        draw = ImageDraw.Draw(image)
+        _draw_smooth_curve(draw, controls, width, "round")
+        for point, color in drift_pixels:
+            draw.point(point, fill=color)
+        return image
+
+    return replace(
+        base,
+        draw=lambda draw: None,
+        source_factory=_source,
+        vectorize_config={"color_tolerance": 18.0},
+        color_tolerance=15.0,
+        max_raster_l1_error=0.03,
+        max_raster_edge_error=0.035,
+    )
+
+
+def _transparent_arc_spec(
+    case_id: str,
+    variant: str,
+    arc: ArcParams,
+) -> PrimitiveSpec:
+    base = _arc_spec(case_id, "transparent_arc", variant, arc)
+
+    def _source(arc: ArcParams = arc) -> Image.Image:
+        image = Image.new("RGBA", (64, 64), (255, 255, 255, 0))
+        _draw_circular_arc(ImageDraw.Draw(image), arc)
+        return image
+
+    return replace(
+        base,
+        draw=lambda draw: None,
+        source_factory=_source,
+        vectorize_config={"background": "#ffffff"},
+        background="#ffffff00",
+        max_raster_alpha_error=0.03,
+    )
+
+
+def _transparent_curve_spec(
+    case_id: str,
+    variant: str,
+    controls: CurveControls,
+    width: int,
+) -> PrimitiveSpec:
+    base = _smooth_curve_spec(
+        case_id,
+        "transparent_curve",
+        variant,
+        controls,
+        width,
+        "round",
+    )
+
+    def _source(
+        controls: CurveControls = controls,
+        width: int = width,
+    ) -> Image.Image:
+        image = Image.new("RGBA", (64, 64), (255, 255, 255, 0))
+        _draw_smooth_curve(ImageDraw.Draw(image), controls, width, "round")
+        return image
+
+    return replace(
+        base,
+        draw=lambda draw: None,
+        source_factory=_source,
+        vectorize_config={"background": "#ffffff"},
+        background="#ffffff00",
+        max_raster_alpha_error=0.03,
     )
 
 

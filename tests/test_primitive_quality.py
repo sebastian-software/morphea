@@ -249,6 +249,25 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertIn('stroke="#ffffff"', svg)
                 self.assertIn(" C ", svg)
 
+    def test_antialiased_curves_do_not_fragment(self):
+        report = check_primitive_quality(
+            cases=(
+                "antialiased_arc",
+                "antialiased_curve_s",
+                "transparent_curve_s",
+                "drift_curve_s",
+            ),
+        )
+
+        self.assertTrue(report["ok"])
+        for case in report["cases"]:
+            self.assertEqual(case["anchor_count"], 1)
+        kinds = {case["id"]: case["actual_kind"] for case in report["cases"]}
+        self.assertEqual(kinds["antialiased_arc"], "arc")
+        self.assertEqual(kinds["antialiased_curve_s"], "stroke_path")
+        self.assertEqual(kinds["transparent_curve_s"], "stroke_path")
+        self.assertEqual(kinds["drift_curve_s"], "stroke_path")
+
     def test_ellipse_fixtures_export_editable_ellipse_primitives(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             report = check_primitive_quality(
@@ -507,6 +526,11 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "cutout_curve_ring": 3,
                 "cutout_curve_crossing": 3,
                 "cutout_near_background": 3,
+                "antialiased_arc": 3,
+                "antialiased_curve": 3,
+                "drift_curve": 3,
+                "transparent_arc": 3,
+                "transparent_curve": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,
