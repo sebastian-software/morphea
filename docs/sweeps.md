@@ -34,6 +34,7 @@ and writes comparable run directories.
 
 Supported config keys match the current `vectorize` runtime knobs:
 
+- `background`
 - `min_area`
 - `color_tolerance`
 - `max_size`

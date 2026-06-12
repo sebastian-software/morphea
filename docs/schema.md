@@ -229,6 +229,7 @@ Read by `curve vectorize --config`.
 
 Supported fields match current runtime knobs:
 
+- `background`: optional explicit background color as `#rrggbb` or RGB triplet
 - `min_area`
 - `color_tolerance`
 - `max_size`
@@ -296,6 +297,7 @@ Read by `curve segment --config`.
 Supported fields:
 
 - `segmenter`: currently `flat_color` or `mlx_sam`
+- `background`: optional explicit background color as `#rrggbb` or RGB triplet
 - `min_area`
 - `color_tolerance`
 - `max_size`

@@ -85,6 +85,9 @@ Implemented so far:
 - transparent-background regression fixture.
 - transparent pixels are ignored with diagnostics, and partial-alpha pixels are
   flattened onto the inferred or configured background before color grouping.
+- explicit `background` preprocessing is available through vectorize/profile
+  configs, sweep run configs, curated recommended configs, and flat-color
+  segment configs.
 - large color masks emit `color_mask_split_for_components` and are split into
   connected components before oversized components are deferred.
 - image component scanning checks `timeout_seconds` during traversal and avoids
