@@ -6,6 +6,16 @@ from math import exp, sqrt, tanh
 
 
 RGBA_TOKEN_WIDTH = 7
+TOKEN_PROJECTION_INPUT_NAMES = (
+    "red_or_feature",
+    "green",
+    "blue",
+    "alpha",
+    "x_or_feature_position",
+    "y",
+    "foreground_or_abs_feature",
+    "token_position",
+)
 
 
 def token_transformer_embedding(
@@ -19,16 +29,19 @@ def token_transformer_embedding(
     raster_grid_size: int = 4,
     projection_scale: tuple[float, ...] | None = None,
     projection_bias: tuple[float, ...] | None = None,
+    projection_weights: tuple[tuple[float, ...], ...] | None = None,
+    projection_intercept: tuple[float, ...] | None = None,
 ) -> tuple[float, ...]:
     """Encode geometric features and pooled RGBA crop tokens into one vector."""
 
     hidden_dim = max(1, hidden_dim)
     heads = max(1, heads)
     layers = max(1, layers)
-    tokens = _feature_tokens(features) + _pooled_raster_tokens(
+    tokens = token_transformer_tokens(
+        features,
         crop_tokens,
         crop_size=crop_size,
-        grid_size=raster_grid_size,
+        raster_grid_size=raster_grid_size,
     )
     if not tokens:
         return tuple(0.0 for _ in range(hidden_dim))
@@ -40,6 +53,8 @@ def token_transformer_embedding(
             hidden_dim=hidden_dim,
             projection_scale=projection_scale,
             projection_bias=projection_bias,
+            projection_weights=projection_weights,
+            projection_intercept=projection_intercept,
         )
         for index, token in enumerate(tokens)
     ]
@@ -58,6 +73,20 @@ def token_transformer_embedding(
 def raster_grid_token_count(crop_size: int, raster_grid_size: int = 4) -> int:
     grid_size = max(1, min(raster_grid_size, crop_size))
     return grid_size * grid_size
+
+
+def token_transformer_tokens(
+    features: tuple[float, ...],
+    crop_tokens: tuple[tuple[float, float, float, float], ...],
+    *,
+    crop_size: int,
+    raster_grid_size: int = 4,
+) -> list[tuple[float, ...]]:
+    return _feature_tokens(features) + _pooled_raster_tokens(
+        crop_tokens,
+        crop_size=crop_size,
+        grid_size=raster_grid_size,
+    )
 
 
 def _feature_tokens(features: tuple[float, ...]) -> list[tuple[float, ...]]:
@@ -122,14 +151,37 @@ def _project_token(
     hidden_dim: int,
     projection_scale: tuple[float, ...] | None,
     projection_bias: tuple[float, ...] | None,
+    projection_weights: tuple[tuple[float, ...], ...] | None,
+    projection_intercept: tuple[float, ...] | None,
 ) -> tuple[float, ...]:
     position = (token_index + 1) / 64
     projected: list[float] = []
+    learned_inputs = (*token, position)
     for hidden_index in range(hidden_dim):
-        value = tanh(
-            token[hidden_index % len(token)] * (1.0 + (hidden_index % 5) * 0.2)
-            + position * ((hidden_index % 3) - 1)
+        learned_row = (
+            projection_weights[hidden_index]
+            if projection_weights is not None
+            and hidden_index < len(projection_weights)
+            else None
         )
+        if (
+            learned_row is not None
+            and len(learned_row) == len(learned_inputs)
+            and projection_intercept is not None
+            and hidden_index < len(projection_intercept)
+        ):
+            value = tanh(
+                sum(
+                    learned_row[input_index] * learned_inputs[input_index]
+                    for input_index in range(len(learned_inputs))
+                )
+                + projection_intercept[hidden_index]
+            )
+        else:
+            value = tanh(
+                token[hidden_index % len(token)] * (1.0 + (hidden_index % 5) * 0.2)
+                + position * ((hidden_index % 3) - 1)
+            )
         if (
             projection_scale is not None
             and projection_bias is not None

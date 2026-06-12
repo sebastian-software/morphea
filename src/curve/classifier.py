@@ -1029,6 +1029,7 @@ def _loaded_token_transformer(
     heads = encoder.get("num_heads")
     layers = encoder.get("num_layers")
     projection = _loaded_token_projection(transformer, hidden_dim)
+    token_projection = _loaded_token_projection_weights(transformer, hidden_dim)
     if (
         not isinstance(crop_size, int)
         or crop_size <= 0
@@ -1065,6 +1066,7 @@ def _loaded_token_transformer(
             "num_layers": layers,
         },
         "projection_calibration": projection,
+        "token_projection": token_projection,
     }
 
 
@@ -1095,6 +1097,11 @@ def _token_transformer_logits(
         projection = {}
     projection_scale = projection.get("scale")
     projection_bias = projection.get("bias")
+    token_projection = transformer.get("token_projection", {})
+    if not isinstance(token_projection, dict):
+        token_projection = {}
+    projection_weights = token_projection.get("weights")
+    projection_intercept = token_projection.get("bias")
     if (
         not isinstance(crop_size, int)
         or not isinstance(raster_grid_size, int)
@@ -1119,6 +1126,16 @@ def _token_transformer_logits(
         projection_bias=(
             projection_bias
             if isinstance(projection_bias, tuple)
+            else None
+        ),
+        projection_weights=(
+            projection_weights
+            if isinstance(projection_weights, tuple)
+            else None
+        ),
+        projection_intercept=(
+            projection_intercept
+            if isinstance(projection_intercept, tuple)
             else None
         ),
     )
@@ -1178,6 +1195,36 @@ def _loaded_token_projection(
         "scale": tuple(scale),
         "bias": tuple(bias),
         "strategy": str(projection.get("strategy", "")),
+        "trained_examples": projection.get("trained_examples"),
+    }
+
+
+def _loaded_token_projection_weights(
+    transformer: dict[str, object],
+    hidden_dim: object,
+) -> dict[str, object] | None:
+    if not isinstance(hidden_dim, int) or hidden_dim <= 0:
+        return None
+    projection = transformer.get("token_projection")
+    if not isinstance(projection, dict):
+        return None
+    if projection.get("weight_format") != "mlx_token_projection_v1":
+        return None
+    weights = _matrix(projection.get("weights", []))
+    bias = _vector(projection.get("bias", []))
+    if len(weights) != hidden_dim or len(bias) != hidden_dim:
+        return None
+    input_count = len(weights[0]) if weights else 0
+    if input_count <= 0 or any(len(row) != input_count for row in weights):
+        return None
+    return {
+        "weights": tuple(tuple(row) for row in weights),
+        "bias": tuple(bias),
+        "input_names": tuple(
+            str(name)
+            for name in projection.get("input_names", [])
+            if isinstance(name, str)
+        ),
         "trained_examples": projection.get("trained_examples"),
     }
 

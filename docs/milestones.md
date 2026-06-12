@@ -598,6 +598,10 @@ Implemented so far:
 - `mlx_token_transformer_v1` now records a learned projection calibration over
   encoder dimensions, so token embeddings are no longer purely deterministic
   before classifier-head training.
+- when real MLX autograd is available, `mlx_token_transformer_v1` now trains
+  `mlx_token_projection_v1` token-to-hidden projection weights and the token
+  classifier head together, records `training_status`, and uses those
+  projection weights at runtime.
 - runtime classifier loading prefers valid `mlx_token_transformer_v1` logits
   when crop tokens are available, then falls back through feature/raster fusion,
   raster-token mixer, feature head, and centroid fallback.
@@ -613,14 +617,13 @@ Implemented so far:
   for valid `raster_token_mixer_v1` artifacts, allowing runtime priors to fuse
   raster attention and geometric feature logits.
 - MLX classifier runtime status reports trainable feature/raster/token
-  capabilities separately from the still-pending end-to-end attention training
-  capability.
+  capabilities and end-to-end token-projection training separately from the
+  still-pending full attention-weight training capability.
 
 Remaining:
 
-- replace the current learned projection calibration with full end-to-end MLX
-  attention/projection backpropagation once local MLX execution is available in
-  the target environment.
+- extend the current MLX autograd token-projection training to full
+  attention-weight backpropagation for the serialized token-transformer encoder.
 
 ## M8: Self-Learning Loop
 

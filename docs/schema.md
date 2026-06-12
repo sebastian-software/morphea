@@ -437,7 +437,9 @@ of being treated as partial success.
 Optional status entries may expose a `capabilities` object. Each capability
 records `available`, `status`, and optional `reason`. The current MLX/SAM
 capability statuses make two remaining milestone blockers explicit:
-`live_sam_model_adapter` and `end_to_end_attention_training`.
+`live_sam_model_adapter` and `end_to_end_attention_training`; the classifier
+status also reports the available `end_to_end_token_projection_training`
+capability when MLX autograd is usable.
 
 ## Segment Config v1
 
@@ -924,13 +926,16 @@ loss history. `token_transformer` stores a serialized `mlx_token_transformer_v1`
 encoder path. Its `tokenization` section records feature tokens, crop size,
 raster grid size, raster token count, and channel order. Its `encoder` section
 records hidden dimension, head count, layer count, projection policy, attention
-type, and pooling policy. Its classifier head stores weights, bias,
-normalization, and loss history over the pooled encoder embedding.
-`projection_calibration` records training-derived per-dimension scale and bias
-values for the token-transformer projection path, plus strategy and training
-example count. The fallback centroids keep the artifact usable as a
-deterministic `--classifier-model` prior when MLX is not installed or while
-end-to-end learned MLX attention weights are still being expanded.
+type, and pooling policy. When MLX autograd is available, `token_projection`
+stores `mlx_token_projection_v1` weights, bias, input names, optimizer, and
+training example count for the learned token-to-hidden projection. Its
+classifier head stores weights, bias, normalization, and loss history over the
+pooled encoder embedding. `projection_calibration` records either identity
+parameters after learned token projection or training-derived per-dimension
+scale and bias values for fallback token-transformer projection paths, plus
+strategy and training example count. The fallback centroids keep the artifact
+usable as a deterministic `--classifier-model` prior when MLX is not installed
+or while learned MLX attention weights are still being expanded.
 When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
 uses the serialized MLX feature-head weights for prediction; malformed or
 unavailable MLX artifacts degrade to `fallback_centroids`.

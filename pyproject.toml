@@ -7,6 +7,11 @@ dependencies = [
     "pillow>=10",
 ]
 
+[project.optional-dependencies]
+mlx = [
+    "mlx>=0.31",
+]
+
 [project.scripts]
 curve = "curve.cli:main"
 

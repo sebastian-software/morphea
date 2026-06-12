@@ -22,8 +22,10 @@ from curve.classifier import (
     raster_examples_from_dataset,
 )
 from curve.token_transformer import (
+    TOKEN_PROJECTION_INPUT_NAMES,
     raster_grid_token_count,
     token_transformer_embedding,
+    token_transformer_tokens,
 )
 
 
@@ -86,13 +88,18 @@ def _mlx_classifier_capabilities(available: bool) -> dict[str, dict[str, object]
             "status": runtime_status,
             "reason": runtime_reason,
         },
+        "end_to_end_token_projection_training": {
+            "available": available,
+            "status": runtime_status,
+            "reason": runtime_reason,
+        },
         "end_to_end_attention_training": {
             "available": False,
             "status": "pending_implementation",
             "reason": (
-                "Current MLX path serializes token-transformer weights and "
-                "projection calibration; full attention/projection "
-                "backpropagation is not wired yet"
+                "Current MLX path trains token projection and classifier "
+                "head with autograd; full attention-weight backpropagation "
+                "is not wired yet"
             ),
         },
     }
@@ -241,12 +248,21 @@ def _train_mlx_weights(
         labels,
         config,
     )
-    head["token_transformer"] = _train_token_transformer(
-        train_examples,
-        raster_examples,
-        labels,
-        config,
-    )
+    if _supports_mlx_autograd(mx):
+        head["token_transformer"] = _train_end_to_end_token_transformer(
+            train_examples,
+            raster_examples,
+            labels,
+            config,
+            mx,
+        )
+    else:
+        head["token_transformer"] = _train_token_transformer(
+            train_examples,
+            raster_examples,
+            labels,
+            config,
+        )
     head["feature_head_parameter_count"] = head["parameter_count"]
     head["parameter_count"] += head["raster_token_mixer"]["parameter_count"]
     head["parameter_count"] += head["feature_raster_fusion"]["parameter_count"]
@@ -254,10 +270,31 @@ def _train_mlx_weights(
     head["architecture"] = (
         "feature_head_plus_raster_token_mixer_fusion_and_token_transformer"
     )
-    head["transformer_status"] = "token_transformer_encoder_serialized"
+    head["transformer_status"] = head["token_transformer"].get(
+        "training_status",
+        "token_transformer_encoder_serialized",
+    )
     head["backend_version"] = getattr(mx, "__version__", "unknown")
     head["backend_array_api"] = "mlx.core"
     return head
+
+
+def _supports_mlx_autograd(mx: Any) -> bool:
+    return all(
+        hasattr(mx, name)
+        for name in (
+            "array",
+            "concatenate",
+            "eval",
+            "exp",
+            "log",
+            "matmul",
+            "mean",
+            "softmax",
+            "tanh",
+            "value_and_grad",
+        )
+    )
 
 
 def _train_feature_head(
@@ -481,6 +518,234 @@ def _train_feature_raster_fusion(
         "bias": bias,
         "loss_history": loss_history,
     }
+
+
+def _train_end_to_end_token_transformer(
+    train_examples: tuple[TrainingExample, ...],
+    raster_examples: tuple[RasterTrainingExample, ...],
+    labels: list[str],
+    config: MlxClassifierTrainingConfig,
+    mx: Any,
+) -> dict[str, Any]:
+    label_to_index = {label: index for index, label in enumerate(labels)}
+    rows = []
+    for example, raster_example in zip(train_examples, raster_examples):
+        if (
+            example.label not in label_to_index
+            or raster_example.label != example.label
+        ):
+            continue
+        rows.append(
+            (
+                _token_projection_inputs(
+                    example.features,
+                    raster_example.crop_tokens,
+                    config,
+                ),
+                label_to_index[example.label],
+            )
+        )
+    if not rows:
+        fallback = _train_token_transformer(
+            train_examples,
+            raster_examples,
+            labels,
+            config,
+        )
+        fallback["training_status"] = "token_transformer_no_raster_examples"
+        return fallback
+
+    token_input_count = len(TOKEN_PROJECTION_INPUT_NAMES)
+    token_rows = mx.array([row for row, _ in rows])
+    targets = mx.array([target for _, target in rows])
+    params = {
+        "projection_weights": mx.array(
+            _initial_token_projection_weights(config.hidden_dim, token_input_count)
+        ),
+        "projection_bias": mx.array([0.0 for _ in range(config.hidden_dim)]),
+        "weights": mx.array(
+            [
+                [0.0 for _ in range(config.hidden_dim)]
+                for _ in range(len(labels))
+            ]
+        ),
+        "bias": mx.array([0.0 for _ in labels]),
+    }
+    epochs = max(1, config.epochs)
+    learning_rate = config.learning_rate
+    loss_history: list[dict[str, float | int]] = []
+    for epoch in range(epochs):
+        loss, grads = mx.value_and_grad(
+            lambda current: _token_transformer_training_loss(
+                current,
+                token_rows,
+                targets,
+                config,
+                mx,
+            )
+        )(params)
+        params = {
+            key: params[key] - learning_rate * grads[key]
+            for key in params
+        }
+        mx.eval(params)
+        logits = _token_transformer_training_logits(
+            params,
+            token_rows,
+            config,
+            mx,
+        )
+        predictions = mx.argmax(logits, axis=1).tolist()
+        target_values = targets.tolist()
+        correct = sum(
+            1
+            for prediction, target in zip(predictions, target_values)
+            if int(prediction) == int(target)
+        )
+        loss_history.append(
+            {
+                "epoch": epoch + 1,
+                "loss": float(loss.item()),
+                "accuracy": correct / len(target_values),
+            }
+        )
+
+    projection_weights = _array_to_nested_floats(params["projection_weights"])
+    projection_bias = _array_to_floats(params["projection_bias"])
+    weights = _array_to_nested_floats(params["weights"])
+    bias = _array_to_floats(params["bias"])
+    return {
+        "weight_format": "mlx_token_transformer_v1",
+        "labels": list(labels),
+        "tokenization": _token_transformer_tokenization(config),
+        "encoder": {
+            **_token_transformer_encoder_config(config),
+            "projection": "mlx_learned_token_projection_v1",
+        },
+        "token_projection": {
+            "weight_format": "mlx_token_projection_v1",
+            "input_names": list(TOKEN_PROJECTION_INPUT_NAMES),
+            "weights": projection_weights,
+            "bias": projection_bias,
+            "trained_examples": len(rows),
+            "optimizer": "manual_sgd",
+        },
+        "projection_calibration": {
+            "strategy": "identity_after_learned_token_projection",
+            "scale": [1.0 for _ in range(config.hidden_dim)],
+            "bias": [0.0 for _ in range(config.hidden_dim)],
+            "trained_examples": len(rows),
+        },
+        "training_status": "end_to_end_token_projection_trained",
+        "parameter_count": len(labels) * (config.hidden_dim + 1)
+        + config.hidden_dim * (token_input_count + 1),
+        "normalization": {
+            "mean": [0.0 for _ in range(config.hidden_dim)],
+            "scale": [1.0 for _ in range(config.hidden_dim)],
+        },
+        "weights": weights,
+        "bias": bias,
+        "loss_history": loss_history,
+    }
+
+
+def _token_projection_inputs(
+    features: tuple[float, ...],
+    crop_tokens: tuple[tuple[float, float, float, float], ...],
+    config: MlxClassifierTrainingConfig,
+) -> list[list[float]]:
+    tokens = token_transformer_tokens(
+        features,
+        crop_tokens,
+        crop_size=config.crop_size,
+    )
+    return [
+        [*token, (token_index + 1) / 64]
+        for token_index, token in enumerate(tokens)
+    ]
+
+
+def _initial_token_projection_weights(
+    hidden_dim: int,
+    token_input_count: int,
+) -> list[list[float]]:
+    weights = []
+    token_value_count = token_input_count - 1
+    for hidden_index in range(hidden_dim):
+        row = [0.0 for _ in range(token_input_count)]
+        row[hidden_index % token_value_count] = 1.0 + (hidden_index % 5) * 0.2
+        row[-1] = float((hidden_index % 3) - 1)
+        weights.append(row)
+    return weights
+
+
+def _token_transformer_training_loss(
+    params: dict[str, Any],
+    token_rows: Any,
+    targets: Any,
+    config: MlxClassifierTrainingConfig,
+    mx: Any,
+) -> Any:
+    logits = _token_transformer_training_logits(params, token_rows, config, mx)
+    losses = mx.logsumexp(logits, axis=1) - logits[mx.arange(len(targets)), targets]
+    return mx.mean(losses)
+
+
+def _token_transformer_training_logits(
+    params: dict[str, Any],
+    token_rows: Any,
+    config: MlxClassifierTrainingConfig,
+    mx: Any,
+) -> Any:
+    hidden = mx.tanh(
+        mx.matmul(token_rows, mx.transpose(params["projection_weights"]))
+        + params["projection_bias"]
+    )
+    for layer_index in range(max(1, config.num_layers)):
+        hidden = _mlx_self_attention_layer(hidden, config.num_heads, layer_index, mx)
+    pooled = mx.mean(hidden, axis=1)
+    return mx.matmul(pooled, mx.transpose(params["weights"])) + params["bias"]
+
+
+def _mlx_self_attention_layer(
+    hidden: Any,
+    heads: int,
+    layer_index: int,
+    mx: Any,
+) -> Any:
+    hidden_dim = int(hidden.shape[-1])
+    attended_values = []
+    for start, end in _attention_head_slices(hidden_dim, heads):
+        query = hidden[:, :, start:end]
+        scores = mx.matmul(query, mx.transpose(query, axes=(0, 2, 1)))
+        scores = scores / max(1, end - start) ** 0.5
+        attention = mx.softmax(scores, axis=-1)
+        attended_values.append(mx.matmul(attention, query))
+    attended = mx.concatenate(attended_values, axis=-1)
+    return mx.tanh((hidden + attended) / 2 + layer_index * 0.01)
+
+
+def _attention_head_slices(hidden_dim: int, heads: int) -> list[tuple[int, int]]:
+    head_count = max(1, min(heads, hidden_dim))
+    base_width = max(1, hidden_dim // head_count)
+    slices: list[tuple[int, int]] = []
+    start = 0
+    for head in range(head_count):
+        end = hidden_dim if head == head_count - 1 else min(hidden_dim, start + base_width)
+        slices.append((start, end))
+        start = end
+    return slices
+
+
+def _array_to_floats(values: Any) -> list[float]:
+    return [float(value) for value in values.tolist()]
+
+
+def _array_to_nested_floats(values: Any) -> list[list[float]]:
+    return [
+        [float(value) for value in row]
+        for row in values.tolist()
+    ]
 
 
 def _train_token_transformer(

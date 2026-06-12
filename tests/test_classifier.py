@@ -450,6 +450,11 @@ class PrimitiveClassifierTests(unittest.TestCase):
         self.assertTrue(
             available["capabilities"]["feature_head_training"]["available"]
         )
+        self.assertTrue(
+            available["capabilities"][
+                "end_to_end_token_projection_training"
+            ]["available"]
+        )
         self.assertEqual(
             available["capabilities"]["end_to_end_attention_training"]["status"],
             "pending_implementation",
@@ -671,6 +676,70 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
             self.assertIn(predicted, classifier["labels"])
 
+    def test_load_classifier_model_preserves_token_projection(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "mlx-model.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "model_type": MLX_MODEL_TYPE,
+                        "fallback_centroids": {},
+                        "mlx_training": {
+                            "weight_format": "mlx_feature_head_v1",
+                            "labels": ["circle", "cubic_path"],
+                            "weights": [
+                                [0.0 for _ in FEATURE_NAMES],
+                                [0.0 for _ in FEATURE_NAMES],
+                            ],
+                            "bias": [0.0, 0.0],
+                            "normalization": {
+                                "mean": [0.0 for _ in FEATURE_NAMES],
+                                "scale": [1.0 for _ in FEATURE_NAMES],
+                            },
+                            "token_transformer": {
+                                "weight_format": "mlx_token_transformer_v1",
+                                "labels": ["circle", "cubic_path"],
+                                "weights": [[1.0], [-1.0]],
+                                "bias": [0.0, 0.0],
+                                "normalization": {
+                                    "mean": [0.0],
+                                    "scale": [1.0],
+                                },
+                                "tokenization": {
+                                    "crop_size": 2,
+                                    "raster_grid_size": 2,
+                                },
+                                "encoder": {
+                                    "hidden_dim": 1,
+                                    "num_heads": 1,
+                                    "num_layers": 1,
+                                },
+                                "projection_calibration": {
+                                    "scale": [1.0],
+                                    "bias": [0.0],
+                                    "strategy": "identity_after_learned_token_projection",
+                                },
+                                "token_projection": {
+                                    "weight_format": "mlx_token_projection_v1",
+                                    "input_names": ["red_or_feature"],
+                                    "weights": [[0.0] * 8],
+                                    "bias": [1.0],
+                                    "trained_examples": 2,
+                                },
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            classifier = load_classifier_model(model_path)
+
+            projection = classifier["token_transformer"]["token_projection"]
+            self.assertEqual(projection["weights"], ((0.0,) * 8,))
+            self.assertEqual(projection["bias"], (1.0,))
+            self.assertEqual(projection["trained_examples"], 2)
+
     def test_mlx_feature_head_can_predict_with_raster_tokens(self):
         classifier = {
             "classifier_backend": "mlx_feature_head",
@@ -793,6 +862,62 @@ class PrimitiveClassifierTests(unittest.TestCase):
             (0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
             crop_tokens=(
                 (0.0, 0.0, 0.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+            ),
+        )
+
+        self.assertEqual(predicted, "circle")
+
+    def test_mlx_token_transformer_uses_learned_token_projection(self):
+        classifier = {
+            "classifier_backend": "mlx_feature_head",
+            "labels": ("circle", "cubic_path"),
+            "weights": (
+                (0.0,) * len(FEATURE_NAMES),
+                (0.0,) * len(FEATURE_NAMES),
+            ),
+            "bias": (0.0, 0.0),
+            "normalization": {
+                "mean": (0.0,) * len(FEATURE_NAMES),
+                "scale": (1.0,) * len(FEATURE_NAMES),
+            },
+            "crop_token_spec": {"crop_size": 2},
+            "token_transformer": {
+                "labels": ("circle", "cubic_path"),
+                "weights": ((10.0,), (-10.0,)),
+                "bias": (0.0, 0.0),
+                "normalization": {
+                    "mean": (0.0,),
+                    "scale": (1.0,),
+                },
+                "tokenization": {
+                    "crop_size": 2,
+                    "raster_grid_size": 2,
+                },
+                "encoder": {
+                    "hidden_dim": 1,
+                    "num_heads": 1,
+                    "num_layers": 1,
+                },
+                "projection_calibration": {
+                    "scale": (1.0,),
+                    "bias": (0.0,),
+                    "strategy": "identity_after_learned_token_projection",
+                },
+                "token_projection": {
+                    "weights": ((0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),),
+                    "bias": (1.0,),
+                },
+            },
+        }
+
+        predicted = predict_classifier_label(
+            classifier,
+            (0.0,) * len(FEATURE_NAMES),
+            crop_tokens=(
+                (1.0, 1.0, 1.0, 1.0),
                 (1.0, 1.0, 1.0, 1.0),
                 (1.0, 1.0, 1.0, 1.0),
                 (1.0, 1.0, 1.0, 1.0),
