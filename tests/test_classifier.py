@@ -244,6 +244,28 @@ class PrimitiveClassifierTests(unittest.TestCase):
                     ),
                 )
 
+    def test_train_mlx_rejects_invalid_head_count(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=3,
+                seed=22,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+
+            with self.assertRaisesRegex(ValueError, "num_heads must be positive"):
+                train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=Path(temp_dir) / "mlx-model.json",
+                    config=MlxClassifierTrainingConfig(
+                        num_heads=0,
+                        allow_unavailable=True,
+                    ),
+                )
+
     def test_mlx_classifier_runtime_status_reports_package_state(self):
         with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
             unavailable = mlx_classifier_runtime_status()
@@ -371,6 +393,10 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(model["mlx_training"]["backend_version"], "test-mlx")
             self.assertEqual(len(model["mlx_training"]["loss_history"]), 1)
             self.assertIn("weights", model["mlx_training"])
+            self.assertEqual(
+                model["mlx_training"]["transformer_status"],
+                "raster_token_mixer_trained_attention_block_pending",
+            )
             self.assertEqual(model["mlx_training"]["crop_token_spec"]["crop_size"], 6)
             self.assertEqual(
                 model["mlx_training"]["crop_token_spec"]["token_shape"],
@@ -380,6 +406,12 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 model["mlx_training"]["crop_token_summary"]["raster_example_count"],
                 model["train_examples"],
             )
+            mixer = model["mlx_training"]["raster_token_mixer"]
+            self.assertEqual(mixer["weight_format"], "raster_token_mixer_v1")
+            self.assertEqual(mixer["attention"]["heads"], 4)
+            self.assertEqual(len(mixer["attention"]["embedding_names"]), 28)
+            self.assertEqual(len(mixer["loss_history"]), 1)
+            self.assertGreater(mixer["parameter_count"], 0)
 
     def test_load_classifier_model_uses_mlx_feature_head_predictor(self):
         with tempfile.TemporaryDirectory() as temp_dir:

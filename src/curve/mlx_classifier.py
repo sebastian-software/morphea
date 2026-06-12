@@ -69,6 +69,9 @@ def train_mlx_transformer_classifier(
     if training_config.crop_size <= 0:
         msg = "MLX crop_size must be positive"
         raise ValueError(msg)
+    if training_config.num_heads <= 0:
+        msg = "MLX num_heads must be positive"
+        raise ValueError(msg)
     train_examples = examples_from_dataset(dataset_json, splits=("train",))
     if not train_examples:
         msg = "training dataset contains no train examples"
@@ -179,6 +182,15 @@ def _train_mlx_weights(
         "value_range": [0.0, 1.0],
     }
     head["crop_token_summary"] = _crop_token_summary(raster_examples)
+    head["raster_token_mixer"] = _train_raster_token_mixer(
+        raster_examples,
+        labels,
+        config,
+    )
+    head["feature_head_parameter_count"] = head["parameter_count"]
+    head["parameter_count"] += head["raster_token_mixer"]["parameter_count"]
+    head["architecture"] = "feature_head_plus_raster_token_mixer"
+    head["transformer_status"] = "raster_token_mixer_trained_attention_block_pending"
     head["backend_version"] = getattr(mx, "__version__", "unknown")
     head["backend_array_api"] = "mlx.core"
     return head
@@ -276,6 +288,64 @@ def _train_feature_head(
     }
 
 
+def _train_raster_token_mixer(
+    raster_examples: tuple[RasterTrainingExample, ...],
+    labels: list[str],
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    embedding_names = _raster_embedding_names(config.num_heads)
+    label_to_index = {label: index for index, label in enumerate(labels)}
+    rows = [
+        (
+            _raster_attention_embedding(example, config),
+            label_to_index[example.label],
+        )
+        for example in raster_examples
+        if example.label in label_to_index
+    ]
+    if not rows:
+        return {
+            "weight_format": "raster_token_mixer_v1",
+            "attention": {
+                "heads": config.num_heads,
+                "embedding_names": embedding_names,
+            },
+            "parameter_count": 0,
+            "weights": [],
+            "bias": [],
+            "normalization": {"mean": [], "scale": []},
+            "loss_history": [],
+        }
+    means, scales = _row_normalization(tuple(row for row, _ in rows))
+    normalized_rows = [
+        (_normalize_row(row, means, scales), target_index)
+        for row, target_index in rows
+    ]
+    weights, bias, loss_history = _train_softmax(
+        normalized_rows,
+        class_count=len(labels),
+        input_count=len(embedding_names),
+        config=config,
+    )
+    return {
+        "weight_format": "raster_token_mixer_v1",
+        "attention": {
+            "heads": config.num_heads,
+            "embedding_names": embedding_names,
+            "score": "foreground_weighted_spatial_rgba",
+        },
+        "parameter_count": len(labels) * (len(embedding_names) + 1),
+        "labels": list(labels),
+        "normalization": {
+            "mean": list(means),
+            "scale": list(scales),
+        },
+        "weights": weights,
+        "bias": bias,
+        "loss_history": loss_history,
+    }
+
+
 def _feature_normalization(
     train_examples: tuple[TrainingExample, ...],
 ) -> tuple[tuple[float, ...], tuple[float, ...]]:
@@ -302,6 +372,148 @@ def _normalize_features(
         (features[index] - means[index]) / scales[index]
         for index in range(len(FEATURE_NAMES))
     )
+
+
+def _raster_embedding_names(head_count: int) -> list[str]:
+    names: list[str] = []
+    for head in range(head_count):
+        names.extend(
+            [
+                f"head_{head}_red",
+                f"head_{head}_green",
+                f"head_{head}_blue",
+                f"head_{head}_alpha",
+                f"head_{head}_x",
+                f"head_{head}_y",
+                f"head_{head}_foreground",
+            ]
+        )
+    return names
+
+
+def _raster_attention_embedding(
+    example: RasterTrainingExample,
+    config: MlxClassifierTrainingConfig,
+) -> tuple[float, ...]:
+    crop_size = config.crop_size
+    embedding: list[float] = []
+    for head in range(config.num_heads):
+        weighted = [0.0 for _ in range(7)]
+        total_weight = 0.0
+        for index, token in enumerate(example.crop_tokens):
+            red, green, blue, alpha = token
+            x = (index % crop_size) / max(1, crop_size - 1)
+            y = (index // crop_size) / max(1, crop_size - 1)
+            foreground = alpha * (
+                abs(red - 1.0) + abs(green - 1.0) + abs(blue - 1.0)
+            ) / 3
+            spatial_bias = _head_spatial_bias(head, x, y)
+            weight = 1e-6 + foreground * spatial_bias
+            total_weight += weight
+            values = (red, green, blue, alpha, x, y, foreground)
+            for value_index, value in enumerate(values):
+                weighted[value_index] += value * weight
+        if total_weight <= 0:
+            embedding.extend([0.0 for _ in range(7)])
+            continue
+        embedding.extend(value / total_weight for value in weighted)
+    return tuple(embedding)
+
+
+def _head_spatial_bias(head: int, x: float, y: float) -> float:
+    mode = head % 5
+    if mode == 1:
+        return 1.0 + x
+    if mode == 2:
+        return 2.0 - x
+    if mode == 3:
+        return 1.0 + y
+    if mode == 4:
+        return 2.0 - y
+    return 1.0
+
+
+def _row_normalization(
+    rows: tuple[tuple[float, ...], ...],
+) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    if not rows:
+        return (), ()
+    input_count = len(rows[0])
+    means = tuple(
+        sum(row[index] for row in rows) / len(rows)
+        for index in range(input_count)
+    )
+    variances = tuple(
+        sum((row[index] - means[index]) ** 2 for row in rows) / len(rows)
+        for index in range(input_count)
+    )
+    scales = tuple(max(variance ** 0.5, 1.0) for variance in variances)
+    return means, scales
+
+
+def _normalize_row(
+    row: tuple[float, ...],
+    means: tuple[float, ...],
+    scales: tuple[float, ...],
+) -> tuple[float, ...]:
+    return tuple(
+        (row[index] - means[index]) / scales[index]
+        for index in range(len(row))
+    )
+
+
+def _train_softmax(
+    rows: list[tuple[tuple[float, ...], int]],
+    *,
+    class_count: int,
+    input_count: int,
+    config: MlxClassifierTrainingConfig,
+) -> tuple[list[list[float]], list[float], list[dict[str, float | int]]]:
+    weights = [[0.0 for _ in range(input_count)] for _ in range(class_count)]
+    bias = [0.0 for _ in range(class_count)]
+    loss_history: list[dict[str, float | int]] = []
+    epochs = max(1, config.epochs)
+    learning_rate = config.learning_rate
+    for epoch in range(epochs):
+        grad_weights = [[0.0 for _ in range(input_count)] for _ in range(class_count)]
+        grad_bias = [0.0 for _ in range(class_count)]
+        loss = 0.0
+        correct = 0
+        for values, target_index in rows:
+            logits = [
+                bias[class_index]
+                + sum(
+                    weights[class_index][input_index] * values[input_index]
+                    for input_index in range(input_count)
+                )
+                for class_index in range(class_count)
+            ]
+            probabilities = _softmax(logits)
+            loss -= log(max(probabilities[target_index], 1e-12))
+            if _argmax(probabilities) == target_index:
+                correct += 1
+            for class_index, probability in enumerate(probabilities):
+                coefficient = probability - (
+                    1.0 if class_index == target_index else 0.0
+                )
+                grad_bias[class_index] += coefficient
+                for input_index, value in enumerate(values):
+                    grad_weights[class_index][input_index] += coefficient * value
+        scale = 1 / len(rows)
+        for class_index in range(class_count):
+            bias[class_index] -= learning_rate * grad_bias[class_index] * scale
+            for input_index in range(input_count):
+                weights[class_index][input_index] -= (
+                    learning_rate * grad_weights[class_index][input_index] * scale
+                )
+        loss_history.append(
+            {
+                "epoch": epoch + 1,
+                "loss": loss * scale,
+                "accuracy": correct / len(rows),
+            }
+        )
+    return weights, bias, loss_history
 
 
 def _softmax(logits: list[float]) -> list[float]:
