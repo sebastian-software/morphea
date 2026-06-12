@@ -686,7 +686,7 @@ Written by `curve generate`.
 `dataset.json` records:
 
 - `count`, `seed`, `width`, `height`
-- `difficulty`: currently `basic`, `dense`, or `logo`
+- `difficulty`: currently `basic`, `dense`, `grid`, or `logo`
 - `splits`
 - `samples`
 

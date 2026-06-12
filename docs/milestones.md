@@ -393,6 +393,8 @@ Implemented so far:
   groups while preserving deterministic seed behavior
 - `logo` difficulty tier adds simple logo-like compositions with a ring mark,
   accent dot, diagonal stroke, and rounded wordmark bar
+- `grid` difficulty tier adds a larger labeled perspective tile family with
+  row/column metadata for table-like quad-grid training cases
 
 ## M6: Local MLX Segmentation Layer
 
