@@ -26,7 +26,15 @@ class SyntheticGeneratorTests(unittest.TestCase):
         self.assertIn(AnchorKind.QUAD, kinds)
         self.assertGreaterEqual(
             sum(1 for anchor in sample.scene.anchors if anchor.kind == AnchorKind.QUAD),
-            5,
+            6,
+        )
+        self.assertEqual(
+            {
+                anchor.metrics.get("quad_subtype_code")
+                for anchor in sample.scene.anchors
+                if "quad_subtype_code" in anchor.metrics
+            },
+            {1.0, 2.0},
         )
         self.assertTrue(
             any(
@@ -49,7 +57,7 @@ class SyntheticGeneratorTests(unittest.TestCase):
             self.assertTrue(image_path.exists())
             self.assertEqual(manifest["seed"], 11)
             self.assertEqual(manifest["difficulty"], "basic")
-            self.assertEqual(manifest["anchor_count"], 14)
+            self.assertEqual(manifest["anchor_count"], 15)
 
     def test_dense_synthetic_sample_adds_parallel_stroke_group(self):
         sample = generate_synthetic_sample(
@@ -67,7 +75,7 @@ class SyntheticGeneratorTests(unittest.TestCase):
         ]
 
         self.assertEqual(len(parallel), 3)
-        self.assertEqual(len(sample.scene.anchors), 17)
+        self.assertEqual(len(sample.scene.anchors), 18)
 
     def test_logo_synthetic_sample_adds_logo_like_composition(self):
         sample = generate_synthetic_sample(
@@ -88,7 +96,7 @@ class SyntheticGeneratorTests(unittest.TestCase):
             if "logo_element" in anchor.metrics
         }
 
-        self.assertEqual(len(sample.scene.anchors), 18)
+        self.assertEqual(len(sample.scene.anchors), 19)
         self.assertEqual(
             set(logo_elements),
             {"accent_dot", "diagonal_stroke", "mark_ring", "wordmark_bar"},

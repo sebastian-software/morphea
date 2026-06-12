@@ -55,8 +55,8 @@ class PrimitiveClassifierTests(unittest.TestCase):
             examples = examples_from_dataset(Path(temp_dir) / "dataset.json")
             anchors = anchors_from_dataset(Path(temp_dir) / "dataset.json")
 
-            self.assertEqual(len(examples), 14)
-            self.assertEqual(len(anchors), 14)
+            self.assertEqual(len(examples), 15)
+            self.assertEqual(len(anchors), 15)
             self.assertEqual({example.label for example in examples}, {
                 "arc",
                 "circle",
@@ -113,7 +113,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 main(["train", str(Path(temp_dir) / "dataset.json"), "-o", str(model_path)])
 
             model = json.loads(model_path.read_text())
-            self.assertEqual(model["train_examples"], 28)
+            self.assertEqual(model["train_examples"], 30)
             self.assertIn("ranking_evaluation", model)
 
     def test_train_cli_accepts_config_file(self):
@@ -144,7 +144,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 main(["train", "--config", str(config)])
 
             model = json.loads(model_path.read_text(encoding="utf-8"))
-            self.assertEqual(model["train_examples"], 28)
+            self.assertEqual(model["train_examples"], 30)
 
     def test_train_mlx_requires_backend_by_default(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -257,7 +257,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 anchors_from_dataset(dataset, splits=("val",)),
             )
 
-            self.assertEqual(ranking["examples"], 14)
+            self.assertEqual(ranking["examples"], 15)
             self.assertGreaterEqual(
                 ranking["classifier_accuracy"],
                 ranking["heuristic_accuracy"],

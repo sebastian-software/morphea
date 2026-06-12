@@ -72,6 +72,7 @@ def generate_synthetic_sample(
     anchors.append(_draw_rect(draw, rng, width, height))
     anchors.append(_draw_rounded_rect(draw, rng, width, height))
     anchors.append(_draw_quad(draw, rng, width, height))
+    anchors.append(_draw_parallelogram(draw, rng, width, height))
     anchors.extend(_draw_tile_grid(draw, rng, width, height))
     anchors.append(_draw_cutout_stroke(draw, width, height))
     if difficulty == "dense":
@@ -354,6 +355,37 @@ def _draw_quad(
         parameter_count=8,
         color=color,
         quad=QuadAnchor(corners=corners),
+        metrics={"quad_subtype_code": 1.0},
+    )
+
+
+def _draw_parallelogram(
+    draw: ImageDraw.ImageDraw,
+    rng: Random,
+    width: int,
+    height: int,
+) -> AnchorCandidate:
+    x0 = width * 0.08
+    y0 = height * 0.45
+    box_width = width * 0.18
+    box_height = height * 0.12
+    skew = width * 0.06
+    corners = (
+        Point(x0 + skew, y0),
+        Point(x0 + skew + box_width, y0),
+        Point(x0 + box_width, y0 + box_height),
+        Point(x0, y0 + box_height),
+    )
+    color = rng.choice(PALETTE)
+    draw.polygon(_point_xy(corners), fill=color)
+    return AnchorCandidate(
+        kind=AnchorKind.QUAD,
+        raster_error=0.0,
+        node_count=4,
+        parameter_count=8,
+        color=color,
+        quad=QuadAnchor(corners=corners),
+        metrics={"quad_subtype_code": 2.0},
     )
 
 

@@ -56,7 +56,7 @@ class DatasetTests(unittest.TestCase):
 
             self.assertEqual(index["difficulty"], "dense")
             self.assertEqual(manifest["difficulty"], "dense")
-            self.assertEqual(manifest["anchor_count"], 17)
+            self.assertEqual(manifest["anchor_count"], 18)
 
     def test_generate_cli_writes_dataset_index(self):
         with tempfile.TemporaryDirectory() as temp_dir:
