@@ -293,6 +293,8 @@ Implemented so far:
 - `curve report` can render Markdown or HTML from an existing manifest
 - sweep summaries include `semantic_rank` and a top-level `ranking` list using
   semantic-first score ordering before raster error.
+- sweep run configs can pass `cutout_export` through to run-directory SVG
+  export, so overlay and negative-mask exports can be compared in experiments.
 - optional Markdown comparison reports for config sweeps
 
 ## M5: Synthetic Dataset Generator

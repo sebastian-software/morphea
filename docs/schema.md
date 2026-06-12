@@ -136,6 +136,10 @@ contains those metrics.
 editability score and raster error. It is derived from `sweep-summary.json` and
 does not change the JSON schema.
 
+Sweep run configs may include `cutout_export` with `overlay_stroke` or
+`negative_mask`; this affects the run directory `output.svg` but is not passed
+to primitive detection.
+
 ## Profile Report v1
 
 Written by `curve profile`.
