@@ -1,5 +1,5 @@
 {
-  "case_count": 309,
+  "case_count": 318,
   "cases": {
     "adjacent_different_color_rects_horizontal": {
       "anchor_count": 2,
@@ -1243,117 +1243,234 @@
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.894602,
-      "edge": 0.02199,
+      "bbox_iou": 0.912879,
+      "edge": 0.020087,
       "kind": "cubic_path",
-      "l1": 0.015234,
+      "l1": 0.013477,
       "ok": true,
-      "svg_edge": 0.022238,
-      "svg_l1": 0.017858
+      "svg_edge": 0.019917,
+      "svg_l1": 0.016333
     },
     "concave_c_deep": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.907219,
-      "edge": 0.027488,
+      "bbox_iou": 0.928786,
+      "edge": 0.023259,
       "kind": "cubic_path",
-      "l1": 0.019531,
+      "l1": 0.016211,
       "ok": true,
-      "svg_edge": 0.026077,
-      "svg_l1": 0.022059
+      "svg_edge": 0.024485,
+      "svg_l1": 0.020566
     },
     "concave_c_wide": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.766937,
-      "edge": 0.019664,
+      "bbox_iou": 0.78403,
+      "edge": 0.017973,
       "kind": "cubic_path",
-      "l1": 0.012891,
+      "l1": 0.011523,
       "ok": true,
-      "svg_edge": 0.020766,
-      "svg_l1": 0.016379
+      "svg_edge": 0.019951,
+      "svg_l1": 0.015173
     },
     "concave_embrace": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.956916,
-      "edge": 0.034677,
+      "bbox_iou": 0.961431,
+      "edge": 0.029179,
       "kind": "cubic_path",
-      "l1": 0.024219,
+      "l1": 0.019336,
       "ok": true,
-      "svg_edge": 0.03185,
-      "svg_l1": 0.026377
+      "svg_edge": 0.031376,
+      "svg_l1": 0.025707
     },
     "concave_embrace_thick": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.966315,
-      "edge": 0.033196,
+      "bbox_iou": 0.958633,
+      "edge": 0.027699,
       "kind": "cubic_path",
-      "l1": 0.023438,
+      "l1": 0.01875,
       "ok": true,
-      "svg_edge": 0.033412,
-      "svg_l1": 0.028052
+      "svg_edge": 0.030448,
+      "svg_l1": 0.025774
     },
     "concave_embrace_tight": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.970704,
-      "edge": 0.027488,
+      "bbox_iou": 0.951758,
+      "edge": 0.031928,
       "kind": "cubic_path",
-      "l1": 0.018555,
+      "l1": 0.021875,
       "ok": true,
-      "svg_edge": 0.032485,
-      "svg_l1": 0.026498
+      "svg_edge": 0.031824,
+      "svg_l1": 0.026603
     },
     "concave_u": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.94614,
-      "edge": 0.027065,
+      "bbox_iou": 0.955897,
+      "edge": 0.029391,
       "kind": "cubic_path",
-      "l1": 0.018555,
+      "l1": 0.021289,
       "ok": true,
-      "svg_edge": 0.027408,
-      "svg_l1": 0.022901
+      "svg_edge": 0.027439,
+      "svg_l1": 0.023261
     },
     "concave_u_narrow": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.964466,
-      "edge": 0.026007,
+      "bbox_iou": 0.961664,
+      "edge": 0.027699,
       "kind": "cubic_path",
-      "l1": 0.018555,
+      "l1": 0.020313,
       "ok": true,
-      "svg_edge": 0.027052,
-      "svg_l1": 0.022913
+      "svg_edge": 0.028714,
+      "svg_l1": 0.024942
     },
     "concave_u_tilted": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.931984,
-      "edge": 0.024104,
+      "bbox_iou": 0.940461,
+      "edge": 0.027065,
       "kind": "cubic_path",
-      "l1": 0.01582,
+      "l1": 0.01875,
       "ok": true,
-      "svg_edge": 0.025865,
-      "svg_l1": 0.020719
+      "svg_edge": 0.02529,
+      "svg_l1": 0.019823
+    },
+    "corner_arrow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.014801,
+      "kind": "cubic_path",
+      "l1": 0.010742,
+      "ok": true,
+      "svg_edge": 0.016588,
+      "svg_l1": 0.013352
+    },
+    "corner_arrow_chevron": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.019876,
+      "kind": "cubic_path",
+      "l1": 0.009961,
+      "ok": true,
+      "svg_edge": 0.021226,
+      "svg_l1": 0.014267
+    },
+    "corner_arrow_up": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.016915,
+      "kind": "cubic_path",
+      "l1": 0.0125,
+      "ok": true,
+      "svg_edge": 0.019745,
+      "svg_l1": 0.01674
+    },
+    "corner_notch": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.008881,
+      "kind": "cubic_path",
+      "l1": 0.007422,
+      "ok": true,
+      "svg_edge": 0.01599,
+      "svg_l1": 0.01453
+    },
+    "corner_notch_deep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.011206,
+      "kind": "cubic_path",
+      "l1": 0.00918,
+      "ok": true,
+      "svg_edge": 0.019814,
+      "svg_l1": 0.018659
+    },
+    "corner_notch_double": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.997184,
+      "edge": 0.009303,
+      "kind": "cubic_path",
+      "l1": 0.007422,
+      "ok": true,
+      "svg_edge": 0.018466,
+      "svg_l1": 0.016545
+    },
+    "corner_star": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.979177,
+      "edge": 0.018184,
+      "kind": "cubic_path",
+      "l1": 0.010937,
+      "ok": true,
+      "svg_edge": 0.022359,
+      "svg_l1": 0.017385
+    },
+    "corner_star_sharp": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.981481,
+      "edge": 0.02199,
+      "kind": "cubic_path",
+      "l1": 0.01543,
+      "ok": true,
+      "svg_edge": 0.022878,
+      "svg_l1": 0.019891
+    },
+    "corner_star_six": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.957702,
+      "edge": 0.02347,
+      "kind": "cubic_path",
+      "l1": 0.015625,
+      "ok": true,
+      "svg_edge": 0.023311,
+      "svg_l1": 0.018651
     },
     "curve_asymmetric": {
       "anchor_count": 1,
@@ -2931,169 +3048,169 @@
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.945461,
-      "edge": 0.015435,
+      "bbox_iou": 0.941248,
+      "edge": 0.016915,
       "kind": "cubic_path",
-      "l1": 0.009961,
+      "l1": 0.011719,
       "ok": true,
-      "svg_edge": 0.017163,
-      "svg_l1": 0.01431
+      "svg_edge": 0.017404,
+      "svg_l1": 0.014902
     },
     "organic_asymmetric_heavy": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.954129,
-      "edge": 0.01459,
+      "bbox_iou": 0.959911,
+      "edge": 0.015647,
       "kind": "cubic_path",
-      "l1": 0.010156,
+      "l1": 0.011328,
       "ok": true,
-      "svg_edge": 0.015201,
-      "svg_l1": 0.012607
+      "svg_edge": 0.014915,
+      "svg_l1": 0.012986
     },
     "organic_asymmetric_soft": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.960306,
-      "edge": 0.018184,
+      "bbox_iou": 0.959464,
+      "edge": 0.015647,
       "kind": "cubic_path",
-      "l1": 0.011914,
+      "l1": 0.009961,
       "ok": true,
-      "svg_edge": 0.017374,
-      "svg_l1": 0.014375
+      "svg_edge": 0.017255,
+      "svg_l1": 0.014108
     },
     "organic_blob": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.941934,
-      "edge": 0.017127,
+      "bbox_iou": 0.932148,
+      "edge": 0.01755,
       "kind": "cubic_path",
-      "l1": 0.011133,
+      "l1": 0.011719,
       "ok": true,
-      "svg_edge": 0.017545,
-      "svg_l1": 0.014679
+      "svg_edge": 0.01794,
+      "svg_l1": 0.015254
     },
     "organic_blob_lumpy": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.950509,
-      "edge": 0.013744,
+      "bbox_iou": 0.955133,
+      "edge": 0.012687,
       "kind": "cubic_path",
-      "l1": 0.009375,
+      "l1": 0.008789,
       "ok": true,
-      "svg_edge": 0.014525,
-      "svg_l1": 0.011925
+      "svg_edge": 0.015656,
+      "svg_l1": 0.012952
     },
     "organic_blob_soft": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.95669,
+      "bbox_iou": 0.95691,
       "edge": 0.018184,
       "kind": "cubic_path",
       "l1": 0.011719,
       "ok": true,
-      "svg_edge": 0.017986,
-      "svg_l1": 0.01493
+      "svg_edge": 0.019094,
+      "svg_l1": 0.015735
     },
     "organic_compound": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.947392,
-      "edge": 0.017973,
+      "bbox_iou": 0.94594,
+      "edge": 0.017338,
       "kind": "cubic_path",
-      "l1": 0.011523,
+      "l1": 0.011719,
       "ok": true,
-      "svg_edge": 0.019308,
-      "svg_l1": 0.015428
+      "svg_edge": 0.01762,
+      "svg_l1": 0.014474
     },
     "organic_compound_tall": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.925823,
-      "edge": 0.015435,
+      "bbox_iou": 0.924103,
+      "edge": 0.014378,
       "kind": "cubic_path",
-      "l1": 0.010937,
+      "l1": 0.010156,
       "ok": true,
-      "svg_edge": 0.01622,
-      "svg_l1": 0.013933
+      "svg_edge": 0.016434,
+      "svg_l1": 0.014219
     },
     "organic_compound_wide": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.953737,
-      "edge": 0.014167,
+      "bbox_iou": 0.952595,
+      "edge": 0.014801,
       "kind": "cubic_path",
-      "l1": 0.010156,
+      "l1": 0.010742,
       "ok": true,
-      "svg_edge": 0.017047,
-      "svg_l1": 0.014867
+      "svg_edge": 0.017838,
+      "svg_l1": 0.01575
     },
     "organic_crescent": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.772284,
-      "edge": 0.018607,
+      "bbox_iou": 0.80274,
+      "edge": 0.016493,
       "kind": "cubic_path",
-      "l1": 0.013281,
+      "l1": 0.011523,
       "ok": true,
-      "svg_edge": 0.0179,
-      "svg_l1": 0.0149
+      "svg_edge": 0.017668,
+      "svg_l1": 0.014623
     },
     "organic_crescent_high": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.772284,
-      "edge": 0.018184,
+      "bbox_iou": 0.781693,
+      "edge": 0.012898,
       "kind": "cubic_path",
-      "l1": 0.011523,
+      "l1": 0.007227,
       "ok": true,
-      "svg_edge": 0.018879,
-      "svg_l1": 0.014426
+      "svg_edge": 0.016741,
+      "svg_l1": 0.012306
     },
     "organic_crescent_low": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.772284,
-      "edge": 0.018607,
+      "bbox_iou": 0.80274,
+      "edge": 0.016493,
       "kind": "cubic_path",
-      "l1": 0.013281,
+      "l1": 0.011523,
       "ok": true,
-      "svg_edge": 0.0179,
-      "svg_l1": 0.0149
+      "svg_edge": 0.017668,
+      "svg_l1": 0.014623
     },
     "organic_donut": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.949163,
-      "edge": 0.02791,
+      "bbox_iou": 0.945358,
+      "edge": 0.026007,
       "kind": "cubic_path",
-      "l1": 0.018945,
+      "l1": 0.017578,
       "ok": true,
-      "svg_edge": 0.027994,
-      "svg_l1": 0.02349
+      "svg_edge": 0.027224,
+      "svg_l1": 0.022661
     },
     "organic_donut_offset": {
       "anchor_count": 1,
@@ -3170,21 +3287,21 @@
       "kind": "cubic_path",
       "l1": 0.020117,
       "ok": true,
-      "svg_edge": 0.033199,
-      "svg_l1": 0.026288
+      "svg_edge": 0.033629,
+      "svg_l1": 0.026473
     },
     "organic_frame_thin": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "cubic_path": 1
       },
-      "bbox_iou": 0.96879,
-      "edge": 0.029813,
+      "bbox_iou": 0.973368,
+      "edge": 0.029391,
       "kind": "cubic_path",
-      "l1": 0.02207,
+      "l1": 0.021094,
       "ok": true,
-      "svg_edge": 0.032551,
-      "svg_l1": 0.027916
+      "svg_edge": 0.03175,
+      "svg_l1": 0.026559
     },
     "organic_frame_wavy": {
       "anchor_count": 1,
@@ -3192,12 +3309,12 @@
         "cubic_path": 1
       },
       "bbox_iou": 0.950013,
-      "edge": 0.035311,
+      "edge": 0.035522,
       "kind": "cubic_path",
-      "l1": 0.023242,
+      "l1": 0.024023,
       "ok": true,
-      "svg_edge": 0.035589,
-      "svg_l1": 0.028604
+      "svg_edge": 0.035865,
+      "svg_l1": 0.028996
     },
     "organic_leaf": {
       "anchor_count": 1,

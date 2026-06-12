@@ -6,7 +6,7 @@ import json
 import tempfile
 from dataclasses import dataclass, field, replace
 from fnmatch import fnmatch
-from math import ceil, cos, hypot, pi, radians, sin
+from math import atan2, ceil, cos, hypot, pi, radians, sin
 from pathlib import Path
 from statistics import mean
 from typing import Any, Callable, Iterable
@@ -1016,6 +1016,41 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ("concave_embrace_thick", "concave_embrace", "thick",
              (32, 33, 25, ((3, 0.06, 0.2),)),
              (("ellipse", (23, 23, 43, 43)), ("rect", (28, 0, 36, 26)))),
+        )
+    )
+    specs.extend(
+        _cornered_path_spec(
+            case_id,
+            family,
+            variant,
+            polygon,
+            min_corners=min_corners,
+        )
+        for case_id, family, variant, polygon, min_corners in (
+            ("corner_star", "corner_star", "base",
+             _star_polygon(32, 32, 26, 12, 5), 8),
+            ("corner_star_six", "corner_star", "six",
+             _star_polygon(32, 32, 25, 13, 6), 10),
+            ("corner_star_sharp", "corner_star", "sharp",
+             _star_polygon(32, 32, 27, 9, 4), 6),
+            ("corner_arrow", "corner_arrow", "base",
+             [(8, 24), (36, 24), (36, 12), (58, 32),
+              (36, 52), (36, 40), (8, 40)], 6),
+            ("corner_arrow_up", "corner_arrow", "up",
+             [(24, 56), (24, 28), (12, 28), (32, 6),
+              (52, 28), (40, 28), (40, 56)], 6),
+            ("corner_arrow_chevron", "corner_arrow", "chevron",
+             [(12, 10), (34, 32), (12, 54), (26, 54),
+              (48, 32), (26, 10)], 5),
+            ("corner_notch", "corner_notch", "base",
+             [(10, 14), (54, 14), (54, 50), (38, 50),
+              (32, 36), (26, 50), (10, 50)], 6),
+            ("corner_notch_deep", "corner_notch", "deep",
+             [(12, 12), (52, 12), (52, 52), (40, 52),
+              (32, 22), (24, 52), (12, 52)], 6),
+            ("corner_notch_double", "corner_notch", "double",
+             [(8, 16), (56, 16), (56, 48), (46, 48), (41, 34),
+              (36, 48), (28, 48), (23, 34), (18, 48), (8, 48)], 8),
         )
     )
     specs.extend(
@@ -2121,6 +2156,63 @@ def _concave_spec(
         max_svg_vs_preview_l1_error=0.03,
         min_bbox_iou=min_bbox_iou,
     )
+
+
+def _cornered_path_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    polygon: list[tuple[float, float]],
+    *,
+    min_corners: int,
+    max_nodes: int = 20,
+) -> PrimitiveSpec:
+    """A filled polygon whose sharp vertices must survive the Bezier fit.
+
+    These pin corner detection: without it the Schneider fit blends star
+    tips and arrow heads into C1 bulges that miss the raster budgets.
+    """
+
+    xs = [x for x, _ in polygon]
+    ys = [y for _, y in polygon]
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("cubic_path",),
+        geometry_type="cubic_path",
+        geometry={
+            "bounds": (min(xs), min(ys), max(xs), max(ys)),
+            "max_nodes": max_nodes,
+            "min_corners": min_corners,
+        },
+        draw=lambda draw, polygon=polygon: draw.polygon(polygon, fill=BLUE),
+        allow_cubic_path=True,
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.05,
+        max_svg_raster_l1_error=0.06,
+        max_svg_raster_edge_error=0.06,
+        max_svg_vs_preview_l1_error=0.03,
+        min_bbox_iou=0.85,
+    )
+
+
+def _star_polygon(
+    cx: float,
+    cy: float,
+    outer_radius: float,
+    inner_radius: float,
+    tips: int,
+    *,
+    phase: float = -pi / 2,
+) -> list[tuple[float, float]]:
+    points = []
+    for index in range(tips * 2):
+        radius = outer_radius if index % 2 == 0 else inner_radius
+        angle = phase + pi * index / tips
+        points.append((cx + radius * cos(angle), cy + radius * sin(angle)))
+    return points
 
 
 def _blob_polygon(
@@ -4083,7 +4175,53 @@ def _cubic_path_failures(
                     f"expected {expected_holes} even-odd holes, got {actual_holes}",
                 )
             )
+    if "min_corners" in spec.geometry:
+        min_corners = int(spec.geometry["min_corners"])
+        actual_corners = _count_path_tangent_breaks(path)
+        if actual_corners < min_corners:
+            failures.append(
+                _failure(
+                    "geometry_drift",
+                    f"expected at least {min_corners} sharp corners, "
+                    f"got {actual_corners}",
+                )
+            )
     return failures
+
+
+def _count_path_tangent_breaks(path: dict[str, Any]) -> int:
+    """Count on-curve points whose in/out tangents break by > ~26 degrees."""
+
+    points = [
+        (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
+        for point in path.get("points", [])
+    ]
+    controls = [
+        (
+            (float(pair[0].get("x", 0.0)), float(pair[0].get("y", 0.0))),
+            (float(pair[1].get("x", 0.0)), float(pair[1].get("y", 0.0))),
+        )
+        for pair in path.get("controls", [])
+    ]
+    if len(points) < 3 or len(controls) != len(points):
+        return 0
+    corners = 0
+    for index, point in enumerate(points):
+        incoming_control = controls[index - 1][1]
+        outgoing_control = controls[index][0]
+        in_dx = point[0] - incoming_control[0]
+        in_dy = point[1] - incoming_control[1]
+        out_dx = outgoing_control[0] - point[0]
+        out_dy = outgoing_control[1] - point[1]
+        in_length = hypot(in_dx, in_dy)
+        out_length = hypot(out_dx, out_dy)
+        if in_length <= 1e-6 or out_length <= 1e-6:
+            continue
+        cross = in_dx * out_dy - in_dy * out_dx
+        dot = in_dx * out_dx + in_dy * out_dy
+        if abs(atan2(cross, dot)) > 0.45:
+            corners += 1
+    return corners
 
 
 def _point_polyline_distance(

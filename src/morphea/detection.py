@@ -224,7 +224,10 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
     # segments to the whole contour. Approximation averages the remaining
     # noise out, unlike interpolation through individual contour pixels, and
     # the adaptive splits land segment joints at the curvature extrema.
-    smoothed = _smoothed_closed_outline(outline, window=2)
+    # Corners are detected on the raw trace (smoothing spreads them out)
+    # and pinned through the smoothing so apexes stay sharp.
+    corners = _detect_outline_corners(outline)
+    smoothed = _smoothed_closed_outline(outline, window=2, pinned=corners)
     perimeter = sum(
         smoothed[index].distance_to(smoothed[(index + 1) % len(smoothed)])
         for index in range(len(smoothed))
@@ -236,6 +239,7 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
     points, controls, fit_error = _fit_closed_bezier_outline(
         smoothed,
         max_segments=node_budget,
+        corners=corners,
     )
     smoothness = _curvature_jitter(points + points[:2])
     holes = _fitted_hole_subpaths(component)
@@ -289,7 +293,8 @@ def _fitted_hole_subpaths(
         outline = _traced_outline(gap)
         if outline is None or len(outline) < 4:
             continue
-        smoothed = _smoothed_closed_outline(outline, window=2)
+        corners = _detect_outline_corners(outline)
+        smoothed = _smoothed_closed_outline(outline, window=2, pinned=corners)
         perimeter = sum(
             smoothed[index].distance_to(smoothed[(index + 1) % len(smoothed)])
             for index in range(len(smoothed))
@@ -298,6 +303,7 @@ def _fitted_hole_subpaths(
         hole_points, hole_controls, _ = _fit_closed_bezier_outline(
             smoothed,
             max_segments=budget,
+            corners=corners,
         )
         holes.append((hole_points, hole_controls))
     return tuple(holes)
@@ -339,14 +345,24 @@ def _smoothed_closed_outline(
     outline: tuple[Point, ...],
     *,
     window: int,
+    pinned: tuple[int, ...] = (),
 ) -> tuple[Point, ...]:
-    """Circular moving average; removes staircase jitter before fitting."""
+    """Circular moving average; removes staircase jitter before fitting.
+
+    ``pinned`` indices keep their raw position: averaging a star tip or
+    arrow head shaves the apex off and halves the tangent break the
+    corner-aware fit needs downstream.
+    """
 
     count = len(outline)
     if count < window * 2 + 3:
         return outline
+    pinned_set = set(pinned)
     smoothed = []
     for index in range(count):
+        if index in pinned_set:
+            smoothed.append(outline[index])
+            continue
         xs = 0.0
         ys = 0.0
         for offset in range(-window, window + 1):
@@ -365,12 +381,17 @@ def _fit_closed_bezier_outline(
     outline: tuple[Point, ...],
     *,
     max_segments: int,
+    corners: tuple[int, ...] | None = None,
 ) -> tuple[tuple[Point, ...], tuple[tuple[Point, Point], ...], float]:
     """Least-squares cubic Bezier fit of a closed contour (Schneider).
 
     Returns on-curve points, per-segment control pairs, and the maximum
     fit error in pixels. The error tolerance widens until the segment
-    budget holds.
+    budget holds. Sharp direction breaks (star tips, arrow heads) become
+    segment boundaries with free tangents, so corners stay corners
+    instead of being blended into C1 bulges. Pass ``corners`` detected on
+    the raw outline (same indexing); detecting here on a smoothed contour
+    misses shallow corners the smoothing already spread out.
     """
 
     count = len(outline)
@@ -381,41 +402,80 @@ def _fit_closed_bezier_outline(
         )
         return outline, controls, 0.0
 
-    anchor_a = max(
-        range(count),
-        key=lambda index: outline[index].distance_to(outline[0]),
-    )
-    anchor_b = max(
-        range(count),
-        key=lambda index: outline[index].distance_to(outline[anchor_a]),
-    )
-    first, second = sorted((anchor_a, anchor_b))
-    half_one = outline[first : second + 1]
-    half_two = outline[second:] + outline[: first + 1]
-    # Shared joint tangents keep the two halves C1-continuous.
-    tangent_first = _normalized_direction(
-        outline[(first + 1) % count],
-        outline[(first - 1) % count],
-    )
-    tangent_second = _normalized_direction(
-        outline[(second + 1) % count],
-        outline[(second - 1) % count],
-    )
+    if corners is None:
+        corners = _detect_outline_corners(outline, max_corners=max_segments)
+    else:
+        corners = tuple(index for index in corners if index < count)[
+            :max_segments
+        ]
+    if len(corners) == 2:
+        # Two corners alone (a crescent's tips) would yield a fragile
+        # two-node path; split each arc at its chord-distance apex so the
+        # shape keeps editable nodes at the curvature extrema.
+        corners = tuple(sorted(set(corners) | {
+            apex
+            for apex in (
+                _chord_apex_index(outline, corners[0], corners[1]),
+                _chord_apex_index(outline, corners[1], corners[0]),
+            )
+            if apex is not None
+        }))
+    if len(corners) >= 2:
+        pieces = []
+        for position, start in enumerate(corners):
+            end = corners[(position + 1) % len(corners)]
+            if end > start:
+                piece = outline[start : end + 1]
+            else:
+                piece = outline[start:] + outline[: end + 1]
+            pieces.append(piece)
+        joint_tangents = None
+    else:
+        anchor_a = max(
+            range(count),
+            key=lambda index: outline[index].distance_to(outline[0]),
+        )
+        anchor_b = max(
+            range(count),
+            key=lambda index: outline[index].distance_to(outline[anchor_a]),
+        )
+        first, second = sorted((anchor_a, anchor_b))
+        pieces = [
+            outline[first : second + 1],
+            outline[second:] + outline[: first + 1],
+        ]
+        # Shared joint tangents keep the two halves C1-continuous.
+        joint_tangents = (
+            _normalized_direction(
+                outline[(first + 1) % count],
+                outline[(first - 1) % count],
+            ),
+            _normalized_direction(
+                outline[(second + 1) % count],
+                outline[(second - 1) % count],
+            ),
+        )
 
     tolerance = 0.45
     segments: list[BezierSegment] = []
     for _ in range(8):
-        segments = _fit_cubic(
-            half_one,
-            tangent_first,
-            _negated(tangent_second),
-            tolerance,
-        ) + _fit_cubic(
-            half_two,
-            tangent_second,
-            _negated(tangent_first),
-            tolerance,
-        )
+        segments = []
+        for index, piece in enumerate(pieces):
+            if joint_tangents is not None:
+                left = joint_tangents[index]
+                right = _negated(joint_tangents[(index + 1) % 2])
+            else:
+                # Free chord tangents at the corners; sharing them with
+                # the neighbour piece would round the corner off.
+                left = _normalized_direction(
+                    piece[min(2, len(piece) - 1)],
+                    piece[0],
+                )
+                right = _normalized_direction(
+                    piece[max(len(piece) - 3, 0)],
+                    piece[-1],
+                )
+            segments.extend(_fit_cubic(piece, left, right, tolerance))
         if len(segments) <= max_segments:
             break
         tolerance *= 1.5
@@ -430,6 +490,94 @@ def _fit_closed_bezier_outline(
         )
         max_error = max(max_error, best)
     return points, controls, round(max_error, 4)
+
+
+def _detect_outline_corners(
+    outline: tuple[Point, ...],
+    *,
+    span: int = 4,
+    min_turn: float = 0.65,
+    max_corners: int = 16,
+) -> tuple[int, ...]:
+    """Indices where the contour direction breaks sharply.
+
+    Measure on the RAW traced outline: smoothing spreads a corner across
+    several points and pushes its turn below any usable threshold. Two
+    chord scales separate corners from curvature: a genuine corner keeps
+    its turn when the chord doubles, while smooth curvature roughly
+    doubles with it. Staircase jitter stays far below the threshold at
+    both scales. Returns non-maximum-suppressed indices in contour order;
+    an empty tuple means the contour is smooth everywhere.
+    """
+
+    count = len(outline)
+    if count < span * 4 + 4:
+        return ()
+    turns_small = _chord_turns(outline, span)
+    turns_large = _chord_turns(outline, span * 2)
+
+    kept: list[int] = []
+    for index in sorted(
+        (i for i in range(count) if turns_small[i] >= min_turn),
+        key=lambda i: -turns_small[i],
+    ):
+        if turns_large[index] > turns_small[index] + 0.35:
+            continue
+        distance_ok = all(
+            min(abs(index - other), count - abs(index - other)) > span * 2
+            for other in kept
+        )
+        if distance_ok:
+            kept.append(index)
+        if len(kept) >= max_corners:
+            break
+    return tuple(sorted(kept))
+
+
+def _chord_apex_index(
+    outline: tuple[Point, ...],
+    start: int,
+    end: int,
+) -> int | None:
+    """Index of the point farthest from the start-end chord, walking forward."""
+
+    count = len(outline)
+    size = (end - start) % count
+    if size < 10:
+        return None
+    chord_start = outline[start]
+    chord_end = outline[end]
+    best_index = None
+    best_distance = 0.0
+    for offset in range(1, size):
+        index = (start + offset) % count
+        distance = _point_line_distance(outline[index], chord_start, chord_end)
+        if distance > best_distance:
+            best_distance = distance
+            best_index = index
+    if best_distance < 1.5:
+        return None
+    return best_index
+
+
+def _chord_turns(outline: tuple[Point, ...], span: int) -> list[float]:
+    count = len(outline)
+    turns = []
+    for index in range(count):
+        before = outline[(index - span) % count]
+        here = outline[index]
+        after = outline[(index + span) % count]
+        in_dx = here.x - before.x
+        in_dy = here.y - before.y
+        out_dx = after.x - here.x
+        out_dy = after.y - here.y
+        if hypot(in_dx, in_dy) <= 0 or hypot(out_dx, out_dy) <= 0:
+            turns.append(0.0)
+            continue
+        cross = in_dx * out_dy - in_dy * out_dx
+        dot = in_dx * out_dx + in_dy * out_dy
+        turns.append(abs(atan2(cross, dot)))
+    return turns
 
 
 def _line_controls(start: Point, end: Point) -> tuple[Point, Point]:
@@ -1713,6 +1861,14 @@ def _smooth_stroke_path_candidate(
     if samples is None or len(samples) < 5:
         return None
 
+    # A smooth band has at most the four cap corners of its butt ends.
+    # More sharp outline corners mean spikes or kinks (star tips, chevron
+    # bends) that a smooth centerline would blur into bulges.
+    outline = _traced_outline(component)
+    if outline is not None and len(outline) >= 16:
+        if len(_detect_outline_corners(outline)) > 4:
+            return None
+
     path_length = sum(
         a.distance_to(b) for a, b in zip(samples, samples[1:])
     )
@@ -2145,6 +2301,8 @@ def _quad_candidate(
     fill_error = _scanline_quad_fill_error(component, quad)
     if fill_error > thresholds.quad_max_fill_error:
         return None
+    if _has_compact_fill_defect(component, _quad_inside_predicate(quad)):
+        return None
 
     candidate = AnchorCandidate(
         kind=AnchorKind.QUAD,
@@ -2155,6 +2313,94 @@ def _quad_candidate(
         metrics=_quad_subtype_metrics(quad),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _quad_inside_predicate(quad: QuadAnchor):
+    corners = quad.corners
+
+    def inside(x: float, y: float) -> bool:
+        sign = 0
+        for index in range(4):
+            ax, ay = corners[index].x, corners[index].y
+            bx, by = corners[(index + 1) % 4].x, corners[(index + 1) % 4].y
+            cross = (bx - ax) * (y - ay) - (by - ay) * (x - ax)
+            if abs(cross) < 1e-9:
+                continue
+            current = 1 if cross > 0 else -1
+            if sign == 0:
+                sign = current
+            elif sign != current:
+                return False
+        return True
+
+    return inside
+
+
+def _has_compact_fill_defect(component: MaskComponent, inside) -> bool:
+    """True when the candidate shape covers a chunky region the ink lacks.
+
+    Notches and star valleys cost only a few percent of fill error, but
+    they form one compact missing region; anti-aliased edge fringes are
+    thin and stay below the thickness cut. Regions are measured against
+    the bounding box (not the fitted polygon): a rectangular missing
+    block flush with a box edge is the occlusion pattern the fragment
+    promotion resolves later, so it must not disqualify the candidate.
+    The ``inside`` predicate then decides whether a genuinely concave
+    region affects this candidate's shape at all (wedge quads leave the
+    box-corner triangles outside their polygon). Large components skip
+    the scan to keep candidate generation cheap.
+    """
+
+    min_x, min_y, max_x, max_y = component.bounds
+    window_area = (max_x - min_x + 1) * (max_y - min_y + 1)
+    if window_area > 100_000:
+        return False
+    pixels = component.pixels
+    missing = {
+        (x, y)
+        for y in range(min_y, max_y + 1)
+        for x in range(min_x, max_x + 1)
+        if (x, y) not in pixels
+    }
+    min_area = max(16, component.area * 0.02)
+    while missing:
+        seed = missing.pop()
+        region = [seed]
+        queue = [seed]
+        while queue:
+            cx, cy = queue.pop()
+            for nx, ny in (
+                (cx - 1, cy),
+                (cx + 1, cy),
+                (cx, cy - 1),
+                (cx, cy + 1),
+            ):
+                if (nx, ny) in missing:
+                    missing.remove((nx, ny))
+                    region.append((nx, ny))
+                    queue.append((nx, ny))
+        if len(region) < min_area:
+            continue
+        xs = [x for x, _ in region]
+        ys = [y for _, y in region]
+        region_w = max(xs) - min(xs) + 1
+        region_h = max(ys) - min(ys) + 1
+        extent = max(region_w, region_h)
+        if len(region) / extent <= 2.5:
+            continue
+        rectangular = len(region) / (region_w * region_h) >= 0.85
+        touches_edge = (
+            min(xs) <= min_x
+            or max(xs) >= max_x
+            or min(ys) <= min_y
+            or max(ys) >= max_y
+        )
+        if rectangular and touches_edge:
+            continue
+        covered = sum(1 for x, y in region if inside(x, y))
+        if covered >= max(min_area, len(region) * 0.5):
+            return True
+    return False
 
 
 def _extreme_quad(component: MaskComponent) -> QuadAnchor | None:
@@ -2205,6 +2451,11 @@ def _rect_candidate(
             return None
         if abs(left - min_x) > 1 or abs(right - max_x) > 1:
             return None
+
+    # Row spans only see the leftmost/rightmost ink per row, so an interior
+    # notch biting in from an edge stays invisible to the checks above.
+    if _has_compact_fill_defect(component, lambda x, y: True):
+        return None
 
     quad = QuadAnchor(
         corners=(
