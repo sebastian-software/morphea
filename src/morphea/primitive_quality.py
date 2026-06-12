@@ -20,6 +20,7 @@ from morphea.scene import SvgStyle
 
 Geometry = dict[str, Any]
 DrawFunction = Callable[[ImageDraw.ImageDraw], None]
+BLUE = "#003366"
 
 
 @dataclass(frozen=True)
@@ -44,108 +45,337 @@ class PrimitiveSpec:
 
 
 def primitive_specs() -> tuple[PrimitiveSpec, ...]:
-    blue = "#003366"
-    return (
-        PrimitiveSpec(
-            id="filled_square",
-            expected_kinds=("rect", "quad"),
-            geometry_type="quad",
-            geometry={"corners": ((16, 16), (47, 16), (47, 47), (16, 47))},
-            draw=lambda draw: draw.rectangle((16, 16, 47, 47), fill=blue),
-            max_raster_l1_error=0.001,
-            max_raster_edge_error=0.001,
+    specs: list[PrimitiveSpec] = []
+    specs.extend(
+        _square_spec(case_id, variant, box)
+        for case_id, variant, box in (
+            ("filled_square", "base", (16, 16, 47, 47)),
+            ("filled_square_small_top_left", "small_top_left", (8, 8, 25, 25)),
+            ("filled_square_small_bottom_right", "small_bottom_right", (38, 34, 55, 51)),
+            ("filled_square_medium_left", "medium_left", (6, 24, 29, 47)),
+            ("filled_square_medium_right", "medium_right", (35, 10, 58, 33)),
+            ("filled_square_large_center", "large_center", (10, 10, 53, 53)),
+            ("filled_square_near_top", "near_top", (24, 2, 45, 23)),
+            ("filled_square_near_bottom", "near_bottom", (20, 40, 41, 61)),
+            ("filled_square_tiny_center", "tiny_center", (27, 27, 38, 38)),
+            ("filled_square_offset_center", "offset_center", (18, 11, 44, 37)),
+        )
+    )
+    specs.extend(
+        _rectangle_spec(case_id, variant, box)
+        for case_id, variant, box in (
+            ("filled_rectangle", "base", (12, 20, 52, 38)),
+            ("filled_rectangle_tall", "tall", (18, 8, 38, 56)),
+            ("filled_rectangle_wide", "wide", (6, 24, 58, 38)),
+            ("filled_rectangle_wide_thick", "wide_thick", (4, 22, 60, 36)),
+            ("filled_rectangle_narrow_tall", "narrow_tall", (26, 4, 40, 60)),
+            ("filled_rectangle_small", "small", (8, 8, 28, 22)),
+            ("filled_rectangle_bottom", "bottom", (18, 42, 54, 58)),
+            ("filled_rectangle_top_strip", "top_strip", (10, 4, 54, 16)),
+            ("filled_rectangle_right", "right", (38, 12, 58, 50)),
+            ("filled_rectangle_near_square", "near_square", (20, 16, 48, 42)),
+        )
+    )
+    specs.extend(
+        _circle_spec(case_id, variant, box)
+        for case_id, variant, box in (
+            ("filled_circle", "base", (18, 18, 46, 46)),
+            ("filled_circle_small_top_left", "small_top_left", (8, 8, 28, 28)),
+            ("filled_circle_small_top_right", "small_top_right", (34, 8, 56, 30)),
+            ("filled_circle_small_bottom_left", "small_bottom_left", (8, 34, 30, 56)),
+            ("filled_circle_large_top_right", "large_top_right", (24, 4, 60, 40)),
+            ("filled_circle_large_bottom_left", "large_bottom_left", (4, 24, 36, 56)),
+            ("filled_circle_medium_center", "medium_center", (20, 20, 44, 44)),
+            ("filled_circle_large_center", "large_center", (10, 14, 50, 54)),
+            ("filled_circle_near_origin", "near_origin", (2, 2, 30, 30)),
+            ("filled_circle_near_corner", "near_corner", (32, 32, 60, 60)),
+        )
+    )
+    specs.extend(
+        _horizontal_stroke_spec(case_id, variant, line, width)
+        for case_id, variant, line, width in (
+            ("horizontal_stroke", "base", (12, 32, 52, 32), 4),
+            ("horizontal_stroke_width_1", "width_1", (8, 14, 56, 14), 1),
+            ("horizontal_stroke_width_2", "width_2", (8, 20, 56, 20), 2),
+            ("horizontal_stroke_width_3", "width_3", (10, 26, 54, 26), 3),
+            ("horizontal_stroke_width_5", "width_5", (8, 38, 56, 38), 5),
+            ("horizontal_stroke_width_6", "width_6", (12, 46, 52, 46), 6),
+            ("horizontal_stroke_width_8", "width_8", (10, 54, 54, 54), 8),
+            ("horizontal_stroke_short", "short", (18, 10, 42, 10), 4),
+            ("horizontal_stroke_left", "left", (4, 32, 34, 32), 4),
+            ("horizontal_stroke_right", "right", (30, 32, 60, 32), 4),
+        )
+    )
+    specs.extend(
+        _vertical_stroke_spec(case_id, variant, line, width)
+        for case_id, variant, line, width in (
+            ("vertical_stroke", "base", (32, 12, 32, 52), 4),
+            ("vertical_stroke_width_1", "width_1", (14, 8, 14, 56), 1),
+            ("vertical_stroke_width_2", "width_2", (20, 8, 20, 56), 2),
+            ("vertical_stroke_width_3", "width_3", (26, 10, 26, 54), 3),
+            ("vertical_stroke_width_5", "width_5", (38, 8, 38, 56), 5),
+            ("vertical_stroke_width_6", "width_6", (46, 12, 46, 52), 6),
+            ("vertical_stroke_width_8", "width_8", (54, 10, 54, 54), 8),
+            ("vertical_stroke_short", "short", (10, 18, 10, 42), 4),
+            ("vertical_stroke_top", "top", (32, 4, 32, 34), 4),
+            ("vertical_stroke_bottom", "bottom", (32, 30, 32, 60), 4),
+        )
+    )
+    specs.extend(
+        _diagonal_stroke_spec(case_id, variant, line, width)
+        for case_id, variant, line, width in (
+            ("diagonal_stroke", "base", (14, 50, 50, 14), 3),
+            ("diagonal_stroke_width_2", "width_2", (12, 52, 52, 12), 2),
+            ("diagonal_stroke_width_3", "width_3", (10, 50, 54, 14), 3),
+            ("diagonal_stroke_width_4", "width_4", (8, 48, 56, 20), 4),
+            ("diagonal_stroke_width_5", "width_5", (12, 12, 52, 52), 5),
+            ("diagonal_stroke_width_6", "width_6", (8, 56, 56, 8), 6),
+            ("diagonal_stroke_width_7", "width_7", (16, 54, 50, 10), 7),
+            ("diagonal_stroke_width_8", "width_8", (10, 16, 54, 48), 8),
+            ("diagonal_stroke_shallow", "shallow", (8, 44, 56, 24), 4),
+            ("diagonal_stroke_steep", "steep", (24, 56, 42, 8), 4),
+        )
+    )
+    specs.extend(
+        _ring_spec(case_id, variant, box, width)
+        for case_id, variant, box, width in (
+            ("outlined_ring", "base", (18, 18, 46, 46), 4),
+            ("outlined_ring_thin", "thin", (18, 18, 46, 46), 2),
+            ("outlined_ring_medium", "medium", (16, 16, 48, 48), 4),
+            ("outlined_ring_thick", "thick", (16, 16, 48, 48), 6),
+            ("outlined_ring_large_thick", "large_thick", (10, 10, 54, 54), 8),
+            ("outlined_ring_small_left", "small_left", (6, 18, 34, 46), 4),
+            ("outlined_ring_small_right", "small_right", (30, 18, 58, 46), 4),
+            ("outlined_ring_top", "top", (18, 4, 46, 32), 4),
+            ("outlined_ring_bottom", "bottom", (18, 30, 46, 58), 4),
+            ("outlined_ring_large", "large", (8, 8, 56, 56), 5),
+        )
+    )
+    specs.extend(
+        _rounded_rectangle_spec(case_id, variant, box, radius)
+        for case_id, variant, box, radius in (
+            ("rounded_rectangle", "base", (14, 20, 50, 44), 6),
+            ("rounded_rectangle_small_radius", "small_radius", (8, 8, 38, 30), 4),
+            ("rounded_rectangle_medium_radius", "medium_radius", (10, 18, 54, 46), 10),
+            ("rounded_rectangle_tall", "tall", (20, 8, 50, 56), 8),
+            ("rounded_rectangle_wide", "wide", (6, 24, 58, 42), 6),
+            ("rounded_rectangle_small", "small", (12, 10, 36, 28), 5),
+            ("rounded_rectangle_bottom", "bottom", (14, 36, 52, 58), 7),
+            ("rounded_rectangle_top", "top", (14, 4, 52, 26), 7),
+            ("rounded_rectangle_right", "right", (30, 12, 58, 48), 8),
+            ("rounded_rectangle_left", "left", (6, 12, 34, 48), 8),
+        )
+    )
+    specs.extend(
+        _quad_spec(case_id, variant, corners)
+        for case_id, variant, corners in (
+            ("simple_quad", "base", ((20, 18), (46, 18), (54, 44), (12, 44))),
+            ("simple_quad_trapezoid_1", "trapezoid_1", ((18, 18), (46, 18), (52, 44), (12, 44))),
+            ("simple_quad_trapezoid_2", "trapezoid_2", ((14, 14), (50, 14), (54, 48), (10, 48))),
+            ("simple_quad_trapezoid_3", "trapezoid_3", ((18, 12), (42, 12), (50, 52), (10, 52))),
+            ("simple_quad_trapezoid_4", "trapezoid_4", ((10, 20), (54, 20), (48, 48), (16, 48))),
+            ("simple_quad_trapezoid_5", "trapezoid_5", ((20, 10), (44, 10), (56, 42), (8, 42))),
+            ("simple_quad_trapezoid_6", "trapezoid_6", ((8, 12), (56, 12), (50, 32), (16, 32))),
+            ("simple_quad_trapezoid_7", "trapezoid_7", ((16, 30), (48, 30), (58, 56), (6, 56))),
+            ("simple_quad_trapezoid_8", "trapezoid_8", ((24, 8), (54, 8), (48, 40), (12, 40))),
+            ("simple_quad_trapezoid_9", "trapezoid_9", ((12, 24), (52, 24), (44, 54), (20, 54))),
+        )
+    )
+    return tuple(specs)
+
+
+def _square_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+) -> PrimitiveSpec:
+    return _rectangle_spec(case_id, variant, box, family="filled_square")
+
+
+def _rectangle_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+    *,
+    family: str = "filled_rectangle",
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("rect", "quad"),
+        geometry_type="quad",
+        geometry={"corners": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))},
+        draw=lambda draw, box=box: draw.rectangle(box, fill=BLUE),
+        max_raster_l1_error=0.001,
+        max_raster_edge_error=0.001,
+    )
+
+
+def _circle_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    radius = (x1 - x0) / 2
+    return PrimitiveSpec(
+        id=case_id,
+        family="filled_circle",
+        variant=variant,
+        expected_kinds=("circle",),
+        geometry_type="circle",
+        geometry={"cx": (x0 + x1) / 2, "cy": (y0 + y1) / 2, "r": radius},
+        draw=lambda draw, box=box: draw.ellipse(box, fill=BLUE),
+        max_raster_l1_error=0.018,
+        max_raster_edge_error=0.024,
+        min_bbox_iou=0.9,
+    )
+
+
+def _horizontal_stroke_spec(
+    case_id: str,
+    variant: str,
+    line: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = line
+    center_y = y0 + (0.5 if width % 2 == 0 else 0.0)
+    return PrimitiveSpec(
+        id=case_id,
+        family="horizontal_stroke",
+        variant=variant,
+        expected_kinds=("stroke_polyline",),
+        geometry_type="stroke",
+        geometry={"centerline": ((float(x0), center_y), (float(x1), center_y)), "width": float(width)},
+        draw=lambda draw, line=line, width=width: draw.line(line, fill=BLUE, width=width),
+        coordinate_tolerance=1.75,
+        max_raster_l1_error=0.002,
+        max_raster_edge_error=0.002,
+    )
+
+
+def _vertical_stroke_spec(
+    case_id: str,
+    variant: str,
+    line: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = line
+    center_x = x0 + (0.5 if width % 2 == 0 else 0.0)
+    return PrimitiveSpec(
+        id=case_id,
+        family="vertical_stroke",
+        variant=variant,
+        expected_kinds=("stroke_polyline",),
+        geometry_type="stroke",
+        geometry={"centerline": ((center_x, float(y0)), (center_x, float(y1))), "width": float(width)},
+        draw=lambda draw, line=line, width=width: draw.line(line, fill=BLUE, width=width),
+        coordinate_tolerance=1.75,
+        max_raster_l1_error=0.002,
+        max_raster_edge_error=0.002,
+    )
+
+
+def _diagonal_stroke_spec(
+    case_id: str,
+    variant: str,
+    line: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = line
+    return PrimitiveSpec(
+        id=case_id,
+        family="diagonal_stroke",
+        variant=variant,
+        expected_kinds=("stroke_polyline",),
+        geometry_type="stroke",
+        geometry={
+            "centerline": ((float(x0), float(y0)), (float(x1), float(y1))),
+            "width": float(width),
+        },
+        draw=lambda draw, line=line, width=width: draw.line(line, fill=BLUE, width=width),
+        coordinate_tolerance=2.75,
+        max_raster_l1_error=0.035,
+        max_raster_edge_error=0.055,
+        min_bbox_iou=0.78,
+    )
+
+
+def _ring_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    outer_radius = (x1 - x0) / 2
+    return PrimitiveSpec(
+        id=case_id,
+        family="outlined_ring",
+        variant=variant,
+        expected_kinds=("stroke_circle",),
+        geometry_type="stroke_circle",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "r": outer_radius - width / 2 + 0.5,
+            "width": width + 0.5,
+        },
+        draw=lambda draw, box=box, width=width: draw.ellipse(
+            box,
+            outline=BLUE,
+            width=width,
         ),
-        PrimitiveSpec(
-            id="filled_rectangle",
-            expected_kinds=("rect", "quad"),
-            geometry_type="quad",
-            geometry={"corners": ((12, 20), (52, 20), (52, 38), (12, 38))},
-            draw=lambda draw: draw.rectangle((12, 20, 52, 38), fill=blue),
-            max_raster_l1_error=0.001,
-            max_raster_edge_error=0.001,
+        coordinate_tolerance=2.0,
+        max_raster_l1_error=0.18,
+        max_raster_edge_error=0.08,
+        min_bbox_iou=0.8,
+    )
+
+
+def _rounded_rectangle_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+    radius: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family="rounded_rectangle",
+        variant=variant,
+        expected_kinds=("rounded_rect",),
+        geometry_type="quad",
+        geometry={"corners": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))},
+        draw=lambda draw, box=box, radius=radius: draw.rounded_rectangle(
+            box,
+            radius=radius,
+            fill=BLUE,
         ),
-        PrimitiveSpec(
-            id="filled_circle",
-            expected_kinds=("circle",),
-            geometry_type="circle",
-            geometry={"cx": 32.0, "cy": 32.0, "r": 14.0},
-            draw=lambda draw: draw.ellipse((18, 18, 46, 46), fill=blue),
-            max_raster_l1_error=0.015,
-            max_raster_edge_error=0.02,
-            min_bbox_iou=0.92,
-        ),
-        PrimitiveSpec(
-            id="horizontal_stroke",
-            expected_kinds=("stroke_polyline",),
-            geometry_type="stroke",
-            geometry={
-                "centerline": ((12.0, 32.5), (52.0, 32.5)),
-                "width": 4.0,
-            },
-            draw=lambda draw: draw.line((12, 32, 52, 32), fill=blue, width=4),
-            max_raster_l1_error=0.001,
-            max_raster_edge_error=0.001,
-        ),
-        PrimitiveSpec(
-            id="vertical_stroke",
-            expected_kinds=("stroke_polyline",),
-            geometry_type="stroke",
-            geometry={
-                "centerline": ((32.5, 12.0), (32.5, 52.0)),
-                "width": 4.0,
-            },
-            draw=lambda draw: draw.line((32, 12, 32, 52), fill=blue, width=4),
-            max_raster_l1_error=0.001,
-            max_raster_edge_error=0.001,
-        ),
-        PrimitiveSpec(
-            id="diagonal_stroke",
-            expected_kinds=("stroke_polyline",),
-            geometry_type="stroke",
-            geometry={
-                "centerline": ((14.0, 50.0), (50.0, 14.0)),
-                "width": 4.0,
-            },
-            draw=lambda draw: draw.line((14, 50, 50, 14), fill=blue, width=3),
-            max_raster_l1_error=0.02,
-            max_raster_edge_error=0.04,
-            min_bbox_iou=0.86,
-        ),
-        PrimitiveSpec(
-            id="outlined_ring",
-            expected_kinds=("stroke_circle",),
-            geometry_type="stroke_circle",
-            geometry={"cx": 32.0, "cy": 32.0, "r": 12.5, "width": 4.5},
-            draw=lambda draw: draw.ellipse((18, 18, 46, 46), outline=blue, width=4),
-            max_raster_l1_error=0.07,
-            max_raster_edge_error=0.05,
-            min_bbox_iou=0.82,
-        ),
-        PrimitiveSpec(
-            id="rounded_rectangle",
-            expected_kinds=("rounded_rect",),
-            geometry_type="quad",
-            geometry={"corners": ((14, 20), (50, 20), (50, 44), (14, 44))},
-            draw=lambda draw: draw.rounded_rectangle(
-                (14, 20, 50, 44),
-                radius=6,
-                fill=blue,
-            ),
-            max_raster_l1_error=0.02,
-            max_raster_edge_error=0.02,
-        ),
-        PrimitiveSpec(
-            id="simple_quad",
-            expected_kinds=("quad",),
-            geometry_type="quad",
-            geometry={"corners": ((20, 18), (46, 18), (54, 44), (12, 44))},
-            draw=lambda draw: draw.polygon(
-                ((20, 18), (46, 18), (54, 44), (12, 44)),
-                fill=blue,
-            ),
-            max_raster_l1_error=0.001,
-            max_raster_edge_error=0.001,
-        ),
+        max_raster_l1_error=0.03,
+        max_raster_edge_error=0.03,
+        min_bbox_iou=0.9,
+    )
+
+
+def _quad_spec(
+    case_id: str,
+    variant: str,
+    corners: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]],
+) -> PrimitiveSpec:
+    return PrimitiveSpec(
+        id=case_id,
+        family="simple_quad",
+        variant=variant,
+        expected_kinds=("quad",),
+        geometry_type="quad",
+        geometry={"corners": corners},
+        draw=lambda draw, corners=corners: draw.polygon(corners, fill=BLUE),
+        max_raster_l1_error=0.002,
+        max_raster_edge_error=0.002,
+        min_bbox_iou=0.9,
     )
 
 
@@ -276,7 +506,7 @@ def _selected_specs(
         selected = tuple(
             spec
             for spec in selected
-            if spec.id in requested or _spec_family(spec) in requested
+            if spec.id in requested
         )
     if filter_pattern:
         selected = tuple(

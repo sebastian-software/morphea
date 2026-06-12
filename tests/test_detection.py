@@ -208,6 +208,41 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(anchors[0].stroke.centerline), 2)
         self.assertEqual(anchors[0].stroke.width_samples, (4.0,))
 
+    def test_one_pixel_horizontal_stroke_remains_stroke(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((8, 32, 56, 32), fill="black", width=1)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=1)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertEqual(len(anchors[0].stroke.centerline), 2)
+        self.assertEqual(anchors[0].stroke.width_samples, (1.0,))
+
+    def test_filled_wide_rectangle_prefers_rect_over_stroke(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((4, 24, 58, 34), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.RECT)
+
+    def test_skewed_quad_does_not_become_circle(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.polygon(((20, 12), (50, 20), (44, 52), (12, 44)), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.QUAD)
+
     def test_stroke_threshold_config_can_require_longer_thin_shapes(self):
         mask = BinaryMask.from_rows(
             (

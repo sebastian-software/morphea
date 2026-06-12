@@ -136,6 +136,8 @@ Exit criteria:
 
 ### PQ2: Primitive Variant Matrix
 
+Status: implemented for deterministic single-primitive variants.
+
 Purpose: prove single primitives across position, size, and style variation.
 
 Fixture families:
@@ -161,6 +163,14 @@ Exit criteria:
 - Each primitive family has at least 10 deterministic variants.
 - No family relies on `cubic_path` for simple expected shapes.
 - Visual thresholds are tight enough that a visibly shifted shape fails.
+
+Current evidence:
+
+- 90 deterministic primitive cases run through `morphea primitive-check`.
+- square, rectangle, circle, horizontal/vertical/diagonal stroke, ring, rounded
+  rectangle, and quad families each have 10 variants.
+- regressions cover 1 px strokes, wide filled rectangles, and skewed quads so
+  variants drive detector behavior instead of only looser thresholds.
 
 ### PQ3: Anti-Aliased and Palette-Drift Primitives
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from morphea.cli import main
 from morphea.primitive_quality import (
     check_primitive_quality,
+    primitive_specs,
     render_primitive_quality_markdown,
 )
 
@@ -18,7 +19,7 @@ class PrimitiveQualityTests(unittest.TestCase):
             report = check_primitive_quality(output_dir=temp_dir)
 
             self.assertTrue(report["ok"])
-            self.assertEqual(report["case_count"], 9)
+            self.assertEqual(report["case_count"], len(primitive_specs()))
             self.assertEqual(report["failed_count"], 0)
             self.assertEqual(report["selection"], {"cases": [], "filter": None})
             actual_kinds = {
@@ -52,12 +53,32 @@ class PrimitiveQualityTests(unittest.TestCase):
         self.assertEqual(report["selection"], {"cases": ["filled_square"], "filter": None})
 
     def test_primitive_quality_harness_filters_by_pattern(self):
-        report = check_primitive_quality(filter_pattern="*_stroke")
+        report = check_primitive_quality(filter_pattern="*_stroke_width_1")
 
         self.assertTrue(report["ok"])
         self.assertEqual(
             report["selected_case_ids"],
-            ["horizontal_stroke", "vertical_stroke", "diagonal_stroke"],
+            ["horizontal_stroke_width_1", "vertical_stroke_width_1"],
+        )
+
+    def test_primitive_specs_have_ten_variants_per_family(self):
+        counts: dict[str, int] = {}
+        for spec in primitive_specs():
+            counts[spec.family or spec.id] = counts.get(spec.family or spec.id, 0) + 1
+
+        self.assertEqual(
+            counts,
+            {
+                "diagonal_stroke": 10,
+                "filled_circle": 10,
+                "filled_rectangle": 10,
+                "filled_square": 10,
+                "horizontal_stroke": 10,
+                "outlined_ring": 10,
+                "rounded_rectangle": 10,
+                "simple_quad": 10,
+                "vertical_stroke": 10,
+            },
         )
 
     def test_primitive_quality_markdown_summarizes_failures(self):

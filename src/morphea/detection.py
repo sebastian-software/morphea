@@ -32,6 +32,7 @@ class AnchorThresholdConfig:
     circle_min_diameter: int = 3
     circle_max_aspect_error: float = 0.22
     circle_max_area_error: float = 0.35
+    circle_max_fit_residual: float = 0.06
     stroke_min_length: float = 4.0
     stroke_min_length_width_ratio: float = 3.0
     quad_min_fill_ratio: float = 0.35
@@ -288,6 +289,8 @@ def _circle_candidate(
         component,
         fallback_radius=fallback_radius,
     )
+    if diameter >= 12 and fit_residual > thresholds.circle_max_fit_residual:
+        return None
     samples = tuple(Point(x, y) for x, y in component.boundary_pixels)
     candidate = AnchorCandidate(
         kind=AnchorKind.CIRCLE,
@@ -430,6 +433,12 @@ def _stroke_candidate(
         stroke_width=stroke_width,
     )
     coverage = min(component.area / (length * stroke_width), 1.0)
+    if (
+        coverage >= 0.98
+        and stroke_width > 8.0
+        and _axis_aligned_filled_rect_component(component)
+    ):
+        return None
     width_samples = _stroke_width_samples_along_centerline(
         component,
         centerline,
@@ -622,11 +631,23 @@ def _stroke_bounds_exceed_component(
     if stroke_height / component_height > max_side_ratio:
         return True
     min_x, min_y, max_x, max_y = component.bounds
+    x_tolerance = max(1.0, component_width * 0.35)
+    y_tolerance = max(1.0, component_height * 0.35)
     return (
-        min(xs) - pad < min_x - component_width * 0.35
-        or max(xs) + pad > max_x + component_width * 0.35
-        or min(ys) - pad < min_y - component_height * 0.35
-        or max(ys) + pad > max_y + component_height * 0.35
+        min(xs) - pad < min_x - x_tolerance
+        or max(xs) + pad > max_x + x_tolerance
+        or min(ys) - pad < min_y - y_tolerance
+        or max(ys) + pad > max_y + y_tolerance
+    )
+
+
+def _axis_aligned_filled_rect_component(component: MaskComponent) -> bool:
+    if component.area != component.width * component.height:
+        return False
+    min_x, min_y, max_x, max_y = component.bounds
+    return all(
+        min_y <= y <= max_y and left == min_x and right == max_x
+        for y, left, right in component.row_spans()
     )
 
 
@@ -736,20 +757,12 @@ def _quad_candidate(
     ):
         return None
 
-    spans = component.row_spans()
-    if len(spans) < 3:
+    if len(component.boundary_pixels) < 4:
         return None
 
-    top_y, top_left, top_right = spans[0]
-    bottom_y, bottom_left, bottom_right = spans[-1]
-    quad = QuadAnchor(
-        corners=(
-            Point(top_left, top_y),
-            Point(top_right, top_y),
-            Point(bottom_right, bottom_y),
-            Point(bottom_left, bottom_y),
-        )
-    )
+    quad = _extreme_quad(component)
+    if quad is None:
+        return None
     fill_error = _scanline_quad_fill_error(component, quad)
     if fill_error > thresholds.quad_max_fill_error:
         return None
@@ -763,6 +776,19 @@ def _quad_candidate(
         metrics=_quad_subtype_metrics(quad),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _extreme_quad(component: MaskComponent) -> QuadAnchor | None:
+    points = [Point(x, y) for x, y in component.boundary_pixels]
+    top_left = min(points, key=lambda point: (point.x + point.y, point.y, point.x))
+    top_right = max(points, key=lambda point: (point.x - point.y, -point.y, point.x))
+    bottom_right = max(points, key=lambda point: (point.x + point.y, point.y, point.x))
+    bottom_left = min(points, key=lambda point: (point.x - point.y, -point.x, point.y))
+    corners = (top_left, top_right, bottom_right, bottom_left)
+    unique = {(point.x, point.y) for point in corners}
+    if len(unique) < 4:
+        return None
+    return QuadAnchor(corners=corners)
 
 
 def _quad_subtype_metrics(quad: QuadAnchor) -> dict[str, float]:
@@ -878,33 +904,57 @@ def _rounded_rect_candidate(
 
 def _scanline_quad_fill_error(component: MaskComponent, quad: QuadAnchor) -> float:
     corners = quad.corners
-    top_y = corners[0].y
-    bottom_y = corners[3].y
-    if bottom_y <= top_y:
+    min_y = int(min(point.y for point in corners))
+    max_y = int(max(point.y for point in corners))
+    if max_y <= min_y:
         return 1.0
 
     expected = 0
     missing = 0
     extra = 0
-    row_lookup = {y: (left, right) for y, left, right in component.row_spans()}
-    for y in range(int(top_y), int(bottom_y) + 1):
-        t = (y - top_y) / (bottom_y - top_y)
-        left = round(corners[0].x + (corners[3].x - corners[0].x) * t)
-        right = round(corners[1].x + (corners[2].x - corners[1].x) * t)
-        if left > right:
-            left, right = right, left
-        expected += right - left + 1
-        actual = row_lookup.get(y)
-        if actual is None:
-            missing += right - left + 1
+    row_pixels: dict[int, set[int]] = {}
+    for x, pixel_y in component.pixels:
+        row_pixels.setdefault(pixel_y, set()).add(x)
+    for y in range(min_y, max_y + 1):
+        row_span = _quad_row_span(corners, float(y))
+        if row_span is None:
             continue
-        actual_left, actual_right = actual
-        missing += max(0, actual_left - left) + max(0, right - actual_right)
-        extra += max(0, left - actual_left) + max(0, actual_right - right)
+        left, right = row_span
+        actual_xs = row_pixels.get(y, set())
+        expected += right - left + 1
+        missing += sum(1 for x in range(left, right + 1) if x not in actual_xs)
+        extra += sum(1 for x in actual_xs if x < left or x > right)
 
     if expected == 0:
         return 1.0
     return (missing + extra) / expected
+
+
+def _quad_row_span(
+    corners: tuple[Point, Point, Point, Point],
+    y: float,
+) -> tuple[int, int] | None:
+    intersections: list[float] = []
+    for index, start in enumerate(corners):
+        end = corners[(index + 1) % len(corners)]
+        if start.y == end.y:
+            if y == start.y:
+                intersections.extend((start.x, end.x))
+            continue
+        min_y = min(start.y, end.y)
+        max_y = max(start.y, end.y)
+        if y < min_y or y > max_y:
+            continue
+        t = (y - start.y) / (end.y - start.y)
+        if 0.0 <= t <= 1.0:
+            intersections.append(start.x + (end.x - start.x) * t)
+    if len(intersections) < 2:
+        return None
+    left = round(min(intersections))
+    right = round(max(intersections))
+    if left > right:
+        left, right = right, left
+    return left, right
 
 
 def _horizontal_cutout_strokes(
