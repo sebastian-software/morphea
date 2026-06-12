@@ -292,6 +292,24 @@ Proposal fields:
 `model_configured`, `model_exists`, and the runtime knobs. It will write the
 same proposal schema once the local model runtime is installed and wired.
 
+## Runtime Status Report v1
+
+Written by `curve status`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `segmenters`: status for `flat_color` and `mlx_sam`
+- `classifiers`: status for `centroid` and `mlx`
+- `refinement`: output of `available_refinement_backends()`
+- `blocked_backends`: normalized rows for unavailable or non-available
+  backends
+
+Each status entry records `status`, `backend_available`, and optional `reason`
+where the underlying backend exposes those fields. The report is intentionally
+diagnostic: missing MLX/SAM/DiffVG integrations are reported explicitly instead
+of being treated as partial success.
+
 ## Segment Config v1
 
 Read by `curve segment --config`.

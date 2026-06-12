@@ -744,6 +744,7 @@ Implemented so far:
 - `curve self-learn`
 - `curve retrain`
 - `curve refinement-gate`
+- `curve status`
 - `curve vectorize --config config.json` for repeatable runtime knob files
 - `curve train --config train.json` for repeatable classifier training inputs
 - `curve eval-classifier --config eval-classifier.json` for repeatable
@@ -774,6 +775,9 @@ Implemented so far:
 - `curve refine --config refine.json` for repeatable bounded refinement runs
 - `curve refinement-gate --config refinement-gate.json` for repeatable
   structure-preserving refinement acceptance decisions
+- `curve status -o status.json --markdown status.md` for a single
+  machine-readable report of segmenter, classifier, and refinement backend
+  availability/blockers
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
