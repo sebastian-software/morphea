@@ -322,6 +322,24 @@ Top-level fields:
 Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
 metrics, run metrics, and `source_manifest` provenance.
 
+## Harvest Config v1
+
+Read by `curve harvest --config`.
+
+Supported fields:
+
+- `run_root`
+- `output`
+- `max_run_diagnostics`
+- `max_classifier_prior_error`
+- `min_editability_score`
+- `max_fragmentation_penalty`
+- `max_raster_l1_error`
+- `max_raster_edge_error`
+- `max_anchor_quality_error`
+
+CLI arguments override values loaded from the config file.
+
 ## Review Queue and Reviewed Labels v1
 
 Written by `curve review` and `curve apply-review`.
