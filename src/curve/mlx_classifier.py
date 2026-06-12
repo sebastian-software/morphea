@@ -20,6 +20,10 @@ from curve.classifier import (
     examples_from_dataset,
     raster_examples_from_dataset,
 )
+from curve.token_transformer import (
+    raster_grid_token_count,
+    token_transformer_embedding,
+)
 
 
 MLX_MODEL_TYPE = "mlx_transformer_primitive_classifier"
@@ -71,6 +75,12 @@ def train_mlx_transformer_classifier(
         raise ValueError(msg)
     if training_config.num_heads <= 0:
         msg = "MLX num_heads must be positive"
+        raise ValueError(msg)
+    if training_config.hidden_dim <= 0:
+        msg = "MLX hidden_dim must be positive"
+        raise ValueError(msg)
+    if training_config.num_layers <= 0:
+        msg = "MLX num_layers must be positive"
         raise ValueError(msg)
     train_examples = examples_from_dataset(dataset_json, splits=("train",))
     if not train_examples:
@@ -193,13 +203,20 @@ def _train_mlx_weights(
         labels,
         config,
     )
+    head["token_transformer"] = _train_token_transformer(
+        train_examples,
+        raster_examples,
+        labels,
+        config,
+    )
     head["feature_head_parameter_count"] = head["parameter_count"]
     head["parameter_count"] += head["raster_token_mixer"]["parameter_count"]
     head["parameter_count"] += head["feature_raster_fusion"]["parameter_count"]
-    head["architecture"] = "feature_head_plus_raster_token_mixer_and_fusion_head"
-    head["transformer_status"] = (
-        "feature_raster_fusion_trained_transformer_encoder_pending"
+    head["parameter_count"] += head["token_transformer"]["parameter_count"]
+    head["architecture"] = (
+        "feature_head_plus_raster_token_mixer_fusion_and_token_transformer"
     )
+    head["transformer_status"] = "token_transformer_encoder_serialized"
     head["backend_version"] = getattr(mx, "__version__", "unknown")
     head["backend_array_api"] = "mlx.core"
     return head
@@ -425,6 +442,99 @@ def _train_feature_raster_fusion(
         "weights": weights,
         "bias": bias,
         "loss_history": loss_history,
+    }
+
+
+def _train_token_transformer(
+    train_examples: tuple[TrainingExample, ...],
+    raster_examples: tuple[RasterTrainingExample, ...],
+    labels: list[str],
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    label_to_index = {label: index for index, label in enumerate(labels)}
+    rows = []
+    for example, raster_example in zip(train_examples, raster_examples):
+        if (
+            example.label not in label_to_index
+            or raster_example.label != example.label
+        ):
+            continue
+        rows.append(
+            (
+                token_transformer_embedding(
+                    example.features,
+                    raster_example.crop_tokens,
+                    crop_size=config.crop_size,
+                    hidden_dim=config.hidden_dim,
+                    heads=config.num_heads,
+                    layers=config.num_layers,
+                ),
+                label_to_index[example.label],
+            )
+        )
+    if not rows:
+        return {
+            "weight_format": "mlx_token_transformer_v1",
+            "labels": list(labels),
+            "tokenization": _token_transformer_tokenization(config),
+            "encoder": _token_transformer_encoder_config(config),
+            "parameter_count": 0,
+            "weights": [],
+            "bias": [],
+            "normalization": {"mean": [], "scale": []},
+            "loss_history": [],
+        }
+
+    means, scales = _row_normalization(tuple(row for row, _ in rows))
+    normalized_rows = [
+        (_normalize_row(row, means, scales), target_index)
+        for row, target_index in rows
+    ]
+    weights, bias, loss_history = _train_softmax(
+        normalized_rows,
+        class_count=len(labels),
+        input_count=config.hidden_dim,
+        config=config,
+    )
+    return {
+        "weight_format": "mlx_token_transformer_v1",
+        "labels": list(labels),
+        "tokenization": _token_transformer_tokenization(config),
+        "encoder": _token_transformer_encoder_config(config),
+        "parameter_count": len(labels) * (config.hidden_dim + 1),
+        "normalization": {
+            "mean": list(means),
+            "scale": list(scales),
+        },
+        "weights": weights,
+        "bias": bias,
+        "loss_history": loss_history,
+    }
+
+
+def _token_transformer_tokenization(
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    return {
+        "feature_names": list(FEATURE_NAMES),
+        "crop_size": config.crop_size,
+        "raster_grid_size": min(4, config.crop_size),
+        "raster_token_count": raster_grid_token_count(config.crop_size),
+        "feature_token_count": len(FEATURE_NAMES),
+        "channel_order": ["r", "g", "b", "a"],
+    }
+
+
+def _token_transformer_encoder_config(
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    return {
+        "hidden_dim": config.hidden_dim,
+        "num_heads": config.num_heads,
+        "num_layers": config.num_layers,
+        "attention": "scaled_dot_product_self_attention",
+        "projection": "deterministic_feature_rgba_v1",
+        "pooling": "mean_token_pool",
     }
 
 

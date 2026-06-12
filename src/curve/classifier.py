@@ -19,6 +19,7 @@ from curve.anchors import (
     semantic_anchor_score,
 )
 from curve.masks import MaskComponent
+from curve.token_transformer import token_transformer_embedding
 
 
 ClassifierModel = dict[str, object]
@@ -591,6 +592,7 @@ def load_classifier_model(model_json: str | Path) -> ClassifierModel:
         },
         "raster_token_mixer": _loaded_raster_token_mixer(training),
         "feature_raster_fusion": _loaded_feature_raster_fusion(training),
+        "token_transformer": _loaded_token_transformer(training),
         "crop_token_spec": training.get("crop_token_spec", {}),
         "fallback_centroids": fallback,
     }
@@ -657,6 +659,17 @@ def _predict_mlx_classifier(
     crop_tokens: tuple[tuple[float, float, float, float], ...] | None,
 ) -> str:
     labels, logits = _feature_head_logits(classifier_model, features)
+    token_transformer_logits = (
+        _token_transformer_logits(classifier_model, features, crop_tokens)
+        if crop_tokens is not None
+        else None
+    )
+    if (
+        token_transformer_logits is not None
+        and len(token_transformer_logits) == len(logits)
+    ):
+        logits = token_transformer_logits
+        return labels[max(range(len(logits)), key=logits.__getitem__)]
     fusion_logits = (
         _feature_raster_fusion_logits(classifier_model, features, crop_tokens)
         if crop_tokens is not None
@@ -767,6 +780,141 @@ def _loaded_raster_token_mixer(training: dict[str, object]) -> dict[str, object]
             "embedding_names": tuple(embedding_names),
         },
     }
+
+
+def _loaded_token_transformer(
+    training: dict[str, object],
+) -> dict[str, object] | None:
+    transformer = training.get("token_transformer")
+    if not isinstance(transformer, dict):
+        return None
+    if transformer.get("weight_format") != "mlx_token_transformer_v1":
+        return None
+    labels = [
+        str(label)
+        for label in transformer.get("labels", [])
+        if isinstance(label, str)
+    ]
+    weights = _matrix(transformer.get("weights", []))
+    bias = _vector(transformer.get("bias", []))
+    normalization = transformer.get("normalization", {})
+    tokenization = transformer.get("tokenization", {})
+    encoder = transformer.get("encoder", {})
+    if (
+        not isinstance(normalization, dict)
+        or not isinstance(tokenization, dict)
+        or not isinstance(encoder, dict)
+    ):
+        return None
+    mean = _vector(normalization.get("mean", []))
+    scale = _vector(normalization.get("scale", []))
+    crop_size = tokenization.get("crop_size")
+    raster_grid_size = tokenization.get("raster_grid_size")
+    hidden_dim = encoder.get("hidden_dim")
+    heads = encoder.get("num_heads")
+    layers = encoder.get("num_layers")
+    if (
+        not isinstance(crop_size, int)
+        or crop_size <= 0
+        or not isinstance(raster_grid_size, int)
+        or raster_grid_size <= 0
+        or not isinstance(hidden_dim, int)
+        or hidden_dim <= 0
+        or not isinstance(heads, int)
+        or heads <= 0
+        or not isinstance(layers, int)
+        or layers <= 0
+        or not labels
+        or len(weights) != len(labels)
+        or len(bias) != len(labels)
+        or len(mean) != hidden_dim
+        or len(scale) != hidden_dim
+    ):
+        return None
+    return {
+        "labels": tuple(labels),
+        "weights": tuple(tuple(row) for row in weights),
+        "bias": tuple(bias),
+        "normalization": {
+            "mean": tuple(mean),
+            "scale": tuple(scale),
+        },
+        "tokenization": {
+            "crop_size": crop_size,
+            "raster_grid_size": raster_grid_size,
+        },
+        "encoder": {
+            "hidden_dim": hidden_dim,
+            "num_heads": heads,
+            "num_layers": layers,
+        },
+    }
+
+
+def _token_transformer_logits(
+    classifier_model: dict[str, object],
+    features: tuple[float, ...],
+    crop_tokens: tuple[tuple[float, float, float, float], ...],
+) -> list[float] | None:
+    transformer = classifier_model.get("token_transformer")
+    if not isinstance(transformer, dict):
+        return None
+    tokenization = transformer.get("tokenization", {})
+    encoder = transformer.get("encoder", {})
+    normalization = transformer.get("normalization", {})
+    if (
+        not isinstance(tokenization, dict)
+        or not isinstance(encoder, dict)
+        or not isinstance(normalization, dict)
+    ):
+        return None
+    crop_size = tokenization.get("crop_size")
+    raster_grid_size = tokenization.get("raster_grid_size")
+    hidden_dim = encoder.get("hidden_dim")
+    heads = encoder.get("num_heads")
+    layers = encoder.get("num_layers")
+    if (
+        not isinstance(crop_size, int)
+        or not isinstance(raster_grid_size, int)
+        or not isinstance(hidden_dim, int)
+        or not isinstance(heads, int)
+        or not isinstance(layers, int)
+    ):
+        return None
+    row = token_transformer_embedding(
+        features,
+        crop_tokens,
+        crop_size=crop_size,
+        hidden_dim=hidden_dim,
+        heads=heads,
+        layers=layers,
+        raster_grid_size=raster_grid_size,
+    )
+    mean = normalization.get("mean", ())
+    scale = normalization.get("scale", ())
+    weights = transformer.get("weights", ())
+    bias = transformer.get("bias", ())
+    if (
+        not isinstance(mean, tuple)
+        or not isinstance(scale, tuple)
+        or len(row) != len(mean)
+        or len(row) != len(scale)
+        or not isinstance(weights, tuple)
+        or not isinstance(bias, tuple)
+    ):
+        return None
+    normalized = tuple(
+        (row[index] - mean[index]) / scale[index]
+        for index in range(len(row))
+    )
+    return [
+        float(bias[class_index])
+        + sum(
+            weights[class_index][feature_index] * normalized[feature_index]
+            for feature_index in range(len(normalized))
+        )
+        for class_index in range(len(bias))
+    ]
 
 
 def _loaded_feature_raster_fusion(
@@ -1005,6 +1153,7 @@ def _classifier_uses_raster_tokens(classifier_model: dict[str, object]) -> bool:
         and (
             isinstance(classifier_model.get("raster_token_mixer"), dict)
             or isinstance(classifier_model.get("feature_raster_fusion"), dict)
+            or isinstance(classifier_model.get("token_transformer"), dict)
         )
         and isinstance(classifier_model.get("crop_token_spec"), dict)
     )

@@ -286,6 +286,37 @@ class PrimitiveClassifierTests(unittest.TestCase):
                     ),
                 )
 
+    def test_train_mlx_rejects_invalid_transformer_shape(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=3,
+                seed=22,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+
+            with self.assertRaisesRegex(ValueError, "hidden_dim must be positive"):
+                train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=Path(temp_dir) / "mlx-model.json",
+                    config=MlxClassifierTrainingConfig(
+                        hidden_dim=0,
+                        allow_unavailable=True,
+                    ),
+                )
+            with self.assertRaisesRegex(ValueError, "num_layers must be positive"):
+                train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=Path(temp_dir) / "mlx-model.json",
+                    config=MlxClassifierTrainingConfig(
+                        num_layers=0,
+                        allow_unavailable=True,
+                    ),
+                )
+
     def test_mlx_classifier_runtime_status_reports_package_state(self):
         with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
             unavailable = mlx_classifier_runtime_status()
@@ -415,7 +446,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertIn("weights", model["mlx_training"])
             self.assertEqual(
                 model["mlx_training"]["transformer_status"],
-                "feature_raster_fusion_trained_transformer_encoder_pending",
+                "token_transformer_encoder_serialized",
             )
             self.assertEqual(model["mlx_training"]["crop_token_spec"]["crop_size"], 6)
             self.assertEqual(
@@ -441,6 +472,14 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(len(fusion["raster_embedding_names"]), 28)
             self.assertEqual(len(fusion["loss_history"]), 1)
             self.assertGreater(fusion["parameter_count"], 0)
+            transformer = model["mlx_training"]["token_transformer"]
+            self.assertEqual(transformer["weight_format"], "mlx_token_transformer_v1")
+            self.assertEqual(transformer["encoder"]["hidden_dim"], 32)
+            self.assertEqual(transformer["encoder"]["num_heads"], 4)
+            self.assertEqual(transformer["encoder"]["num_layers"], 1)
+            self.assertEqual(transformer["tokenization"]["raster_token_count"], 16)
+            self.assertEqual(len(transformer["loss_history"]), 1)
+            self.assertGreater(transformer["parameter_count"], 0)
 
     def test_load_classifier_model_uses_mlx_feature_head_predictor(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -484,6 +523,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
             self.assertEqual(classifier["classifier_backend"], "mlx_feature_head")
             self.assertIsInstance(classifier["feature_raster_fusion"], dict)
+            self.assertIsInstance(classifier["token_transformer"], dict)
             self.assertIn(predicted, classifier["labels"])
 
     def test_mlx_feature_head_can_predict_with_raster_tokens(self):
@@ -526,6 +566,81 @@ class PrimitiveClassifierTests(unittest.TestCase):
         predicted = predict_classifier_label(
             classifier,
             (0.0,) * 11,
+            crop_tokens=(
+                (0.0, 0.0, 0.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+            ),
+        )
+
+        self.assertEqual(predicted, "circle")
+
+    def test_mlx_token_transformer_wins_when_crop_tokens_are_available(self):
+        classifier = {
+            "classifier_backend": "mlx_feature_head",
+            "labels": ("circle", "cubic_path"),
+            "weights": (
+                (0.0, 0.0, -8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+                (0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+            ),
+            "bias": (0.0, 0.0),
+            "normalization": {
+                "mean": (0.0,) * 11,
+                "scale": (1.0,) * 11,
+            },
+            "crop_token_spec": {"crop_size": 2},
+            "feature_raster_fusion": {
+                "labels": ("circle", "cubic_path"),
+                "weights": (
+                    (*((0.0,) * 17), -20.0),
+                    (*((0.0,) * 17), 20.0),
+                ),
+                "bias": (0.0, 0.0),
+                "normalization": {
+                    "mean": (0.0,) * 18,
+                    "scale": (1.0,) * 18,
+                },
+                "raster_embedding_names": (
+                    "head_0_red",
+                    "head_0_green",
+                    "head_0_blue",
+                    "head_0_alpha",
+                    "head_0_x",
+                    "head_0_y",
+                    "head_0_foreground",
+                ),
+                "fusion": {
+                    "heads": 1,
+                    "strategy": "concat_feature_and_raster_attention",
+                },
+            },
+            "token_transformer": {
+                "labels": ("circle", "cubic_path"),
+                "weights": (
+                    (0.0, 0.0, 0.0),
+                    (0.0, 0.0, 0.0),
+                ),
+                "bias": (10.0, -10.0),
+                "normalization": {
+                    "mean": (0.0, 0.0, 0.0),
+                    "scale": (1.0, 1.0, 1.0),
+                },
+                "tokenization": {
+                    "crop_size": 2,
+                    "raster_grid_size": 2,
+                },
+                "encoder": {
+                    "hidden_dim": 3,
+                    "num_heads": 1,
+                    "num_layers": 1,
+                },
+            },
+        }
+
+        predicted = predict_classifier_label(
+            classifier,
+            (0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
             crop_tokens=(
                 (0.0, 0.0, 0.0, 1.0),
                 (1.0, 1.0, 1.0, 1.0),
