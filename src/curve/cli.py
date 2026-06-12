@@ -135,6 +135,7 @@ HARVEST_DEFAULT_CONFIG = {
 }
 REVIEW_CONFIG_KEYS = {"pseudo_labels", "output"}
 APPLY_REVIEW_CONFIG_KEYS = {"review", "output"}
+MERGE_LABELS_CONFIG_KEYS = {"reviewed_labels", "output_dir"}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -406,8 +407,9 @@ def main(argv: list[str] | None = None) -> None:
         "merge-labels",
         help="Convert accepted reviewed pseudo-labels into a trainable dataset.",
     )
-    merge_labels.add_argument("reviewed_labels", type=Path)
-    merge_labels.add_argument("-o", "--output-dir", type=Path, required=True)
+    merge_labels.add_argument("reviewed_labels", type=Path, nargs="?")
+    merge_labels.add_argument("-o", "--output-dir", type=Path)
+    merge_labels.add_argument("--config", type=Path)
 
     compare_training = subcommands.add_parser(
         "compare-training",
@@ -724,9 +726,10 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "merge-labels":
+        merge_config = _resolved_merge_labels_config(args)
         dataset = merge_reviewed_pseudo_label_dataset(
-            reviewed_labels=args.reviewed_labels,
-            output_dir=args.output_dir,
+            reviewed_labels=merge_config["reviewed_labels"],
+            output_dir=merge_config["output_dir"],
         )
         print(f"merged {dataset['count']} reviewed labels")
         return
@@ -1070,6 +1073,16 @@ def _resolved_apply_review_config(args: argparse.Namespace) -> dict[str, Path]:
     if args.output is not None:
         config["output"] = args.output
     _require_config_paths(config, ("review", "output"), "apply-review")
+    return config
+
+
+def _resolved_merge_labels_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(args.config, MERGE_LABELS_CONFIG_KEYS, "merge-labels")
+    if args.reviewed_labels is not None:
+        config["reviewed_labels"] = args.reviewed_labels
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    _require_config_paths(config, ("reviewed_labels", "output_dir"), "merge-labels")
     return config
 
 

@@ -435,6 +435,28 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertTrue((output_dir / "dataset.json").exists())
 
+    def test_merge_labels_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            reviewed = root / "reviewed.json"
+            output_dir = root / "dataset"
+            config = root / "merge-labels.json"
+            _write_reviewed_circle(reviewed)
+            config.write_text(
+                json.dumps(
+                    {
+                        "reviewed_labels": str(reviewed),
+                        "output_dir": str(output_dir),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["merge-labels", "--config", str(config)])
+
+            self.assertTrue((output_dir / "dataset.json").exists())
+
     def test_compare_retraining_reports_augmented_delta(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
