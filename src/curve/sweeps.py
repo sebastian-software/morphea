@@ -38,6 +38,7 @@ VECTORIZE_CONFIG_KEYS = {
     "rect_max_fill_error",
     "rounded_rect_max_fill_error",
 }
+EXPORT_CONFIG_KEYS = {"cutout_export"}
 
 
 def load_sweep_config(path: str | Path) -> dict[str, Any]:
@@ -86,13 +87,15 @@ def run_sweep(
     run_results = []
     for run in config["runs"]:
         run_id = run["id"]
-        vectorize_config = _vectorize_config(run.get("config", {}))
+        run_config = run.get("config", {})
+        vectorize_config = _vectorize_config(run_config)
         effective_config = {
             "command": "sweep",
             "sweep": str(config_path),
             "run_id": run_id,
             "input": str(input_path),
             **vectorize_config,
+            **_export_config(run_config),
         }
         scene = scene_from_flat_color_image(input_path, **vectorize_config)
         run_dir = root / run_id
@@ -204,3 +207,18 @@ def _fmt(value: object) -> str:
 
 def _vectorize_config(config: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in config.items() if key in VECTORIZE_CONFIG_KEYS}
+
+
+def _export_config(config: dict[str, Any]) -> dict[str, Any]:
+    export_config = {
+        key: value
+        for key, value in config.items()
+        if key in EXPORT_CONFIG_KEYS
+    }
+    cutout_export = export_config.get("cutout_export")
+    if cutout_export is not None and cutout_export not in {
+        "overlay_stroke",
+        "negative_mask",
+    }:
+        raise ValueError("cutout_export must be overlay_stroke or negative_mask")
+    return export_config

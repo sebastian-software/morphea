@@ -74,6 +74,45 @@ class SweepTests(unittest.TestCase):
             self.assertIn("# Curve Sweep Summary", text)
             self.assertIn("| Rank | Run | Editability |", text)
 
+    def test_run_sweep_passes_cutout_export_to_output_svg(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_cutout_image(root)
+            config = root / "sweep.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "input": str(image_path),
+                        "runs": [
+                            {
+                                "id": "mask-export",
+                                "config": {
+                                    "min_area": 8,
+                                    "cutout_export": "negative_mask",
+                                },
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output_dir = root / "runs"
+
+            summary = run_sweep(config, output_dir=output_dir)
+
+            svg = (output_dir / "mask-export" / "output.svg").read_text(
+                encoding="utf-8"
+            )
+            run_config = json.loads(
+                (output_dir / "mask-export" / "config.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(summary["run_count"], 1)
+            self.assertEqual(run_config["cutout_export"], "negative_mask")
+            self.assertIn('<mask id="curve-cutout-mask"', svg)
+
     def test_render_sweep_markdown_ranks_by_editability_then_raster_error(self):
         markdown = render_sweep_markdown(
             {
@@ -131,6 +170,16 @@ def _write_input_image(root: Path) -> Path:
     draw = ImageDraw.Draw(image)
     draw.ellipse((4, 4, 14, 14), fill="#dd2222")
     draw.rectangle((16, 10, 22, 11), fill="#003366")
+    image.save(image_path)
+    return image_path
+
+
+def _write_cutout_image(root: Path) -> Path:
+    image_path = root / "cutout.png"
+    image = Image.new("RGB", (18, 9), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((2, 2, 15, 6), fill="#003366")
+    draw.rectangle((6, 4, 11, 4), fill="white")
     image.save(image_path)
     return image_path
 
