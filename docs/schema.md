@@ -551,6 +551,11 @@ edge error. Optimizer metadata stores initial/final L1, edge, and combined
 objective values so geometry changes can be judged against visual edge quality,
 not only average pixel color.
 
+`max_iterations` must be non-negative, `timeout_seconds` must be positive when
+set, and raster objective weights must be non-negative with at least one
+positive weight. `optimizer.elapsed_seconds`, `optimizer.timeout_reached`, and
+`optimizer.stopped_reason` make bounded refinement runs auditable.
+
 `optimizer.optimized_parameter_kinds` lists primitive kinds whose parameters
 changed during the local pass. The current local backend can adjust circle
 radii, quad-like corner parameters, and stroke/arc centerline or width samples

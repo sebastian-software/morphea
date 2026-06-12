@@ -578,6 +578,8 @@ Implemented so far:
 - recognized optional differentiable backend names (`differentiable`, `diffvg`)
   behind the same `curve refine --backend ...` interface, with an explicit
   not-installed/not-configured failure path until a renderer is wired
+- refinement config validates iteration, timeout, and raster-weight limits, and
+  optimizer metadata records elapsed seconds, timeout state, and stopped reason
 
 Remaining:
 
