@@ -5,6 +5,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+from PIL import Image, ImageDraw
+
 from curve.cli import main
 from curve.classifier import examples_from_dataset
 from curve.dataset import generate_synthetic_dataset
@@ -12,6 +14,7 @@ from curve.self_learning import (
     apply_review_file,
     compare_retraining,
     create_review_file,
+    harvest_curated_pseudo_labels,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
     render_apply_review_markdown,
@@ -81,6 +84,40 @@ class SelfLearningTests(unittest.TestCase):
             self.assertTrue(output.exists())
             self.assertIn(
                 "# Curve Pseudo-Label Harvest",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_harvest_curated_runs_suite_and_collects_labels(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_circle_suite(root)
+            run_root = root / "runs"
+            output = root / "pseudo.json"
+            curated_report = root / "curated.json"
+            snapshot = root / "snapshot.json"
+            markdown = root / "pseudo.md"
+
+            result = harvest_curated_pseudo_labels(
+                suite=suite,
+                run_root=run_root,
+                output=output,
+                curated_report=curated_report,
+                snapshot=snapshot,
+                markdown=markdown,
+            )
+
+            self.assertEqual(result["source"], "curated_suite")
+            self.assertEqual(result["curated_case_count"], 1)
+            self.assertEqual(result["curated_checked_count"], 1)
+            self.assertEqual(result["curated_missing_source_count"], 0)
+            self.assertGreaterEqual(result["pseudo_label_count"], 1)
+            self.assertTrue((run_root / "circle-case" / "manifest.json").exists())
+            self.assertTrue(curated_report.exists())
+            self.assertTrue(snapshot.exists())
+            saved = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(saved["source"], "curated_suite")
+            self.assertIn(
+                "- Suite:",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -272,6 +309,71 @@ class SelfLearningTests(unittest.TestCase):
                 "# Curve Pseudo-Label Harvest",
                 markdown.read_text(encoding="utf-8"),
             )
+
+    def test_harvest_curated_cli_writes_outputs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_circle_suite(root)
+            run_root = root / "runs"
+            output = root / "pseudo.json"
+            curated_report = root / "curated.json"
+            markdown = root / "pseudo.md"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "harvest-curated",
+                        str(suite),
+                        "--run-root",
+                        str(run_root),
+                        "-o",
+                        str(output),
+                        "--curated-report",
+                        str(curated_report),
+                        "--markdown",
+                        str(markdown),
+                        "--min-editability-score",
+                        "0.0",
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["source"], "curated_suite")
+            self.assertEqual(result["curated_checked_count"], 1)
+            self.assertTrue(curated_report.exists())
+            self.assertIn(
+                "Curve Pseudo-Label Harvest",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_harvest_curated_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_circle_suite(root)
+            run_root = root / "runs"
+            output = root / "pseudo.json"
+            markdown = root / "pseudo.md"
+            config = root / "harvest-curated.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "suite": str(suite),
+                        "run_root": str(run_root),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                        "max_fragmentation_penalty": 1.0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["harvest-curated", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["curated_case_count"], 1)
+            self.assertEqual(result["filters"]["max_fragmentation_penalty"], 1.0)
+            self.assertTrue(markdown.exists())
 
     def test_create_review_file_marks_labels_pending(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1009,6 +1111,41 @@ def _write_reviewed_circle(path: Path) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _write_curated_circle_suite(root: Path) -> Path:
+    source = root / "circle.png"
+    image = Image.new("RGB", (32, 32), "white")
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((8, 8, 23, 23), fill="#c08011")
+    image.save(source)
+    suite = root / "suite.json"
+    suite.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "cases": [
+                    {
+                        "id": "circle-case",
+                        "source": str(source),
+                        "recommended_config": {
+                            "min_area": 4,
+                            "timeout_seconds": 5,
+                        },
+                        "expectations": [
+                            {
+                                "id": "circle-anchor",
+                                "kind": "circle",
+                                "min_count": 1,
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return suite
 
 
 if __name__ == "__main__":

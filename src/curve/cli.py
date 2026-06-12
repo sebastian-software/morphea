@@ -35,9 +35,11 @@ from curve.segmenters import (
 )
 from curve.scene import SvgStyle
 from curve.self_learning import (
+    HARVEST_FILTER_DEFAULTS,
     apply_review_file,
     compare_retraining,
     create_review_file,
+    harvest_curated_pseudo_labels,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
     retrain_centroid_classifier,
@@ -130,13 +132,19 @@ HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
     "markdown": None,
-    "max_run_diagnostics": 0,
-    "max_classifier_prior_error": 0.0,
-    "min_editability_score": 0.0,
-    "max_fragmentation_penalty": 1.0,
-    "max_raster_l1_error": 1.0,
-    "max_raster_edge_error": 1.0,
-    "max_anchor_quality_error": 1.0,
+    **HARVEST_FILTER_DEFAULTS,
+}
+HARVEST_CURATED_DEFAULT_CONFIG = {
+    "suite": None,
+    "run_root": None,
+    "output": None,
+    "curated_report": None,
+    "snapshot": None,
+    **{
+        key: value
+        for key, value in HARVEST_DEFAULT_CONFIG.items()
+        if key not in {"run_root", "output"}
+    },
 }
 REVIEW_CONFIG_KEYS = {"pseudo_labels", "output", "markdown"}
 APPLY_REVIEW_CONFIG_KEYS = {"review", "output", "markdown"}
@@ -399,6 +407,25 @@ def main(argv: list[str] | None = None) -> None:
     harvest.add_argument("--max-raster-edge-error", type=float)
     harvest.add_argument("--max-anchor-quality-error", type=float)
     harvest.add_argument("--config", type=Path)
+
+    harvest_curated = subcommands.add_parser(
+        "harvest-curated",
+        help="Run a curated real-image suite and harvest high-confidence labels.",
+    )
+    harvest_curated.add_argument("suite", type=Path, nargs="?")
+    harvest_curated.add_argument("--run-root", type=Path)
+    harvest_curated.add_argument("-o", "--output", type=Path)
+    harvest_curated.add_argument("--curated-report", type=Path)
+    harvest_curated.add_argument("--snapshot", type=Path)
+    harvest_curated.add_argument("--markdown", type=Path)
+    harvest_curated.add_argument("--max-run-diagnostics", type=int)
+    harvest_curated.add_argument("--max-classifier-prior-error", type=float)
+    harvest_curated.add_argument("--min-editability-score", type=float)
+    harvest_curated.add_argument("--max-fragmentation-penalty", type=float)
+    harvest_curated.add_argument("--max-raster-l1-error", type=float)
+    harvest_curated.add_argument("--max-raster-edge-error", type=float)
+    harvest_curated.add_argument("--max-anchor-quality-error", type=float)
+    harvest_curated.add_argument("--config", type=Path)
 
     review = subcommands.add_parser(
         "review",
@@ -723,6 +750,35 @@ def main(argv: list[str] | None = None) -> None:
             ),
         )
         print(f"harvested {result['pseudo_label_count']} pseudo-labels")
+        return
+
+    if args.command == "harvest-curated":
+        harvest_config = _resolved_harvest_curated_config(args)
+        result = harvest_curated_pseudo_labels(
+            suite=harvest_config["suite"],
+            run_root=harvest_config["run_root"],
+            output=harvest_config["output"],
+            curated_report=harvest_config.get("curated_report"),
+            snapshot=harvest_config.get("snapshot"),
+            markdown=harvest_config.get("markdown"),
+            max_run_diagnostics=int(harvest_config["max_run_diagnostics"]),
+            max_classifier_prior_error=float(
+                harvest_config["max_classifier_prior_error"]
+            ),
+            min_editability_score=float(harvest_config["min_editability_score"]),
+            max_fragmentation_penalty=float(
+                harvest_config["max_fragmentation_penalty"]
+            ),
+            max_raster_l1_error=float(harvest_config["max_raster_l1_error"]),
+            max_raster_edge_error=float(harvest_config["max_raster_edge_error"]),
+            max_anchor_quality_error=float(
+                harvest_config["max_anchor_quality_error"]
+            ),
+        )
+        print(
+            f"harvested {result['pseudo_label_count']} pseudo-labels "
+            f"from {result['curated_checked_count']} curated cases"
+        )
         return
 
     if args.command == "review":
@@ -1095,6 +1151,41 @@ def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
     return config
 
 
+def _resolved_harvest_curated_config(args: argparse.Namespace) -> dict[str, object]:
+    config = dict(HARVEST_CURATED_DEFAULT_CONFIG)
+    if args.config is not None:
+        config.update(_load_harvest_curated_config(args.config))
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.run_root is not None:
+        config["run_root"] = args.run_root
+    if args.output is not None:
+        config["output"] = args.output
+    if args.curated_report is not None:
+        config["curated_report"] = args.curated_report
+    if args.snapshot is not None:
+        config["snapshot"] = args.snapshot
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    for key in (
+        "max_run_diagnostics",
+        "max_classifier_prior_error",
+        "min_editability_score",
+        "max_fragmentation_penalty",
+        "max_raster_l1_error",
+        "max_raster_edge_error",
+        "max_anchor_quality_error",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    _require_config_paths(config, ("suite", "run_root", "output"), "harvest-curated")
+    for key in ("suite", "run_root", "output", "curated_report", "snapshot", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _resolved_review_config(args: argparse.Namespace) -> dict[str, Path]:
     config = _load_path_config(args.config, REVIEW_CONFIG_KEYS, "review")
     if args.pseudo_labels is not None:
@@ -1229,6 +1320,21 @@ def _load_harvest_config(path: Path) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("run_root", "output", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_harvest_curated_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("harvest-curated config must be a JSON object")
+    unknown = sorted(set(loaded) - set(HARVEST_CURATED_DEFAULT_CONFIG))
+    if unknown:
+        msg = f"unsupported harvest-curated config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("suite", "run_root", "output", "curated_report", "snapshot", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

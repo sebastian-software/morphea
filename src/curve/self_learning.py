@@ -14,6 +14,18 @@ from curve.classifier import (
     evaluate_classifier_ranking,
     examples_from_dataset,
 )
+from curve.curated import check_curated_suite
+
+
+HARVEST_FILTER_DEFAULTS = {
+    "max_run_diagnostics": 0,
+    "max_classifier_prior_error": 0.0,
+    "min_editability_score": 0.0,
+    "max_fragmentation_penalty": 1.0,
+    "max_raster_l1_error": 1.0,
+    "max_raster_edge_error": 1.0,
+    "max_anchor_quality_error": 1.0,
+}
 
 
 def harvest_pseudo_labels(
@@ -144,6 +156,73 @@ def harvest_pseudo_labels(
     return result
 
 
+def harvest_curated_pseudo_labels(
+    *,
+    suite: str | Path,
+    run_root: str | Path,
+    output: str | Path,
+    curated_report: str | Path | None = None,
+    snapshot: str | Path | None = None,
+    markdown: str | Path | None = None,
+    max_run_diagnostics: int = 0,
+    max_classifier_prior_error: float = 0.0,
+    min_editability_score: float = 0.0,
+    max_fragmentation_penalty: float = 1.0,
+    max_raster_l1_error: float = 1.0,
+    max_raster_edge_error: float = 1.0,
+    max_anchor_quality_error: float = 1.0,
+) -> dict[str, object]:
+    curated = check_curated_suite(
+        suite,
+        output=curated_report,
+        output_dir=run_root,
+        run=True,
+        snapshot=snapshot,
+    )
+    result = harvest_pseudo_labels(
+        run_root=run_root,
+        output=output,
+        max_run_diagnostics=max_run_diagnostics,
+        max_classifier_prior_error=max_classifier_prior_error,
+        min_editability_score=min_editability_score,
+        max_fragmentation_penalty=max_fragmentation_penalty,
+        max_raster_l1_error=max_raster_l1_error,
+        max_raster_edge_error=max_raster_edge_error,
+        max_anchor_quality_error=max_anchor_quality_error,
+    )
+    result.update(
+        {
+            "schema_version": 1,
+            "source": "curated_suite",
+            "suite": str(suite),
+            "run_root": str(run_root),
+            "curated_ok": bool(curated.get("ok", False)),
+            "curated_case_count": int(curated.get("case_count", 0)),
+            "curated_checked_count": sum(
+                1
+                for case in curated.get("cases", [])
+                if isinstance(case, dict) and case.get("status") == "checked"
+            ),
+            "curated_missing_source_count": sum(
+                1
+                for case in curated.get("cases", [])
+                if isinstance(case, dict) and case.get("status") == "missing_source"
+            ),
+        }
+    )
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(render_harvest_markdown(result), encoding="utf-8")
+    return result
+
+
 def render_harvest_markdown(report: dict[str, object]) -> str:
     filters = report.get("filters", {})
     if not isinstance(filters, dict):
@@ -160,12 +239,25 @@ def render_harvest_markdown(report: dict[str, object]) -> str:
         "",
         f"- Pseudo-labels: {_fmt_metric(report.get('pseudo_label_count'))}",
         f"- Rejected runs: {_fmt_metric(len(rejected_runs))}",
+    ]
+    if report.get("source") == "curated_suite":
+        lines.extend(
+            [
+                f"- Suite: `{report.get('suite')}`",
+                f"- Curated cases: {_fmt_metric(report.get('curated_case_count'))}",
+                f"- Checked cases: {_fmt_metric(report.get('curated_checked_count'))}",
+                f"- Missing sources: {_fmt_metric(report.get('curated_missing_source_count'))}",
+            ]
+        )
+    lines.extend(
+        [
         "",
         "## Filters",
         "",
         "| Gate | Value |",
         "| --- | ---: |",
-    ]
+        ]
+    )
     for key in sorted(filters):
         lines.append(f"| `{key}` | {_fmt_metric(filters.get(key))} |")
 
