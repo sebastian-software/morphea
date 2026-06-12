@@ -131,6 +131,8 @@ Implemented so far:
 - freeform cut-out gap detection uses a local interior-gap component scanner
   for temporary background gaps, avoiding the heavier generic
   `connected_components` hint path during real-image profiling.
+- principal-axis fitting computes projection bounds in one streaming pass
+  instead of allocating per-component projection lists.
 
 Remaining:
 

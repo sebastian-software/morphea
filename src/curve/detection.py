@@ -650,21 +650,32 @@ def _principal_axis(
 
     dx, dy = direction
     minor = (-dy, dx)
-    major_projections: list[float] = []
-    minor_projections: list[float] = []
-    for x, y in component.pixels:
+    min_major = max_major = min_minor = max_minor = 0.0
+    for index, (x, y) in enumerate(component.pixels):
         centered_x = x - center.x
         centered_y = y - center.y
-        major_projections.append(centered_x * dx + centered_y * dy)
-        minor_projections.append(centered_x * minor[0] + centered_y * minor[1])
+        major_projection = centered_x * dx + centered_y * dy
+        minor_projection = centered_x * minor[0] + centered_y * minor[1]
+        if index == 0:
+            min_major = max_major = major_projection
+            min_minor = max_minor = minor_projection
+            continue
+        if major_projection < min_major:
+            min_major = major_projection
+        elif major_projection > max_major:
+            max_major = major_projection
+        if minor_projection < min_minor:
+            min_minor = minor_projection
+        elif minor_projection > max_minor:
+            max_minor = minor_projection
 
     return (
         center,
         direction,
-        min(major_projections),
-        max(major_projections),
-        min(minor_projections),
-        max(minor_projections),
+        min_major,
+        max_major,
+        min_minor,
+        max_minor,
     )
 
 
