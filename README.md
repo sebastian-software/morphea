@@ -3,103 +3,130 @@
 Curve is a local research prototype for semantic-first raster-to-SVG
 vectorization.
 
-The primary goal is not pixel-perfect tracing. The primary goal is editable
-SVG structure: simple, stable primitives first, then more complex organic
-detail.
+Most vectorizers optimize for visual similarity first. Curve optimizes for
+editable structure first: true circles should stay circles, strokes should stay
+strokes, perspective tiles should stay quads, and repeated structures should
+become coherent scene groups instead of noisy path fragments.
 
-## Current Focus
+The project is intentionally hybrid. Deterministic geometry establishes a
+trustworthy baseline; local ML, reviewed pseudo-labels, and refinement loops
+then help choose and improve semantic primitives without turning every image
+into dense, hard-to-edit paths.
 
-- Detect simple visual anchors before generic fitting.
-- Prefer true circles, strokes, arcs, rectangles, and perspective quads over
-  noisy path approximations.
-- Penalize fragmented layers when a simpler editable shape explains the image.
-- Treat cut-out-looking lines as editable strokes in v1.
+## Why Curve Exists
 
-See [docs/plan.md](docs/plan.md) and [docs/adr](docs/adr) for the current
-implementation direction and accepted architecture decisions.
-See [docs/schema.md](docs/schema.md) for the current output schema contracts.
+AI-generated illustrations, logos, and UI screenshots often look flat enough
+to vectorize, but common tracing output is difficult to edit:
 
-## Development
+- simple circles become lumpy Bezier paths;
+- clean strokes become filled blobs;
+- white cut-outs become unstructured holes;
+- perspective grids become many unrelated polygons;
+- antialiasing and palette drift create too many layers.
+
+Curve treats these as structure-recognition problems. Pixel fidelity still
+matters, but it is balanced against editability, primitive quality, layer
+fragmentation, and scene semantics.
+
+## Current Baseline
+
+The current baseline implements:
+
+- primitive anchor detection for circles, dots, rings, strokes, arcs,
+  rectangles, rounded rectangles, perspective quads, and grid-like tile groups;
+- editable white cut-out strokes, with an optional negative-mask SVG export
+  strategy;
+- real-image runtime controls for alpha handling, palette quantization,
+  analysis resizing, component deferral, and timeouts;
+- timestamped run directories with SVG, manifest, preview, config, palette,
+  mask summaries, and Markdown/HTML reports;
+- synthetic dataset generation and primitive classifier training, including an
+  optional MLX path when the local environment supports it;
+- curated real-image checks, snapshots, and profile reports;
+- reviewed pseudo-label harvesting, review/apply-review, retraining gates, and
+  self-learning cycles;
+- structure-preserving local and soft-raster refinement.
+
+See [docs/milestones.md](docs/milestones.md) for the implemented baseline and
+the longer roadmap.
+
+## Quickstart
+
+Curve is a Python package with a CLI entrypoint. The project currently targets
+Python 3.12 or newer.
 
 ```sh
-python3 -m unittest discover -s tests
+python -m pip install -e .
 ```
 
-## First Usable Path
-
-The current CLI can vectorize exact flat-color images into editable SVG
-primitives:
+Run the test suite:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg
+python -m unittest discover -s tests
 ```
 
-This path currently targets non-antialiased flat-color fixtures. It detects and
-exports the first base forms: circles/dots, straight stroke components, and
-perspective quad tiles.
-
-For simple anti-aliased or near-flat images, group close colors before
-component detection:
+Vectorize an image into editable SVG primitives:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --color-tolerance 18
+curve vectorize input.png -o output.svg
 ```
 
-Write a timestamped run directory with input copy, SVG, manifest, config, and
-Markdown report:
+For near-flat or antialiased images, group close colors before component
+detection:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --run-dir runs
+curve vectorize input.png -o output.svg --color-tolerance 18
 ```
 
-Write a debug SVG with anchor ids, bounds, and labels:
+Write a full run directory with input copy, SVG, preview, manifest, config, and
+reports:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --debug-svg debug.svg
+curve vectorize input.png -o output.svg --run-dir runs
 ```
 
-Summarize run directories:
+Run the curated real-image suite metadata and bounded local cases:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli eval runs -o runs/summary.json --markdown runs/summary.md
+curve curated-check docs/real-images/suite.json \
+  -o runs/curated-report.json \
+  --output-dir runs/curated \
+  --run
 ```
 
-Render a report from an existing manifest and optional config:
+Profile the curated suite:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli report runs/manifest.json -o runs/report.md --config runs/config.json
+curve profile-curated docs/real-images/suite.json \
+  -o runs/curated-profile.json \
+  --markdown runs/curated-profile.md \
+  --repeats 3
 ```
 
-Generate labeled synthetic flat-color samples:
+## Common Workflows
+
+Generate labeled synthetic samples:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli generate -o runs/synthetic --count 10 --seed 1
+curve generate -o runs/synthetic --count 10 --seed 1
 ```
 
-Generation writes `dataset.json` plus split folders (`train`, `val`, `test`).
-
-Train the current primitive-classifier baseline:
+Train the primitive-classifier baseline:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli train runs/synthetic/dataset.json -o runs/model.json
+curve train runs/synthetic/dataset.json -o runs/model.json
 ```
 
 Use a trained classifier as an optional vectorize ranking prior:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize input.png -o output.svg --classifier-model runs/model.json
+curve vectorize input.png -o output.svg --classifier-model runs/model.json
 ```
 
 Harvest high-confidence pseudo-labels from run manifests:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json
-```
-
-Filter harvested labels by scene quality:
-
-```sh
-PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json \
+curve harvest runs -o runs/pseudo-labels.json \
   --min-editability-score 0.8 \
   --max-fragmentation-penalty 0.2
 ```
@@ -107,33 +134,56 @@ PYTHONPATH=src python3 -m curve.cli harvest runs -o runs/pseudo-labels.json \
 Create and apply a human review queue:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli review runs/pseudo-labels.json -o runs/review.json
-PYTHONPATH=src python3 -m curve.cli apply-review runs/review.json -o runs/accepted-labels.json
+curve review runs/pseudo-labels.json -o runs/review.json
+curve apply-review runs/review.json -o runs/accepted-labels.json
 ```
 
-Run the current structure-preserving refinement baseline:
+Run a reviewed-label self-learning cycle:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli refine runs/manifest.json -o runs/refined-manifest.json
+curve self-learn runs/synthetic/dataset.json \
+  --reviewed-labels runs/accepted-labels.json \
+  -o runs/self-learn
 ```
 
-Validate the curated real-image suite metadata:
+Run structure-preserving refinement:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json -o runs/curated-report.json
-```
-
-Run existing local source images from the suite with their bounded configs:
-
-```sh
-PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
-  -o runs/curated-report.json \
-  --output-dir runs/curated \
-  --run
+curve refine runs/manifest.json -o runs/refined-manifest.json
 ```
 
 Run a config-driven vectorize sweep:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli sweep sweep.json -o runs/sweep
+curve sweep sweep.json -o runs/sweep --markdown runs/sweep.md
 ```
+
+## Documentation
+
+- [Plan](docs/plan.md): semantic-first vectorization direction.
+- [Milestones](docs/milestones.md): implemented baselines and roadmap.
+- [Schema](docs/schema.md): manifests, reports, status files, and command
+  schemas.
+- [Sweeps](docs/sweeps.md): config-driven experiment comparisons.
+- [ADRs](docs/adr): accepted architecture decisions.
+- [Real-image notes](docs/real-images): curated local image metadata and
+  observations. The source images stay outside git.
+
+## GitHub Pages
+
+The static project homepage lives in [site/](site/). It is dependency-free HTML
+and CSS. The Pages workflow uploads that site plus a temporary copy of the repo
+docs so the published documentation links resolve without duplicating docs in
+the repository.
+
+To enable deployment, set the repository Pages source to **GitHub Actions** in
+GitHub repository settings.
+
+## Development Notes
+
+- Keep tests bounded. When running long checks locally, wrap subprocesses with
+  an explicit timeout.
+- Do not use local real-image files as checked-in assets. Curated suite entries
+  may point at local paths, but the files themselves stay outside git.
+- Curve prefers simple parametric shapes over generic paths unless fidelity
+  would break materially.
