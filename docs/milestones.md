@@ -102,8 +102,8 @@ Implemented so far:
   `row_spans` computes per-row extents in one pass instead of rescanning the
   component once per row.
 - `curve profile input.png -o profile.json` records bounded vectorize timings,
-  anchor counts, diagnostics, and min/mean/max elapsed summaries for repeated
-  runs.
+  anchor counts, diagnostics, diagnostic stage counts, and min/mean/max elapsed
+  summaries for repeated runs.
 
 Remaining:
 

@@ -172,8 +172,8 @@ Top-level fields:
 - `summary`
 
 Each run records `index`, `elapsed_seconds`, `anchor_count`,
-`diagnostic_count`, and `diagnostic_codes`. The summary records min/mean/max
-elapsed seconds across all repeats.
+`diagnostic_count`, `diagnostic_codes`, and `diagnostic_stage_counts`. The
+summary records min/mean/max elapsed seconds across all repeats.
 
 ## Curated Snapshot v1
 
