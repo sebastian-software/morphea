@@ -38,7 +38,20 @@ class SelfLearningTests(unittest.TestCase):
     def test_harvest_pseudo_labels_accepts_clean_run_anchors(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
-            _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
+            _write_manifest(
+                root,
+                "clean",
+                diagnostics=[],
+                classifier_error=0.0,
+                groups=[
+                    {
+                        "id": "grid-a",
+                        "kind": "perspective_grid",
+                        "anchor_indexes": [0, 1],
+                        "metrics": {"row_count": 1.0, "column_count": 2.0},
+                    }
+                ],
+            )
             output = Path(temp_dir) / "pseudo.json"
 
             result = harvest_pseudo_labels(run_root=root, output=output)
@@ -46,7 +59,18 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["pseudo_label_count"], 1)
             self.assertEqual(result["pseudo_labels"][0]["kind"], "circle")
             self.assertEqual(result["pseudo_labels"][0]["anchor"]["kind"], "circle")
-            self.assertEqual(result["pseudo_labels"][0]["run_metrics"]["editability_score"], 1.0)
+            self.assertEqual(
+                result["pseudo_labels"][0]["run_metrics"]["editability_score"],
+                1.0,
+            )
+            self.assertEqual(
+                result["pseudo_labels"][0]["group_context"][0]["kind"],
+                "perspective_grid",
+            )
+            self.assertEqual(
+                result["pseudo_labels"][0]["group_context"][0]["anchor_position"],
+                0,
+            )
             self.assertTrue(output.exists())
 
     def test_render_harvest_markdown_summarizes_quality_gates(self):
@@ -59,6 +83,9 @@ class SelfLearningTests(unittest.TestCase):
                         "anchor_index": 0,
                         "kind": "circle",
                         "anchor_quality_error": 0.02,
+                        "group_context": [
+                            {"kind": "perspective_grid", "anchor_indexes": [0, 1]}
+                        ],
                         "source_manifest": "runs/clean/manifest.json",
                     }
                 ],
@@ -78,7 +105,7 @@ class SelfLearningTests(unittest.TestCase):
 
         self.assertIn("# Curve Pseudo-Label Harvest", markdown)
         self.assertIn("| `min_editability_score` | 0.8 |", markdown)
-        self.assertIn("| `clean` | 0 | `circle` | 0.02 |", markdown)
+        self.assertIn("| `clean` | 0 | `circle` (perspective_grid) | 0.02 |", markdown)
         self.assertIn("| `noisy` | `too_many_run_diagnostics` | 2 |", markdown)
 
     def test_harvest_pseudo_labels_writes_markdown_report(self):
@@ -732,7 +759,20 @@ class SelfLearningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             runs = root / "runs"
-            _write_manifest(runs, "clean", diagnostics=[], classifier_error=0.0)
+            _write_manifest(
+                runs,
+                "clean",
+                diagnostics=[],
+                classifier_error=0.0,
+                groups=[
+                    {
+                        "id": "grid-a",
+                        "kind": "perspective_grid",
+                        "anchor_indexes": [0, 1],
+                        "metrics": {"row_count": 1.0, "column_count": 2.0},
+                    }
+                ],
+            )
             pseudo = root / "pseudo.json"
             reviewed = root / "reviewed.json"
             output_dir = root / "dataset"
@@ -753,6 +793,18 @@ class SelfLearningTests(unittest.TestCase):
             self.assertTrue((output_dir / "train" / "pseudo-00000.json").exists())
             self.assertEqual(len(examples), 1)
             self.assertEqual(examples[0].label, "circle")
+            pseudo_manifest = json.loads(
+                (output_dir / "train" / "pseudo-00000.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(pseudo_manifest["groups"][0]["kind"], "perspective_grid")
+            self.assertEqual(pseudo_manifest["groups"][0]["anchor_indexes"], [0])
+            self.assertEqual(pseudo_manifest["groups"][0]["source_group_id"], "grid-a")
+            self.assertEqual(
+                pseudo_manifest["groups"][0]["source_anchor_indexes"],
+                [0, 1],
+            )
 
     def test_merge_labels_cli_writes_dataset(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1555,6 +1607,7 @@ def _write_manifest(
     raster_l1_error: float = 0.0,
     raster_edge_error: float = 0.0,
     anchor_metrics: dict[str, float] | None = None,
+    groups: list[dict[str, object]] | None = None,
 ) -> None:
     run_dir = root / run_name
     run_dir.mkdir(parents=True)
@@ -1572,6 +1625,7 @@ def _write_manifest(
                     }
                 ],
                 "diagnostics": diagnostics,
+                "groups": groups or [],
                 "metrics": {
                     "editability_score": editability_score,
                     "fragmentation_penalty": fragmentation_penalty,

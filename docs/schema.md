@@ -410,7 +410,8 @@ Top-level fields:
 - `max_anchor_quality_error`
 
 Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
-metrics, run metrics, and `source_manifest` provenance.
+metrics, run metrics, `source_manifest` provenance, and `group_context` for
+scene groups that contained the harvested anchor.
 
 `curve harvest-curated` first runs a curated real-image suite with each case's
 bounded `recommended_config`, then harvests the generated run directories with
@@ -485,6 +486,11 @@ visible without scanning every item.
 summary next to the JSON artifact. Accepted labels include a `review`
 provenance object and apply `corrected_kind` to both the top-level label kind
 and embedded anchor kind when present.
+
+When harvested labels carry `group_context`, `curve merge-labels` preserves it
+in each generated pseudo-sample manifest as single-anchor groups with
+`source_group_id`, `source_anchor_indexes`, and `source_anchor_position`
+provenance.
 
 ## Review Config v1
 

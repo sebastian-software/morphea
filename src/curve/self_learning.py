@@ -129,6 +129,7 @@ def harvest_pseudo_labels(
                     "metrics": metrics,
                     "anchor_quality_error": quality_error,
                     "run_metrics": run_metrics,
+                    "group_context": _anchor_group_context(manifest, index),
                     "source_manifest": str(manifest_path),
                 }
             )
@@ -278,11 +279,13 @@ def render_harvest_markdown(report: dict[str, object]) -> str:
         for label in pseudo_labels:
             if not isinstance(label, dict):
                 continue
+            group_context = label.get("group_context", [])
             lines.append(
                 "| "
                 f"`{label.get('run', 'n/a')}` | "
                 f"{_fmt_metric(label.get('anchor_index'))} | "
-                f"`{label.get('kind', 'n/a')}` | "
+                f"`{label.get('kind', 'n/a')}`"
+                f"{_group_context_suffix(group_context)} | "
                 f"{_fmt_metric(label.get('anchor_quality_error'))} | "
                 f"`{label.get('source_manifest', 'n/a')}` |"
             )
@@ -336,6 +339,48 @@ def _anchor_quality_error(metrics: object) -> float:
         if key.endswith("_error") or key == "stroke_width_variance":
             total += float(value)
     return total
+
+
+def _anchor_group_context(
+    manifest: dict[str, object],
+    anchor_index: int,
+) -> list[dict[str, object]]:
+    groups = manifest.get("groups", [])
+    if not isinstance(groups, list):
+        return []
+    context = []
+    for group_index, group in enumerate(groups):
+        if not isinstance(group, dict):
+            continue
+        anchor_indexes = group.get("anchor_indexes", [])
+        if not isinstance(anchor_indexes, list) or anchor_index not in anchor_indexes:
+            continue
+        context.append(
+            {
+                "id": group.get("id", f"group-{group_index:04d}"),
+                "kind": group.get("kind"),
+                "anchor_indexes": anchor_indexes,
+                "anchor_position": anchor_indexes.index(anchor_index),
+                "metrics": group.get("metrics", {}),
+                "color": group.get("color"),
+            }
+        )
+    return context
+
+
+def _group_context_suffix(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return ""
+    kinds = sorted(
+        {
+            str(group.get("kind"))
+            for group in value
+            if isinstance(group, dict) and group.get("kind") is not None
+        }
+    )
+    if not kinds:
+        return ""
+    return f" ({', '.join(kinds)})"
 
 
 def compare_retraining(
@@ -977,7 +1022,7 @@ def merge_reviewed_pseudo_label_dataset(
             "anchor_count": 1,
             "anchors": [anchor],
             "diagnostics": [],
-            "groups": [],
+            "groups": _pseudo_label_groups(label),
             "layers": [],
             "metrics": {},
             "source_manifest": label.get("source_manifest"),
@@ -1040,6 +1085,29 @@ def _anchor_from_label(label: dict[str, object]) -> dict[str, object]:
         "color": label.get("color"),
         "metrics": dict(label.get("metrics", {})),
     }
+
+
+def _pseudo_label_groups(label: dict[str, object]) -> list[dict[str, object]]:
+    context = label.get("group_context", [])
+    if not isinstance(context, list):
+        return []
+    groups = []
+    for index, group in enumerate(context):
+        if not isinstance(group, dict):
+            continue
+        groups.append(
+            {
+                "id": f"pseudo-group-{index:04d}",
+                "kind": group.get("kind"),
+                "anchor_indexes": [0],
+                "metrics": group.get("metrics", {}),
+                "source_group_id": group.get("id"),
+                "source_anchor_indexes": group.get("anchor_indexes", []),
+                "source_anchor_position": group.get("anchor_position"),
+                "color": group.get("color"),
+            }
+        )
+    return groups
 
 
 def create_review_file(

@@ -635,6 +635,9 @@ Implemented so far:
 - run-level `raster_l1_error` and `raster_edge_error` maximum filters
 - anchor-level aggregate quality filter for unstable simple-shape metrics
 - output pseudo-label index with source manifest provenance
+- harvested pseudo-labels preserve scene `group_context` for groups that
+  contain the accepted anchor, and `curve merge-labels` carries that context
+  into generated pseudo-sample manifests with source group provenance.
 - `curve harvest --markdown harvest.md` writes a scan-friendly pseudo-label
   quality-gate report with accepted labels, filters, and rejected runs
 - `curve harvest-curated suite.json --run-root runs/curated -o pseudo.json`
