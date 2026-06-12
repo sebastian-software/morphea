@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from curve.classifier import (
+    FEATURE_NAMES,
     anchors_from_dataset,
     classifier_prior_error,
     evaluate_classifier_ranking,
@@ -39,6 +40,28 @@ class PrimitiveClassifierTests(unittest.TestCase):
         self.assertEqual(features[0], 1.0)
         self.assertEqual(features[2], 1.0)
         self.assertEqual(features[3], 6.0)
+
+    def test_features_from_anchor_include_quad_subtype_code(self):
+        features = features_from_anchor(
+            {
+                "kind": "quad",
+                "node_count": 4,
+                "parameter_count": 8,
+                "quad": {
+                    "corners": [
+                        {"x": 1, "y": 2},
+                        {"x": 17, "y": 3},
+                        {"x": 15, "y": 12},
+                        {"x": 3, "y": 11},
+                    ]
+                },
+                "metrics": {"quad_subtype_code": 2.0},
+            }
+        )
+
+        self.assertEqual(len(features), len(FEATURE_NAMES))
+        self.assertEqual(FEATURE_NAMES[-1], "quad_subtype_code")
+        self.assertEqual(features[-1], 2.0)
 
     def test_examples_from_dataset_reads_train_split_manifests(self):
         with tempfile.TemporaryDirectory() as temp_dir:

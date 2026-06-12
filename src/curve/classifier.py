@@ -29,6 +29,7 @@ FEATURE_NAMES = (
     "has_quad",
     "quad_width",
     "quad_height",
+    "quad_subtype_code",
 )
 
 
@@ -64,6 +65,13 @@ def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
             quad_width = max(xs) - min(xs)
             quad_height = max(ys) - min(ys)
 
+    quad_subtype_code = 0.0
+    metrics = anchor.get("metrics", {})
+    if isinstance(metrics, dict):
+        value = metrics.get("quad_subtype_code", 0.0)
+        if isinstance(value, (int, float)):
+            quad_subtype_code = float(value)
+
     return (
         float(anchor.get("node_count", 0)),
         float(anchor.get("parameter_count", 0)),
@@ -75,6 +83,7 @@ def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
         1.0 if isinstance(quad, dict) else 0.0,
         float(quad_width),
         float(quad_height),
+        quad_subtype_code,
     )
 
 
