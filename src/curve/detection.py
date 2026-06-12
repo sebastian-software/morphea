@@ -196,7 +196,10 @@ def _stroke_circle_candidate(
     if aspect_error > thresholds.stroke_circle_max_aspect_error:
         return None
 
-    center = component.centroid
+    center, _, fit_residual = _fit_circle_from_boundary(
+        component,
+        fallback_radius=diameter / 2,
+    )
     distances = [Point(x, y).distance_to(center) for x, y in component.pixels]
     inner_radius = min(distances)
     outer_radius = max(distances)
@@ -220,7 +223,7 @@ def _stroke_circle_candidate(
     radius = (inner_radius + outer_radius) / 2
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_CIRCLE,
-        raster_error=area_error + aspect_error,
+        raster_error=area_error + aspect_error + fit_residual,
         node_count=1,
         parameter_count=4,
         circle=CircleAnchor(
@@ -230,7 +233,11 @@ def _stroke_circle_candidate(
         ),
         stroke=StrokeAnchor(centerline=(), width_samples=(stroke_width,)),
     )
-    return enrich_anchor_metrics(candidate)
+    return _with_metric(
+        enrich_anchor_metrics(candidate),
+        "circle_fit_residual_error",
+        fit_residual,
+    )
 
 
 def _circle_candidate(
@@ -247,22 +254,128 @@ def _circle_candidate(
     if aspect_error > thresholds.circle_max_aspect_error:
         return None
 
-    radius = sqrt(component.area / pi)
+    fallback_radius = sqrt(component.area / pi)
     expected_area = pi * (diameter / 2) ** 2
     area_error = abs(component.area - expected_area) / expected_area
     if area_error > thresholds.circle_max_area_error:
         return None
 
-    center = component.centroid
+    center, radius, fit_residual = _fit_circle_from_boundary(
+        component,
+        fallback_radius=fallback_radius,
+    )
     samples = tuple(Point(x, y) for x, y in component.boundary_pixels)
     candidate = AnchorCandidate(
         kind=AnchorKind.CIRCLE,
-        raster_error=area_error + aspect_error,
+        raster_error=area_error + aspect_error + fit_residual,
         node_count=1,
         parameter_count=3,
         circle=CircleAnchor(center=center, radius=radius, samples=samples),
     )
-    return enrich_anchor_metrics(candidate)
+    return _with_metric(
+        enrich_anchor_metrics(candidate),
+        "circle_fit_residual_error",
+        fit_residual,
+    )
+
+
+def _fit_circle_from_boundary(
+    component: MaskComponent,
+    *,
+    fallback_radius: float,
+) -> tuple[Point, float, float]:
+    samples = tuple(component.boundary_pixels)
+    if len(samples) < 3:
+        return component.centroid, fallback_radius, 0.0
+
+    n = float(len(samples))
+    sum_x = sum(float(x) for x, _ in samples)
+    sum_y = sum(float(y) for _, y in samples)
+    sum_xx = sum(float(x * x) for x, _ in samples)
+    sum_yy = sum(float(y * y) for _, y in samples)
+    sum_xy = sum(float(x * y) for x, y in samples)
+    sum_z = sum(float(x * x + y * y) for x, y in samples)
+    sum_xz = sum(float(x * (x * x + y * y)) for x, y in samples)
+    sum_yz = sum(float(y * (x * x + y * y)) for x, y in samples)
+
+    matrix = (
+        (sum_xx, sum_xy, sum_x),
+        (sum_xy, sum_yy, sum_y),
+        (sum_x, sum_y, n),
+    )
+    rhs = (sum_xz, sum_yz, sum_z)
+    solved = _solve_3x3(matrix, rhs)
+    if solved is None:
+        return component.centroid, fallback_radius, 0.0
+
+    a, b, c = solved
+    center = Point(a / 2, b / 2)
+    radius_squared = c + center.x**2 + center.y**2
+    if radius_squared <= 0:
+        return component.centroid, fallback_radius, 0.0
+    radius = sqrt(radius_squared)
+    if radius <= 0:
+        return component.centroid, fallback_radius, 0.0
+    residual = (
+        sum(
+            abs(Point(x, y).distance_to(center) - radius)
+            for x, y in samples
+        )
+        / len(samples)
+        / radius
+    )
+    return center, radius, residual
+
+
+def _solve_3x3(
+    matrix: tuple[tuple[float, float, float], ...],
+    rhs: tuple[float, float, float],
+) -> tuple[float, float, float] | None:
+    determinant = _determinant_3x3(matrix)
+    if abs(determinant) < 1e-9:
+        return None
+    columns = tuple(zip(*matrix, strict=True))
+    return tuple(
+        _determinant_3x3(
+            tuple(
+                tuple(
+                    rhs[row] if column == replace_column else columns[column][row]
+                    for column in range(3)
+                )
+                for row in range(3)
+            )
+        )
+        / determinant
+        for replace_column in range(3)
+    )
+
+
+def _determinant_3x3(matrix: tuple[tuple[float, float, float], ...]) -> float:
+    return (
+        matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1])
+        - matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0])
+        + matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0])
+    )
+
+
+def _with_metric(
+    candidate: AnchorCandidate,
+    key: str,
+    value: float,
+) -> AnchorCandidate:
+    metrics = dict(candidate.metrics)
+    metrics[key] = value
+    return AnchorCandidate(
+        kind=candidate.kind,
+        raster_error=candidate.raster_error,
+        node_count=candidate.node_count,
+        parameter_count=candidate.parameter_count,
+        color=candidate.color,
+        circle=candidate.circle,
+        stroke=candidate.stroke,
+        quad=candidate.quad,
+        metrics=metrics,
+    )
 
 
 def _stroke_candidate(

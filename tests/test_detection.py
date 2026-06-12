@@ -1,9 +1,14 @@
 import unittest
 
 from curve.anchors import AnchorKind
-from curve.detection import AnchorThresholdConfig, detect_primitive_anchors
+from curve.anchors import Point
+from curve.detection import (
+    AnchorThresholdConfig,
+    _fit_circle_from_boundary,
+    detect_primitive_anchors,
+)
 from curve.detection import detect_cutout_strokes
-from curve.masks import BinaryMask, connected_components
+from curve.masks import BinaryMask, MaskComponent, connected_components
 
 
 class MaskComponentTests(unittest.TestCase):
@@ -113,6 +118,23 @@ class PrimitiveDetectionTests(unittest.TestCase):
         )
 
         self.assertNotEqual(anchors[0].kind, AnchorKind.CIRCLE)
+
+    def test_circle_fit_uses_boundary_samples_over_centroid_fallback(self):
+        component = MaskComponent(
+            pixels=frozenset({(3, 0), (0, 3), (-3, 0), (0, -3), (0, 0)}),
+            centroid_hint=Point(10, 10),
+            boundary_pixels_hint=frozenset({(3, 0), (0, 3), (-3, 0), (0, -3)}),
+        )
+
+        center, radius, residual = _fit_circle_from_boundary(
+            component,
+            fallback_radius=1.0,
+        )
+
+        self.assertAlmostEqual(center.x, 0.0)
+        self.assertAlmostEqual(center.y, 0.0)
+        self.assertAlmostEqual(radius, 3.0)
+        self.assertAlmostEqual(residual, 0.0)
 
     def test_circle_ring_is_detected_as_stroke_circle_anchor(self):
         mask = BinaryMask.from_rows(
