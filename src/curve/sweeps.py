@@ -121,6 +121,8 @@ def run_sweep(
                 "diagnostic_stage_counts": diagnostic_stage_counts(diagnostics),
                 "editability_score": metrics.get("editability_score"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
+                "anchor_quality_error_mean": metrics.get("anchor_quality_error_mean"),
+                "anchor_quality_error_max": metrics.get("anchor_quality_error_max"),
                 "raster_l1_error": metrics.get("raster_l1_error"),
                 "raster_edge_error": metrics.get("raster_edge_error"),
             }
@@ -173,16 +175,17 @@ def render_sweep_markdown(summary: dict[str, Any]) -> str:
         "## Ranked Runs",
         "",
         (
-            "| Rank | Run | Editability | Raster L1 | Edge Error | Anchors | "
+            "| Rank | Run | Editability | Quality Max | Raster L1 | Edge Error | Anchors | "
             "Diagnostics | Diagnostic Stages |"
         ),
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for rank, run in enumerate(ranked, start=1):
         lines.append(
             "| "
             f"{rank} | `{run.get('id')}` | "
             f"{_fmt(run.get('editability_score'))} | "
+            f"{_fmt(run.get('anchor_quality_error_max'))} | "
             f"{_fmt(run.get('raster_l1_error'))} | "
             f"{_fmt(run.get('raster_edge_error'))} | "
             f"{run.get('anchor_count', 'n/a')} | "

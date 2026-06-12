@@ -66,6 +66,45 @@
       },
       "id": "chatgpt-image-2026-06-11",
       "metrics": {
+        "anchor_quality_error_max": 0.661263,
+        "anchor_quality_error_mean": 0.151603,
+        "anchor_quality_metric_summary": {
+          "circle_fit_residual_error": {
+            "count": 5,
+            "max": 0.048126,
+            "mean": 0.045486
+          },
+          "circle_roundness_error": {
+            "count": 5,
+            "max": 0.054241,
+            "mean": 0.051206
+          },
+          "cutout_anchor_error": {
+            "count": 22,
+            "max": 0.0,
+            "mean": 0.0
+          },
+          "line_smoothness_error": {
+            "count": 22,
+            "max": 0.395148,
+            "mean": 0.017961
+          },
+          "quad_corner_consistency_error": {
+            "count": 20,
+            "max": 0.660681,
+            "mean": 0.405153
+          },
+          "quad_edge_straightness_error": {
+            "count": 20,
+            "max": 0.0,
+            "mean": 0.0
+          },
+          "stroke_width_variance": {
+            "count": 31,
+            "max": 0.266115,
+            "mean": 0.008584
+          }
+        },
         "color_fragment_counts": {
           "#1e334a": 10,
           "#d0b383": 8,
@@ -158,6 +197,45 @@
       },
       "id": "terminaro-tweaked",
       "metrics": {
+        "anchor_quality_error_max": 0.660681,
+        "anchor_quality_error_mean": 0.135862,
+        "anchor_quality_metric_summary": {
+          "circle_fit_residual_error": {
+            "count": 5,
+            "max": 0.096937,
+            "mean": 0.076582
+          },
+          "circle_roundness_error": {
+            "count": 5,
+            "max": 0.114787,
+            "mean": 0.089602
+          },
+          "cutout_anchor_error": {
+            "count": 17,
+            "max": 0.0,
+            "mean": 0.0
+          },
+          "line_smoothness_error": {
+            "count": 17,
+            "max": 0.221724,
+            "mean": 0.013043
+          },
+          "quad_corner_consistency_error": {
+            "count": 16,
+            "max": 0.660681,
+            "mean": 0.407407
+          },
+          "quad_edge_straightness_error": {
+            "count": 16,
+            "max": 0.0,
+            "mean": 0.0
+          },
+          "stroke_width_variance": {
+            "count": 28,
+            "max": 0.173006,
+            "mean": 0.006179
+          }
+        },
         "color_fragment_counts": {
           "#002554": 13,
           "#b67f13": 8,
@@ -231,6 +309,35 @@
       },
       "id": "ui-radio-acceptance-screenshot",
       "metrics": {
+        "anchor_quality_error_max": 0.578404,
+        "anchor_quality_error_mean": 0.035738,
+        "anchor_quality_metric_summary": {
+          "circle_fit_residual_error": {
+            "count": 9,
+            "max": 0.212126,
+            "mean": 0.165875
+          },
+          "circle_roundness_error": {
+            "count": 9,
+            "max": 0.254563,
+            "mean": 0.187022
+          },
+          "cutout_anchor_error": {
+            "count": 88,
+            "max": 0.0,
+            "mean": 0.0
+          },
+          "line_smoothness_error": {
+            "count": 88,
+            "max": 0.083296,
+            "mean": 0.004764
+          },
+          "stroke_width_variance": {
+            "count": 161,
+            "max": 0.495108,
+            "mean": 0.019178
+          }
+        },
         "color_fragment_counts": {
           "#000000": 135,
           "#0f0f0f": 9,

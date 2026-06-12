@@ -28,6 +28,8 @@ def evaluate_runs(run_root: str | Path) -> dict[str, object]:
                 "diagnostic_stage_counts": diagnostic_stage_counts(diagnostics),
                 "editability_score": metrics.get("editability_score"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
+                "anchor_quality_error_mean": metrics.get("anchor_quality_error_mean"),
+                "anchor_quality_error_max": metrics.get("anchor_quality_error_max"),
                 "raster_l1_error": metrics.get("raster_l1_error"),
                 "raster_alpha_error": metrics.get("raster_alpha_error"),
                 "raster_edge_error": metrics.get("raster_edge_error"),
@@ -88,6 +90,14 @@ def render_eval_markdown(summary: dict[str, object]) -> str:
         lines.append(f"- Editability score: {run.get('editability_score', 'n/a')}")
         lines.append(
             f"- Fragmentation penalty: {run.get('fragmentation_penalty', 'n/a')}"
+        )
+        lines.append(
+            "- Anchor quality error mean: "
+            f"{run.get('anchor_quality_error_mean', 'n/a')}"
+        )
+        lines.append(
+            "- Anchor quality error max: "
+            f"{run.get('anchor_quality_error_max', 'n/a')}"
         )
         lines.append(f"- Raster L1 error: {run.get('raster_l1_error', 'n/a')}")
         lines.append(f"- Raster edge error: {run.get('raster_edge_error', 'n/a')}")

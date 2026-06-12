@@ -20,6 +20,8 @@ class EvalTests(unittest.TestCase):
             self.assertEqual(summary["runs"][0]["anchor_count"], 2)
             self.assertEqual(summary["runs"][0]["layer_count"], 1)
             self.assertEqual(summary["runs"][0]["editability_score"], 0.75)
+            self.assertEqual(summary["runs"][0]["anchor_quality_error_mean"], 0.04)
+            self.assertEqual(summary["runs"][0]["anchor_quality_error_max"], 0.12)
             self.assertEqual(summary["runs"][0]["raster_l1_error"], 0.12)
             self.assertEqual(summary["runs"][0]["anchor_types"]["circle"], 1)
             self.assertEqual(
@@ -65,6 +67,8 @@ class EvalTests(unittest.TestCase):
         self.assertIn("- Layers: 0", markdown)
         self.assertIn("- Diagnostic stages: segmentation: 1", markdown)
         self.assertIn("- Editability score: n/a", markdown)
+        self.assertIn("- Anchor quality error mean: n/a", markdown)
+        self.assertIn("- Anchor quality error max: n/a", markdown)
         self.assertIn("- Raster L1 error: n/a", markdown)
 
     def test_eval_cli_writes_summary(self):
@@ -122,6 +126,8 @@ def _write_run_manifest(root: Path, name: str) -> Path:
                 "metrics": {
                     "editability_score": 0.75,
                     "fragmentation_penalty": 0.2,
+                    "anchor_quality_error_mean": 0.04,
+                    "anchor_quality_error_max": 0.12,
                     "raster_l1_error": 0.12,
                     "raster_edge_error": 0.08,
                 },

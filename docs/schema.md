@@ -73,6 +73,11 @@ Scene metrics:
 - `group_count`
 - `simple_shape_ratio`
 - `fragmentation_penalty`
+- `anchor_quality_error_mean`
+- `anchor_quality_error_max`
+- `anchor_quality_metric_summary`: per-metric aggregate counts, means, and
+  maxima for primitive quality metrics such as `circle_roundness_error`,
+  `line_smoothness_error`, `stroke_width_variance`, and quad/grid errors
 - `diagnostic_penalty`
 - `editability_score`
 - `raster_l1_error`: average normalized RGB error for run-directory previews

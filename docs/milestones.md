@@ -344,6 +344,9 @@ Implemented so far:
   `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
 - node, parameter, simple-shape, generic-path, cut-out, and color-fragment
   counts
+- aggregate anchor-quality summaries expose mean/max quality error and
+  per-metric counts/means/maxima for primitive fit metrics such as circle
+  roundness, line smoothness, stroke-width variance, and quad/grid errors.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

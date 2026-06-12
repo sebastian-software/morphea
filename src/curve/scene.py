@@ -609,6 +609,10 @@ def scene_metrics_to_manifest(
         else 1.0
     )
     fragmentation_penalty = _fragmentation_penalty(anchors)
+    anchor_quality_errors = [
+        quality_metric_error(anchor.metrics)
+        for anchor in anchors
+    ]
     diagnostic_penalty = min(
         sum(1 for diagnostic in diagnostics if diagnostic.get("level") == "warning")
         * 0.05,
@@ -646,6 +650,15 @@ def scene_metrics_to_manifest(
         "group_count": len(groups or []),
         "simple_shape_ratio": round(simple_shape_ratio, 6),
         "fragmentation_penalty": round(fragmentation_penalty, 6),
+        "anchor_quality_error_mean": round(
+            mean(anchor_quality_errors) if anchor_quality_errors else 0.0,
+            6,
+        ),
+        "anchor_quality_error_max": round(
+            max(anchor_quality_errors) if anchor_quality_errors else 0.0,
+            6,
+        ),
+        "anchor_quality_metric_summary": _anchor_quality_metric_summary(anchors),
         "diagnostic_penalty": round(diagnostic_penalty, 6),
         "editability_score": round(editability_score, 6),
         "color_fragment_counts": _color_fragment_counts(anchors),
@@ -661,6 +674,33 @@ def _color_fragment_counts(
             continue
         counts[anchor.color] = counts.get(anchor.color, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _anchor_quality_metric_summary(
+    anchors: tuple[AnchorCandidate, ...],
+) -> dict[str, dict[str, float | int]]:
+    values_by_metric: dict[str, list[float]] = {}
+    for anchor in anchors:
+        for key, value in anchor.metrics.items():
+            if not _is_anchor_quality_metric(key) or not isinstance(value, (int, float)):
+                continue
+            values_by_metric.setdefault(key, []).append(float(value))
+    return {
+        key: {
+            "count": len(values),
+            "mean": round(mean(values), 6),
+            "max": round(max(values), 6),
+        }
+        for key, values in sorted(values_by_metric.items())
+        if values
+    }
+
+
+def _is_anchor_quality_metric(key: str) -> bool:
+    return (
+        key.endswith("_error")
+        or key in {"stroke_width_variance", "classifier_prior_error"}
+    )
 
 
 def _quad_grid_summary(

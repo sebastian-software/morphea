@@ -46,6 +46,8 @@ class SweepTests(unittest.TestCase):
             self.assertIn("layer_count", summary["runs"][0])
             self.assertIn("editability_score", summary["runs"][0])
             self.assertIn("fragmentation_penalty", summary["runs"][0])
+            self.assertIn("anchor_quality_error_mean", summary["runs"][0])
+            self.assertIn("anchor_quality_error_max", summary["runs"][0])
             self.assertIn("raster_l1_error", summary["runs"][0])
             self.assertIn("raster_edge_error", summary["runs"][0])
             self.assertIn("semantic_rank", summary["runs"][0])
@@ -73,7 +75,7 @@ class SweepTests(unittest.TestCase):
             self.assertTrue(markdown.exists())
             text = markdown.read_text(encoding="utf-8")
             self.assertIn("# Curve Sweep Summary", text)
-            self.assertIn("| Rank | Run | Editability |", text)
+            self.assertIn("| Rank | Run | Editability | Quality Max |", text)
             self.assertIn("Diagnostic Stages", text)
 
     def test_run_sweep_summarizes_diagnostic_stages(self):

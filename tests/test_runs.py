@@ -119,6 +119,8 @@ class RunWriterTests(unittest.TestCase):
                 "metrics": {
                     "editability_score": 0.8,
                     "fragmentation_penalty": 0.1,
+                    "anchor_quality_error_mean": 0.05,
+                    "anchor_quality_error_max": 0.2,
                     "raster_l1_error": 0.2,
                 },
             },
@@ -136,6 +138,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("`segmentation`: 1", report)
         self.assertIn("`warning` `component_deferred`", report)
         self.assertIn("- Editability score: 0.8", report)
+        self.assertIn("- Anchor quality error mean: 0.05", report)
+        self.assertIn("- Anchor quality error max: 0.2", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
         self.assertIn("`raster_l1_error`: 0.2", report)
 
@@ -162,6 +166,8 @@ class RunWriterTests(unittest.TestCase):
                 "metrics": {
                     "editability_score": 0.8,
                     "fragmentation_penalty": 0.1,
+                    "anchor_quality_error_mean": 0.05,
+                    "anchor_quality_error_max": 0.2,
                     "raster_l1_error": 0.2,
                 },
             },
@@ -176,6 +182,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("2 anchors, color #dd2222", report)
         self.assertIn("action merge_adjacent_fragments", report)
         self.assertIn("reason compact_same_color_bounds", report)
+        self.assertIn("Anchor quality error mean", report)
+        self.assertIn("Anchor quality error max", report)
         self.assertIn("<h2>Pipeline Stages</h2>", report)
         self.assertIn("<code>segmentation</code>", report)
         self.assertIn("<td>component_deferred</td>", report)

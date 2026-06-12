@@ -531,6 +531,36 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(group["merge_plan"]["bounds"], [0, 0, 8, 4])
         self.assertEqual(group["metrics"]["bounds_fill_ratio"], 1.0)
 
+    def test_scene_metrics_summarize_anchor_quality_errors(self):
+        anchors = (
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                metrics={"circle_roundness_error": 0.1},
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                metrics={
+                    "line_smoothness_error": 0.2,
+                    "stroke_width_variance": 0.4,
+                },
+            ),
+        )
+
+        metrics = scene_metrics_to_manifest(anchors)
+
+        self.assertEqual(metrics["anchor_quality_error_mean"], 0.35)
+        self.assertEqual(metrics["anchor_quality_error_max"], 0.6)
+        self.assertEqual(
+            metrics["anchor_quality_metric_summary"]["stroke_width_variance"],
+            {"count": 1, "mean": 0.4, "max": 0.4},
+        )
+
     def test_auto_merge_compact_same_color_rect_fragments(self):
         fragments = (
             _rect_anchor(0, 0, 4, 4, color="#003366"),
