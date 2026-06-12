@@ -6,7 +6,7 @@ import json
 import tempfile
 from dataclasses import dataclass, field, replace
 from fnmatch import fnmatch
-from math import hypot
+from math import ceil, cos, hypot, pi, radians, sin
 from pathlib import Path
 from statistics import mean
 from typing import Any, Callable, Iterable
@@ -47,6 +47,13 @@ SVG_L1_TOLERANCE_OFFSET = 0.03
 SVG_EDGE_TOLERANCE_OFFSET = 0.035
 SVG_ALPHA_TOLERANCE_OFFSET = 0.02
 SVG_VS_PREVIEW_TOLERANCE_OFFSET = 0.02
+
+# Simple arc fixtures render through the manifest preview and the exported
+# SVG. Until FQ3 lands true smooth arc export both renderers draw the
+# three-point centerline as two chords, so the family raster budget reflects
+# that honestly instead of hiding it.
+ARC_MAX_RASTER_L1_ERROR = 0.06
+ARC_MAX_RASTER_EDGE_ERROR = 0.035
 
 
 @dataclass(frozen=True)
@@ -228,6 +235,35 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ("simple_quad_trapezoid_7", "trapezoid_7", ((16, 30), (48, 30), (58, 56), (6, 56))),
             ("simple_quad_trapezoid_8", "trapezoid_8", ((24, 8), (54, 8), (48, 40), (12, 40))),
             ("simple_quad_trapezoid_9", "trapezoid_9", ((12, 24), (52, 24), (44, 54), (20, 54))),
+        )
+    )
+    specs.extend(
+        _arc_spec(case_id, family, variant, arc)
+        for case_id, family, variant, arc in (
+            ("arc_up", "arc_up", "base", (32, 40, 20, -150, -30, 3)),
+            ("arc_up_small", "arc_up", "small", (30, 38, 17, -150, -30, 3)),
+            ("arc_up_large", "arc_up", "large", (33, 42, 22, -152, -28, 3)),
+            ("arc_down", "arc_down", "base", (32, 24, 20, 30, 150, 3)),
+            ("arc_down_small", "arc_down", "small", (30, 22, 17, 30, 150, 3)),
+            ("arc_down_large", "arc_down", "large", (33, 26, 22, 28, 152, 3)),
+            ("arc_left", "arc_left", "base", (40, 32, 20, 120, 240, 3)),
+            ("arc_left_small", "arc_left", "small", (38, 30, 17, 120, 240, 3)),
+            ("arc_left_large", "arc_left", "large", (42, 33, 22, 122, 238, 3)),
+            ("arc_right", "arc_right", "base", (24, 32, 20, -60, 60, 3)),
+            ("arc_right_small", "arc_right", "small", (22, 30, 17, -60, 60, 3)),
+            ("arc_right_large", "arc_right", "large", (26, 33, 22, -58, 58, 3)),
+            ("arc_shallow", "arc_shallow", "base", (32, 50, 26, -125, -55, 3)),
+            ("arc_shallow_small", "arc_shallow", "small", (32, 48, 24, -122, -58, 3)),
+            ("arc_shallow_large", "arc_shallow", "large", (31, 52, 28, -126, -54, 3)),
+            ("arc_steep", "arc_steep", "base", (32, 36, 17, -170, -10, 3)),
+            ("arc_steep_small", "arc_steep", "small", (32, 35, 15, -168, -12, 3)),
+            ("arc_steep_large", "arc_steep", "large", (32, 38, 19, -166, -14, 3)),
+            ("arc_thick", "arc_thick", "base", (32, 40, 19, -150, -30, 6)),
+            ("arc_thick_medium", "arc_thick", "medium", (32, 38, 17, -148, -32, 5)),
+            ("arc_thick_wide", "arc_thick", "wide", (32, 42, 20, -152, -28, 7)),
+            ("arc_small_radius", "arc_small_radius", "base", (32, 36, 10, -160, -20, 3)),
+            ("arc_small_radius_left", "arc_small_radius", "left", (24, 30, 9, -158, -22, 3)),
+            ("arc_small_radius_right", "arc_small_radius", "right", (40, 34, 11, -162, -18, 3)),
         )
     )
     specs.extend(
@@ -1071,6 +1107,85 @@ def _quad_spec(
         max_raster_edge_error=0.002,
         min_bbox_iou=0.9,
     )
+
+
+ArcParams = tuple[float, float, float, float, float, int]
+
+
+def _arc_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    arc: ArcParams,
+) -> PrimitiveSpec:
+    cx, cy, radius, start_deg, end_deg, width = arc
+    start = _arc_point_xy(cx, cy, radius, start_deg)
+    end = _arc_point_xy(cx, cy, radius, end_deg)
+    apex = _arc_point_xy(cx, cy, radius, (start_deg + end_deg) / 2)
+    chord_mid = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
+    bow = hypot(apex[0] - chord_mid[0], apex[1] - chord_mid[1])
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("arc",),
+        geometry_type="arc",
+        geometry={
+            "start": start,
+            "end": end,
+            "apex": apex,
+            "bow": bow,
+            "bow_direction": _bow_direction(apex, chord_mid),
+            "width": float(width),
+            "cx": cx,
+            "cy": cy,
+            "r": float(radius),
+        },
+        draw=lambda draw, arc=arc: _draw_circular_arc(draw, arc),
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=ARC_MAX_RASTER_L1_ERROR,
+        max_raster_edge_error=ARC_MAX_RASTER_EDGE_ERROR,
+        # Thin arc bounding strips lose over 10% IoU per pixel of drift; the
+        # endpoint, bow, and width contracts carry the strict geometry here.
+        min_bbox_iou=0.72,
+    )
+
+
+def _arc_point_xy(
+    cx: float,
+    cy: float,
+    radius: float,
+    angle_deg: float,
+) -> tuple[float, float]:
+    angle = radians(angle_deg)
+    return (cx + radius * cos(angle), cy + radius * sin(angle))
+
+
+def _bow_direction(
+    apex: tuple[float, float],
+    chord_mid: tuple[float, float],
+) -> str:
+    dx = apex[0] - chord_mid[0]
+    dy = apex[1] - chord_mid[1]
+    if abs(dx) >= abs(dy):
+        return "right" if dx > 0 else "left"
+    return "down" if dy > 0 else "up"
+
+
+def _draw_circular_arc(draw: ImageDraw.ImageDraw, arc: ArcParams) -> None:
+    cx, cy, radius, start_deg, end_deg, width = arc
+    steps = max(24, ceil(radius * abs(end_deg - start_deg) / 360 * 2 * pi))
+    points = []
+    for index in range(steps + 1):
+        angle = radians(start_deg + (end_deg - start_deg) * index / steps)
+        points.append((cx + radius * cos(angle), cy + radius * sin(angle)))
+    draw.line(points, fill=BLUE, width=width, joint="curve")
+    half = width / 2
+    for point in (points[0], points[-1]):
+        draw.ellipse(
+            (point[0] - half, point[1] - half, point[0] + half - 1, point[1] + half - 1),
+            fill=BLUE,
+        )
 
 
 def _antialiased_circle_spec(
@@ -2399,7 +2514,96 @@ def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict
         return _circle_failures(spec, anchor) + _stroke_width_failures(spec, anchor)
     if spec.geometry_type == "stroke":
         return _stroke_failures(spec, anchor)
+    if spec.geometry_type == "arc":
+        return _arc_failures(spec, anchor)
     return [_failure("geometry_drift", f"unsupported geometry contract {spec.geometry_type}")]
+
+
+def _arc_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
+    stroke = anchor.get("stroke")
+    if not isinstance(stroke, dict):
+        return [_failure("geometry_drift", "missing arc stroke geometry")]
+    centerline = tuple(
+        (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
+        for point in stroke.get("centerline", [])
+    )
+    if len(centerline) < 2:
+        return [_failure("geometry_drift", "arc centerline has fewer than 2 points")]
+
+    failures: list[dict[str, str]] = []
+    expected_start = tuple(float(value) for value in spec.geometry["start"])
+    expected_end = tuple(float(value) for value in spec.geometry["end"])
+    actual_start = centerline[0]
+    actual_end = centerline[-1]
+    endpoint_error = min(
+        max(
+            _point_distance(actual_start, expected_start),
+            _point_distance(actual_end, expected_end),
+        ),
+        max(
+            _point_distance(actual_start, expected_end),
+            _point_distance(actual_end, expected_start),
+        ),
+    )
+    if endpoint_error > spec.coordinate_tolerance:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"arc endpoint distance {round(endpoint_error, 6)} exceeds "
+                f"{spec.coordinate_tolerance}",
+            )
+        )
+
+    chord_mid = (
+        (actual_start[0] + actual_end[0]) / 2,
+        (actual_start[1] + actual_end[1]) / 2,
+    )
+    apex = max(
+        centerline,
+        key=lambda point: _point_segment_distance(point, actual_start, actual_end),
+    )
+    actual_bow = _point_segment_distance(apex, actual_start, actual_end)
+    expected_bow = float(spec.geometry["bow"])
+    bow_tolerance = spec.coordinate_tolerance + 0.5
+    if abs(actual_bow - expected_bow) > bow_tolerance:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"arc bow delta {round(abs(actual_bow - expected_bow), 6)} exceeds "
+                f"{bow_tolerance}",
+            )
+        )
+    expected_direction = str(spec.geometry["bow_direction"])
+    actual_direction = _bow_direction(apex, chord_mid)
+    if actual_direction != expected_direction:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"arc bow direction expected {expected_direction}, got {actual_direction}",
+            )
+        )
+    actual_cap = str(stroke.get("cap_style", "round"))
+    if actual_cap != "round":
+        failures.append(
+            _failure("geometry_drift", f"expected cap_style round, got {actual_cap}")
+        )
+    failures.extend(_stroke_width_failures(spec, anchor))
+    return failures
+
+
+def _point_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = hypot(dx, dy)
+    if denominator == 0:
+        return _point_distance(point, start)
+    return abs(
+        dy * point[0] - dx * point[1] + end[0] * start[1] - end[1] * start[0]
+    ) / denominator
 
 
 def _quad_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
@@ -2557,6 +2761,16 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
             width,
             str(spec.geometry.get("cap_style", "butt")),
         )
+    if spec.geometry_type == "arc":
+        points = tuple(
+            (float(x), float(y))
+            for x, y in (
+                spec.geometry["start"],
+                spec.geometry["apex"],
+                spec.geometry["end"],
+            )
+        )
+        return _stroke_visual_bounds(points, float(spec.geometry["width"]), "round")
     return 0.0, 0.0, 0.0, 0.0
 
 
@@ -2764,13 +2978,23 @@ def _rounded_geometry(geometry: Geometry) -> Geometry:
     for key, value in geometry.items():
         if key == "draw":
             continue
-        if isinstance(value, tuple):
+        if _is_point_pair(value):
+            rounded[key] = [round(float(value[0]), 6), round(float(value[1]), 6)]
+        elif isinstance(value, tuple):
             rounded[key] = _rounded_points(value)
         elif isinstance(value, float | int):
             rounded[key] = round(float(value), 6)
         else:
             rounded[key] = value
     return rounded
+
+
+def _is_point_pair(value: object) -> bool:
+    return (
+        isinstance(value, tuple)
+        and len(value) == 2
+        and all(isinstance(item, (int, float)) for item in value)
+    )
 
 
 def _rounded_points(points: Iterable[tuple[float, float]]) -> list[list[float]]:

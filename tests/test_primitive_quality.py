@@ -126,6 +126,40 @@ class PrimitiveQualityTests(unittest.TestCase):
             )
             self.assertEqual(adjacent["svg_metrics"]["svg_raster_l1_error"], 0.0)
 
+    def test_simple_arc_fixture_meets_arc_contract(self):
+        report = check_primitive_quality(cases=("arc_up", "arc_thick", "arc_shallow"))
+
+        self.assertTrue(report["ok"])
+        for case in report["cases"]:
+            self.assertEqual(case["actual_kind"], "arc")
+            self.assertEqual(case["anchor_count"], 1)
+            self.assertEqual(case["anchor_kind_counts"], {"arc": 1})
+        self.assertEqual(report["curve_anchor_kind_counts"]["arc"], 3)
+
+    def test_arc_contract_failures_report_endpoint_bow_and_width(self):
+        from morphea.primitive_quality import _arc_failures, primitive_specs
+
+        spec = next(spec for spec in primitive_specs() if spec.id == "arc_up")
+        drifted_anchor = {
+            "kind": "arc",
+            "stroke": {
+                "centerline": [
+                    {"x": 5.0, "y": 50.0},
+                    {"x": 32.0, "y": 44.0},
+                    {"x": 60.0, "y": 50.0},
+                ],
+                "width_samples": [9.0],
+                "cap_style": "butt",
+            },
+        }
+
+        failures = [failure["message"] for failure in _arc_failures(spec, drifted_anchor)]
+
+        self.assertTrue(any("endpoint distance" in message for message in failures))
+        self.assertTrue(any("bow" in message for message in failures))
+        self.assertTrue(any("width" in message for message in failures))
+        self.assertTrue(any("cap_style" in message for message in failures))
+
     def test_primitive_quality_harness_filters_cases(self):
         report = check_primitive_quality(cases=("filled_square",))
 
@@ -296,6 +330,14 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "rounded_rectangle": 10,
                 "simple_quad": 10,
                 "vertical_stroke": 10,
+                "arc_up": 3,
+                "arc_down": 3,
+                "arc_left": 3,
+                "arc_right": 3,
+                "arc_shallow": 3,
+                "arc_steep": 3,
+                "arc_thick": 3,
+                "arc_small_radius": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

@@ -406,9 +406,14 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(anchors), 1)
         self.assertEqual(anchors[0].kind, AnchorKind.ARC)
         self.assertEqual(len(anchors[0].stroke.centerline), 3)
-        self.assertEqual(len(anchors[0].stroke.width_samples), 3)
-        self.assertEqual(anchors[0].parameter_count, 9)
+        self.assertEqual(len(anchors[0].stroke.width_samples), 1)
+        self.assertEqual(anchors[0].parameter_count, 7)
         self.assertIn("arc_bow_ratio", anchors[0].metrics)
+        self.assertIn("arc_radius", anchors[0].metrics)
+        self.assertIn("arc_center_x", anchors[0].metrics)
+        self.assertIn("arc_theta_start", anchors[0].metrics)
+        self.assertIn("arc_sweep", anchors[0].metrics)
+        self.assertGreater(anchors[0].metrics["arc_radius"], 2.0)
 
     def test_filled_axis_aligned_block_is_detected_as_rect(self):
         mask = BinaryMask.from_rows(

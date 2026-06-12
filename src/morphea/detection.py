@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from math import hypot, pi, sqrt
+from math import asin, atan2, cos, hypot, pi, sin, sqrt
 from statistics import mean
 
 from morphea.anchors import (
@@ -484,9 +484,13 @@ def _stroke_candidate(
     )
     if _stroke_bounds_exceed_component(stroke, component):
         return None
+    # Low oriented-box coverage means the straight-stroke story is poor (for
+    # example a curved band absorbed into an inflated width); penalize it
+    # enough that an honest arc fit wins the ranking.
+    coverage_weight = 0.1 if len(centerline) > 2 or coverage >= 0.7 else 0.3
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
-        raster_error=abs(1.0 - coverage) * 0.1,
+        raster_error=abs(1.0 - coverage) * coverage_weight,
         node_count=len(centerline),
         parameter_count=len(width_samples) + len(centerline) * 2,
         stroke=stroke,
@@ -597,34 +601,26 @@ def _arc_candidate(
         return None
 
     density = component.area / max(width * height, 1)
-    if density > 0.45:
+    if density > 0.55:
         return None
 
-    start, end = _arc_endpoints(component)
+    fit = _fit_circular_arc(component)
+    if fit is None:
+        return None
+
+    start = fit["start"]
+    apex = fit["apex"]
+    end = fit["end"]
     if start.distance_to(end) < thresholds.stroke_min_length:
         return None
-
-    control = max(
-        (Point(x, y) for x, y in component.pixels),
-        key=lambda point: _point_line_distance(point, start, end),
-    )
-    bow = _point_line_distance(control, start, end)
+    bow = _point_line_distance(apex, start, end)
     bow_ratio = bow / max(start.distance_to(end), 1.0)
-    if bow < max(1.0, min(width, height) * 0.25) or bow_ratio < 0.12:
+    if bow < 1.0 or bow_ratio < 0.1:
         return None
 
-    stroke_width = max(
-        1.0,
-        round(component.area / max(start.distance_to(end), 1.0) * 0.75),
-    )
-    centerline = (start, control, end)
-    width_samples = _stroke_width_samples_along_centerline(
-        component,
-        centerline,
-        fallback_width=stroke_width,
-    )
-    if mean(width_samples) > min(width, height) * 0.7:
-        return None
+    stroke_width = float(fit["stroke_width"])
+    centerline = (start, apex, end)
+    width_samples = (stroke_width,)
     stroke = StrokeAnchor(
         centerline=centerline,
         width_samples=width_samples,
@@ -635,16 +631,235 @@ def _arc_candidate(
         return None
     candidate = AnchorCandidate(
         kind=AnchorKind.ARC,
-        raster_error=max(0.0, 0.12 - bow_ratio),
+        raster_error=float(fit["band_residual_error"]),
         node_count=3,
-        parameter_count=len(width_samples) + len(centerline) * 2,
+        parameter_count=7,
         stroke=stroke,
         metrics={
             "arc_bow_ratio": bow_ratio,
+            "arc_center_x": fit["center"].x,
+            "arc_center_y": fit["center"].y,
+            "arc_radius": float(fit["radius"]),
+            "arc_theta_start": float(fit["theta_start"]),
+            "arc_theta_end": float(fit["theta_end"]),
+            "arc_sweep": float(fit["sweep"]),
+            "arc_large_arc": float(fit["large_arc"]),
+            "arc_angular_span": float(fit["angular_span"]),
+            "arc_fit_residual_error": float(fit["band_residual_error"]),
             "stroke_width_variance": stroke_width_variance(width_samples),
         },
     )
     return candidate
+
+
+def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
+    """Fit a circular stroke band to a thin curved component.
+
+    Returns centerline endpoints, apex, radius, angular range, and stroke
+    width, or None when the component does not look like a single open
+    circular arc band.
+    """
+
+    pixels = tuple(component.pixels)
+    if len(pixels) < 8:
+        return None
+    center, radius = _kasa_circle_fit(pixels)
+    if center is None or radius is None:
+        return None
+    max_span = float(max(component.width, component.height))
+    if radius < 2.0 or radius > max_span * 4.0:
+        return None
+
+    distances = [Point(x, y).distance_to(center) for x, y in pixels]
+    inner = min(distances)
+    outer = max(distances)
+    band_width = max(outer - inner, 1.0)
+    if band_width > radius * 0.9:
+        return None
+    mid_radius = (inner + outer) / 2
+    band_residual = sum(abs(d - mid_radius) for d in distances) / len(distances)
+    # A uniformly filled band has mean radial deviation near width / 4.
+    if band_residual > band_width * 0.5 + 0.5:
+        return None
+
+    angles = [
+        atan2(y - center.y, x - center.x)
+        for x, y in pixels
+    ]
+    mean_angle = atan2(
+        sum(sin(a) for a in angles),
+        sum(cos(a) for a in angles),
+    )
+    centered = sorted(_wrapped_angle(a - mean_angle) for a in angles)
+    theta_min = centered[0]
+    theta_max = centered[-1]
+    span = theta_max - theta_min
+    if span < 0.3 or span > 5.9:
+        return None
+    largest_gap = max(
+        (b - a for a, b in zip(centered, centered[1:])),
+        default=0.0,
+    )
+    if largest_gap > max(0.35, span * 0.2):
+        return None
+
+    # The whole-band Kåsa fit underestimates the radius on shallow arcs, so
+    # refit through per-angle-bin centerline midpoints which sit on the true
+    # stroke centerline.
+    refit = _refit_arc_through_bin_midpoints(
+        pixels,
+        center=center,
+        mean_angle=mean_angle,
+        theta_min=theta_min,
+        theta_max=theta_max,
+    )
+    if refit is not None:
+        center, mid_radius = refit
+        angles = [atan2(y - center.y, x - center.x) for x, y in pixels]
+        mean_angle = atan2(
+            sum(sin(a) for a in angles),
+            sum(cos(a) for a in angles),
+        )
+        centered = sorted(_wrapped_angle(a - mean_angle) for a in angles)
+        theta_min = centered[0]
+        theta_max = centered[-1]
+        span = theta_max - theta_min
+        if span < 0.3 or span > 5.9:
+            return None
+
+    # Two width estimators with opposite biases: area / arc-length counts cap
+    # angles into the length and underestimates wide strokes, while the radial
+    # 10th-90th percentile band spans pixel centers (width - 1) plus staircase
+    # noise and overestimates thin ones. Their mean tracks the drawn width.
+    arc_length = max(span * mid_radius, 1.0)
+    area_width = len(pixels) / arc_length
+    refit_distances = sorted(Point(x, y).distance_to(center) for x, y in pixels)
+    p10 = refit_distances[int(len(refit_distances) * 0.1)]
+    p90 = refit_distances[min(int(len(refit_distances) * 0.9), len(refit_distances) - 1)]
+    band_width = (p90 - p10) / 0.8 + 1.0
+    stroke_width = max((area_width + band_width) / 2, 1.0)
+
+    # Round caps extend the pixel band past the true centerline endpoints by
+    # half a stroke width. Inside the outermost cap_angle window a full band
+    # cross section would hold cap_angle * R * width pixels while a round cap
+    # half-disk holds only pi/4 of that, so a taper below 0.9 marks a cap.
+    cap_angle = asin(min(0.95, (stroke_width / 2) / max(mid_radius, 1.0)))
+    if cap_angle > 0.01 and stroke_width >= 4.0:
+        expected_window_pixels = max(cap_angle * mid_radius * stroke_width, 1.0)
+        start_count = sum(1 for a in centered if a < theta_min + cap_angle)
+        end_count = sum(1 for a in centered if a > theta_max - cap_angle)
+        if start_count / expected_window_pixels < 0.9:
+            theta_min += cap_angle
+        if end_count / expected_window_pixels < 0.9:
+            theta_max -= cap_angle
+        span = theta_max - theta_min
+        if span < 0.3:
+            return None
+
+    theta_start = theta_min + mean_angle
+    theta_end = theta_max + mean_angle
+    start = _arc_point(center, mid_radius, theta_start)
+    end = _arc_point(center, mid_radius, theta_end)
+    apex = _arc_point(center, mid_radius, (theta_start + theta_end) / 2)
+    if (abs(end.x - start.x) >= abs(end.y - start.y) and end.x < start.x) or (
+        abs(end.y - start.y) > abs(end.x - start.x) and end.y < start.y
+    ):
+        start, end = end, start
+        theta_start, theta_end = theta_end, theta_start
+    cross = (end.x - start.x) * (apex.y - start.y) - (end.y - start.y) * (
+        apex.x - start.x
+    )
+    return {
+        "center": center,
+        "radius": mid_radius,
+        "stroke_width": stroke_width,
+        "band_residual_error": band_residual / max(band_width, 1.0) * 0.1,
+        "theta_start": theta_start,
+        "theta_end": theta_end,
+        "angular_span": span,
+        "sweep": 1 if cross > 0 else 0,
+        "large_arc": 1 if span > pi else 0,
+        "start": start,
+        "apex": apex,
+        "end": end,
+    }
+
+
+def _refit_arc_through_bin_midpoints(
+    pixels: tuple[tuple[int, int], ...],
+    *,
+    center: Point,
+    mean_angle: float,
+    theta_min: float,
+    theta_max: float,
+) -> tuple[Point, float] | None:
+    span = theta_max - theta_min
+    if span <= 0:
+        return None
+    bin_count = max(8, min(48, int(len(pixels) / 4)))
+    bins: list[list[tuple[float, float]]] = [[] for _ in range(bin_count)]
+    for x, y in pixels:
+        offset = _wrapped_angle(atan2(y - center.y, x - center.x) - mean_angle)
+        index = int((offset - theta_min) / span * (bin_count - 1) + 0.5)
+        if 0 <= index < bin_count:
+            bins[index].append((float(x), float(y)))
+    midpoints = tuple(
+        (
+            sum(x for x, _ in bucket) / len(bucket),
+            sum(y for _, y in bucket) / len(bucket),
+        )
+        for bucket in bins
+        if bucket
+    )
+    if len(midpoints) < 5:
+        return None
+    refit_center, refit_radius = _kasa_circle_fit(midpoints)
+    if refit_center is None or refit_radius is None or refit_radius < 2.0:
+        return None
+    return refit_center, refit_radius
+
+
+def _kasa_circle_fit(
+    pixels: tuple[tuple[float, float], ...],
+) -> tuple[Point | None, float | None]:
+    n = float(len(pixels))
+    sum_x = sum(float(x) for x, _ in pixels)
+    sum_y = sum(float(y) for _, y in pixels)
+    sum_xx = sum(float(x * x) for x, _ in pixels)
+    sum_yy = sum(float(y * y) for _, y in pixels)
+    sum_xy = sum(float(x * y) for x, y in pixels)
+    sum_z = sum(float(x * x + y * y) for x, y in pixels)
+    sum_xz = sum(float(x * (x * x + y * y)) for x, y in pixels)
+    sum_yz = sum(float(y * (x * x + y * y)) for x, y in pixels)
+    matrix = (
+        (sum_xx, sum_xy, sum_x),
+        (sum_xy, sum_yy, sum_y),
+        (sum_x, sum_y, n),
+    )
+    solved = _solve_3x3(matrix, (sum_xz, sum_yz, sum_z))
+    if solved is None:
+        return None, None
+    a, b, c = solved
+    center = Point(a / 2, b / 2)
+    radius_squared = c + center.x**2 + center.y**2
+    if radius_squared <= 0:
+        return None, None
+    return center, sqrt(radius_squared)
+
+
+def _wrapped_angle(angle: float) -> float:
+    while angle <= -pi:
+        angle += 2 * pi
+    while angle > pi:
+        angle -= 2 * pi
+    return angle
+
+
+def _arc_point(center: Point, radius: float, theta: float) -> Point:
+    return Point(
+        center.x + radius * cos(theta),
+        center.y + radius * sin(theta),
+    )
 
 
 def _stroke_bounds_exceed_component(
@@ -1155,6 +1370,8 @@ def _freeform_cutout_strokes(
 
     candidates: list[AnchorCandidate] = []
     for gap in _interior_gap_components(component, min_area=min_length):
+        if _gap_open_to_background(gap, component):
+            continue
         candidate = _freeform_cutout_candidate(
             gap,
             host_bounds=component.bounds,
@@ -1165,6 +1382,31 @@ def _freeform_cutout_strokes(
         if candidate is not None:
             candidates.append(candidate)
     return tuple(candidates)
+
+
+def _gap_open_to_background(
+    gap: MaskComponent,
+    component: MaskComponent,
+) -> bool:
+    """Detect interior-window gaps that actually leak to the background.
+
+    The interior scan only inspects pixels strictly inside the host bounds, so
+    a concave region (for example below or above a shallow arc) shows up as a
+    gap component even though it connects to the outside. A real hole is
+    sealed by host pixels just outside the interior window.
+    """
+
+    min_x, min_y, max_x, max_y = component.bounds
+    for x, y in gap.pixels:
+        if x == min_x + 1 and (min_x, y) not in component.pixels:
+            return True
+        if x == max_x - 1 and (max_x, y) not in component.pixels:
+            return True
+        if y == min_y + 1 and (x, min_y) not in component.pixels:
+            return True
+        if y == max_y - 1 and (x, max_y) not in component.pixels:
+            return True
+    return False
 
 
 def _interior_gap_components(
@@ -1368,8 +1610,37 @@ def _has_component_neighbor_above_and_below(
     end: int,
     y: int,
 ) -> bool:
-    mid = (start + end) // 2
-    return (mid, y - 1) in component.pixels and (mid, y + 1) in component.pixels
+    """Require material above and below every column of a gap run.
+
+    Checking only the middle column lets open regions below shallow arcs
+    masquerade as cut-out strokes.
+    """
+
+    min_y = component.bounds[1]
+    max_y = component.bounds[3]
+    return all(
+        _column_has_pixel_above(component, x, y, min_y)
+        and _column_has_pixel_below(component, x, y, max_y)
+        for x in range(start, end + 1)
+    )
+
+
+def _column_has_pixel_above(
+    component: MaskComponent,
+    x: int,
+    y: int,
+    min_y: int,
+) -> bool:
+    return any((x, above) in component.pixels for above in range(min_y, y))
+
+
+def _column_has_pixel_below(
+    component: MaskComponent,
+    x: int,
+    y: int,
+    max_y: int,
+) -> bool:
+    return any((x, below) in component.pixels for below in range(y + 1, max_y + 1))
 
 
 def _has_component_neighbor_left_and_right(
@@ -1378,8 +1649,15 @@ def _has_component_neighbor_left_and_right(
     start: int,
     end: int,
 ) -> bool:
-    mid = (start + end) // 2
-    return (x - 1, mid) in component.pixels and (x + 1, mid) in component.pixels
+    """Require material left and right of every row of a gap run."""
+
+    min_x = component.bounds[0]
+    max_x = component.bounds[2]
+    return all(
+        any((left, y) in component.pixels for left in range(min_x, x))
+        and any((right, y) in component.pixels for right in range(x + 1, max_x + 1))
+        for y in range(start, end + 1)
+    )
 
 
 def _overlap_length(
