@@ -189,6 +189,9 @@ Implemented so far:
   stroke interpretation.
 - diagonal and freeform thin interior gaps can be detected as editable cut-out
   overlay strokes when they are enclosed by the host shape.
+- anti-aliased neutral UI rings can be recovered from a composite grayscale
+  mask as `circle`/`stroke_circle` anchors when individual gray palette
+  fragments are too small to pass per-color component thresholds.
 - compact filled axis-aligned rectangles classify as `rect` and stay in the
   `filled_primitives` scene layer.
 - simple rounded-rectangle silhouettes classify as `rounded_rect`; descriptive
@@ -780,6 +783,8 @@ Implemented so far:
   with a small radio-circle control and bounded text-fragment expectations.
 - checked-in deterministic baseline snapshot at
   `docs/real-images/baselines/current-curated-snapshot.json`.
+- the UI radio-control case now exercises neutral composite ring recovery so
+  thin anti-aliased controls remain represented by simple circle primitives.
 
 Remaining:
 

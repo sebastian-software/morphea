@@ -11,11 +11,13 @@ from PIL import Image
 
 from curve.anchors import (
     AnchorCandidate,
+    AnchorKind,
     CircleAnchor,
     Point,
     QuadAnchor,
     ScoringConfig,
     StrokeAnchor,
+    choose_best_anchor,
 )
 from curve.classifier import (
     classifier_crop_size,
@@ -27,8 +29,9 @@ from curve.detection import (
     AnchorThresholdConfig,
     detect_cutout_strokes,
     detect_primitive_anchors,
+    primitive_candidates_for_component,
 )
-from curve.masks import BinaryMask, MaskComponent
+from curve.masks import BinaryMask, MaskComponent, connected_components
 from curve.scene import Scene, merge_auto_mergeable_same_color_fragments
 
 
@@ -340,6 +343,15 @@ def scene_from_flat_color_image(
                 anchors.append(_scale_anchor(_with_color(anchor, color_mask.color), mask_result.scale))
             for anchor in detect_cutout_strokes(component_mask):
                 anchors.append(_scale_anchor(anchor, mask_result.scale))
+    anchors.extend(
+        _neutral_composite_circle_anchors(
+            color_masks,
+            min_area=min_area,
+            thresholds=thresholds,
+            scoring=scoring,
+            analysis_scale=mask_result.scale,
+        )
+    )
     return Scene(
         width=mask_result.width,
         height=mask_result.height,
@@ -353,6 +365,46 @@ class ComponentScanResult:
     components: tuple[MaskComponent, ...]
     diagnostics: tuple[dict[str, object], ...]
     timed_out: bool = False
+
+
+def _neutral_composite_circle_anchors(
+    color_masks: tuple[ColorMask, ...],
+    *,
+    min_area: int,
+    thresholds: AnchorThresholdConfig,
+    scoring: ScoringConfig,
+    analysis_scale: float,
+) -> tuple[AnchorCandidate, ...]:
+    neutral_pixels = frozenset(
+        pixel
+        for color_mask in color_masks
+        if _is_neutral_color(color_mask.color)
+        for pixel in color_mask.mask.pixels
+    )
+    if len(neutral_pixels) < min_area:
+        return ()
+
+    first_mask = color_masks[0].mask
+    composite_mask = BinaryMask(
+        width=first_mask.width,
+        height=first_mask.height,
+        pixels=neutral_pixels,
+    )
+    anchors: list[AnchorCandidate] = []
+    for component in connected_components(composite_mask, min_area=min_area):
+        circle_candidates = tuple(
+            candidate
+            for candidate in primitive_candidates_for_component(
+                component,
+                thresholds=thresholds,
+            )
+            if candidate.kind in {AnchorKind.CIRCLE, AnchorKind.STROKE_CIRCLE}
+        )
+        if not circle_candidates:
+            continue
+        anchor = choose_best_anchor(circle_candidates, scoring=scoring)
+        anchors.append(_scale_anchor(_with_color(anchor, "#000000"), analysis_scale))
+    return tuple(anchors)
 
 
 def _bounded_connected_components(
@@ -487,6 +539,18 @@ def _sort_components(components: list[MaskComponent]) -> tuple[MaskComponent, ..
     return tuple(
         sorted(components, key=lambda component: component.area, reverse=True)
     )
+
+
+def _is_neutral_color(color: str) -> bool:
+    if len(color) != 7 or not color.startswith("#"):
+        return False
+    try:
+        red = int(color[1:3], 16)
+        green = int(color[3:5], 16)
+        blue = int(color[5:7], 16)
+    except ValueError:
+        return False
+    return max(red, green, blue) - min(red, green, blue) <= 8
 
 
 def _with_color(anchor: AnchorCandidate, color: str) -> AnchorCandidate:

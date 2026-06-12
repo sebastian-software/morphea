@@ -19,8 +19,10 @@ keeps the pipeline honest about tiny simple controls and text-heavy screenshots.
 
 ## Expected Structures
 
-- `radio-circle-anchor`: at least one true `circle` anchor for the unselected
-  radio control at the recommended analysis scale.
+- `radio-circle-anchor`: at least one true circle-family anchor for the
+  unselected radio control at the recommended analysis scale. A thin neutral
+  anti-aliased ring may appear as `stroke_circle`, while smaller filled
+  circular glyph details may appear as `circle`.
 - `text-stroke-fragments`: at least ten `stroke_polyline` anchors from text/UI
   strokes, proving the run stays bounded and produces editable primitives.
 
@@ -41,4 +43,7 @@ keeps the pipeline honest about tiny simple controls and text-heavy screenshots.
 
 Text remains fragmented and carries a high fragmentation penalty. That is
 acceptable for this milestone; the case exists to keep runtime bounded and to
-make the simple circular control visible in regression snapshots.
+make the simple circular control visible in regression snapshots. The radio
+ring is recovered through neutral composite circle detection because its
+individual gray antialias fragments are too small to survive per-color
+component filtering.

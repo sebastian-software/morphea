@@ -128,9 +128,9 @@
       "expectations": [
         {
           "id": "radio-circle-anchor",
-          "kind": "circle",
+          "kind": "stroke_circle",
           "min_count": 1,
-          "description": "The unselected radio control should produce at least one true circle anchor at this analysis scale."
+          "description": "The unselected radio control should produce at least one true editable circle-stroke anchor at this analysis scale."
         },
         {
           "id": "text-stroke-fragments",

@@ -7,8 +7,8 @@
         "arc": 9,
         "circle": 5,
         "cubic_path": 5,
-        "quad": 19,
-        "stroke_polyline": 23
+        "quad": 20,
+        "stroke_polyline": 22
       },
       "config": {
         "color_tolerance": 18,
@@ -41,7 +41,7 @@
           "ok": true
         },
         {
-          "actual_count": 23,
+          "actual_count": 22,
           "id": "smooth-stroke-anchors",
           "min_count": 12,
           "ok": true
@@ -53,7 +53,7 @@
           "ok": true
         },
         {
-          "actual_count": 19,
+          "actual_count": 20,
           "id": "table-perspective-quads",
           "min_count": 12,
           "ok": true
@@ -80,9 +80,9 @@
         "generic_path_count": 5,
         "group_count": 6,
         "negative_mask_candidate_count": 21,
-        "node_count": 655,
-        "parameter_count": 1338,
-        "reserved_simple_shape_area": 1748884.514984,
+        "node_count": 658,
+        "parameter_count": 1372,
+        "reserved_simple_shape_area": 10509018.869623,
         "reserved_simple_shape_area_ratio": 1.0,
         "reserved_simple_shape_count": 56,
         "shape_count": 61,
@@ -99,8 +99,8 @@
         "arc": 11,
         "circle": 5,
         "cubic_path": 8,
-        "quad": 15,
-        "stroke_polyline": 18
+        "quad": 16,
+        "stroke_polyline": 17
       },
       "config": {
         "color_tolerance": 18,
@@ -133,7 +133,7 @@
           "ok": true
         },
         {
-          "actual_count": 18,
+          "actual_count": 17,
           "id": "smooth-stroke-anchors",
           "min_count": 8,
           "ok": true
@@ -145,7 +145,7 @@
           "ok": true
         },
         {
-          "actual_count": 15,
+          "actual_count": 16,
           "id": "table-perspective-quads",
           "min_count": 8,
           "ok": true
@@ -173,9 +173,9 @@
         "generic_path_count": 8,
         "group_count": 7,
         "negative_mask_candidate_count": 14,
-        "node_count": 852,
-        "parameter_count": 1727,
-        "reserved_simple_shape_area": 1726798.4507,
+        "node_count": 855,
+        "parameter_count": 1767,
+        "reserved_simple_shape_area": 10507276.183001,
         "reserved_simple_shape_area_ratio": 1.0,
         "reserved_simple_shape_count": 49,
         "shape_count": 57,
@@ -187,12 +187,13 @@
       "status": "checked"
     },
     {
-      "anchor_count": 178,
+      "anchor_count": 187,
       "anchor_kind_counts": {
         "arc": 73,
-        "circle": 1,
-        "cubic_path": 14,
-        "stroke_polyline": 90
+        "circle": 7,
+        "cubic_path": 19,
+        "stroke_circle": 2,
+        "stroke_polyline": 86
       },
       "config": {
         "color_tolerance": 10,
@@ -205,20 +206,20 @@
       "diagnostic_count": 2,
       "expectations": [
         {
-          "actual_count": 1,
+          "actual_count": 2,
           "id": "radio-circle-anchor",
           "min_count": 1,
           "ok": true
         },
         {
-          "actual_value": 0.921348,
+          "actual_value": 0.898396,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
           "min_value": 0.85,
           "ok": true
         },
         {
-          "actual_count": 90,
+          "actual_count": 86,
           "id": "text-stroke-fragments",
           "min_count": 10,
           "ok": true
@@ -231,7 +232,7 @@
       "id": "ui-radio-acceptance-screenshot",
       "metrics": {
         "color_fragment_counts": {
-          "#000000": 126,
+          "#000000": 135,
           "#0f0f0f": 9,
           "#474747": 9,
           "#8c8c8c": 15,
@@ -242,19 +243,19 @@
         "cutout_anchor_count": 0,
         "cutout_overlay_count": 0,
         "diagnostic_penalty": 0.0,
-        "editability_score": 0.041011,
-        "fragmentation_penalty": 0.480337,
-        "generic_path_count": 14,
+        "editability_score": 0.017112,
+        "fragmentation_penalty": 0.481283,
+        "generic_path_count": 19,
         "group_count": 8,
         "negative_mask_candidate_count": 0,
-        "node_count": 730,
-        "parameter_count": 1551,
-        "reserved_simple_shape_area": 15342.213773,
-        "reserved_simple_shape_area_ratio": 0.057704,
-        "reserved_simple_shape_count": 164,
-        "shape_count": 178,
-        "simple_shape_count": 164,
-        "simple_shape_ratio": 0.921348
+        "node_count": 807,
+        "parameter_count": 1954,
+        "reserved_simple_shape_area": 49315.88672,
+        "reserved_simple_shape_area_ratio": 0.185482,
+        "reserved_simple_shape_count": 168,
+        "shape_count": 187,
+        "simple_shape_count": 168,
+        "simple_shape_ratio": 0.898396
       },
       "ok": true,
       "source_exists": true,
