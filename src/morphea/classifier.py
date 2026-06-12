@@ -1746,6 +1746,7 @@ def _candidate_with_classifier_prior(
         circle=candidate.circle,
         stroke=candidate.stroke,
         quad=candidate.quad,
+        arc=candidate.arc,
         metrics=metrics,
     )
 
@@ -1803,6 +1804,7 @@ def _candidate_as_kind(candidate: AnchorCandidate, kind: AnchorKind) -> AnchorCa
         circle=candidate.circle,
         stroke=candidate.stroke,
         quad=candidate.quad,
+        arc=candidate.arc,
         metrics={},
     )
 

@@ -136,6 +136,54 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertEqual(case["anchor_kind_counts"], {"arc": 1})
         self.assertEqual(report["curve_anchor_kind_counts"]["arc"], 3)
 
+    def test_simple_arc_exports_single_svg_arc_command(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("arc_up", "arc_down", "arc_left", "arc_right"),
+            )
+
+            self.assertTrue(report["ok"])
+            for case in report["cases"]:
+                svg = (Path(temp_dir) / case["id"] / "output.svg").read_text(
+                    encoding="utf-8"
+                )
+                paths = [
+                    line for line in svg.splitlines() if "<path" in line
+                ]
+                self.assertEqual(len(paths), 1)
+                self.assertIn(" A ", paths[0])
+                self.assertNotIn(" L ", paths[0])
+                self.assertIn('stroke-linecap="round"', paths[0])
+                manifest = json.loads(
+                    (Path(temp_dir) / case["id"] / "manifest.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                arc = manifest["anchors"][0]["arc"]
+                self.assertGreater(arc["r"], 2.0)
+                self.assertIn("sweep", arc)
+                self.assertIn("large_arc", arc)
+
+    def test_straight_strokes_still_export_two_point_lines(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("horizontal_stroke", "outlined_ring"),
+            )
+
+            self.assertTrue(report["ok"])
+            stroke_svg = (
+                Path(temp_dir) / "horizontal_stroke" / "output.svg"
+            ).read_text(encoding="utf-8")
+            self.assertIn(" L ", stroke_svg)
+            self.assertNotIn(" A ", stroke_svg)
+            ring_svg = (
+                Path(temp_dir) / "outlined_ring" / "output.svg"
+            ).read_text(encoding="utf-8")
+            self.assertIn("<circle", ring_svg)
+            self.assertNotIn("<path", ring_svg)
+
     def test_arc_contract_failures_report_endpoint_bow_and_width(self):
         from morphea.primitive_quality import _arc_failures, primitive_specs
 

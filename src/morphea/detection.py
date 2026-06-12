@@ -10,6 +10,7 @@ from statistics import mean
 from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
+    ArcAnchor,
     CircleAnchor,
     Point,
     QuadAnchor,
@@ -203,6 +204,7 @@ def _with_classifier_prior(
         circle=candidate.circle,
         stroke=candidate.stroke,
         quad=candidate.quad,
+        arc=candidate.arc,
         metrics=metrics,
     )
 
@@ -432,6 +434,7 @@ def _with_metric(
         circle=candidate.circle,
         stroke=candidate.stroke,
         quad=candidate.quad,
+        arc=candidate.arc,
         metrics=metrics,
     )
 
@@ -635,6 +638,14 @@ def _arc_candidate(
         node_count=3,
         parameter_count=7,
         stroke=stroke,
+        arc=ArcAnchor(
+            center=fit["center"],
+            radius=float(fit["radius"]),
+            theta_start=float(fit["theta_start"]),
+            theta_end=float(fit["theta_end"]),
+            sweep=bool(fit["sweep"]),
+            large_arc=bool(fit["large_arc"]),
+        ),
         metrics={
             "arc_bow_ratio": bow_ratio,
             "arc_center_x": fit["center"].x,
@@ -766,9 +777,7 @@ def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
     ):
         start, end = end, start
         theta_start, theta_end = theta_end, theta_start
-    cross = (end.x - start.x) * (apex.y - start.y) - (end.y - start.y) * (
-        apex.x - start.x
-    )
+    # SVG sweep=1 follows increasing angles (clockwise with y pointing down).
     return {
         "center": center,
         "radius": mid_radius,
@@ -777,7 +786,7 @@ def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
         "theta_start": theta_start,
         "theta_end": theta_end,
         "angular_span": span,
-        "sweep": 1 if cross > 0 else 0,
+        "sweep": 1 if theta_end > theta_start else 0,
         "large_arc": 1 if span > pi else 0,
         "start": start,
         "apex": apex,

@@ -10,6 +10,7 @@ from typing import Iterable
 from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
+    ArcAnchor,
     Point,
     QuadAnchor,
     parallel_spacing_error,
@@ -385,8 +386,10 @@ def anchor_to_svg_element(
     if anchor.kind in {AnchorKind.STROKE_PATH, AnchorKind.STROKE_POLYLINE, AnchorKind.ARC}:
         if anchor.stroke is None:
             return _unsupported_anchor(anchor)
-        points = anchor.stroke.centerline
-        path = _polyline_path(points)
+        if anchor.kind == AnchorKind.ARC and anchor.arc is not None:
+            path = _arc_path(anchor.arc)
+        else:
+            path = _polyline_path(anchor.stroke.centerline)
         width = _stroke_width(anchor)
         cap = escape(anchor.stroke.cap_style)
         join = escape(anchor.stroke.join_style)
@@ -509,6 +512,16 @@ def anchor_to_manifest_with_index(
                 {"x": point.x, "y": point.y}
                 for point in anchor.quad.corners
             ]
+        }
+    if anchor.arc is not None:
+        data["arc"] = {
+            "cx": anchor.arc.center.x,
+            "cy": anchor.arc.center.y,
+            "r": anchor.arc.radius,
+            "theta_start": anchor.arc.theta_start,
+            "theta_end": anchor.arc.theta_end,
+            "sweep": anchor.arc.sweep,
+            "large_arc": anchor.arc.large_arc,
         }
     return data
 
@@ -1448,6 +1461,18 @@ def _polyline_path(points: tuple[Point, ...]) -> str:
     commands = [f"M {_fmt(first.x)} {_fmt(first.y)}"]
     commands.extend(f"L {_fmt(point.x)} {_fmt(point.y)}" for point in rest)
     return " ".join(commands)
+
+
+def _arc_path(arc: ArcAnchor) -> str:
+    start = arc.start
+    end = arc.end
+    radius = _fmt(arc.radius)
+    return (
+        f"M {_fmt(start.x)} {_fmt(start.y)} "
+        f"A {radius} {radius} 0 "
+        f"{1 if arc.large_arc else 0} {1 if arc.sweep else 0} "
+        f"{_fmt(end.x)} {_fmt(end.y)}"
+    )
 
 
 def _point_pair(point: Point) -> str:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from math import hypot
+from math import cos, hypot, sin
 from statistics import mean, pstdev
 from typing import Iterable, Sequence
 
@@ -48,6 +48,32 @@ class CircleAnchor:
 
 
 @dataclass(frozen=True)
+class ArcAnchor:
+    """Circular arc parameters for smooth SVG `A` command export."""
+
+    center: Point
+    radius: float
+    theta_start: float
+    theta_end: float
+    sweep: bool
+    large_arc: bool
+
+    @property
+    def start(self) -> Point:
+        return self._point_at(self.theta_start)
+
+    @property
+    def end(self) -> Point:
+        return self._point_at(self.theta_end)
+
+    def _point_at(self, theta: float) -> Point:
+        return Point(
+            self.center.x + self.radius * cos(theta),
+            self.center.y + self.radius * sin(theta),
+        )
+
+
+@dataclass(frozen=True)
 class StrokeAnchor:
     centerline: tuple[Point, ...]
     width_samples: tuple[float, ...]
@@ -72,6 +98,7 @@ class AnchorCandidate:
     circle: CircleAnchor | None = None
     stroke: StrokeAnchor | None = None
     quad: QuadAnchor | None = None
+    arc: ArcAnchor | None = None
     metrics: dict[str, float] = field(default_factory=dict)
 
     @property
@@ -314,6 +341,7 @@ def enrich_anchor_metrics(candidate: AnchorCandidate) -> AnchorCandidate:
         circle=candidate.circle,
         stroke=candidate.stroke,
         quad=candidate.quad,
+        arc=candidate.arc,
         metrics=metrics,
     )
 

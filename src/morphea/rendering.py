@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from math import ceil, cos, pi, sin
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -99,6 +100,14 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
             width=_stroke_width(anchor),
         )
         return
+    if kind == "arc" and "arc" in anchor and "stroke" in anchor:
+        points = _sampled_arc_points(anchor["arc"])
+        width = _stroke_width(anchor)
+        if len(points) >= 2:
+            draw.line(points, fill=color, width=width, joint="curve")
+            if str(anchor["stroke"].get("cap_style", "round")) == "round":
+                _draw_round_caps(draw, (points[0], points[-1]), width, color)
+        return
     if kind in {"stroke_path", "stroke_polyline", "arc"} and "stroke" in anchor:
         points = [
             (float(point["x"]), float(point["y"]))
@@ -114,6 +123,34 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         ]
         if len(points) >= 3:
             draw.polygon(points, fill=color)
+
+
+def _sampled_arc_points(arc: dict[str, Any]) -> list[tuple[float, float]]:
+    cx = float(arc.get("cx", 0.0))
+    cy = float(arc.get("cy", 0.0))
+    radius = float(arc.get("r", 0.0))
+    theta_start = float(arc.get("theta_start", 0.0))
+    theta_end = float(arc.get("theta_end", 0.0))
+    span = theta_end - theta_start
+    steps = max(16, ceil(abs(span) * radius / 2 * pi))
+    return [
+        (
+            cx + radius * cos(theta_start + span * index / steps),
+            cy + radius * sin(theta_start + span * index / steps),
+        )
+        for index in range(steps + 1)
+    ]
+
+
+def _draw_round_caps(
+    draw: ImageDraw.ImageDraw,
+    endpoints: tuple[tuple[float, float], tuple[float, float]],
+    width: int,
+    color: tuple[int, int, int, int],
+) -> None:
+    half = width / 2
+    for x, y in endpoints:
+        draw.ellipse((x - half, y - half, x + half - 1, y + half - 1), fill=color)
 
 
 def _edge_l1_error(source: Image.Image, rendered: Image.Image) -> float:

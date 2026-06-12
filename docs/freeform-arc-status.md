@@ -29,12 +29,13 @@ ambitions. See `freeform-arc-quality-roadmap.md` for the plan.
 
 ## Scene Model and SVG Export
 
-- `arc`, `stroke_path`, and `stroke_polyline` all export through
-  `_polyline_path` as `M`/`L` polyline paths with stroke width, cap, and join
-  attributes. No `A`, `Q`, or `C` command is ever emitted.
-- The manifest serializes stroke centerlines, width samples, cap and join
-  styles, and the cut-out flag. There are no arc parameters (center, radii,
-  sweep) in the manifest.
+- Since FQ3 detected arcs carry an `ArcAnchor` (center, radius, angle range,
+  sweep, large-arc) and export as a single SVG `A` path with round caps. The
+  manifest serializes those parameters under `anchors[].arc` and the preview
+  renderer samples the same fitted circle, so preview, exported SVG, and
+  source agree within `svg_vs_preview_l1_error <= 0.02` on the arc fixtures.
+- `stroke_path` and `stroke_polyline` still export through `_polyline_path`
+  as `M`/`L` paths; smooth `Q`/`C` export is FQ4 territory.
 - `cubic_path` anchors export as an unsupported-anchor SVG comment.
 
 ## Renderer and Quality Gates

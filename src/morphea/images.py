@@ -12,6 +12,7 @@ from PIL import Image
 from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
+    ArcAnchor,
     CircleAnchor,
     Point,
     QuadAnchor,
@@ -600,6 +601,7 @@ def _with_color(anchor: AnchorCandidate, color: str) -> AnchorCandidate:
         circle=anchor.circle,
         stroke=anchor.stroke,
         quad=anchor.quad,
+        arc=anchor.arc,
         metrics=anchor.metrics,
     )
 
@@ -700,7 +702,21 @@ def _scale_anchor(anchor: AnchorCandidate, analysis_scale: float) -> AnchorCandi
         circle=_scale_circle(anchor.circle, factor),
         stroke=_scale_stroke(anchor.stroke, factor),
         quad=_scale_quad(anchor.quad, factor),
+        arc=_scale_arc(anchor.arc, factor),
         metrics=anchor.metrics,
+    )
+
+
+def _scale_arc(arc: ArcAnchor | None, factor: float) -> ArcAnchor | None:
+    if arc is None:
+        return None
+    return ArcAnchor(
+        center=_scale_point(arc.center, factor),
+        radius=arc.radius * factor,
+        theta_start=arc.theta_start,
+        theta_end=arc.theta_end,
+        sweep=arc.sweep,
+        large_arc=arc.large_arc,
     )
 
 

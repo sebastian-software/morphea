@@ -48,12 +48,13 @@ SVG_EDGE_TOLERANCE_OFFSET = 0.035
 SVG_ALPHA_TOLERANCE_OFFSET = 0.02
 SVG_VS_PREVIEW_TOLERANCE_OFFSET = 0.02
 
-# Simple arc fixtures render through the manifest preview and the exported
-# SVG. Until FQ3 lands true smooth arc export both renderers draw the
-# three-point centerline as two chords, so the family raster budget reflects
-# that honestly instead of hiding it.
-ARC_MAX_RASTER_L1_ERROR = 0.06
-ARC_MAX_RASTER_EDGE_ERROR = 0.035
+# Simple arcs export as one smooth SVG `A` path and the preview samples the
+# same fitted circle, so both gates run tight.
+ARC_MAX_RASTER_L1_ERROR = 0.02
+ARC_MAX_RASTER_EDGE_ERROR = 0.025
+ARC_MAX_SVG_RASTER_L1_ERROR = 0.025
+ARC_MAX_SVG_RASTER_EDGE_ERROR = 0.03
+ARC_MAX_SVG_VS_PREVIEW_L1_ERROR = 0.02
 
 
 @dataclass(frozen=True)
@@ -1145,6 +1146,9 @@ def _arc_spec(
         coordinate_tolerance=2.5,
         max_raster_l1_error=ARC_MAX_RASTER_L1_ERROR,
         max_raster_edge_error=ARC_MAX_RASTER_EDGE_ERROR,
+        max_svg_raster_l1_error=ARC_MAX_SVG_RASTER_L1_ERROR,
+        max_svg_raster_edge_error=ARC_MAX_SVG_RASTER_EDGE_ERROR,
+        max_svg_vs_preview_l1_error=ARC_MAX_SVG_VS_PREVIEW_L1_ERROR,
         # Thin arc bounding strips lose over 10% IoU per pixel of drift; the
         # endpoint, bow, and width contracts carry the strict geometry here.
         min_bbox_iou=0.72,
