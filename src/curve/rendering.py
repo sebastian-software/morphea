@@ -141,14 +141,18 @@ def _edge_l1_error(source: Image.Image, rendered: Image.Image) -> float:
     return error / (count * 510)
 
 
-def _luma_values(image: Image.Image) -> list[float]:
+def _luma_values(image: Image.Image) -> bytearray:
     pixels = image.tobytes()
-    return [
-        pixels[index] * 0.299
-        + pixels[index + 1] * 0.587
-        + pixels[index + 2] * 0.114
-        for index in range(0, len(pixels), 4)
-    ]
+    luma = bytearray(len(pixels) // 4)
+    output_index = 0
+    for index in range(0, len(pixels), 4):
+        luma[output_index] = (
+            (pixels[index] * 299)
+            + (pixels[index + 1] * 587)
+            + (pixels[index + 2] * 114)
+        ) // 1000
+        output_index += 1
+    return luma
 
 
 def _stroke_width(anchor: dict[str, Any]) -> int:
