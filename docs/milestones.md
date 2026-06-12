@@ -104,6 +104,8 @@ Implemented so far:
 - `curve profile input.png -o profile.json` records bounded vectorize timings,
   anchor counts, diagnostics, diagnostic stage counts, and min/mean/max elapsed
   summaries for repeated runs.
+- component BFS in both generic masks and bounded image scanning uses direct
+  8-neighbor index checks instead of nested per-pixel neighbor range loops.
 
 Remaining:
 
