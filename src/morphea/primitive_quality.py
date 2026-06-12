@@ -854,6 +854,47 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _curved_cutout_spec(case_id, family, variant, host, arc, extra, config)
+        for case_id, family, variant, host, arc, extra, config in (
+            ("cutout_curve_rect", "cutout_curve_rect", "base",
+             ("rect", (8, 18, 56, 46)), (32, 52, 24, -125, -55, 2), None, {}),
+            ("cutout_curve_rect_high", "cutout_curve_rect", "high",
+             ("rect", (10, 16, 54, 44)), (32, 50, 23, -122, -58, 2), None, {}),
+            ("cutout_curve_rect_low", "cutout_curve_rect", "low",
+             ("rect", (8, 20, 56, 48)), (32, 56, 26, -126, -54, 2), None, {}),
+            ("cutout_curve_circle", "cutout_curve_circle", "base",
+             ("circle", (12, 12, 52, 52)), (32, 56, 24, -120, -60, 2), None, {}),
+            ("cutout_curve_circle_large", "cutout_curve_circle", "large",
+             ("circle", (10, 10, 54, 54)), (32, 58, 26, -122, -58, 2), None, {}),
+            ("cutout_curve_circle_offset", "cutout_curve_circle", "offset",
+             ("circle", (14, 12, 54, 52)), (34, 56, 24, -118, -62, 2), None, {}),
+            ("cutout_curve_ring", "cutout_curve_ring", "base",
+             ("ring", (8, 8, 56, 56), 10), (32, 32, 19, -150, -30, 2), None, {}),
+            ("cutout_curve_ring_thick", "cutout_curve_ring", "thick",
+             ("ring", (6, 6, 58, 58), 11), (32, 32, 20, -145, -35, 2), None, {}),
+            ("cutout_curve_ring_offset", "cutout_curve_ring", "offset",
+             ("ring", (8, 10, 54, 56), 10), (31, 33, 18, -148, -32, 2), None, {}),
+            ("cutout_curve_crossing", "cutout_curve_crossing", "base",
+             ("rect", (6, 20, 44, 46)), (25, 52, 22, -120, -60, 2),
+             ("circle", (48, 8, 60, 20), "#dd2222"), {}),
+            ("cutout_curve_crossing_low", "cutout_curve_crossing", "low",
+             ("rect", (6, 14, 44, 40)), (25, 46, 22, -120, -60, 2),
+             ("circle", (48, 44, 60, 56), "#dd2222"), {}),
+            ("cutout_curve_crossing_right", "cutout_curve_crossing", "right",
+             ("rect", (20, 20, 58, 46)), (39, 52, 22, -120, -60, 2),
+             ("circle", (4, 8, 16, 20), "#dd2222"), {}),
+            ("cutout_near_background", "cutout_near_background", "base",
+             ("rect", (8, 18, 56, 46)), (32, 52, 24, -125, -55, 2), None,
+             {"cutout_color": "#fafafa", "color_tolerance": 12.0}),
+            ("cutout_near_background_light", "cutout_near_background", "light",
+             ("rect", (10, 16, 54, 44)), (32, 50, 23, -122, -58, 2), None,
+             {"cutout_color": "#f6f6f6", "color_tolerance": 16.0}),
+            ("cutout_near_background_offwhite", "cutout_near_background", "offwhite",
+             ("rect", (8, 20, 56, 48)), (32, 56, 26, -126, -54, 2), None,
+             {"cutout_color": "#fbfbfb", "color_tolerance": 10.0}),
+        )
+    )
+    specs.extend(
         _composition_spec(
             case_id,
             "group_parallel_strokes",
@@ -1711,6 +1752,84 @@ def _composition_spec(
     )
 
 
+CutoutHost = tuple
+CutoutArc = tuple[float, float, float, float, float, int]
+
+
+def _curved_cutout_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    host: CutoutHost,
+    arc: CutoutArc,
+    extra: tuple | None,
+    config: dict[str, Any],
+) -> PrimitiveSpec:
+    cutout_color = str(config.get("cutout_color", "#ffffff"))
+    vectorize_config: dict[str, Any] = {}
+    if "color_tolerance" in config:
+        vectorize_config["color_tolerance"] = float(config["color_tolerance"])
+
+    host_kind = host[0]
+    if host_kind == "rect":
+        host_primitive = _rect_primitive("host", host[1])
+    elif host_kind == "circle":
+        host_primitive = _circle_primitive("host", host[1])
+    else:
+        host_primitive = _ring_primitive("host", host[1], host[2])
+
+    cx, cy, radius, start_deg, end_deg, width = arc
+    start = _arc_point_xy(cx, cy, radius, start_deg)
+    apex = _arc_point_xy(cx, cy, radius, (start_deg + end_deg) / 2)
+    end = _arc_point_xy(cx, cy, radius, end_deg)
+    cutout_primitive = ExpectedPrimitive(
+        id="cutout",
+        expected_kinds=("stroke_path",),
+        geometry_type="stroke",
+        geometry={
+            "centerline": (start, apex, end),
+            "width": float(width),
+            "is_cutout": True,
+            "draw": ("arc_line", arc, cutout_color),
+        },
+        color="#ffffff",
+        color_tolerance=12.0,
+        # Gap endpoints quantize softly inside a 2 px slit; the visual gates
+        # keep the export honest while the centerline tolerance absorbs it.
+        coordinate_tolerance=3.0,
+        min_bbox_iou=0.55,
+    )
+
+    primitives = [host_primitive, cutout_primitive]
+    if extra is not None:
+        primitives.append(
+            _circle_primitive("foreground", extra[1], color=extra[2])
+        )
+
+    is_ring = host_kind == "ring"
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=host_primitive.expected_kinds,
+        geometry_type=host_primitive.geometry_type,
+        geometry=host_primitive.geometry,
+        color=host_primitive.color,
+        expected_primitives=tuple(primitives),
+        compare_cutout_exports=True,
+        vectorize_config=vectorize_config,
+        draw=lambda draw, primitives=tuple(primitives): _draw_expected_primitives(
+            draw,
+            primitives,
+        ),
+        max_anchor_count=len(primitives),
+        coordinate_tolerance=2.0,
+        max_raster_l1_error=0.1 if is_ring else 0.035,
+        max_raster_edge_error=0.08 if is_ring else 0.035,
+        min_bbox_iou=0.78,
+    )
+
+
 def _rect_primitive(
     primitive_id: str,
     box: tuple[int, int, int, int],
@@ -1884,6 +2003,23 @@ def _draw_expected_primitives(
             draw.ellipse(box, outline=primitive.color, width=width)
         elif kind == "quad":
             draw.polygon(draw_instruction[1], fill=primitive.color)
+        elif kind == "arc_line":
+            _, arc, color = draw_instruction
+            _draw_arc_line(draw, arc, color)
+
+
+def _draw_arc_line(
+    draw: ImageDraw.ImageDraw,
+    arc: CutoutArc,
+    color: str,
+) -> None:
+    cx, cy, radius, start_deg, end_deg, width = arc
+    steps = max(24, ceil(radius * abs(end_deg - start_deg) / 360 * 2 * pi))
+    points = [
+        _arc_point_xy(cx, cy, radius, start_deg + (end_deg - start_deg) * index / steps)
+        for index in range(steps + 1)
+    ]
+    draw.line(points, fill=color, width=width, joint="curve")
 
 
 def check_primitive_quality(

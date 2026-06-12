@@ -96,34 +96,19 @@ def detect_cutout_strokes_for_component(
     max_thickness: int = 3,
     color: str = "#ffffff",
 ) -> tuple[AnchorCandidate, ...]:
-    """Detect background-gap strokes inside one already-isolated component."""
+    """Detect background-gap strokes inside one already-isolated component.
 
-    cutouts: list[AnchorCandidate] = []
-    cutouts.extend(
-        _horizontal_cutout_strokes(
-            component,
-            min_length=min_length,
-            max_thickness=max_thickness,
-            color=color,
-        )
+    Every enclosed gap is analyzed as one connected component, so straight,
+    diagonal, and curved gaps share a single detection path and cannot
+    fragment each other the way separate row/column scans did.
+    """
+
+    return _freeform_cutout_strokes(
+        component,
+        min_length=min_length,
+        max_thickness=max_thickness,
+        color=color,
     )
-    cutouts.extend(
-        _vertical_cutout_strokes(
-            component,
-            min_length=min_length,
-            max_thickness=max_thickness,
-            color=color,
-        )
-    )
-    cutouts.extend(
-        _freeform_cutout_strokes(
-            component,
-            min_length=min_length,
-            max_thickness=max_thickness,
-            color=color,
-        )
-    )
-    return tuple(cutouts)
 
 
 def primitive_candidates_for_component(
@@ -308,6 +293,19 @@ def _circle_candidate(
     bounds_center, bounds_radius, bounds_residual = _bounds_regularized_circle(
         component,
     )
+    if fit_residual > thresholds.circle_max_fit_residual:
+        # Interior cut-out gaps add inner boundary pixels that wreck the fit;
+        # retry against the outer boundary only.
+        outer = _boundary_without_gap_edges(component)
+        if outer is not None:
+            center, radius, fit_residual = _fit_circle_from_samples(
+                outer,
+                fallback_center=component.centroid,
+                fallback_radius=fallback_radius,
+            )
+            bounds_center, bounds_radius, bounds_residual = (
+                _bounds_regularized_circle(component, samples=outer)
+            )
     if bounds_residual <= max(
         thresholds.circle_max_fit_residual,
         fit_residual + 0.02,
@@ -481,12 +479,15 @@ def _normalized_ellipse_distance(
 
 def _bounds_regularized_circle(
     component: MaskComponent,
+    *,
+    samples: tuple[tuple[int, int], ...] | None = None,
 ) -> tuple[Point, float, float]:
     min_x, min_y, max_x, max_y = component.bounds
     diameter = max(max_x - min_x, max_y - min_y)
     radius = max(diameter / 2, 0.5)
     center = Point((min_x + max_x) / 2, (min_y + max_y) / 2)
-    samples = tuple(component.boundary_pixels)
+    if samples is None:
+        samples = tuple(component.boundary_pixels)
     if not samples:
         return center, radius, 0.0
     residual = (
@@ -500,14 +501,51 @@ def _bounds_regularized_circle(
     return center, radius, residual
 
 
+def _boundary_without_gap_edges(
+    component: MaskComponent,
+) -> tuple[tuple[int, int], ...] | None:
+    """Boundary pixels that do not border an enclosed interior gap."""
+
+    gaps = _interior_gap_components(component, min_area=1)
+    if not gaps:
+        return None
+    gap_pixels = frozenset(
+        pixel
+        for gap in gaps
+        for pixel in gap.pixels
+    )
+    outer = tuple(
+        (x, y)
+        for x, y in component.boundary_pixels
+        if not any(
+            (x + dx, y + dy) in gap_pixels
+            for dx in (-1, 0, 1)
+            for dy in (-1, 0, 1)
+        )
+    )
+    return outer if len(outer) >= 8 else None
+
+
 def _fit_circle_from_boundary(
     component: MaskComponent,
     *,
     fallback_radius: float,
 ) -> tuple[Point, float, float]:
-    samples = tuple(component.boundary_pixels)
+    return _fit_circle_from_samples(
+        tuple(component.boundary_pixels),
+        fallback_center=component.centroid,
+        fallback_radius=fallback_radius,
+    )
+
+
+def _fit_circle_from_samples(
+    samples: tuple[tuple[int, int], ...],
+    *,
+    fallback_center: Point,
+    fallback_radius: float,
+) -> tuple[Point, float, float]:
     if len(samples) < 3:
-        return component.centroid, fallback_radius, 0.0
+        return fallback_center, fallback_radius, 0.0
 
     n = float(len(samples))
     sum_x = sum(float(x) for x, _ in samples)
@@ -527,16 +565,16 @@ def _fit_circle_from_boundary(
     rhs = (sum_xz, sum_yz, sum_z)
     solved = _solve_3x3(matrix, rhs)
     if solved is None:
-        return component.centroid, fallback_radius, 0.0
+        return fallback_center, fallback_radius, 0.0
 
     a, b, c = solved
     center = Point(a / 2, b / 2)
     radius_squared = c + center.x**2 + center.y**2
     if radius_squared <= 0:
-        return component.centroid, fallback_radius, 0.0
+        return fallback_center, fallback_radius, 0.0
     radius = sqrt(radius_squared)
     if radius <= 0:
-        return component.centroid, fallback_radius, 0.0
+        return fallback_center, fallback_radius, 0.0
     residual = (
         sum(
             abs(Point(x, y).distance_to(center) - radius)
@@ -1714,130 +1752,8 @@ def _quad_row_span(
     return left, right
 
 
-def _horizontal_cutout_strokes(
-    component: MaskComponent,
-    *,
-    min_length: int,
-    max_thickness: int,
-    color: str,
-) -> tuple[AnchorCandidate, ...]:
-    min_x, min_y, max_x, max_y = component.bounds
-    runs: list[tuple[int, int, int]] = []
-    for y in range(min_y + 1, max_y):
-        x = min_x + 1
-        while x < max_x:
-            if (x, y) in component.pixels:
-                x += 1
-                continue
-            start = x
-            while x < max_x and (x, y) not in component.pixels:
-                x += 1
-            end = x - 1
-            if (
-                end - start + 1 >= min_length
-                and (start - 1, y) in component.pixels
-                and (end + 1, y) in component.pixels
-                and _has_component_neighbor_above_and_below(component, start, end, y)
-            ):
-                runs.append((y, start, end))
-    return _group_horizontal_runs(
-        runs,
-        min_length=min_length,
-        max_thickness=max_thickness,
-        color=color,
-    )
 
 
-def _vertical_cutout_strokes(
-    component: MaskComponent,
-    *,
-    min_length: int,
-    max_thickness: int,
-    color: str,
-) -> tuple[AnchorCandidate, ...]:
-    min_x, min_y, max_x, max_y = component.bounds
-    runs: list[tuple[int, int, int]] = []
-    for x in range(min_x + 1, max_x):
-        y = min_y + 1
-        while y < max_y:
-            if (x, y) in component.pixels:
-                y += 1
-                continue
-            start = y
-            while y < max_y and (x, y) not in component.pixels:
-                y += 1
-            end = y - 1
-            if (
-                end - start + 1 >= min_length
-                and (x, start - 1) in component.pixels
-                and (x, end + 1) in component.pixels
-                and _has_component_neighbor_left_and_right(component, x, start, end)
-            ):
-                runs.append((x, start, end))
-    return _group_vertical_runs(
-        runs,
-        min_length=min_length,
-        max_thickness=max_thickness,
-        color=color,
-    )
-
-
-def _group_horizontal_runs(
-    runs: list[tuple[int, int, int]],
-    *,
-    min_length: int,
-    max_thickness: int,
-    color: str,
-) -> tuple[AnchorCandidate, ...]:
-    grouped: list[list[tuple[int, int, int]]] = []
-    for run in runs:
-        y, start, end = run
-        if grouped:
-            previous_y, previous_start, previous_end = grouped[-1][-1]
-            if y == previous_y + 1 and _overlap_length(start, end, previous_start, previous_end) >= min_length:
-                grouped[-1].append(run)
-                continue
-        grouped.append([run])
-    candidates: list[AnchorCandidate] = []
-    for group in grouped:
-        thickness = len(group)
-        start = round(sum(run[1] for run in group) / thickness)
-        end = round(sum(run[2] for run in group) / thickness)
-        length = end - start + 1
-        if thickness > max_thickness or length < min_length or thickness / length > 0.35:
-            continue
-        y = sum(run[0] for run in group) / thickness
-        candidates.append(_cutout_candidate(Point(start, y), Point(end, y), thickness, color))
-    return tuple(candidates)
-
-
-def _group_vertical_runs(
-    runs: list[tuple[int, int, int]],
-    *,
-    min_length: int,
-    max_thickness: int,
-    color: str,
-) -> tuple[AnchorCandidate, ...]:
-    grouped: list[list[tuple[int, int, int]]] = []
-    for run in runs:
-        x, start, end = run
-        if grouped:
-            previous_x, previous_start, previous_end = grouped[-1][-1]
-            if x == previous_x + 1 and _overlap_length(start, end, previous_start, previous_end) >= min_length:
-                grouped[-1].append(run)
-                continue
-        grouped.append([run])
-    candidates: list[AnchorCandidate] = []
-    for group in grouped:
-        thickness = len(group)
-        start = round(sum(run[1] for run in group) / thickness)
-        end = round(sum(run[2] for run in group) / thickness)
-        length = end - start + 1
-        if thickness > max_thickness or length < min_length or thickness / length > 0.35:
-            continue
-        x = sum(run[0] for run in group) / thickness
-        candidates.append(_cutout_candidate(Point(x, start), Point(x, end), thickness, color))
-    return tuple(candidates)
 
 
 def _freeform_cutout_strokes(
@@ -2010,37 +1926,29 @@ def _freeform_cutout_candidate(
     if _touches_bounds(component, host_bounds):
         return None
 
-    axis = _principal_axis(component)
-    if axis is None:
+    horizontal = component.width >= component.height
+    samples = _functional_centerline_samples(component, horizontal=horizontal)
+    if samples is None or len(samples) < 2:
+        return None
+    path_length = sum(a.distance_to(b) for a, b in zip(samples, samples[1:]))
+    path_length = max(path_length, float(len(samples)))
+    # Ink width (area / length) measures the actual slit thickness and also
+    # rejects bulky holes like ring interiors.
+    stroke_width = max(component.area / path_length, 1.0)
+    if path_length < min_length or stroke_width > max_thickness:
         return None
 
-    center, direction, min_major, max_major, min_minor, max_minor = axis
-    length = max_major - min_major + 1
-    stroke_width = max(max_minor - min_minor + 1, 1.0)
-    if length < min_length or stroke_width > max_thickness:
-        return None
-
-    dx, dy = direction
-    start = Point(center.x + dx * min_major, center.y + dy * min_major)
-    end = Point(center.x + dx * max_major, center.y + dy * max_major)
-    if _is_axis_aligned(start, end):
-        return None
-
+    start = samples[0]
+    end = samples[-1]
     control = max(
-        (Point(x, y) for x, y in component.pixels),
+        samples,
         key=lambda point: _point_line_distance(point, start, end),
     )
     bow = _point_line_distance(control, start, end)
-    centerline = (
-        (start, control, end)
-        if bow >= max(1.0, stroke_width * 0.75)
-        else (start, end)
-    )
+    bowed = bow >= max(1.0, stroke_width * 0.75)
+    centerline = (start, control, end) if bowed else (start, end)
     return _cutout_centerline_candidate(centerline, stroke_width, color)
 
-
-def _cutout_candidate(start: Point, end: Point, width: float, color: str) -> AnchorCandidate:
-    return _cutout_centerline_candidate((start, end), width, color)
 
 
 def _cutout_centerline_candidate(
@@ -2048,8 +1956,15 @@ def _cutout_centerline_candidate(
     width: float,
     color: str,
 ) -> AnchorCandidate:
+    # Bowed cut-outs export as smooth stroke paths so the overlay follows
+    # the curved gap instead of kinking across it.
+    kind = (
+        AnchorKind.STROKE_PATH
+        if len(centerline) >= 3
+        else AnchorKind.STROKE_POLYLINE
+    )
     candidate = AnchorCandidate(
-        kind=AnchorKind.STROKE_POLYLINE,
+        kind=kind,
         raster_error=0.0,
         node_count=len(centerline),
         parameter_count=max(5, len(centerline) * 2 + 1),
@@ -2078,75 +1993,3 @@ def _touches_bounds(
         or component_min_y <= min_y
         or component_max_y >= max_y
     )
-
-
-def _is_axis_aligned(start: Point, end: Point) -> bool:
-    dx = abs(end.x - start.x)
-    dy = abs(end.y - start.y)
-    length = max(start.distance_to(end), 1.0)
-    return dx / length < 0.18 or dy / length < 0.18
-
-
-def _has_component_neighbor_above_and_below(
-    component: MaskComponent,
-    start: int,
-    end: int,
-    y: int,
-) -> bool:
-    """Require material above and below every column of a gap run.
-
-    Checking only the middle column lets open regions below shallow arcs
-    masquerade as cut-out strokes.
-    """
-
-    min_y = component.bounds[1]
-    max_y = component.bounds[3]
-    return all(
-        _column_has_pixel_above(component, x, y, min_y)
-        and _column_has_pixel_below(component, x, y, max_y)
-        for x in range(start, end + 1)
-    )
-
-
-def _column_has_pixel_above(
-    component: MaskComponent,
-    x: int,
-    y: int,
-    min_y: int,
-) -> bool:
-    return any((x, above) in component.pixels for above in range(min_y, y))
-
-
-def _column_has_pixel_below(
-    component: MaskComponent,
-    x: int,
-    y: int,
-    max_y: int,
-) -> bool:
-    return any((x, below) in component.pixels for below in range(y + 1, max_y + 1))
-
-
-def _has_component_neighbor_left_and_right(
-    component: MaskComponent,
-    x: int,
-    start: int,
-    end: int,
-) -> bool:
-    """Require material left and right of every row of a gap run."""
-
-    min_x = component.bounds[0]
-    max_x = component.bounds[2]
-    return all(
-        any((left, y) in component.pixels for left in range(min_x, x))
-        and any((right, y) in component.pixels for right in range(x + 1, max_x + 1))
-        for y in range(start, end + 1)
-    )
-
-
-def _overlap_length(
-    first_start: int,
-    first_end: int,
-    second_start: int,
-    second_end: int,
-) -> int:
-    return max(0, min(first_end, second_end) - max(first_start, second_start) + 1)

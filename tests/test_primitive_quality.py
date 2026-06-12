@@ -218,6 +218,37 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertEqual(caps["curve_s"], "round")
             self.assertEqual(caps["curve_square_caps"], "butt")
 
+    def test_curved_cutouts_stay_editable_and_compare_exports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("cutout_curve_rect", "cutout_curve_ring"),
+            )
+
+            self.assertTrue(report["ok"])
+            for case in report["cases"]:
+                comparison = case["export_comparison"]
+                self.assertTrue(comparison["ok"])
+                self.assertEqual(comparison["cutout_anchor_count"], 1)
+                manifest = json.loads(
+                    (Path(temp_dir) / case["id"] / "manifest.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                cutouts = [
+                    anchor
+                    for anchor in manifest["anchors"]
+                    if anchor.get("stroke", {}).get("is_cutout")
+                ]
+                self.assertEqual(len(cutouts), 1)
+                self.assertEqual(cutouts[0]["kind"], "stroke_path")
+                self.assertEqual(len(cutouts[0]["stroke"]["centerline"]), 3)
+                svg = (Path(temp_dir) / case["id"] / "output.svg").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn('stroke="#ffffff"', svg)
+                self.assertIn(" C ", svg)
+
     def test_ellipse_fixtures_export_editable_ellipse_primitives(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             report = check_primitive_quality(
@@ -471,6 +502,11 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "ellipse_wide": 3,
                 "stroked_ellipse": 3,
                 "antialiased_ellipse": 3,
+                "cutout_curve_rect": 3,
+                "cutout_curve_circle": 3,
+                "cutout_curve_ring": 3,
+                "cutout_curve_crossing": 3,
+                "cutout_near_background": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

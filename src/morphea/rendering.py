@@ -117,10 +117,13 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         cx = float(circle["cx"])
         cy = float(circle["cy"])
         radius = float(circle["r"])
+        width = _stroke_width(anchor)
+        half = width / 2
+        # Match the SVG model: the stroke centers on the circle outline.
         draw.ellipse(
-            (cx - radius, cy - radius, cx + radius, cy + radius),
+            (cx - radius - half, cy - radius - half, cx + radius + half, cy + radius + half),
             outline=color,
-            width=_stroke_width(anchor),
+            width=width,
         )
         return
     if kind == "arc" and "arc" in anchor and "stroke" in anchor:
