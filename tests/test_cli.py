@@ -48,7 +48,7 @@ class CliTests(unittest.TestCase):
 
             with (
                 patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
-                redirect_stdout(StringIO()),
+                redirect_stdout(StringIO()) as stdout,
             ):
                 main(["status", "-o", str(output), "--markdown", str(markdown)])
 
@@ -56,6 +56,7 @@ class CliTests(unittest.TestCase):
             self.assertEqual(status["schema_version"], 1)
             self.assertIn("flat_color", status["segmenters"])
             self.assertIn("mlx", status["classifiers"])
+            self.assertIn("capability blockers", stdout.getvalue())
             self.assertTrue(markdown.exists())
 
     def test_status_cli_accepts_config_file(self):

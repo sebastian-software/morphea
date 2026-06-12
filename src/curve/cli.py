@@ -1253,7 +1253,11 @@ def main(argv: list[str] | None = None) -> None:
             markdown=status_config.get("markdown"),
             mlx_sam_model_path=status_config.get("mlx_sam_model_path"),
         )
-        print(f"wrote runtime status with {len(result['blocked_backends'])} blockers")
+        print(
+            "wrote runtime status with "
+            f"{len(result['blocked_backends'])} backend blockers and "
+            f"{len(result.get('blocked_capabilities', []))} capability blockers"
+        )
         return
 
     if args.command == "curated-check":
