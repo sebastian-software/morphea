@@ -948,6 +948,32 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _organic_hole_spec(case_id, family, variant, outer, holes)
+        for case_id, family, variant, outer, holes in (
+            ("organic_donut", "organic_donut", "base",
+             (32, 32, 22, ((3, 0.14, 0.5),)), (("ellipse", (24, 24, 40, 40)),)),
+            ("organic_donut_offset", "organic_donut", "offset",
+             (31, 33, 21, ((4, 0.1, 1.1),)), (("ellipse", (22, 26, 36, 40)),)),
+            ("organic_donut_small_hole", "organic_donut", "small_hole",
+             (32, 32, 23, ((2, 0.1, 0.4),)), (("ellipse", (27, 27, 38, 38)),)),
+            ("organic_frame", "organic_frame", "base",
+             (32, 32, 24, ((4, 0.1, 1.2),)), (("blob", (32, 32, 12, ((3, 0.12, 0.4),))),)),
+            ("organic_frame_wavy", "organic_frame", "wavy",
+             (32, 32, 25, ((3, 0.12, 0.7),)), (("blob", (32, 32, 13, ((4, 0.1, 1.6),))),)),
+            ("organic_frame_thin", "organic_frame", "thin",
+             (32, 32, 24, ((2, 0.14, 0.2), (5, 0.06, 1.8))), (("blob", (32, 31, 14, ((2, 0.12, 1.0),))),)),
+            ("organic_double_hole", "organic_double_hole", "base",
+             (32, 32, 24, ((2, 0.12, 0.9),)),
+             (("ellipse", (18, 22, 30, 34)), ("ellipse", (36, 30, 46, 40)))),
+            ("organic_double_hole_vertical", "organic_double_hole", "vertical",
+             (32, 32, 24, ((3, 0.1, 0.3),)),
+             (("ellipse", (24, 16, 36, 28)), ("ellipse", (28, 36, 40, 48)))),
+            ("organic_double_hole_uneven", "organic_double_hole", "uneven",
+             (32, 33, 23, ((2, 0.1, 1.4),)),
+             (("ellipse", (20, 24, 34, 38)), ("ellipse", (38, 32, 46, 40)))),
+        )
+    )
+    specs.extend(
         _composition_spec(case_id, "composition_arc_circle", variant, primitives)
         for case_id, variant, primitives in (
             (
@@ -1955,6 +1981,48 @@ def _organic_fallback_spec(
         max_svg_raster_edge_error=0.06,
         max_svg_vs_preview_l1_error=0.03,
         min_bbox_iou=0.55 if mode == "crescent" else 0.85,
+    )
+
+
+def _organic_hole_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    outer: tuple,
+    holes: tuple,
+) -> PrimitiveSpec:
+    outer_polygon = _blob_polygon(*outer)
+
+    def draw_fn(draw, outer_polygon=outer_polygon, holes=holes):
+        draw.polygon(outer_polygon, fill=BLUE)
+        for kind, params in holes:
+            if kind == "ellipse":
+                draw.ellipse(params, fill="#ffffff")
+            else:
+                draw.polygon(_blob_polygon(*params), fill="#ffffff")
+
+    xs = [x for x, _ in outer_polygon]
+    ys = [y for _, y in outer_polygon]
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("cubic_path",),
+        geometry_type="cubic_path",
+        geometry={
+            "bounds": (min(xs), min(ys), max(xs), max(ys)),
+            "max_nodes": 16,
+            "expected_holes": len(holes),
+        },
+        draw=draw_fn,
+        allow_cubic_path=True,
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.05,
+        max_svg_raster_l1_error=0.06,
+        max_svg_raster_edge_error=0.06,
+        max_svg_vs_preview_l1_error=0.03,
+        min_bbox_iou=0.85,
     )
 
 
@@ -3908,6 +3976,16 @@ def _cubic_path_failures(
         failures.append(
             _failure("editability_drift", "organic path lacks path_smoothness metric")
         )
+    if "expected_holes" in spec.geometry:
+        expected_holes = int(spec.geometry["expected_holes"])
+        actual_holes = len(path.get("holes", []))
+        if actual_holes != expected_holes:
+            failures.append(
+                _failure(
+                    "geometry_drift",
+                    f"expected {expected_holes} even-odd holes, got {actual_holes}",
+                )
+            )
     return failures
 
 

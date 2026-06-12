@@ -179,7 +179,9 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
                 for point in hole.get("points", [])
             ]
             hole_controls = hole.get("controls")
-            if len(hole_points) >= 3 and hole_controls:
+            # Two on-curve points with control pairs already describe a
+            # closed two-segment loop (a circle fits exactly that way).
+            if len(hole_points) >= 2 and hole_controls:
                 hole_polygon = _sampled_closed_bezier(hole_points, hole_controls)
             elif len(hole_points) >= 3:
                 hole_polygon = hole_points

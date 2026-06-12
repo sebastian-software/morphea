@@ -127,17 +127,22 @@ def primitive_candidates_for_component(
 
     thresholds = thresholds or AnchorThresholdConfig()
     candidates: list[AnchorCandidate] = []
+    # Filled primitives cannot express enclosed negative space. Thin slit
+    # gaps are fine (cut-out overlay strokes cover them), but a component
+    # with bulky holes must not collapse into a solid circle or rect.
+    bulky_holes = _has_bulky_enclosed_holes(component)
     stroke_circle = _stroke_circle_candidate(component, thresholds)
     if stroke_circle is not None:
         candidates.append(stroke_circle)
 
-    circle = _circle_candidate(component, thresholds)
-    if circle is not None:
-        candidates.append(circle)
+    if not bulky_holes:
+        circle = _circle_candidate(component, thresholds)
+        if circle is not None:
+            candidates.append(circle)
 
-    ellipse = _ellipse_candidate(component, thresholds)
-    if ellipse is not None:
-        candidates.append(ellipse)
+        ellipse = _ellipse_candidate(component, thresholds)
+        if ellipse is not None:
+            candidates.append(ellipse)
 
     stroke_ellipse = _stroke_ellipse_candidate(component, thresholds)
     if stroke_ellipse is not None:
@@ -155,17 +160,18 @@ def primitive_candidates_for_component(
     if stroke is not None:
         candidates.append(stroke)
 
-    rect = _rect_candidate(component, thresholds)
-    if rect is not None:
-        candidates.append(rect)
+    if not bulky_holes:
+        rect = _rect_candidate(component, thresholds)
+        if rect is not None:
+            candidates.append(rect)
 
-    rounded_rect = _rounded_rect_candidate(component, thresholds)
-    if rounded_rect is not None:
-        candidates.append(rounded_rect)
+        rounded_rect = _rounded_rect_candidate(component, thresholds)
+        if rounded_rect is not None:
+            candidates.append(rounded_rect)
 
-    quad = _quad_candidate(component, thresholds)
-    if quad is not None:
-        candidates.append(quad)
+        quad = _quad_candidate(component, thresholds)
+        if quad is not None:
+            candidates.append(quad)
 
     candidates.append(_organic_fallback_candidate(component))
     if classifier_model is not None:
@@ -185,6 +191,20 @@ ORGANIC_FALLBACK_MAX_NODES = 16
 # semantic candidate passes its plausibility gates, so the candidate carries
 # a flat ranking penalty on top of its node complexity.
 ORGANIC_FALLBACK_RANK_PENALTY = 0.35
+
+
+def _has_bulky_enclosed_holes(component: MaskComponent) -> bool:
+    slit_limit = max(
+        3,
+        min(8, round(min(component.width, component.height) * 0.05)),
+    )
+    for gap in _interior_gap_components(component, min_area=16):
+        if _gap_open_to_background(gap, component):
+            continue
+        ink_width = gap.area / max(max(gap.width, gap.height), 1)
+        if ink_width > slit_limit and gap.area >= component.area * 0.02:
+            return True
+    return False
 
 
 def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
