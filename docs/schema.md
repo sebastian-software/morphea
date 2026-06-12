@@ -34,6 +34,7 @@ Anchor fields:
 - `layer`
 - `confidence`
 - `reserved`: reserved bounds and reason
+- `source_mask`: stable source-mask proxy used by run artifacts and reviews
 - `provenance`: source stage and fitting stage
 - `export_policy`: editability and debug label metadata
 - `raster_error`
@@ -87,6 +88,16 @@ Cut-out export policy fields:
   `negative_mask` to keep cut-out strokes editable inside an SVG mask.
 - `mask_eligible`: whether the anchor can be exported through the
   negative-mask path without losing the semantic cut-out intent.
+
+Source mask fields:
+
+- `id`: stable source-mask id aligned with the anchor index, for example
+  `mask-0000`
+- `source`: currently `reserved_bounds`, meaning the mask proxy is derived
+  from the reserved anchor bounds
+- `bounds`: the source-mask proxy bounds used by run artifacts
+- `bounds_area`: area of those bounds, used for inspection and later
+  reservation audits
 
 Group fields:
 

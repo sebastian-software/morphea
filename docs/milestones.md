@@ -199,6 +199,8 @@ Implemented so far:
 
 - anchor manifests include stable ids, layer names, confidence, reservation
   bounds, provenance, and export policy metadata.
+- anchor manifests include stable `source_mask` proxies derived from reserved
+  bounds so run artifacts and review workflows can refer back to mask sources.
 - scene manifests include a top-level `layers` section with anchor indexes and
   counts per semantic layer.
 - simple anchors are marked as reserved by `simple_shape_anchor`.
