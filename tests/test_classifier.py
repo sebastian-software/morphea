@@ -415,7 +415,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertIn("weights", model["mlx_training"])
             self.assertEqual(
                 model["mlx_training"]["transformer_status"],
-                "raster_token_mixer_trained_attention_block_pending",
+                "feature_raster_fusion_trained_transformer_encoder_pending",
             )
             self.assertEqual(model["mlx_training"]["crop_token_spec"]["crop_size"], 6)
             self.assertEqual(
@@ -432,6 +432,15 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(len(mixer["attention"]["embedding_names"]), 28)
             self.assertEqual(len(mixer["loss_history"]), 1)
             self.assertGreater(mixer["parameter_count"], 0)
+            fusion = model["mlx_training"]["feature_raster_fusion"]
+            self.assertEqual(
+                fusion["weight_format"],
+                "mlx_feature_raster_fusion_v1",
+            )
+            self.assertEqual(fusion["fusion"]["heads"], 4)
+            self.assertEqual(len(fusion["raster_embedding_names"]), 28)
+            self.assertEqual(len(fusion["loss_history"]), 1)
+            self.assertGreater(fusion["parameter_count"], 0)
 
     def test_load_classifier_model_uses_mlx_feature_head_predictor(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -474,6 +483,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
 
             self.assertEqual(classifier["classifier_backend"], "mlx_feature_head")
+            self.assertIsInstance(classifier["feature_raster_fusion"], dict)
             self.assertIn(predicted, classifier["labels"])
 
     def test_mlx_feature_head_can_predict_with_raster_tokens(self):
@@ -516,6 +526,84 @@ class PrimitiveClassifierTests(unittest.TestCase):
         predicted = predict_classifier_label(
             classifier,
             (0.0,) * 11,
+            crop_tokens=(
+                (0.0, 0.0, 0.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+            ),
+        )
+
+        self.assertEqual(predicted, "circle")
+
+    def test_mlx_feature_raster_fusion_wins_when_crop_tokens_are_available(self):
+        classifier = {
+            "classifier_backend": "mlx_feature_head",
+            "labels": ("circle", "cubic_path"),
+            "weights": (
+                (0.0, 0.0, -8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+                (0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+            ),
+            "bias": (0.0, 0.0),
+            "normalization": {
+                "mean": (0.0,) * 11,
+                "scale": (1.0,) * 11,
+            },
+            "crop_token_spec": {"crop_size": 2},
+            "raster_token_mixer": {
+                "labels": ("circle", "cubic_path"),
+                "weights": (
+                    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -8.0),
+                    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0),
+                ),
+                "bias": (0.0, 0.0),
+                "normalization": {
+                    "mean": (0.0,) * 7,
+                    "scale": (1.0,) * 7,
+                },
+                "attention": {
+                    "heads": 1,
+                    "embedding_names": (
+                        "head_0_red",
+                        "head_0_green",
+                        "head_0_blue",
+                        "head_0_alpha",
+                        "head_0_x",
+                        "head_0_y",
+                        "head_0_foreground",
+                    ),
+                },
+            },
+            "feature_raster_fusion": {
+                "labels": ("circle", "cubic_path"),
+                "weights": (
+                    (*((0.0,) * 17), 20.0),
+                    (*((0.0,) * 17), -20.0),
+                ),
+                "bias": (0.0, 0.0),
+                "normalization": {
+                    "mean": (0.0,) * 18,
+                    "scale": (1.0,) * 18,
+                },
+                "raster_embedding_names": (
+                    "head_0_red",
+                    "head_0_green",
+                    "head_0_blue",
+                    "head_0_alpha",
+                    "head_0_x",
+                    "head_0_y",
+                    "head_0_foreground",
+                ),
+                "fusion": {
+                    "heads": 1,
+                    "strategy": "concat_feature_and_raster_attention",
+                },
+            },
+        }
+
+        predicted = predict_classifier_label(
+            classifier,
+            (0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
             crop_tokens=(
                 (0.0, 0.0, 0.0, 1.0),
                 (1.0, 1.0, 1.0, 1.0),

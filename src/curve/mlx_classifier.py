@@ -187,10 +187,19 @@ def _train_mlx_weights(
         labels,
         config,
     )
+    head["feature_raster_fusion"] = _train_feature_raster_fusion(
+        train_examples,
+        raster_examples,
+        labels,
+        config,
+    )
     head["feature_head_parameter_count"] = head["parameter_count"]
     head["parameter_count"] += head["raster_token_mixer"]["parameter_count"]
-    head["architecture"] = "feature_head_plus_raster_token_mixer"
-    head["transformer_status"] = "raster_token_mixer_trained_attention_block_pending"
+    head["parameter_count"] += head["feature_raster_fusion"]["parameter_count"]
+    head["architecture"] = "feature_head_plus_raster_token_mixer_and_fusion_head"
+    head["transformer_status"] = (
+        "feature_raster_fusion_trained_transformer_encoder_pending"
+    )
     head["backend_version"] = getattr(mx, "__version__", "unknown")
     head["backend_array_api"] = "mlx.core"
     return head
@@ -336,6 +345,79 @@ def _train_raster_token_mixer(
         },
         "parameter_count": len(labels) * (len(embedding_names) + 1),
         "labels": list(labels),
+        "normalization": {
+            "mean": list(means),
+            "scale": list(scales),
+        },
+        "weights": weights,
+        "bias": bias,
+        "loss_history": loss_history,
+    }
+
+
+def _train_feature_raster_fusion(
+    train_examples: tuple[TrainingExample, ...],
+    raster_examples: tuple[RasterTrainingExample, ...],
+    labels: list[str],
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    raster_embedding_names = _raster_embedding_names(config.num_heads)
+    input_names = [
+        *(f"feature_{name}" for name in FEATURE_NAMES),
+        *raster_embedding_names,
+    ]
+    label_to_index = {label: index for index, label in enumerate(labels)}
+    rows = []
+    for example, raster_example in zip(train_examples, raster_examples):
+        if (
+            example.label not in label_to_index
+            or raster_example.label != example.label
+        ):
+            continue
+        row = (
+            *example.features,
+            *_raster_attention_embedding(raster_example, config),
+        )
+        rows.append((row, label_to_index[example.label]))
+    if not rows:
+        return {
+            "weight_format": "mlx_feature_raster_fusion_v1",
+            "feature_names": list(FEATURE_NAMES),
+            "raster_embedding_names": raster_embedding_names,
+            "input_names": input_names,
+            "fusion": {
+                "strategy": "concat_feature_and_raster_attention",
+                "heads": config.num_heads,
+            },
+            "parameter_count": 0,
+            "weights": [],
+            "bias": [],
+            "normalization": {"mean": [], "scale": []},
+            "loss_history": [],
+        }
+
+    means, scales = _row_normalization(tuple(row for row, _ in rows))
+    normalized_rows = [
+        (_normalize_row(row, means, scales), target_index)
+        for row, target_index in rows
+    ]
+    weights, bias, loss_history = _train_softmax(
+        normalized_rows,
+        class_count=len(labels),
+        input_count=len(input_names),
+        config=config,
+    )
+    return {
+        "weight_format": "mlx_feature_raster_fusion_v1",
+        "feature_names": list(FEATURE_NAMES),
+        "raster_embedding_names": raster_embedding_names,
+        "input_names": input_names,
+        "labels": list(labels),
+        "fusion": {
+            "strategy": "concat_feature_and_raster_attention",
+            "heads": config.num_heads,
+        },
+        "parameter_count": len(labels) * (len(input_names) + 1),
         "normalization": {
             "mean": list(means),
             "scale": list(scales),

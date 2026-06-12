@@ -590,6 +590,7 @@ def load_classifier_model(model_json: str | Path) -> ClassifierModel:
             "scale": tuple(scale),
         },
         "raster_token_mixer": _loaded_raster_token_mixer(training),
+        "feature_raster_fusion": _loaded_feature_raster_fusion(training),
         "crop_token_spec": training.get("crop_token_spec", {}),
         "fallback_centroids": fallback,
     }
@@ -656,6 +657,14 @@ def _predict_mlx_classifier(
     crop_tokens: tuple[tuple[float, float, float, float], ...] | None,
 ) -> str:
     labels, logits = _feature_head_logits(classifier_model, features)
+    fusion_logits = (
+        _feature_raster_fusion_logits(classifier_model, features, crop_tokens)
+        if crop_tokens is not None
+        else None
+    )
+    if fusion_logits is not None and len(fusion_logits) == len(logits):
+        logits = fusion_logits
+        return labels[max(range(len(logits)), key=logits.__getitem__)]
     raster_logits = (
         _raster_mixer_logits(classifier_model, crop_tokens)
         if crop_tokens is not None
@@ -758,6 +767,112 @@ def _loaded_raster_token_mixer(training: dict[str, object]) -> dict[str, object]
             "embedding_names": tuple(embedding_names),
         },
     }
+
+
+def _loaded_feature_raster_fusion(
+    training: dict[str, object],
+) -> dict[str, object] | None:
+    fusion = training.get("feature_raster_fusion")
+    if not isinstance(fusion, dict):
+        return None
+    if fusion.get("weight_format") != "mlx_feature_raster_fusion_v1":
+        return None
+    labels = [
+        str(label)
+        for label in fusion.get("labels", [])
+        if isinstance(label, str)
+    ]
+    weights = _matrix(fusion.get("weights", []))
+    bias = _vector(fusion.get("bias", []))
+    normalization = fusion.get("normalization", {})
+    if not isinstance(normalization, dict):
+        return None
+    mean = _vector(normalization.get("mean", []))
+    scale = _vector(normalization.get("scale", []))
+    raster_embedding_names = [
+        str(name)
+        for name in fusion.get("raster_embedding_names", [])
+        if isinstance(name, str)
+    ]
+    fusion_config = fusion.get("fusion", {})
+    if not isinstance(fusion_config, dict):
+        return None
+    heads = fusion_config.get("heads")
+    input_count = len(FEATURE_NAMES) + len(raster_embedding_names)
+    if (
+        not isinstance(heads, int)
+        or heads <= 0
+        or not labels
+        or len(weights) != len(labels)
+        or len(bias) != len(labels)
+        or len(mean) != input_count
+        or len(scale) != input_count
+    ):
+        return None
+    return {
+        "labels": tuple(labels),
+        "weights": tuple(tuple(row) for row in weights),
+        "bias": tuple(bias),
+        "normalization": {
+            "mean": tuple(mean),
+            "scale": tuple(scale),
+        },
+        "raster_embedding_names": tuple(raster_embedding_names),
+        "fusion": {
+            "heads": heads,
+            "strategy": str(fusion_config.get("strategy", "")),
+        },
+    }
+
+
+def _feature_raster_fusion_logits(
+    classifier_model: dict[str, object],
+    features: tuple[float, ...],
+    crop_tokens: tuple[tuple[float, float, float, float], ...],
+) -> list[float] | None:
+    fusion = classifier_model.get("feature_raster_fusion")
+    crop_spec = classifier_model.get("crop_token_spec", {})
+    if not isinstance(fusion, dict) or not isinstance(crop_spec, dict):
+        return None
+    fusion_config = fusion.get("fusion", {})
+    normalization = fusion.get("normalization", {})
+    if not isinstance(fusion_config, dict) or not isinstance(normalization, dict):
+        return None
+    heads = fusion_config.get("heads")
+    crop_size = crop_spec.get("crop_size")
+    if not isinstance(heads, int) or not isinstance(crop_size, int):
+        return None
+    raster_row = _raster_attention_embedding(
+        crop_tokens,
+        crop_size=crop_size,
+        heads=heads,
+    )
+    row = (*features, *raster_row)
+    mean = normalization.get("mean", ())
+    scale = normalization.get("scale", ())
+    weights = fusion.get("weights", ())
+    bias = fusion.get("bias", ())
+    if (
+        not isinstance(mean, tuple)
+        or not isinstance(scale, tuple)
+        or len(row) != len(mean)
+        or len(row) != len(scale)
+        or not isinstance(weights, tuple)
+        or not isinstance(bias, tuple)
+    ):
+        return None
+    normalized = tuple(
+        (row[index] - mean[index]) / scale[index]
+        for index in range(len(row))
+    )
+    return [
+        float(bias[class_index])
+        + sum(
+            weights[class_index][feature_index] * normalized[feature_index]
+            for feature_index in range(len(normalized))
+        )
+        for class_index in range(len(bias))
+    ]
 
 
 def _raster_mixer_logits(
@@ -887,7 +1002,10 @@ def _classifier_labels(classifier_model: dict[str, object]) -> list[str]:
 def _classifier_uses_raster_tokens(classifier_model: dict[str, object]) -> bool:
     return (
         classifier_model.get("classifier_backend") == "mlx_feature_head"
-        and isinstance(classifier_model.get("raster_token_mixer"), dict)
+        and (
+            isinstance(classifier_model.get("raster_token_mixer"), dict)
+            or isinstance(classifier_model.get("feature_raster_fusion"), dict)
+        )
         and isinstance(classifier_model.get("crop_token_spec"), dict)
     )
 
