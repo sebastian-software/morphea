@@ -399,6 +399,8 @@ Implemented so far:
   flat-color and future MLX runs can be compared explicitly.
 - flat-color segment proposals split connected components by default and can
   mark oversized components as `deferred` via `max_component_area`
+- segment proposals include `downstream_status` and `rejection_reason` so
+  geometry/review stages can distinguish pending proposals from rejected ones.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

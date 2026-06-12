@@ -262,6 +262,9 @@ Proposal fields:
 - `bounds`
 - `area`
 - `status`
+- `downstream_status`: `pending`, `accepted`, or `rejected`; initial flat-color
+  proposals are `pending`, while deferred oversized proposals are `rejected`
+- `rejection_reason`: nullable machine-readable reason for rejected proposals
 
 `backend` records `source`, `backend_available`, `status`, and an optional
 `reason`. MLX SAM currently has an explicit not-configured error path. It will
