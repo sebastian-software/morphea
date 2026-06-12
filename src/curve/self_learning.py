@@ -454,6 +454,7 @@ def create_review_file(
     *,
     pseudo_labels: str | Path,
     output: str | Path,
+    markdown: str | Path | None = None,
 ) -> dict[str, object]:
     source = json.loads(Path(pseudo_labels).read_text(encoding="utf-8"))
     review_items = []
@@ -476,7 +477,47 @@ def create_review_file(
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(review, indent=2, sort_keys=True), encoding="utf-8")
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(render_review_markdown(review), encoding="utf-8")
     return review
+
+
+def render_review_markdown(review: dict[str, object]) -> str:
+    items = review.get("items", [])
+    if not isinstance(items, list):
+        items = []
+    lines = [
+        "# Curve Review Queue",
+        "",
+        f"- Source: `{review.get('source', 'n/a')}`",
+        f"- Items: {_fmt_metric(review.get('review_count'))}",
+        "",
+        "| ID | Decision | Kind | Quality error | Issues |",
+        "| --- | --- | --- | ---: | --- |",
+    ]
+    if items:
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            label = item.get("label", {})
+            if not isinstance(label, dict):
+                label = {}
+            issues = item.get("issues", [])
+            if not isinstance(issues, list):
+                issues = []
+            lines.append(
+                "| "
+                f"`{item.get('id', 'n/a')}` | "
+                f"`{item.get('decision', 'n/a')}` | "
+                f"`{label.get('kind', 'n/a')}` | "
+                f"{_fmt_metric(label.get('anchor_quality_error'))} | "
+                f"{', '.join(str(issue) for issue in issues) or 'n/a'} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+    return "\n".join(lines) + "\n"
 
 
 def apply_review_file(

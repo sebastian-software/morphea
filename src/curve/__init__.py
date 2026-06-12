@@ -89,6 +89,7 @@ from curve.self_learning import (
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
     render_harvest_markdown,
+    render_review_markdown,
     render_training_comparison_markdown,
     retrain_centroid_classifier,
 )
@@ -192,6 +193,7 @@ __all__ = [
     "render_eval_markdown",
     "render_harvest_markdown",
     "render_manifest_image",
+    "render_review_markdown",
     "render_snapshot_comparison",
     "render_snapshot_comparison_markdown",
     "render_sweep_markdown",

@@ -138,7 +138,7 @@ HARVEST_DEFAULT_CONFIG = {
     "max_raster_edge_error": 1.0,
     "max_anchor_quality_error": 1.0,
 }
-REVIEW_CONFIG_KEYS = {"pseudo_labels", "output"}
+REVIEW_CONFIG_KEYS = {"pseudo_labels", "output", "markdown"}
 APPLY_REVIEW_CONFIG_KEYS = {"review", "output"}
 MERGE_LABELS_CONFIG_KEYS = {"reviewed_labels", "output_dir"}
 
@@ -406,6 +406,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     review.add_argument("pseudo_labels", type=Path, nargs="?")
     review.add_argument("-o", "--output", type=Path)
+    review.add_argument("--markdown", type=Path)
     review.add_argument("--config", type=Path)
 
     apply_review = subcommands.add_parser(
@@ -728,6 +729,7 @@ def main(argv: list[str] | None = None) -> None:
         review_result = create_review_file(
             pseudo_labels=review_config["pseudo_labels"],
             output=review_config["output"],
+            markdown=review_config.get("markdown"),
         )
         print(f"created review queue with {review_result['review_count']} items")
         return
@@ -1097,6 +1099,8 @@ def _resolved_review_config(args: argparse.Namespace) -> dict[str, Path]:
         config["pseudo_labels"] = args.pseudo_labels
     if args.output is not None:
         config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
     _require_config_paths(config, ("pseudo_labels", "output"), "review")
     return config
 
