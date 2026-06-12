@@ -383,6 +383,29 @@ def _group_context_suffix(value: object) -> str:
     return f" ({', '.join(kinds)})"
 
 
+def _format_group_context(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    parts = []
+    for group in value:
+        if not isinstance(group, dict):
+            continue
+        kind = group.get("kind")
+        if kind is None:
+            continue
+        position = group.get("anchor_position")
+        suffix = f"#{position}" if isinstance(position, int) else ""
+        parts.append(f"`{kind}{suffix}`")
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _rejected_group_context(item: dict[str, object]) -> str:
+    label = item.get("label", {})
+    if not isinstance(label, dict):
+        return "n/a"
+    return _format_group_context(label.get("group_context", []))
+
+
 def compare_retraining(
     *,
     base_dataset: str | Path,
@@ -1156,8 +1179,8 @@ def render_review_markdown(review: dict[str, object]) -> str:
         f"- Items: {_fmt_metric(review.get('review_count'))}",
         f"- Issue counts: {_format_issue_counts(_review_issue_counts(review, items))}",
         "",
-        "| ID | Decision | Kind | Quality error | Issues |",
-        "| --- | --- | --- | ---: | --- |",
+        "| ID | Decision | Kind | Groups | Quality error | Issues |",
+        "| --- | --- | --- | --- | ---: | --- |",
     ]
     if items:
         for item in items:
@@ -1174,11 +1197,12 @@ def render_review_markdown(review: dict[str, object]) -> str:
                 f"`{item.get('id', 'n/a')}` | "
                 f"`{item.get('decision', 'n/a')}` | "
                 f"`{label.get('kind', 'n/a')}` | "
+                f"{_format_group_context(label.get('group_context', []))} | "
                 f"{_fmt_metric(label.get('anchor_quality_error'))} | "
                 f"{', '.join(str(issue) for issue in issues) or 'n/a'} |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
     return "\n".join(lines) + "\n"
 
 
@@ -1258,8 +1282,8 @@ def render_apply_review_markdown(result: dict[str, object]) -> str:
         "",
         "## Accepted",
         "",
-        "| Kind | Corrected kind | Issues |",
-        "| --- | --- | --- |",
+        "| Kind | Corrected kind | Groups | Issues |",
+        "| --- | --- | --- | --- |",
     ]
     if accepted:
         for label in accepted:
@@ -1275,18 +1299,19 @@ def render_apply_review_markdown(result: dict[str, object]) -> str:
                 "| "
                 f"`{label.get('kind', 'n/a')}` | "
                 f"`{review.get('corrected_kind') or 'n/a'}` | "
+                f"{_format_group_context(label.get('group_context', []))} | "
                 f"{', '.join(str(issue) for issue in issues) or 'n/a'} |"
             )
     else:
-        lines.append("| n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [
             "",
             "## Rejected",
             "",
-            "| ID | Reason | Issues |",
-            "| --- | --- | --- |",
+            "| ID | Reason | Groups | Issues |",
+            "| --- | --- | --- | --- |",
         ]
     )
     if rejected:
@@ -1300,10 +1325,11 @@ def render_apply_review_markdown(result: dict[str, object]) -> str:
                 "| "
                 f"`{item.get('id', 'n/a')}` | "
                 f"{item.get('reason', '') or 'n/a'} | "
+                f"{_rejected_group_context(item)} | "
                 f"{', '.join(str(issue) for issue in issues) or 'n/a'} |"
             )
     else:
-        lines.append("| n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [

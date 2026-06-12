@@ -442,6 +442,12 @@ class SelfLearningTests(unittest.TestCase):
                         "label": {
                             "kind": "circle",
                             "anchor_quality_error": 0.03,
+                            "group_context": [
+                                {
+                                    "kind": "perspective_grid",
+                                    "anchor_position": 2,
+                                }
+                            ],
                         },
                     }
                 ],
@@ -452,7 +458,7 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("- Source: `pseudo.json`", markdown)
         self.assertIn("- Issue counts: `bad_cutout: 1`", markdown)
         self.assertIn(
-            "| `review-00000` | `pending` | `circle` | 0.03 | bad_cutout |",
+            "| `review-00000` | `pending` | `circle` | `perspective_grid#2` | 0.03 | bad_cutout |",
             markdown,
         )
 
@@ -539,6 +545,12 @@ class SelfLearningTests(unittest.TestCase):
                 "accepted": [
                     {
                         "kind": "stroke_polyline",
+                        "group_context": [
+                            {
+                                "kind": "parallel_stroke_group",
+                                "anchor_position": 1,
+                            }
+                        ],
                         "review": {
                             "corrected_kind": "stroke_polyline",
                             "issues": ["wrong_primitive_type"],
@@ -550,6 +562,14 @@ class SelfLearningTests(unittest.TestCase):
                         "id": "review-00001",
                         "reason": "bad cutout",
                         "issues": ["bad_cutout"],
+                        "label": {
+                            "group_context": [
+                                {
+                                    "kind": "primitive_anchor_reservation",
+                                    "anchor_position": 0,
+                                }
+                            ]
+                        },
                     }
                 ],
                 "pending": ["review-00002"],
@@ -563,10 +583,14 @@ class SelfLearningTests(unittest.TestCase):
             markdown,
         )
         self.assertIn(
-            "| `stroke_polyline` | `stroke_polyline` | wrong_primitive_type |",
+            "| `stroke_polyline` | `stroke_polyline` | "
+            "`parallel_stroke_group#1` | wrong_primitive_type |",
             markdown,
         )
-        self.assertIn("| `review-00001` | bad cutout | bad_cutout |", markdown)
+        self.assertIn(
+            "| `review-00001` | bad cutout | `primitive_anchor_reservation#0` | bad_cutout |",
+            markdown,
+        )
         self.assertIn("`review-00002`", markdown)
 
     def test_apply_review_file_writes_markdown_report(self):

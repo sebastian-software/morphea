@@ -645,7 +645,10 @@ Implemented so far:
   generated per-case manifests
 - human-editable review queue via `curve review`
 - `curve review --markdown review.md` writes a scan-friendly queue summary
-  while keeping accept/reject decisions in JSON
+  while keeping accept/reject decisions in JSON; review and apply-review
+  Markdown reports surface harvested group context so reviewers can see when an
+  anchor belongs to a grid, parallel stroke group, merge candidate, or
+  reservation group.
 - accepted/rejected/pending split via `curve apply-review`
 - `curve apply-review --markdown accepted.md` writes a scan-friendly decision
   summary for accepted, rejected, and pending labels

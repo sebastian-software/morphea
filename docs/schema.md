@@ -479,7 +479,9 @@ primitive type without manually editing nested anchor payloads. `issues` is a
 free-form string list for structured human notes such as `wrong_primitive_type`,
 `bad_cutout`, or `bad_stroke`. Review queue and apply-review artifacts include
 `issue_counts` so repeated cut-out, stroke, or primitive-type problems are
-visible without scanning every item.
+visible without scanning every item. Markdown review reports surface label
+`group_context` so humans can judge anchors in their grid, stroke-group,
+merge, or reservation context.
 
 `curve apply-review` writes accepted, rejected, and pending splits.
 `curve apply-review --markdown accepted.md` writes a scan-friendly decision
