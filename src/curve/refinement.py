@@ -61,6 +61,9 @@ def refine_manifest(
             raster_edge_weight=config.raster_edge_weight,
         )
 
+    source_anchors = list(data.get("anchors", []))
+    optimized_anchors = list(optimized_data.get("anchors", []))
+    structure_audit = _refinement_structure_audit(source_anchors, optimized_anchors)
     refined_anchors = []
     for anchor in optimized_data.get("anchors", []):
         refined = dict(anchor)
@@ -86,6 +89,7 @@ def refine_manifest(
         "raster_l1_weight": config.raster_l1_weight,
         "raster_edge_weight": config.raster_edge_weight,
         "structure_preserving": True,
+        "structure_audit": structure_audit,
         "optimizer": optimizer_metrics,
     }
     output = Path(output)
@@ -98,6 +102,50 @@ def available_refinement_backends() -> dict[str, object]:
     return {
         "local": [LOCAL_REFINEMENT_BACKEND],
         "optional": list(OPTIONAL_DIFFERENTIABLE_BACKENDS),
+    }
+
+
+def _refinement_structure_audit(
+    source_anchors: list[object],
+    refined_anchors: list[object],
+) -> dict[str, object]:
+    comparable_pairs = [
+        (source, refined)
+        for source, refined in zip(source_anchors, refined_anchors, strict=False)
+        if isinstance(source, dict) and isinstance(refined, dict)
+    ]
+    preserved_kind_count = sum(
+        1
+        for source, refined in comparable_pairs
+        if source.get("kind") == refined.get("kind")
+    )
+    changed_geometry_count = sum(
+        1
+        for source, refined in comparable_pairs
+        if _anchor_geometry_payload(source) != _anchor_geometry_payload(refined)
+    )
+    anchor_count = len(refined_anchors)
+    return {
+        "source_anchor_count": len(source_anchors),
+        "refined_anchor_count": anchor_count,
+        "preserved_kind_count": preserved_kind_count,
+        "changed_geometry_count": changed_geometry_count,
+        "structure_preserved": (
+            len(source_anchors) == anchor_count
+            and preserved_kind_count == anchor_count
+        ),
+        "editability_preserved": (
+            len(source_anchors) == anchor_count
+            and preserved_kind_count == anchor_count
+        ),
+    }
+
+
+def _anchor_geometry_payload(anchor: dict[str, object]) -> dict[str, object]:
+    return {
+        key: anchor.get(key)
+        for key in ("circle", "stroke", "quad")
+        if key in anchor
     }
 
 

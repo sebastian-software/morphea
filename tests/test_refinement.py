@@ -29,6 +29,16 @@ class RefinementTests(unittest.TestCase):
 
             self.assertEqual(result["anchors"][0]["kind"], "circle")
             self.assertTrue(result["refinement"]["structure_preserving"])
+            self.assertTrue(
+                result["refinement"]["structure_audit"]["structure_preserved"]
+            )
+            self.assertTrue(
+                result["refinement"]["structure_audit"]["editability_preserved"]
+            )
+            self.assertEqual(
+                result["refinement"]["structure_audit"]["changed_geometry_count"],
+                0,
+            )
             self.assertEqual(
                 result["anchors"][0]["metrics"]["refinement_iterations"],
                 3.0,
@@ -78,6 +88,13 @@ class RefinementTests(unittest.TestCase):
                 result["refinement"]["optimizer"]["initial_objective"],
             )
             self.assertIn("refinement_objective", result["metrics"])
+            self.assertTrue(
+                result["refinement"]["structure_audit"]["editability_preserved"]
+            )
+            self.assertEqual(
+                result["refinement"]["structure_audit"]["changed_geometry_count"],
+                1,
+            )
             self.assertEqual(
                 result["anchors"][0]["metrics"]["refinement_radius_delta"],
                 1.0,
