@@ -129,6 +129,7 @@ REFINE_CONFIG_KEYS = {
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
+    "markdown": None,
     "max_run_diagnostics": 0,
     "max_classifier_prior_error": 0.0,
     "min_editability_score": 0.0,
@@ -389,6 +390,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     harvest.add_argument("run_root", type=Path, nargs="?")
     harvest.add_argument("-o", "--output", type=Path)
+    harvest.add_argument("--markdown", type=Path)
     harvest.add_argument("--max-run-diagnostics", type=int)
     harvest.add_argument("--max-classifier-prior-error", type=float)
     harvest.add_argument("--min-editability-score", type=float)
@@ -703,6 +705,7 @@ def main(argv: list[str] | None = None) -> None:
         result = harvest_pseudo_labels(
             run_root=harvest_config["run_root"],
             output=harvest_config["output"],
+            markdown=harvest_config.get("markdown"),
             max_run_diagnostics=int(harvest_config["max_run_diagnostics"]),
             max_classifier_prior_error=float(
                 harvest_config["max_classifier_prior_error"]
@@ -1066,6 +1069,8 @@ def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
         config["run_root"] = args.run_root
     if args.output is not None:
         config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
     for key in (
         "max_run_diagnostics",
         "max_classifier_prior_error",
@@ -1081,6 +1086,8 @@ def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
     _require_config_paths(config, ("run_root", "output"), "harvest")
     config["run_root"] = Path(config["run_root"])
     config["output"] = Path(config["output"])
+    if config.get("markdown") is not None:
+        config["markdown"] = Path(str(config["markdown"]))
     return config
 
 
@@ -1213,7 +1220,7 @@ def _load_harvest_config(path: Path) -> dict[str, object]:
         msg = f"unsupported harvest config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     config = dict(loaded)
-    for key in ("run_root", "output"):
+    for key in ("run_root", "output", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

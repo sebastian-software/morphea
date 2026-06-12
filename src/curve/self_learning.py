@@ -20,6 +20,7 @@ def harvest_pseudo_labels(
     *,
     run_root: str | Path,
     output: str | Path,
+    markdown: str | Path | None = None,
     max_run_diagnostics: int = 0,
     max_classifier_prior_error: float = 0.0,
     min_editability_score: float = 0.0,
@@ -133,7 +134,100 @@ def harvest_pseudo_labels(
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_harvest_markdown(result),
+            encoding="utf-8",
+        )
     return result
+
+
+def render_harvest_markdown(report: dict[str, object]) -> str:
+    filters = report.get("filters", {})
+    if not isinstance(filters, dict):
+        filters = {}
+    pseudo_labels = report.get("pseudo_labels", [])
+    if not isinstance(pseudo_labels, list):
+        pseudo_labels = []
+    rejected_runs = report.get("rejected_runs", [])
+    if not isinstance(rejected_runs, list):
+        rejected_runs = []
+
+    lines = [
+        "# Curve Pseudo-Label Harvest",
+        "",
+        f"- Pseudo-labels: {_fmt_metric(report.get('pseudo_label_count'))}",
+        f"- Rejected runs: {_fmt_metric(len(rejected_runs))}",
+        "",
+        "## Filters",
+        "",
+        "| Gate | Value |",
+        "| --- | ---: |",
+    ]
+    for key in sorted(filters):
+        lines.append(f"| `{key}` | {_fmt_metric(filters.get(key))} |")
+
+    lines.extend(
+        [
+            "",
+            "## Accepted Labels",
+            "",
+            "| Run | Anchor | Kind | Quality error | Source |",
+            "| --- | ---: | --- | ---: | --- |",
+        ]
+    )
+    if pseudo_labels:
+        for label in pseudo_labels:
+            if not isinstance(label, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{label.get('run', 'n/a')}` | "
+                f"{_fmt_metric(label.get('anchor_index'))} | "
+                f"`{label.get('kind', 'n/a')}` | "
+                f"{_fmt_metric(label.get('anchor_quality_error'))} | "
+                f"`{label.get('source_manifest', 'n/a')}` |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+
+    lines.extend(
+        [
+            "",
+            "## Rejected Runs",
+            "",
+            "| Run | Reason | Detail |",
+            "| --- | --- | ---: |",
+        ]
+    )
+    if rejected_runs:
+        for rejected in rejected_runs:
+            if not isinstance(rejected, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{rejected.get('run', 'n/a')}` | "
+                f"`{rejected.get('reason', 'n/a')}` | "
+                f"{_rejection_detail_for_markdown(rejected)} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a |")
+    return "\n".join(lines) + "\n"
+
+
+def _rejection_detail_for_markdown(rejected: dict[str, object]) -> str:
+    for key in (
+        "diagnostic_count",
+        "editability_score",
+        "fragmentation_penalty",
+        "raster_l1_error",
+        "raster_edge_error",
+    ):
+        if key in rejected:
+            return _fmt_metric(rejected[key])
+    return "n/a"
 
 
 def _anchor_quality_error(metrics: object) -> float:

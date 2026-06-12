@@ -14,6 +14,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    render_harvest_markdown,
     render_training_comparison_markdown,
     retrain_centroid_classifier,
 )
@@ -33,6 +34,53 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["pseudo_labels"][0]["anchor"]["kind"], "circle")
             self.assertEqual(result["pseudo_labels"][0]["run_metrics"]["editability_score"], 1.0)
             self.assertTrue(output.exists())
+
+    def test_render_harvest_markdown_summarizes_quality_gates(self):
+        markdown = render_harvest_markdown(
+            {
+                "pseudo_label_count": 1,
+                "pseudo_labels": [
+                    {
+                        "run": "clean",
+                        "anchor_index": 0,
+                        "kind": "circle",
+                        "anchor_quality_error": 0.02,
+                        "source_manifest": "runs/clean/manifest.json",
+                    }
+                ],
+                "rejected_runs": [
+                    {
+                        "run": "noisy",
+                        "reason": "too_many_run_diagnostics",
+                        "diagnostic_count": 2,
+                    }
+                ],
+                "filters": {
+                    "max_run_diagnostics": 0,
+                    "min_editability_score": 0.8,
+                },
+            }
+        )
+
+        self.assertIn("# Curve Pseudo-Label Harvest", markdown)
+        self.assertIn("| `min_editability_score` | 0.8 |", markdown)
+        self.assertIn("| `clean` | 0 | `circle` | 0.02 |", markdown)
+        self.assertIn("| `noisy` | `too_many_run_diagnostics` | 2 |", markdown)
+
+    def test_harvest_pseudo_labels_writes_markdown_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
+            output = Path(temp_dir) / "pseudo.json"
+            markdown = Path(temp_dir) / "pseudo.md"
+
+            harvest_pseudo_labels(run_root=root, output=output, markdown=markdown)
+
+            self.assertTrue(output.exists())
+            self.assertIn(
+                "# Curve Pseudo-Label Harvest",
+                markdown.read_text(encoding="utf-8"),
+            )
 
     def test_harvest_rejects_runs_with_warning_diagnostics(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -158,6 +206,7 @@ class SelfLearningTests(unittest.TestCase):
             root = Path(temp_dir) / "runs"
             _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
             output = Path(temp_dir) / "pseudo.json"
+            markdown = Path(temp_dir) / "pseudo.md"
 
             with redirect_stdout(StringIO()):
                 main(
@@ -174,6 +223,8 @@ class SelfLearningTests(unittest.TestCase):
                         "0.5",
                         "--max-anchor-quality-error",
                         "0.25",
+                        "--markdown",
+                        str(markdown),
                     ]
                 )
 
@@ -181,18 +232,24 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["pseudo_label_count"], 1)
             self.assertEqual(result["filters"]["min_editability_score"], 0.8)
             self.assertEqual(result["filters"]["max_raster_edge_error"], 0.5)
+            self.assertIn(
+                "# Curve Pseudo-Label Harvest",
+                markdown.read_text(encoding="utf-8"),
+            )
 
     def test_harvest_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
             _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
             output = Path(temp_dir) / "pseudo.json"
+            markdown = Path(temp_dir) / "pseudo.md"
             config = Path(temp_dir) / "harvest.json"
             config.write_text(
                 json.dumps(
                     {
                         "run_root": str(root),
                         "output": str(output),
+                        "markdown": str(markdown),
                         "min_editability_score": 0.8,
                         "max_fragmentation_penalty": 0.25,
                         "max_raster_edge_error": 0.5,
@@ -209,6 +266,10 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["pseudo_label_count"], 1)
             self.assertEqual(result["filters"]["min_editability_score"], 0.8)
             self.assertEqual(result["filters"]["max_fragmentation_penalty"], 0.25)
+            self.assertIn(
+                "# Curve Pseudo-Label Harvest",
+                markdown.read_text(encoding="utf-8"),
+            )
 
     def test_create_review_file_marks_labels_pending(self):
         with tempfile.TemporaryDirectory() as temp_dir:
