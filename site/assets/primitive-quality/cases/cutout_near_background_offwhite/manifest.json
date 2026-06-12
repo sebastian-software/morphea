@@ -1,0 +1,258 @@
+{
+  "anchor_count": 2,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.923016,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:quad:0.923016",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "quad",
+      "layer": "filled_primitives",
+      "metrics": {
+        "quad_corner_consistency_error": 0.2631578947368421,
+        "quad_edge_straightness_error": 0.0,
+        "semantic_anchor_score": 0.2038264380162228,
+        "simple_shape_priority_bonus": 0.25
+      },
+      "node_count": 4,
+      "parameter_count": 8,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "quad": {
+        "corners": [
+          {
+            "x": 8,
+            "y": 20
+          },
+          {
+            "x": 56,
+            "y": 20
+          },
+          {
+            "x": 56,
+            "y": 48
+          },
+          {
+            "x": 8,
+            "y": 48
+          }
+        ]
+      },
+      "raster_error": 0.050668543279380716,
+      "reserved": {
+        "bounds": [
+          8,
+          20,
+          56,
+          48
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          8,
+          20,
+          56,
+          48
+        ],
+        "bounds_area": 1344,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    },
+    {
+      "color": "#ffffff",
+      "confidence": 0.960481,
+      "export_policy": {
+        "cutout_strategy": "overlay_stroke",
+        "debug_label": "anchor-0001:stroke_path:0.960481",
+        "editable": true,
+        "mask_eligible": true
+      },
+      "id": "anchor-0001",
+      "kind": "stroke_path",
+      "layer": "cutout_overlays",
+      "metrics": {
+        "cutout_anchor_error": 0.1317285200180123,
+        "line_smoothness_error": 0.2634570400360246,
+        "semantic_anchor_score": 0.2601855600540369,
+        "simple_shape_priority_bonus": 0.25,
+        "stroke_width_variance": 0.0
+      },
+      "node_count": 3,
+      "parameter_count": 7,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.0,
+      "reserved": {
+        "bounds": [
+          14.89115287613588,
+          29.39115287613588,
+          48.108847123864116,
+          35.358847123864116
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          14.89115287613588,
+          29.39115287613588,
+          48.108847123864116,
+          35.358847123864116
+        ],
+        "bounds_area": 198.233043,
+        "id": "mask-0001",
+        "source": "reserved_bounds"
+      },
+      "stroke": {
+        "cap_style": "round",
+        "centerline": [
+          {
+            "x": 16.0,
+            "y": 34.25
+          },
+          {
+            "x": 26.0,
+            "y": 30.5
+          },
+          {
+            "x": 47.0,
+            "y": 34.25
+          }
+        ],
+        "is_cutout": true,
+        "join_style": "round",
+        "width_samples": [
+          2.217694247728238
+        ]
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "colors": [
+        "#003366",
+        "#ffffff"
+      ],
+      "kind": "primitive_contact_pair",
+      "metrics": {
+        "bounds_gap": 0.0,
+        "bounds_iou": 0.147495
+      },
+      "relation": "overlapping",
+      "separation_policy": "separate_by_color"
+    },
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 2,
+        "reserved_bounds_area": 1542.233043
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        1
+      ],
+      "name": "cutout_overlays"
+    },
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "filled_primitives"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.395186,
+    "anchor_quality_error_mean": 0.329172,
+    "anchor_quality_metric_summary": {
+      "cutout_anchor_error": {
+        "count": 1,
+        "max": 0.131729,
+        "mean": 0.131729
+      },
+      "line_smoothness_error": {
+        "count": 1,
+        "max": 0.263457,
+        "mean": 0.263457
+      },
+      "quad_corner_consistency_error": {
+        "count": 1,
+        "max": 0.263158,
+        "mean": 0.263158
+      },
+      "quad_edge_straightness_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "stroke_width_variance": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 0.260186,
+      "semantic_anchor_score_mean": 0.232006,
+      "semantic_anchor_score_min": 0.203826,
+      "simple_shape_priority_bonus_mean": 0.25,
+      "simple_shape_priority_bonus_total": 0.5
+    },
+    "color_fragment_counts": {
+      "#003366": 1,
+      "#ffffff": 1
+    },
+    "cutout_anchor_count": 1,
+    "cutout_overlay_count": 1,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 1.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 0,
+    "group_count": 2,
+    "negative_mask_candidate_count": 1,
+    "node_count": 7,
+    "parameter_count": 15,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.010955,
+    "raster_l1_error": 0.010623,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 1542.233043,
+    "reserved_simple_shape_area_ratio": 0.376522,
+    "reserved_simple_shape_count": 2,
+    "shape_count": 2,
+    "simple_shape_count": 2,
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.022936,
+    "svg_raster_l1_error": 0.021012,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.018622,
+    "svg_vs_preview_l1_error": 0.016581
+  },
+  "schema_version": 1,
+  "width": 64
+}

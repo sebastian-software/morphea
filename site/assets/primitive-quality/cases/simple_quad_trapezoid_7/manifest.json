@@ -136,7 +136,13 @@
     "reserved_simple_shape_count": 1,
     "shape_count": 1,
     "simple_shape_count": 1,
-    "simple_shape_ratio": 1.0
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.014348,
+    "svg_raster_l1_error": 0.012296,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.014348,
+    "svg_vs_preview_l1_error": 0.012296
   },
   "schema_version": 1,
   "width": 64

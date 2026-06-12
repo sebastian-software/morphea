@@ -1,0 +1,168 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "arc": {
+        "cx": 31.390818665278157,
+        "cy": 50.97513847270754,
+        "large_arc": false,
+        "r": 27.328703204009688,
+        "sweep": true,
+        "theta_end": -0.9740338717981447,
+        "theta_start": -2.1904693169585556
+      },
+      "color": "#003366",
+      "confidence": 0.975423,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:arc:0.975423",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "arc",
+      "layer": "strokes",
+      "metrics": {
+        "arc_angular_span": 1.216435445160411,
+        "arc_bow_ratio": 0.1569220191180468,
+        "arc_center_x": 31.390818665278157,
+        "arc_center_y": 50.97513847270754,
+        "arc_fit_residual_error": 0.022342423300857447,
+        "arc_large_arc": 0.0,
+        "arc_radius": 27.328703204009688,
+        "arc_sweep": 1.0,
+        "arc_theta_end": -0.9740338717981447,
+        "arc_theta_start": -2.1904693169585556,
+        "semantic_anchor_score": -0.09031515339828511,
+        "simple_shape_priority_bonus": 0.25,
+        "stroke_width_variance": 0.0
+      },
+      "node_count": 3,
+      "parameter_count": 7,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.022342423300857447,
+      "reserved": {
+        "bounds": [
+          13.6270034710877,
+          21.756076306597368,
+          48.64081254790729,
+          30.61985632886285
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          13.6270034710877,
+          21.756076306597368,
+          48.64081254790729,
+          30.61985632886285
+        ],
+        "bounds_area": 310.354701,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      },
+      "stroke": {
+        "cap_style": "round",
+        "centerline": [
+          {
+            "x": 15.519155492914305,
+            "y": 28.727704307036245
+          },
+          {
+            "x": 31.07776790405704,
+            "y": 23.648228328423972
+          },
+          {
+            "x": 46.748660526080684,
+            "y": 28.36994632153504
+          }
+        ],
+        "is_cutout": false,
+        "join_style": "round",
+        "width_samples": [
+          3.7843040436532096
+        ]
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 1,
+        "reserved_bounds_area": 310.354701
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "strokes"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.022342,
+    "anchor_quality_error_mean": 0.022342,
+    "anchor_quality_metric_summary": {
+      "arc_fit_residual_error": {
+        "count": 1,
+        "max": 0.022342,
+        "mean": 0.022342
+      },
+      "stroke_width_variance": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": -0.090315,
+      "semantic_anchor_score_mean": -0.090315,
+      "semantic_anchor_score_min": -0.090315,
+      "simple_shape_priority_bonus_mean": 0.25,
+      "simple_shape_priority_bonus_total": 0.25
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 1.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 0,
+    "group_count": 1,
+    "negative_mask_candidate_count": 0,
+    "node_count": 3,
+    "parameter_count": 7,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.008669,
+    "raster_l1_error": 0.007227,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 310.354701,
+    "reserved_simple_shape_area_ratio": 0.07577,
+    "reserved_simple_shape_count": 1,
+    "shape_count": 1,
+    "simple_shape_count": 1,
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.010431,
+    "svg_raster_l1_error": 0.009241,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.008427,
+    "svg_vs_preview_l1_error": 0.006808
+  },
+  "schema_version": 1,
+  "width": 64
+}

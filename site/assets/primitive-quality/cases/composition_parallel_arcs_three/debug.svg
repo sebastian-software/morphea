@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="arc">
+    <path d="M 11.065 27.055 A 26.827 26.827 0 0 1 51.935 27.055" fill="none" stroke="#003366" stroke-width="3.954" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="9.088" y="15.632" width="44.824" height="13.4" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="9.088" y="13.632" font-size="4" fill="#ff00ff">anchor-0000:arc:0.978521</text>
+  </g>
+  <g id="anchor-0001" data-kind="arc">
+    <path d="M 17.144 32.127 A 19.121 19.121 0 0 1 45.856 32.127" fill="none" stroke="#003366" stroke-width="3.874" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="15.208" y="23.699" width="32.585" height="10.364" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="15.208" y="21.699" font-size="4" fill="#ff00ff">anchor-0001:arc:0.977121</text>
+  </g>
+  <g id="anchor-0002" data-kind="arc">
+    <path d="M 24.127 37.443 A 8.744 8.744 0 0 1 38.873 37.443" fill="none" stroke="#003366" stroke-width="3.92" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="22.167" y="31.441" width="18.666" height="7.963" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="22.167" y="29.441" font-size="4" fill="#ff00ff">anchor-0002:arc:0.977406</text>
+  </g>
+</svg>

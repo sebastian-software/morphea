@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="8" y="22" width="49" height="25" rx="0" ry="0" fill="#003366" shape-rendering="crispEdges" />
+  <path d="M 2 40.75 C 3.667 39.431 8.667 34.625 12 32.833 C 15.333 31.042 18.667 30.194 22 30 C 25.333 29.806 28.833 31.167 32 31.667 C 35.167 32.167 37.833 33.167 41 33 C 44.167 32.833 47.667 32.375 51 30.667 C 54.333 28.958 59.333 24.069 61 22.75" fill="none" stroke="#dd2222" stroke-width="3.405" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

@@ -38,6 +38,11 @@ DEFAULT_TEASER_CASE_IDS = (
     "overlapping_rectangles_bottom_right",
     "cutout_horizontal_gap_center",
     "group_parallel_strokes_horizontal",
+    "arc_up",
+    "curve_s",
+    "ellipse_horizontal",
+    "cutout_curve_rect",
+    "organic_blob",
 )
 
 
@@ -169,6 +174,11 @@ def render_full_gallery_html(
             <option value="stroke_polyline">stroke_polyline</option>
             <option value="stroke_circle">stroke_circle</option>
             <option value="rounded_rect">rounded_rect</option>
+            <option value="arc">arc</option>
+            <option value="stroke_path">stroke_path</option>
+            <option value="ellipse">ellipse</option>
+            <option value="stroke_ellipse">stroke_ellipse</option>
+            <option value="cubic_path">cubic_path</option>
           </select>
         </label>
         <label>
@@ -178,6 +188,11 @@ def render_full_gallery_html(
             <option value="group">Groups</option>
             <option value="cutout">Cut-outs</option>
             <option value="export">Export comparison</option>
+            <option value="arc_contract">Arcs</option>
+            <option value="smooth_curve_contract">Smooth curves</option>
+            <option value="ellipse_contract">Ellipses</option>
+            <option value="curved_cutout_contract">Curved cut-outs</option>
+            <option value="organic_fallback">Organic fallback</option>
             <option value="failed">Failed only</option>
           </select>
         </label>
@@ -324,6 +339,7 @@ def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
         <div class="media-pair">
           {_render_media_figure("Bitmap", _artifact_uri(case, "input", html_path), case_id + " bitmap")}
           {_render_media_figure("SVG", _artifact_uri(case, "output_svg", html_path), case_id + " SVG")}
+          {_render_svg_raster_figure(case, html_path)}
         </div>
         <dl class="fact-grid">
           <div><dt>Kind</dt><dd>{_esc(kind)}</dd></div>
@@ -356,6 +372,17 @@ def _render_teaser_card(case: dict[str, Any], homepage_path: Path) -> str:
             </div>
             <p><code>{_esc(kind)}</code> · {_anchor_count_text(case)} · L1 {_metric_text(metrics, "raster_l1_error")} · edge {_metric_text(metrics, "raster_edge_error")}</p>
           </article>"""
+
+
+def _render_svg_raster_figure(case: dict[str, Any], html_path: Path) -> str:
+    artifacts = case.get("artifacts", {})
+    if not isinstance(artifacts, dict) or "svg_render" not in artifacts:
+        return ""
+    return _render_media_figure(
+        "SVG raster",
+        _artifact_uri(case, "svg_render", html_path),
+        str(case.get("id")) + " rasterized SVG",
+    )
 
 
 def _render_media_figure(
@@ -457,9 +484,31 @@ def _contract_tokens(case: dict[str, Any]) -> list[str]:
             tokens.append("cutout")
     if "cutout" in str(case.get("family", "")):
         tokens.append("cutout")
+    tokens.extend(_curve_contract_tokens(case))
     if not case.get("ok"):
         tokens.append("failed")
     return sorted(set(tokens))
+
+
+def _curve_contract_tokens(case: dict[str, Any]) -> list[str]:
+    kinds = set()
+    counts = case.get("anchor_kind_counts", {})
+    if isinstance(counts, dict):
+        kinds.update(str(kind) for kind, count in counts.items() if count)
+    kinds.add(str(case.get("actual_kind")))
+    tokens = []
+    if "arc" in kinds:
+        tokens.append("arc_contract")
+    if "stroke_path" in kinds:
+        if "cutout" in str(case.get("family", "")):
+            tokens.append("curved_cutout_contract")
+        else:
+            tokens.append("smooth_curve_contract")
+    if kinds & {"ellipse", "stroke_ellipse"}:
+        tokens.append("ellipse_contract")
+    if "cubic_path" in kinds:
+        tokens.append("organic_fallback")
+    return tokens
 
 
 def _badge_html(case: dict[str, Any]) -> str:
@@ -473,6 +522,7 @@ def _badge_html(case: dict[str, Any]) -> str:
         labels.append("export_comparison")
     if "cutout" in _contract_tokens(case):
         labels.append("cutout")
+    labels.extend(_curve_contract_tokens(case))
     if not labels:
         labels.append("semantic contract")
     return "".join(f"<span>{_esc(label)}</span>" for label in sorted(set(labels)))

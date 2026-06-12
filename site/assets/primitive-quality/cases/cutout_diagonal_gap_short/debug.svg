@@ -5,8 +5,8 @@
     <text x="12" y="14" font-size="4" fill="#ff00ff">anchor-0000:rect:0.97832</text>
   </g>
   <g id="anchor-0001" data-kind="stroke_polyline">
-    <path d="M 26 26 L 38 38" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="butt" stroke-linejoin="round" />
-    <rect x="25.646" y="25.646" width="12.707" height="12.707" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="25.646" y="23.646" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
+    <path d="M 26 26.5 L 38 37.5" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="butt" stroke-linejoin="round" />
+    <rect x="25.662" y="26.131" width="12.676" height="11.737" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="25.662" y="24.131" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
   </g>
 </svg>

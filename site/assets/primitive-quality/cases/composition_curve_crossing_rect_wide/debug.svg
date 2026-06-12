@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="rect">
+    <rect x="8" y="22" width="49" height="25" rx="0" ry="0" fill="#003366" shape-rendering="crispEdges" />
+    <rect x="8" y="22" width="48" height="24" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="8" y="20" font-size="4" fill="#ff00ff">anchor-0000:rect:0.779703</text>
+  </g>
+  <g id="anchor-0001" data-kind="stroke_path">
+    <path d="M 2 40.75 C 3.667 39.431 8.667 34.625 12 32.833 C 15.333 31.042 18.667 30.194 22 30 C 25.333 29.806 28.833 31.167 32 31.667 C 35.167 32.167 37.833 33.167 41 33 C 44.167 32.833 47.667 32.375 51 30.667 C 54.333 28.958 59.333 24.069 61 22.75" fill="none" stroke="#dd2222" stroke-width="3.405" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="0.298" y="21.048" width="62.405" height="21.405" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="0.298" y="19.048" font-size="4" fill="#ff00ff">anchor-0001:stroke_path:0.955449</text>
+  </g>
+</svg>

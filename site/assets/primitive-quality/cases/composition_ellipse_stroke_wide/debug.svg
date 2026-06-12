@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="ellipse">
+    <ellipse cx="32" cy="46" rx="26.5" ry="10.5" fill="#003366" />
+    <rect x="5.5" y="35.5" width="53" height="21" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="5.5" y="33.5" font-size="4" fill="#ff00ff">anchor-0000:ellipse:0.968697</text>
+  </g>
+  <g id="anchor-0001" data-kind="stroke_polyline">
+    <path d="M 10 16.5 L 54 16.5" fill="none" stroke="#dd2222" stroke-width="4" stroke-linecap="butt" stroke-linejoin="round" />
+    <rect x="10" y="14.5" width="44" height="4" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="10" y="12.5" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
+  </g>
+</svg>

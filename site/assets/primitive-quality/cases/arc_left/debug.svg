@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="arc">
+    <path d="M 29.959 13.924 A 19.862 19.862 0 0 0 30.432 49.124" fill="none" stroke="#003366" stroke-width="3.923" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="17.576" y="11.963" width="14.817" height="39.122" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="17.576" y="9.963" font-size="4" fill="#ff00ff">anchor-0000:arc:0.978287</text>
+  </g>
+</svg>

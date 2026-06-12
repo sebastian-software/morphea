@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="arc">
+    <path d="M 16.253 15.158 A 17.968 17.968 0 0 1 46.747 15.158" fill="none" stroke="#003366" stroke-width="3.858" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="14.324" y="4.767" width="34.353" height="12.32" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="14.324" y="2.767" font-size="4" fill="#ff00ff">anchor-0000:arc:0.977651</text>
+  </g>
+  <g id="anchor-0001" data-kind="rect">
+    <rect x="14" y="38" width="37" height="19" rx="0" ry="0" fill="#c99700" shape-rendering="crispEdges" />
+    <rect x="14" y="38" width="36" height="18" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="14" y="36" font-size="4" fill="#ff00ff">anchor-0001:rect:0.966667</text>
+  </g>
+</svg>

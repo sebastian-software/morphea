@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="ellipse">
+    <ellipse cx="31.5" cy="31.5" rx="18" ry="10" fill="#003366" />
+    <rect x="13.5" y="21.5" width="36" height="20" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="13.5" y="19.5" font-size="4" fill="#ff00ff">anchor-0000:ellipse:0.956352</text>
+  </g>
+</svg>

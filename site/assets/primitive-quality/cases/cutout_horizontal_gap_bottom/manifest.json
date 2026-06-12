@@ -118,11 +118,11 @@
         "cap_style": "butt",
         "centerline": [
           {
-            "x": 20,
+            "x": 20.0,
             "y": 40.0
           },
           {
-            "x": 44,
+            "x": 44.0,
             "y": 40.0
           }
         ],
@@ -247,7 +247,13 @@
     "reserved_simple_shape_count": 2,
     "shape_count": 2,
     "simple_shape_count": 2,
-    "simple_shape_ratio": 1.0
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.002842,
+    "svg_raster_l1_error": 0.002515,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.002842,
+    "svg_vs_preview_l1_error": 0.002515
   },
   "schema_version": 1,
   "width": 64

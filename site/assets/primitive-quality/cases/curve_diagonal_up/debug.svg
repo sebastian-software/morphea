@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="stroke_path">
+    <path d="M 8 9.25 C 9.333 10.236 13.333 13.153 16 15.167 C 18.667 17.181 21.333 19.361 24 21.333 C 26.667 23.306 29.5 25.056 32 27 C 34.5 28.944 36.5 30.528 39 33 C 41.5 35.472 44.333 38.5 47 41.833 C 49.667 45.167 53.667 51.139 55 53" fill="none" stroke="#003366" stroke-width="3.691" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="6.154" y="7.404" width="50.691" height="47.441" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="6.154" y="5.404" font-size="4" fill="#ff00ff">anchor-0000:stroke_path:0.978285</text>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="stroke_path">
+    <path d="M 6 51 C 7.333 50.25 11.167 47.472 14 46.5 C 16.833 45.528 20 45.083 23 45.167 C 26 45.25 29.167 46.583 32 47 C 34.833 47.417 37.333 48.083 40 47.667 C 42.667 47.25 45.167 45.986 48 44.5 C 50.833 43.014 55.5 39.708 57 38.75" fill="none" stroke="#003366" stroke-width="3.449" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="4.276" y="37.026" width="54.449" height="15.699" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="4.276" y="35.026" font-size="4" fill="#ff00ff">anchor-0000:stroke_path:0.955339</text>
+  </g>
+  <g id="anchor-0001" data-kind="stroke_path">
+    <path d="M 6 21 C 7.333 20.25 11.167 17.472 14 16.5 C 16.833 15.528 20 15.083 23 15.167 C 26 15.25 29.167 16.583 32 17 C 34.833 17.417 37.333 18.083 40 17.667 C 42.667 17.25 45.167 15.986 48 14.5 C 50.833 13.014 55.5 9.708 57 8.75" fill="none" stroke="#003366" stroke-width="3.449" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="4.276" y="7.026" width="54.449" height="15.699" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="4.276" y="5.026" font-size="4" fill="#ff00ff">anchor-0001:stroke_path:0.955339</text>
+  </g>
+</svg>

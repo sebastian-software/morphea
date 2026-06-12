@@ -96,21 +96,21 @@
       "raster_error": 0.0,
       "reserved": {
         "bounds": [
-          25.646446609406727,
-          25.646446609406727,
-          38.35355339059328,
-          38.35355339059328
+          25.662137685741328,
+          26.131422929899628,
+          38.33786231425867,
+          37.86857707010037
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
-          25.646446609406727,
-          25.646446609406727,
-          38.35355339059328,
-          38.35355339059328
+          25.662137685741328,
+          26.131422929899628,
+          38.33786231425867,
+          37.86857707010037
         ],
-        "bounds_area": 161.470563,
+        "bounds_area": 148.776934,
         "id": "mask-0001",
         "source": "reserved_bounds"
       },
@@ -119,11 +119,11 @@
         "centerline": [
           {
             "x": 26.0,
-            "y": 26.0
+            "y": 26.5
           },
           {
             "x": 38.0,
-            "y": 38.0
+            "y": 37.5
           }
         ],
         "is_cutout": true,
@@ -148,7 +148,7 @@
       "kind": "primitive_contact_pair",
       "metrics": {
         "bounds_gap": 0.0,
-        "bounds_iou": 0.126149
+        "bounds_iou": 0.116232
       },
       "relation": "overlapping",
       "separation_policy": "separate_by_color"
@@ -161,7 +161,7 @@
       "kind": "primitive_anchor_reservation",
       "metrics": {
         "reserved_anchor_count": 2,
-        "reserved_bounds_area": 1441.470563
+        "reserved_bounds_area": 1428.776934
       }
     }
   ],
@@ -239,15 +239,21 @@
     "node_count": 6,
     "parameter_count": 9,
     "raster_alpha_error": 0.0,
-    "raster_edge_error": 0.0,
-    "raster_l1_error": 0.0,
+    "raster_edge_error": 0.002749,
+    "raster_l1_error": 0.002344,
     "raster_size_match": true,
-    "reserved_simple_shape_area": 1441.470563,
-    "reserved_simple_shape_area_ratio": 0.351922,
+    "reserved_simple_shape_area": 1428.776934,
+    "reserved_simple_shape_area_ratio": 0.348822,
     "reserved_simple_shape_count": 2,
     "shape_count": 2,
     "simple_shape_count": 2,
-    "simple_shape_ratio": 1.0
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.002728,
+    "svg_raster_l1_error": 0.001821,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.003041,
+    "svg_vs_preview_l1_error": 0.00243
   },
   "schema_version": 1,
   "width": 64
