@@ -138,6 +138,9 @@ Implemented so far:
   gap pixel.
 - generic and bounded component scanners update bounds and row spans with
   direct comparisons instead of per-pixel `min()`/`max()` calls.
+- the temporary interior-gap scanner inlines 8-neighbor enqueueing so
+  freeform cut-out detection avoids tens of thousands of per-pixel helper
+  calls on curated real images.
 
 Remaining:
 
