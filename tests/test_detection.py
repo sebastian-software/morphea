@@ -237,6 +237,22 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(anchors), 1)
         self.assertEqual(anchors[0].kind, AnchorKind.QUAD)
         self.assertIn("quad_edge_straightness_error", anchors[0].metrics)
+        self.assertEqual(anchors[0].metrics["quad_subtype_code"], 1.0)
+
+    def test_shifted_equal_width_tile_is_marked_as_parallelogram(self):
+        mask = BinaryMask.from_rows(
+            (
+                "...####....",
+                "..####.....",
+                ".####......",
+            )
+        )
+
+        anchors = detect_primitive_anchors(mask)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.QUAD)
+        self.assertEqual(anchors[0].metrics["quad_subtype_code"], 2.0)
 
     def test_simple_quad_anchor_beats_generic_path_for_tile(self):
         mask = BinaryMask.from_rows(

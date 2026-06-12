@@ -460,8 +460,26 @@ def _quad_candidate(
         node_count=4,
         parameter_count=8,
         quad=quad,
+        metrics=_quad_subtype_metrics(quad),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _quad_subtype_metrics(quad: QuadAnchor) -> dict[str, float]:
+    corners = quad.corners
+    top_width = corners[0].distance_to(corners[1])
+    bottom_width = corners[3].distance_to(corners[2])
+    left_shift = corners[3].x - corners[0].x
+    right_shift = corners[2].x - corners[1].x
+    if (
+        abs(top_width - bottom_width) <= 1.0
+        and abs(left_shift - right_shift) <= 1.0
+        and abs(left_shift) > 0.5
+    ):
+        return {"quad_subtype_code": 2.0}
+    if abs(top_width - bottom_width) > 1.0:
+        return {"quad_subtype_code": 1.0}
+    return {}
 
 
 def _rect_candidate(
