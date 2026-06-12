@@ -174,6 +174,9 @@ def render_markdown_report(
     groups = list(manifest.get("groups", []))
     layers = list(manifest.get("layers", []))
     metrics = dict(manifest.get("metrics", {}))
+    scoring = metrics.get("anchor_scoring_summary", {})
+    if not isinstance(scoring, dict):
+        scoring = {}
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
         "# Curve Vectorize Report",
@@ -189,6 +192,8 @@ def render_markdown_report(
         f"- Fragmentation penalty: {metrics.get('fragmentation_penalty', 'n/a')}",
         f"- Anchor quality error mean: {metrics.get('anchor_quality_error_mean', 'n/a')}",
         f"- Anchor quality error max: {metrics.get('anchor_quality_error_max', 'n/a')}",
+        f"- Simple-shape priority bonus total: {scoring.get('simple_shape_priority_bonus_total', 'n/a')}",
+        f"- Semantic anchor score mean: {scoring.get('semantic_anchor_score_mean', 'n/a')}",
         "",
         "## Anchor Types",
         "",
@@ -252,6 +257,9 @@ def render_html_report(
     groups = list(manifest.get("groups", []))
     layers = list(manifest.get("layers", []))
     metrics = dict(manifest.get("metrics", {}))
+    scoring = metrics.get("anchor_scoring_summary", {})
+    if not isinstance(scoring, dict):
+        scoring = {}
     anchor_counts = _counts(anchor.get("kind") for anchor in anchors)
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
@@ -282,6 +290,8 @@ def render_html_report(
         f"    <li>Fragmentation penalty: {escape(str(metrics.get('fragmentation_penalty', 'n/a')))}</li>",
         f"    <li>Anchor quality error mean: {escape(str(metrics.get('anchor_quality_error_mean', 'n/a')))}</li>",
         f"    <li>Anchor quality error max: {escape(str(metrics.get('anchor_quality_error_max', 'n/a')))}</li>",
+        f"    <li>Simple-shape priority bonus total: {escape(str(scoring.get('simple_shape_priority_bonus_total', 'n/a')))}</li>",
+        f"    <li>Semantic anchor score mean: {escape(str(scoring.get('semantic_anchor_score_mean', 'n/a')))}</li>",
         "  </ul>",
         "  <h2>Anchor Types</h2>",
         _html_table(("Kind", "Count"), anchor_counts.items()),

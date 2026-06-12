@@ -121,6 +121,10 @@ class RunWriterTests(unittest.TestCase):
                     "fragmentation_penalty": 0.1,
                     "anchor_quality_error_mean": 0.05,
                     "anchor_quality_error_max": 0.2,
+                    "anchor_scoring_summary": {
+                        "simple_shape_priority_bonus_total": 0.7,
+                        "semantic_anchor_score_mean": -0.1,
+                    },
                     "raster_l1_error": 0.2,
                 },
             },
@@ -140,6 +144,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn("- Anchor quality error mean: 0.05", report)
         self.assertIn("- Anchor quality error max: 0.2", report)
+        self.assertIn("- Simple-shape priority bonus total: 0.7", report)
+        self.assertIn("- Semantic anchor score mean: -0.1", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
         self.assertIn("`raster_l1_error`: 0.2", report)
 
@@ -168,6 +174,10 @@ class RunWriterTests(unittest.TestCase):
                     "fragmentation_penalty": 0.1,
                     "anchor_quality_error_mean": 0.05,
                     "anchor_quality_error_max": 0.2,
+                    "anchor_scoring_summary": {
+                        "simple_shape_priority_bonus_total": 0.7,
+                        "semantic_anchor_score_mean": -0.1,
+                    },
                     "raster_l1_error": 0.2,
                 },
             },
@@ -184,6 +194,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("reason compact_same_color_bounds", report)
         self.assertIn("Anchor quality error mean", report)
         self.assertIn("Anchor quality error max", report)
+        self.assertIn("Simple-shape priority bonus total", report)
+        self.assertIn("Semantic anchor score mean", report)
         self.assertIn("<h2>Pipeline Stages</h2>", report)
         self.assertIn("<code>segmentation</code>", report)
         self.assertIn("<td>component_deferred</td>", report)
