@@ -169,6 +169,9 @@ Acceptance criteria:
 Implemented so far:
 
 - circle/ring metrics for roundness and stroke width.
+- filled circle and ring candidates regularize center/radius from boundary
+  samples with a deterministic algebraic fit and record
+  `circle_fit_residual_error`.
 - stroke width, smoothness, cut-out error metrics.
 - quad edge/corner metrics and perspective grid consistency metric.
 - quad detection adds numeric subtype markers for trapezoids and
