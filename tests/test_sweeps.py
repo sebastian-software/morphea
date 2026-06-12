@@ -48,6 +48,13 @@ class SweepTests(unittest.TestCase):
             self.assertIn("fragmentation_penalty", summary["runs"][0])
             self.assertIn("raster_l1_error", summary["runs"][0])
             self.assertIn("raster_edge_error", summary["runs"][0])
+            self.assertIn("semantic_rank", summary["runs"][0])
+            self.assertEqual(len(summary["ranking"]), 2)
+            self.assertEqual(summary["ranking"][0]["rank"], 1)
+            self.assertIn(
+                summary["ranking"][0]["id"],
+                {run["id"] for run in summary["runs"]},
+            )
             self.assertTrue((output_dir / "baseline" / "manifest.json").exists())
             self.assertTrue((output_dir / "tolerant" / "report.md").exists())
             self.assertTrue((output_dir / "sweep-summary.json").exists())

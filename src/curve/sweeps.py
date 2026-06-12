@@ -119,11 +119,28 @@ def run_sweep(
             }
         )
 
+    ranked_runs = _ranked_runs(run_results)
+    rank_by_id = {
+        str(run.get("id")): rank
+        for rank, run in enumerate(ranked_runs, start=1)
+    }
+    for run in run_results:
+        run["semantic_rank"] = rank_by_id[str(run.get("id"))]
+
     summary = {
         "schema_version": SWEEP_SCHEMA_VERSION,
         "sweep": str(config_path),
         "input": str(input_path),
         "run_count": len(run_results),
+        "ranking": [
+            {
+                "rank": rank,
+                "id": run.get("id"),
+                "editability_score": run.get("editability_score"),
+                "raster_l1_error": run.get("raster_l1_error"),
+            }
+            for rank, run in enumerate(ranked_runs, start=1)
+        ],
         "runs": run_results,
     }
     (root / "sweep-summary.json").write_text(
@@ -139,14 +156,7 @@ def run_sweep(
 
 def render_sweep_markdown(summary: dict[str, Any]) -> str:
     runs = list(summary.get("runs", []))
-    ranked = sorted(
-        runs,
-        key=lambda run: (
-            -(float(run.get("editability_score") or 0.0)),
-            float(run.get("raster_l1_error") or 1.0),
-            str(run.get("id", "")),
-        ),
-    )
+    ranked = _ranked_runs(runs)
     lines = [
         "# Curve Sweep Summary",
         "",
@@ -173,6 +183,17 @@ def render_sweep_markdown(summary: dict[str, Any]) -> str:
     for run in runs:
         lines.append(f"- `{run.get('id')}`: `{run.get('run_dir')}`")
     return "\n".join(lines) + "\n"
+
+
+def _ranked_runs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(
+        runs,
+        key=lambda run: (
+            -(float(run.get("editability_score") or 0.0)),
+            float(run.get("raster_l1_error") or 1.0),
+            str(run.get("id", "")),
+        ),
+    )
 
 
 def _fmt(value: object) -> str:
