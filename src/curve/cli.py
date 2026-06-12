@@ -133,6 +133,8 @@ HARVEST_DEFAULT_CONFIG = {
     "max_raster_edge_error": 1.0,
     "max_anchor_quality_error": 1.0,
 }
+REVIEW_CONFIG_KEYS = {"pseudo_labels", "output"}
+APPLY_REVIEW_CONFIG_KEYS = {"review", "output"}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -388,15 +390,17 @@ def main(argv: list[str] | None = None) -> None:
         "review",
         help="Create a human-editable review queue from harvested pseudo-labels.",
     )
-    review.add_argument("pseudo_labels", type=Path)
-    review.add_argument("-o", "--output", type=Path, required=True)
+    review.add_argument("pseudo_labels", type=Path, nargs="?")
+    review.add_argument("-o", "--output", type=Path)
+    review.add_argument("--config", type=Path)
 
     apply_review = subcommands.add_parser(
         "apply-review",
         help="Apply accept/reject decisions from a review file.",
     )
-    apply_review.add_argument("review", type=Path)
-    apply_review.add_argument("-o", "--output", type=Path, required=True)
+    apply_review.add_argument("review", type=Path, nargs="?")
+    apply_review.add_argument("-o", "--output", type=Path)
+    apply_review.add_argument("--config", type=Path)
 
     merge_labels = subcommands.add_parser(
         "merge-labels",
@@ -702,17 +706,19 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "review":
+        review_config = _resolved_review_config(args)
         review_result = create_review_file(
-            pseudo_labels=args.pseudo_labels,
-            output=args.output,
+            pseudo_labels=review_config["pseudo_labels"],
+            output=review_config["output"],
         )
         print(f"created review queue with {review_result['review_count']} items")
         return
 
     if args.command == "apply-review":
+        review_config = _resolved_apply_review_config(args)
         reviewed = apply_review_file(
-            review=args.review,
-            output=args.output,
+            review=review_config["review"],
+            output=review_config["output"],
         )
         print(f"accepted {reviewed['accepted_count']} reviewed pseudo-labels")
         return
@@ -1044,6 +1050,26 @@ def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
     _require_config_paths(config, ("run_root", "output"), "harvest")
     config["run_root"] = Path(config["run_root"])
     config["output"] = Path(config["output"])
+    return config
+
+
+def _resolved_review_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(args.config, REVIEW_CONFIG_KEYS, "review")
+    if args.pseudo_labels is not None:
+        config["pseudo_labels"] = args.pseudo_labels
+    if args.output is not None:
+        config["output"] = args.output
+    _require_config_paths(config, ("pseudo_labels", "output"), "review")
+    return config
+
+
+def _resolved_apply_review_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(args.config, APPLY_REVIEW_CONFIG_KEYS, "apply-review")
+    if args.review is not None:
+        config["review"] = args.review
+    if args.output is not None:
+        config["output"] = args.output
+    _require_config_paths(config, ("review", "output"), "apply-review")
     return config
 
 

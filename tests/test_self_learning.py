@@ -320,6 +320,66 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(accepted.read_text())
             self.assertEqual(result["accepted_count"], 1)
 
+    def test_review_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pseudo = Path(temp_dir) / "pseudo.json"
+            pseudo.write_text(
+                json.dumps({"pseudo_labels": [{"kind": "circle"}]}),
+                encoding="utf-8",
+            )
+            review = Path(temp_dir) / "review.json"
+            config = Path(temp_dir) / "review-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "pseudo_labels": str(pseudo),
+                        "output": str(review),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["review", "--config", str(config)])
+
+            data = json.loads(review.read_text(encoding="utf-8"))
+            self.assertEqual(data["review_count"], 1)
+
+    def test_apply_review_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review = Path(temp_dir) / "review.json"
+            accepted = Path(temp_dir) / "accepted.json"
+            config = Path(temp_dir) / "apply-review-config.json"
+            review.write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "id": "review-00000",
+                                "decision": "accept",
+                                "label": {"kind": "circle"},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "review": str(review),
+                        "output": str(accepted),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["apply-review", "--config", str(config)])
+
+            result = json.loads(accepted.read_text(encoding="utf-8"))
+            self.assertEqual(result["accepted_count"], 1)
+
     def test_merge_reviewed_pseudo_labels_writes_trainable_dataset(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
