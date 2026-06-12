@@ -437,6 +437,10 @@ Implemented so far:
   mark oversized components as `deferred` via `max_component_area`
 - segment proposals include `downstream_status` and `rejection_reason` so
   geometry/review stages can distinguish pending proposals from rejected ones.
+- pending flat-color segment proposals include primitive `anchor_kind`,
+  `anchor_metrics`, and `anchor_parameter_count` summaries from the geometry
+  scorer, while deferred oversized proposals remain rejected without pretending
+  to be accepted anchors.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

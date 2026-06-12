@@ -286,6 +286,10 @@ Proposal fields:
 - `downstream_status`: `pending`, `accepted`, or `rejected`; initial flat-color
   proposals are `pending`, while deferred oversized proposals are `rejected`
 - `rejection_reason`: nullable machine-readable reason for rejected proposals
+- `anchor_kind`: nullable primitive kind summary from the geometry scorer for
+  pending flat-color proposals
+- `anchor_metrics`: nullable primitive metric summary for the proposed anchor
+- `anchor_parameter_count`: nullable parameter count for the proposed anchor
 
 `backend` records `source`, `backend_available`, `status`, and an optional
 `reason`. MLX SAM status distinguishes `not_installed`, `not_configured`,
