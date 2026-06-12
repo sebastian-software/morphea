@@ -31,6 +31,24 @@ class ProfilingTests(unittest.TestCase):
             self.assertIn("mean_elapsed_seconds", report["summary"])
             self.assertGreaterEqual(report["runs"][0]["anchor_count"], 1)
 
+    def test_profile_vectorize_records_diagnostic_stage_counts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_profile_image(root)
+            output = root / "profile.json"
+
+            report = profile_vectorize(
+                image_path,
+                output=output,
+                repeats=1,
+                config={"min_area": 4, "max_component_area": 8},
+            )
+
+            self.assertEqual(
+                report["runs"][0]["diagnostic_stage_counts"]["segmentation"],
+                2,
+            )
+
     def test_profile_cli_writes_report_with_vectorize_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -8,6 +8,7 @@ from statistics import mean
 from time import perf_counter
 from typing import Any
 
+from curve.diagnostics import diagnostic_stage_counts
 from curve.images import scene_from_flat_color_image
 
 
@@ -37,6 +38,7 @@ def profile_vectorize(
                     for diagnostic in scene.diagnostics
                     if isinstance(diagnostic, dict)
                 ],
+                "diagnostic_stage_counts": diagnostic_stage_counts(scene.diagnostics),
             }
         )
 
