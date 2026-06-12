@@ -730,6 +730,9 @@ full raster-crop Transformer encoder is still being expanded.
 When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
 uses the serialized MLX feature-head weights for prediction; malformed or
 unavailable MLX artifacts degrade to `fallback_centroids`.
+During vectorization, valid `raster_token_mixer_v1` artifacts receive
+component-derived RGBA crop tokens so candidate-ranking priors can fuse raster
+attention logits with feature-head logits.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. Its centroid

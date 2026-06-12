@@ -515,12 +515,14 @@ Implemented so far:
 - `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
   serialized weights as the candidate-ranking prior, while malformed or
   unavailable MLX artifacts degrade to centroid fallback weights.
+- vectorize candidate ranking now generates component-derived RGBA crop tokens
+  for valid `raster_token_mixer_v1` artifacts, allowing runtime priors to fuse
+  raster attention and geometric feature logits.
 
 Remaining:
 
 - replace the current feature-head plus raster-token mixer with a full small
-  Transformer encoder, and add runtime crop-token extraction for vectorize
-  candidates so ranking can fuse raster attention and geometric features.
+  Transformer encoder with learned token/feature fusion.
 
 ## M8: Self-Learning Loop
 
