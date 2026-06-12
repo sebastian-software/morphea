@@ -450,5 +450,26 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("# Morphēa Curated Check", markdown.read_text(encoding="utf-8"))
 
 
+class CuratedAssetsSuiteTests(unittest.TestCase):
+    def test_checked_in_curated_suite_passes_with_run(self):
+        """Hand-made real-image cases live in assets/curated/suite.json."""
+
+        from morphea.curated import check_curated_suite
+
+        report = check_curated_suite(
+            Path("assets/curated/suite.json"),
+            run=True,
+        )
+
+        self.assertTrue(
+            report["ok"],
+            [
+                (case["id"], case.get("expectations"))
+                for case in report["cases"]
+                if not case["ok"]
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -94,16 +94,20 @@ def detect_cutout_strokes_for_component(
     component: MaskComponent,
     *,
     min_length: int = 4,
-    max_thickness: int = 3,
+    max_thickness: int | None = None,
     color: str = "#ffffff",
 ) -> tuple[AnchorCandidate, ...]:
     """Detect background-gap strokes inside one already-isolated component.
 
     Every enclosed gap is analyzed as one connected component, so straight,
     diagonal, and curved gaps share a single detection path and cannot
-    fragment each other the way separate row/column scans did.
+    fragment each other the way separate row/column scans did. The default
+    thickness limit scales with the host: a 3 px slit is a hairline in a
+    64 px icon but proportionally identical to a 6 px slit in a 128 px one.
     """
 
+    if max_thickness is None:
+        max_thickness = max(3, min(8, round(min(component.width, component.height) * 0.05)))
     return _freeform_cutout_strokes(
         component,
         min_length=min_length,
@@ -201,14 +205,22 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
     # noise out, unlike interpolation through individual contour pixels, and
     # the adaptive splits land segment joints at the curvature extrema.
     smoothed = _smoothed_closed_outline(outline, window=2)
+    perimeter = sum(
+        smoothed[index].distance_to(smoothed[(index + 1) % len(smoothed)])
+        for index in range(len(smoothed))
+    )
+    # One node per ~12 px of contour: a 64 px fixture blob keeps the 16-node
+    # budget while a large detailed silhouette earns enough segments to keep
+    # noses and lobes instead of melting them into the tolerance.
+    node_budget = min(48, max(ORGANIC_FALLBACK_MAX_NODES, round(perimeter / 12)))
     points, controls, fit_error = _fit_closed_bezier_outline(
         smoothed,
-        max_segments=ORGANIC_FALLBACK_MAX_NODES,
+        max_segments=node_budget,
     )
     smoothness = _curvature_jitter(points + points[:2])
     # Rank as if the outline used its full node budget: a compact fit must
     # not make the generic fallback cheaper against semantic candidates.
-    saved_nodes = ORGANIC_FALLBACK_MAX_NODES - len(points)
+    saved_nodes = max(0, node_budget - len(points))
     rank_penalty = ORGANIC_FALLBACK_RANK_PENALTY + saved_nodes * 0.035
     return AnchorCandidate(
         kind=AnchorKind.CUBIC_PATH,
@@ -2436,7 +2448,17 @@ def _freeform_cutout_candidate(
     horizontal = component.width >= component.height
     samples = _functional_centerline_samples(component, horizontal=horizontal)
     if samples is None or len(samples) < 2:
-        return None
+        # Strongly curved slits fold back along both axes, so no functional
+        # centerline exists; the circular arc fit works directly on pixels
+        # and angles and does not need one.
+        arc_fit = _fit_circular_arc(component)
+        if arc_fit is None:
+            return None
+        arc_width = float(arc_fit["stroke_width"])
+        arc_length = float(arc_fit["angular_span"]) * float(arc_fit["radius"])
+        if arc_width > max_thickness or arc_length < min_length:
+            return None
+        return _arc_cutout_candidate(arc_fit, arc_width, color)
     path_length = sum(a.distance_to(b) for a, b in zip(samples, samples[1:]))
     path_length = max(path_length, float(len(samples)))
     # Ink width (area / length) measures the actual slit thickness and also

@@ -100,6 +100,24 @@ node composition, preview and SVG raster metrics, and bounding-box IoU.
   `morphea primitive-check -o <report> --update-baseline` and commit the
   regenerated file; the per-case movement is then reviewable in the diff.
 
+## Hand-Made Real-Image Cases
+
+Curated complex artwork lives in `assets/curated/`:
+
+- Drop the PNG into `assets/curated/` (generators for synthetic stand-ins go
+  into `assets/curated/sources/`).
+- Add a case to `assets/curated/suite.json` with a `source`, a
+  `recommended_config`, and honest `expectations` (anchor kinds with counts
+  and manifest metrics such as `cutout_anchor_count`, `generic_path_count`,
+  `editability_score`).
+- `morphea curated-check assets/curated/suite.json --run` executes the suite;
+  `tests/test_curated.py` runs it as part of the normal test suite.
+
+The first case, `profile_head_synthetic`, is a deterministic stand-in for a
+classical profile head: one organic silhouette (adaptive node budget,
+~23 nodes), five curl slits and one eye slit detected as editable cut-out
+arcs and strokes.
+
 ## FQ11: Real-Image Promotion Process
 
 No real-image curve tuning ships without a synthetic contract first:
