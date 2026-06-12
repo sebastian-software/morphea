@@ -230,6 +230,34 @@ Each run records `index`, `elapsed_seconds`, `anchor_count`,
 `diagnostic_count`, `diagnostic_codes`, and `diagnostic_stage_counts`. The
 summary records min/mean/max elapsed seconds across all repeats.
 
+## Curated Profile Report v1
+
+Written by `curve profile-curated`.
+`curve profile-curated --config profile-curated.json` accepts `suite`,
+`output`, `markdown`, and `repeats`. CLI arguments override matching config
+values.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `suite`
+- `repeat_count`
+- `case_count`
+- `checked_count`
+- `missing_source_count`
+- `cases`
+- `summary`
+
+Each case records `id`, `source`, `status`, `config`, `runs`, and `summary`.
+Available source images use the case `recommended_config` and the same run
+fields as Profile Report v1. Missing source images are retained in the report
+with `status: "missing_source"` and empty runs so curated-family reports stay
+auditable even when local image assets are incomplete.
+
+The summary records `slowest_case_id`, `max_elapsed_seconds`, and
+`mean_case_elapsed_seconds` across checked cases. `--markdown` writes a
+scan-friendly companion table for profile-guided hot-loop work.
+
 ## Curated Snapshot v1
 
 Written by `curve curated-check --snapshot snapshot.json`.

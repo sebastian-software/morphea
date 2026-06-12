@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from curve.cli import main
-from curve.profiling import profile_vectorize
+from curve.profiling import profile_curated_suite, profile_vectorize
 
 
 class ProfilingTests(unittest.TestCase):
@@ -161,6 +161,98 @@ class ProfilingTests(unittest.TestCase):
                     output=root / "profile.json",
                     repeats=0,
                 )
+
+    def test_profile_curated_suite_writes_aggregate_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_profile_image(root)
+            suite = root / "suite.json"
+            output = root / "profile-curated.json"
+            markdown = root / "profile-curated.md"
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "case-a",
+                                "source": str(image_path),
+                                "recommended_config": {
+                                    "min_area": 4,
+                                    "timeout_seconds": 5,
+                                },
+                            },
+                            {
+                                "id": "missing",
+                                "source": str(root / "missing.png"),
+                                "recommended_config": {"min_area": 4},
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = profile_curated_suite(
+                suite,
+                output=output,
+                markdown=markdown,
+                repeats=1,
+            )
+
+            self.assertTrue(output.exists())
+            self.assertTrue(markdown.exists())
+            self.assertEqual(report["repeat_count"], 1)
+            self.assertEqual(report["case_count"], 2)
+            self.assertEqual(report["checked_count"], 1)
+            self.assertEqual(report["missing_source_count"], 1)
+            self.assertEqual(report["summary"]["slowest_case_id"], "case-a")
+            self.assertEqual(report["cases"][0]["status"], "checked")
+            self.assertEqual(report["cases"][1]["status"], "missing_source")
+
+    def test_profile_curated_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_profile_image(root)
+            suite = root / "suite.json"
+            output = root / "profile-curated.json"
+            markdown = root / "profile-curated.md"
+            config = root / "profile-curated-config.json"
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "case-a",
+                                "source": str(image_path),
+                                "recommended_config": {"min_area": 4},
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "suite": str(suite),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                        "repeats": 1,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["profile-curated", "--config", str(config)])
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertTrue(markdown.exists())
+            self.assertEqual(report["repeat_count"], 1)
+            self.assertEqual(report["checked_count"], 1)
+            self.assertEqual(report["cases"][0]["id"], "case-a")
 
 
 def _write_profile_image(root: Path) -> Path:

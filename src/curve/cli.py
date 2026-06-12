@@ -21,7 +21,7 @@ from curve.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
 )
-from curve.profiling import profile_vectorize
+from curve.profiling import profile_curated_suite, profile_vectorize
 from curve.runs import (
     create_run_dir,
     write_html_report,
@@ -113,6 +113,7 @@ GENERATE_CONFIG_KEYS = set(GENERATE_DEFAULT_CONFIG)
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
 EVAL_CONFIG_KEYS = {"run_root", "output", "markdown"}
 PROFILE_CONFIG_KEYS = set(VECTORIZE_DEFAULT_CONFIG) | {"input", "output", "repeats"}
+PROFILE_CURATED_CONFIG_KEYS = {"suite", "output", "markdown", "repeats"}
 EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "markdown", "splits"}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
@@ -396,6 +397,16 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         help="Optional JSON config for vectorize runtime knobs.",
     )
+
+    profile_curated = subcommands.add_parser(
+        "profile-curated",
+        help="Profile every available case in a curated real-image suite.",
+    )
+    profile_curated.add_argument("suite", type=Path, nargs="?")
+    profile_curated.add_argument("-o", "--output", type=Path)
+    profile_curated.add_argument("--markdown", type=Path)
+    profile_curated.add_argument("--repeats", type=int, default=None)
+    profile_curated.add_argument("--config", type=Path)
 
     generate = subcommands.add_parser(
         "generate",
@@ -863,6 +874,21 @@ def main(argv: list[str] | None = None) -> None:
             "profiled "
             f"{report['repeat_count']} runs; "
             f"mean={report['summary']['mean_elapsed_seconds']:.6f}s"
+        )
+        return
+
+    if args.command == "profile-curated":
+        profile_config = _resolved_profile_curated_config(args)
+        report = profile_curated_suite(
+            profile_config["suite"],
+            output=profile_config["output"],
+            repeats=int(profile_config["repeats"]),
+            markdown=profile_config.get("markdown"),
+        )
+        print(
+            "profiled curated suite "
+            f"{report['checked_count']}/{report['case_count']} cases; "
+            f"slowest={report['summary']['slowest_case_id'] or 'n/a'}"
         )
         return
 
@@ -1423,6 +1449,27 @@ def _resolved_profile_config(args: argparse.Namespace) -> dict[str, object]:
     _require_config_paths(config, ("input", "output"), "profile")
     config["input"] = Path(str(config["input"]))
     config["output"] = Path(str(config["output"]))
+    config["repeats"] = int(config["repeats"])
+    return config
+
+
+def _resolved_profile_curated_config(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    config = _load_profile_curated_config(args.config)
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    if args.repeats is not None:
+        config["repeats"] = args.repeats
+    config.setdefault("repeats", 1)
+    _require_config_paths(config, ("suite", "output"), "profile-curated")
+    for key in ("suite", "output", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
     config["repeats"] = int(config["repeats"])
     return config
 
@@ -2143,6 +2190,23 @@ def _load_profile_config(path: Path | None) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("input", "output", "classifier_model"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_profile_curated_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("profile-curated config must be a JSON object")
+    unknown = sorted(set(loaded) - PROFILE_CURATED_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported profile-curated config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("suite", "output", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

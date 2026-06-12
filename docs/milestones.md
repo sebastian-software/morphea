@@ -110,6 +110,9 @@ Implemented so far:
 - `curve profile input.png -o profile.json` records bounded vectorize timings,
   anchor counts, diagnostics, diagnostic stage counts, and min/mean/max elapsed
   summaries for repeated runs.
+- `curve profile-curated suite.json -o profile.json` profiles every available
+  curated real-image case with its recommended config, keeps missing sources
+  visible, and reports the slowest case plus per-case min/mean/max timings.
 - component BFS in both generic masks and bounded image scanning uses direct
   8-neighbor index checks instead of nested per-pixel neighbor range loops.
 - boundary-pixel detection and centroid calculation avoid repeated generator
@@ -128,8 +131,8 @@ Implemented so far:
 
 Remaining:
 
-- continue profile-guided hot-loop work as larger curated image families expose
-  new bottlenecks.
+- continue profile-guided hot-loop work from `profile-curated` reports as
+  larger curated image families expose new bottlenecks.
 
 ## M2: Primitive Anchor Detection V2
 
@@ -920,6 +923,8 @@ Implemented so far:
   classifier evaluation reports
 - `curve eval --config eval.json` for repeatable run-directory summaries
 - `curve profile --config profile.json` for repeatable bounded runtime probes
+- `curve profile-curated --config profile-curated.json` for repeatable
+  curated-family runtime profiling and Markdown summaries
 - `curve report --command-config report.json` for repeatable standalone report
   rendering from existing manifests
 - `curve harvest --config harvest.json` for repeatable pseudo-label quality

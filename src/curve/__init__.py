@@ -44,7 +44,11 @@ from curve.runs import (
 )
 from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
-from curve.profiling import profile_vectorize
+from curve.profiling import (
+    profile_curated_suite,
+    profile_vectorize,
+    render_curated_profile_markdown,
+)
 from curve.comparison import (
     compare_git_snapshots,
     compare_segment_manifests,
@@ -231,6 +235,7 @@ __all__ = [
     "segment_proposal_groups",
     "render_segment_manifest_comparison",
     "render_segment_manifest_comparison_markdown",
+    "profile_curated_suite",
     "profile_vectorize",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
@@ -242,6 +247,7 @@ __all__ = [
     "render_html_report",
     "render_curated_snapshot",
     "render_curated_markdown",
+    "render_curated_profile_markdown",
     "render_classifier_evaluation_markdown",
     "render_eval_markdown",
     "render_apply_review_markdown",
