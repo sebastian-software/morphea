@@ -457,9 +457,9 @@ class PrimitiveClassifierTests(unittest.TestCase):
         )
         self.assertEqual(
             available["capabilities"]["end_to_end_attention_training"]["status"],
-            "pending_implementation",
+            "available",
         )
-        self.assertFalse(
+        self.assertTrue(
             available["capabilities"]["end_to_end_attention_training"]["available"]
         )
 
@@ -726,6 +726,19 @@ class PrimitiveClassifierTests(unittest.TestCase):
                                     "bias": [1.0],
                                     "trained_examples": 2,
                                 },
+                                "attention_parameters": {
+                                    "weight_format": "mlx_attention_diagonal_v1",
+                                    "trained_examples": 2,
+                                    "layers": [
+                                        {
+                                            "query_scale": [1.0],
+                                            "key_scale": [1.0],
+                                            "value_scale": [1.0],
+                                            "output_scale": [1.0],
+                                            "output_bias": [0.25],
+                                        }
+                                    ],
+                                },
                             },
                         },
                     }
@@ -739,6 +752,76 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(projection["weights"], ((0.0,) * 8,))
             self.assertEqual(projection["bias"], (1.0,))
             self.assertEqual(projection["trained_examples"], 2)
+            attention = classifier["token_transformer"]["attention_parameters"]
+            self.assertEqual(attention["weight_format"], "mlx_attention_diagonal_v1")
+            self.assertEqual(attention["layers"][0]["output_bias"], (0.25,))
+
+    def test_mlx_token_transformer_uses_learned_attention_parameters(self):
+        classifier = {
+            "classifier_backend": "mlx_feature_head",
+            "labels": ("circle", "cubic_path"),
+            "weights": (
+                (0.0,) * len(FEATURE_NAMES),
+                (0.0,) * len(FEATURE_NAMES),
+            ),
+            "bias": (0.0, 0.0),
+            "normalization": {
+                "mean": (0.0,) * len(FEATURE_NAMES),
+                "scale": (1.0,) * len(FEATURE_NAMES),
+            },
+            "crop_token_spec": {"crop_size": 2},
+            "token_transformer": {
+                "labels": ("circle", "cubic_path"),
+                "weights": ((10.0,), (-10.0,)),
+                "bias": (0.0, 0.0),
+                "normalization": {
+                    "mean": (0.0,),
+                    "scale": (1.0,),
+                },
+                "tokenization": {
+                    "crop_size": 2,
+                    "raster_grid_size": 2,
+                },
+                "encoder": {
+                    "hidden_dim": 1,
+                    "num_heads": 1,
+                    "num_layers": 1,
+                },
+                "projection_calibration": {
+                    "scale": (1.0,),
+                    "bias": (0.0,),
+                    "strategy": "identity_after_learned_token_projection",
+                },
+                "token_projection": {
+                    "weights": ((0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),),
+                    "bias": (0.0,),
+                },
+                "attention_parameters": {
+                    "layers": (
+                        {
+                            "query_scale": (1.0,),
+                            "key_scale": (1.0,),
+                            "value_scale": (1.0,),
+                            "output_scale": (1.0,),
+                            "output_bias": (1.0,),
+                        },
+                    ),
+                },
+            },
+        }
+
+        predicted = predict_classifier_label(
+            classifier,
+            (0.0,) * len(FEATURE_NAMES),
+            crop_tokens=(
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+            ),
+        )
+
+        self.assertEqual(predicted, "circle")
 
     def test_mlx_feature_head_can_predict_with_raster_tokens(self):
         classifier = {

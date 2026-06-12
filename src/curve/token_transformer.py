@@ -31,6 +31,7 @@ def token_transformer_embedding(
     projection_bias: tuple[float, ...] | None = None,
     projection_weights: tuple[tuple[float, ...], ...] | None = None,
     projection_intercept: tuple[float, ...] | None = None,
+    attention_parameters: dict[str, object] | None = None,
 ) -> tuple[float, ...]:
     """Encode geometric features and pooled RGBA crop tokens into one vector."""
 
@@ -63,6 +64,7 @@ def token_transformer_embedding(
             hidden,
             heads=heads,
             layer_index=layer_index,
+            attention_parameters=attention_parameters,
         )
     return tuple(
         sum(token[hidden_index] for token in hidden) / len(hidden)
@@ -201,16 +203,30 @@ def _self_attention_layer(
     *,
     heads: int,
     layer_index: int,
+    attention_parameters: dict[str, object] | None,
 ) -> list[tuple[float, ...]]:
     hidden_dim = len(hidden[0])
     slices = _head_slices(hidden_dim, min(heads, hidden_dim))
+    layer_params = _attention_layer_parameters(
+        attention_parameters,
+        layer_index=layer_index,
+        hidden_dim=hidden_dim,
+    )
     next_hidden: list[tuple[float, ...]] = []
     for token in hidden:
         attended_values: list[float] = []
         for start, end in slices:
-            query = token[start:end]
+            query = tuple(
+                token[index] * layer_params["query_scale"][index]
+                for index in range(start, end)
+            )
             scores = [
-                sum(query[index] * other[start + index] for index in range(end - start))
+                sum(
+                    query[index]
+                    * other[start + index]
+                    * layer_params["key_scale"][start + index]
+                    for index in range(end - start)
+                )
                 / sqrt(max(1, end - start))
                 for other in hidden
             ]
@@ -218,17 +234,56 @@ def _self_attention_layer(
             for feature_index in range(start, end):
                 attended_values.append(
                     sum(
-                        weight * other[feature_index]
+                        weight
+                        * other[feature_index]
+                        * layer_params["value_scale"][feature_index]
                         for weight, other in zip(weights, hidden)
                     )
                 )
         next_hidden.append(
             tuple(
-                tanh((token[index] + attended_values[index]) / 2 + layer_index * 0.01)
+                tanh(
+                    (
+                        token[index]
+                        + attended_values[index] * layer_params["output_scale"][index]
+                        + layer_params["output_bias"][index]
+                    )
+                    / 2
+                    + layer_index * 0.01
+                )
                 for index in range(hidden_dim)
             )
         )
     return next_hidden
+
+
+def _attention_layer_parameters(
+    attention_parameters: dict[str, object] | None,
+    *,
+    layer_index: int,
+    hidden_dim: int,
+) -> dict[str, tuple[float, ...]]:
+    defaults = {
+        "query_scale": tuple(1.0 for _ in range(hidden_dim)),
+        "key_scale": tuple(1.0 for _ in range(hidden_dim)),
+        "value_scale": tuple(1.0 for _ in range(hidden_dim)),
+        "output_scale": tuple(1.0 for _ in range(hidden_dim)),
+        "output_bias": tuple(0.0 for _ in range(hidden_dim)),
+    }
+    if not isinstance(attention_parameters, dict):
+        return defaults
+    layers = attention_parameters.get("layers")
+    if not isinstance(layers, tuple) or layer_index >= len(layers):
+        return defaults
+    layer = layers[layer_index]
+    if not isinstance(layer, dict):
+        return defaults
+    resolved = dict(defaults)
+    for key in resolved:
+        values = layer.get(key)
+        if isinstance(values, tuple) and len(values) == hidden_dim:
+            resolved[key] = values
+    return resolved
 
 
 def _head_slices(hidden_dim: int, heads: int) -> list[tuple[int, int]]:

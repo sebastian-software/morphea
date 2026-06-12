@@ -94,13 +94,9 @@ def _mlx_classifier_capabilities(available: bool) -> dict[str, dict[str, object]
             "reason": runtime_reason,
         },
         "end_to_end_attention_training": {
-            "available": False,
-            "status": "pending_implementation",
-            "reason": (
-                "Current MLX path trains token projection and classifier "
-                "head with autograd; full attention-weight backpropagation "
-                "is not wired yet"
-            ),
+            "available": available,
+            "status": runtime_status,
+            "reason": runtime_reason,
         },
     }
 
@@ -563,6 +559,21 @@ def _train_end_to_end_token_transformer(
             _initial_token_projection_weights(config.hidden_dim, token_input_count)
         ),
         "projection_bias": mx.array([0.0 for _ in range(config.hidden_dim)]),
+        "attention_query_scale": mx.ones(
+            (max(1, config.num_layers), config.hidden_dim)
+        ),
+        "attention_key_scale": mx.ones(
+            (max(1, config.num_layers), config.hidden_dim)
+        ),
+        "attention_value_scale": mx.ones(
+            (max(1, config.num_layers), config.hidden_dim)
+        ),
+        "attention_output_scale": mx.ones(
+            (max(1, config.num_layers), config.hidden_dim)
+        ),
+        "attention_output_bias": mx.zeros(
+            (max(1, config.num_layers), config.hidden_dim)
+        ),
         "weights": mx.array(
             [
                 [0.0 for _ in range(config.hidden_dim)]
@@ -612,6 +623,7 @@ def _train_end_to_end_token_transformer(
 
     projection_weights = _array_to_nested_floats(params["projection_weights"])
     projection_bias = _array_to_floats(params["projection_bias"])
+    attention_parameters = _serialized_attention_parameters(params, len(rows))
     weights = _array_to_nested_floats(params["weights"])
     bias = _array_to_floats(params["bias"])
     return {
@@ -621,6 +633,7 @@ def _train_end_to_end_token_transformer(
         "encoder": {
             **_token_transformer_encoder_config(config),
             "projection": "mlx_learned_token_projection_v1",
+            "attention_parameters": "mlx_attention_diagonal_v1",
         },
         "token_projection": {
             "weight_format": "mlx_token_projection_v1",
@@ -630,15 +643,17 @@ def _train_end_to_end_token_transformer(
             "trained_examples": len(rows),
             "optimizer": "manual_sgd",
         },
+        "attention_parameters": attention_parameters,
         "projection_calibration": {
             "strategy": "identity_after_learned_token_projection",
             "scale": [1.0 for _ in range(config.hidden_dim)],
             "bias": [0.0 for _ in range(config.hidden_dim)],
             "trained_examples": len(rows),
         },
-        "training_status": "end_to_end_token_projection_trained",
+        "training_status": "end_to_end_attention_trained",
         "parameter_count": len(labels) * (config.hidden_dim + 1)
-        + config.hidden_dim * (token_input_count + 1),
+        + config.hidden_dim * (token_input_count + 1)
+        + max(1, config.num_layers) * config.hidden_dim * 5,
         "normalization": {
             "mean": [0.0 for _ in range(config.hidden_dim)],
             "scale": [1.0 for _ in range(config.hidden_dim)],
@@ -702,27 +717,67 @@ def _token_transformer_training_logits(
         + params["projection_bias"]
     )
     for layer_index in range(max(1, config.num_layers)):
-        hidden = _mlx_self_attention_layer(hidden, config.num_heads, layer_index, mx)
+        hidden = _mlx_self_attention_layer(
+            hidden,
+            params,
+            config.num_heads,
+            layer_index,
+            mx,
+        )
     pooled = mx.mean(hidden, axis=1)
     return mx.matmul(pooled, mx.transpose(params["weights"])) + params["bias"]
 
 
 def _mlx_self_attention_layer(
     hidden: Any,
+    params: dict[str, Any],
     heads: int,
     layer_index: int,
     mx: Any,
 ) -> Any:
     hidden_dim = int(hidden.shape[-1])
     attended_values = []
+    query_scale = params["attention_query_scale"][layer_index]
+    key_scale = params["attention_key_scale"][layer_index]
+    value_scale = params["attention_value_scale"][layer_index]
     for start, end in _attention_head_slices(hidden_dim, heads):
-        query = hidden[:, :, start:end]
-        scores = mx.matmul(query, mx.transpose(query, axes=(0, 2, 1)))
+        query = hidden[:, :, start:end] * query_scale[start:end]
+        key = hidden[:, :, start:end] * key_scale[start:end]
+        value = hidden[:, :, start:end] * value_scale[start:end]
+        scores = mx.matmul(query, mx.transpose(key, axes=(0, 2, 1)))
         scores = scores / max(1, end - start) ** 0.5
         attention = mx.softmax(scores, axis=-1)
-        attended_values.append(mx.matmul(attention, query))
+        attended_values.append(mx.matmul(attention, value))
     attended = mx.concatenate(attended_values, axis=-1)
-    return mx.tanh((hidden + attended) / 2 + layer_index * 0.01)
+    output_scale = params["attention_output_scale"][layer_index]
+    output_bias = params["attention_output_bias"][layer_index]
+    return mx.tanh((hidden + attended * output_scale + output_bias) / 2 + layer_index * 0.01)
+
+
+def _serialized_attention_parameters(
+    params: dict[str, Any],
+    trained_examples: int,
+) -> dict[str, Any]:
+    query_scale = _array_to_nested_floats(params["attention_query_scale"])
+    key_scale = _array_to_nested_floats(params["attention_key_scale"])
+    value_scale = _array_to_nested_floats(params["attention_value_scale"])
+    output_scale = _array_to_nested_floats(params["attention_output_scale"])
+    output_bias = _array_to_nested_floats(params["attention_output_bias"])
+    return {
+        "weight_format": "mlx_attention_diagonal_v1",
+        "trained_examples": trained_examples,
+        "optimizer": "manual_sgd",
+        "layers": [
+            {
+                "query_scale": query_scale[index],
+                "key_scale": key_scale[index],
+                "value_scale": value_scale[index],
+                "output_scale": output_scale[index],
+                "output_bias": output_bias[index],
+            }
+            for index in range(len(query_scale))
+        ],
+    }
 
 
 def _attention_head_slices(hidden_dim: int, heads: int) -> list[tuple[int, int]]:

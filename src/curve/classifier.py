@@ -1030,6 +1030,7 @@ def _loaded_token_transformer(
     layers = encoder.get("num_layers")
     projection = _loaded_token_projection(transformer, hidden_dim)
     token_projection = _loaded_token_projection_weights(transformer, hidden_dim)
+    attention_parameters = _loaded_attention_parameters(transformer, hidden_dim, layers)
     if (
         not isinstance(crop_size, int)
         or crop_size <= 0
@@ -1067,6 +1068,7 @@ def _loaded_token_transformer(
         },
         "projection_calibration": projection,
         "token_projection": token_projection,
+        "attention_parameters": attention_parameters,
     }
 
 
@@ -1102,6 +1104,9 @@ def _token_transformer_logits(
         token_projection = {}
     projection_weights = token_projection.get("weights")
     projection_intercept = token_projection.get("bias")
+    attention_parameters = transformer.get("attention_parameters")
+    if not isinstance(attention_parameters, dict):
+        attention_parameters = None
     if (
         not isinstance(crop_size, int)
         or not isinstance(raster_grid_size, int)
@@ -1138,6 +1143,7 @@ def _token_transformer_logits(
             if isinstance(projection_intercept, tuple)
             else None
         ),
+        attention_parameters=attention_parameters,
     )
     mean = normalization.get("mean", ())
     scale = normalization.get("scale", ())
@@ -1226,6 +1232,50 @@ def _loaded_token_projection_weights(
             if isinstance(name, str)
         ),
         "trained_examples": projection.get("trained_examples"),
+    }
+
+
+def _loaded_attention_parameters(
+    transformer: dict[str, object],
+    hidden_dim: object,
+    layer_count: object,
+) -> dict[str, object] | None:
+    if (
+        not isinstance(hidden_dim, int)
+        or hidden_dim <= 0
+        or not isinstance(layer_count, int)
+        or layer_count <= 0
+    ):
+        return None
+    attention = transformer.get("attention_parameters")
+    if not isinstance(attention, dict):
+        return None
+    if attention.get("weight_format") != "mlx_attention_diagonal_v1":
+        return None
+    layers = attention.get("layers")
+    if not isinstance(layers, list) or len(layers) != layer_count:
+        return None
+    loaded_layers: list[dict[str, tuple[float, ...]]] = []
+    for layer in layers:
+        if not isinstance(layer, dict):
+            return None
+        loaded_layer: dict[str, tuple[float, ...]] = {}
+        for key in (
+            "query_scale",
+            "key_scale",
+            "value_scale",
+            "output_scale",
+            "output_bias",
+        ):
+            values = _vector(layer.get(key, []))
+            if len(values) != hidden_dim:
+                return None
+            loaded_layer[key] = tuple(values)
+        loaded_layers.append(loaded_layer)
+    return {
+        "weight_format": "mlx_attention_diagonal_v1",
+        "layers": tuple(loaded_layers),
+        "trained_examples": attention.get("trained_examples"),
     }
 
 

@@ -618,12 +618,17 @@ Implemented so far:
   raster attention and geometric feature logits.
 - MLX classifier runtime status reports trainable feature/raster/token
   capabilities and end-to-end token-projection training separately from the
-  still-pending full attention-weight training capability.
+  end-to-end attention-weight training capability.
+- available MLX token-transformer artifacts now train
+  `mlx_attention_diagonal_v1` per-layer query/key/value/output scales and
+  output bias with MLX autograd, serialize them in `attention_parameters`, and
+  use them during runtime prediction.
 
 Remaining:
 
-- extend the current MLX autograd token-projection training to full
-  attention-weight backpropagation for the serialized token-transformer encoder.
+- none for the current primitive-classifier milestone baseline; future quality
+  work can replace diagonal attention parameters with richer projection
+  matrices if real-image results justify the extra complexity.
 
 ## M8: Self-Learning Loop
 
@@ -720,11 +725,14 @@ Implemented so far:
 - MLX retraining can consume reviewed pseudo-label manifests that do not carry
   source images: feature training includes those pseudo labels, while
   raster-token crops are trained from image-backed samples.
+- reviewed-label MLX retraining now uses the same end-to-end token projection
+  and attention-parameter training path as `curve train-mlx` for image-backed
+  examples.
 
 Remaining:
 
-- extend the reviewed-label MLX retraining path from end-to-end token
-  projection/head training to full attention-weight backpropagation.
+- none for the current reviewed-label self-learning baseline; additional real
+  pseudo-label data should drive future quality thresholds.
 
 ## M9: Differentiable and Local Refinement
 
