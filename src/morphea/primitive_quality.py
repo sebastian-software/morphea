@@ -974,6 +974,51 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _concave_spec(
+            case_id,
+            family,
+            variant,
+            outer,
+            bites,
+            # The wide bay eats into the blob's right flank, so the actual
+            # component box is narrower than the ideal blob bounds.
+            min_bbox_iou=0.7 if case_id == "concave_c_wide" else 0.8,
+        )
+        for case_id, family, variant, outer, bites in (
+            # Pac-Man style bay biting in from the right edge.
+            ("concave_c", "concave_c", "base",
+             (32, 32, 24, ((3, 0.08, 0.5),)),
+             (("ellipse", (42, 20, 76, 44)),)),
+            ("concave_c_deep", "concave_c", "deep",
+             (31, 32, 24, ((2, 0.1, 1.2),)),
+             (("ellipse", (28, 24, 78, 40)),)),
+            ("concave_c_wide", "concave_c", "wide",
+             (32, 31, 23, ((4, 0.07, 0.9),)),
+             (("ellipse", (40, 12, 80, 52)),)),
+            # U-shaped bay entering from the top edge.
+            ("concave_u", "concave_u", "base",
+             (32, 34, 24, ((3, 0.08, 1.1),)),
+             (("ellipse", (24, -10, 40, 38)),)),
+            ("concave_u_narrow", "concave_u", "narrow",
+             (32, 34, 24, ((2, 0.09, 0.4),)),
+             (("ellipse", (27, -8, 37, 42)),)),
+            ("concave_u_tilted", "concave_u", "tilted",
+             (33, 33, 23, ((4, 0.06, 1.7),)),
+             (("ellipse", (20, -12, 38, 36)),)),
+            # Near-closed embrace: a wide interior connected to the outside
+            # only through a narrow channel, so it is a bay, not a hole.
+            ("concave_embrace", "concave_embrace", "base",
+             (32, 32, 24, ((3, 0.07, 0.8),)),
+             (("ellipse", (20, 20, 44, 44)), ("rect", (29, 0, 35, 24)))),
+            ("concave_embrace_tight", "concave_embrace", "tight",
+             (32, 32, 24, ((2, 0.08, 1.5),)),
+             (("ellipse", (19, 19, 45, 45)), ("rect", (30, 0, 34, 24)))),
+            ("concave_embrace_thick", "concave_embrace", "thick",
+             (32, 33, 25, ((3, 0.06, 0.2),)),
+             (("ellipse", (23, 23, 43, 43)), ("rect", (28, 0, 36, 26)))),
+        )
+    )
+    specs.extend(
         _composition_spec(case_id, "composition_arc_circle", variant, primitives)
         for case_id, variant, primitives in (
             (
@@ -2023,6 +2068,58 @@ def _organic_hole_spec(
         max_svg_raster_edge_error=0.06,
         max_svg_vs_preview_l1_error=0.03,
         min_bbox_iou=0.85,
+    )
+
+
+def _concave_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    outer: tuple,
+    bites: tuple,
+    *,
+    min_bbox_iou: float = 0.8,
+) -> PrimitiveSpec:
+    """An organic mass with a deep bay that stays open to the background.
+
+    Unlike the hole families the bitten-out region touches the outside, so
+    the outline must follow the bay in and back out; collapsing it into a
+    closed ring or painting the bay shut is exactly the failure these pin.
+    """
+
+    outer_polygon = _blob_polygon(*outer)
+
+    def draw_fn(draw, outer_polygon=outer_polygon, bites=bites):
+        draw.polygon(outer_polygon, fill=BLUE)
+        for kind, params in bites:
+            if kind == "ellipse":
+                draw.ellipse(params, fill="#ffffff")
+            else:
+                draw.rectangle(params, fill="#ffffff")
+
+    xs = [x for x, _ in outer_polygon]
+    ys = [y for _, y in outer_polygon]
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("cubic_path",),
+        geometry_type="cubic_path",
+        geometry={
+            "bounds": (min(xs), min(ys), max(xs), max(ys)),
+            "max_nodes": 24,
+            "expected_holes": 0,
+            "loose_bounds": True,
+        },
+        draw=draw_fn,
+        allow_cubic_path=True,
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.05,
+        max_svg_raster_l1_error=0.06,
+        max_svg_raster_edge_error=0.06,
+        max_svg_vs_preview_l1_error=0.03,
+        min_bbox_iou=min_bbox_iou,
     )
 
 

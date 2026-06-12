@@ -1,5 +1,5 @@
 {
-  "case_count": 300,
+  "case_count": 309,
   "cases": {
     "adjacent_different_color_rects_horizontal": {
       "anchor_count": 2,
@@ -1237,6 +1237,123 @@
       "ok": true,
       "svg_edge": 0.008011,
       "svg_l1": 0.006378
+    },
+    "concave_c": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.894602,
+      "edge": 0.02199,
+      "kind": "cubic_path",
+      "l1": 0.015234,
+      "ok": true,
+      "svg_edge": 0.022238,
+      "svg_l1": 0.017858
+    },
+    "concave_c_deep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.907219,
+      "edge": 0.027488,
+      "kind": "cubic_path",
+      "l1": 0.019531,
+      "ok": true,
+      "svg_edge": 0.026077,
+      "svg_l1": 0.022059
+    },
+    "concave_c_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.766937,
+      "edge": 0.019664,
+      "kind": "cubic_path",
+      "l1": 0.012891,
+      "ok": true,
+      "svg_edge": 0.020766,
+      "svg_l1": 0.016379
+    },
+    "concave_embrace": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.956916,
+      "edge": 0.034677,
+      "kind": "cubic_path",
+      "l1": 0.024219,
+      "ok": true,
+      "svg_edge": 0.03185,
+      "svg_l1": 0.026377
+    },
+    "concave_embrace_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.966315,
+      "edge": 0.033196,
+      "kind": "cubic_path",
+      "l1": 0.023438,
+      "ok": true,
+      "svg_edge": 0.033412,
+      "svg_l1": 0.028052
+    },
+    "concave_embrace_tight": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.970704,
+      "edge": 0.027488,
+      "kind": "cubic_path",
+      "l1": 0.018555,
+      "ok": true,
+      "svg_edge": 0.032485,
+      "svg_l1": 0.026498
+    },
+    "concave_u": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.94614,
+      "edge": 0.027065,
+      "kind": "cubic_path",
+      "l1": 0.018555,
+      "ok": true,
+      "svg_edge": 0.027408,
+      "svg_l1": 0.022901
+    },
+    "concave_u_narrow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.964466,
+      "edge": 0.026007,
+      "kind": "cubic_path",
+      "l1": 0.018555,
+      "ok": true,
+      "svg_edge": 0.027052,
+      "svg_l1": 0.022913
+    },
+    "concave_u_tilted": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.931984,
+      "edge": 0.024104,
+      "kind": "cubic_path",
+      "l1": 0.01582,
+      "ok": true,
+      "svg_edge": 0.025865,
+      "svg_l1": 0.020719
     },
     "curve_asymmetric": {
       "anchor_count": 1,

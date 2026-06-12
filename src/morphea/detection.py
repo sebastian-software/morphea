@@ -698,6 +698,21 @@ def _stroke_circle_candidate(
     if area_error > thresholds.stroke_circle_max_area_error:
         return None
 
+    # A ring severed by a channel (a bay open to the background) still
+    # passes the area gates because the cut costs only a few percent, but
+    # a closed stroke circle would paint the channel shut. Reject when the
+    # angular coverage has a real gap; closed rings stay far below it.
+    angles = sorted(
+        atan2(y - center.y, x - center.x) for x, y in component.pixels
+    )
+    angular_gap = max(
+        (b - a for a, b in zip(angles, angles[1:])),
+        default=0.0,
+    )
+    wraparound = angles[0] + 2 * pi - angles[-1]
+    if max(angular_gap, wraparound) > 0.2:
+        return None
+
     radius = (inner_radius + outer_radius) / 2
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_CIRCLE,
