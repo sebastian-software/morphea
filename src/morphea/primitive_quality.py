@@ -2388,7 +2388,7 @@ def _curved_cutout_spec(
     end = _arc_point_xy(cx, cy, radius, end_deg)
     cutout_primitive = ExpectedPrimitive(
         id="cutout",
-        expected_kinds=("stroke_path",),
+        expected_kinds=("arc", "stroke_path"),
         geometry_type="stroke",
         geometry={
             "centerline": (start, apex, end),
@@ -2428,7 +2428,9 @@ def _curved_cutout_spec(
         ),
         max_anchor_count=len(primitives),
         coordinate_tolerance=2.0,
-        max_raster_l1_error=0.1 if is_ring else 0.035,
+        # Arc-fitted cut-outs follow the curved gap exactly; these budgets
+        # reflect the measured suite (<= 0.007 plain, <= 0.061 on rings).
+        max_raster_l1_error=0.08 if is_ring else 0.02,
         max_raster_edge_error=0.08 if is_ring else 0.035,
         min_bbox_iou=0.78,
     )

@@ -2148,8 +2148,55 @@ def _freeform_cutout_candidate(
     )
     bow = _point_line_distance(control, start, end)
     bowed = bow >= max(1.0, stroke_width * 0.75)
+    if bowed:
+        # A bowed gap is usually a circular slit (for example concentric to a
+        # ring band); a true arc fit follows that curvature exactly where a
+        # three-point spline sags flat.
+        arc_fit = _fit_circular_arc(component)
+        if arc_fit is not None:
+            arc_candidate = _arc_cutout_candidate(arc_fit, stroke_width, color)
+            if arc_candidate is not None:
+                return arc_candidate
     centerline = (start, control, end) if bowed else (start, end)
     return _cutout_centerline_candidate(centerline, stroke_width, color)
+
+
+def _arc_cutout_candidate(
+    fit: dict[str, object],
+    stroke_width: float,
+    color: str,
+) -> AnchorCandidate | None:
+    start = fit["start"]
+    apex = fit["apex"]
+    end = fit["end"]
+    if start.distance_to(end) <= 0:
+        return None
+    candidate = AnchorCandidate(
+        kind=AnchorKind.ARC,
+        raster_error=float(fit["band_residual_error"]),
+        node_count=3,
+        parameter_count=7,
+        color=color,
+        stroke=StrokeAnchor(
+            centerline=(start, apex, end),
+            width_samples=(stroke_width,),
+            is_cutout=True,
+            cap_style="round",
+            join_style="round",
+        ),
+        arc=ArcAnchor(
+            center=fit["center"],
+            radius=float(fit["radius"]),
+            theta_start=float(fit["theta_start"]),
+            theta_end=float(fit["theta_end"]),
+            sweep=bool(fit["sweep"]),
+            large_arc=bool(fit["large_arc"]),
+        ),
+        metrics={
+            "arc_fit_residual_error": float(fit["band_residual_error"]),
+        },
+    )
+    return candidate
 
 
 

@@ -241,13 +241,15 @@ class PrimitiveQualityTests(unittest.TestCase):
                     if anchor.get("stroke", {}).get("is_cutout")
                 ]
                 self.assertEqual(len(cutouts), 1)
-                self.assertEqual(cutouts[0]["kind"], "stroke_path")
+                # Circular slits fit a true arc and export an A command.
+                self.assertEqual(cutouts[0]["kind"], "arc")
                 self.assertEqual(len(cutouts[0]["stroke"]["centerline"]), 3)
+                self.assertIn("arc", cutouts[0])
                 svg = (Path(temp_dir) / case["id"] / "output.svg").read_text(
                     encoding="utf-8"
                 )
                 self.assertIn('stroke="#ffffff"', svg)
-                self.assertIn(" C ", svg)
+                self.assertIn(" A ", svg)
 
     def test_organic_fallback_is_controlled_and_inspectable(self):
         with tempfile.TemporaryDirectory() as temp_dir:
