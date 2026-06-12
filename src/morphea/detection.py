@@ -212,12 +212,14 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
     # One node per ~12 px of contour: a 64 px fixture blob keeps the 16-node
     # budget while a large detailed silhouette earns enough segments to keep
     # noses and lobes instead of melting them into the tolerance.
-    node_budget = min(48, max(ORGANIC_FALLBACK_MAX_NODES, round(perimeter / 12)))
+    node_budget = min(64, max(ORGANIC_FALLBACK_MAX_NODES, round(perimeter / 12)))
     points, controls, fit_error = _fit_closed_bezier_outline(
         smoothed,
         max_segments=node_budget,
     )
     smoothness = _curvature_jitter(points + points[:2])
+    holes = _fitted_hole_subpaths(component)
+    hole_nodes = sum(len(hole_points) for hole_points, _ in holes)
     # Rank as if the outline used its full node budget: a compact fit must
     # not make the generic fallback cheaper against semantic candidates.
     saved_nodes = max(0, node_budget - len(points))
@@ -225,15 +227,60 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
     return AnchorCandidate(
         kind=AnchorKind.CUBIC_PATH,
         raster_error=rank_penalty,
-        node_count=len(points),
-        parameter_count=len(points) * 2,
-        path=PathAnchor(points=points, closed=True, controls=controls),
+        node_count=len(points) + hole_nodes,
+        parameter_count=(len(points) + hole_nodes) * 2,
+        path=PathAnchor(
+            points=points,
+            closed=True,
+            controls=controls,
+            holes=holes,
+        ),
         metrics={
-            "path_node_count": float(len(points)),
+            "path_node_count": float(len(points) + hole_nodes),
+            "path_hole_count": float(len(holes)),
             "path_smoothness": smoothness,
             "path_fit_max_error_px": fit_error,
         },
     )
+
+
+def _fitted_hole_subpaths(
+    component: MaskComponent,
+) -> tuple[tuple[tuple[Point, ...], tuple[tuple[Point, Point], ...]], ...]:
+    """Fit enclosed gaps too bulky for slit cut-outs as even-odd holes.
+
+    Thin slits stay editable overlay strokes (the established cut-out
+    contract); anything wider is real negative space that the filled
+    outline must not paint over.
+    """
+
+    slit_limit = max(
+        3,
+        min(8, round(min(component.width, component.height) * 0.05)),
+    )
+    holes = []
+    for gap in _interior_gap_components(component, min_area=16):
+        if _gap_open_to_background(gap, component):
+            continue
+        ink_width = gap.area / max(max(gap.width, gap.height), 1)
+        if ink_width <= slit_limit:
+            # Slit territory; the cut-out detector owns it.
+            continue
+        outline = _traced_outline(gap)
+        if outline is None or len(outline) < 4:
+            continue
+        smoothed = _smoothed_closed_outline(outline, window=2)
+        perimeter = sum(
+            smoothed[index].distance_to(smoothed[(index + 1) % len(smoothed)])
+            for index in range(len(smoothed))
+        )
+        budget = min(24, max(8, round(perimeter / 12)))
+        hole_points, hole_controls, _ = _fit_closed_bezier_outline(
+            smoothed,
+            max_segments=budget,
+        )
+        holes.append((hole_points, hole_controls))
+    return tuple(holes)
 
 
 def _traced_outline(component: MaskComponent) -> tuple[Point, ...] | None:

@@ -463,7 +463,10 @@ def anchor_to_svg_element(
             )
         else:
             path_data = _closed_smooth_path(anchor.path.points)
-        return f'<path d="{path_data}" fill="{escape(fill)}" />'
+        for hole_points, hole_controls in anchor.path.holes:
+            path_data += " " + _closed_bezier_path(hole_points, hole_controls)
+        fill_rule = ' fill-rule="evenodd"' if anchor.path.holes else ""
+        return f'<path d="{path_data}" fill="{escape(fill)}"{fill_rule} />'
 
     return _unsupported_anchor(anchor)
 
@@ -577,6 +580,22 @@ def anchor_to_manifest_with_index(
                     {"x": control2.x, "y": control2.y},
                 ]
                 for control1, control2 in anchor.path.controls
+            ]
+        if anchor.path.holes:
+            data["path"]["holes"] = [
+                {
+                    "points": [
+                        {"x": point.x, "y": point.y} for point in hole_points
+                    ],
+                    "controls": [
+                        [
+                            {"x": control1.x, "y": control1.y},
+                            {"x": control2.x, "y": control2.y},
+                        ]
+                        for control1, control2 in hole_controls
+                    ],
+                }
+                for hole_points, hole_controls in anchor.path.holes
             ]
     if anchor.ellipse is not None:
         data["ellipse"] = {

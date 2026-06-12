@@ -1,9 +1,4 @@
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.coverage
+.DS_Store
 .venv/
-dist/
-build/
-*.egg-info/
-
+__pycache__/
+*.pyc

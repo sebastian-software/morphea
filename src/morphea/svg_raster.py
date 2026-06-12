@@ -293,8 +293,11 @@ def _render_path(
     stroke_width = _number(element, "stroke-width", default=1.0)
     cap = element.attrib.get("stroke-linecap", "butt")
     if fill is not None:
-        for points, _ in subpaths:
-            if len(points) >= 3:
+        closed_fills = [points for points, _ in subpaths if len(points) >= 3]
+        if element.attrib.get("fill-rule") == "evenodd" and len(closed_fills) > 1:
+            _fill_evenodd(draw, closed_fills, fill)
+        else:
+            for points in closed_fills:
                 draw.polygon(points, fill=fill)
     if stroke is None or stroke_width <= 0:
         return
@@ -312,6 +315,23 @@ def _render_path(
         elif cap == "square":
             _draw_square_cap(draw, points[0], points[1], pixel_width, stroke)
             _draw_square_cap(draw, points[-1], points[-2], pixel_width, stroke)
+
+
+def _fill_evenodd(
+    draw: ImageDraw.ImageDraw,
+    subpaths: list[list[tuple[float, float]]],
+    fill: tuple[int, int, int, int],
+) -> None:
+    """Even-odd fill via an XOR coverage mask, composited in place."""
+
+    image = draw._image
+    mask = Image.new("1", image.size, 0)
+    for points in subpaths:
+        contour = Image.new("1", image.size, 0)
+        ImageDraw.Draw(contour).polygon(points, fill=1)
+        mask = ImageChops.logical_xor(mask, contour)
+    overlay = Image.new("RGBA", image.size, fill)
+    image.paste(overlay, (0, 0), mask.convert("L").point(lambda v: 255 if v else 0))
 
 
 def _draw_cap_circle(

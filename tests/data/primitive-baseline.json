@@ -123,39 +123,39 @@
       "anchor_kind_counts": {
         "arc": 1
       },
-      "bbox_iou": 0.805054,
-      "edge": 0.014908,
+      "bbox_iou": 0.875496,
+      "edge": 0.015775,
       "kind": "arc",
-      "l1": 0.012235,
+      "l1": 0.013211,
       "ok": true,
-      "svg_edge": 0.013921,
-      "svg_l1": 0.01351
+      "svg_edge": 0.010344,
+      "svg_l1": 0.009112
     },
     "antialiased_arc_steep": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "arc": 1
       },
-      "bbox_iou": 0.868194,
-      "edge": 0.016588,
+      "bbox_iou": 0.901597,
+      "edge": 0.01675,
       "kind": "arc",
-      "l1": 0.013844,
+      "l1": 0.013999,
       "ok": true,
-      "svg_edge": 0.013719,
-      "svg_l1": 0.013359
+      "svg_edge": 0.010913,
+      "svg_l1": 0.009742
     },
     "antialiased_arc_thick": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "arc": 1
       },
-      "bbox_iou": 0.879498,
-      "edge": 0.015515,
+      "bbox_iou": 0.887754,
+      "edge": 0.014713,
       "kind": "arc",
-      "l1": 0.012888,
+      "l1": 0.012047,
       "ok": true,
-      "svg_edge": 0.014993,
-      "svg_l1": 0.014558
+      "svg_edge": 0.014408,
+      "svg_l1": 0.014147
     },
     "antialiased_circle": {
       "anchor_count": 1,
@@ -201,39 +201,39 @@
       "anchor_kind_counts": {
         "stroke_path": 1
       },
-      "bbox_iou": 0.89317,
-      "edge": 0.024024,
+      "bbox_iou": 0.923091,
+      "edge": 0.019035,
       "kind": "stroke_path",
-      "l1": 0.02142,
+      "l1": 0.014593,
       "ok": true,
-      "svg_edge": 0.018189,
-      "svg_l1": 0.017905
+      "svg_edge": 0.013913,
+      "svg_l1": 0.011829
     },
     "antialiased_curve_s": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "stroke_path": 1
       },
-      "bbox_iou": 0.8968,
-      "edge": 0.024752,
+      "bbox_iou": 0.910026,
+      "edge": 0.021891,
       "kind": "stroke_path",
-      "l1": 0.018818,
+      "l1": 0.016106,
       "ok": true,
-      "svg_edge": 0.018547,
-      "svg_l1": 0.01687
+      "svg_edge": 0.017038,
+      "svg_l1": 0.014447
     },
     "antialiased_curve_wave": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "stroke_path": 1
       },
-      "bbox_iou": 0.846439,
-      "edge": 0.01936,
+      "bbox_iou": 0.791017,
+      "edge": 0.020315,
       "kind": "stroke_path",
-      "l1": 0.017426,
+      "l1": 0.017752,
       "ok": true,
-      "svg_edge": 0.011989,
-      "svg_l1": 0.012204
+      "svg_edge": 0.014209,
+      "svg_l1": 0.014611
     },
     "antialiased_ellipse": {
       "anchor_count": 1,
@@ -279,52 +279,52 @@
       "anchor_kind_counts": {
         "stroke_circle": 1
       },
-      "bbox_iou": 0.946301,
-      "edge": 0.023825,
+      "bbox_iou": 0.948135,
+      "edge": 0.032366,
       "kind": "stroke_circle",
-      "l1": 0.019435,
+      "l1": 0.034737,
       "ok": true,
-      "svg_edge": 0.023357,
-      "svg_l1": 0.024557
+      "svg_edge": 0.019437,
+      "svg_l1": 0.019154
     },
     "antialiased_ring_large": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "stroke_circle": 1
       },
-      "bbox_iou": 0.965777,
-      "edge": 0.050373,
+      "bbox_iou": 0.96661,
+      "edge": 0.04555,
       "kind": "stroke_circle",
-      "l1": 0.053777,
+      "l1": 0.042988,
       "ok": true,
-      "svg_edge": 0.034852,
-      "svg_l1": 0.035531
+      "svg_edge": 0.030819,
+      "svg_l1": 0.029003
     },
     "antialiased_ring_medium": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "stroke_circle": 1
       },
-      "bbox_iou": 0.959586,
-      "edge": 0.041004,
+      "bbox_iou": 0.956892,
+      "edge": 0.029564,
       "kind": "stroke_circle",
-      "l1": 0.043551,
+      "l1": 0.023305,
       "ok": true,
-      "svg_edge": 0.027713,
-      "svg_l1": 0.027218
+      "svg_edge": 0.024788,
+      "svg_l1": 0.023338
     },
     "antialiased_stroke_diagonal": {
       "anchor_count": 1,
       "anchor_kind_counts": {
         "stroke_polyline": 1
       },
-      "bbox_iou": 0.976859,
-      "edge": 0.030997,
+      "bbox_iou": 0.973943,
+      "edge": 0.022812,
       "kind": "stroke_polyline",
-      "l1": 0.020594,
+      "l1": 0.014524,
       "ok": true,
-      "svg_edge": 0.01856,
-      "svg_l1": 0.012874
+      "svg_edge": 0.018714,
+      "svg_l1": 0.01309
     },
     "antialiased_stroke_horizontal": {
       "anchor_count": 1,

@@ -114,6 +114,9 @@ class PathAnchor:
     closed: bool = True
     fallback_reason: str = "organic_boundary_fit"
     controls: tuple[tuple[Point, Point], ...] | None = None
+    # Enclosed holes too bulky to stay overlay slit strokes; each entry is a
+    # fitted closed subpath (points plus control pairs) rendered even-odd.
+    holes: tuple[tuple[tuple[Point, ...], tuple[tuple[Point, Point], ...]], ...] = ()
 
 
 @dataclass(frozen=True)

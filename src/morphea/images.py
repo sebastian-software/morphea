@@ -128,24 +128,34 @@ def _flat_color_masks_result(
         _normalize_background_color(background) or _infer_background_color(image)
     )
     flattened_rgb = _flatten_rgba_image(image, inferred_background)
-    quantized_rgb = None
+
+    source_pixels = _image_pixels(image)
+    flattened_pixels = _image_pixels(flattened_rgb)
+    quantized_pixels = None
     if max_colors is not None:
-        quantized_rgb = flattened_rgb.quantize(colors=max_colors).convert("RGB")
+        # Median-cut quantization spends its clusters on the dominant
+        # background and anti-aliasing ramps of flat artwork, dropping
+        # small-but-distinct brand colors such as a thin dark ring. Instead,
+        # anchor the palette at the most frequent well-separated colors and
+        # snap every pixel to its nearest anchor (or the background).
+        anchors = _dominant_palette_anchors(
+            flattened_pixels,
+            background=inferred_background,
+            max_colors=max_colors,
+            min_separation=max(48.0, color_tolerance * 2),
+        )
+        quantized_pixels = [
+            _nearest_anchor(pixel, anchors, inferred_background)
+            for pixel in flattened_pixels
+        ]
         diagnostics.append(
             {
                 "level": "info",
                 "code": "palette_quantized",
                 "max_colors": max_colors,
+                "palette": [_hex_color(anchor) for anchor in anchors],
             }
         )
-
-    source_pixels = _image_pixels(image)
-    flattened_pixels = _image_pixels(flattened_rgb)
-    quantized_pixels = (
-        _image_pixels(quantized_rgb)
-        if quantized_rgb is not None
-        else None
-    )
     transparent_pixel_count = 0
     partial_alpha_pixel_count = 0
 
@@ -221,6 +231,91 @@ def _flat_color_masks_result(
         scale=scale,
         diagnostics=tuple(diagnostics),
     )
+
+
+def _dominant_palette_anchors(
+    pixels: list[tuple[int, ...]],
+    *,
+    background: Rgb,
+    max_colors: int,
+    min_separation: float,
+) -> list[Rgb]:
+    # Generated artwork rarely repeats exact colors, so dominance is
+    # aggregated over coarse 16-step color cells; each anchor is the most
+    # common exact color of its cell, keeping the brand tone crisp.
+    cell_counts: Counter[tuple[int, int, int]] = Counter()
+    cell_colors: dict[tuple[int, int, int], Counter[Rgb]] = {}
+    for pixel in pixels:
+        color = (int(pixel[0]), int(pixel[1]), int(pixel[2]))
+        cell = (color[0] >> 4, color[1] >> 4, color[2] >> 4)
+        cell_counts[cell] += 1
+        cell_colors.setdefault(cell, Counter())[color] += 1
+    minimum_share = max(16, len(pixels) // 500)
+    anchors: list[Rgb] = []
+    for cell, count in cell_counts.most_common():
+        if count < minimum_share:
+            break
+        color = cell_colors[cell].most_common(1)[0][0]
+        if _color_distance(color, background) < min_separation:
+            continue
+        if any(
+            _color_distance(color, anchor) < min_separation
+            for anchor in anchors
+        ):
+            continue
+        # Anti-aliasing ramps sit on the straight RGB line between two real
+        # colors; a candidate close to any anchor/background pair's segment
+        # is a blend seam, not a brand color.
+        if _is_blend_of_existing(color, anchors, background):
+            continue
+        anchors.append(color)
+        if len(anchors) >= max_colors:
+            break
+    return anchors
+
+
+def _is_blend_of_existing(
+    color: Rgb,
+    anchors: list[Rgb],
+    background: Rgb,
+) -> bool:
+    palette = [background, *anchors]
+    for index, first in enumerate(palette):
+        for second in palette[index + 1 :]:
+            if _point_to_rgb_segment_distance(color, first, second) < 24.0:
+                return True
+    return False
+
+
+def _point_to_rgb_segment_distance(point: Rgb, start: Rgb, end: Rgb) -> float:
+    direction = tuple(e - s for s, e in zip(start, end))
+    length_squared = sum(d * d for d in direction)
+    if length_squared <= 0:
+        return _color_distance(point, start)
+    t = sum(
+        (p - s) * d for p, s, d in zip(point, start, direction)
+    ) / length_squared
+    t = max(0.0, min(1.0, t))
+    closest = tuple(s + d * t for s, d in zip(start, direction))
+    return (
+        sum((p - c) ** 2 for p, c in zip(point, closest))
+    ) ** 0.5
+
+
+def _nearest_anchor(
+    pixel: tuple[int, ...],
+    anchors: list[Rgb],
+    background: Rgb,
+) -> Rgb:
+    color = (int(pixel[0]), int(pixel[1]), int(pixel[2]))
+    best = background
+    best_distance = _color_distance(color, background)
+    for anchor in anchors:
+        distance = _color_distance(color, anchor)
+        if distance < best_distance:
+            best = anchor
+            best_distance = distance
+    return best
 
 
 def _representative_mask_color(
@@ -727,6 +822,16 @@ def _scale_path(path: PathAnchor | None, factor: float) -> PathAnchor | None:
             )
             if path.controls is not None
             else None
+        ),
+        holes=tuple(
+            (
+                tuple(_scale_point(point, factor) for point in hole_points),
+                tuple(
+                    (_scale_point(c1, factor), _scale_point(c2, factor))
+                    for c1, c2 in hole_controls
+                ),
+            )
+            for hole_points, hole_controls in path.holes
         ),
     )
 

@@ -160,12 +160,34 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
             return
         controls = anchor["path"].get("controls")
         if controls:
-            draw.polygon(
-                _sampled_closed_bezier(points, controls),
-                fill=color,
-            )
+            outer = _sampled_closed_bezier(points, controls)
         else:
-            draw.polygon(_sampled_closed_catmull_rom(points), fill=color)
+            outer = _sampled_closed_catmull_rom(points)
+        holes = anchor["path"].get("holes") or []
+        if not holes:
+            draw.polygon(outer, fill=color)
+            return
+        # Even-odd fill: paint through a mask so the holes keep whatever
+        # was rendered underneath.
+        image = draw._image
+        mask = Image.new("L", image.size, 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.polygon(outer, fill=255)
+        for hole in holes:
+            hole_points = [
+                (float(point["x"]), float(point["y"]))
+                for point in hole.get("points", [])
+            ]
+            hole_controls = hole.get("controls")
+            if len(hole_points) >= 3 and hole_controls:
+                hole_polygon = _sampled_closed_bezier(hole_points, hole_controls)
+            elif len(hole_points) >= 3:
+                hole_polygon = hole_points
+            else:
+                continue
+            mask_draw.polygon(hole_polygon, fill=0)
+        overlay = Image.new("RGBA", image.size, color)
+        image.paste(overlay, (0, 0), mask)
         return
     if kind in {"rect", "rounded_rect", "quad"} and "quad" in anchor:
         points = [

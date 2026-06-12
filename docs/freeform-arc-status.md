@@ -113,10 +113,14 @@ Curated complex artwork lives in `assets/curated/`:
 - `morphea curated-check assets/curated/suite.json --run` executes the suite;
   `tests/test_curated.py` runs it as part of the normal test suite.
 
-The first case, `profile_head_synthetic`, is a deterministic stand-in for a
-classical profile head: one organic silhouette (adaptive node budget,
-~23 nodes), five curl slits and one eye slit detected as editable cut-out
-arcs and strokes.
+The suite carries four real brand logos (Stellara compass, Agoros map pin,
+Relanto Hermes, Palamedes laurel head) with honest expectations: rings and
+dots resolve to circle primitives, curl slits stay editable cut-outs, filled
+artwork falls back to organic outlines with even-odd holes, and per-case
+notes name the known gaps (merged map segments at analysis resolution, the
+coarse laurel-head silhouette whose face is carried by the background).
+Palamedes is the tracked FQ11 promotion candidate for concave-region
+handling.
 
 ## FQ11: Real-Image Promotion Process
 
