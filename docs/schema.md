@@ -296,6 +296,22 @@ Supported fields match current runtime knobs:
 
 CLI arguments override values loaded from the config file.
 
+## Report Config v1
+
+Read by `curve report --command-config`.
+
+Supported fields:
+
+- `manifest`
+- `output`
+- `config`: optional vectorize/run config JSON rendered in the report
+- `format`: optional `markdown` or `html`; when omitted, the output suffix
+  selects HTML for `.html` and Markdown otherwise
+
+`curve report --config` remains the optional vectorize/run config file that is
+rendered inside the report. CLI arguments override values loaded from
+`--command-config`.
+
 ## Segment Proposal Manifest v1
 
 Written by `curve segment`. `curve segment --markdown proposals.md` writes a

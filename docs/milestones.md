@@ -888,6 +888,8 @@ Implemented so far:
   classifier evaluation reports
 - `curve eval --config eval.json` for repeatable run-directory summaries
 - `curve profile --config profile.json` for repeatable bounded runtime probes
+- `curve report --command-config report.json` for repeatable standalone report
+  rendering from existing manifests
 - `curve harvest --config harvest.json` for repeatable pseudo-label quality
   gates
 - `curve harvest --markdown harvest.md` for scan-friendly pseudo-label quality

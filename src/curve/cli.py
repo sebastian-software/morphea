@@ -186,6 +186,7 @@ REFINEMENT_GATE_CONFIG_KEYS = {
     "require_improvement",
 }
 STATUS_CONFIG_KEYS = {"output", "markdown", "mlx_sam_model_path"}
+REPORT_CONFIG_KEYS = {"manifest", "output", "config", "format"}
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
@@ -430,9 +431,10 @@ def main(argv: list[str] | None = None) -> None:
         "report",
         help="Render a report from an existing vectorize manifest.",
     )
-    report.add_argument("manifest", type=Path)
-    report.add_argument("-o", "--output", type=Path, required=True)
+    report.add_argument("manifest", type=Path, nargs="?")
+    report.add_argument("-o", "--output", type=Path)
     report.add_argument("--config", type=Path)
+    report.add_argument("--command-config", type=Path)
     report.add_argument(
         "--format",
         choices=("markdown", "html"),
@@ -860,22 +862,25 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "report":
-        report_format = args.format or (
-            "html" if args.output.suffix.lower() == ".html" else "markdown"
+        report_config = _resolved_report_config(args)
+        report_format = report_config["format"] or (
+            "html"
+            if Path(report_config["output"]).suffix.lower() == ".html"
+            else "markdown"
         )
         if report_format == "html":
             write_html_report(
-                manifest=args.manifest,
-                output=args.output,
-                config=args.config,
+                manifest=report_config["manifest"],
+                output=report_config["output"],
+                config=report_config.get("config"),
             )
         else:
             write_markdown_report(
-                manifest=args.manifest,
-                output=args.output,
-                config=args.config,
+                manifest=report_config["manifest"],
+                output=report_config["output"],
+                config=report_config.get("config"),
             )
-        print(f"wrote report {args.output}")
+        print(f"wrote report {report_config['output']}")
         return
 
     if args.command == "train":
@@ -1239,6 +1244,27 @@ def _resolved_eval_config(args: argparse.Namespace) -> dict[str, Path]:
     if args.markdown is not None:
         config["markdown"] = args.markdown
     _require_config_paths(config, ("run_root", "output"), "eval")
+    return config
+
+
+def _resolved_report_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_report_config(args.command_config)
+    config.setdefault("format", None)
+    if args.manifest is not None:
+        config["manifest"] = args.manifest
+    if args.output is not None:
+        config["output"] = args.output
+    if args.config is not None:
+        config["config"] = args.config
+    if args.format is not None:
+        config["format"] = args.format
+    _require_config_paths(config, ("manifest", "output"), "report")
+    for key in ("manifest", "output", "config"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    report_format = config.get("format")
+    if report_format is not None and report_format not in {"markdown", "html"}:
+        raise ValueError("report format must be markdown or html")
     return config
 
 
@@ -1783,6 +1809,23 @@ def _load_profile_config(path: Path | None) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("input", "output", "classifier_model"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_report_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("report config must be a JSON object")
+    unknown = sorted(set(loaded) - REPORT_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported report config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("manifest", "output", "config"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

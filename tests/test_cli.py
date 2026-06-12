@@ -780,6 +780,99 @@ class CliTests(unittest.TestCase):
             self.assertIn("<h1>Curve Vectorize Report</h1>", html)
             self.assertIn("<code>quad</code>", html)
 
+    def test_report_cli_accepts_command_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = root / "manifest.json"
+            run_config = root / "run-config.json"
+            output = root / "report.md"
+            command_config = root / "report-config.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "width": 12,
+                        "height": 12,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "quad"}],
+                        "groups": [],
+                        "diagnostics": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_config.write_text(
+                json.dumps({"command": "vectorize", "min_area": 8}),
+                encoding="utf-8",
+            )
+            command_config.write_text(
+                json.dumps(
+                    {
+                        "manifest": str(manifest),
+                        "output": str(output),
+                        "config": str(run_config),
+                        "format": "markdown",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["report", "--command-config", str(command_config)])
+
+            report = output.read_text(encoding="utf-8")
+            self.assertIn("`quad`: 1", report)
+            self.assertIn('"min_area": 8', report)
+
+    def test_report_cli_args_override_command_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = root / "manifest.json"
+            config_output = root / "config-report.md"
+            cli_output = root / "cli-report.html"
+            command_config = root / "report-config.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "width": 12,
+                        "height": 12,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "circle"}],
+                        "layers": [],
+                        "groups": [],
+                        "diagnostics": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            command_config.write_text(
+                json.dumps(
+                    {
+                        "manifest": str(manifest),
+                        "output": str(config_output),
+                        "format": "markdown",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "report",
+                        "--command-config",
+                        str(command_config),
+                        "-o",
+                        str(cli_output),
+                        "--format",
+                        "html",
+                    ]
+                )
+
+            self.assertFalse(config_output.exists())
+            html = cli_output.read_text(encoding="utf-8")
+            self.assertIn("<h1>Curve Vectorize Report</h1>", html)
+            self.assertIn("<code>circle</code>", html)
+
 
 if __name__ == "__main__":
     unittest.main()
