@@ -124,6 +124,36 @@ class CliTests(unittest.TestCase):
             manifest = json.loads(output_path.with_suffix(".json").read_text())
             self.assertEqual(manifest["anchor_count"], 1)
 
+    def test_vectorize_config_accepts_explicit_background(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            config_path = Path(temp_dir) / "vectorize.json"
+            image = Image.new("RGB", (18, 14), "#f6f6f6")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((0, 0, 8, 5), fill="#003366")
+            image.save(input_path)
+            config_path.write_text(
+                json.dumps({"background": "#f6f6f6", "min_area": 4}),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertEqual(manifest["anchor_count"], 1)
+            self.assertEqual(manifest["anchors"][0]["color"], "#003366")
+
     def test_vectorize_config_rejects_unknown_keys(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

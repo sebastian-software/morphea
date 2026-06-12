@@ -32,6 +32,7 @@ class Segmenter(Protocol):
 
 @dataclass(frozen=True)
 class FlatColorSegmenter:
+    background: str | list[int] | tuple[int, int, int] | None = None
     min_area: int = 8
     color_tolerance: float = 0.0
     max_size: int | None = None
@@ -43,6 +44,7 @@ class FlatColorSegmenter:
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
         masks = flat_color_masks_from_image(
             image_path,
+            background=self.background,
             min_area=self.min_area,
             color_tolerance=self.color_tolerance,
             max_size=self.max_size,

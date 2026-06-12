@@ -152,6 +152,47 @@ class SweepTests(unittest.TestCase):
             self.assertEqual(run_config["cutout_export"], "negative_mask")
             self.assertIn('<mask id="curve-cutout-mask"', svg)
 
+    def test_run_sweep_passes_background_to_vectorize_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_top_left_foreground_image(root)
+            config = root / "sweep.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "input": str(image_path),
+                        "runs": [
+                            {
+                                "id": "explicit-bg",
+                                "config": {
+                                    "background": "#f6f6f6",
+                                    "min_area": 4,
+                                },
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output_dir = root / "runs"
+
+            summary = run_sweep(config, output_dir=output_dir)
+
+            run_config = json.loads(
+                (output_dir / "explicit-bg" / "config.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            manifest = json.loads(
+                (output_dir / "explicit-bg" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(summary["run_count"], 1)
+            self.assertEqual(run_config["background"], "#f6f6f6")
+            self.assertEqual(manifest["anchors"][0]["color"], "#003366")
+
     def test_render_sweep_markdown_ranks_by_editability_then_raster_error(self):
         markdown = render_sweep_markdown(
             {
@@ -219,6 +260,15 @@ def _write_cutout_image(root: Path) -> Path:
     draw = ImageDraw.Draw(image)
     draw.rectangle((2, 2, 15, 6), fill="#003366")
     draw.rectangle((6, 4, 11, 4), fill="white")
+    image.save(image_path)
+    return image_path
+
+
+def _write_top_left_foreground_image(root: Path) -> Path:
+    image_path = root / "top-left-foreground.png"
+    image = Image.new("RGB", (18, 14), "#f6f6f6")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((0, 0, 8, 5), fill="#003366")
     image.save(image_path)
     return image_path
 

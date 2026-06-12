@@ -13,6 +13,7 @@ from curve.runs import write_vectorize_run
 
 SWEEP_SCHEMA_VERSION = 1
 VECTORIZE_CONFIG_KEYS = {
+    "background",
     "min_area",
     "color_tolerance",
     "max_size",

@@ -47,6 +47,7 @@ from curve.sweeps import run_sweep
 
 
 VECTORIZE_DEFAULT_CONFIG = {
+    "background": None,
     "min_area": 8,
     "color_tolerance": 0.0,
     "max_size": None,
@@ -89,6 +90,7 @@ TRAIN_MLX_CONFIG_KEYS = {
 }
 SEGMENT_CONFIG_DEFAULTS = {
     "segmenter": "flat_color",
+    "background": None,
     "min_area": 8,
     "color_tolerance": 0.0,
     "max_size": None,
@@ -157,6 +159,10 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         required=True,
         help="Output SVG path.",
+    )
+    vectorize.add_argument(
+        "--background",
+        help="Explicit background color as #rrggbb for flattening/grouping.",
     )
     vectorize.add_argument(
         "--min-area",
@@ -244,6 +250,7 @@ def main(argv: list[str] | None = None) -> None:
     profile.add_argument("input", type=Path)
     profile.add_argument("-o", "--output", type=Path, required=True)
     profile.add_argument("--repeats", type=int, default=1)
+    profile.add_argument("--background")
     profile.add_argument("--min-area", type=int, default=None)
     profile.add_argument("--color-tolerance", type=float, default=None)
     profile.add_argument("--max-size", type=int)
@@ -296,6 +303,7 @@ def main(argv: list[str] | None = None) -> None:
     segment.add_argument("input", type=Path)
     segment.add_argument("-o", "--output", type=Path, required=True)
     segment.add_argument("--segmenter", choices=("flat_color", "mlx_sam"))
+    segment.add_argument("--background")
     segment.add_argument("--min-area", type=int)
     segment.add_argument("--color-tolerance", type=float)
     segment.add_argument("--max-size", type=int)
@@ -1212,6 +1220,11 @@ def _segmenter_from_config(
     segmenter = config.get("segmenter")
     if segmenter == "flat_color":
         return FlatColorSegmenter(
+            background=(
+                config.get("background")
+                if config.get("background") is not None
+                else None
+            ),
             min_area=int(config["min_area"]),
             color_tolerance=float(config["color_tolerance"]),
             max_size=(

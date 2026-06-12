@@ -11,6 +11,7 @@ from curve.runs import write_vectorize_run
 
 
 VECTORIZE_CONFIG_KEYS = {
+    "background",
     "min_area",
     "color_tolerance",
     "max_size",

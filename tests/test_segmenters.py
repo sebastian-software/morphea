@@ -39,6 +39,16 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual({proposal.color for proposal in proposals}, {"#dd2222"})
         self.assertTrue(all(proposal.status == "proposed" for proposal in proposals))
 
+    def test_flat_color_segmenter_accepts_explicit_background(self):
+        image_path = _write_top_left_foreground_image()
+
+        proposals = FlatColorSegmenter(background="#f6f6f6", min_area=4).propose(
+            image_path
+        )
+
+        self.assertEqual(len(proposals), 1)
+        self.assertEqual(proposals[0].color, "#003366")
+
     def test_flat_color_segmenter_marks_oversized_components_deferred(self):
         image_path = _write_same_color_component_image()
 
@@ -100,6 +110,7 @@ class SegmenterTests(unittest.TestCase):
                 json.dumps(
                     {
                         "segmenter": "flat_color",
+                        "background": "#ffffff",
                         "min_area": 4,
                         "color_tolerance": 0.0,
                         "max_component_area": 10,
@@ -124,6 +135,7 @@ class SegmenterTests(unittest.TestCase):
             manifest = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(manifest["schema_version"], 1)
             self.assertEqual(manifest["config"]["segmenter"], "flat_color")
+            self.assertEqual(manifest["config"]["background"], "#ffffff")
             self.assertTrue(manifest["backend"]["backend_available"])
             self.assertEqual(manifest["backend"]["source"], "flat_color")
             self.assertEqual(manifest["config"]["max_component_area"], 10)
@@ -201,6 +213,17 @@ def _write_same_color_component_image() -> Path:
     draw = ImageDraw.Draw(image)
     draw.rectangle((2, 2, 6, 6), fill="#dd2222")
     draw.rectangle((14, 2, 20, 8), fill="#dd2222")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_top_left_foreground_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "top-left-foreground.png"
+    image = Image.new("RGB", (18, 14), "#f6f6f6")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((0, 0, 8, 5), fill="#003366")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path

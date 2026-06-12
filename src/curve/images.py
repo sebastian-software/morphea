@@ -28,6 +28,7 @@ from curve.scene import Scene
 
 
 Rgb = tuple[int, int, int]
+BackgroundColor = Rgb | str | list[int] | None
 
 
 @dataclass(frozen=True)
@@ -48,7 +49,7 @@ class ImageMaskResult:
 def flat_color_masks_from_image(
     path: str | Path,
     *,
-    background: Rgb | None = None,
+    background: BackgroundColor = None,
     min_area: int = 8,
     color_tolerance: float = 0.0,
     max_size: int | None = None,
@@ -74,7 +75,7 @@ def flat_color_masks_from_image(
 def _flat_color_masks_result(
     path: str | Path,
     *,
-    background: Rgb | None,
+    background: BackgroundColor,
     min_area: int,
     color_tolerance: float,
     max_size: int | None,
@@ -107,7 +108,9 @@ def _flat_color_masks_result(
     pixel_indexes_by_color: dict[Rgb, list[int]] = {}
     palette: list[Rgb] = []
     palette_bucket_cache: dict[Rgb, Rgb] = {}
-    inferred_background = background or _infer_background_color(image)
+    inferred_background = (
+        _normalize_background_color(background) or _infer_background_color(image)
+    )
     flattened_rgb = _flatten_rgba_image(image, inferred_background)
     quantized_rgb = None
     if max_colors is not None:
@@ -214,7 +217,7 @@ def _flatten_rgba_image(image: Image.Image, background: Rgb) -> Image.Image:
 def scene_from_flat_color_image(
     path: str | Path,
     *,
-    background: Rgb | None = None,
+    background: BackgroundColor = None,
     min_area: int = 8,
     color_tolerance: float = 0.0,
     max_size: int | None = None,
@@ -587,6 +590,28 @@ def _scale_point(point: Point, factor: float) -> Point:
 
 def _hex_color(color: Rgb) -> str:
     return f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+
+
+def _normalize_background_color(color: BackgroundColor) -> Rgb | None:
+    if color is None:
+        return None
+    if isinstance(color, str):
+        value = color.removeprefix("#")
+        if len(value) != 6:
+            raise ValueError("background must be a #rrggbb color")
+        try:
+            return (
+                int(value[0:2], 16),
+                int(value[2:4], 16),
+                int(value[4:6], 16),
+            )
+        except ValueError as error:
+            raise ValueError("background must be a #rrggbb color") from error
+    if isinstance(color, (list, tuple)) and len(color) == 3:
+        channels = tuple(int(channel) for channel in color)
+        if all(0 <= channel <= 255 for channel in channels):
+            return channels
+    raise ValueError("background must be a #rrggbb color or RGB triplet")
 
 
 def _nearest_palette_color(

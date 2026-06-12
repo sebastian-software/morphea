@@ -56,7 +56,13 @@ class ProfilingTests(unittest.TestCase):
             output = root / "profile.json"
             config = root / "vectorize-config.json"
             config.write_text(
-                json.dumps({"min_area": 4, "timeout_seconds": 5}),
+                json.dumps(
+                    {
+                        "background": "#ffffff",
+                        "min_area": 4,
+                        "timeout_seconds": 5,
+                    }
+                ),
                 encoding="utf-8",
             )
 
@@ -76,6 +82,7 @@ class ProfilingTests(unittest.TestCase):
 
             report = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(report["repeat_count"], 1)
+            self.assertEqual(report["config"]["background"], "#ffffff")
             self.assertEqual(report["config"]["timeout_seconds"], 5)
 
     def test_profile_rejects_zero_repeats(self):

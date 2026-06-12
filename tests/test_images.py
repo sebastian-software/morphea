@@ -42,6 +42,16 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertEqual(scene.anchors[0].kind, AnchorKind.CIRCLE)
         self.assertEqual(scene.anchors[0].color, "#dd2222")
 
+    def test_explicit_background_preserves_top_left_foreground_shape(self):
+        image_path = _write_top_left_foreground_image()
+
+        masks = flat_color_masks_from_image(image_path, background="#f6f6f6")
+        scene = scene_from_flat_color_image(image_path, background="#f6f6f6")
+
+        self.assertEqual([mask.color for mask in masks], ["#003366"])
+        self.assertEqual(len(scene.anchors), 1)
+        self.assertEqual(scene.anchors[0].color, "#003366")
+
     def test_white_gap_inside_flat_shape_exports_cutout_stroke(self):
         image_path = _write_cutout_gap_image()
 
@@ -191,6 +201,17 @@ def _write_near_flat_circle_image() -> Path:
         ),
         fill="#e02a2a",
     )
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_top_left_foreground_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "top-left-foreground.png"
+    image = Image.new("RGB", (18, 14), "#f6f6f6")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((0, 0, 8, 5), fill="#003366")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
