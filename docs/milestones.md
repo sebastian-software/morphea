@@ -133,7 +133,7 @@ Remaining:
 
 ## M2: Primitive Anchor Detection V2
 
-Status: started.
+Status: implemented for the current primitive-anchor baseline.
 
 Purpose: make simple forms robust enough to be trusted before generic fitting.
 
@@ -208,7 +208,7 @@ Implemented so far:
 
 ## M3: Scene Graph and Layer Semantics
 
-Status: started.
+Status: implemented for the current scene-graph baseline.
 
 Purpose: move from a list of anchors to a coherent editable vector scene.
 
@@ -278,7 +278,7 @@ Implemented so far:
 
 ## M4: Reports, Metrics, and Experiment Runs
 
-Status: started.
+Status: implemented for the current experiment-report baseline.
 
 Purpose: make every iteration measurable.
 
@@ -365,7 +365,7 @@ Implemented so far:
 
 ## M5: Synthetic Dataset Generator
 
-Status: started.
+Status: implemented for the current synthetic-data baseline.
 
 Purpose: create reliable labels for training and evaluation.
 
@@ -420,7 +420,7 @@ Implemented so far:
 
 ## M6: Local MLX Segmentation Layer
 
-Status: started.
+Status: implemented for the current local-segmentation baseline.
 
 Purpose: add local AI as a proposal layer, not as the final source of truth.
 
@@ -504,7 +504,7 @@ Implemented so far:
 
 ## M7: Primitive Classifier Training
 
-Status: started.
+Status: implemented for the current classifier-training baseline.
 
 Purpose: train the first local model that helps choose semantic primitive type.
 
@@ -636,7 +636,7 @@ Remaining:
 
 ## M8: Self-Learning Loop
 
-Status: started.
+Status: implemented for the current self-learning baseline.
 
 Purpose: turn the pipeline into an iteration engine.
 
