@@ -195,6 +195,51 @@ class RefinementTests(unittest.TestCase):
                 result["anchors"][0]["metrics"],
             )
 
+    def test_differentiable_refinement_adjusts_stroke_centerline_from_source(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = _write_stroke_manifest(root, y=8)
+            source = _write_stroke_source(root, y=9)
+            output = root / "refined.json"
+
+            result = refine_manifest(
+                manifest=manifest,
+                output=output,
+                config=RefinementConfig(
+                    backend="differentiable",
+                    max_iterations=3,
+                    timeout_seconds=1.0,
+                    source_image=source,
+                ),
+            )
+
+            centerline = result["anchors"][0]["stroke"]["centerline"]
+            self.assertEqual(result["anchors"][0]["kind"], "stroke_polyline")
+            self.assertGreater(centerline[0]["y"], 8.0)
+            self.assertGreater(centerline[1]["y"], 8.0)
+            self.assertIn(
+                "stroke_polyline",
+                result["refinement"]["optimizer"]["optimized_parameter_kinds"],
+            )
+            self.assertIn(
+                "stroke_polyline",
+                result["refinement"]["optimizer"]["renderer_primitive_kinds"],
+            )
+            self.assertLess(
+                result["refinement"]["optimizer"]["final_objective"],
+                result["refinement"]["optimizer"]["initial_objective"],
+            )
+            self.assertGreater(
+                result["anchors"][0]["metrics"][
+                    "refinement_stroke_centerline_delta"
+                ],
+                0.0,
+            )
+            self.assertIn(
+                "differentiable_stroke_dy_gradient",
+                result["anchors"][0]["metrics"],
+            )
+
     def test_refine_cli_accepts_source_image(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -667,7 +667,16 @@ def _optimize_differentiable_geometry(
             str(anchor.get("kind"))
             for anchor in result.get("anchors", [])
             if isinstance(anchor, dict)
-            and anchor.get("kind") in {"circle", "rect", "rounded_rect", "quad"}
+            and anchor.get("kind")
+            in {
+                "circle",
+                "rect",
+                "rounded_rect",
+                "quad",
+                "stroke_polyline",
+                "stroke_path",
+                "arc",
+            }
         }
         for _ in range(max_iterations):
             if _deadline_exceeded(started_at, timeout_seconds):
@@ -717,6 +726,66 @@ def _optimize_differentiable_geometry(
                         - old_radius
                     )
                     metrics["differentiable_radius_gradient"] = gradient
+                    anchor["metrics"] = metrics
+                    current_metrics = candidate_metrics
+                    optimized_kinds.add(kind)
+                    improved = True
+                    continue
+                if kind in {"stroke_polyline", "stroke_path", "arc"}:
+                    base_centerline = _stroke_centerline(anchor)
+                    if base_centerline is None:
+                        continue
+                    base_widths = _stroke_width_samples(anchor)
+                    gradient = _soft_stroke_transform_gradient(
+                        result,
+                        anchor,
+                        source_rgba,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    if max(abs(value) for value in gradient) < 1e-6:
+                        continue
+                    candidate_centerline, candidate_widths = _stroke_gradient_step(
+                        base_centerline,
+                        base_widths,
+                        gradient,
+                    )
+                    if (
+                        candidate_centerline == base_centerline
+                        and candidate_widths == base_widths
+                    ):
+                        continue
+                    candidate = _with_stroke_geometry(
+                        result,
+                        anchor,
+                        candidate_centerline,
+                        candidate_widths,
+                    )
+                    candidate_metrics = _manifest_soft_raster_metrics(
+                        candidate,
+                        source_rgba,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    if candidate_metrics["objective"] >= current_metrics["objective"]:
+                        continue
+                    stroke = anchor.get("stroke")
+                    if not isinstance(stroke, dict):
+                        continue
+                    stroke["centerline"] = _manifest_points(candidate_centerline)
+                    stroke["width_samples"] = list(candidate_widths)
+                    metrics = dict(anchor.get("metrics", {}))
+                    metrics["refinement_stroke_centerline_delta"] = (
+                        metrics.get("refinement_stroke_centerline_delta", 0.0)
+                        + _centerline_delta(base_centerline, candidate_centerline)
+                    )
+                    metrics["refinement_stroke_width_delta"] = (
+                        metrics.get("refinement_stroke_width_delta", 0.0)
+                        + _width_delta(base_widths, candidate_widths)
+                    )
+                    metrics["differentiable_stroke_dx_gradient"] = gradient[0]
+                    metrics["differentiable_stroke_dy_gradient"] = gradient[1]
+                    metrics["differentiable_stroke_width_gradient"] = gradient[2]
                     anchor["metrics"] = metrics
                     current_metrics = candidate_metrics
                     optimized_kinds.add(kind)
@@ -939,6 +1008,53 @@ def _soft_quad_transform_gradient(
     return (dx_gradient, dy_gradient, scale_gradient)
 
 
+def _soft_stroke_transform_gradient(
+    manifest: dict[str, object],
+    target_anchor: dict[str, object],
+    source: Image.Image,
+    *,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> tuple[float, float, float]:
+    del raster_edge_weight
+    base_centerline = _stroke_centerline(target_anchor)
+    if base_centerline is None:
+        return (0.0, 0.0, 0.0)
+    base_widths = _stroke_width_samples(target_anchor)
+    epsilon = 0.25
+
+    def objective(
+        centerline: tuple[tuple[float, float], ...],
+        width_samples: tuple[float, ...],
+    ) -> float:
+        candidate = _with_stroke_geometry(
+            manifest,
+            target_anchor,
+            centerline,
+            width_samples,
+        )
+        return _manifest_soft_raster_metrics(
+            candidate,
+            source,
+            raster_l1_weight=raster_l1_weight,
+            raster_edge_weight=0.0,
+        )["objective"]
+
+    dx_gradient = (
+        objective(_translate_points(base_centerline, epsilon, 0.0), base_widths)
+        - objective(_translate_points(base_centerline, -epsilon, 0.0), base_widths)
+    ) / (epsilon * 2.0)
+    dy_gradient = (
+        objective(_translate_points(base_centerline, 0.0, epsilon), base_widths)
+        - objective(_translate_points(base_centerline, 0.0, -epsilon), base_widths)
+    ) / (epsilon * 2.0)
+    width_gradient = (
+        objective(base_centerline, _adjust_width_samples(base_widths, epsilon))
+        - objective(base_centerline, _adjust_width_samples(base_widths, -epsilon))
+    ) / (epsilon * 2.0)
+    return (dx_gradient, dy_gradient, width_gradient)
+
+
 def _quad_gradient_step(
     corners: tuple[tuple[float, float], ...],
     gradient: tuple[float, float, float],
@@ -953,6 +1069,25 @@ def _quad_gradient_step(
     )
     translated = _translate_quad_corners(corners, dx, dy)
     return _scale_quad_corners(translated, scale_delta)
+
+
+def _stroke_gradient_step(
+    centerline: tuple[tuple[float, float], ...],
+    width_samples: tuple[float, ...],
+    gradient: tuple[float, float, float],
+) -> tuple[tuple[tuple[float, float], ...], tuple[float, ...]]:
+    dx_gradient, dy_gradient, width_gradient = gradient
+    dx = _bounded_gradient_step(dx_gradient, learning_rate=180.0, max_step=1.0)
+    dy = _bounded_gradient_step(dy_gradient, learning_rate=180.0, max_step=1.0)
+    width_delta = _bounded_gradient_step(
+        width_gradient,
+        learning_rate=180.0,
+        max_step=1.0,
+    )
+    return (
+        _translate_points(centerline, dx, dy),
+        _adjust_width_samples(width_samples, width_delta),
+    )
 
 
 def _bounded_gradient_step(
@@ -991,6 +1126,16 @@ def _soft_raster_rgb(
             if corners is None:
                 continue
             alpha = _soft_quad_alpha(corners, px, py)
+        elif kind in {"stroke_polyline", "stroke_path", "arc"}:
+            centerline = _stroke_centerline(anchor)
+            if centerline is None:
+                continue
+            alpha = _soft_stroke_alpha(
+                centerline,
+                _stroke_width_samples(anchor),
+                px,
+                py,
+            )
         else:
             continue
         color = _hex_rgb(str(anchor.get("color") or "#0b2d5f"))
@@ -1028,6 +1173,42 @@ def _polygon_orientation(corners: tuple[tuple[float, float], ...]) -> float:
         x2, y2 = corners[(index + 1) % len(corners)]
         area += (x1 * y2) - (x2 * y1)
     return area
+
+
+def _soft_stroke_alpha(
+    centerline: tuple[tuple[float, float], ...],
+    width_samples: tuple[float, ...],
+    px: float,
+    py: float,
+) -> float:
+    if len(centerline) < 2:
+        return 0.0
+    width = sum(width_samples) / max(len(width_samples), 1)
+    radius = max(0.25, width / 2.0)
+    distance = min(
+        _point_segment_distance(px, py, ax, ay, bx, by)
+        for (ax, ay), (bx, by) in zip(centerline, centerline[1:], strict=False)
+    )
+    return min(1.0, max(0.0, 0.5 + (radius - distance) / 2.0))
+
+
+def _point_segment_distance(
+    px: float,
+    py: float,
+    ax: float,
+    ay: float,
+    bx: float,
+    by: float,
+) -> float:
+    edge_x = bx - ax
+    edge_y = by - ay
+    length_sq = (edge_x**2) + (edge_y**2)
+    if length_sq <= 1e-12:
+        return ((px - ax) ** 2 + (py - ay) ** 2) ** 0.5
+    t = max(0.0, min(1.0, (((px - ax) * edge_x) + ((py - ay) * edge_y)) / length_sq))
+    nearest_x = ax + (t * edge_x)
+    nearest_y = ay + (t * edge_y)
+    return ((px - nearest_x) ** 2 + (py - nearest_y) ** 2) ** 0.5
 
 
 def _hex_rgb(color: str) -> tuple[int, int, int]:
@@ -1166,6 +1347,21 @@ def _stroke_variants(
             )
         )
     return tuple(variants)
+
+
+def _translate_points(
+    points: tuple[tuple[float, float], ...],
+    dx: float,
+    dy: float,
+) -> tuple[tuple[float, float], ...]:
+    return tuple((x + dx, y + dy) for x, y in points)
+
+
+def _adjust_width_samples(
+    width_samples: tuple[float, ...],
+    delta: float,
+) -> tuple[float, ...]:
+    return tuple(max(0.5, sample + delta) for sample in width_samples)
 
 
 def _quad_corners(anchor: dict[str, object]) -> tuple[tuple[float, float], ...] | None:
