@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -118,6 +119,24 @@ class PrimitiveQualityTests(unittest.TestCase):
             anchor = manifest["anchors"][0]
             self.assertEqual(anchor["kind"], "rounded_rect")
             self.assertGreater(anchor["metrics"]["corner_radius"], 3.0)
+
+    def test_adjacent_different_color_rect_svgs_export_without_contact_gaps(self):
+        cases = (
+            "adjacent_different_color_rects_horizontal",
+            "adjacent_different_color_rects_vertical",
+            "adjacent_different_color_rects_offset",
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(output_dir=temp_dir, cases=cases)
+
+            self.assertTrue(report["ok"])
+            for case_id in cases:
+                rects = _svg_rects(Path(temp_dir) / case_id / "output.svg")
+                self.assertEqual(len(rects), 2)
+                self.assertTrue(
+                    _has_touching_rect_pair(rects),
+                    f"{case_id} exported rects do not touch without a gap",
+                )
 
     def test_primitive_quality_harness_matches_multiple_anchors(self):
         report = check_primitive_quality(cases=("composition_square_plus_circle_a",))
@@ -352,6 +371,50 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertEqual(report["case_count"], 1)
             self.assertEqual(report["selection"]["cases"], ["filled_square"])
             self.assertTrue(markdown.exists())
+
+
+def _svg_rects(path: Path) -> list[dict[str, float]]:
+    root = ET.fromstring(path.read_text(encoding="utf-8"))
+    rects: list[dict[str, float]] = []
+    for element in root.iter():
+        if element.tag.rsplit("}", 1)[-1] != "rect":
+            continue
+        rects.append(
+            {
+                "x0": float(element.attrib["x"]),
+                "y0": float(element.attrib["y"]),
+                "x1": float(element.attrib["x"]) + float(element.attrib["width"]),
+                "y1": float(element.attrib["y"]) + float(element.attrib["height"]),
+            }
+        )
+    return rects
+
+
+def _has_touching_rect_pair(rects: list[dict[str, float]]) -> bool:
+    for index, first in enumerate(rects):
+        for second in rects[index + 1 :]:
+            if _rects_touch_vertically(first, second) or _rects_touch_horizontally(
+                first,
+                second,
+            ):
+                return True
+    return False
+
+
+def _rects_touch_vertically(first: dict[str, float], second: dict[str, float]) -> bool:
+    touches_x = abs(first["x1"] - second["x0"]) < 1e-9 or abs(
+        second["x1"] - first["x0"]
+    ) < 1e-9
+    overlaps_y = min(first["y1"], second["y1"]) - max(first["y0"], second["y0"]) > 0
+    return touches_x and overlaps_y
+
+
+def _rects_touch_horizontally(first: dict[str, float], second: dict[str, float]) -> bool:
+    touches_y = abs(first["y1"] - second["y0"]) < 1e-9 or abs(
+        second["y1"] - first["y0"]
+    ) < 1e-9
+    overlaps_x = min(first["x1"], second["x1"]) - max(first["x0"], second["x0"]) > 0
+    return touches_y and overlaps_x
 
 
 if __name__ == "__main__":

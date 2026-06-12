@@ -168,8 +168,12 @@ class SceneExportTests(unittest.TestCase):
 
         svg = scene.to_svg()
 
-        self.assertIn('<rect x="2" y="3" width="6" height="4" rx="0" ry="0"', svg)
-        self.assertIn('<rect x="3" y="9" width="7" height="4" rx="2" ry="2"', svg)
+        self.assertIn(
+            '<rect x="2" y="3" width="7" height="5" rx="0" ry="0"',
+            svg,
+        )
+        self.assertIn('shape-rendering="crispEdges"', svg)
+        self.assertIn('<rect x="3" y="9" width="8" height="5" rx="2" ry="2"', svg)
 
     def test_circle_ring_exports_editable_svg_stroke_circle(self):
         mask = BinaryMask.from_rows(

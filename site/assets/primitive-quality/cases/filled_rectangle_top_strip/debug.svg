@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="rect">
-    <rect x="10" y="4" width="44" height="12" rx="0" ry="0" fill="#003366" />
+    <rect x="10" y="4" width="45" height="13" rx="0" ry="0" fill="#003366" shape-rendering="crispEdges" />
     <rect x="10" y="4" width="44" height="12" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
     <text x="10" y="2" font-size="4" fill="#ff00ff">anchor-0000:rect:0.942857</text>
   </g>

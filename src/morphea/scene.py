@@ -397,12 +397,18 @@ def anchor_to_svg_element(
         )
 
     if anchor.kind in {AnchorKind.RECT, AnchorKind.ROUNDED_RECT} and anchor.quad is not None:
-        min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+        min_x, min_y, width, height = _rect_svg_box(anchor)
         radius = anchor.metrics.get("corner_radius", 0.0)
+        rendering = (
+            ' shape-rendering="crispEdges"'
+            if radius == 0.0 and _integer_axis_aligned_quad(anchor)
+            else ""
+        )
         return (
             f'<rect x="{_fmt(min_x)}" y="{_fmt(min_y)}" '
-            f'width="{_fmt(max_x - min_x)}" height="{_fmt(max_y - min_y)}" '
-            f'rx="{_fmt(radius)}" ry="{_fmt(radius)}" fill="{escape(fill)}" />'
+            f'width="{_fmt(width)}" height="{_fmt(height)}" '
+            f'rx="{_fmt(radius)}" ry="{_fmt(radius)}" fill="{escape(fill)}"'
+            f"{rendering} />"
         )
 
     if anchor.kind == AnchorKind.QUAD and anchor.quad is not None:
@@ -1338,6 +1344,43 @@ def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]
         ys = [point.y for point in anchor.quad.corners]
         return (min(xs), min(ys), max(xs), max(ys))
     return (0.0, 0.0, 0.0, 0.0)
+
+
+def _rect_svg_box(anchor: AnchorCandidate) -> tuple[float, float, float, float]:
+    min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+    width = max_x - min_x
+    height = max_y - min_y
+    if _integer_axis_aligned_quad(anchor):
+        width += 1
+        height += 1
+    return min_x, min_y, width, height
+
+
+def _integer_axis_aligned_quad(anchor: AnchorCandidate) -> bool:
+    if anchor.quad is None:
+        return False
+    corners = anchor.quad.corners
+    if len(corners) != 4:
+        return False
+    min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+    expected = {
+        (min_x, min_y),
+        (max_x, min_y),
+        (max_x, max_y),
+        (min_x, max_y),
+    }
+    actual = {(point.x, point.y) for point in corners}
+    if actual != expected:
+        return False
+    return all(
+        _is_integer_coordinate(value)
+        for point in corners
+        for value in (point.x, point.y)
+    )
+
+
+def _is_integer_coordinate(value: float) -> bool:
+    return abs(value - round(value)) < 1e-9
 
 
 def _stroke_bounds(stroke: StrokeAnchor, width: float) -> tuple[float, float, float, float]:

@@ -6,6 +6,6 @@
     </mask>
   </defs>
   <g mask="url(#morphea-cutout-mask)">
-    <rect x="12" y="16" width="40" height="32" rx="0" ry="0" fill="#003366" />
+    <rect x="12" y="16" width="41" height="33" rx="0" ry="0" fill="#003366" shape-rendering="crispEdges" />
   </g>
 </svg>

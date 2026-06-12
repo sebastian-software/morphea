@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="rect">
-    <rect x="10" y="16" width="32" height="32" rx="0" ry="0" fill="#003366" />
+    <rect x="10" y="16" width="33" height="33" rx="0" ry="0" fill="#003366" shape-rendering="crispEdges" />
     <rect x="10" y="16" width="32" height="32" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
     <text x="10" y="14" font-size="4" fill="#ff00ff">anchor-0000:rect:0.812655</text>
   </g>
   <g id="anchor-0001" data-kind="rect">
-    <rect x="28" y="26" width="28" height="28" rx="0" ry="0" fill="#c99700" />
+    <rect x="28" y="26" width="29" height="29" rx="0" ry="0" fill="#c99700" shape-rendering="crispEdges" />
     <rect x="28" y="26" width="28" height="28" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
     <text x="28" y="24" font-size="4" fill="#ff00ff">anchor-0001:rect:1.0</text>
   </g>
