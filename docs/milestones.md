@@ -553,6 +553,8 @@ Implemented so far:
 - comparison reports include a scan-friendly augmentation verdict with
   best/worst accuracy deltas and train-example delta, so regressions are easier
   to spot before retraining is accepted.
+- `curve compare-training --markdown comparison.md` writes a scan-friendly
+  retraining comparison table derived from the JSON report.
 - `curve retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
@@ -729,6 +731,8 @@ Implemented so far:
 - `curve merge-labels --config merge-labels.json` for repeatable reviewed-label
   dataset export
 - `curve compare-training --config compare.json` for repeatable retraining
+  comparisons
+- `curve compare-training --markdown compare.md` for scan-friendly retraining
   comparisons
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve refine --config refine.json` for repeatable bounded refinement runs

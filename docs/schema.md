@@ -457,6 +457,7 @@ Supported fields:
 - `pseudo_dataset`
 - `validation_dataset`
 - `output`
+- `markdown`: optional Markdown report path
 
 CLI arguments override values loaded from the config file.
 
@@ -592,6 +593,8 @@ Both `baseline` and `augmented` include validation/test `evaluation` and
 `ranking_evaluation` sections using the same validation dataset. The report is
 intended to show whether reviewed pseudo-labels improve, degrade, or leave
 candidate ranking unchanged before a heavier retraining backend is introduced.
+`curve compare-training --markdown comparison.md` writes a scan-friendly
+Markdown table derived from the same JSON report.
 
 ## Snapshot Comparison v1
 
