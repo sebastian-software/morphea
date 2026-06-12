@@ -144,6 +144,69 @@ class CliTests(unittest.TestCase):
                     ]
                 )
 
+    def test_vectorize_reads_cutout_export_from_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            config_path = Path(temp_dir) / "vectorize.json"
+            image = Image.new("RGB", (18, 9), "white")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((2, 2, 15, 6), fill="#003366")
+            draw.rectangle((6, 4, 11, 4), fill="white")
+            image.save(input_path)
+            config_path.write_text(
+                json.dumps({"min_area": 8, "cutout_export": "negative_mask"}),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                    ]
+                )
+
+            svg = output_path.read_text(encoding="utf-8")
+            self.assertIn('<mask id="curve-cutout-mask"', svg)
+
+    def test_vectorize_cutout_export_flag_overrides_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            config_path = Path(temp_dir) / "vectorize.json"
+            image = Image.new("RGB", (18, 9), "white")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((2, 2, 15, 6), fill="#003366")
+            draw.rectangle((6, 4, 11, 4), fill="white")
+            image.save(input_path)
+            config_path.write_text(
+                json.dumps({"min_area": 8, "cutout_export": "negative_mask"}),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                        "--cutout-export",
+                        "overlay_stroke",
+                    ]
+                )
+
+            svg = output_path.read_text(encoding="utf-8")
+            self.assertNotIn('<mask id="curve-cutout-mask"', svg)
+            self.assertIn('stroke="#ffffff"', svg)
+
     def test_vectorize_manifest_includes_cutout_strokes(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

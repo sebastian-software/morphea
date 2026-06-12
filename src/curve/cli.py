@@ -73,6 +73,7 @@ VECTORIZE_DEFAULT_CONFIG = {
     "rect_max_fill_error": 0.08,
     "rounded_rect_max_fill_error": 0.30,
 }
+CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
@@ -191,7 +192,7 @@ def main(argv: list[str] | None = None) -> None:
     vectorize.add_argument(
         "--cutout-export",
         choices=("overlay_stroke", "negative_mask"),
-        default="overlay_stroke",
+        default=None,
         help="Export cut-outs as visible overlay strokes or as an editable SVG mask.",
     )
     vectorize.add_argument("--raster-error-weight", type=float)
@@ -479,13 +480,14 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if args.command == "vectorize":
         vectorize_config = _resolved_vectorize_config(args)
+        cutout_export = _resolved_cutout_export(args)
         config = {
             "command": "vectorize",
             "input": str(args.input),
             "output": str(args.output),
             "debug_svg": str(args.debug_svg) if args.debug_svg else None,
             "config": str(args.config) if args.config else None,
-            "cutout_export": args.cutout_export,
+            "cutout_export": cutout_export,
             **vectorize_config,
         }
         scene = scene_from_flat_color_image(
@@ -505,7 +507,7 @@ def main(argv: list[str] | None = None) -> None:
 
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
-            scene.to_svg(SvgStyle(cutout_strategy=args.cutout_export)),
+            scene.to_svg(SvgStyle(cutout_strategy=cutout_export)),
             encoding="utf-8",
         )
         if args.debug_svg is not None:
@@ -770,13 +772,28 @@ def _resolved_vectorize_config(args: argparse.Namespace) -> dict[str, object]:
     config = dict(VECTORIZE_DEFAULT_CONFIG)
     if args.config is not None:
         loaded = _load_vectorize_config(args.config)
-        config.update(loaded)
+        config.update(
+            {
+                key: value
+                for key, value in loaded.items()
+                if key in VECTORIZE_DEFAULT_CONFIG
+            }
+        )
 
     for key in VECTORIZE_DEFAULT_CONFIG:
         value = getattr(args, key, None)
         if value is not None:
             config[key] = str(value) if key == "classifier_model" else value
     return config
+
+
+def _resolved_cutout_export(args: argparse.Namespace) -> str:
+    if args.cutout_export is not None:
+        return str(args.cutout_export)
+    if args.config is None:
+        return "overlay_stroke"
+    loaded = _load_vectorize_config(args.config)
+    return str(loaded.get("cutout_export", "overlay_stroke"))
 
 
 def _resolved_train_config(args: argparse.Namespace) -> dict[str, Path]:
@@ -883,10 +900,14 @@ def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
         raise ValueError("vectorize config must be a JSON object")
-    unknown = sorted(set(loaded) - set(VECTORIZE_DEFAULT_CONFIG))
+    supported = set(VECTORIZE_DEFAULT_CONFIG) | {"cutout_export"}
+    unknown = sorted(set(loaded) - supported)
     if unknown:
         msg = f"unsupported vectorize config keys: {', '.join(unknown)}"
         raise ValueError(msg)
+    cutout_export = loaded.get("cutout_export")
+    if cutout_export is not None and cutout_export not in CUTOUT_EXPORT_VALUES:
+        raise ValueError("cutout_export must be overlay_stroke or negative_mask")
     return loaded
 
 
