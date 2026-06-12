@@ -54,7 +54,7 @@ def generate_synthetic_sample(
     height: int = 96,
     difficulty: str = "basic",
 ) -> SyntheticSample:
-    if difficulty not in {"basic", "dense", "logo"}:
+    if difficulty not in {"basic", "dense", "grid", "logo"}:
         msg = f"unsupported synthetic difficulty: {difficulty}"
         raise ValueError(msg)
 
@@ -77,6 +77,8 @@ def generate_synthetic_sample(
     anchors.append(_draw_cutout_stroke(draw, width, height))
     if difficulty == "dense":
         anchors.extend(_draw_parallel_stroke_group(draw, rng, width, height))
+    if difficulty == "grid":
+        anchors.extend(_draw_large_perspective_tile_grid(draw, rng, width, height))
     if difficulty == "logo":
         anchors.extend(_draw_logo_composition(draw, rng, width, height))
 
@@ -439,6 +441,62 @@ def _draw_tile_grid(
                     color=color,
                     quad=QuadAnchor(corners=corners),
                     metrics={"grid_row": float(row_index), "grid_col": float(col_index)},
+                )
+            )
+    return tuple(anchors)
+
+
+def _draw_large_perspective_tile_grid(
+    draw: ImageDraw.ImageDraw,
+    rng: Random,
+    width: int,
+    height: int,
+) -> tuple[AnchorCandidate, ...]:
+    left_top = Point(width * 0.16, height * 0.42)
+    right_top = Point(width * 0.84, height * 0.42)
+    left_bottom = Point(width * 0.03, height * 0.96)
+    right_bottom = Point(width * 0.97, height * 0.96)
+    row_count = 3
+    column_count = 4
+    row_guides = tuple(
+        (
+            _lerp_point(left_top, left_bottom, row_index / row_count),
+            _lerp_point(right_top, right_bottom, row_index / row_count),
+        )
+        for row_index in range(row_count + 1)
+    )
+    anchors: list[AnchorCandidate] = []
+    for row_index in range(row_count):
+        for column_index in range(column_count):
+            left_a, right_a = row_guides[row_index]
+            left_b, right_b = row_guides[row_index + 1]
+            col_a = column_index / column_count
+            col_b = (column_index + 1) / column_count
+            corners = (
+                _lerp_point(left_a, right_a, col_a),
+                _lerp_point(left_a, right_a, col_b),
+                _lerp_point(left_b, right_b, col_b),
+                _lerp_point(left_b, right_b, col_a),
+            )
+            color = PALETTE[
+                (row_index + column_index + rng.randint(0, 2)) % len(PALETTE)
+            ]
+            draw.polygon(_point_xy(corners), fill=color, outline="white")
+            anchors.append(
+                AnchorCandidate(
+                    kind=AnchorKind.QUAD,
+                    raster_error=0.0,
+                    node_count=4,
+                    parameter_count=8,
+                    color=color,
+                    quad=QuadAnchor(corners=corners),
+                    metrics={
+                        "grid_row": float(row_index),
+                        "grid_col": float(column_index),
+                        "synthetic_grid_family": 1.0,
+                        "synthetic_grid_row_count": float(row_count),
+                        "synthetic_grid_column_count": float(column_count),
+                    },
                 )
             )
     return tuple(anchors)
