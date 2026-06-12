@@ -39,6 +39,20 @@ class MaskComponentTests(unittest.TestCase):
         self.assertEqual(component.height, 2)
         self.assertEqual(component.row_spans(), ((1, 2, 4), (2, 2, 3)))
 
+    def test_connected_components_keep_diagonal_neighbors_connected(self):
+        mask = BinaryMask.from_rows(
+            (
+                "#..",
+                ".#.",
+                "..#",
+            )
+        )
+
+        components = connected_components(mask)
+
+        self.assertEqual(len(components), 1)
+        self.assertEqual(components[0].area, 3)
+
 
 class PrimitiveDetectionTests(unittest.TestCase):
     def test_filled_dot_is_detected_as_circle_anchor(self):
