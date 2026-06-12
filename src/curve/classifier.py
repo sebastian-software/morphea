@@ -37,6 +37,18 @@ FEATURE_NAMES = (
     "quad_width",
     "quad_height",
     "quad_subtype_code",
+    "group_count",
+    "in_perspective_grid",
+    "in_parallel_stroke_group",
+    "in_same_color_fragment_group",
+    "in_primitive_anchor_reservation",
+)
+
+GROUP_FEATURE_KINDS = (
+    "perspective_grid",
+    "parallel_stroke_group",
+    "same_color_fragment_group",
+    "primitive_anchor_reservation",
 )
 
 
@@ -89,6 +101,14 @@ def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
         if isinstance(value, (int, float)):
             quad_subtype_code = float(value)
 
+    group_context = anchor.get("group_context", [])
+    groups = group_context if isinstance(group_context, list) else []
+    group_kinds = {
+        str(group.get("kind"))
+        for group in groups
+        if isinstance(group, dict) and group.get("kind") is not None
+    }
+
     return (
         float(anchor.get("node_count", 0)),
         float(anchor.get("parameter_count", 0)),
@@ -101,6 +121,11 @@ def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
         float(quad_width),
         float(quad_height),
         quad_subtype_code,
+        float(len(groups)),
+        *(
+            1.0 if kind in group_kinds else 0.0
+            for kind in GROUP_FEATURE_KINDS
+        ),
     )
 
 
@@ -149,11 +174,13 @@ def examples_from_dataset(
         manifest = json.loads(
             (root / sample["manifest"]).read_text(encoding="utf-8")
         )
-        for anchor in manifest.get("anchors", []):
+        for anchor_index, anchor in enumerate(manifest.get("anchors", [])):
             examples.append(
                 TrainingExample(
                     label=anchor["kind"],
-                    features=features_from_anchor(anchor),
+                    features=features_from_anchor(
+                        _anchor_with_group_context(manifest, anchor_index, anchor)
+                    ),
                 )
             )
     return tuple(examples)
@@ -185,7 +212,9 @@ def raster_examples_from_dataset(
             examples.append(
                 RasterTrainingExample(
                     label=anchor["kind"],
-                    features=features_from_anchor(anchor),
+                    features=features_from_anchor(
+                        _anchor_with_group_context(manifest, anchor_index, anchor)
+                    ),
                     crop_tokens=_rgba_crop_tokens(image, bounds, crop_size),
                     bounds=bounds,
                     sample_id=str(sample.get("id", "")),
@@ -243,6 +272,51 @@ def anchors_from_dataset(
         manifest = json.loads((root / sample["manifest"]).read_text(encoding="utf-8"))
         anchors.extend(anchor for anchor in manifest.get("anchors", []))
     return tuple(anchors)
+
+
+def _anchor_with_group_context(
+    manifest: dict[str, object],
+    anchor_index: int,
+    anchor: dict[str, object],
+) -> dict[str, object]:
+    if "group_context" in anchor:
+        return anchor
+    group_context = _anchor_group_context(manifest, anchor_index)
+    if not group_context:
+        return anchor
+    return {**anchor, "group_context": group_context}
+
+
+def _anchor_group_context(
+    manifest: dict[str, object],
+    anchor_index: int,
+) -> list[dict[str, object]]:
+    groups = manifest.get("groups", [])
+    if not isinstance(groups, list):
+        return []
+    context: list[dict[str, object]] = []
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        indexes = group.get("anchor_indexes", [])
+        if not isinstance(indexes, list) or anchor_index not in indexes:
+            continue
+        entry: dict[str, object] = {}
+        for key in (
+            "id",
+            "kind",
+            "anchor_indexes",
+            "metrics",
+            "source_group_id",
+            "source_anchor_indexes",
+            "source_anchor_position",
+            "color",
+        ):
+            if key in group:
+                entry[key] = group[key]
+        entry["anchor_position"] = indexes.index(anchor_index)
+        context.append(entry)
+    return context
 
 
 def _component_crop_bounds(component: MaskComponent) -> tuple[int, int, int, int]:
@@ -645,7 +719,21 @@ def predict_label(
     centroids: dict[str, tuple[float, ...]],
     features: tuple[float, ...],
 ) -> str:
-    return min(centroids, key=lambda label: dist(features, centroids[label]))
+    return min(
+        centroids,
+        key=lambda label: dist(
+            _align_features(features, len(centroids[label])),
+            centroids[label],
+        ),
+    )
+
+
+def _align_features(features: tuple[float, ...], expected_count: int) -> tuple[float, ...]:
+    if len(features) == expected_count:
+        return features
+    if len(features) > expected_count:
+        return features[:expected_count]
+    return (*features, *((0.0,) * (expected_count - len(features))))
 
 
 def _predict_feature_head(
@@ -710,15 +798,27 @@ def _feature_head_logits(
         normalization = {}
     mean = tuple(float(value) for value in normalization.get("mean", ()))
     scale = tuple(float(value) for value in normalization.get("scale", ()))
+    if not labels or len(weights) < len(labels) or len(bias) < len(labels):
+        msg = "classifier feature head is malformed"
+        raise ValueError(msg)
+    feature_count = min(
+        len(mean),
+        len(scale),
+        *(len(weights[class_index]) for class_index in range(len(labels))),
+    )
+    if feature_count <= 0:
+        msg = "classifier feature head is malformed"
+        raise ValueError(msg)
+    aligned_features = _align_features(features, feature_count)
     normalized = tuple(
-        (features[index] - mean[index]) / scale[index]
-        for index in range(len(FEATURE_NAMES))
+        (aligned_features[index] - mean[index]) / scale[index]
+        for index in range(feature_count)
     )
     logits = [
         bias[class_index]
         + sum(
             weights[class_index][feature_index] * normalized[feature_index]
-            for feature_index in range(len(FEATURE_NAMES))
+            for feature_index in range(feature_count)
         )
         for class_index in range(len(labels))
     ]

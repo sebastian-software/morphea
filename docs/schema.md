@@ -772,6 +772,14 @@ numeric feature. This lets the first classifier learn trapezoid and
 parallelogram-sensitive ranking behavior without expanding the top-level class
 set or forcing downstream exporters to understand new primitive kinds.
 
+Primitive classifier feature extraction also includes lightweight scene-group
+context when a manifest anchor belongs to `groups`. The numeric features record
+the group count plus membership flags for `perspective_grid`,
+`parallel_stroke_group`, `same_color_fragment_group`, and
+`primitive_anchor_reservation`. This lets synthetic and reviewed pseudo-label
+training preserve simple-shape and grid context without changing primitive
+labels.
+
 ## Primitive Classifier Model v1
 
 Written by `curve train`, `curve retrain`, and `curve train-mlx`.

@@ -22,6 +22,7 @@ from curve.classifier import (
     load_classifier_model,
     load_centroid_model,
     predict_classifier_label,
+    predict_label,
     raster_examples_from_dataset,
     train_centroid_classifier,
 )
@@ -71,8 +72,32 @@ class PrimitiveClassifierTests(unittest.TestCase):
         )
 
         self.assertEqual(len(features), len(FEATURE_NAMES))
-        self.assertEqual(FEATURE_NAMES[-1], "quad_subtype_code")
-        self.assertEqual(features[-1], 2.0)
+        subtype_index = FEATURE_NAMES.index("quad_subtype_code")
+        self.assertEqual(features[subtype_index], 2.0)
+
+    def test_features_from_anchor_include_group_context_features(self):
+        features = features_from_anchor(
+            {
+                "kind": "quad",
+                "node_count": 4,
+                "parameter_count": 8,
+                "group_context": [
+                    {"kind": "perspective_grid"},
+                    {"kind": "primitive_anchor_reservation"},
+                ],
+            }
+        )
+
+        self.assertEqual(features[FEATURE_NAMES.index("group_count")], 2.0)
+        self.assertEqual(features[FEATURE_NAMES.index("in_perspective_grid")], 1.0)
+        self.assertEqual(
+            features[FEATURE_NAMES.index("in_primitive_anchor_reservation")],
+            1.0,
+        )
+        self.assertEqual(
+            features[FEATURE_NAMES.index("in_parallel_stroke_group")],
+            0.0,
+        )
 
     def test_examples_from_dataset_reads_train_split_manifests(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -101,6 +126,75 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 "stroke_path",
                 "stroke_polyline",
             })
+
+    def test_examples_from_dataset_adds_manifest_group_context_features(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest_path = root / "sample.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "anchors": [
+                            {
+                                "kind": "quad",
+                                "node_count": 4,
+                                "parameter_count": 8,
+                            },
+                            {
+                                "kind": "quad",
+                                "node_count": 4,
+                                "parameter_count": 8,
+                            },
+                        ],
+                        "groups": [
+                            {
+                                "id": "grid-1",
+                                "kind": "perspective_grid",
+                                "anchor_indexes": [0, 1],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            dataset_path = root / "dataset.json"
+            dataset_path.write_text(
+                json.dumps(
+                    {
+                        "samples": [
+                            {
+                                "id": "sample-0000",
+                                "split": "train",
+                                "manifest": "sample.json",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            examples = examples_from_dataset(dataset_path)
+
+            self.assertEqual(len(examples), 2)
+            for example in examples:
+                self.assertEqual(
+                    example.features[FEATURE_NAMES.index("group_count")],
+                    1.0,
+                )
+                self.assertEqual(
+                    example.features[FEATURE_NAMES.index("in_perspective_grid")],
+                    1.0,
+                )
+
+    def test_predict_label_aligns_new_features_to_legacy_centroids(self):
+        centroids = {
+            "circle": (1.0, 0.0),
+            "quad": (9.0, 9.0),
+        }
+
+        predicted = predict_label(centroids, (1.0, 0.0, 1.0))
+
+        self.assertEqual(predicted, "circle")
 
     def test_raster_examples_from_dataset_reads_rgba_crop_tokens(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -557,6 +557,10 @@ Implemented so far:
 - classifier feature extraction includes detected/generated
   `quad_subtype_code` values so trapezoid and parallelogram structure can
   influence candidate ranking without adding new top-level primitive classes
+- classifier feature extraction includes anchor `group_context` signals for
+  perspective grids, parallel stroke groups, same-color fragment groups, and
+  primitive reservations, so reviewed pseudo-labels can carry scene structure
+  into centroid and MLX training examples.
 - classifier training can extract fixed-size RGBA anchor-crop token sequences
   from synthetic dataset images and manifests.
 - `curve train-mlx --crop-size N` records the raster token size, token shape,
