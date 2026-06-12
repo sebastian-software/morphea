@@ -116,6 +116,9 @@ Implemented so far:
   passes and per-pixel neighbor tuple allocation.
 - raster edge metrics use compact integer luma buffers instead of float lists
   during preview/refinement comparisons.
+- mask components cache derived centroid, boundary-pixel, and row-span
+  geometry so primitive candidate generation does not rescan the same pixels
+  for each simple-shape hypothesis.
 
 Remaining:
 
