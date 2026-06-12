@@ -58,6 +58,74 @@ class CliTests(unittest.TestCase):
             self.assertIn("mlx", status["classifiers"])
             self.assertTrue(markdown.exists())
 
+    def test_status_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "status.json"
+            markdown = root / "status.md"
+            model_path = root / "sam.npz"
+            config = root / "status-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "output": str(output),
+                        "markdown": str(markdown),
+                        "mlx_sam_model_path": str(model_path),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with (
+                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                redirect_stdout(StringIO()),
+            ):
+                main(["status", "--config", str(config)])
+
+            status = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                status["segmenters"]["mlx_sam"]["model_path"],
+                str(model_path),
+            )
+            self.assertTrue(markdown.exists())
+
+    def test_status_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "status.json"
+            config_model = root / "config-sam.npz"
+            cli_model = root / "cli-sam.npz"
+            config = root / "status-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "output": str(output),
+                        "mlx_sam_model_path": str(config_model),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with (
+                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                redirect_stdout(StringIO()),
+            ):
+                main(
+                    [
+                        "status",
+                        "--config",
+                        str(config),
+                        "--mlx-sam-model-path",
+                        str(cli_model),
+                    ]
+                )
+
+            status = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                status["segmenters"]["mlx_sam"]["model_path"],
+                str(cli_model),
+            )
+
     def test_vectorize_accepts_color_tolerance(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

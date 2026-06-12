@@ -360,6 +360,8 @@ same proposal schema once the local model runtime is installed and wired.
 ## Runtime Status Report v1
 
 Written by `curve status`.
+`curve status --config status.json` accepts `output`, `markdown`, and
+`mlx_sam_model_path`. CLI arguments override matching config values.
 
 Top-level fields:
 

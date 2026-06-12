@@ -915,6 +915,8 @@ Implemented so far:
 - `curve status -o status.json --markdown status.md` for a single
   machine-readable report of segmenter, classifier, and refinement backend
   availability/blockers
+- `curve status --config status.json` for repeatable runtime/backend
+  availability checks
 - `curve curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
 - `curve segment --config segment.json` for repeatable segment proposal runs

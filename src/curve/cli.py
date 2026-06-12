@@ -184,6 +184,7 @@ REFINEMENT_GATE_CONFIG_KEYS = {
     "max_objective_regression",
     "require_improvement",
 }
+STATUS_CONFIG_KEYS = {"output", "markdown", "mlx_sam_model_path"}
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
@@ -694,9 +695,10 @@ def main(argv: list[str] | None = None) -> None:
         "status",
         help="Write runtime/backend availability status.",
     )
-    status.add_argument("-o", "--output", type=Path, required=True)
+    status.add_argument("-o", "--output", type=Path)
     status.add_argument("--markdown", type=Path)
     status.add_argument("--mlx-sam-model-path", type=Path)
+    status.add_argument("--config", type=Path)
 
     curated_check = subcommands.add_parser(
         "curated-check",
@@ -1157,10 +1159,11 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "status":
+        status_config = _resolved_status_config(args)
         result = collect_runtime_status(
-            output=args.output,
-            markdown=args.markdown,
-            mlx_sam_model_path=args.mlx_sam_model_path,
+            output=status_config["output"],
+            markdown=status_config.get("markdown"),
+            mlx_sam_model_path=status_config.get("mlx_sam_model_path"),
         )
         print(f"wrote runtime status with {len(result['blocked_backends'])} blockers")
         return
@@ -1569,6 +1572,21 @@ def _resolved_refinement_gate_config(args: argparse.Namespace) -> dict[str, obje
     return config
 
 
+def _resolved_status_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_status_config(args.config)
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    if args.mlx_sam_model_path is not None:
+        config["mlx_sam_model_path"] = args.mlx_sam_model_path
+    _require_config_paths(config, ("output",), "status")
+    for key in ("output", "markdown", "mlx_sam_model_path"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
     config = dict(HARVEST_DEFAULT_CONFIG)
     if args.config is not None:
@@ -1809,6 +1827,23 @@ def _load_refinement_gate_config(path: Path) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("refined_manifest", "output", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_status_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("status config must be a JSON object")
+    unknown = sorted(set(loaded) - STATUS_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported status config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("output", "markdown", "mlx_sam_model_path"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config
