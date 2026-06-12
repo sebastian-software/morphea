@@ -14,6 +14,7 @@ from curve.segmenters import (
     MlxSamSegmenter,
     mlx_sam_runtime_status,
     proposals_to_manifest,
+    render_segment_proposal_markdown,
     segment_proposal_summary,
     segmenter_backend_status,
 )
@@ -121,6 +122,24 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(summary["anchor_kind_counts"]["rect"], 1)
         self.assertEqual(summary["reserved_anchor_count"], 1)
 
+    def test_render_segment_proposal_markdown_summarizes_reservations(self):
+        image_path = _write_two_color_image()
+        proposals = FlatColorSegmenter().propose(image_path)
+        manifest = {
+            "input": str(image_path),
+            "backend": {"source": "flat_color", "status": "available"},
+            "proposal_count": len(proposals),
+            "summary": segment_proposal_summary(proposals),
+            "proposals": proposals_to_manifest(proposals),
+        }
+
+        markdown = render_segment_proposal_markdown(manifest)
+
+        self.assertIn("# Curve Segment Proposals", markdown)
+        self.assertIn("- Reserved anchors: `2`", markdown)
+        self.assertIn("`rect`", markdown)
+        self.assertIn("simple_shape_anchor", markdown)
+
     def test_mlx_sam_segmenter_reports_not_configured(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
@@ -195,6 +214,7 @@ class SegmenterTests(unittest.TestCase):
             root = Path(temp_dir)
             image_path = _write_two_color_image()
             output = root / "segments.json"
+            markdown = root / "segments.md"
             config = root / "segment-config.json"
             config.write_text(
                 json.dumps(
@@ -217,6 +237,8 @@ class SegmenterTests(unittest.TestCase):
                         str(image_path),
                         "-o",
                         str(output),
+                        "--markdown",
+                        str(markdown),
                         "--config",
                         str(config),
                     ]
@@ -245,6 +267,9 @@ class SegmenterTests(unittest.TestCase):
             )
             self.assertIsNone(manifest["proposals"][0]["anchor_kind"])
             self.assertFalse(manifest["proposals"][0]["anchor_reserved"])
+            report = markdown.read_text(encoding="utf-8")
+            self.assertIn("# Curve Segment Proposals", report)
+            self.assertIn("- Reserved anchors: `0`", report)
 
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:

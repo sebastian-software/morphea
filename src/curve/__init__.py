@@ -90,6 +90,7 @@ from curve.segmenters import (
     SegmentProposal,
     Segmenter,
     proposals_to_manifest,
+    render_segment_proposal_markdown,
 )
 from curve.self_learning import (
     apply_review_file,
@@ -210,6 +211,7 @@ __all__ = [
     "predict_label",
     "predict_classifier_label",
     "raster_examples_from_dataset",
+    "render_segment_proposal_markdown",
     "profile_vectorize",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",

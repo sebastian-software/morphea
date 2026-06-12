@@ -449,6 +449,9 @@ Implemented so far:
   to be accepted anchors.
 - segment proposal manifests include aggregate proposal status, downstream
   status, anchor-kind, and reserved-anchor counts for quick scan/review.
+- `curve segment --markdown proposals.md` renders a scan-friendly proposal
+  report with backend status, aggregate counts, anchor kinds, and reservation
+  reasons.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
@@ -859,6 +862,8 @@ Implemented so far:
   machine-readable report of segmenter, classifier, and refinement backend
   availability/blockers
 - `curve segment --config segment.json` for repeatable segment proposal runs
+- `curve segment --markdown proposals.md` for scan-friendly segment proposal
+  reports
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
   MLX backend to be installed

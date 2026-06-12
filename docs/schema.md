@@ -264,7 +264,9 @@ CLI arguments override values loaded from the config file.
 
 ## Segment Proposal Manifest v1
 
-Written by `curve segment`.
+Written by `curve segment`. `curve segment --markdown proposals.md` writes a
+scan-friendly Markdown report derived from the same manifest, including summary
+counts and a proposal table with anchor reservation state.
 
 Top-level fields:
 

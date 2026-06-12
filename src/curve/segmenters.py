@@ -217,6 +217,50 @@ def segment_proposal_summary(
     }
 
 
+def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
+    """Render a scan-friendly segment proposal report."""
+
+    summary = manifest.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    backend = manifest.get("backend", {})
+    if not isinstance(backend, dict):
+        backend = {}
+    lines = [
+        "# Curve Segment Proposals",
+        "",
+        f"- Input: `{manifest.get('input', 'unknown')}`",
+        f"- Source: `{backend.get('source', 'unknown')}`",
+        f"- Backend status: `{backend.get('status', 'unknown')}`",
+        f"- Proposal count: `{manifest.get('proposal_count', 0)}`",
+        f"- Status counts: {_format_counts(summary.get('status_counts', {}))}",
+        "- Downstream status counts: "
+        f"{_format_counts(summary.get('downstream_status_counts', {}))}",
+        f"- Anchor kind counts: {_format_counts(summary.get('anchor_kind_counts', {}))}",
+        f"- Reserved anchors: `{summary.get('reserved_anchor_count', 0)}`",
+        "",
+        "| ID | Status | Downstream | Anchor | Reserved | Bounds | Reason |",
+        "| --- | --- | --- | --- | ---: | --- | --- |",
+    ]
+    proposals = manifest.get("proposals", [])
+    if not isinstance(proposals, list):
+        proposals = []
+    for proposal in proposals:
+        if not isinstance(proposal, dict):
+            continue
+        lines.append(
+            "| "
+            f"`{proposal.get('id', 'unknown')}` | "
+            f"`{proposal.get('status', 'unknown')}` | "
+            f"`{proposal.get('downstream_status', 'unknown')}` | "
+            f"`{proposal.get('anchor_kind') or 'n/a'}` | "
+            f"{str(bool(proposal.get('anchor_reserved', False))).lower()} | "
+            f"`{_format_bounds(proposal.get('bounds'))}` | "
+            f"{proposal.get('reservation_reason') or proposal.get('rejection_reason') or 'n/a'} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def _proposal_from_color_mask(
     index: int,
     source: str,
@@ -289,6 +333,19 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _format_counts(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return "`none`"
+    parts = [f"{key}: {count}" for key, count in sorted(value.items())]
+    return "`" + ", ".join(parts) + "`"
+
+
+def _format_bounds(value: object) -> str:
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        return "n/a"
+    return ",".join(str(part) for part in value)
 
 
 def _primitive_anchor_summary(component: MaskComponent) -> dict[str, object]:

@@ -31,6 +31,7 @@ from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
     proposals_to_manifest,
+    render_segment_proposal_markdown,
     segment_proposal_summary,
     segmenter_backend_status,
 )
@@ -361,6 +362,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     segment.add_argument("input", type=Path)
     segment.add_argument("-o", "--output", type=Path, required=True)
+    segment.add_argument("--markdown", type=Path)
     segment.add_argument("--segmenter", choices=("flat_color", "mlx_sam"))
     segment.add_argument("--background")
     segment.add_argument("--min-area", type=int)
@@ -783,6 +785,12 @@ def main(argv: list[str] | None = None) -> None:
             json.dumps(manifest, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+        if args.markdown is not None:
+            args.markdown.parent.mkdir(parents=True, exist_ok=True)
+            args.markdown.write_text(
+                render_segment_proposal_markdown(manifest),
+                encoding="utf-8",
+            )
         print(f"wrote {len(proposals)} segment proposals")
         return
 
