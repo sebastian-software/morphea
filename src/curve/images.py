@@ -371,6 +371,9 @@ def _bounded_connected_components(
         start_y = start // mask.width
         min_x = max_x = start_x
         min_y = max_y = start_y
+        sum_x = 0
+        sum_y = 0
+        row_spans: dict[int, tuple[int, int]] = {}
         store_pixels = True
 
         while queue:
@@ -386,15 +389,23 @@ def _bounded_connected_components(
             x = index % mask.width
             y = index // mask.width
             area += 1
+            sum_x += x
+            sum_y += y
             min_x = min(min_x, x)
             max_x = max(max_x, x)
             min_y = min(min_y, y)
             max_y = max(max_y, y)
             if store_pixels:
                 pixel_indexes.append(index)
+                if y not in row_spans:
+                    row_spans[y] = (x, x)
+                else:
+                    row_min_x, row_max_x = row_spans[y]
+                    row_spans[y] = (min(row_min_x, x), max(row_max_x, x))
             if max_component_area is not None and area > max_component_area:
                 store_pixels = False
                 pixel_indexes.clear()
+                row_spans.clear()
 
             _enqueue_neighbors8(
                 grid,
@@ -426,6 +437,10 @@ def _bounded_connected_components(
                     for index in pixel_indexes
                 ),
                 bounds_hint=(min_x, min_y, max_x, max_y),
+                centroid_hint=Point(sum_x / area, sum_y / area),
+                row_spans_hint=tuple(
+                    (y, *row_spans[y]) for y in sorted(row_spans)
+                ),
             )
         )
 
