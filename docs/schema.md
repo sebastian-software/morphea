@@ -354,6 +354,28 @@ free-form string list for structured human notes such as `wrong_primitive_type`,
 labels include a `review` provenance object and apply `corrected_kind` to both
 the top-level label kind and embedded anchor kind when present.
 
+## Review Config v1
+
+Read by `curve review --config`.
+
+Supported fields:
+
+- `pseudo_labels`
+- `output`
+
+CLI arguments override values loaded from the config file.
+
+## Apply Review Config v1
+
+Read by `curve apply-review --config`.
+
+Supported fields:
+
+- `review`
+- `output`
+
+CLI arguments override values loaded from the config file.
+
 ## Training Config v1
 
 Read by `curve train --config`.
