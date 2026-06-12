@@ -622,6 +622,14 @@ def scene_metrics_to_manifest(
         quality_metric_error(anchor.metrics)
         for anchor in anchors
     ]
+    simple_shape_priority_bonuses = [
+        simple_shape_priority_bonus(anchor)
+        for anchor in anchors
+    ]
+    semantic_anchor_scores = [
+        semantic_anchor_score(anchor)
+        for anchor in anchors
+    ]
     diagnostic_penalty = min(
         sum(1 for diagnostic in diagnostics if diagnostic.get("level") == "warning")
         * 0.05,
@@ -668,6 +676,30 @@ def scene_metrics_to_manifest(
             6,
         ),
         "anchor_quality_metric_summary": _anchor_quality_metric_summary(anchors),
+        "anchor_scoring_summary": {
+            "simple_shape_priority_bonus_total": round(
+                sum(simple_shape_priority_bonuses),
+                6,
+            ),
+            "simple_shape_priority_bonus_mean": round(
+                mean(simple_shape_priority_bonuses)
+                if simple_shape_priority_bonuses
+                else 0.0,
+                6,
+            ),
+            "semantic_anchor_score_mean": round(
+                mean(semantic_anchor_scores) if semantic_anchor_scores else 0.0,
+                6,
+            ),
+            "semantic_anchor_score_min": round(
+                min(semantic_anchor_scores) if semantic_anchor_scores else 0.0,
+                6,
+            ),
+            "semantic_anchor_score_max": round(
+                max(semantic_anchor_scores) if semantic_anchor_scores else 0.0,
+                6,
+            ),
+        },
         "diagnostic_penalty": round(diagnostic_penalty, 6),
         "editability_score": round(editability_score, 6),
         "color_fragment_counts": _color_fragment_counts(anchors),

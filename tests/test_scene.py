@@ -562,6 +562,14 @@ class SceneExportTests(unittest.TestCase):
             metrics["anchor_quality_metric_summary"]["stroke_width_variance"],
             {"count": 1, "mean": 0.4, "max": 0.4},
         )
+        self.assertEqual(
+            metrics["anchor_scoring_summary"]["simple_shape_priority_bonus_total"],
+            0.6,
+        )
+        self.assertEqual(
+            metrics["anchor_scoring_summary"]["semantic_anchor_score_min"],
+            -0.205,
+        )
 
     def test_auto_merge_compact_same_color_rect_fragments(self):
         fragments = (

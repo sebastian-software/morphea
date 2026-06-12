@@ -350,6 +350,8 @@ Implemented so far:
 - anchor manifests include `simple_shape_priority_bonus` and
   `semantic_anchor_score`, making simple-form preference visible in reports,
   reviews, and pseudo-label harvesting.
+- scene metrics aggregate anchor scoring into `anchor_scoring_summary`, so
+  runs expose total/mean simple-shape priority and semantic score envelopes.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

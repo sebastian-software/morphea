@@ -83,6 +83,9 @@ Scene metrics:
 - `anchor_quality_metric_summary`: per-metric aggregate counts, means, and
   maxima for primitive quality metrics such as `circle_roundness_error`,
   `line_smoothness_error`, `stroke_width_variance`, and quad/grid errors
+- `anchor_scoring_summary`: aggregate `simple_shape_priority_bonus` and
+  `semantic_anchor_score` values so run reports can audit semantic-first
+  ranking pressure
 - `diagnostic_penalty`
 - `editability_score`
 - `raster_l1_error`: average normalized RGB error for run-directory previews
