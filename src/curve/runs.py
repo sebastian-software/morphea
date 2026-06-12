@@ -406,16 +406,18 @@ def _mask_summary_artifact(manifest: dict[str, object]) -> dict[str, object]:
     for anchor in manifest.get("anchors", []):
         if not isinstance(anchor, dict):
             continue
-        reserved = anchor.get("reserved", {})
-        bounds = reserved.get("bounds", []) if isinstance(reserved, dict) else []
+        source_mask = anchor.get("source_mask", {})
+        source_mask = source_mask if isinstance(source_mask, dict) else {}
         masks.append(
             {
+                "id": source_mask.get("id"),
                 "anchor_id": anchor.get("id"),
                 "kind": anchor.get("kind"),
                 "color": anchor.get("color"),
                 "layer": anchor.get("layer"),
-                "bounds": bounds,
-                "source": "reserved_bounds",
+                "bounds": source_mask.get("bounds", []),
+                "bounds_area": source_mask.get("bounds_area", 0.0),
+                "source": source_mask.get("source", "reserved_bounds"),
             }
         )
     return {

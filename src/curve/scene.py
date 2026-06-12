@@ -234,6 +234,8 @@ def anchor_to_manifest_with_index(
     index: int | None,
 ) -> dict[str, object]:
     anchor_id = f"anchor-{index:04d}" if index is not None else None
+    source_mask_id = f"mask-{index:04d}" if index is not None else None
+    bounds = list(_anchor_bounds(anchor))
     data: dict[str, object] = {
         "id": anchor_id,
         "kind": anchor.kind.value,
@@ -241,8 +243,14 @@ def anchor_to_manifest_with_index(
         "layer": _anchor_layer(anchor),
         "confidence": _anchor_confidence(anchor),
         "reserved": {
-            "bounds": list(_anchor_bounds(anchor)),
+            "bounds": bounds,
             "reason": _reservation_reason(anchor),
+        },
+        "source_mask": {
+            "id": source_mask_id,
+            "source": "reserved_bounds",
+            "bounds": bounds,
+            "bounds_area": round(_bounds_area(bounds), 6),
         },
         "provenance": {
             "source": "primitive_anchor_detection",
@@ -631,9 +639,13 @@ def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
 def _reserved_bounds_area(anchors: tuple[AnchorCandidate, ...]) -> float:
     area = 0.0
     for anchor in anchors:
-        min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
-        area += max(0.0, max_x - min_x) * max(0.0, max_y - min_y)
+        area += _bounds_area(_anchor_bounds(anchor))
     return area
+
+
+def _bounds_area(bounds: tuple[float, float, float, float] | list[float]) -> float:
+    min_x, min_y, max_x, max_y = bounds
+    return max(0.0, max_x - min_x) * max(0.0, max_y - min_y)
 
 
 def _anchor_layer(anchor: AnchorCandidate) -> str:

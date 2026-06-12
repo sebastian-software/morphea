@@ -56,7 +56,10 @@ class RunWriterTests(unittest.TestCase):
             self.assertEqual(palette["colors"][0]["color"], "#dd2222")
             self.assertEqual(palette["colors"][0]["kinds"], {"circle": 1})
             self.assertEqual(masks["mask_count"], 1)
+            self.assertEqual(masks["masks"][0]["id"], "mask-0000")
+            self.assertEqual(masks["masks"][0]["anchor_id"], "anchor-0000")
             self.assertEqual(masks["masks"][0]["source"], "reserved_bounds")
+            self.assertGreater(masks["masks"][0]["bounds_area"], 0.0)
             self.assertIn(
                 "`raster_l1_error`",
                 run.report_path.read_text(encoding="utf-8"),
