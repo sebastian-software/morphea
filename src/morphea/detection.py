@@ -912,7 +912,8 @@ def _rounded_rect_candidate(
         return None
     if widths[0] >= mid_width - 1 or widths[-1] >= mid_width - 1:
         return None
-    if abs(widths[0] - widths[-1]) > 1:
+    symmetry_tolerance = max(1, len(widths) // 8)
+    if abs(widths[0] - widths[-1]) > symmetry_tolerance:
         return None
 
     expected_area = component.width * component.height
@@ -921,7 +922,7 @@ def _rounded_rect_candidate(
         return None
 
     min_x, min_y, max_x, max_y = component.bounds
-    corner_radius = max(1.0, (max_width - min(widths[0], widths[-1])) / 2)
+    corner_radius = _rounded_rect_corner_radius(widths)
     quad = QuadAnchor(
         corners=(
             Point(min_x, min_y),
@@ -942,6 +943,22 @@ def _rounded_rect_candidate(
         },
     )
     return candidate
+
+
+def _rounded_rect_corner_radius(widths: list[int]) -> float:
+    max_width = max(widths)
+    width_radius = (max_width - min(widths[0], widths[-1])) / 2
+    top_taper = _taper_rows_to_full_width(widths)
+    bottom_taper = _taper_rows_to_full_width(list(reversed(widths)))
+    return max(1.0, float(width_radius), float(top_taper), float(bottom_taper))
+
+
+def _taper_rows_to_full_width(widths: list[int]) -> int:
+    max_width = max(widths)
+    for index, width in enumerate(widths):
+        if width >= max_width:
+            return index
+    return 0
 
 
 def _scanline_quad_fill_error(component: MaskComponent, quad: QuadAnchor) -> float:

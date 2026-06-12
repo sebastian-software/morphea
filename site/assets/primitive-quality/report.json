@@ -9092,10 +9092,10 @@
         "actual_bounds": [
           14.0,
           20.0,
-          50.0,
-          44.0
+          49.0,
+          43.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.931713,
         "expected_bounds": [
           14.0,
           20.0,
@@ -9112,16 +9112,16 @@
                 20.0
               ],
               [
-                50.0,
+                49.0,
                 20.0
               ],
               [
-                50.0,
-                44.0
+                49.0,
+                43.0
               ],
               [
                 14.0,
-                44.0
+                43.0
               ]
             ]
           },
@@ -9130,6 +9130,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 6.0,
             "corners": [
               [
                 14.0,
@@ -9161,7 +9162,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.931713,
           "expected_id": "rounded_rectangle",
           "geometry_diff": {
             "actual": {
@@ -9172,16 +9173,16 @@
                     20.0
                   ],
                   [
-                    50.0,
+                    49.0,
                     20.0
                   ],
                   [
-                    50.0,
-                    44.0
+                    49.0,
+                    43.0
                   ],
                   [
                     14.0,
-                    44.0
+                    43.0
                   ]
                 ]
               },
@@ -9190,6 +9191,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 6.0,
                 "corners": [
                   [
                     14.0,
@@ -9219,8 +9221,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.006343,
-        "raster_l1_error": 0.007812,
+        "raster_edge_error": 0.009346,
+        "raster_l1_error": 0.00926,
         "raster_size_match": true
       },
       "ok": true,
@@ -9249,10 +9251,10 @@
         "actual_bounds": [
           8.0,
           8.0,
-          38.0,
-          30.0
+          37.0,
+          29.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.922727,
         "expected_bounds": [
           8.0,
           8.0,
@@ -9269,16 +9271,16 @@
                 8.0
               ],
               [
-                38.0,
+                37.0,
                 8.0
               ],
               [
-                38.0,
-                30.0
+                37.0,
+                29.0
               ],
               [
                 8.0,
-                30.0
+                29.0
               ]
             ]
           },
@@ -9287,6 +9289,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 4.0,
             "corners": [
               [
                 8.0,
@@ -9318,7 +9321,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.922727,
           "expected_id": "rounded_rectangle_small_radius",
           "geometry_diff": {
             "actual": {
@@ -9329,16 +9332,16 @@
                     8.0
                   ],
                   [
-                    38.0,
+                    37.0,
                     8.0
                   ],
                   [
-                    38.0,
-                    30.0
+                    37.0,
+                    29.0
                   ],
                   [
                     8.0,
-                    30.0
+                    29.0
                   ]
                 ]
               },
@@ -9347,6 +9350,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 4.0,
                 "corners": [
                   [
                     8.0,
@@ -9376,8 +9380,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.004652,
-        "raster_l1_error": 0.003906,
+        "raster_edge_error": 0.006592,
+        "raster_l1_error": 0.005992,
         "raster_size_match": true
       },
       "ok": true,
@@ -9406,10 +9410,10 @@
         "actual_bounds": [
           10.0,
           18.0,
-          54.0,
-          46.0
+          53.0,
+          45.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.94237,
         "expected_bounds": [
           10.0,
           18.0,
@@ -9426,16 +9430,16 @@
                 18.0
               ],
               [
-                54.0,
+                53.0,
                 18.0
               ],
               [
-                54.0,
-                46.0
+                53.0,
+                45.0
               ],
               [
                 10.0,
-                46.0
+                45.0
               ]
             ]
           },
@@ -9444,6 +9448,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 10.0,
             "corners": [
               [
                 10.0,
@@ -9475,7 +9480,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.94237,
           "expected_id": "rounded_rectangle_medium_radius",
           "geometry_diff": {
             "actual": {
@@ -9486,16 +9491,16 @@
                     18.0
                   ],
                   [
-                    54.0,
+                    53.0,
                     18.0
                   ],
                   [
-                    54.0,
-                    46.0
+                    53.0,
+                    45.0
                   ],
                   [
                     10.0,
-                    46.0
+                    45.0
                   ]
                 ]
               },
@@ -9504,6 +9509,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 10.0,
                 "corners": [
                   [
                     10.0,
@@ -9533,8 +9539,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011418,
-        "raster_l1_error": 0.017969,
+        "raster_edge_error": 0.014818,
+        "raster_l1_error": 0.019439,
         "raster_size_match": true
       },
       "ok": true,
@@ -9563,10 +9569,10 @@
         "actual_bounds": [
           20.0,
           8.0,
-          50.0,
-          56.0
+          49.0,
+          55.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.946528,
         "expected_bounds": [
           20.0,
           8.0,
@@ -9583,16 +9589,16 @@
                 8.0
               ],
               [
-                50.0,
+                49.0,
                 8.0
               ],
               [
-                50.0,
-                56.0
+                49.0,
+                55.0
               ],
               [
                 20.0,
-                56.0
+                55.0
               ]
             ]
           },
@@ -9601,6 +9607,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 8.0,
             "corners": [
               [
                 20.0,
@@ -9632,7 +9639,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.946528,
           "expected_id": "rounded_rectangle_tall",
           "geometry_diff": {
             "actual": {
@@ -9643,16 +9650,16 @@
                     8.0
                   ],
                   [
-                    50.0,
+                    49.0,
                     8.0
                   ],
                   [
-                    50.0,
-                    56.0
+                    49.0,
+                    55.0
                   ],
                   [
                     20.0,
-                    56.0
+                    55.0
                   ]
                 ]
               },
@@ -9661,6 +9668,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 8.0,
                 "corners": [
                   [
                     20.0,
@@ -9690,8 +9698,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.009726,
-        "raster_l1_error": 0.013281,
+        "raster_edge_error": 0.013096,
+        "raster_l1_error": 0.014808,
         "raster_size_match": true
       },
       "ok": true,
@@ -9720,10 +9728,10 @@
         "actual_bounds": [
           6.0,
           24.0,
-          58.0,
-          42.0
+          57.0,
+          41.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.926282,
         "expected_bounds": [
           6.0,
           24.0,
@@ -9740,16 +9748,16 @@
                 24.0
               ],
               [
-                58.0,
+                57.0,
                 24.0
               ],
               [
-                58.0,
-                42.0
+                57.0,
+                41.0
               ],
               [
                 6.0,
-                42.0
+                41.0
               ]
             ]
           },
@@ -9758,6 +9766,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 6.0,
             "corners": [
               [
                 6.0,
@@ -9789,7 +9798,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.926282,
           "expected_id": "rounded_rectangle_wide",
           "geometry_diff": {
             "actual": {
@@ -9800,16 +9809,16 @@
                     24.0
                   ],
                   [
-                    58.0,
+                    57.0,
                     24.0
                   ],
                   [
-                    58.0,
-                    42.0
+                    57.0,
+                    41.0
                   ],
                   [
                     6.0,
-                    42.0
+                    41.0
                   ]
                 ]
               },
@@ -9818,6 +9827,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 6.0,
                 "corners": [
                   [
                     6.0,
@@ -9847,8 +9857,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.006343,
-        "raster_l1_error": 0.007812,
+        "raster_edge_error": 0.010255,
+        "raster_l1_error": 0.010141,
         "raster_size_match": true
       },
       "ok": true,
@@ -9877,10 +9887,10 @@
         "actual_bounds": [
           12.0,
           10.0,
-          36.0,
-          28.0
+          35.0,
+          27.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.905093,
         "expected_bounds": [
           12.0,
           10.0,
@@ -9897,16 +9907,16 @@
                 10.0
               ],
               [
-                36.0,
+                35.0,
                 10.0
               ],
               [
-                36.0,
-                28.0
+                35.0,
+                27.0
               ],
               [
                 12.0,
-                28.0
+                27.0
               ]
             ]
           },
@@ -9915,6 +9925,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 5.0,
             "corners": [
               [
                 12.0,
@@ -9946,7 +9957,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.905093,
           "expected_id": "rounded_rectangle_small",
           "geometry_diff": {
             "actual": {
@@ -9957,16 +9968,16 @@
                     10.0
                   ],
                   [
-                    36.0,
+                    35.0,
                     10.0
                   ],
                   [
-                    36.0,
-                    28.0
+                    35.0,
+                    27.0
                   ],
                   [
                     12.0,
-                    28.0
+                    27.0
                   ]
                 ]
               },
@@ -9975,6 +9986,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 5.0,
                 "corners": [
                   [
                     12.0,
@@ -10004,8 +10016,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.004652,
-        "raster_l1_error": 0.004687,
+        "raster_edge_error": 0.0067,
+        "raster_l1_error": 0.00629,
         "raster_size_match": true
       },
       "ok": true,
@@ -10034,10 +10046,10 @@
         "actual_bounds": [
           14.0,
           36.0,
-          52.0,
-          58.0
+          51.0,
+          57.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.929426,
         "expected_bounds": [
           14.0,
           36.0,
@@ -10054,16 +10066,16 @@
                 36.0
               ],
               [
-                52.0,
+                51.0,
                 36.0
               ],
               [
-                52.0,
-                58.0
+                51.0,
+                57.0
               ],
               [
                 14.0,
-                58.0
+                57.0
               ]
             ]
           },
@@ -10072,6 +10084,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 7.0,
             "corners": [
               [
                 14.0,
@@ -10103,7 +10116,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.929426,
           "expected_id": "rounded_rectangle_bottom",
           "geometry_diff": {
             "actual": {
@@ -10114,16 +10127,16 @@
                     36.0
                   ],
                   [
-                    52.0,
+                    51.0,
                     36.0
                   ],
                   [
-                    52.0,
-                    58.0
+                    51.0,
+                    57.0
                   ],
                   [
                     14.0,
-                    58.0
+                    57.0
                   ]
                 ]
               },
@@ -10132,6 +10145,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 7.0,
                 "corners": [
                   [
                     14.0,
@@ -10161,8 +10175,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008035,
-        "raster_l1_error": 0.009375,
+        "raster_edge_error": 0.010295,
+        "raster_l1_error": 0.010972,
         "raster_size_match": true
       },
       "ok": true,
@@ -10191,10 +10205,10 @@
         "actual_bounds": [
           14.0,
           4.0,
-          52.0,
-          26.0
+          51.0,
+          25.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.929426,
         "expected_bounds": [
           14.0,
           4.0,
@@ -10211,16 +10225,16 @@
                 4.0
               ],
               [
-                52.0,
+                51.0,
                 4.0
               ],
               [
-                52.0,
-                26.0
+                51.0,
+                25.0
               ],
               [
                 14.0,
-                26.0
+                25.0
               ]
             ]
           },
@@ -10229,6 +10243,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 7.0,
             "corners": [
               [
                 14.0,
@@ -10260,7 +10275,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.929426,
           "expected_id": "rounded_rectangle_top",
           "geometry_diff": {
             "actual": {
@@ -10271,16 +10286,16 @@
                     4.0
                   ],
                   [
-                    52.0,
+                    51.0,
                     4.0
                   ],
                   [
-                    52.0,
-                    26.0
+                    51.0,
+                    25.0
                   ],
                   [
                     14.0,
-                    26.0
+                    25.0
                   ]
                 ]
               },
@@ -10289,6 +10304,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 7.0,
                 "corners": [
                   [
                     14.0,
@@ -10318,8 +10334,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008035,
-        "raster_l1_error": 0.009375,
+        "raster_edge_error": 0.010295,
+        "raster_l1_error": 0.010972,
         "raster_size_match": true
       },
       "ok": true,
@@ -10348,10 +10364,10 @@
         "actual_bounds": [
           30.0,
           12.0,
-          58.0,
-          48.0
+          57.0,
+          47.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.9375,
         "expected_bounds": [
           30.0,
           12.0,
@@ -10368,16 +10384,16 @@
                 12.0
               ],
               [
-                58.0,
+                57.0,
                 12.0
               ],
               [
-                58.0,
-                48.0
+                57.0,
+                47.0
               ],
               [
                 30.0,
-                48.0
+                47.0
               ]
             ]
           },
@@ -10386,6 +10402,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 8.0,
             "corners": [
               [
                 30.0,
@@ -10417,7 +10434,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.9375,
           "expected_id": "rounded_rectangle_right",
           "geometry_diff": {
             "actual": {
@@ -10428,16 +10445,16 @@
                     12.0
                   ],
                   [
-                    58.0,
+                    57.0,
                     12.0
                   ],
                   [
-                    58.0,
-                    48.0
+                    57.0,
+                    47.0
                   ],
                   [
                     30.0,
-                    48.0
+                    47.0
                   ]
                 ]
               },
@@ -10446,6 +10463,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 8.0,
                 "corners": [
                   [
                     30.0,
@@ -10475,8 +10493,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.009726,
-        "raster_l1_error": 0.013281,
+        "raster_edge_error": 0.011823,
+        "raster_l1_error": 0.013575,
         "raster_size_match": true
       },
       "ok": true,
@@ -10505,10 +10523,10 @@
         "actual_bounds": [
           6.0,
           12.0,
-          34.0,
-          48.0
+          33.0,
+          47.0
         ],
-        "bbox_iou": 1.0,
+        "bbox_iou": 0.9375,
         "expected_bounds": [
           6.0,
           12.0,
@@ -10525,16 +10543,16 @@
                 12.0
               ],
               [
-                34.0,
+                33.0,
                 12.0
               ],
               [
-                34.0,
-                48.0
+                33.0,
+                47.0
               ],
               [
                 6.0,
-                48.0
+                47.0
               ]
             ]
           },
@@ -10543,6 +10561,7 @@
         },
         "expected": {
           "geometry": {
+            "corner_radius": 8.0,
             "corners": [
               [
                 6.0,
@@ -10574,7 +10593,7 @@
         {
           "actual_index": 0,
           "actual_kind": "rounded_rect",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.9375,
           "expected_id": "rounded_rectangle_left",
           "geometry_diff": {
             "actual": {
@@ -10585,16 +10604,16 @@
                     12.0
                   ],
                   [
-                    34.0,
+                    33.0,
                     12.0
                   ],
                   [
-                    34.0,
-                    48.0
+                    33.0,
+                    47.0
                   ],
                   [
                     6.0,
-                    48.0
+                    47.0
                   ]
                 ]
               },
@@ -10603,6 +10622,7 @@
             },
             "expected": {
               "geometry": {
+                "corner_radius": 8.0,
                 "corners": [
                   [
                     6.0,
@@ -10632,8 +10652,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.009726,
-        "raster_l1_error": 0.013281,
+        "raster_edge_error": 0.011823,
+        "raster_l1_error": 0.013575,
         "raster_size_match": true
       },
       "ok": true,

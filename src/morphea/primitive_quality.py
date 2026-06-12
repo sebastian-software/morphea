@@ -1006,15 +1006,23 @@ def _rounded_rectangle_spec(
         variant=variant,
         expected_kinds=("rounded_rect",),
         geometry_type="quad",
-        geometry={"corners": ((x0, y0), (x1, y0), (x1, y1), (x0, y1))},
-        draw=lambda draw, box=box, radius=radius: draw.rounded_rectangle(
-            box,
-            radius=radius,
-            fill=BLUE,
+        geometry={
+            "corners": ((x0, y0), (x1, y0), (x1, y1), (x0, y1)),
+            "corner_radius": float(radius),
+        },
+        draw=lambda draw: None,
+        source_factory=lambda box=box, radius=radius: _antialiased_source(
+            lambda draw, scale: draw.rounded_rectangle(
+                tuple(value * scale for value in box),
+                radius=radius * scale,
+                fill=BLUE,
+            )
         ),
-        max_raster_l1_error=0.03,
-        max_raster_edge_error=0.03,
-        min_bbox_iou=0.9,
+        vectorize_config={"max_colors": 2},
+        coordinate_tolerance=3.25,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.035,
+        min_bbox_iou=0.86,
     )
 
 
@@ -2280,7 +2288,30 @@ def _quad_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str
                     f"{spec.coordinate_tolerance}",
                 )
             )
+    failures.extend(_corner_radius_failures(spec, anchor))
     return failures
+
+
+def _corner_radius_failures(
+    spec: PrimitiveSpec,
+    anchor: dict[str, Any],
+) -> list[dict[str, str]]:
+    if "corner_radius" not in spec.geometry:
+        return []
+    metrics = anchor.get("metrics", {})
+    if not isinstance(metrics, dict) or "corner_radius" not in metrics:
+        return [_failure("geometry_drift", "missing rounded corner radius")]
+    actual = float(metrics.get("corner_radius", 0.0))
+    expected = float(spec.geometry["corner_radius"])
+    if abs(actual - expected) > spec.coordinate_tolerance:
+        return [
+            _failure(
+                "geometry_drift",
+                f"corner radius delta {round(abs(actual - expected), 6)} exceeds "
+                f"{spec.coordinate_tolerance}",
+            )
+        ]
+    return []
 
 
 def _circle_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:

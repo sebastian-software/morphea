@@ -5,6 +5,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+from PIL import Image
+
 from morphea.cli import main
 from morphea.primitive_quality import (
     check_primitive_quality,
@@ -96,6 +98,26 @@ class PrimitiveQualityTests(unittest.TestCase):
                 Path(temp_dir) / "diagonal_stroke_width_7" / "output.svg"
             ).read_text(encoding="utf-8")
             self.assertIn('stroke-linecap="butt"', svg)
+
+    def test_rounded_rectangle_wide_source_is_visibly_rounded(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("rounded_rectangle_wide",),
+            )
+
+            self.assertTrue(report["ok"])
+            case_root = Path(temp_dir) / "rounded_rectangle_wide"
+            image = Image.open(case_root / "input.png").convert("RGB")
+            colors = image.getcolors(maxcolors=4096)
+            self.assertIsNotNone(colors)
+            self.assertGreater(len(colors), 2)
+            manifest = json.loads(
+                (case_root / "manifest.json").read_text(encoding="utf-8")
+            )
+            anchor = manifest["anchors"][0]
+            self.assertEqual(anchor["kind"], "rounded_rect")
+            self.assertGreater(anchor["metrics"]["corner_radius"], 3.0)
 
     def test_primitive_quality_harness_matches_multiple_anchors(self):
         report = check_primitive_quality(cases=("composition_square_plus_circle_a",))
