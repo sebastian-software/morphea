@@ -264,6 +264,8 @@ Implemented so far:
 - same-color fragment groups include a structured `merge_plan` with combined
   bounds, per-fragment bounds, bounds fill ratio, and a conservative merge or
   review action.
+- same-color merge plans include `auto_merge_allowed` and `decision_reason` so
+  automatic merges stay auditable instead of becoming opaque cleanup behavior.
 
 ## M4: Reports, Metrics, and Experiment Runs
 
