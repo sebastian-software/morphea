@@ -85,6 +85,72 @@ class ProfilingTests(unittest.TestCase):
             self.assertEqual(report["config"]["background"], "#ffffff")
             self.assertEqual(report["config"]["timeout_seconds"], 5)
 
+    def test_profile_cli_accepts_config_file_paths_and_repeats(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_profile_image(root)
+            output = root / "profile.json"
+            config = root / "profile-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "input": str(image_path),
+                        "output": str(output),
+                        "repeats": 2,
+                        "min_area": 4,
+                        "timeout_seconds": 5,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["profile", "--config", str(config)])
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(report["repeat_count"], 2)
+            self.assertEqual(report["config"]["min_area"], 4)
+            self.assertEqual(report["config"]["timeout_seconds"], 5)
+
+    def test_profile_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_profile_image(root)
+            output = root / "profile.json"
+            override_output = root / "override-profile.json"
+            config = root / "profile-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "input": str(image_path),
+                        "output": str(output),
+                        "repeats": 2,
+                        "min_area": 99,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "profile",
+                        "--config",
+                        str(config),
+                        "-o",
+                        str(override_output),
+                        "--repeats",
+                        "1",
+                        "--min-area",
+                        "4",
+                    ]
+                )
+
+            report = json.loads(override_output.read_text(encoding="utf-8"))
+            self.assertFalse(output.exists())
+            self.assertEqual(report["repeat_count"], 1)
+            self.assertEqual(report["config"]["min_area"], 4)
+
     def test_profile_rejects_zero_repeats(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

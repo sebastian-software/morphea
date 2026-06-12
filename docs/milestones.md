@@ -887,6 +887,7 @@ Implemented so far:
 - `curve eval-classifier --config eval-classifier.json` for repeatable
   classifier evaluation reports
 - `curve eval --config eval.json` for repeatable run-directory summaries
+- `curve profile --config profile.json` for repeatable bounded runtime probes
 - `curve harvest --config harvest.json` for repeatable pseudo-label quality
   gates
 - `curve harvest --markdown harvest.md` for scan-friendly pseudo-label quality

@@ -92,6 +92,7 @@ VECTORIZE_DEFAULT_CONFIG = {
 CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
 EVAL_CONFIG_KEYS = {"run_root", "output", "markdown"}
+PROFILE_CONFIG_KEYS = set(VECTORIZE_DEFAULT_CONFIG) | {"input", "output", "repeats"}
 EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "markdown", "splits"}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
@@ -322,9 +323,9 @@ def main(argv: list[str] | None = None) -> None:
         "profile",
         help="Measure bounded vectorize runtime for an input image.",
     )
-    profile.add_argument("input", type=Path)
-    profile.add_argument("-o", "--output", type=Path, required=True)
-    profile.add_argument("--repeats", type=int, default=1)
+    profile.add_argument("input", type=Path, nargs="?")
+    profile.add_argument("-o", "--output", type=Path)
+    profile.add_argument("--repeats", type=int, default=None)
     profile.add_argument("--background")
     profile.add_argument("--min-area", type=int, default=None)
     profile.add_argument("--color-tolerance", type=float, default=None)
@@ -779,12 +780,12 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "profile":
-        profile_config = _resolved_vectorize_config(args)
+        profile_config = _resolved_profile_config(args)
         report = profile_vectorize(
-            args.input,
-            output=args.output,
-            repeats=args.repeats,
-            config=profile_config,
+            profile_config["input"],
+            output=profile_config["output"],
+            repeats=int(profile_config["repeats"]),
+            config=profile_config["config"],
         )
         print(
             "profiled "
@@ -1238,6 +1239,42 @@ def _resolved_eval_config(args: argparse.Namespace) -> dict[str, Path]:
     if args.markdown is not None:
         config["markdown"] = args.markdown
     _require_config_paths(config, ("run_root", "output"), "eval")
+    return config
+
+
+def _resolved_profile_config(args: argparse.Namespace) -> dict[str, object]:
+    loaded = _load_profile_config(args.config)
+    vectorize_config = dict(VECTORIZE_DEFAULT_CONFIG)
+    vectorize_config.update(
+        {
+            key: value
+            for key, value in loaded.items()
+            if key in VECTORIZE_DEFAULT_CONFIG
+        }
+    )
+    for key in VECTORIZE_DEFAULT_CONFIG:
+        value = getattr(args, key, None)
+        if value is not None:
+            vectorize_config[key] = str(value) if key == "classifier_model" else value
+    if vectorize_config.get("classifier_model") is not None:
+        vectorize_config["classifier_model"] = str(vectorize_config["classifier_model"])
+
+    config: dict[str, object] = {
+        "input": loaded.get("input"),
+        "output": loaded.get("output"),
+        "repeats": loaded.get("repeats", 1),
+        "config": vectorize_config,
+    }
+    if args.input is not None:
+        config["input"] = args.input
+    if args.output is not None:
+        config["output"] = args.output
+    if args.repeats is not None:
+        config["repeats"] = args.repeats
+    _require_config_paths(config, ("input", "output"), "profile")
+    config["input"] = Path(str(config["input"]))
+    config["output"] = Path(str(config["output"]))
+    config["repeats"] = int(config["repeats"])
     return config
 
 
@@ -1732,6 +1769,23 @@ def _load_segment_config(path: Path) -> dict[str, object]:
         msg = f"unsupported segment config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     return loaded
+
+
+def _load_profile_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("profile config must be a JSON object")
+    unknown = sorted(set(loaded) - PROFILE_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported profile config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("input", "output", "classifier_model"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
 
 
 def _load_train_mlx_config(path: Path | None) -> dict[str, object]:

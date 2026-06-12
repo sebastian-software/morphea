@@ -198,6 +198,9 @@ CLI arguments override values loaded from the config file.
 ## Profile Report v1
 
 Written by `curve profile`.
+`curve profile --config profile.json` accepts `input`, `output`, `repeats`,
+and the same bounded vectorize runtime knobs used by `curve vectorize --config`.
+CLI arguments override matching config values.
 
 Top-level fields:
 
