@@ -395,8 +395,9 @@ Proposal group fields:
 `reason`. MLX SAM status distinguishes `json_adapter_available`,
 `not_installed`, `not_configured`, `model_missing`, and `adapter_pending`; it
 also records `package_available`, `model_configured`, `model_exists`, adapter
-name, and the runtime knobs. The JSON adapter is a local bridge for checked-in
-or generated proposal payloads shaped as:
+name, runtime knobs, and per-capability status for `json_proposal_adapter` and
+`live_sam_model_adapter`. The JSON adapter is a local bridge for checked-in or
+generated proposal payloads shaped as:
 
 - `proposals`: list of proposal objects
 - each proposal may contain `bounds` as `[left, top, right, bottom]` or `bbox`
@@ -425,11 +426,18 @@ Top-level fields:
 - `refinement`: output of `available_refinement_backends()`
 - `blocked_backends`: normalized rows for unavailable or non-available
   backends
+- `blocked_capabilities`: normalized rows for backend capabilities that are
+  unavailable or still pending implementation
 
 Each status entry records `status`, `backend_available`, and optional `reason`
 where the underlying backend exposes those fields. The report is intentionally
 diagnostic: missing MLX/SAM/DiffVG integrations are reported explicitly instead
 of being treated as partial success.
+
+Optional status entries may expose a `capabilities` object. Each capability
+records `available`, `status`, and optional `reason`. The current MLX/SAM
+capability statuses make two remaining milestone blockers explicit:
+`live_sam_model_adapter` and `end_to_end_attention_training`.
 
 ## Segment Config v1
 

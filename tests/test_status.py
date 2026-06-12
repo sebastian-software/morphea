@@ -59,6 +59,17 @@ class RuntimeStatusTests(unittest.TestCase):
                 },
                 written["blocked_backends"],
             )
+            self.assertIn(
+                {
+                    "area": "segmenter",
+                    "backend": "mlx_sam",
+                    "capability": "live_sam_model_adapter",
+                    "status": "not_installed",
+                    "available": False,
+                    "reason": "MLX runtime package is not installed",
+                },
+                written["blocked_capabilities"],
+            )
 
     def test_collect_runtime_status_treats_json_adapter_as_available(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -108,6 +119,17 @@ class RuntimeStatusTests(unittest.TestCase):
                 },
                 result["blocked_backends"],
             )
+            self.assertIn(
+                {
+                    "area": "segmenter",
+                    "backend": "mlx_sam",
+                    "capability": "live_sam_model_adapter",
+                    "status": "not_installed",
+                    "available": False,
+                    "reason": "MLX runtime package is not installed",
+                },
+                result["blocked_capabilities"],
+            )
 
     def test_runtime_status_markdown_summarizes_backends(self):
         markdown = render_runtime_status_markdown(
@@ -135,12 +157,26 @@ class RuntimeStatusTests(unittest.TestCase):
                         "reason": "model missing",
                     }
                 ],
+                "blocked_capabilities": [
+                    {
+                        "area": "classifier",
+                        "backend": "mlx",
+                        "capability": "end_to_end_attention_training",
+                        "status": "pending_implementation",
+                        "available": False,
+                        "reason": "attention training pending",
+                    }
+                ],
             }
         )
 
         self.assertIn("# Curve Runtime Status", markdown)
         self.assertIn("`flat_color`", markdown)
         self.assertIn("segmenter/mlx_sam: not_configured", markdown)
+        self.assertIn(
+            "classifier/mlx/end_to_end_attention_training: pending_implementation",
+            markdown,
+        )
 
 
 if __name__ == "__main__":

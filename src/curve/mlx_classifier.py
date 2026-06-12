@@ -59,6 +59,42 @@ def mlx_classifier_runtime_status() -> dict[str, object]:
         "training_implementation": (
             "mlx_feature_head" if available else "centroid_fallback"
         ),
+        "capabilities": _mlx_classifier_capabilities(available),
+    }
+
+
+def _mlx_classifier_capabilities(available: bool) -> dict[str, dict[str, object]]:
+    runtime_status = "available" if available else "not_installed"
+    runtime_reason = (
+        None
+        if available
+        else "MLX primitive classifier runtime is not installed"
+    )
+    return {
+        "feature_head_training": {
+            "available": available,
+            "status": runtime_status,
+            "reason": runtime_reason,
+        },
+        "raster_token_mixer_training": {
+            "available": available,
+            "status": runtime_status,
+            "reason": runtime_reason,
+        },
+        "token_transformer_serialization": {
+            "available": available,
+            "status": runtime_status,
+            "reason": runtime_reason,
+        },
+        "end_to_end_attention_training": {
+            "available": False,
+            "status": "pending_implementation",
+            "reason": (
+                "Current MLX path serializes token-transformer weights and "
+                "projection calibration; full attention/projection "
+                "backpropagation is not wired yet"
+            ),
+        },
     }
 
 

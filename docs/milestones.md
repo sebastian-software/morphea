@@ -486,6 +486,8 @@ Implemented so far:
 - MLX SAM status reporting distinguishes missing MLX package, missing model
   configuration, missing model file, and adapter-pending states without
   allowing AI proposals to bypass the geometry pipeline.
+- MLX SAM status includes per-capability diagnostics for the JSON proposal
+  adapter and the still-pending live SAM model adapter.
 - `MlxSamSegmenter` can consume local JSON proposal payloads through the same
   segment proposal schema, score threshold, mask limit, and downstream
   geometry gate; this gives M6 an operational adapter contract before live SAM
@@ -610,6 +612,9 @@ Implemented so far:
 - vectorize candidate ranking now generates component-derived RGBA crop tokens
   for valid `raster_token_mixer_v1` artifacts, allowing runtime priors to fuse
   raster attention and geometric feature logits.
+- MLX classifier runtime status reports trainable feature/raster/token
+  capabilities separately from the still-pending end-to-end attention training
+  capability.
 
 Remaining:
 
@@ -933,6 +938,9 @@ Implemented so far:
   availability/blockers
 - `curve status --config status.json` for repeatable runtime/backend
   availability checks
+- `curve status` reports blocked backend capabilities such as the live MLX SAM
+  adapter and end-to-end MLX attention training separately from installed
+  package status
 - `curve curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
 - `curve segment --config segment.json` for repeatable input/output,

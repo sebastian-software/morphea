@@ -229,6 +229,13 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(configured["status"], "adapter_pending")
             self.assertTrue(configured["model_exists"])
             self.assertFalse(configured["backend_available"])
+            self.assertEqual(
+                configured["capabilities"]["live_sam_model_adapter"]["status"],
+                "pending_implementation",
+            )
+            self.assertFalse(
+                configured["capabilities"]["live_sam_model_adapter"]["available"]
+            )
 
     def test_mlx_sam_runtime_status_requires_model_configuration(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
@@ -237,6 +244,10 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(status["status"], "not_configured")
         self.assertTrue(status["package_available"])
         self.assertFalse(status["model_configured"])
+        self.assertEqual(
+            status["capabilities"]["live_sam_model_adapter"]["status"],
+            "not_configured",
+        )
 
     def test_mlx_sam_segmenter_keeps_adapter_pending_non_operational(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -261,6 +272,13 @@ class SegmenterTests(unittest.TestCase):
             self.assertTrue(status["backend_available"])
             self.assertEqual(status["adapter"], "json_proposals")
             self.assertFalse(status["package_available"])
+            self.assertTrue(
+                status["capabilities"]["json_proposal_adapter"]["available"]
+            )
+            self.assertEqual(
+                status["capabilities"]["live_sam_model_adapter"]["status"],
+                "not_installed",
+            )
 
     def test_mlx_sam_json_adapter_filters_and_limits_proposals(self):
         with tempfile.TemporaryDirectory() as temp_dir:

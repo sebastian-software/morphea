@@ -48,6 +48,7 @@ def collect_runtime_status(
         "refinement": available_refinement_backends(),
     }
     result["blocked_backends"] = _blocked_backend_rows(result)
+    result["blocked_capabilities"] = _blocked_capability_rows(result)
 
     if output is not None:
         output_path = Path(output)
@@ -97,6 +98,24 @@ def render_runtime_status_markdown(status: dict[str, Any]) -> str:
             )
     else:
         lines.append("n/a")
+    blocked_capabilities = status.get("blocked_capabilities", [])
+    if not isinstance(blocked_capabilities, list):
+        blocked_capabilities = []
+    lines.extend(["", "## Blocked Capabilities", ""])
+    if blocked_capabilities:
+        for row in blocked_capabilities:
+            if not isinstance(row, dict):
+                continue
+            lines.append(
+                "- "
+                f"{row.get('area', 'unknown')}/"
+                f"{row.get('backend', 'unknown')}/"
+                f"{row.get('capability', 'unknown')}: "
+                f"{row.get('status', 'unknown')} - "
+                f"{row.get('reason') or 'n/a'}"
+            )
+    else:
+        lines.append("n/a")
     return "\n".join(lines) + "\n"
 
 
@@ -124,6 +143,59 @@ def _blocked_backend_rows(status: dict[str, Any]) -> list[dict[str, Any]]:
         for row in _status_rows(status)
         if not row["available"] or row["status"] not in AVAILABLE_STATUSES
     ]
+
+
+def _blocked_capability_rows(status: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        row
+        for row in _capability_rows(status)
+        if not row["available"] or row["status"] not in AVAILABLE_STATUSES
+    ]
+
+
+def _capability_rows(status: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    segmenters = status.get("segmenters", {})
+    if isinstance(segmenters, dict):
+        for backend, detail in sorted(segmenters.items()):
+            rows.extend(_backend_capability_rows("segmenter", backend, detail))
+    classifiers = status.get("classifiers", {})
+    if isinstance(classifiers, dict):
+        for backend, detail in sorted(classifiers.items()):
+            rows.extend(_backend_capability_rows("classifier", backend, detail))
+    refinement = status.get("refinement", {})
+    details = refinement.get("details", {}) if isinstance(refinement, dict) else {}
+    if isinstance(details, dict):
+        for backend, detail in sorted(details.items()):
+            rows.extend(_backend_capability_rows("refinement", backend, detail))
+    return rows
+
+
+def _backend_capability_rows(
+    area: str,
+    backend: str,
+    detail: object,
+) -> list[dict[str, Any]]:
+    if not isinstance(detail, dict):
+        return []
+    capabilities = detail.get("capabilities", {})
+    if not isinstance(capabilities, dict):
+        return []
+    rows: list[dict[str, Any]] = []
+    for capability, capability_detail in sorted(capabilities.items()):
+        if not isinstance(capability_detail, dict):
+            capability_detail = {}
+        rows.append(
+            {
+                "area": area,
+                "backend": backend,
+                "capability": capability,
+                "status": capability_detail.get("status", "unknown"),
+                "available": bool(capability_detail.get("available", False)),
+                "reason": capability_detail.get("reason"),
+            }
+        )
+    return rows
 
 
 def _row(area: str, backend: str, detail: object) -> dict[str, Any]:

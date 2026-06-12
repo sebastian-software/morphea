@@ -447,6 +447,16 @@ class PrimitiveClassifierTests(unittest.TestCase):
         self.assertEqual(available["status"], "available")
         self.assertTrue(available["backend_available"])
         self.assertEqual(available["training_implementation"], "mlx_feature_head")
+        self.assertTrue(
+            available["capabilities"]["feature_head_training"]["available"]
+        )
+        self.assertEqual(
+            available["capabilities"]["end_to_end_attention_training"]["status"],
+            "pending_implementation",
+        )
+        self.assertFalse(
+            available["capabilities"]["end_to_end_attention_training"]["available"]
+        )
 
     def test_train_mlx_can_write_unavailable_fallback_artifact(self):
         with tempfile.TemporaryDirectory() as temp_dir:

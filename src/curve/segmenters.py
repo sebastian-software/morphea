@@ -166,6 +166,53 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         "score_threshold": segmenter.score_threshold,
         "max_masks": segmenter.max_masks,
         "timeout_seconds": segmenter.timeout_seconds,
+        "capabilities": _mlx_sam_capabilities(
+            package_available=package_available,
+            model_configured=model_configured,
+            model_exists=model_exists,
+            json_adapter_available=json_adapter_available,
+        ),
+    }
+
+
+def _mlx_sam_capabilities(
+    *,
+    package_available: bool,
+    model_configured: bool,
+    model_exists: bool,
+    json_adapter_available: bool,
+) -> dict[str, dict[str, object]]:
+    live_status = "pending_implementation"
+    live_reason = "MLX SAM live model proposal adapter is not wired yet"
+    if not package_available:
+        live_status = "not_installed"
+        live_reason = "MLX runtime package is not installed"
+    elif not model_configured:
+        live_status = "not_configured"
+        live_reason = "MLX SAM model path is not configured"
+    elif not model_exists:
+        live_status = "model_missing"
+        live_reason = "MLX SAM model path does not exist"
+
+    return {
+        "json_proposal_adapter": {
+            "available": json_adapter_available,
+            "status": (
+                "available"
+                if json_adapter_available
+                else "requires_json_proposal_payload"
+            ),
+            "reason": (
+                None
+                if json_adapter_available
+                else "Configure mlx_model_path with a JSON proposal payload"
+            ),
+        },
+        "live_sam_model_adapter": {
+            "available": False,
+            "status": live_status,
+            "reason": live_reason,
+        },
     }
 
 
