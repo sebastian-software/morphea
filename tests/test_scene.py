@@ -14,6 +14,7 @@ from morphea.scene import (
     Scene,
     SvgStyle,
     merge_auto_mergeable_same_color_fragments,
+    promote_occluded_rect_primitives,
     scene_from_mask,
     scene_layers_to_manifest,
     scene_groups_to_manifest,
@@ -532,6 +533,125 @@ class SceneExportTests(unittest.TestCase):
         )
         self.assertEqual(group["merge_plan"]["bounds"], [0, 0, 8, 4])
         self.assertEqual(group["metrics"]["bounds_fill_ratio"], 1.0)
+
+    def test_contacting_different_color_primitives_get_contact_group(self):
+        anchors = (
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                color="#003366",
+                circle=CircleAnchor(center=Point(5, 5), radius=4),
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                color="#dd2222",
+                stroke=StrokeAnchor(
+                    centerline=(Point(9, 5), Point(14, 5)),
+                    width_samples=(2.0,),
+                ),
+            ),
+        )
+
+        groups = scene_groups_to_manifest(anchors)
+        contact_group = [
+            group
+            for group in groups
+            if group["kind"] == "primitive_contact_pair"
+        ][0]
+
+        self.assertEqual(contact_group["anchor_indexes"], [0, 1])
+        self.assertEqual(contact_group["relation"], "overlapping")
+        self.assertEqual(contact_group["separation_policy"], "separate_by_color")
+        self.assertEqual(contact_group["colors"], ["#003366", "#dd2222"])
+
+    def test_occluded_rect_fragments_record_ordered_occluder_group(self):
+        anchors = (
+            AnchorCandidate(
+                kind=AnchorKind.RECT,
+                raster_error=0.0,
+                node_count=4,
+                parameter_count=4,
+                color="#003366",
+                quad=QuadAnchor(
+                    corners=(Point(0, 0), Point(10, 0), Point(10, 4), Point(0, 4)),
+                ),
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.RECT,
+                raster_error=0.0,
+                node_count=4,
+                parameter_count=4,
+                color="#003366",
+                quad=QuadAnchor(
+                    corners=(Point(0, 7), Point(10, 7), Point(10, 10), Point(0, 10)),
+                ),
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.STROKE_POLYLINE,
+                raster_error=0.0,
+                node_count=2,
+                parameter_count=5,
+                color="#dd2222",
+                stroke=StrokeAnchor(
+                    centerline=(Point(-1, 5.5), Point(11, 5.5)),
+                    width_samples=(2.0,),
+                ),
+            ),
+        )
+
+        groups = scene_groups_to_manifest(anchors)
+        occlusion_group = [
+            group
+            for group in groups
+            if group["kind"] == "occluded_primitive_group"
+        ][0]
+
+        self.assertEqual(occlusion_group["fragment_anchor_indexes"], [0, 1])
+        self.assertEqual(occlusion_group["occluder_anchor_indexes"], [2])
+        self.assertEqual(occlusion_group["base_color"], "#003366")
+        self.assertEqual(occlusion_group["target_kind"], "rect")
+        self.assertEqual(occlusion_group["draw_order"], "base_then_occluder")
+        self.assertEqual(
+            occlusion_group["occlusion_policy"],
+            "visible_fragments_with_ordered_occluder",
+        )
+
+    def test_occluded_rect_like_quad_promotes_to_full_rect(self):
+        base = AnchorCandidate(
+            kind=AnchorKind.QUAD,
+            raster_error=0.12,
+            node_count=4,
+            parameter_count=8,
+            color="#003366",
+            quad=QuadAnchor(
+                corners=(Point(10, 16), Point(42, 16), Point(27, 48), Point(10, 48)),
+            ),
+            metrics={"quad_corner_consistency_error": 0.2},
+        )
+        occluder = AnchorCandidate(
+            kind=AnchorKind.RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=4,
+            color="#c99700",
+            quad=QuadAnchor(
+                corners=(Point(28, 26), Point(56, 26), Point(56, 54), Point(28, 54)),
+            ),
+        )
+
+        promoted = promote_occluded_rect_primitives((base, occluder))
+
+        self.assertEqual(promoted[0].kind, AnchorKind.RECT)
+        self.assertEqual(
+            promoted[0].quad.corners,
+            (Point(10, 16), Point(42, 16), Point(42, 48), Point(10, 48)),
+        )
+        self.assertEqual(promoted[0].metrics["occluded_rect_promotion"], 1.0)
 
     def test_scene_metrics_summarize_anchor_quality_errors(self):
         anchors = (

@@ -256,7 +256,8 @@ Current evidence:
 
 ### PQ5: Touching and Adjacent Primitive Compositions
 
-Status: implemented for adjacent rectangle merge/separate policy fixtures.
+Status: implemented for adjacent, touching, crossing, and ordered-overlap
+policy fixtures.
 
 Purpose: handle cases where primitive boundaries meet or nearly meet.
 
@@ -289,12 +290,13 @@ Current evidence:
 - adjacent same-color rectangles with a shared edge are accepted as a merged
   filled rectangle.
 - same-color rectangles with a small visible gap stay separate.
-
-Remaining:
-
-- add stricter crossing/overlap fixtures for stroke-over-rectangle and
-  circle-touching-stroke cases once their merge policy is explicit enough to
-  avoid ambiguous contracts.
+- circle-touching-stroke fixtures keep different-color primitives separate and
+  record a `primitive_contact_pair` with `separate_by_color` policy.
+- stroke-crossing-rectangle fixtures keep visible fragments editable and record
+  an `occluded_primitive_group` with `base_then_occluder` draw order.
+- ordered overlapping rectangles promote simple occluded base quads back to
+  full editable rectangles when a different-color filled primitive covers the
+  missing corner.
 
 ### PQ6: Cut-Outs, Holes, and Negative Space
 

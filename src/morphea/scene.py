@@ -81,9 +81,28 @@ def scene_from_mask(mask: BinaryMask, *, min_area: int = 8) -> Scene:
         width=mask.width,
         height=mask.height,
         anchors=merge_auto_mergeable_same_color_fragments(
-            detect_primitive_anchors(mask, min_area=min_area)
+            promote_occluded_rect_primitives(
+                detect_primitive_anchors(mask, min_area=min_area)
+            )
         ),
     )
+
+
+def promote_occluded_rect_primitives(
+    anchors: tuple[AnchorCandidate, ...],
+) -> tuple[AnchorCandidate, ...]:
+    """Promote simple occluded rect-like quads back to full rects.
+
+    This only applies when a different-color filled primitive overlaps the
+    quad's bounds. The visible pixels can look like an L-shaped quad, but the
+    editable representation is better as the full base rect drawn before the
+    occluding primitive.
+    """
+
+    promoted: list[AnchorCandidate] = []
+    for index, anchor in enumerate(anchors):
+        promoted.append(_promoted_occluded_rect(anchor, anchors, index=index) or anchor)
+    return tuple(promoted)
 
 
 def merge_auto_mergeable_same_color_fragments(
@@ -116,6 +135,52 @@ def merge_auto_mergeable_same_color_fragments(
         replacements.get(index, anchor)
         for index, anchor in enumerate(anchors)
         if index not in removed
+    )
+
+
+def _promoted_occluded_rect(
+    anchor: AnchorCandidate,
+    anchors: tuple[AnchorCandidate, ...],
+    *,
+    index: int,
+) -> AnchorCandidate | None:
+    if anchor.kind != AnchorKind.QUAD or anchor.quad is None:
+        return None
+    if anchor.color is None:
+        return None
+    if float(anchor.metrics.get("quad_corner_consistency_error", 0.0)) < 0.08:
+        return None
+    bounds = _anchor_bounds(anchor)
+    occluders = [
+        other
+        for other_index, other in enumerate(anchors)
+        if other_index != index
+        and other.color is not None
+        and other.color != anchor.color
+        and _is_filled_primitive(other)
+        and _bounds_intersection_area(bounds, _anchor_bounds(other)) > 0.0
+    ]
+    if not occluders:
+        return None
+    min_x, min_y, max_x, max_y = bounds
+    metrics = dict(anchor.metrics)
+    metrics["occluded_rect_promotion"] = 1.0
+    metrics["occluding_primitive_count"] = float(len(occluders))
+    return AnchorCandidate(
+        kind=AnchorKind.RECT,
+        raster_error=anchor.raster_error,
+        node_count=4,
+        parameter_count=4,
+        color=anchor.color,
+        quad=QuadAnchor(
+            corners=(
+                Point(min_x, min_y),
+                Point(max_x, min_y),
+                Point(max_x, max_y),
+                Point(min_x, max_y),
+            )
+        ),
+        metrics=metrics,
     )
 
 
@@ -430,6 +495,9 @@ def scene_groups_to_manifest(
             }
         )
 
+    groups.extend(_primitive_contact_groups(anchors))
+    groups.extend(_occluded_fragment_groups(anchors, groups))
+
     reservation_indexes = [
         index
         for index, anchor in enumerate(anchors)
@@ -507,6 +575,135 @@ def _stroke_orientation_bucket(points: tuple[Point, ...]) -> str | None:
     if abs(dy) >= abs(dx) * 2:
         return "vertical"
     return "diagonal_pos" if dx * dy >= 0 else "diagonal_neg"
+
+
+def _primitive_contact_groups(
+    anchors: tuple[AnchorCandidate, ...],
+) -> list[dict[str, object]]:
+    groups: list[dict[str, object]] = []
+    for first_index, first in enumerate(anchors):
+        for second_index in range(first_index + 1, len(anchors)):
+            second = anchors[second_index]
+            if first.color is None or second.color is None:
+                continue
+            if first.color == second.color:
+                continue
+            first_bounds = _anchor_bounds(first)
+            second_bounds = _anchor_bounds(second)
+            gap = _bounds_gap(first_bounds, second_bounds)
+            intersection = _bounds_intersection_area(first_bounds, second_bounds)
+            if gap > 1.0 and intersection <= 0.0:
+                continue
+            relation = "overlapping" if intersection > 0.0 else "touching"
+            groups.append(
+                {
+                    "kind": "primitive_contact_pair",
+                    "anchor_indexes": [first_index, second_index],
+                    "relation": relation,
+                    "separation_policy": _contact_separation_policy(
+                        first,
+                        second,
+                        relation=relation,
+                    ),
+                    "colors": [first.color, second.color],
+                    "metrics": {
+                        "bounds_gap": round(gap, 6),
+                        "bounds_iou": round(
+                            _bounds_iou(first_bounds, second_bounds),
+                            6,
+                        ),
+                    },
+                }
+            )
+    return groups
+
+
+def _occluded_fragment_groups(
+    anchors: tuple[AnchorCandidate, ...],
+    groups: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    occlusion_groups: list[dict[str, object]] = []
+    for group in groups:
+        if group.get("kind") != "same_color_fragment_group":
+            continue
+        indexes = [
+            int(index)
+            for index in group.get("anchor_indexes", [])
+            if isinstance(index, int)
+        ]
+        if len(indexes) < 2:
+            continue
+        merge_plan = group.get("merge_plan")
+        if not isinstance(merge_plan, dict):
+            continue
+        if not bool(merge_plan.get("auto_merge_allowed")):
+            continue
+        combined_area = float(merge_plan.get("combined_bounds_area", 0.0))
+        fragment_area = float(merge_plan.get("fragment_bounds_area", 0.0))
+        if combined_area <= 0.0 or fragment_area >= combined_area:
+            continue
+        bounds_value = merge_plan.get("bounds")
+        if not isinstance(bounds_value, list) or len(bounds_value) != 4:
+            continue
+        combined_bounds = tuple(float(value) for value in bounds_value)
+        fragment_set = set(indexes)
+        base_color = group.get("color")
+        occluders = [
+            index
+            for index, anchor in enumerate(anchors)
+            if index not in fragment_set
+            and anchor.color != base_color
+            and _bounds_intersection_area(_anchor_bounds(anchor), combined_bounds) > 0.0
+        ]
+        if not occluders:
+            continue
+        fragments = tuple(anchors[index] for index in indexes)
+        occlusion_groups.append(
+            {
+                "kind": "occluded_primitive_group",
+                "anchor_indexes": indexes + occluders,
+                "fragment_anchor_indexes": indexes,
+                "occluder_anchor_indexes": occluders,
+                "base_color": base_color,
+                "occluder_colors": [
+                    anchors[index].color for index in occluders
+                ],
+                "target_kind": (
+                    "rect"
+                    if all(_axis_aligned_rect_fragment(fragment) for fragment in fragments)
+                    else "compound_shape"
+                ),
+                "draw_order": "base_then_occluder",
+                "occlusion_policy": "visible_fragments_with_ordered_occluder",
+                "metrics": {
+                    "fragment_count": len(indexes),
+                    "occluder_count": len(occluders),
+                    "bounds_fill_ratio": merge_plan.get("bounds_fill_ratio", 0.0),
+                    "occluded_bounds_area": round(combined_area - fragment_area, 6),
+                },
+            }
+        )
+    return occlusion_groups
+
+
+def _contact_separation_policy(
+    first: AnchorCandidate,
+    second: AnchorCandidate,
+    *,
+    relation: str,
+) -> str:
+    if relation == "overlapping" and _is_filled_primitive(first) and _is_filled_primitive(second):
+        return "ordered_overlap"
+    return "separate_by_color"
+
+
+def _is_filled_primitive(anchor: AnchorCandidate) -> bool:
+    return anchor.kind in {
+        AnchorKind.CIRCLE,
+        AnchorKind.RECT,
+        AnchorKind.ROUNDED_RECT,
+        AnchorKind.QUAD,
+    }
 
 
 def _same_color_merge_plan(
@@ -929,6 +1126,37 @@ def _reserved_bounds_area(anchors: tuple[AnchorCandidate, ...]) -> float:
 def _bounds_area(bounds: tuple[float, float, float, float] | list[float]) -> float:
     min_x, min_y, max_x, max_y = bounds
     return max(0.0, max_x - min_x) * max(0.0, max_y - min_y)
+
+
+def _bounds_intersection_area(
+    first: tuple[float, float, float, float] | list[float],
+    second: tuple[float, float, float, float] | list[float],
+) -> float:
+    min_x = max(first[0], second[0])
+    min_y = max(first[1], second[1])
+    max_x = min(first[2], second[2])
+    max_y = min(first[3], second[3])
+    return _bounds_area((min_x, min_y, max_x, max_y))
+
+
+def _bounds_iou(
+    first: tuple[float, float, float, float] | list[float],
+    second: tuple[float, float, float, float] | list[float],
+) -> float:
+    intersection = _bounds_intersection_area(first, second)
+    union = _bounds_area(first) + _bounds_area(second) - intersection
+    if union <= 0.0:
+        return 0.0
+    return intersection / union
+
+
+def _bounds_gap(
+    first: tuple[float, float, float, float] | list[float],
+    second: tuple[float, float, float, float] | list[float],
+) -> float:
+    horizontal_gap = max(first[0] - second[2], second[0] - first[2], 0.0)
+    vertical_gap = max(first[1] - second[3], second[1] - first[3], 0.0)
+    return (horizontal_gap * horizontal_gap + vertical_gap * vertical_gap) ** 0.5
 
 
 def _anchor_layer(anchor: AnchorCandidate) -> str:

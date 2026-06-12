@@ -530,6 +530,139 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _composition_spec(
+            case_id,
+            "touching_circle_stroke",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "primitive_contact_pair",
+                    "anchor_count": 2,
+                    "relation": "overlapping",
+                    "separation_policy": "separate_by_color",
+                },
+            ),
+        )
+        for case_id, variant, primitives in (
+            (
+                "touching_circle_stroke_right",
+                "right",
+                (
+                    _circle_primitive("circle", (12, 22, 32, 42), color=BLUE),
+                    _stroke_primitive("stroke", (32, 32, 54, 32), 4, color="#dd2222"),
+                ),
+            ),
+            (
+                "touching_circle_stroke_left",
+                "left",
+                (
+                    _circle_primitive("circle", (32, 22, 52, 42), color=BLUE),
+                    _stroke_primitive("stroke", (10, 32, 32, 32), 4, color="#dd2222"),
+                ),
+            ),
+            (
+                "touching_circle_stroke_bottom",
+                "bottom",
+                (
+                    _circle_primitive("circle", (22, 12, 42, 32), color=BLUE),
+                    _stroke_primitive("stroke", (32, 32, 32, 54), 4, color="#dd2222"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "stroke_crossing_rectangle",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "occluded_primitive_group",
+                    "anchor_count": 3,
+                    "fragment_count": 2,
+                    "occluder_count": 1,
+                    "base_color": BLUE,
+                    "target_kind": "rect",
+                    "draw_order": "base_then_occluder",
+                    "occlusion_policy": "visible_fragments_with_ordered_occluder",
+                },
+            ),
+        )
+        for case_id, variant, primitives in (
+            (
+                "stroke_crossing_rectangle_horizontal",
+                "horizontal",
+                (
+                    _rect_primitive("top_fragment", (12, 20, 52, 30)),
+                    _rect_primitive("bottom_fragment", (12, 35, 52, 44)),
+                    _stroke_primitive("stroke", (8, 32, 56, 32), 4, color="#dd2222"),
+                ),
+            ),
+            (
+                "stroke_crossing_rectangle_vertical",
+                "vertical",
+                (
+                    _rect_primitive("left_fragment", (20, 12, 30, 52)),
+                    _rect_primitive("right_fragment", (35, 12, 44, 52)),
+                    _stroke_primitive("stroke", (32, 8, 32, 56), 4, color="#dd2222"),
+                ),
+            ),
+            (
+                "stroke_crossing_rectangle_low",
+                "low_horizontal",
+                (
+                    _rect_primitive("top_fragment", (10, 14, 54, 36)),
+                    _rect_primitive("bottom_fragment", (10, 41, 54, 50)),
+                    _stroke_primitive("stroke", (6, 38, 58, 38), 4, color="#dd2222"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "overlapping_rectangles_ordered",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "primitive_contact_pair",
+                    "anchor_count": 2,
+                    "relation": "overlapping",
+                    "separation_policy": "ordered_overlap",
+                },
+            ),
+        )
+        for case_id, variant, primitives in (
+            (
+                "overlapping_rectangles_bottom_right",
+                "bottom_right",
+                (
+                    _rect_primitive("base_rect", (10, 16, 42, 48), color=BLUE),
+                    _rect_primitive("overlay_rect", (28, 26, 56, 54), color="#c99700"),
+                ),
+            ),
+            (
+                "overlapping_rectangles_top_left",
+                "top_left",
+                (
+                    _rect_primitive("base_rect", (20, 18, 56, 52), color=BLUE),
+                    _rect_primitive("overlay_rect", (8, 8, 34, 34), color="#c99700"),
+                ),
+            ),
+            (
+                "overlapping_rectangles_side",
+                "side",
+                (
+                    _rect_primitive("base_rect", (12, 8, 36, 56), color=BLUE),
+                    _rect_primitive("overlay_rect", (28, 16, 52, 48), color="#dd2222"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
         _composition_spec(case_id, "cutout_horizontal_gap", variant, primitives)
         for case_id, variant, primitives in (
             (
@@ -1862,9 +1995,26 @@ def _group_contract_failures(
         failures.append(f"expected group anchor_count {expected['anchor_count']}, got {anchor_count}")
     if "min_anchor_count" in expected and anchor_count < int(expected["min_anchor_count"]):
         failures.append(f"expected group min_anchor_count {expected['min_anchor_count']}, got {anchor_count}")
-    for key in ("row_count", "column_count", "color"):
+    for key in (
+        "row_count",
+        "column_count",
+        "color",
+        "relation",
+        "separation_policy",
+        "base_color",
+        "target_kind",
+        "draw_order",
+        "occlusion_policy",
+    ):
         if key in expected and group.get(key) != expected[key]:
             failures.append(f"expected group {key} {expected[key]}, got {group.get(key)}")
+    metrics = group.get("metrics", {})
+    metrics = metrics if isinstance(metrics, dict) else {}
+    for key in ("fragment_count", "occluder_count"):
+        if key in expected and int(metrics.get(key, -1)) != int(expected[key]):
+            failures.append(
+                f"expected group {key} {expected[key]}, got {metrics.get(key)}"
+            )
     return failures
 
 
