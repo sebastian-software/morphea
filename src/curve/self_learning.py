@@ -13,6 +13,7 @@ from curve.classifier import (
     evaluate_classifier,
     evaluate_classifier_ranking,
     examples_from_dataset,
+    feature_importance_from_centroids,
 )
 from curve.curated import check_curated_suite
 from curve.mlx_classifier import (
@@ -851,6 +852,7 @@ def retrain_centroid_classifier(
             label: list(values)
             for label, values in sorted(centroids.items())
         },
+        "feature_importance": feature_importance_from_centroids(centroids),
         "train_examples": len(train_examples),
         "source_datasets": {
             "base_dataset": str(base_dataset),
@@ -1473,6 +1475,7 @@ def _training_comparison_model(
         "model_type": "centroid_primitive_classifier",
         "train_examples": len(train_examples),
         "classes": sorted(centroids),
+        "feature_importance": feature_importance_from_centroids(centroids),
         "evaluation": {
             "val": evaluate_classifier(
                 centroids,

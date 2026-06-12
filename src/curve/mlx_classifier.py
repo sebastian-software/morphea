@@ -18,6 +18,7 @@ from curve.classifier import (
     evaluate_classifier,
     evaluate_classifier_ranking,
     examples_from_dataset,
+    feature_importance_from_centroids,
     raster_examples_from_dataset,
 )
 from curve.token_transformer import (
@@ -123,6 +124,7 @@ def train_mlx_transformer_classifier(
             label: list(values)
             for label, values in sorted(fallback_centroids.items())
         },
+        "feature_importance": feature_importance_from_centroids(fallback_centroids),
         "evaluation": {
             "val": evaluate_classifier(
                 fallback_centroids,

@@ -17,6 +17,7 @@ from curve.classifier import (
     evaluate_classifier_ranking,
     evaluate_raster_classifier,
     examples_from_dataset,
+    feature_importance_from_centroids,
     features_from_anchor,
     features_from_candidate,
     load_classifier_model,
@@ -196,6 +197,19 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
         self.assertEqual(predicted, "circle")
 
+    def test_feature_importance_from_centroids_sorts_by_feature_spread(self):
+        importance = feature_importance_from_centroids(
+            {
+                "circle": (1.0, 0.0, 1.0),
+                "quad": (5.0, 0.0, 0.0),
+            }
+        )
+
+        self.assertEqual(importance[0]["feature"], "node_count")
+        self.assertEqual(importance[0]["spread"], 4.0)
+        self.assertEqual(importance[0]["min"], 1.0)
+        self.assertEqual(importance[0]["max"], 5.0)
+
     def test_raster_examples_from_dataset_reads_rgba_crop_tokens(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             generate_synthetic_dataset(
@@ -260,6 +274,13 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertTrue(model_path.exists())
             self.assertEqual(model["model_type"], "centroid_primitive_classifier")
             self.assertIn("circle", model["classes"])
+            self.assertIn("feature_importance", model)
+            self.assertTrue(
+                any(
+                    item["feature"] == "node_count"
+                    for item in model["feature_importance"]
+                )
+            )
             self.assertIn("val", model["evaluation"])
             self.assertIn("val", model["ranking_evaluation"])
             self.assertGreaterEqual(
@@ -457,6 +478,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(model["training_implementation"], "centroid_fallback")
             self.assertEqual(model["training_config"]["epochs"], 3)
             self.assertIn("circle", model["fallback_centroids"])
+            self.assertIn("feature_importance", model)
             self.assertIn("circle", centroids)
             self.assertIn("ranking_evaluation", model)
 
@@ -920,6 +942,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertTrue(report_path.exists())
             self.assertEqual(report["schema_version"], 1)
             self.assertEqual(report["splits"], ["val"])
+            self.assertIn("feature_importance", report)
             self.assertEqual(report["evaluation"]["val"]["examples"], 15)
             self.assertEqual(report["ranking_evaluation"]["val"]["examples"], 15)
 
@@ -960,10 +983,9 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertIn("test", report["evaluation"])
             self.assertIn("test", report["ranking_evaluation"])
             self.assertFalse(report["uses_raster_tokens"])
-            self.assertIn(
-                "# Curve Classifier Evaluation",
-                markdown_path.read_text(encoding="utf-8"),
-            )
+            markdown = markdown_path.read_text(encoding="utf-8")
+            self.assertIn("# Curve Classifier Evaluation", markdown)
+            self.assertIn("## Feature Importance", markdown)
 
     def test_eval_classifier_model_uses_raster_tokens_for_mlx_mixer(self):
         with tempfile.TemporaryDirectory() as temp_dir:

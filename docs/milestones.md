@@ -540,6 +540,9 @@ Implemented so far:
   standalone evaluation of an existing primitive classifier artifact
 - `curve eval-classifier --markdown report.md` for scan-friendly classifier
   evaluation summaries
+- classifier artifacts and evaluation reports include centroid-spread
+  `feature_importance`, making it visible when simple geometry and
+  scene-group context signals separate primitive classes.
 - optional `--classifier-model` prior during `curve vectorize`
 - `classifier_prior_error` metric in candidate manifests
 - `curve train` writes `ranking_evaluation` comparing heuristic-only candidate

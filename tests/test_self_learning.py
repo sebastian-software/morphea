@@ -916,6 +916,8 @@ class SelfLearningTests(unittest.TestCase):
                 result["augmented"]["train_examples"],
                 result["baseline"]["train_examples"],
             )
+            self.assertIn("feature_importance", result["baseline"])
+            self.assertIn("feature_importance", result["augmented"])
             self.assertIn("ranking_evaluation", result["delta"])
             self.assertIn(
                 result["summary"]["status"],
@@ -1469,6 +1471,7 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertIn("evaluation", model)
             self.assertIn("ranking_evaluation", model)
+            self.assertIn("feature_importance", model)
             self.assertEqual(
                 model["source_datasets"]["pseudo_dataset"],
                 str(pseudo_dir / "dataset.json"),
@@ -1520,6 +1523,7 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(model["model_type"], "mlx_transformer_primitive_classifier")
             self.assertEqual(model["retraining_backend"], "mlx")
             self.assertEqual(model["augmentation"]["pseudo_train_examples"], 1)
+            self.assertIn("feature_importance", model)
             self.assertEqual(
                 model["train_examples"],
                 model["augmentation"]["base_train_examples"] + 1,

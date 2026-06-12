@@ -791,6 +791,9 @@ Top-level fields:
 - `feature_names`
 - `classes`
 - `centroids`
+- `feature_importance`: centroid-spread summary sorted by strongest
+  class-separating feature; each row records `feature`, `spread`, `min`, and
+  `max`
 - `train_examples`
 - `source_datasets`: present for `curve retrain`, recording base,
   pseudo-label, and validation dataset paths

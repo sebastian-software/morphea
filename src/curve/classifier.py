@@ -432,6 +432,7 @@ def train_centroid_classifier(
             label: list(values)
             for label, values in sorted(centroids.items())
         },
+        "feature_importance": feature_importance_from_centroids(centroids),
         "train_examples": len(train_examples),
         "evaluation": {
             "val": evaluate_classifier(
@@ -482,6 +483,7 @@ def evaluate_classifier_model(
         "classifier_backend": classifier.get("classifier_backend"),
         "uses_raster_tokens": use_raster_eval,
         "feature_names": model.get("feature_names", list(FEATURE_NAMES)),
+        "feature_importance": model.get("feature_importance", []),
         "classes": model.get("classes", _classifier_labels(classifier)),
         "splits": list(splits),
         "evaluation": {
@@ -573,6 +575,22 @@ def render_classifier_evaluation_markdown(report: dict[str, object]) -> str:
             )
             lines.append(f"- `{label}` -> {cells}")
         lines.append("")
+    importance = report.get("feature_importance", [])
+    if isinstance(importance, list) and importance:
+        lines.extend(["## Feature Importance", ""])
+        lines.append("| Feature | Spread | Min | Max |")
+        lines.append("| --- | ---: | ---: | ---: |")
+        for item in importance[:8]:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{item.get('feature')}` | "
+                f"{_fmt_number(item.get('spread'))} | "
+                f"{_fmt_number(item.get('min'))} | "
+                f"{_fmt_number(item.get('max'))} |"
+            )
+        lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -593,6 +611,33 @@ def centroids_from_examples(
         msg = "training examples must not be empty"
         raise ValueError(msg)
     return _centroids(examples)
+
+
+def feature_importance_from_centroids(
+    centroids: dict[str, tuple[float, ...]],
+) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for index, feature in enumerate(FEATURE_NAMES):
+        values = [
+            centroid[index] if index < len(centroid) else 0.0
+            for centroid in centroids.values()
+        ]
+        if not values:
+            continue
+        minimum = min(values)
+        maximum = max(values)
+        rows.append(
+            {
+                "feature": feature,
+                "spread": maximum - minimum,
+                "min": minimum,
+                "max": maximum,
+            }
+        )
+    return sorted(
+        rows,
+        key=lambda item: (-float(item["spread"]), str(item["feature"])),
+    )
 
 
 def load_centroid_model(model_json: str | Path) -> dict[str, tuple[float, ...]]:
