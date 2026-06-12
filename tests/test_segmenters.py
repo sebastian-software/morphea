@@ -26,6 +26,8 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(proposals[0].source, "flat_color")
         self.assertEqual(proposals[0].confidence, 1.0)
         self.assertEqual(proposals[0].status, "proposed")
+        self.assertEqual(proposals[0].downstream_status, "pending")
+        self.assertIsNone(proposals[0].rejection_reason)
         self.assertGreater(proposals[0].area, 0)
 
     def test_flat_color_segmenter_splits_same_color_components(self):
@@ -47,6 +49,11 @@ class SegmenterTests(unittest.TestCase):
 
         self.assertEqual(len(proposals), 2)
         self.assertIn("deferred", {proposal.status for proposal in proposals})
+        self.assertIn("rejected", {proposal.downstream_status for proposal in proposals})
+        self.assertIn(
+            "max_component_area_exceeded",
+            {proposal.rejection_reason for proposal in proposals},
+        )
 
     def test_proposals_to_manifest_is_json_ready(self):
         image_path = _write_two_color_image()
@@ -56,6 +63,8 @@ class SegmenterTests(unittest.TestCase):
 
         self.assertEqual(manifest[0]["source"], "flat_color")
         self.assertIsInstance(manifest[0]["bounds"], list)
+        self.assertEqual(manifest[0]["downstream_status"], "pending")
+        self.assertIsNone(manifest[0]["rejection_reason"])
 
     def test_mlx_sam_segmenter_reports_not_configured(self):
         with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
@@ -121,6 +130,10 @@ class SegmenterTests(unittest.TestCase):
             self.assertTrue(manifest["config"]["split_components"])
             self.assertEqual(manifest["proposal_count"], 2)
             self.assertEqual(manifest["proposals"][0]["status"], "deferred")
+            self.assertEqual(
+                manifest["proposals"][0]["downstream_status"],
+                "rejected",
+            )
 
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -19,6 +19,8 @@ class SegmentProposal:
     bounds: tuple[int, int, int, int]
     area: int
     status: str = "proposed"
+    downstream_status: str = "pending"
+    rejection_reason: str | None = None
 
 
 class Segmenter(Protocol):
@@ -136,6 +138,8 @@ def proposals_to_manifest(
             "bounds": list(proposal.bounds),
             "area": proposal.area,
             "status": proposal.status,
+            "downstream_status": proposal.downstream_status,
+            "rejection_reason": proposal.rejection_reason,
         }
         for proposal in proposals
     ]
@@ -152,6 +156,7 @@ def _proposal_from_color_mask(
     xs = [x for x, _ in pixels]
     ys = [y for _, y in pixels]
     status = _proposal_status(len(pixels), max_component_area)
+    downstream_status, rejection_reason = _downstream_status(status)
     return SegmentProposal(
         id=f"{source}-{index:04d}",
         source=source,
@@ -160,6 +165,8 @@ def _proposal_from_color_mask(
         bounds=(min(xs), min(ys), max(xs), max(ys)),
         area=len(pixels),
         status=status,
+        downstream_status=downstream_status,
+        rejection_reason=rejection_reason,
     )
 
 
@@ -171,6 +178,8 @@ def _proposal_from_component(
     *,
     max_component_area: int | None,
 ) -> SegmentProposal:
+    status = _proposal_status(component.area, max_component_area)
+    downstream_status, rejection_reason = _downstream_status(status)
     return SegmentProposal(
         id=f"{source}-{index:04d}",
         source=source,
@@ -178,7 +187,9 @@ def _proposal_from_component(
         color=color,
         bounds=component.bounds,
         area=component.area,
-        status=_proposal_status(component.area, max_component_area),
+        status=status,
+        downstream_status=downstream_status,
+        rejection_reason=rejection_reason,
     )
 
 
@@ -186,3 +197,9 @@ def _proposal_status(area: int, max_component_area: int | None) -> str:
     if max_component_area is not None and area > max_component_area:
         return "deferred"
     return "proposed"
+
+
+def _downstream_status(status: str) -> tuple[str, str | None]:
+    if status == "deferred":
+        return "rejected", "max_component_area_exceeded"
+    return "pending", None
