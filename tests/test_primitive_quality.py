@@ -61,6 +61,19 @@ class PrimitiveQualityTests(unittest.TestCase):
             ["horizontal_stroke_width_1", "vertical_stroke_width_1"],
         )
 
+    def test_primitive_quality_harness_matches_multiple_anchors(self):
+        report = check_primitive_quality(cases=("composition_square_plus_circle_a",))
+
+        self.assertTrue(report["ok"])
+        case = report["cases"][0]
+        self.assertEqual(case["anchor_count"], 2)
+        self.assertEqual(case["unmatched_expected"], [])
+        self.assertEqual(case["unexpected_actual"], [])
+        self.assertEqual(
+            {match["expected_id"]: match["actual_kind"] for match in case["matches"]},
+            {"square": "rect", "circle": "circle"},
+        )
+
     def test_primitive_specs_have_ten_variants_per_family(self):
         counts: dict[str, int] = {}
         for spec in primitive_specs():
@@ -83,6 +96,13 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "antialiased_stroke": 3,
                 "palette_drift_primitive": 3,
                 "transparent_circle": 3,
+                "composition_circle_plus_stroke": 3,
+                "composition_different_color_separated": 3,
+                "composition_dot_row": 3,
+                "composition_multiple_strokes": 3,
+                "composition_ring_plus_dot": 3,
+                "composition_same_color_separated": 3,
+                "composition_square_plus_circle": 3,
             },
         )
 

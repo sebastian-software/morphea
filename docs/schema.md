@@ -238,6 +238,9 @@ Each case records:
   `raster_alpha_error`, and `raster_size_match`
 - `geometry`: expected bounds, actual bounds, and `bbox_iou`
 - `geometry_diff`: compact expected-vs-actual semantic geometry
+- `matches`: order-independent expected-to-actual primitive matches
+- `unmatched_expected`: expected primitives that could not be matched
+- `unexpected_actual`: extra actual primitives left after matching
 - `failures`: contract failures such as wrong kind, fallback path, loose
   coordinates, out-of-canvas bounds, or visual round-trip regression
 - `failure_categories`: stable categories such as `wrong_kind`, `wrong_count`,

@@ -214,6 +214,8 @@ Current evidence:
 
 ### PQ4: Non-Touching Primitive Compositions
 
+Status: implemented for deterministic separated composition fixtures.
+
 Purpose: prove that multiple independent primary forms are detected together
 without merging, dropping, or inventing shapes.
 
@@ -240,6 +242,17 @@ Exit criteria:
 - Same-color separated shapes stay separate unless a later grouping rule says
   otherwise.
 - Geometry matching is stable when output order changes.
+
+Current evidence:
+
+- the primitive harness now performs order-independent expected-to-actual
+  matching by kind, color, bounds, and geometry.
+- each non-touching composition family has 3 deterministic variants:
+  same-color separated shapes, different-color separated shapes, circle plus
+  stroke, square plus circle, ring plus dot, aligned dot rows, and multiple
+  strokes.
+- reports include `matches`, `unmatched_expected`, and `unexpected_actual` so
+  multi-anchor failures identify dropped or invented primitives directly.
 
 ### PQ5: Touching and Adjacent Primitive Compositions
 

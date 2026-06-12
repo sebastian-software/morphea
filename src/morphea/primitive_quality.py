@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from fnmatch import fnmatch
 from math import hypot
 from pathlib import Path
@@ -25,6 +25,18 @@ BLUE = "#003366"
 
 
 @dataclass(frozen=True)
+class ExpectedPrimitive:
+    id: str
+    expected_kinds: tuple[str, ...]
+    geometry_type: str
+    geometry: Geometry
+    color: str = BLUE
+    color_tolerance: float = 0.0
+    coordinate_tolerance: float | None = None
+    min_bbox_iou: float | None = None
+
+
+@dataclass(frozen=True)
 class PrimitiveSpec:
     id: str
     expected_kinds: tuple[str, ...]
@@ -40,6 +52,7 @@ class PrimitiveSpec:
     background: str = "#ffffff"
     color: str = "#003366"
     color_tolerance: float = 0.0
+    expected_primitives: tuple[ExpectedPrimitive, ...] = ()
     min_area: int = 4
     coordinate_tolerance: float = 1.5
     max_raster_l1_error: float = 0.02
@@ -239,6 +252,201 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ("transparent_circle", "base", (18, 18, 46, 46)),
             ("transparent_circle_small", "small", (10, 10, 32, 32)),
             ("transparent_circle_offset", "offset", (30, 18, 56, 44)),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_same_color_separated", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_same_color_two_squares",
+                "two_squares",
+                (
+                    _rect_primitive("left_square", (8, 12, 24, 28)),
+                    _rect_primitive("right_square", (40, 34, 56, 50)),
+                ),
+            ),
+            (
+                "composition_same_color_square_circle",
+                "square_circle",
+                (
+                    _rect_primitive("square", (8, 34, 24, 50)),
+                    _circle_primitive("circle", (38, 10, 56, 28)),
+                ),
+            ),
+            (
+                "composition_same_color_rect_circle",
+                "rect_circle",
+                (
+                    _rect_primitive("rect", (6, 12, 30, 24)),
+                    _circle_primitive("circle", (40, 36, 56, 52)),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_different_color_separated", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_different_color_square_circle",
+                "square_circle",
+                (
+                    _rect_primitive("blue_square", (8, 10, 26, 28), color=BLUE),
+                    _circle_primitive("red_circle", (38, 34, 56, 52), color="#dd2222"),
+                ),
+            ),
+            (
+                "composition_different_color_two_rects",
+                "two_rects",
+                (
+                    _rect_primitive("blue_rect", (6, 36, 28, 50), color=BLUE),
+                    _rect_primitive("gold_rect", (36, 10, 58, 24), color="#c99700"),
+                ),
+            ),
+            (
+                "composition_different_color_circle_rect",
+                "circle_rect",
+                (
+                    _circle_primitive("red_circle", (8, 8, 28, 28), color="#dd2222"),
+                    _rect_primitive("blue_rect", (34, 36, 58, 50), color=BLUE),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_circle_plus_stroke", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_circle_plus_horizontal_stroke",
+                "horizontal",
+                (
+                    _circle_primitive("circle", (8, 8, 28, 28)),
+                    _stroke_primitive("stroke", (36, 42, 58, 42), 4),
+                ),
+            ),
+            (
+                "composition_circle_plus_vertical_stroke",
+                "vertical",
+                (
+                    _circle_primitive("circle", (36, 8, 56, 28)),
+                    _stroke_primitive("stroke", (16, 34, 16, 58), 4),
+                ),
+            ),
+            (
+                "composition_circle_plus_diagonal_stroke",
+                "diagonal",
+                (
+                    _circle_primitive("circle", (8, 36, 26, 54)),
+                    _stroke_primitive("stroke", (38, 28, 58, 8), 4, tolerance=2.75),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_square_plus_circle", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_square_plus_circle_a",
+                "a",
+                (
+                    _rect_primitive("square", (8, 8, 26, 26)),
+                    _circle_primitive("circle", (38, 38, 56, 56)),
+                ),
+            ),
+            (
+                "composition_square_plus_circle_b",
+                "b",
+                (
+                    _rect_primitive("square", (38, 8, 56, 26)),
+                    _circle_primitive("circle", (8, 38, 26, 56)),
+                ),
+            ),
+            (
+                "composition_square_plus_circle_c",
+                "c",
+                (
+                    _rect_primitive("square", (22, 8, 40, 26)),
+                    _circle_primitive("circle", (8, 38, 26, 56)),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_ring_plus_dot", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_ring_plus_dot_a",
+                "a",
+                (
+                    _ring_primitive("ring", (8, 8, 34, 34), 4),
+                    _circle_primitive("dot", (46, 46, 56, 56)),
+                ),
+            ),
+            (
+                "composition_ring_plus_dot_b",
+                "b",
+                (
+                    _ring_primitive("ring", (30, 8, 56, 34), 4),
+                    _circle_primitive("dot", (8, 46, 18, 56)),
+                ),
+            ),
+            (
+                "composition_ring_plus_dot_c",
+                "c",
+                (
+                    _ring_primitive("ring", (8, 30, 34, 56), 4),
+                    _circle_primitive("dot", (46, 8, 56, 18)),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_dot_row", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_dot_row_three",
+                "three",
+                tuple(_circle_primitive(f"dot_{index}", box) for index, box in enumerate(((8, 28, 16, 36), (28, 28, 36, 36), (48, 28, 56, 36)))),
+            ),
+            (
+                "composition_dot_row_four",
+                "four",
+                tuple(_circle_primitive(f"dot_{index}", box) for index, box in enumerate(((6, 28, 14, 36), (22, 28, 30, 36), (38, 28, 46, 36), (54, 28, 62, 36)))),
+            ),
+            (
+                "composition_dot_column_three",
+                "column_three",
+                tuple(_circle_primitive(f"dot_{index}", box) for index, box in enumerate(((28, 6, 36, 14), (28, 28, 36, 36), (28, 50, 36, 58)))),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "composition_multiple_strokes", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "composition_multiple_horizontal_strokes",
+                "horizontal",
+                (
+                    _stroke_primitive("top", (8, 18, 56, 18), 3),
+                    _stroke_primitive("bottom", (8, 44, 56, 44), 3),
+                ),
+            ),
+            (
+                "composition_multiple_vertical_strokes",
+                "vertical",
+                (
+                    _stroke_primitive("left", (18, 8, 18, 56), 3),
+                    _stroke_primitive("right", (46, 8, 46, 56), 3),
+                ),
+            ),
+            (
+                "composition_multiple_mixed_strokes",
+                "mixed",
+                (
+                    _stroke_primitive("horizontal", (8, 18, 34, 18), 3),
+                    _stroke_primitive("vertical", (50, 30, 50, 58), 3),
+                    _stroke_primitive("diagonal", (8, 54, 30, 32), 3, tolerance=2.75),
+                ),
+            ),
         )
     )
     return tuple(specs)
@@ -631,6 +839,161 @@ def _transparent_circle_source(box: tuple[int, int, int, int]) -> Image.Image:
     return image
 
 
+def _composition_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    primitives: tuple[ExpectedPrimitive, ...],
+) -> PrimitiveSpec:
+    first = primitives[0]
+    max_l1 = 0.08 if "ring" in family else 0.025
+    max_edge = 0.06 if "ring" in family else 0.03
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=first.expected_kinds,
+        geometry_type=first.geometry_type,
+        geometry=first.geometry,
+        color=first.color,
+        expected_primitives=primitives,
+        draw=lambda draw, primitives=primitives: _draw_expected_primitives(draw, primitives),
+        max_anchor_count=len(primitives),
+        max_raster_l1_error=max_l1,
+        max_raster_edge_error=max_edge,
+        min_bbox_iou=0.82,
+    )
+
+
+def _rect_primitive(
+    primitive_id: str,
+    box: tuple[int, int, int, int],
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    x0, y0, x1, y1 = box
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("rect", "quad"),
+        geometry_type="quad",
+        geometry={
+            "corners": ((x0, y0), (x1, y0), (x1, y1), (x0, y1)),
+            "draw": ("rect", box),
+        },
+        color=color,
+        min_bbox_iou=0.88,
+    )
+
+
+def _circle_primitive(
+    primitive_id: str,
+    box: tuple[int, int, int, int],
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    x0, y0, x1, y1 = box
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("circle",),
+        geometry_type="circle",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "r": (x1 - x0) / 2,
+            "draw": ("circle", box),
+        },
+        color=color,
+        coordinate_tolerance=1.75,
+        min_bbox_iou=0.86,
+    )
+
+
+def _stroke_primitive(
+    primitive_id: str,
+    line: tuple[int, int, int, int],
+    width: int,
+    *,
+    color: str = BLUE,
+    tolerance: float = 1.75,
+) -> ExpectedPrimitive:
+    x0, y0, x1, y1 = line
+    centerline = _expected_line_centerline(line, width)
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("stroke_polyline",),
+        geometry_type="stroke",
+        geometry={
+            "centerline": centerline,
+            "width": float(width),
+            "draw": ("stroke", line, width),
+        },
+        color=color,
+        coordinate_tolerance=tolerance,
+        min_bbox_iou=0.76,
+    )
+
+
+def _ring_primitive(
+    primitive_id: str,
+    box: tuple[int, int, int, int],
+    width: int,
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    x0, y0, x1, y1 = box
+    outer_radius = (x1 - x0) / 2
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("stroke_circle",),
+        geometry_type="stroke_circle",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "r": outer_radius - width / 2 + 0.5,
+            "width": width + 0.5,
+            "draw": ("ring", box, width),
+        },
+        color=color,
+        coordinate_tolerance=2.0,
+        min_bbox_iou=0.78,
+    )
+
+
+def _expected_line_centerline(
+    line: tuple[int, int, int, int],
+    width: int,
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    x0, y0, x1, y1 = line
+    if y0 == y1:
+        center_y = y0 + (0.5 if width % 2 == 0 else 0.0)
+        return (float(x0), center_y), (float(x1), center_y)
+    if x0 == x1:
+        center_x = x0 + (0.5 if width % 2 == 0 else 0.0)
+        return (center_x, float(y0)), (center_x, float(y1))
+    return (float(x0), float(y0)), (float(x1), float(y1))
+
+
+def _draw_expected_primitives(
+    draw: ImageDraw.ImageDraw,
+    primitives: tuple[ExpectedPrimitive, ...],
+) -> None:
+    for primitive in primitives:
+        draw_instruction = primitive.geometry.get("draw")
+        if not isinstance(draw_instruction, tuple):
+            continue
+        kind = draw_instruction[0]
+        if kind == "rect":
+            draw.rectangle(draw_instruction[1], fill=primitive.color)
+        elif kind == "circle":
+            draw.ellipse(draw_instruction[1], fill=primitive.color)
+        elif kind == "stroke":
+            _, line, width = draw_instruction
+            draw.line(line, fill=primitive.color, width=width)
+        elif kind == "ring":
+            _, box, width = draw_instruction
+            draw.ellipse(box, outline=primitive.color, width=width)
+
+
 def check_primitive_quality(
     *,
     output_dir: str | Path | None = None,
@@ -853,24 +1216,6 @@ def _evaluate_case(
 ) -> dict[str, Any]:
     anchors = list(manifest.get("anchors", []))
     failure_details: list[dict[str, str]] = []
-    if len(anchors) > spec.max_anchor_count:
-        failure_details.append(
-            _failure(
-                "wrong_count",
-                f"anchor_count {len(anchors)} exceeds {spec.max_anchor_count}",
-            )
-        )
-    if not anchors:
-        failure_details.append(_failure("wrong_count", "no anchors detected"))
-        return _case_result(
-            spec,
-            None,
-            metrics,
-            failure_details,
-            bbox_iou=0.0,
-            anchor_count=0,
-        )
-
     for anchor in anchors:
         if anchor.get("kind") == "cubic_path":
             failure_details.append(
@@ -890,25 +1235,6 @@ def _evaluate_case(
                 )
             )
 
-    anchor = anchors[0]
-    actual_kind = str(anchor.get("kind"))
-    if actual_kind not in spec.expected_kinds:
-        failure_details.append(
-            _failure(
-                "wrong_kind",
-                "expected kind "
-                f"{'/'.join(spec.expected_kinds)}, got {actual_kind}",
-            )
-        )
-    actual_color = str(anchor.get("color"))
-    color_delta = _color_distance(actual_color, spec.color)
-    if color_delta > spec.color_tolerance:
-        failure_details.append(
-            _failure(
-                "color_drift",
-                f"expected color {spec.color}, got {anchor.get('color')}",
-            )
-        )
     if not bool(metrics.get("raster_size_match", False)):
         failure_details.append(
             _failure("visual_drift", "rendered size does not match source")
@@ -938,14 +1264,10 @@ def _evaluate_case(
             )
         )
 
-    expected_bounds = _expected_visual_bounds(spec)
-    actual_bounds = _anchor_visual_bounds(anchor)
-    bbox_iou = _bbox_iou(expected_bounds, actual_bounds)
-    if bbox_iou < spec.min_bbox_iou:
-        failure_details.append(
-            _failure("geometry_drift", f"bbox_iou {bbox_iou} below {spec.min_bbox_iou}")
-        )
-    failure_details.extend(_geometry_failures(spec, anchor))
+    match_result = _match_expected_primitives(spec, anchors)
+    failure_details.extend(match_result["failure_details"])
+    anchor = match_result["primary_anchor"]
+    bbox_iou = match_result["primary_bbox_iou"]
     return _case_result(
         spec,
         anchor,
@@ -953,6 +1275,9 @@ def _evaluate_case(
         failure_details,
         bbox_iou=bbox_iou,
         anchor_count=len(anchors),
+        matches=match_result["matches"],
+        unmatched_expected=match_result["unmatched_expected"],
+        unexpected_actual=match_result["unexpected_actual"],
     )
 
 
@@ -964,6 +1289,9 @@ def _case_result(
     *,
     bbox_iou: float,
     anchor_count: int,
+    matches: list[dict[str, Any]],
+    unmatched_expected: list[dict[str, Any]],
+    unexpected_actual: list[dict[str, Any]],
 ) -> dict[str, Any]:
     failures = [failure["message"] for failure in failure_details]
     categories = sorted({failure["category"] for failure in failure_details})
@@ -986,10 +1314,191 @@ def _case_result(
             "bbox_iou": round(bbox_iou, 6),
         },
         "geometry_diff": _geometry_diff(spec, anchor),
+        "matches": matches,
+        "unmatched_expected": unmatched_expected,
+        "unexpected_actual": unexpected_actual,
         "failures": failures,
         "failure_categories": categories,
         "failure_details": failure_details,
     }
+
+
+def _match_expected_primitives(
+    spec: PrimitiveSpec,
+    anchors: list[dict[str, Any]],
+) -> dict[str, Any]:
+    expected_primitives = _expected_primitives(spec)
+    unmatched_actual = set(range(len(anchors)))
+    matches: list[dict[str, Any]] = []
+    unmatched_expected: list[dict[str, Any]] = []
+    failure_details: list[dict[str, str]] = []
+
+    for expected in expected_primitives:
+        expected_spec = _expected_to_spec(spec, expected)
+        best: tuple[int, list[dict[str, str]], float] | None = None
+        for index in sorted(unmatched_actual):
+            anchor = anchors[index]
+            candidate_failures, bbox_iou = _anchor_contract_failures(
+                expected_spec,
+                anchor,
+            )
+            score = (len(candidate_failures), -bbox_iou)
+            if best is None or score < (len(best[1]), -best[2]):
+                best = (index, candidate_failures, bbox_iou)
+        if best is None:
+            failure_details.append(
+                _failure("wrong_count", f"expected primitive {expected.id} was not detected")
+            )
+            unmatched_expected.append({"id": expected.id, "reason": "no_actual_anchor"})
+            continue
+        index, candidate_failures, bbox_iou = best
+        if candidate_failures:
+            failure_details.append(
+                _failure("wrong_count", f"expected primitive {expected.id} was not matched")
+            )
+            failure_details.extend(
+                _prefix_failures(expected.id, candidate_failures)
+            )
+            unmatched_expected.append(
+                {
+                    "id": expected.id,
+                    "best_actual_index": index,
+                    "best_actual_kind": anchors[index].get("kind"),
+                    "failure_categories": sorted(
+                        {failure["category"] for failure in candidate_failures}
+                    ),
+                    "failures": [failure["message"] for failure in candidate_failures],
+                }
+            )
+            continue
+        unmatched_actual.remove(index)
+        matches.append(
+            {
+                "expected_id": expected.id,
+                "actual_index": index,
+                "actual_kind": anchors[index].get("kind"),
+                "bbox_iou": round(bbox_iou, 6),
+                "geometry_diff": _geometry_diff(expected_spec, anchors[index]),
+            }
+        )
+
+    unexpected_actual = [
+        {
+            "actual_index": index,
+            "actual_kind": anchors[index].get("kind"),
+            "bounds": _rounded_bounds(_anchor_visual_bounds(anchors[index])),
+        }
+        for index in sorted(unmatched_actual)
+    ]
+    for actual in unexpected_actual:
+        failure_details.append(
+            _failure(
+                "wrong_count",
+                "unexpected actual primitive "
+                f"{actual['actual_kind']} at index {actual['actual_index']}",
+            )
+        )
+
+    primary_anchor = anchors[matches[0]["actual_index"]] if matches else (anchors[0] if anchors else None)
+    primary_bbox_iou = float(matches[0]["bbox_iou"]) if matches else 0.0
+    return {
+        "matches": matches,
+        "unmatched_expected": unmatched_expected,
+        "unexpected_actual": unexpected_actual,
+        "failure_details": failure_details,
+        "primary_anchor": primary_anchor,
+        "primary_bbox_iou": primary_bbox_iou,
+    }
+
+
+def _anchor_contract_failures(
+    expected_spec: PrimitiveSpec,
+    anchor: dict[str, Any],
+) -> tuple[list[dict[str, str]], float]:
+    failures: list[dict[str, str]] = []
+    actual_kind = str(anchor.get("kind"))
+    if actual_kind not in expected_spec.expected_kinds:
+        failures.append(
+            _failure(
+                "wrong_kind",
+                "expected kind "
+                f"{'/'.join(expected_spec.expected_kinds)}, got {actual_kind}",
+            )
+        )
+    actual_color = str(anchor.get("color"))
+    color_delta = _color_distance(actual_color, expected_spec.color)
+    if color_delta > expected_spec.color_tolerance:
+        failures.append(
+            _failure(
+                "color_drift",
+                f"expected color {expected_spec.color}, got {anchor.get('color')}",
+            )
+        )
+    expected_bounds = _expected_visual_bounds(expected_spec)
+    actual_bounds = _anchor_visual_bounds(anchor)
+    bbox_iou = _bbox_iou(expected_bounds, actual_bounds)
+    if bbox_iou < expected_spec.min_bbox_iou:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"bbox_iou {bbox_iou} below {expected_spec.min_bbox_iou}",
+            )
+        )
+    failures.extend(_geometry_failures(expected_spec, anchor))
+    return failures, bbox_iou
+
+
+def _expected_primitives(spec: PrimitiveSpec) -> tuple[ExpectedPrimitive, ...]:
+    if spec.expected_primitives:
+        return spec.expected_primitives
+    return (
+        ExpectedPrimitive(
+            id=spec.id,
+            expected_kinds=spec.expected_kinds,
+            geometry_type=spec.geometry_type,
+            geometry=spec.geometry,
+            color=spec.color,
+            color_tolerance=spec.color_tolerance,
+            coordinate_tolerance=spec.coordinate_tolerance,
+            min_bbox_iou=spec.min_bbox_iou,
+        ),
+    )
+
+
+def _expected_to_spec(
+    spec: PrimitiveSpec,
+    expected: ExpectedPrimitive,
+) -> PrimitiveSpec:
+    return replace(
+        spec,
+        id=expected.id,
+        expected_kinds=expected.expected_kinds,
+        geometry_type=expected.geometry_type,
+        geometry=expected.geometry,
+        color=expected.color,
+        color_tolerance=expected.color_tolerance,
+        coordinate_tolerance=(
+            expected.coordinate_tolerance
+            if expected.coordinate_tolerance is not None
+            else spec.coordinate_tolerance
+        ),
+        min_bbox_iou=(
+            expected.min_bbox_iou
+            if expected.min_bbox_iou is not None
+            else spec.min_bbox_iou
+        ),
+        expected_primitives=(),
+    )
+
+
+def _prefix_failures(
+    expected_id: str,
+    failures: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    return [
+        _failure(failure["category"], f"{expected_id}: {failure['message']}")
+        for failure in failures
+    ]
 
 
 def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
@@ -1287,6 +1796,8 @@ def _actual_geometry(anchor: dict[str, Any] | None) -> dict[str, Any] | None:
 def _rounded_geometry(geometry: Geometry) -> Geometry:
     rounded: Geometry = {}
     for key, value in geometry.items():
+        if key == "draw":
+            continue
         if isinstance(value, tuple):
             rounded[key] = _rounded_points(value)
         elif isinstance(value, float | int):
