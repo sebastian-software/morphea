@@ -46,6 +46,17 @@ class MaskComponent:
         compare=False,
         repr=False,
     )
+    centroid_hint: Point | None = field(default=None, compare=False, repr=False)
+    boundary_pixels_hint: frozenset[Pixel] | None = field(
+        default=None,
+        compare=False,
+        repr=False,
+    )
+    row_spans_hint: tuple[tuple[int, int, int], ...] | None = field(
+        default=None,
+        compare=False,
+        repr=False,
+    )
 
     @property
     def area(self) -> int:
@@ -80,15 +91,21 @@ class MaskComponent:
 
     @property
     def centroid(self) -> Point:
+        if self.centroid_hint is not None:
+            return self.centroid_hint
         sum_x = 0
         sum_y = 0
         for x, y in self.pixels:
             sum_x += x
             sum_y += y
-        return Point(sum_x / self.area, sum_y / self.area)
+        centroid = Point(sum_x / self.area, sum_y / self.area)
+        object.__setattr__(self, "centroid_hint", centroid)
+        return centroid
 
     @property
     def boundary_pixels(self) -> frozenset[Pixel]:
+        if self.boundary_pixels_hint is not None:
+            return self.boundary_pixels_hint
         boundary: set[Pixel] = set()
         pixels = self.pixels
         for pixel in self.pixels:
@@ -100,9 +117,13 @@ class MaskComponent:
                 or (x, y + 1) not in pixels
             ):
                 boundary.add(pixel)
-        return frozenset(boundary)
+        result = frozenset(boundary)
+        object.__setattr__(self, "boundary_pixels_hint", result)
+        return result
 
     def row_spans(self) -> tuple[tuple[int, int, int], ...]:
+        if self.row_spans_hint is not None:
+            return self.row_spans_hint
         rows: dict[int, tuple[int, int]] = {}
         for x, y in self.pixels:
             if y not in rows:
@@ -110,7 +131,9 @@ class MaskComponent:
                 continue
             min_x, max_x = rows[y]
             rows[y] = (min(min_x, x), max(max_x, x))
-        return tuple((y, *rows[y]) for y in sorted(rows))
+        result = tuple((y, *rows[y]) for y in sorted(rows))
+        object.__setattr__(self, "row_spans_hint", result)
+        return result
 
 
 def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskComponent, ...]:

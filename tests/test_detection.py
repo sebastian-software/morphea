@@ -39,6 +39,22 @@ class MaskComponentTests(unittest.TestCase):
         self.assertEqual(component.height, 2)
         self.assertEqual(component.row_spans(), ((1, 2, 4), (2, 2, 3)))
 
+    def test_mask_component_caches_derived_geometry(self):
+        mask = BinaryMask.from_rows(
+            (
+                "......",
+                "..###.",
+                "..##..",
+                "......",
+            )
+        )
+
+        component = connected_components(mask)[0]
+
+        self.assertIs(component.centroid, component.centroid)
+        self.assertIs(component.boundary_pixels, component.boundary_pixels)
+        self.assertIs(component.row_spans(), component.row_spans())
+
     def test_connected_components_keep_diagonal_neighbors_connected(self):
         mask = BinaryMask.from_rows(
             (
