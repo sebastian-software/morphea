@@ -352,6 +352,8 @@ Implemented so far:
 - core primitive ground truth for circles, point dots, circle strokes, line
   strokes, curved strokes, arc strokes, rects, rounded rects, quads, and
   perspective tile grids
+- synthetic quad ground truth includes numeric subtype markers for trapezoids
+  and parallelograms while preserving `quad` as the editable primitive kind
 - cut-out-like white overlay strokes with editable stroke metadata
 - preview/SVG coverage for generated `arc`, `rect`, and `rounded_rect`
   manifests

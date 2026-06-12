@@ -382,6 +382,11 @@ Written by `curve generate`.
 Each generated sample manifest also includes `seed` and `difficulty` so a
 single PNG/JSON pair is reproducible outside the dataset index.
 
+Synthetic quad anchors may include numeric `metrics.quad_subtype_code` values:
+`1.0` for trapezoid and `2.0` for parallelogram. They remain `quad` anchors so
+the primitive vocabulary stays small while training data can still target
+visually important quad families.
+
 ## Primitive Classifier Model v1
 
 Written by `curve train`, `curve retrain`, and `curve train-mlx`.
