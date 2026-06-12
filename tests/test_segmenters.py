@@ -17,6 +17,7 @@ from curve.segmenters import (
     mlx_sam_runtime_status,
     proposals_to_manifest,
     render_segment_proposal_markdown,
+    segment_proposal_groups,
     segment_proposal_summary,
     segmenter_backend_status,
 )
@@ -125,6 +126,22 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(summary["downstream_status_counts"]["rejected"], 1)
         self.assertEqual(summary["anchor_kind_counts"]["rect"], 1)
         self.assertEqual(summary["reserved_anchor_count"], 1)
+
+    def test_segment_proposal_groups_detects_tile_grid(self):
+        image_path = _write_tile_grid_image()
+        proposals = FlatColorSegmenter(min_area=4).propose(image_path)
+
+        groups = segment_proposal_groups(proposals)
+        summary = segment_proposal_summary(proposals, groups)
+
+        self.assertEqual(len(groups), 1)
+        group = groups[0]
+        self.assertEqual(group["kind"], "proposal_tile_grid")
+        self.assertEqual(len(group["proposal_ids"]), 4)
+        self.assertEqual(group["metrics"]["row_count"], 2.0)
+        self.assertEqual(group["metrics"]["column_count"], 2.0)
+        self.assertEqual(group["metrics"]["grid_occupancy_ratio"], 1.0)
+        self.assertEqual(summary["proposal_group_counts"]["proposal_tile_grid"], 1)
 
     def test_gate_segment_proposals_accepts_simple_anchor(self):
         image_path = _write_two_color_image()
@@ -374,6 +391,41 @@ class SegmenterTests(unittest.TestCase):
             self.assertIn("- Decision reason counts: `geometry_gate_passed: 2`", report)
             self.assertIn("geometry_gate_passed", report)
 
+    def test_segment_cli_writes_tile_grid_proposal_groups(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_tile_grid_image()
+            output = root / "segments.json"
+            markdown = root / "segments.md"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "segment",
+                        str(image_path),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--min-area",
+                        "4",
+                    ]
+                )
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["proposal_count"], 4)
+            self.assertEqual(
+                manifest["proposal_groups"][0]["kind"],
+                "proposal_tile_grid",
+            )
+            self.assertEqual(
+                manifest["summary"]["proposal_group_counts"]["proposal_tile_grid"],
+                1,
+            )
+            report = markdown.read_text(encoding="utf-8")
+            self.assertIn("## Proposal Groups", report)
+            self.assertIn("`proposal_tile_grid`", report)
+
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "segments.json"
@@ -451,6 +503,25 @@ def _write_top_left_foreground_image() -> Path:
     image = Image.new("RGB", (18, 14), "#f6f6f6")
     draw = ImageDraw.Draw(image)
     draw.rectangle((0, 0, 8, 5), fill="#003366")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_tile_grid_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "tile-grid.png"
+    image = Image.new("RGB", (26, 26), "white")
+    draw = ImageDraw.Draw(image)
+    colors = ("#dd2222", "#003366", "#c48800", "#226644")
+    boxes = (
+        (2, 2, 8, 8),
+        (14, 2, 20, 8),
+        (2, 14, 8, 20),
+        (14, 14, 20, 20),
+    )
+    for color, box in zip(colors, boxes):
+        draw.rectangle(box, fill=color)
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path

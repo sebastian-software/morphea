@@ -34,6 +34,7 @@ from curve.segmenters import (
     gate_segment_proposals,
     proposals_to_manifest,
     render_segment_proposal_markdown,
+    segment_proposal_groups,
     segment_proposal_summary,
     segmenter_backend_status,
 )
@@ -820,13 +821,15 @@ def main(argv: list[str] | None = None) -> None:
                     segment_config["require_reserved_anchor"]
                 ),
             )
+        proposal_groups = segment_proposal_groups(proposals)
         manifest = {
             "schema_version": 1,
             "input": str(args.input),
             "config": segment_config,
             "backend": segmenter_backend_status(segmenter),
             "proposal_count": len(proposals),
-            "summary": segment_proposal_summary(proposals),
+            "summary": segment_proposal_summary(proposals, proposal_groups),
+            "proposal_groups": proposal_groups,
             "proposals": proposals_to_manifest(proposals),
         }
         args.output.parent.mkdir(parents=True, exist_ok=True)

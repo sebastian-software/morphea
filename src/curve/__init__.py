@@ -95,6 +95,7 @@ from curve.segmenters import (
     Segmenter,
     proposals_to_manifest,
     render_segment_proposal_markdown,
+    segment_proposal_groups,
 )
 from curve.self_learning import (
     apply_review_file,
@@ -218,6 +219,7 @@ __all__ = [
     "predict_classifier_label",
     "raster_examples_from_dataset",
     "render_segment_proposal_markdown",
+    "segment_proposal_groups",
     "render_segment_manifest_comparison",
     "render_segment_manifest_comparison_markdown",
     "profile_vectorize",

@@ -458,6 +458,9 @@ Implemented so far:
   to be accepted anchors.
 - segment proposal manifests include aggregate proposal status, downstream
   status, anchor-kind, and reserved-anchor counts for quick scan/review.
+- segment proposal manifests include `proposal_tile_grid` groups for regular
+  2D arrangements of reserved `rect`/`quad` proposals, including row/column
+  counts, occupancy, spacing errors, and proposal ids in grid order.
 - `curve segment --markdown proposals.md` renders a scan-friendly proposal
   report with backend status, aggregate counts, anchor kinds, and reservation
   reasons.

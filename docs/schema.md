@@ -292,7 +292,10 @@ Top-level fields:
 - `proposal_count`
 - `summary`: aggregate `status_counts`, `downstream_status_counts`,
   `anchor_kind_counts`, `reserved_anchor_count`, and
-  `downstream_decision_reason_counts`
+  `downstream_decision_reason_counts`; when proposal groups are emitted it
+  also includes `proposal_group_counts`
+- `proposal_groups`: higher-level groupings inferred from simple proposal
+  anchors, currently `proposal_tile_grid`
 - `proposals`
 
 Proposal fields:
@@ -322,6 +325,15 @@ Proposal fields:
   downstream geometry gate decision, for example `geometry_gate_passed`,
   `missing_anchor_summary`, `anchor_quality_error_too_high`, or
   `anchor_not_reserved`
+
+Proposal group fields:
+
+- `id`
+- `kind`: currently `proposal_tile_grid` for regular 2D arrangements of
+  reserved `rect`/`quad` proposals
+- `proposal_ids`: proposal ids in row/column order
+- `metrics`: includes `row_count`, `column_count`, `tile_count`,
+  `grid_occupancy_ratio`, row/column spacing errors, and mean tile dimensions
 
 `backend` records `source`, `backend_available`, `status`, and an optional
 `reason`. MLX SAM status distinguishes `not_installed`, `not_configured`,

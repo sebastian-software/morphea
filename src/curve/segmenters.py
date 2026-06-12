@@ -204,7 +204,9 @@ def proposals_to_manifest(
 
 def segment_proposal_summary(
     proposals: tuple[SegmentProposal, ...],
+    proposal_groups: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
+    proposal_groups = proposal_groups or []
     return {
         "status_counts": _counts(proposal.status for proposal in proposals),
         "downstream_status_counts": _counts(
@@ -223,7 +225,21 @@ def segment_proposal_summary(
             for proposal in proposals
             if proposal.downstream_decision_reason is not None
         ),
+        "proposal_group_counts": _counts(
+            group.get("kind")
+            for group in proposal_groups
+            if isinstance(group, dict) and group.get("kind") is not None
+        ),
     }
+
+
+def segment_proposal_groups(
+    proposals: tuple[SegmentProposal, ...],
+) -> list[dict[str, object]]:
+    """Group simple proposal anchors into higher-level editable structures."""
+
+    tile_group = _tile_grid_group(proposals)
+    return [tile_group] if tile_group is not None else []
 
 
 def gate_segment_proposals(
@@ -268,6 +284,8 @@ def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
         f"- Reserved anchors: `{summary.get('reserved_anchor_count', 0)}`",
         "- Decision reason counts: "
         f"{_format_counts(summary.get('downstream_decision_reason_counts', {}))}",
+        "- Proposal group counts: "
+        f"{_format_counts(summary.get('proposal_group_counts', {}))}",
         "",
         "| ID | Status | Downstream | Anchor | Quality | Reserved | Bounds | Reason |",
         "| --- | --- | --- | --- | ---: | ---: | --- | --- |",
@@ -289,6 +307,32 @@ def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
             f"`{_format_bounds(proposal.get('bounds'))}` | "
             f"{_proposal_reason(proposal)} |"
         )
+    groups = manifest.get("proposal_groups", [])
+    if isinstance(groups, list) and groups:
+        lines.extend(
+            [
+                "",
+                "## Proposal Groups",
+                "",
+                "| ID | Kind | Proposals | Rows | Columns | Occupancy |",
+                "| --- | --- | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            metrics = group.get("metrics", {})
+            if not isinstance(metrics, dict):
+                metrics = {}
+            lines.append(
+                "| "
+                f"`{group.get('id', 'unknown')}` | "
+                f"`{group.get('kind', 'unknown')}` | "
+                f"{len(_list_value(group.get('proposal_ids')))} | "
+                f"{_format_float(metrics.get('row_count'))} | "
+                f"{_format_float(metrics.get('column_count'))} | "
+                f"{_format_float(metrics.get('grid_occupancy_ratio'))} |"
+            )
     return "\n".join(lines) + "\n"
 
 
@@ -364,6 +408,127 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _tile_grid_group(
+    proposals: tuple[SegmentProposal, ...],
+) -> dict[str, object] | None:
+    candidates = [
+        proposal
+        for proposal in proposals
+        if proposal.anchor_reserved
+        and proposal.anchor_kind in {"rect", "quad"}
+        and proposal.status == "proposed"
+    ]
+    if len(candidates) < 4:
+        return None
+
+    centers = {
+        proposal.id: _bounds_center(proposal.bounds)
+        for proposal in candidates
+    }
+    widths = [proposal.bounds[2] - proposal.bounds[0] + 1 for proposal in candidates]
+    heights = [proposal.bounds[3] - proposal.bounds[1] + 1 for proposal in candidates]
+    row_tolerance = max(2.0, _mean(heights) * 0.75)
+    column_tolerance = max(2.0, _mean(widths) * 0.75)
+    rows = _cluster_axis(
+        ((proposal.id, centers[proposal.id][1]) for proposal in candidates),
+        tolerance=row_tolerance,
+    )
+    columns = _cluster_axis(
+        ((proposal.id, centers[proposal.id][0]) for proposal in candidates),
+        tolerance=column_tolerance,
+    )
+    if len(rows) < 2 or len(columns) < 2:
+        return None
+
+    cell_count = len(rows) * len(columns)
+    occupancy = len(candidates) / cell_count if cell_count else 0.0
+    if occupancy < 0.6:
+        return None
+
+    proposal_ids = [
+        proposal.id
+        for proposal in sorted(
+            candidates,
+            key=lambda proposal: (
+                _cluster_index(rows, proposal.id),
+                _cluster_index(columns, proposal.id),
+                proposal.id,
+            ),
+        )
+    ]
+    return {
+        "id": "proposal-group-0000",
+        "kind": "proposal_tile_grid",
+        "proposal_ids": proposal_ids,
+        "metrics": {
+            "row_count": float(len(rows)),
+            "column_count": float(len(columns)),
+            "tile_count": float(len(candidates)),
+            "grid_occupancy_ratio": round(occupancy, 6),
+            "row_spacing_error": _spacing_error([row[0] for row in rows]),
+            "column_spacing_error": _spacing_error(
+                [column[0] for column in columns]
+            ),
+            "mean_tile_width": round(_mean(widths), 6),
+            "mean_tile_height": round(_mean(heights), 6),
+        },
+    }
+
+
+def _bounds_center(bounds: tuple[int, int, int, int]) -> tuple[float, float]:
+    return ((bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2)
+
+
+def _cluster_axis(
+    values: object,
+    *,
+    tolerance: float,
+) -> list[tuple[float, list[str]]]:
+    clusters: list[tuple[float, list[str]]] = []
+    for item_id, value in sorted(values, key=lambda item: item[1]):
+        if clusters and abs(value - clusters[-1][0]) <= tolerance:
+            previous_center, previous_ids = clusters[-1]
+            next_ids = [*previous_ids, item_id]
+            next_center = (
+                previous_center * len(previous_ids) + value
+            ) / len(next_ids)
+            clusters[-1] = (next_center, next_ids)
+            continue
+        clusters.append((float(value), [item_id]))
+    return clusters
+
+
+def _cluster_index(clusters: list[tuple[float, list[str]]], item_id: str) -> int:
+    for index, (_, item_ids) in enumerate(clusters):
+        if item_id in item_ids:
+            return index
+    return len(clusters)
+
+
+def _spacing_error(values: list[float]) -> float:
+    if len(values) < 3:
+        return 0.0
+    spacings = [
+        values[index + 1] - values[index]
+        for index in range(len(values) - 1)
+    ]
+    average = _mean(spacings)
+    if average <= 0:
+        return 1.0
+    variance = sum((value - average) ** 2 for value in spacings) / len(spacings)
+    return round((variance ** 0.5) / average, 6)
+
+
+def _mean(values: list[float] | list[int]) -> float:
+    if not values:
+        return 0.0
+    return sum(float(value) for value in values) / len(values)
+
+
+def _list_value(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
 
 
 def _format_counts(value: object) -> str:
