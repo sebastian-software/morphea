@@ -351,6 +351,42 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertIn("test", report["evaluation"])
             self.assertIn("test", report["ranking_evaluation"])
 
+    def test_eval_classifier_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=43,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            root = Path(temp_dir)
+            dataset = root / "dataset.json"
+            model_path = root / "model.json"
+            report_path = root / "classifier-eval.json"
+            config = root / "eval-classifier.json"
+            train_centroid_classifier(dataset, output=model_path)
+            config.write_text(
+                json.dumps(
+                    {
+                        "model": str(model_path),
+                        "dataset": str(dataset),
+                        "output": str(report_path),
+                        "splits": ["val"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["eval-classifier", "--config", str(config)])
+
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["splits"], ["val"])
+            self.assertIn("val", report["evaluation"])
+
     def test_load_model_and_score_matching_candidate(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             generate_synthetic_dataset(

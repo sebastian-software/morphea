@@ -75,6 +75,7 @@ VECTORIZE_DEFAULT_CONFIG = {
 }
 CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
+EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "splits"}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
     "output",
@@ -335,15 +336,16 @@ def main(argv: list[str] | None = None) -> None:
         "eval-classifier",
         help="Evaluate a primitive classifier model against a generated dataset.",
     )
-    eval_classifier.add_argument("model", type=Path)
-    eval_classifier.add_argument("dataset", type=Path)
-    eval_classifier.add_argument("-o", "--output", type=Path, required=True)
+    eval_classifier.add_argument("model", type=Path, nargs="?")
+    eval_classifier.add_argument("dataset", type=Path, nargs="?")
+    eval_classifier.add_argument("-o", "--output", type=Path)
     eval_classifier.add_argument(
         "--splits",
         nargs="+",
-        default=["val", "test"],
+        default=None,
         help="Dataset splits to evaluate. Defaults to val test.",
     )
+    eval_classifier.add_argument("--config", type=Path)
 
     harvest = subcommands.add_parser(
         "harvest",
@@ -639,11 +641,12 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "eval-classifier":
+        eval_config = _resolved_eval_classifier_config(args)
         report = evaluate_classifier_model(
-            args.model,
-            args.dataset,
-            output=args.output,
-            splits=tuple(args.splits),
+            eval_config["model"],
+            eval_config["dataset"],
+            output=eval_config["output"],
+            splits=tuple(eval_config["splits"]),
         )
         print(
             f"evaluated {report['model_type']} on "
@@ -833,6 +836,25 @@ def _resolved_train_config(args: argparse.Namespace) -> dict[str, Path]:
     return config
 
 
+def _resolved_eval_classifier_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_eval_classifier_config(args.config)
+    if args.model is not None:
+        config["model"] = args.model
+    if args.dataset is not None:
+        config["dataset"] = args.dataset
+    if args.output is not None:
+        config["output"] = args.output
+    if args.splits is not None:
+        config["splits"] = list(args.splits)
+    _require_config_paths(config, ("model", "dataset", "output"), "eval-classifier")
+    return {
+        "model": Path(config["model"]),
+        "dataset": Path(config["dataset"]),
+        "output": Path(config["output"]),
+        "splits": _normalized_splits(config.get("splits", ["val", "test"])),
+    }
+
+
 def _resolved_train_mlx_config(
     args: argparse.Namespace,
 ) -> tuple[dict[str, Path], MlxClassifierTrainingConfig]:
@@ -964,6 +986,36 @@ def _load_train_mlx_config(path: Path | None) -> dict[str, object]:
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config
+
+
+def _load_eval_classifier_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("eval-classifier config must be a JSON object")
+    unknown = sorted(set(loaded) - EVAL_CLASSIFIER_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported eval-classifier config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("model", "dataset", "output"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    if "splits" in config:
+        config["splits"] = _normalized_splits(config["splits"])
+    return config
+
+
+def _normalized_splits(value: object) -> list[str]:
+    if not isinstance(value, list) or not value:
+        raise ValueError("eval-classifier splits must be a non-empty array")
+    splits = []
+    for split in value:
+        if not isinstance(split, str) or not split:
+            raise ValueError("eval-classifier splits must contain strings")
+        splits.append(split)
+    return splits
 
 
 def _segmenter_from_config(
