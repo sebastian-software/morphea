@@ -45,6 +45,39 @@ def compare_snapshots(
     return comparison
 
 
+def compare_segment_manifests(
+    before: str | Path,
+    after: str | Path,
+    *,
+    output: str | Path,
+    markdown: str | Path | None = None,
+) -> dict[str, Any]:
+    before_path = Path(before)
+    after_path = Path(after)
+    before_data = json.loads(before_path.read_text(encoding="utf-8"))
+    after_data = json.loads(after_path.read_text(encoding="utf-8"))
+    comparison = render_segment_manifest_comparison(
+        before_data,
+        after_data,
+        before=str(before_path),
+        after=str(after_path),
+    )
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(comparison, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_segment_manifest_comparison_markdown(comparison),
+            encoding="utf-8",
+        )
+    return comparison
+
+
 def compare_git_snapshots(
     before_ref: str,
     after_ref: str,
@@ -83,6 +116,106 @@ def compare_git_snapshots(
             encoding="utf-8",
         )
     return comparison
+
+
+def render_segment_manifest_comparison(
+    before_data: dict[str, Any],
+    after_data: dict[str, Any],
+    *,
+    before: str,
+    after: str,
+) -> dict[str, Any]:
+    before_proposals = _index_by_id(_list_value(before_data.get("proposals")))
+    after_proposals = _index_by_id(_list_value(after_data.get("proposals")))
+    shared_ids = sorted(set(before_proposals) & set(after_proposals))
+    proposal_changes = []
+    for proposal_id in shared_ids:
+        changes = _proposal_field_changes(
+            before_proposals[proposal_id],
+            after_proposals[proposal_id],
+        )
+        if changes:
+            proposal_changes.append({"id": proposal_id, "changes": changes})
+
+    return {
+        "schema_version": 1,
+        "before": before,
+        "after": after,
+        "before_source": _backend_source(before_data),
+        "after_source": _backend_source(after_data),
+        "before_proposal_count": int(before_data.get("proposal_count", 0)),
+        "after_proposal_count": int(after_data.get("proposal_count", 0)),
+        "proposal_count_delta": int(after_data.get("proposal_count", 0))
+        - int(before_data.get("proposal_count", 0)),
+        "shared_proposal_count": len(shared_ids),
+        "added_ids": sorted(set(after_proposals) - set(before_proposals)),
+        "removed_ids": sorted(set(before_proposals) - set(after_proposals)),
+        "summary_deltas": _summary_count_deltas(
+            _dict_value(before_data.get("summary")),
+            _dict_value(after_data.get("summary")),
+        ),
+        "config_deltas": _config_deltas(
+            _dict_value(before_data.get("config")),
+            _dict_value(after_data.get("config")),
+        ),
+        "proposal_changes": proposal_changes,
+    }
+
+
+def render_segment_manifest_comparison_markdown(
+    comparison: dict[str, Any],
+) -> str:
+    lines = [
+        "# Curve Segment Manifest Comparison",
+        "",
+        f"- Before: `{comparison.get('before')}`",
+        f"- After: `{comparison.get('after')}`",
+        "- Sources: "
+        f"`{comparison.get('before_source')}` -> "
+        f"`{comparison.get('after_source')}`",
+        f"- Proposal count delta: `{comparison.get('proposal_count_delta', 0)}`",
+        f"- Shared proposals: `{comparison.get('shared_proposal_count', 0)}`",
+        f"- Added: {_id_list(comparison.get('added_ids', []))}",
+        f"- Removed: {_id_list(comparison.get('removed_ids', []))}",
+        "",
+        "## Summary Deltas",
+        "",
+        "| Group | Key | Before | After | Delta |",
+        "| --- | --- | ---: | ---: | ---: |",
+    ]
+    summary_deltas = _list_value(comparison.get("summary_deltas"))
+    if summary_deltas:
+        for delta in summary_deltas:
+            lines.append(
+                "| "
+                f"`{delta.get('group')}` | `{delta.get('key')}` | "
+                f"{_fmt(delta.get('before'))} | "
+                f"{_fmt(delta.get('after'))} | "
+                f"{_fmt(delta.get('delta'))} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+
+    lines.extend(["", "## Proposal Changes", ""])
+    lines.extend(
+        [
+            "| Proposal | Field | Before | After |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    change_count = 0
+    for proposal in _list_value(comparison.get("proposal_changes")):
+        for change in _list_value(proposal.get("changes")):
+            change_count += 1
+            lines.append(
+                "| "
+                f"`{proposal.get('id')}` | `{change.get('field')}` | "
+                f"`{change.get('before')}` | `{change.get('after')}` |"
+            )
+    if change_count == 0:
+        lines.append("| n/a | n/a | n/a | n/a |")
+
+    return "\n".join(lines) + "\n"
 
 
 def generate_git_curated_snapshot(
@@ -248,6 +381,116 @@ def _indexed_items(data: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], str
     return {"root": data}, "root"
 
 
+def _backend_source(data: dict[str, Any]) -> str:
+    backend = data.get("backend")
+    if isinstance(backend, dict):
+        return str(backend.get("source", "unknown"))
+    return "unknown"
+
+
+def _summary_count_deltas(
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> list[dict[str, Any]]:
+    deltas = []
+    groups = sorted(set(before) | set(after))
+    for group in groups:
+        before_raw = before.get(group)
+        after_raw = after.get(group)
+        if _is_number(before_raw) or _is_number(after_raw):
+            before_value = _number_or_zero(before_raw)
+            after_value = _number_or_zero(after_raw)
+            if before_value != after_value:
+                deltas.append(
+                    {
+                        "group": group,
+                        "key": "value",
+                        "before": before_value,
+                        "after": after_value,
+                        "delta": after_value - before_value,
+                    }
+                )
+            continue
+        before_counts = _dict_value(before.get(group))
+        after_counts = _dict_value(after.get(group))
+        for key in sorted(set(before_counts) | set(after_counts)):
+            before_value = _number_or_zero(before_counts.get(key))
+            after_value = _number_or_zero(after_counts.get(key))
+            if before_value == after_value:
+                continue
+            deltas.append(
+                {
+                    "group": group,
+                    "key": key,
+                    "before": before_value,
+                    "after": after_value,
+                    "delta": after_value - before_value,
+                }
+            )
+    return deltas
+
+
+def _config_deltas(
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> list[dict[str, Any]]:
+    deltas = []
+    for key in sorted(set(before) | set(after)):
+        before_value = before.get(key)
+        after_value = after.get(key)
+        if before_value == after_value:
+            continue
+        deltas.append(
+            {
+                "key": key,
+                "before": before_value,
+                "after": after_value,
+            }
+        )
+    return deltas
+
+
+def _proposal_field_changes(
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> list[dict[str, Any]]:
+    fields = (
+        "source",
+        "confidence",
+        "status",
+        "downstream_status",
+        "rejection_reason",
+        "anchor_kind",
+        "anchor_parameter_count",
+        "anchor_reserved",
+        "reservation_reason",
+        "anchor_quality_error",
+        "downstream_decision_reason",
+    )
+    changes = []
+    for field in fields:
+        before_value = before.get(field)
+        after_value = after.get(field)
+        if before_value == after_value:
+            continue
+        changes.append(
+            {
+                "field": field,
+                "before": before_value,
+                "after": after_value,
+            }
+        )
+    if before.get("bounds") != after.get("bounds"):
+        changes.append(
+            {
+                "field": "bounds",
+                "before": before.get("bounds"),
+                "after": after.get("bounds"),
+            }
+        )
+    return changes
+
+
 def _index_by_id(items: list[Any]) -> dict[str, dict[str, Any]]:
     indexed = {}
     for index, item in enumerate(items):
@@ -256,6 +499,26 @@ def _index_by_id(items: list[Any]) -> dict[str, dict[str, Any]]:
         item_id = item.get("id", f"item-{index:05d}")
         indexed[str(item_id)] = item
     return indexed
+
+
+def _list_value(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _dict_value(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _number_or_zero(value: Any) -> float:
+    if _is_number(value):
+        return float(value)
+    return 0.0
+
+
+def _is_number(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    return isinstance(value, (int, float))
 
 
 def _numeric_deltas(

@@ -9,6 +9,7 @@ from pathlib import Path
 from curve.classifier import evaluate_classifier_model, train_centroid_classifier
 from curve.comparison import (
     compare_git_snapshots,
+    compare_segment_manifests,
     compare_snapshots,
     generate_git_curated_snapshot,
 )
@@ -603,6 +604,15 @@ def main(argv: list[str] | None = None) -> None:
     compare_snapshots_parser.add_argument("-o", "--output", type=Path, required=True)
     compare_snapshots_parser.add_argument("--markdown", type=Path)
 
+    compare_segments_parser = subcommands.add_parser(
+        "compare-segments",
+        help="Compare two segment proposal manifests.",
+    )
+    compare_segments_parser.add_argument("before", type=Path)
+    compare_segments_parser.add_argument("after", type=Path)
+    compare_segments_parser.add_argument("-o", "--output", type=Path, required=True)
+    compare_segments_parser.add_argument("--markdown", type=Path)
+
     compare_git_snapshots_parser = subcommands.add_parser(
         "compare-git-snapshots",
         help="Compare the same saved snapshot file across two git refs.",
@@ -1057,6 +1067,16 @@ def main(argv: list[str] | None = None) -> None:
             markdown=args.markdown,
         )
         print(f"compared {result['item_count']} snapshot items")
+        return
+
+    if args.command == "compare-segments":
+        result = compare_segment_manifests(
+            args.before,
+            args.after,
+            output=args.output,
+            markdown=args.markdown,
+        )
+        print(f"compared {result['shared_proposal_count']} segment proposals")
         return
 
     if args.command == "compare-git-snapshots":

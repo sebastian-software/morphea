@@ -47,8 +47,11 @@ from curve.dataset import DatasetSplit, generate_synthetic_dataset, split_counts
 from curve.profiling import profile_vectorize
 from curve.comparison import (
     compare_git_snapshots,
+    compare_segment_manifests,
     compare_snapshots,
     generate_git_curated_snapshot,
+    render_segment_manifest_comparison,
+    render_segment_manifest_comparison_markdown,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
 )
@@ -198,6 +201,7 @@ __all__ = [
     "harvest_pseudo_labels",
     "centroids_from_examples",
     "compare_git_snapshots",
+    "compare_segment_manifests",
     "compare_retraining",
     "compare_snapshots",
     "collect_runtime_status",
@@ -214,6 +218,8 @@ __all__ = [
     "predict_classifier_label",
     "raster_examples_from_dataset",
     "render_segment_proposal_markdown",
+    "render_segment_manifest_comparison",
+    "render_segment_manifest_comparison_markdown",
     "profile_vectorize",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",

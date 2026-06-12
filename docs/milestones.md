@@ -467,6 +467,10 @@ Implemented so far:
 - segment proposal manifests record `anchor_quality_error` and
   `downstream_decision_reason` so later review/training stages can explain why
   a proposal passed or failed the geometry gate.
+- `curve compare-segments before.json after.json -o comparison.json` compares
+  segment proposal manifests from different configs or segmenter backends,
+  including summary-count deltas, config differences, added/removed proposals,
+  and changed downstream/anchor decisions.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
@@ -884,6 +888,8 @@ Implemented so far:
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - `curve segment --markdown proposals.md` for scan-friendly segment proposal
   reports
+- `curve compare-segments before.json after.json -o comparison.json` for
+  comparing segment proposal outputs across configs or backends
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
   MLX backend to be installed

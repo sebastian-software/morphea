@@ -911,6 +911,35 @@ output path. The snapshot file intentionally stays compatible with
 `curve compare-snapshots`; git metadata is returned by the command result but
 is not embedded into the deterministic snapshot.
 
+## Segment Manifest Comparison v1
+
+Written by `curve compare-segments`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `before`
+- `after`
+- `before_source`
+- `after_source`
+- `before_proposal_count`
+- `after_proposal_count`
+- `proposal_count_delta`
+- `shared_proposal_count`
+- `added_ids`
+- `removed_ids`
+- `summary_deltas`: count deltas across segment summary groups such as
+  `downstream_status_counts`, `anchor_kind_counts`, and
+  `downstream_decision_reason_counts`
+- `config_deltas`: changed segment config keys between the two manifests
+- `proposal_changes`: changed fields for shared proposal ids, including
+  downstream status, rejection reason, anchor kind, reservation state,
+  anchor-quality error, decision reason, and bounds
+
+`curve compare-segments --markdown comparison.md` writes a scan-friendly
+Markdown summary for comparing flat-color and future MLX proposal outputs or
+for comparing gated and ungated segment configs.
+
 ## Run Directory v1
 
 Written by `curve vectorize --run-dir` and by each `curve sweep` run.

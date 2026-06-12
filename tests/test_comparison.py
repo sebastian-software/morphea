@@ -10,14 +10,195 @@ from unittest.mock import patch
 from curve.cli import main
 from curve.comparison import (
     compare_git_snapshots,
+    compare_segment_manifests,
     compare_snapshots,
     generate_git_curated_snapshot,
+    render_segment_manifest_comparison,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
 )
 
 
 class SnapshotComparisonTests(unittest.TestCase):
+    def test_render_segment_manifest_comparison_reports_gate_changes(self):
+        comparison = render_segment_manifest_comparison(
+            _segment_manifest(
+                summary={
+                    "downstream_status_counts": {"pending": 2},
+                    "anchor_kind_counts": {"rect": 2},
+                    "reserved_anchor_count": 2,
+                },
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "confidence": 1.0,
+                        "bounds": [2, 2, 6, 6],
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                    },
+                    {
+                        "id": "flat_color-0001",
+                        "source": "flat_color",
+                        "confidence": 1.0,
+                        "bounds": [12, 2, 16, 6],
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                    },
+                ],
+            ),
+            _segment_manifest(
+                config={"geometry_gate": True},
+                summary={
+                    "downstream_status_counts": {"accepted": 2},
+                    "anchor_kind_counts": {"rect": 2},
+                    "reserved_anchor_count": 1,
+                    "downstream_decision_reason_counts": {
+                        "geometry_gate_passed": 2
+                    },
+                },
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "confidence": 1.0,
+                        "bounds": [2, 2, 6, 6],
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                        "anchor_quality_error": 0.0,
+                        "downstream_decision_reason": "geometry_gate_passed",
+                    },
+                    {
+                        "id": "flat_color-0002",
+                        "source": "flat_color",
+                        "confidence": 1.0,
+                        "bounds": [18, 2, 22, 6],
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                    },
+                ],
+            ),
+            before="pending.json",
+            after="gated.json",
+        )
+
+        self.assertEqual(comparison["shared_proposal_count"], 1)
+        self.assertEqual(comparison["added_ids"], ["flat_color-0002"])
+        self.assertEqual(comparison["removed_ids"], ["flat_color-0001"])
+        self.assertIn(
+            {
+                "group": "downstream_status_counts",
+                "key": "accepted",
+                "before": 0.0,
+                "after": 2.0,
+                "delta": 2.0,
+            },
+            comparison["summary_deltas"],
+        )
+        self.assertIn(
+            {
+                "group": "reserved_anchor_count",
+                "key": "value",
+                "before": 2.0,
+                "after": 1.0,
+                "delta": -1.0,
+            },
+            comparison["summary_deltas"],
+        )
+        changes = comparison["proposal_changes"][0]["changes"]
+        self.assertIn(
+            {
+                "field": "downstream_status",
+                "before": "pending",
+                "after": "accepted",
+            },
+            changes,
+        )
+        self.assertIn(
+            {"key": "geometry_gate", "before": False, "after": True},
+            comparison["config_deltas"],
+        )
+
+    def test_compare_segment_manifests_cli_writes_json_and_markdown(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            before = root / "before-segments.json"
+            after = root / "after-segments.json"
+            output = root / "segment-comparison.json"
+            markdown = root / "segment-comparison.md"
+            before.write_text(
+                json.dumps(
+                    _segment_manifest(
+                        summary={"downstream_status_counts": {"pending": 1}},
+                        proposals=[
+                            {
+                                "id": "flat_color-0000",
+                                "source": "flat_color",
+                                "status": "proposed",
+                                "downstream_status": "pending",
+                            }
+                        ],
+                    )
+                ),
+                encoding="utf-8",
+            )
+            after.write_text(
+                json.dumps(
+                    _segment_manifest(
+                        config={"geometry_gate": True},
+                        summary={"downstream_status_counts": {"accepted": 1}},
+                        proposals=[
+                            {
+                                "id": "flat_color-0000",
+                                "source": "flat_color",
+                                "status": "proposed",
+                                "downstream_status": "accepted",
+                                "downstream_decision_reason": "geometry_gate_passed",
+                            }
+                        ],
+                    )
+                ),
+                encoding="utf-8",
+            )
+
+            result = compare_segment_manifests(
+                before,
+                after,
+                output=output,
+                markdown=markdown,
+            )
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-segments",
+                        str(before),
+                        str(after),
+                        "-o",
+                        str(root / "cli-segment-comparison.json"),
+                        "--markdown",
+                        str(root / "cli-segment-comparison.md"),
+                    ]
+                )
+
+            self.assertEqual(result["shared_proposal_count"], 1)
+            self.assertTrue(output.exists())
+            self.assertIn(
+                "Curve Segment Manifest Comparison",
+                markdown.read_text(encoding="utf-8"),
+            )
+            cli_result = json.loads(
+                (root / "cli-segment-comparison.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(cli_result["proposal_changes"][0]["id"], "flat_color-0000")
+
     def test_render_snapshot_comparison_reports_case_metric_deltas(self):
         comparison = render_snapshot_comparison(
             {
@@ -335,6 +516,26 @@ class SnapshotComparisonTests(unittest.TestCase):
             self.assertEqual(kwargs["output"], output)
             self.assertEqual(kwargs["timeout_seconds"], 7)
             self.assertFalse(kwargs["run"])
+
+
+def _segment_manifest(
+    *,
+    config=None,
+    summary=None,
+    proposals=None,
+):
+    config = config or {}
+    summary = summary or {}
+    proposals = proposals or []
+    return {
+        "schema_version": 1,
+        "input": "input.png",
+        "config": {"segmenter": "flat_color", "geometry_gate": False, **config},
+        "backend": {"source": "flat_color", "status": "available"},
+        "proposal_count": len(proposals),
+        "summary": summary,
+        "proposals": proposals,
+    }
 
 
 if __name__ == "__main__":
