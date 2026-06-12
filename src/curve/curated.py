@@ -209,6 +209,27 @@ def _check_expectation(
     expectation: dict[str, Any],
     manifest: dict[str, Any],
 ) -> dict[str, Any]:
+    if "metric" in expectation:
+        metric = expectation["metric"]
+        metrics = manifest.get("metrics", {})
+        actual = metrics.get(metric) if isinstance(metrics, dict) else None
+        ok = isinstance(actual, (int, float))
+        result: dict[str, Any] = {
+            "id": expectation["id"],
+            "metric": metric,
+            "actual_value": actual if ok else None,
+        }
+        if "min_value" in expectation:
+            minimum = float(expectation["min_value"])
+            result["min_value"] = minimum
+            ok = ok and actual >= minimum
+        if "max_value" in expectation:
+            maximum = float(expectation["max_value"])
+            result["max_value"] = maximum
+            ok = ok and actual <= maximum
+        result["ok"] = ok
+        return result
+
     minimum = int(expectation.get("min_count", 1))
     if "kind" in expectation:
         kind = expectation["kind"]
@@ -246,12 +267,7 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "ok": case.get("ok", False),
         "source_exists": case.get("source_exists", False),
         "expectations": [
-            {
-                "id": expectation.get("id"),
-                "ok": expectation.get("ok", False),
-                "actual_count": expectation.get("actual_count", 0),
-                "min_count": expectation.get("min_count", 1),
-            }
+            _expectation_snapshot(expectation)
             for expectation in sorted(
                 case.get("expectations", []),
                 key=lambda item: str(item.get("id", "")),
@@ -269,6 +285,27 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         if key in case:
             snapshot[key] = case[key]
     return snapshot
+
+
+def _expectation_snapshot(expectation: dict[str, Any]) -> dict[str, Any]:
+    if "metric" in expectation:
+        snapshot: dict[str, Any] = {
+            "id": expectation.get("id"),
+            "ok": expectation.get("ok", False),
+            "metric": expectation.get("metric"),
+            "actual_value": expectation.get("actual_value"),
+        }
+        for key in ("min_value", "max_value"):
+            if key in expectation:
+                snapshot[key] = expectation[key]
+        return snapshot
+
+    return {
+        "id": expectation.get("id"),
+        "ok": expectation.get("ok", False),
+        "actual_count": expectation.get("actual_count", 0),
+        "min_count": expectation.get("min_count", 1),
+    }
 
 
 def _counts(values: object) -> dict[str, int]:
@@ -291,10 +328,29 @@ def _validate_expectation(
         raise ValueError(f"case {case_id} expectation {index} must have an id")
     has_kind = isinstance(expectation.get("kind"), str)
     has_group_kind = isinstance(expectation.get("group_kind"), str)
-    if has_kind == has_group_kind:
+    has_metric = isinstance(expectation.get("metric"), str)
+    if sum((has_kind, has_group_kind, has_metric)) != 1:
         raise ValueError(
-            f"case {case_id} expectation {expectation_id} must set kind or group_kind"
+            f"case {case_id} expectation {expectation_id} must set kind, "
+            "group_kind, or metric"
         )
+    if has_metric:
+        has_min = "min_value" in expectation
+        has_max = "max_value" in expectation
+        if not has_min and not has_max:
+            raise ValueError(
+                f"case {case_id} expectation {expectation_id} metric expectation "
+                "must set min_value or max_value"
+            )
+        for key in ("min_value", "max_value"):
+            value = expectation.get(key)
+            if key in expectation and not isinstance(value, (int, float)):
+                raise ValueError(
+                    f"case {case_id} expectation {expectation_id} {key} "
+                    "must be numeric"
+                )
+        return
+
     min_count = expectation.get("min_count", 1)
     if not isinstance(min_count, int) or min_count < 1:
         raise ValueError(

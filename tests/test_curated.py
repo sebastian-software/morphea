@@ -33,6 +33,11 @@ class CuratedSuiteTests(unittest.TestCase):
                                         "id": "circle-anchor",
                                         "kind": "circle",
                                         "min_count": 1,
+                                    },
+                                    {
+                                        "id": "editable-enough",
+                                        "metric": "editability_score",
+                                        "min_value": 0.0,
                                     }
                                 ],
                             }
@@ -74,6 +79,16 @@ class CuratedSuiteTests(unittest.TestCase):
                                         "id": "circle-anchor",
                                         "kind": "circle",
                                         "min_count": 1,
+                                    },
+                                    {
+                                        "id": "editable-enough",
+                                        "metric": "editability_score",
+                                        "min_value": 0.0,
+                                    },
+                                    {
+                                        "id": "bounded-fragmentation",
+                                        "metric": "fragmentation_penalty",
+                                        "max_value": 1.0,
                                     }
                                 ],
                             }
@@ -94,6 +109,9 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue(result["ok"])
             self.assertEqual(result["cases"][0]["status"], "checked")
             self.assertTrue(result["cases"][0]["expectations"][0]["ok"])
+            self.assertTrue(result["cases"][0]["expectations"][1]["ok"])
+            self.assertIn("actual_value", result["cases"][0]["expectations"][1])
+            self.assertTrue(result["cases"][0]["expectations"][2]["ok"])
             self.assertEqual(result["cases"][0]["anchor_kind_counts"]["circle"], 1)
             self.assertTrue((output_dir / "simple-circle" / "output.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "debug.svg").exists())
@@ -118,7 +136,43 @@ class CuratedSuiteTests(unittest.TestCase):
                 snapshot_report["cases"][0]["anchor_kind_counts"]["circle"],
                 1,
             )
+            metric_expectations = {
+                item["id"]: item
+                for item in snapshot_report["cases"][0]["expectations"]
+            }
+            self.assertIn("actual_value", metric_expectations["editable-enough"])
+            self.assertEqual(
+                metric_expectations["editable-enough"]["metric"],
+                "editability_score",
+            )
             self.assertIn("editability_score", snapshot_report["cases"][0]["metrics"])
+
+    def test_load_curated_suite_rejects_metric_expectation_without_bounds(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "bad-metric",
+                                "source": "/tmp/simple-circle.png",
+                                "expectations": [
+                                    {
+                                        "id": "editable-enough",
+                                        "metric": "editability_score",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "min_value or max_value"):
+                load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):
         snapshot = render_curated_snapshot(
@@ -145,6 +199,13 @@ class CuratedSuiteTests(unittest.TestCase):
                                 "actual_count": 1,
                                 "min_count": 1,
                             },
+                            {
+                                "id": "metric-exp",
+                                "ok": True,
+                                "metric": "editability_score",
+                                "actual_value": 0.5,
+                                "min_value": 0.25,
+                            },
                         ],
                     },
                     {
@@ -164,7 +225,11 @@ class CuratedSuiteTests(unittest.TestCase):
         )
         self.assertEqual(
             [item["id"] for item in snapshot["cases"][1]["expectations"]],
-            ["a-exp", "z-exp"],
+            ["a-exp", "metric-exp", "z-exp"],
+        )
+        self.assertEqual(
+            snapshot["cases"][1]["expectations"][1]["actual_value"],
+            0.5,
         )
 
     def test_curated_check_cli_writes_report(self):
