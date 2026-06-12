@@ -104,8 +104,10 @@ from curve.refinement import (
     OPTIONAL_DIFFERENTIABLE_BACKENDS,
     RefinementConfig,
     available_refinement_backends,
+    gate_refinement_result,
     refinement_backend_status,
     refine_manifest,
+    render_refinement_gate_markdown,
 )
 from curve.curated import (
     check_curated_suite,
@@ -172,6 +174,7 @@ __all__ = [
     "generate_synthetic_sample",
     "generate_synthetic_dataset",
     "generate_git_curated_snapshot",
+    "gate_refinement_result",
     "gate_training_comparison",
     "harvest_curated_pseudo_labels",
     "harvest_pseudo_labels",
@@ -203,6 +206,7 @@ __all__ = [
     "render_harvest_markdown",
     "render_manifest_image",
     "render_review_markdown",
+    "render_refinement_gate_markdown",
     "render_self_learning_cycle_markdown",
     "render_snapshot_comparison",
     "render_snapshot_comparison_markdown",

@@ -12,8 +12,10 @@ from curve.cli import main
 from curve.refinement import (
     RefinementConfig,
     available_refinement_backends,
+    gate_refinement_result,
     refinement_backend_status,
     refine_manifest,
+    render_refinement_gate_markdown,
 )
 
 
@@ -169,6 +171,160 @@ class RefinementTests(unittest.TestCase):
             self.assertEqual(result["refinement"]["raster_l1_weight"], 0.75)
             self.assertEqual(result["refinement"]["raster_edge_weight"], 0.5)
 
+    def test_refinement_gate_accepts_improved_structure_preserving_result(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            refined = _write_refined_manifest(
+                root,
+                structure_preserved=True,
+                editability_preserved=True,
+                initial_objective=0.4,
+                final_objective=0.2,
+                attempted=True,
+            )
+            output = root / "gate.json"
+
+            result = gate_refinement_result(
+                refined_manifest=refined,
+                output=output,
+            )
+
+            self.assertEqual(result["decision"], "accept")
+            self.assertTrue(result["accepted"])
+            self.assertEqual(result["optimizer"]["objective_delta"], -0.2)
+            self.assertTrue(output.exists())
+
+    def test_refinement_gate_rejects_structure_break_or_regression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            refined = _write_refined_manifest(
+                root,
+                structure_preserved=False,
+                editability_preserved=True,
+                initial_objective=0.2,
+                final_objective=0.4,
+                attempted=True,
+            )
+            output = root / "gate.json"
+
+            result = gate_refinement_result(
+                refined_manifest=refined,
+                output=output,
+            )
+
+            self.assertEqual(result["decision"], "reject")
+            self.assertFalse(result["accepted"])
+            self.assertIn("structure_not_preserved", result["reasons"])
+            self.assertIn("objective_regressed", result["reasons"])
+
+    def test_refinement_gate_marks_missing_metrics_for_review(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            refined = _write_refined_manifest(
+                root,
+                structure_preserved=True,
+                editability_preserved=True,
+                initial_objective=None,
+                final_objective=None,
+                attempted=False,
+            )
+            output = root / "gate.json"
+
+            result = gate_refinement_result(
+                refined_manifest=refined,
+                output=output,
+            )
+
+            self.assertEqual(result["decision"], "manual_review")
+            self.assertIn("missing_objective_metrics", result["reasons"])
+            self.assertIn("optimizer_not_attempted", result["reasons"])
+
+    def test_render_refinement_gate_markdown_summarizes_decision(self):
+        markdown = render_refinement_gate_markdown(
+            {
+                "decision": "reject",
+                "accepted": False,
+                "refined_manifest": "refined.json",
+                "reasons": ["objective_regressed"],
+                "gates": {"max_objective_regression": 0.0},
+                "structure_audit": {
+                    "structure_preserved": True,
+                    "editability_preserved": True,
+                },
+                "optimizer": {
+                    "initial_objective": 0.2,
+                    "final_objective": 0.4,
+                    "objective_delta": 0.2,
+                },
+            }
+        )
+
+        self.assertIn("# Curve Refinement Gate", markdown)
+        self.assertIn("- Decision: `reject`", markdown)
+        self.assertIn("`objective_regressed`", markdown)
+
+    def test_refinement_gate_cli_writes_json_and_markdown(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            refined = _write_refined_manifest(
+                root,
+                structure_preserved=True,
+                editability_preserved=True,
+                initial_objective=0.4,
+                final_objective=0.4,
+                attempted=True,
+            )
+            output = root / "gate.json"
+            markdown = root / "gate.md"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "refinement-gate",
+                        str(refined),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--allow-unchanged",
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["decision"], "accept")
+            self.assertTrue(markdown.exists())
+
+    def test_refinement_gate_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            refined = _write_refined_manifest(
+                root,
+                structure_preserved=True,
+                editability_preserved=True,
+                initial_objective=0.4,
+                final_objective=0.4,
+                attempted=True,
+            )
+            output = root / "gate.json"
+            config = root / "refinement-gate.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "refined_manifest": str(refined),
+                        "output": str(output),
+                        "require_improvement": False,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["refinement-gate", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["decision"], "accept")
+            self.assertFalse(result["gates"]["require_improvement"])
+
     def test_local_metric_refinement_adjusts_quad_geometry_from_source(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -323,6 +479,42 @@ def _write_manifest(root: Path) -> Path:
                         "metrics": {},
                     }
                 ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def _write_refined_manifest(
+    root: Path,
+    *,
+    structure_preserved: bool,
+    editability_preserved: bool,
+    initial_objective: float | None,
+    final_objective: float | None,
+    attempted: bool,
+) -> Path:
+    manifest = root / "refined.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "anchors": [{"kind": "circle", "metrics": {}}],
+                "refinement": {
+                    "structure_audit": {
+                        "structure_preserved": structure_preserved,
+                        "editability_preserved": editability_preserved,
+                    },
+                    "optimizer": {
+                        "attempted": attempted,
+                        "timeout_reached": False,
+                        "stopped_reason": "converged",
+                        "initial_objective": initial_objective,
+                        "final_objective": final_objective,
+                        "initial_raster_l1_error": initial_objective,
+                        "final_raster_l1_error": final_objective,
+                    },
+                },
             }
         ),
         encoding="utf-8",

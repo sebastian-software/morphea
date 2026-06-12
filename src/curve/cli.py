@@ -46,7 +46,11 @@ from curve.self_learning import (
     retrain_centroid_classifier,
     run_self_learning_cycle,
 )
-from curve.refinement import RefinementConfig, refine_manifest
+from curve.refinement import (
+    RefinementConfig,
+    gate_refinement_result,
+    refine_manifest,
+)
 from curve.sweeps import run_sweep
 
 
@@ -153,6 +157,13 @@ REFINE_CONFIG_KEYS = {
     "source_image",
     "raster_l1_weight",
     "raster_edge_weight",
+}
+REFINEMENT_GATE_CONFIG_KEYS = {
+    "refined_manifest",
+    "output",
+    "markdown",
+    "max_objective_regression",
+    "require_improvement",
 }
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
@@ -594,6 +605,22 @@ def main(argv: list[str] | None = None) -> None:
     )
     refine.add_argument("--config", type=Path)
 
+    refinement_gate = subcommands.add_parser(
+        "refinement-gate",
+        help="Decide whether a refinement result is safe to accept.",
+    )
+    refinement_gate.add_argument("refined_manifest", type=Path, nargs="?")
+    refinement_gate.add_argument("-o", "--output", type=Path)
+    refinement_gate.add_argument("--markdown", type=Path)
+    refinement_gate.add_argument("--max-objective-regression", type=float)
+    refinement_gate.add_argument(
+        "--allow-unchanged",
+        dest="require_improvement",
+        action="store_false",
+        default=None,
+    )
+    refinement_gate.add_argument("--config", type=Path)
+
     curated_check = subcommands.add_parser(
         "curated-check",
         help="Validate a curated real-image suite and optionally run it.",
@@ -995,6 +1022,20 @@ def main(argv: list[str] | None = None) -> None:
         print(f"refined {len(result.get('anchors', []))} anchors")
         return
 
+    if args.command == "refinement-gate":
+        gate_config = _resolved_refinement_gate_config(args)
+        result = gate_refinement_result(
+            refined_manifest=gate_config["refined_manifest"],
+            output=gate_config["output"],
+            markdown=gate_config.get("markdown"),
+            max_objective_regression=float(
+                gate_config["max_objective_regression"]
+            ),
+            require_improvement=bool(gate_config["require_improvement"]),
+        )
+        print(f"refinement gate decision: {result['decision']}")
+        return
+
     if args.command == "curated-check":
         result = check_curated_suite(
             args.suite,
@@ -1312,6 +1353,37 @@ def _resolved_refine_config(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
+def _resolved_refinement_gate_config(args: argparse.Namespace) -> dict[str, object]:
+    config: dict[str, object] = {
+        "max_objective_regression": 0.0,
+        "require_improvement": True,
+    }
+    config.update(
+        _load_refinement_gate_config(args.config)
+        if args.config is not None
+        else {}
+    )
+    if args.refined_manifest is not None:
+        config["refined_manifest"] = args.refined_manifest
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    if args.max_objective_regression is not None:
+        config["max_objective_regression"] = args.max_objective_regression
+    if args.require_improvement is not None:
+        config["require_improvement"] = args.require_improvement
+    _require_config_paths(
+        config,
+        ("refined_manifest", "output"),
+        "refinement-gate",
+    )
+    for key in ("refined_manifest", "output", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
     config = dict(HARVEST_DEFAULT_CONFIG)
     if args.config is not None:
@@ -1496,6 +1568,21 @@ def _load_refine_config(path: Path | None) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("manifest", "output", "source_image"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_refinement_gate_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("refinement-gate config must be a JSON object")
+    unknown = sorted(set(loaded) - REFINEMENT_GATE_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported refinement-gate config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("refined_manifest", "output", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

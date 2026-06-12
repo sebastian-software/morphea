@@ -107,6 +107,160 @@ def refine_manifest(
     return result
 
 
+def gate_refinement_result(
+    *,
+    refined_manifest: str | Path,
+    output: str | Path,
+    markdown: str | Path | None = None,
+    max_objective_regression: float = 0.0,
+    require_improvement: bool = True,
+) -> dict[str, object]:
+    data = json.loads(Path(refined_manifest).read_text(encoding="utf-8"))
+    refinement = data.get("refinement", {})
+    if not isinstance(refinement, dict):
+        refinement = {}
+    structure_audit = refinement.get("structure_audit", {})
+    if not isinstance(structure_audit, dict):
+        structure_audit = {}
+    optimizer = refinement.get("optimizer", {})
+    if not isinstance(optimizer, dict):
+        optimizer = {}
+
+    reasons: list[str] = []
+    reject = False
+    manual_review = False
+
+    if not structure_audit.get("structure_preserved", False):
+        reject = True
+        reasons.append("structure_not_preserved")
+    if not structure_audit.get("editability_preserved", False):
+        reject = True
+        reasons.append("editability_not_preserved")
+
+    initial_objective = optimizer.get("initial_objective")
+    final_objective = optimizer.get("final_objective")
+    objective_delta = None
+    if isinstance(initial_objective, (int, float)) and isinstance(
+        final_objective,
+        (int, float),
+    ):
+        objective_delta = float(final_objective) - float(initial_objective)
+        if objective_delta > max_objective_regression:
+            reject = True
+            reasons.append("objective_regressed")
+        elif require_improvement and objective_delta >= 0:
+            manual_review = True
+            reasons.append("objective_not_improved")
+    else:
+        manual_review = True
+        reasons.append("missing_objective_metrics")
+
+    if not optimizer.get("attempted", False):
+        manual_review = True
+        reasons.append("optimizer_not_attempted")
+    if optimizer.get("timeout_reached", False):
+        manual_review = True
+        reasons.append("optimizer_timeout")
+
+    if reject:
+        decision = "reject"
+    elif manual_review:
+        decision = "manual_review"
+    else:
+        decision = "accept"
+
+    result = {
+        "schema_version": 1,
+        "refined_manifest": str(refined_manifest),
+        "decision": decision,
+        "accepted": decision == "accept",
+        "reasons": reasons,
+        "gates": {
+            "max_objective_regression": max_objective_regression,
+            "require_improvement": require_improvement,
+        },
+        "structure_audit": structure_audit,
+        "optimizer": {
+            "attempted": optimizer.get("attempted", False),
+            "timeout_reached": optimizer.get("timeout_reached", False),
+            "stopped_reason": optimizer.get("stopped_reason"),
+            "initial_objective": initial_objective,
+            "final_objective": final_objective,
+            "objective_delta": objective_delta,
+            "initial_raster_l1_error": optimizer.get("initial_raster_l1_error"),
+            "final_raster_l1_error": optimizer.get("final_raster_l1_error"),
+            "initial_raster_edge_error": optimizer.get("initial_raster_edge_error"),
+            "final_raster_edge_error": optimizer.get("final_raster_edge_error"),
+        },
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(render_refinement_gate_markdown(result), encoding="utf-8")
+    return result
+
+
+def render_refinement_gate_markdown(result: dict[str, object]) -> str:
+    gates = result.get("gates", {})
+    if not isinstance(gates, dict):
+        gates = {}
+    optimizer = result.get("optimizer", {})
+    if not isinstance(optimizer, dict):
+        optimizer = {}
+    structure = result.get("structure_audit", {})
+    if not isinstance(structure, dict):
+        structure = {}
+    reasons = result.get("reasons", [])
+    if not isinstance(reasons, list):
+        reasons = []
+    lines = [
+        "# Curve Refinement Gate",
+        "",
+        f"- Decision: `{result.get('decision', 'n/a')}`",
+        f"- Accepted: `{result.get('accepted', False)}`",
+        f"- Refined manifest: `{result.get('refined_manifest', 'n/a')}`",
+        f"- Structure preserved: `{structure.get('structure_preserved', False)}`",
+        f"- Editability preserved: `{structure.get('editability_preserved', False)}`",
+        f"- Initial objective: {_fmt_refinement_value(optimizer.get('initial_objective'))}",
+        f"- Final objective: {_fmt_refinement_value(optimizer.get('final_objective'))}",
+        f"- Objective delta: {_fmt_refinement_value(optimizer.get('objective_delta'))}",
+        "",
+        "## Gates",
+        "",
+        "| Gate | Value |",
+        "| --- | ---: |",
+    ]
+    for key in sorted(gates):
+        lines.append(f"| `{key}` | {_fmt_refinement_value(gates.get(key))} |")
+    lines.extend(
+        [
+            "",
+            "## Reasons",
+            "",
+            ", ".join(f"`{reason}`" for reason in reasons) if reasons else "n/a",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _fmt_refinement_value(value: object) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    if value is None:
+        return "n/a"
+    return str(value)
+
+
 def available_refinement_backends() -> dict[str, object]:
     return {
         "local": [LOCAL_REFINEMENT_BACKEND],
