@@ -396,9 +396,14 @@ def _stroke_candidate(
         return None
 
     dx, dy = direction
-    centerline = (
+    straight_centerline = (
         Point(center.x + dx * min_major, center.y + dy * min_major),
         Point(center.x + dx * max_major, center.y + dy * max_major),
+    )
+    centerline = _stroke_polyline_centerline(
+        component,
+        straight_centerline,
+        stroke_width=stroke_width,
     )
     coverage = min(component.area / (length * stroke_width), 1.0)
     width_samples = (float(stroke_width),)
@@ -406,8 +411,8 @@ def _stroke_candidate(
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=abs(1.0 - coverage) * 0.1,
-        node_count=2,
-        parameter_count=5,
+        node_count=len(centerline),
+        parameter_count=1 + len(centerline) * 2,
         stroke=StrokeAnchor(
             centerline=centerline,
             width_samples=width_samples,
@@ -416,6 +421,25 @@ def _stroke_candidate(
         ),
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _stroke_polyline_centerline(
+    component: MaskComponent,
+    straight_centerline: tuple[Point, Point],
+    *,
+    stroke_width: float,
+) -> tuple[Point, ...]:
+    start, end = straight_centerline
+    if start.distance_to(end) <= 0:
+        return straight_centerline
+    control = max(
+        (Point(x, y) for x, y in component.pixels),
+        key=lambda point: _point_line_distance(point, start, end),
+    )
+    deviation = _point_line_distance(control, start, end)
+    if deviation < max(0.75, stroke_width * 0.35):
+        return straight_centerline
+    return (start, control, end)
 
 
 def _arc_candidate(

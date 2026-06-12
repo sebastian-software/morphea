@@ -5,6 +5,7 @@ from curve.anchors import Point
 from curve.detection import (
     AnchorThresholdConfig,
     _fit_circle_from_boundary,
+    _stroke_polyline_centerline,
     detect_primitive_anchors,
 )
 from curve.detection import detect_cutout_strokes
@@ -217,6 +218,42 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(anchors), 1)
         self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
         self.assertLess(anchors[0].metrics["line_smoothness_error"], 0.01)
+
+    def test_straight_stroke_centerline_remains_two_points(self):
+        component = MaskComponent(
+            pixels=frozenset({(0, 0), (1, 0), (2, 0), (3, 0)}),
+        )
+
+        centerline = _stroke_polyline_centerline(
+            component,
+            (Point(0, 0), Point(3, 0)),
+            stroke_width=1.0,
+        )
+
+        self.assertEqual(centerline, (Point(0, 0), Point(3, 0)))
+
+    def test_curved_stroke_centerline_adds_control_point(self):
+        component = MaskComponent(
+            pixels=frozenset(
+                {
+                    (0, 0),
+                    (1, 0),
+                    (2, 2),
+                    (3, 2),
+                    (4, 0),
+                    (5, 0),
+                }
+            ),
+        )
+
+        centerline = _stroke_polyline_centerline(
+            component,
+            (Point(0, 0), Point(5, 0)),
+            stroke_width=1.0,
+        )
+
+        self.assertEqual(len(centerline), 3)
+        self.assertIn(centerline[1], {Point(2, 2), Point(3, 2)})
 
     def test_thin_curved_component_is_detected_as_arc(self):
         mask = BinaryMask.from_rows(
