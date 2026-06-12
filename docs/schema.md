@@ -287,8 +287,10 @@ Proposal fields:
 - `rejection_reason`: nullable machine-readable reason for rejected proposals
 
 `backend` records `source`, `backend_available`, `status`, and an optional
-`reason`. MLX SAM currently has an explicit not-configured error path. It will
-write the same proposal schema once the local model runtime is installed.
+`reason`. MLX SAM status distinguishes `not_installed`, `not_configured`,
+`model_missing`, and `adapter_pending`; it also records `package_available`,
+`model_configured`, `model_exists`, and the runtime knobs. It will write the
+same proposal schema once the local model runtime is installed and wired.
 
 ## Segment Config v1
 

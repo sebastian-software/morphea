@@ -421,6 +421,9 @@ Implemented so far:
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
+- MLX SAM status reporting distinguishes missing MLX package, missing model
+  configuration, missing model file, and adapter-pending states without
+  allowing AI proposals to bypass the geometry pipeline.
 - `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed
 
