@@ -31,6 +31,9 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(proposals[0].downstream_status, "pending")
         self.assertIsNone(proposals[0].rejection_reason)
         self.assertGreater(proposals[0].area, 0)
+        self.assertEqual(proposals[0].anchor_kind, "rect")
+        self.assertIsNotNone(proposals[0].anchor_metrics)
+        self.assertEqual(proposals[0].anchor_parameter_count, 4)
 
     def test_flat_color_segmenter_splits_same_color_components(self):
         image_path = _write_same_color_component_image()
@@ -66,6 +69,13 @@ class SegmenterTests(unittest.TestCase):
             "max_component_area_exceeded",
             {proposal.rejection_reason for proposal in proposals},
         )
+        self.assertTrue(
+            all(
+                proposal.anchor_kind is None
+                for proposal in proposals
+                if proposal.status == "deferred"
+            )
+        )
 
     def test_proposals_to_manifest_is_json_ready(self):
         image_path = _write_two_color_image()
@@ -77,6 +87,9 @@ class SegmenterTests(unittest.TestCase):
         self.assertIsInstance(manifest[0]["bounds"], list)
         self.assertEqual(manifest[0]["downstream_status"], "pending")
         self.assertIsNone(manifest[0]["rejection_reason"])
+        self.assertEqual(manifest[0]["anchor_kind"], "rect")
+        self.assertIn("rect_fill_error", manifest[0]["anchor_metrics"])
+        self.assertEqual(manifest[0]["anchor_parameter_count"], 4)
 
     def test_mlx_sam_segmenter_reports_not_configured(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
@@ -193,6 +206,7 @@ class SegmenterTests(unittest.TestCase):
                 manifest["proposals"][0]["downstream_status"],
                 "rejected",
             )
+            self.assertIsNone(manifest["proposals"][0]["anchor_kind"])
 
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:

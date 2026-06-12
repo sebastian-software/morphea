@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from curve.anchors import choose_best_anchor
+from curve.detection import primitive_candidates_for_component
 from curve.images import ColorMask, flat_color_masks_from_image
 from curve.masks import MaskComponent, connected_components
 
@@ -22,6 +24,9 @@ class SegmentProposal:
     status: str = "proposed"
     downstream_status: str = "pending"
     rejection_reason: str | None = None
+    anchor_kind: str | None = None
+    anchor_metrics: dict[str, float] | None = None
+    anchor_parameter_count: int | None = None
 
 
 class Segmenter(Protocol):
@@ -175,6 +180,9 @@ def proposals_to_manifest(
             "status": proposal.status,
             "downstream_status": proposal.downstream_status,
             "rejection_reason": proposal.rejection_reason,
+            "anchor_kind": proposal.anchor_kind,
+            "anchor_metrics": proposal.anchor_metrics,
+            "anchor_parameter_count": proposal.anchor_parameter_count,
         }
         for proposal in proposals
     ]
@@ -215,6 +223,11 @@ def _proposal_from_component(
 ) -> SegmentProposal:
     status = _proposal_status(component.area, max_component_area)
     downstream_status, rejection_reason = _downstream_status(status)
+    anchor_summary = (
+        _primitive_anchor_summary(component)
+        if downstream_status == "pending"
+        else {}
+    )
     return SegmentProposal(
         id=f"{source}-{index:04d}",
         source=source,
@@ -225,6 +238,7 @@ def _proposal_from_component(
         status=status,
         downstream_status=downstream_status,
         rejection_reason=rejection_reason,
+        **anchor_summary,
     )
 
 
@@ -238,3 +252,15 @@ def _downstream_status(status: str) -> tuple[str, str | None]:
     if status == "deferred":
         return "rejected", "max_component_area_exceeded"
     return "pending", None
+
+
+def _primitive_anchor_summary(component: MaskComponent) -> dict[str, object]:
+    candidates = primitive_candidates_for_component(component)
+    if not candidates:
+        return {}
+    best = choose_best_anchor(candidates)
+    return {
+        "anchor_kind": str(best.kind),
+        "anchor_metrics": dict(sorted(best.metrics.items())),
+        "anchor_parameter_count": best.parameter_count,
+    }
