@@ -4,6 +4,7 @@ import json
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
@@ -39,6 +40,23 @@ class CliTests(unittest.TestCase):
                 [anchor["kind"] for anchor in manifest["anchors"]],
                 ["stroke_polyline", "circle"],
             )
+
+    def test_status_cli_writes_json_and_markdown(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "status.json"
+            markdown = Path(temp_dir) / "status.md"
+
+            with (
+                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                redirect_stdout(StringIO()),
+            ):
+                main(["status", "-o", str(output), "--markdown", str(markdown)])
+
+            status = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(status["schema_version"], 1)
+            self.assertIn("flat_color", status["segmenters"])
+            self.assertIn("mlx", status["classifiers"])
+            self.assertTrue(markdown.exists())
 
     def test_vectorize_accepts_color_tolerance(self):
         with tempfile.TemporaryDirectory() as temp_dir:

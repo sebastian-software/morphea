@@ -114,6 +114,7 @@ from curve.curated import (
     load_curated_suite,
     render_curated_snapshot,
 )
+from curve.status import collect_runtime_status, render_runtime_status_markdown
 from curve.sweeps import load_sweep_config, render_sweep_markdown, run_sweep
 from curve.rendering import render_manifest_image, write_manifest_preview
 
@@ -182,6 +183,7 @@ __all__ = [
     "compare_git_snapshots",
     "compare_retraining",
     "compare_snapshots",
+    "collect_runtime_status",
     "primitive_candidates_for_component",
     "load_centroid_model",
     "load_curated_suite",
@@ -207,6 +209,7 @@ __all__ = [
     "render_manifest_image",
     "render_review_markdown",
     "render_refinement_gate_markdown",
+    "render_runtime_status_markdown",
     "render_self_learning_cycle_markdown",
     "render_snapshot_comparison",
     "render_snapshot_comparison_markdown",

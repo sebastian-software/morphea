@@ -51,6 +51,7 @@ from curve.refinement import (
     gate_refinement_result,
     refine_manifest,
 )
+from curve.status import collect_runtime_status
 from curve.sweeps import run_sweep
 
 
@@ -621,6 +622,14 @@ def main(argv: list[str] | None = None) -> None:
     )
     refinement_gate.add_argument("--config", type=Path)
 
+    status = subcommands.add_parser(
+        "status",
+        help="Write runtime/backend availability status.",
+    )
+    status.add_argument("-o", "--output", type=Path, required=True)
+    status.add_argument("--markdown", type=Path)
+    status.add_argument("--mlx-sam-model-path", type=Path)
+
     curated_check = subcommands.add_parser(
         "curated-check",
         help="Validate a curated real-image suite and optionally run it.",
@@ -1034,6 +1043,15 @@ def main(argv: list[str] | None = None) -> None:
             require_improvement=bool(gate_config["require_improvement"]),
         )
         print(f"refinement gate decision: {result['decision']}")
+        return
+
+    if args.command == "status":
+        result = collect_runtime_status(
+            output=args.output,
+            markdown=args.markdown,
+            mlx_sam_model_path=args.mlx_sam_model_path,
+        )
+        print(f"wrote runtime status with {len(result['blocked_backends'])} blockers")
         return
 
     if args.command == "curated-check":
