@@ -27,6 +27,9 @@ class SegmentProposal:
     anchor_kind: str | None = None
     anchor_metrics: dict[str, float] | None = None
     anchor_parameter_count: int | None = None
+    anchor_reserved: bool = False
+    reservation_reason: str | None = None
+    reservation_bounds: tuple[int, int, int, int] | None = None
 
 
 class Segmenter(Protocol):
@@ -183,6 +186,13 @@ def proposals_to_manifest(
             "anchor_kind": proposal.anchor_kind,
             "anchor_metrics": proposal.anchor_metrics,
             "anchor_parameter_count": proposal.anchor_parameter_count,
+            "anchor_reserved": proposal.anchor_reserved,
+            "reservation_reason": proposal.reservation_reason,
+            "reservation_bounds": (
+                list(proposal.reservation_bounds)
+                if proposal.reservation_bounds is not None
+                else None
+            ),
         }
         for proposal in proposals
     ]
@@ -200,6 +210,9 @@ def segment_proposal_summary(
             proposal.anchor_kind
             for proposal in proposals
             if proposal.anchor_kind is not None
+        ),
+        "reserved_anchor_count": sum(
+            1 for proposal in proposals if proposal.anchor_reserved
         ),
     }
 
@@ -283,8 +296,12 @@ def _primitive_anchor_summary(component: MaskComponent) -> dict[str, object]:
     if not candidates:
         return {}
     best = choose_best_anchor(candidates)
+    reserved = best.is_simple_shape
     return {
         "anchor_kind": str(best.kind),
         "anchor_metrics": dict(sorted(best.metrics.items())),
         "anchor_parameter_count": best.parameter_count,
+        "anchor_reserved": reserved,
+        "reservation_reason": "simple_shape_anchor" if reserved else None,
+        "reservation_bounds": component.bounds if reserved else None,
     }

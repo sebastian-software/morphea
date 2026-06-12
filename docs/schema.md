@@ -273,8 +273,8 @@ Top-level fields:
 - `config`
 - `backend`: segmenter availability/status metadata
 - `proposal_count`
-- `summary`: aggregate `status_counts`, `downstream_status_counts`, and
-  `anchor_kind_counts`
+- `summary`: aggregate `status_counts`, `downstream_status_counts`,
+  `anchor_kind_counts`, and `reserved_anchor_count`
 - `proposals`
 
 Proposal fields:
@@ -293,6 +293,11 @@ Proposal fields:
   pending flat-color proposals
 - `anchor_metrics`: nullable primitive metric summary for the proposed anchor
 - `anchor_parameter_count`: nullable parameter count for the proposed anchor
+- `anchor_reserved`: true when a simple parametric anchor is reserved before
+  later fitting stages can fragment it
+- `reservation_reason`: nullable reservation reason, currently
+  `simple_shape_anchor`
+- `reservation_bounds`: nullable reserved bounds for the proposal
 
 `backend` records `source`, `backend_available`, `status`, and an optional
 `reason`. MLX SAM status distinguishes `not_installed`, `not_configured`,

@@ -35,6 +35,9 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(proposals[0].anchor_kind, "rect")
         self.assertIsNotNone(proposals[0].anchor_metrics)
         self.assertEqual(proposals[0].anchor_parameter_count, 4)
+        self.assertTrue(proposals[0].anchor_reserved)
+        self.assertEqual(proposals[0].reservation_reason, "simple_shape_anchor")
+        self.assertEqual(proposals[0].reservation_bounds, proposals[0].bounds)
 
     def test_flat_color_segmenter_splits_same_color_components(self):
         image_path = _write_same_color_component_image()
@@ -77,6 +80,13 @@ class SegmenterTests(unittest.TestCase):
                 if proposal.status == "deferred"
             )
         )
+        self.assertTrue(
+            all(
+                not proposal.anchor_reserved
+                for proposal in proposals
+                if proposal.status == "deferred"
+            )
+        )
 
     def test_proposals_to_manifest_is_json_ready(self):
         image_path = _write_two_color_image()
@@ -91,6 +101,9 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(manifest[0]["anchor_kind"], "rect")
         self.assertIn("rect_fill_error", manifest[0]["anchor_metrics"])
         self.assertEqual(manifest[0]["anchor_parameter_count"], 4)
+        self.assertTrue(manifest[0]["anchor_reserved"])
+        self.assertEqual(manifest[0]["reservation_reason"], "simple_shape_anchor")
+        self.assertEqual(manifest[0]["reservation_bounds"], manifest[0]["bounds"])
 
     def test_segment_proposal_summary_counts_statuses_and_anchor_kinds(self):
         image_path = _write_same_color_component_image()
@@ -106,6 +119,7 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(summary["downstream_status_counts"]["pending"], 1)
         self.assertEqual(summary["downstream_status_counts"]["rejected"], 1)
         self.assertEqual(summary["anchor_kind_counts"]["rect"], 1)
+        self.assertEqual(summary["reserved_anchor_count"], 1)
 
     def test_mlx_sam_segmenter_reports_not_configured(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
@@ -223,12 +237,14 @@ class SegmenterTests(unittest.TestCase):
                 2,
             )
             self.assertEqual(manifest["summary"]["anchor_kind_counts"], {})
+            self.assertEqual(manifest["summary"]["reserved_anchor_count"], 0)
             self.assertEqual(manifest["proposals"][0]["status"], "deferred")
             self.assertEqual(
                 manifest["proposals"][0]["downstream_status"],
                 "rejected",
             )
             self.assertIsNone(manifest["proposals"][0]["anchor_kind"])
+            self.assertFalse(manifest["proposals"][0]["anchor_reserved"])
 
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:

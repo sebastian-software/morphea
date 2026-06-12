@@ -199,6 +199,9 @@ Implemented so far:
   `vanishing_line_diagnostics` derived from quad edge pairs.
 - reserved simple-shape anchors are exposed as a
   `primitive_anchor_reservation` scene group with reserved bounds area.
+- segment proposals mark simple parametric anchors as reserved with a
+  `simple_shape_anchor` reason and reserved bounds before later fitting stages
+  can fragment them.
 
 ## M3: Scene Graph and Layer Semantics
 
@@ -445,7 +448,7 @@ Implemented so far:
   scorer, while deferred oversized proposals remain rejected without pretending
   to be accepted anchors.
 - segment proposal manifests include aggregate proposal status, downstream
-  status, and anchor-kind counts for quick scan/review.
+  status, anchor-kind, and reserved-anchor counts for quick scan/review.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
