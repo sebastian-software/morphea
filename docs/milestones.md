@@ -494,16 +494,21 @@ Implemented so far:
   MLX backend status plus centroid fallback weights, so the training pipeline
   remains runnable when MLX is not installed locally
 - MLX classifier runtime status distinguishes missing MLX package from an
-  available package with a still-pending Transformer training hook, while
-  keeping centroid fallback weights usable as the safe ranking prior.
+  available package that trains a serialized normalized feature-head weight
+  artifact, while keeping centroid fallback weights usable as the safe ranking
+  prior.
+- the available MLX training path no longer emits metadata-only hooks; it
+  writes optimized feature-head weights, bias, normalization, and loss history
+  while marking the full raster-crop Transformer encoder as pending.
 - classifier feature extraction includes detected/generated
   `quad_subtype_code` values so trapezoid and parallelogram structure can
   influence candidate ranking without adding new top-level primitive classes
 
 Remaining:
 
-- replace the current MLX training hook metadata with real Transformer weight
-  optimization once MLX is installed in the local environment
+- replace the current MLX feature-head with the full small Transformer over
+  mask/RGBA crop tokens plus geometric features once the local runtime and
+  data loader are ready
 
 ## M8: Self-Learning Loop
 
