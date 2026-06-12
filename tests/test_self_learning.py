@@ -919,6 +919,13 @@ class SelfLearningTests(unittest.TestCase):
             self.assertIn("feature_importance", result["baseline"])
             self.assertIn("feature_importance", result["augmented"])
             self.assertIn("ranking_evaluation", result["delta"])
+            self.assertIn("feature_importance", result["delta"])
+            self.assertTrue(
+                any(
+                    item["feature"] == "node_count"
+                    for item in result["delta"]["feature_importance"]
+                )
+            )
             self.assertIn(
                 result["summary"]["status"],
                 {"improved", "regressed", "mixed", "unchanged"},
@@ -940,13 +947,25 @@ class SelfLearningTests(unittest.TestCase):
                 },
                 "baseline": {"evaluation": {"val": {"accuracy": 0.5}}},
                 "augmented": {"evaluation": {"val": {"accuracy": 0.6}}},
-                "delta": {"evaluation": {"val": 0.1}},
+                "delta": {
+                    "evaluation": {"val": 0.1},
+                    "feature_importance": [
+                        {
+                            "feature": "group_count",
+                            "baseline_spread": 0.0,
+                            "augmented_spread": 1.0,
+                            "spread_delta": 1.0,
+                        }
+                    ],
+                },
             }
         )
 
         self.assertIn("# Curve Training Comparison", markdown)
         self.assertIn("- Status: `improved`", markdown)
         self.assertIn("| `val` | 0.5 | 0.6 | 0.1 |", markdown)
+        self.assertIn("## Feature Importance Delta", markdown)
+        self.assertIn("| `group_count` | 0 | 1 | 1 |", markdown)
 
     def test_compare_training_cli_writes_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:

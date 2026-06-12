@@ -1532,6 +1532,27 @@ def render_training_comparison_markdown(report: dict[str, object]) -> str:
             f"{_fmt_metric(_split_metric_for_markdown(augmented, 'ranking_evaluation', split, 'classifier_accuracy'))} | "
             f"{_fmt_metric(_delta_for_markdown(delta, 'ranking_evaluation', split, 'classifier_accuracy'))} |"
         )
+    importance_delta = delta.get("feature_importance", {})
+    if isinstance(importance_delta, list) and importance_delta:
+        lines.extend(
+            [
+                "",
+                "## Feature Importance Delta",
+                "",
+                "| Feature | Baseline spread | Augmented spread | Delta |",
+                "| --- | ---: | ---: | ---: |",
+            ]
+        )
+        for item in importance_delta[:8]:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{item.get('feature')}` | "
+                f"{_fmt_metric(item.get('baseline_spread'))} | "
+                f"{_fmt_metric(item.get('augmented_spread'))} | "
+                f"{_fmt_metric(item.get('spread_delta'))} |"
+            )
     return "\n".join(lines) + "\n"
 
 
@@ -1624,6 +1645,7 @@ def _training_comparison_delta(
             }
             for split in ("val", "test")
         },
+        "feature_importance": _feature_importance_delta(baseline, augmented),
     }
 
 
@@ -1669,6 +1691,52 @@ def _comparison_metric_deltas(delta: dict[str, object]) -> list[float]:
                 if isinstance(value, (int, float)):
                     values.append(float(value))
     return values
+
+
+def _feature_importance_delta(
+    baseline: dict[str, object],
+    augmented: dict[str, object],
+) -> list[dict[str, object]]:
+    baseline_importance = _feature_importance_by_name(
+        baseline.get("feature_importance", [])
+    )
+    augmented_importance = _feature_importance_by_name(
+        augmented.get("feature_importance", [])
+    )
+    features = sorted(set(baseline_importance) | set(augmented_importance))
+    rows: list[dict[str, object]] = []
+    for feature in features:
+        baseline_spread = baseline_importance.get(feature, 0.0)
+        augmented_spread = augmented_importance.get(feature, 0.0)
+        rows.append(
+            {
+                "feature": feature,
+                "baseline_spread": baseline_spread,
+                "augmented_spread": augmented_spread,
+                "spread_delta": augmented_spread - baseline_spread,
+            }
+        )
+    return sorted(
+        rows,
+        key=lambda item: (
+            -abs(float(item["spread_delta"])),
+            str(item["feature"]),
+        ),
+    )
+
+
+def _feature_importance_by_name(value: object) -> dict[str, float]:
+    if not isinstance(value, list):
+        return {}
+    result: dict[str, float] = {}
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        feature = item.get("feature")
+        spread = item.get("spread")
+        if isinstance(feature, str) and isinstance(spread, (int, float)):
+            result[feature] = float(spread)
+    return result
 
 
 def _split_metric(

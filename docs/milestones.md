@@ -671,6 +671,9 @@ Implemented so far:
 - comparison reports include a scan-friendly augmentation verdict with
   best/worst accuracy deltas and train-example delta, so regressions are easier
   to spot before retraining is accepted.
+- comparison reports include feature-importance spread deltas so reviewed
+  pseudo-labels can be audited for which geometry or group-context signals they
+  strengthen.
 - `curve compare-training --markdown comparison.md` writes a scan-friendly
   retraining comparison table derived from the JSON report.
 - `curve training-gate comparison.json -o gate.json` turns a retraining

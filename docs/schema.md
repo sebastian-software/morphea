@@ -893,12 +893,14 @@ Top-level fields:
 - `baseline`: centroid classifier summary trained only on base train examples
 - `augmented`: centroid classifier summary trained on base plus reviewed
   pseudo-label train examples
-- `delta`: training-count and accuracy changes from baseline to augmented
+- `delta`: training-count, accuracy, ranking, and feature-importance spread
+  changes from baseline to augmented
 - `summary`: scan-friendly augmentation verdict with status, metric count,
   best/worst accuracy deltas, and train-example delta
 
 Both `baseline` and `augmented` include validation/test `evaluation` and
-`ranking_evaluation` sections using the same validation dataset. The report is
+`ranking_evaluation` sections plus `feature_importance` using the same
+validation dataset. The report is
 intended to show whether reviewed pseudo-labels improve, degrade, or leave
 candidate ranking unchanged before a heavier retraining backend is introduced.
 `curve compare-training --markdown comparison.md` writes a scan-friendly
