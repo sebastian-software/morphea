@@ -711,6 +711,7 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         help="Write a deterministic regression snapshot JSON.",
     )
+    curated_check.add_argument("--markdown", type=Path)
 
     sweep = subcommands.add_parser(
         "sweep",
@@ -1162,6 +1163,7 @@ def main(argv: list[str] | None = None) -> None:
             output_dir=args.output_dir,
             run=args.run,
             snapshot=args.snapshot,
+            markdown=args.markdown,
         )
         print(f"checked {result['case_count']} curated cases")
         return

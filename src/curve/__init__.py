@@ -128,6 +128,7 @@ from curve.refinement import (
 from curve.curated import (
     check_curated_suite,
     load_curated_suite,
+    render_curated_markdown,
     render_curated_snapshot,
 )
 from curve.status import collect_runtime_status, render_runtime_status_markdown
@@ -234,6 +235,7 @@ __all__ = [
     "render_markdown_report",
     "render_html_report",
     "render_curated_snapshot",
+    "render_curated_markdown",
     "render_classifier_evaluation_markdown",
     "render_eval_markdown",
     "render_apply_review_markdown",

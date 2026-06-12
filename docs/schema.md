@@ -207,6 +207,10 @@ summary records min/mean/max elapsed seconds across all repeats.
 ## Curated Snapshot v1
 
 Written by `curve curated-check --snapshot snapshot.json`.
+`curve curated-check --markdown report.md` writes a scan-friendly companion
+report from the same suite check result, including case status, failed
+expectations, key anchor/group counts, key metrics, and per-case artifact
+directories when `--output-dir` is used.
 
 Curated suite expectations support three mutually exclusive check types:
 `kind` with `min_count`, `group_kind` with `min_count`, or `metric` with

@@ -808,6 +808,9 @@ Implemented so far:
   simple-shape ratio, and fragmentation envelopes.
 - deterministic `curve curated-check --snapshot snapshot.json` regression
   summaries for important commits/configurations.
+- `curve curated-check --markdown report.md` writes scan-friendly real-image
+  suite reports with case status, failed expectations, key metrics, and
+  artifact directories.
 - second documented curated case:
   `chatgpt-image-2026-06-11`, covering the opaque white-background version of
   the Greek-figures/table illustration.

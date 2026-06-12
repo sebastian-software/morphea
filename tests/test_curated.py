@@ -11,6 +11,7 @@ from curve.cli import main
 from curve.curated import (
     check_curated_suite,
     load_curated_suite,
+    render_curated_markdown,
     render_curated_snapshot,
 )
 
@@ -146,6 +147,55 @@ class CuratedSuiteTests(unittest.TestCase):
                 "editability_score",
             )
             self.assertIn("editability_score", snapshot_report["cases"][0]["metrics"])
+
+    def test_render_curated_markdown_summarizes_cases_and_expectations(self):
+        markdown = render_curated_markdown(
+            {
+                "suite": "suite.json",
+                "run": True,
+                "case_count": 1,
+                "ok": False,
+                "cases": [
+                    {
+                        "id": "simple-circle",
+                        "status": "checked",
+                        "ok": False,
+                        "anchor_count": 1,
+                        "diagnostic_count": 0,
+                        "anchor_kind_counts": {"circle": 1},
+                        "group_kind_counts": {"primitive_anchor_reservation": 1},
+                        "metrics": {
+                            "editability_score": 0.75,
+                            "simple_shape_ratio": 1.0,
+                            "fragmentation_penalty": 0.0,
+                        },
+                        "artifacts": {"run_dir": "runs/simple-circle"},
+                        "expectations": [
+                            {
+                                "id": "circle-anchor",
+                                "kind": "circle",
+                                "actual_count": 1,
+                                "min_count": 1,
+                                "ok": True,
+                            },
+                            {
+                                "id": "editable-enough",
+                                "metric": "editability_score",
+                                "actual_value": 0.75,
+                                "min_value": 0.9,
+                                "ok": False,
+                            },
+                        ],
+                    }
+                ],
+            }
+        )
+
+        self.assertIn("# Curve Curated Check", markdown)
+        self.assertIn("| `simple-circle` | `checked` | `false` | 1 | 0 | `editable-enough` |", markdown)
+        self.assertIn("## simple-circle", markdown)
+        self.assertIn("`circle`=1", markdown)
+        self.assertIn("| `editable-enough` | `metric:editability_score` | 0.75 | >= 0.9 | `false` |", markdown)
 
     def test_check_curated_suite_applies_config_overrides(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -300,6 +350,7 @@ class CuratedSuiteTests(unittest.TestCase):
             suite_path = Path(temp_dir) / "suite.json"
             output = Path(temp_dir) / "report.json"
             snapshot = Path(temp_dir) / "snapshot.json"
+            markdown = Path(temp_dir) / "report.md"
             suite_path.write_text(
                 json.dumps(
                     {
@@ -331,6 +382,8 @@ class CuratedSuiteTests(unittest.TestCase):
                         str(output),
                         "--snapshot",
                         str(snapshot),
+                        "--markdown",
+                        str(markdown),
                     ]
                 )
 
@@ -339,6 +392,10 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(report["cases"][0]["status"], "missing_source")
             snapshot_report = json.loads(snapshot.read_text(encoding="utf-8"))
             self.assertEqual(snapshot_report["cases"][0]["status"], "missing_source")
+            self.assertIn(
+                "# Curve Curated Check",
+                markdown.read_text(encoding="utf-8"),
+            )
 
 
 if __name__ == "__main__":

@@ -83,6 +83,7 @@ def check_curated_suite(
     output_dir: str | Path | None = None,
     run: bool = False,
     snapshot: str | Path | None = None,
+    markdown: str | Path | None = None,
     config_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate a curated suite and optionally run bounded vectorization."""
@@ -124,7 +125,102 @@ def check_curated_suite(
             json.dumps(render_curated_snapshot(report), indent=2, sort_keys=True),
             encoding="utf-8",
         )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_curated_markdown(report),
+            encoding="utf-8",
+        )
     return report
+
+
+def render_curated_markdown(report: dict[str, Any]) -> str:
+    """Render a scan-friendly curated real-image suite report."""
+
+    cases = report.get("cases", [])
+    if not isinstance(cases, list):
+        cases = []
+    lines = [
+        "# Curve Curated Check",
+        "",
+        f"- Suite: `{report.get('suite', 'n/a')}`",
+        f"- Run: `{str(report.get('run', False)).lower()}`",
+        f"- Cases: {_fmt_markdown_value(report.get('case_count'))}",
+        f"- OK: `{str(report.get('ok', False)).lower()}`",
+        "",
+        "| Case | Status | OK | Anchors | Diagnostics | Failed expectations |",
+        "| --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        failed = [
+            str(expectation.get("id", "n/a"))
+            for expectation in case.get("expectations", [])
+            if isinstance(expectation, dict) and not expectation.get("ok", False)
+        ]
+        lines.append(
+            "| "
+            f"`{case.get('id', 'n/a')}` | "
+            f"`{case.get('status', 'n/a')}` | "
+            f"`{str(case.get('ok', False)).lower()}` | "
+            f"{_fmt_markdown_value(case.get('anchor_count'))} | "
+            f"{_fmt_markdown_value(case.get('diagnostic_count'))} | "
+            f"{', '.join(f'`{item}`' for item in failed) if failed else 'n/a'} |"
+        )
+
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        lines.extend(["", f"## {case.get('id', 'n/a')}", ""])
+        if "anchor_kind_counts" in case:
+            lines.append(
+                f"- Anchor kinds: {_fmt_markdown_counts(case.get('anchor_kind_counts'))}"
+            )
+        if "group_kind_counts" in case:
+            lines.append(
+                f"- Group kinds: {_fmt_markdown_counts(case.get('group_kind_counts'))}"
+            )
+        if "metrics" in case:
+            metrics = case.get("metrics")
+            if isinstance(metrics, dict):
+                metric_parts = [
+                    f"`{key}`={_fmt_markdown_value(metrics[key])}"
+                    for key in (
+                        "editability_score",
+                        "simple_shape_ratio",
+                        "fragmentation_penalty",
+                        "raster_l1_error",
+                        "raster_edge_error",
+                    )
+                    if key in metrics
+                ]
+                if metric_parts:
+                    lines.append(f"- Key metrics: {', '.join(metric_parts)}")
+        artifacts = case.get("artifacts", {})
+        if isinstance(artifacts, dict) and artifacts:
+            lines.append(
+                f"- Artifacts: `{artifacts.get('run_dir', 'n/a')}`"
+            )
+        expectations = [
+            item
+            for item in case.get("expectations", [])
+            if isinstance(item, dict)
+        ]
+        if not expectations:
+            lines.append("- Expectations: n/a")
+            continue
+        lines.extend(
+            [
+                "",
+                "| Expectation | Type | Actual | Required | OK |",
+                "| --- | --- | ---: | ---: | ---: |",
+            ]
+        )
+        for expectation in expectations:
+            lines.append(_expectation_markdown_row(expectation))
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
@@ -335,6 +431,55 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _expectation_markdown_row(expectation: dict[str, Any]) -> str:
+    if "metric" in expectation:
+        required_parts = []
+        if "min_value" in expectation:
+            required_parts.append(f">= {_fmt_markdown_value(expectation['min_value'])}")
+        if "max_value" in expectation:
+            required_parts.append(f"<= {_fmt_markdown_value(expectation['max_value'])}")
+        return (
+            "| "
+            f"`{expectation.get('id', 'n/a')}` | "
+            f"`metric:{expectation.get('metric', 'n/a')}` | "
+            f"{_fmt_markdown_value(expectation.get('actual_value'))} | "
+            f"{', '.join(required_parts) if required_parts else 'n/a'} | "
+            f"`{str(expectation.get('ok', False)).lower()}` |"
+        )
+    expectation_type = expectation.get("kind")
+    label = "kind"
+    if expectation_type is None:
+        expectation_type = expectation.get("group_kind")
+        label = "group"
+    return (
+        "| "
+        f"`{expectation.get('id', 'n/a')}` | "
+        f"`{label}:{expectation_type}` | "
+        f"{_fmt_markdown_value(expectation.get('actual_count'))} | "
+        f">= {_fmt_markdown_value(expectation.get('min_count'))} | "
+        f"`{str(expectation.get('ok', False)).lower()}` |"
+    )
+
+
+def _fmt_markdown_counts(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return "n/a"
+    return ", ".join(
+        f"`{key}`={_fmt_markdown_value(value[key])}"
+        for key in sorted(value)
+    )
+
+
+def _fmt_markdown_value(value: object) -> str:
+    if isinstance(value, bool) or value is None:
+        return "n/a"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    return str(value)
 
 
 def _validate_expectation(
