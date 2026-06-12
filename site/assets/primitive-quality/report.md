@@ -1,7 +1,7 @@
 # Morphea Primitive Quality Check
 
-- Cases: 8
-- Passed: 8
+- Cases: 11
+- Passed: 11
 - Failed: 0
 - OK: `true`
 
@@ -15,6 +15,9 @@
 | `group_parallel_strokes` | 1 | 1 | 0 |
 | `horizontal_stroke` | 1 | 1 | 0 |
 | `outlined_ring` | 1 | 1 | 0 |
+| `overlapping_rectangles_ordered` | 1 | 1 | 0 |
+| `stroke_crossing_rectangle` | 1 | 1 | 0 |
+| `touching_circle_stroke` | 1 | 1 | 0 |
 
 | Case | OK | Actual | L1 | Edge | IoU | Failures |
 | --- | ---: | --- | ---: | ---: | ---: | --- |
@@ -24,5 +27,8 @@
 | `outlined_ring` | `true` | `stroke_circle` | 0.053516 | 0.038905 | 0.990867 | n/a |
 | `antialiased_circle` | `true` | `circle` | 0.011854 | 0.014403 | 0.947775 | n/a |
 | `composition_square_plus_circle_a` | `true` | `rect` | 0.005664 | 0.008035 | 1.0 | n/a |
+| `touching_circle_stroke_right` | `true` | `circle` | 0.00918 | 0.011206 | 0.983268 | n/a |
+| `stroke_crossing_rectangle_horizontal` | `true` | `rect` | 0.0 | 0.0 | 1.0 | n/a |
+| `overlapping_rectangles_bottom_right` | `true` | `rect` | 0.0 | 0.0 | 1.0 | n/a |
 | `cutout_horizontal_gap_center` | `true` | `rect` | 0.0 | 0.0 | 1.0 | n/a |
 | `group_parallel_strokes_horizontal` | `true` | `stroke_polyline` | 0.0 | 0.0 | 1.0 | n/a |

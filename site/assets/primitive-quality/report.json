@@ -1,5 +1,5 @@
 {
-  "case_count": 8,
+  "case_count": 11,
   "cases": [
     {
       "actual_kind": "rect",
@@ -779,12 +779,656 @@
       "variant": "a"
     },
     {
+      "actual_kind": "circle",
+      "anchor_count": 2,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/touching_circle_stroke_right/debug.svg",
+        "input": "site/assets/primitive-quality/cases/touching_circle_stroke_right/input.png",
+        "manifest": "site/assets/primitive-quality/cases/touching_circle_stroke_right/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/touching_circle_stroke_right/output.svg",
+        "preview": "site/assets/primitive-quality/cases/touching_circle_stroke_right/preview.png"
+      },
+      "expected_kinds": [
+        "circle"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "touching_circle_stroke",
+      "geometry": {
+        "actual_bounds": [
+          11.830702,
+          21.947077,
+          31.923107,
+          42.039482
+        ],
+        "bbox_iou": 0.983268,
+        "expected_bounds": [
+          12.0,
+          22.0,
+          32.0,
+          42.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "cx": 21.876904,
+            "cy": 31.99328,
+            "r": 10.046202,
+            "width": null
+          },
+          "kind": "circle",
+          "type": "circle"
+        },
+        "expected": {
+          "geometry": {
+            "cx": 22.0,
+            "cy": 32.0,
+            "r": 10.0
+          },
+          "kinds": [
+            "circle"
+          ],
+          "type": "circle"
+        }
+      },
+      "group_matches": [
+        {
+          "anchor_count": 2,
+          "expected_kind": "primitive_contact_pair",
+          "group_index": 0
+        }
+      ],
+      "id": "touching_circle_stroke_right",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "circle",
+          "bbox_iou": 0.983268,
+          "expected_id": "circle",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "cx": 21.876904,
+                "cy": 31.99328,
+                "r": 10.046202,
+                "width": null
+              },
+              "kind": "circle",
+              "type": "circle"
+            },
+            "expected": {
+              "geometry": {
+                "cx": 22.0,
+                "cy": 32.0,
+                "r": 10.0
+              },
+              "kinds": [
+                "circle"
+              ],
+              "type": "circle"
+            }
+          }
+        },
+        {
+          "actual_index": 1,
+          "actual_kind": "stroke_polyline",
+          "bbox_iou": 1.0,
+          "expected_id": "stroke",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "centerline": [
+                  [
+                    32.0,
+                    32.5
+                  ],
+                  [
+                    54.0,
+                    32.5
+                  ]
+                ],
+                "width": 4.0
+              },
+              "kind": "stroke_polyline",
+              "type": "stroke"
+            },
+            "expected": {
+              "geometry": {
+                "centerline": [
+                  [
+                    32.0,
+                    32.5
+                  ],
+                  [
+                    54.0,
+                    32.5
+                  ]
+                ],
+                "width": 4.0
+              },
+              "kinds": [
+                "stroke_polyline"
+              ],
+              "type": "stroke"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.011206,
+        "raster_l1_error": 0.00918,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "right"
+    },
+    {
+      "actual_kind": "rect",
+      "anchor_count": 3,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/debug.svg",
+        "input": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/input.png",
+        "manifest": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/output.svg",
+        "preview": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/preview.png"
+      },
+      "expected_kinds": [
+        "rect",
+        "quad"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "stroke_crossing_rectangle",
+      "geometry": {
+        "actual_bounds": [
+          12.0,
+          20.0,
+          52.0,
+          30.0
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          12.0,
+          20.0,
+          52.0,
+          30.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "corners": [
+              [
+                12.0,
+                20.0
+              ],
+              [
+                52.0,
+                20.0
+              ],
+              [
+                52.0,
+                30.0
+              ],
+              [
+                12.0,
+                30.0
+              ]
+            ]
+          },
+          "kind": "rect",
+          "type": "quad"
+        },
+        "expected": {
+          "geometry": {
+            "corners": [
+              [
+                12.0,
+                20.0
+              ],
+              [
+                52.0,
+                20.0
+              ],
+              [
+                52.0,
+                30.0
+              ],
+              [
+                12.0,
+                30.0
+              ]
+            ]
+          },
+          "kinds": [
+            "rect",
+            "quad"
+          ],
+          "type": "quad"
+        }
+      },
+      "group_matches": [
+        {
+          "anchor_count": 3,
+          "expected_kind": "occluded_primitive_group",
+          "group_index": 3
+        }
+      ],
+      "id": "stroke_crossing_rectangle_horizontal",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "top_fragment",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    12.0,
+                    20.0
+                  ],
+                  [
+                    52.0,
+                    20.0
+                  ],
+                  [
+                    52.0,
+                    30.0
+                  ],
+                  [
+                    12.0,
+                    30.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    12.0,
+                    20.0
+                  ],
+                  [
+                    52.0,
+                    20.0
+                  ],
+                  [
+                    52.0,
+                    30.0
+                  ],
+                  [
+                    12.0,
+                    30.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        },
+        {
+          "actual_index": 1,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "bottom_fragment",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    12.0,
+                    35.0
+                  ],
+                  [
+                    52.0,
+                    35.0
+                  ],
+                  [
+                    52.0,
+                    44.0
+                  ],
+                  [
+                    12.0,
+                    44.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    12.0,
+                    35.0
+                  ],
+                  [
+                    52.0,
+                    35.0
+                  ],
+                  [
+                    52.0,
+                    44.0
+                  ],
+                  [
+                    12.0,
+                    44.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        },
+        {
+          "actual_index": 2,
+          "actual_kind": "stroke_polyline",
+          "bbox_iou": 1.0,
+          "expected_id": "stroke",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "centerline": [
+                  [
+                    8.0,
+                    32.5
+                  ],
+                  [
+                    56.0,
+                    32.5
+                  ]
+                ],
+                "width": 4.0
+              },
+              "kind": "stroke_polyline",
+              "type": "stroke"
+            },
+            "expected": {
+              "geometry": {
+                "centerline": [
+                  [
+                    8.0,
+                    32.5
+                  ],
+                  [
+                    56.0,
+                    32.5
+                  ]
+                ],
+                "width": 4.0
+              },
+              "kinds": [
+                "stroke_polyline"
+              ],
+              "type": "stroke"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "horizontal"
+    },
+    {
+      "actual_kind": "rect",
+      "anchor_count": 2,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/overlapping_rectangles_bottom_right/debug.svg",
+        "input": "site/assets/primitive-quality/cases/overlapping_rectangles_bottom_right/input.png",
+        "manifest": "site/assets/primitive-quality/cases/overlapping_rectangles_bottom_right/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/overlapping_rectangles_bottom_right/output.svg",
+        "preview": "site/assets/primitive-quality/cases/overlapping_rectangles_bottom_right/preview.png"
+      },
+      "expected_kinds": [
+        "rect",
+        "quad"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "overlapping_rectangles_ordered",
+      "geometry": {
+        "actual_bounds": [
+          10.0,
+          16.0,
+          42.0,
+          48.0
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          10.0,
+          16.0,
+          42.0,
+          48.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "corners": [
+              [
+                10.0,
+                16.0
+              ],
+              [
+                42.0,
+                16.0
+              ],
+              [
+                42.0,
+                48.0
+              ],
+              [
+                10.0,
+                48.0
+              ]
+            ]
+          },
+          "kind": "rect",
+          "type": "quad"
+        },
+        "expected": {
+          "geometry": {
+            "corners": [
+              [
+                10.0,
+                16.0
+              ],
+              [
+                42.0,
+                16.0
+              ],
+              [
+                42.0,
+                48.0
+              ],
+              [
+                10.0,
+                48.0
+              ]
+            ]
+          },
+          "kinds": [
+            "rect",
+            "quad"
+          ],
+          "type": "quad"
+        }
+      },
+      "group_matches": [
+        {
+          "anchor_count": 2,
+          "expected_kind": "primitive_contact_pair",
+          "group_index": 0
+        }
+      ],
+      "id": "overlapping_rectangles_bottom_right",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "base_rect",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    10.0,
+                    16.0
+                  ],
+                  [
+                    42.0,
+                    16.0
+                  ],
+                  [
+                    42.0,
+                    48.0
+                  ],
+                  [
+                    10.0,
+                    48.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    10.0,
+                    16.0
+                  ],
+                  [
+                    42.0,
+                    16.0
+                  ],
+                  [
+                    42.0,
+                    48.0
+                  ],
+                  [
+                    10.0,
+                    48.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        },
+        {
+          "actual_index": 1,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "overlay_rect",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    28.0,
+                    26.0
+                  ],
+                  [
+                    56.0,
+                    26.0
+                  ],
+                  [
+                    56.0,
+                    54.0
+                  ],
+                  [
+                    28.0,
+                    54.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    28.0,
+                    26.0
+                  ],
+                  [
+                    56.0,
+                    26.0
+                  ],
+                  [
+                    56.0,
+                    54.0
+                  ],
+                  [
+                    28.0,
+                    54.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "bottom_right"
+    },
+    {
       "actual_kind": "rect",
       "anchor_count": 2,
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/debug.svg",
         "input": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/input.png",
         "manifest": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/manifest.json",
+        "negative_mask_svg": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/negative-mask.svg",
         "output_svg": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/output.svg",
         "preview": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/preview.png"
       },
@@ -792,6 +1436,21 @@
         "rect",
         "quad"
       ],
+      "export_comparison": {
+        "cutout_anchor_count": 1,
+        "negative_mask": {
+          "has_editable_mask_stroke": true,
+          "has_mask": true,
+          "has_visible_cutout_stroke": false,
+          "uses_mask_group": true
+        },
+        "ok": true,
+        "overlay_stroke": {
+          "has_mask": false,
+          "has_visible_cutout_stroke": true
+        },
+        "same_viewbox": true
+      },
       "failure_categories": [],
       "failure_details": [],
       "failures": [],
@@ -1220,10 +1879,31 @@
       "family": "outlined_ring",
       "ok": true,
       "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "overlapping_rectangles_ordered",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "stroke_crossing_rectangle",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "touching_circle_stroke",
+      "ok": true,
+      "passed_count": 1
     }
   ],
   "ok": true,
-  "passed_count": 8,
+  "passed_count": 11,
   "schema_version": 1,
   "selected_case_ids": [
     "filled_square",
@@ -1232,6 +1912,9 @@
     "outlined_ring",
     "antialiased_circle",
     "composition_square_plus_circle_a",
+    "touching_circle_stroke_right",
+    "stroke_crossing_rectangle_horizontal",
+    "overlapping_rectangles_bottom_right",
     "cutout_horizontal_gap_center",
     "group_parallel_strokes_horizontal"
   ],
@@ -1244,7 +1927,10 @@
       "antialiased_circle",
       "composition_square_plus_circle_a",
       "cutout_horizontal_gap_center",
-      "group_parallel_strokes_horizontal"
+      "group_parallel_strokes_horizontal",
+      "touching_circle_stroke_right",
+      "stroke_crossing_rectangle_horizontal",
+      "overlapping_rectangles_bottom_right"
     ],
     "filter": null,
     "refine": false,
