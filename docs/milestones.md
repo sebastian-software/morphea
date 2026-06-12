@@ -468,6 +468,9 @@ Implemented so far:
 - `curve train-mlx --allow-unavailable` writes a deterministic artifact with
   MLX backend status plus centroid fallback weights, so the training pipeline
   remains runnable when MLX is not installed locally
+- classifier feature extraction includes detected/generated
+  `quad_subtype_code` values so trapezoid and parallelogram structure can
+  influence candidate ranking without adding new top-level primitive classes
 
 Remaining:
 

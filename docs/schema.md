@@ -390,6 +390,11 @@ trapezoid and `2.0` for parallelogram. They remain `quad` anchors so the
 primitive vocabulary stays small while training data and detected anchors can
 still target visually important quad families.
 
+Primitive classifier feature extraction includes `quad_subtype_code` as a
+numeric feature. This lets the first classifier learn trapezoid and
+parallelogram-sensitive ranking behavior without expanding the top-level class
+set or forcing downstream exporters to understand new primitive kinds.
+
 ## Primitive Classifier Model v1
 
 Written by `curve train`, `curve retrain`, and `curve train-mlx`.
