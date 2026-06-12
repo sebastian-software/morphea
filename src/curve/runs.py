@@ -376,6 +376,8 @@ def _group_report_details(group: dict[str, object]) -> str:
     merge_plan = group.get("merge_plan", {})
     if isinstance(merge_plan, dict) and merge_plan.get("action") is not None:
         details = f"{details}, action {merge_plan.get('action')}"
+        if merge_plan.get("decision_reason") is not None:
+            details = f"{details}, reason {merge_plan.get('decision_reason')}"
     return details
 
 
