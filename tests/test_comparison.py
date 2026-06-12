@@ -26,6 +26,15 @@ class SnapshotComparisonTests(unittest.TestCase):
                         "id": "terminaro",
                         "metrics": {"editability_score": 0.8},
                         "anchor_kind_counts": {"quad": 4},
+                        "expectations": [
+                            {
+                                "id": "simple-shape-ratio",
+                                "metric": "simple_shape_ratio",
+                                "actual_value": 0.82,
+                                "min_value": 0.8,
+                                "ok": True,
+                            }
+                        ],
                     }
                 ]
             },
@@ -35,6 +44,15 @@ class SnapshotComparisonTests(unittest.TestCase):
                         "id": "terminaro",
                         "metrics": {"editability_score": 0.9},
                         "anchor_kind_counts": {"quad": 6},
+                        "expectations": [
+                            {
+                                "id": "simple-shape-ratio",
+                                "metric": "simple_shape_ratio",
+                                "actual_value": 0.9,
+                                "min_value": 0.8,
+                                "ok": True,
+                            }
+                        ],
                     },
                     {"id": "new-case", "metrics": {"editability_score": 0.5}},
                 ]
@@ -52,6 +70,15 @@ class SnapshotComparisonTests(unittest.TestCase):
                 "before": 4.0,
                 "after": 6.0,
                 "delta": 2.0,
+            },
+            deltas,
+        )
+        self.assertIn(
+            {
+                "path": "expectations.simple-shape-ratio.actual_value",
+                "before": 0.82,
+                "after": 0.9,
+                "delta": 0.08000000000000007,
             },
             deltas,
         )

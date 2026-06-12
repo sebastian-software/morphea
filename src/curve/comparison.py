@@ -290,6 +290,14 @@ def _flatten_numbers(data: Any, prefix: str = "") -> dict[str, float]:
             next_prefix = f"{prefix}.{key}" if prefix else str(key)
             values.update(_flatten_numbers(value, next_prefix))
         return values
+    if isinstance(data, list):
+        values = {}
+        for index, value in enumerate(data):
+            item_id = value.get("id") if isinstance(value, dict) else None
+            key = str(item_id) if isinstance(item_id, str) else str(index)
+            next_prefix = f"{prefix}.{key}" if prefix else key
+            values.update(_flatten_numbers(value, next_prefix))
+        return values
     return {}
 
 
