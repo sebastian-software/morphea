@@ -564,6 +564,9 @@ Implemented so far:
   to spot before retraining is accepted.
 - `curve compare-training --markdown comparison.md` writes a scan-friendly
   retraining comparison table derived from the JSON report.
+- `curve training-gate comparison.json -o gate.json` turns a retraining
+  comparison into an accept/manual-review/reject decision using explicit
+  regression tolerances
 - `curve retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
@@ -728,6 +731,7 @@ Implemented so far:
 - `curve merge-labels`
 - `curve harvest-curated`
 - `curve compare-training`
+- `curve training-gate`
 - `curve retrain`
 - `curve vectorize --config config.json` for repeatable runtime knob files
 - `curve train --config train.json` for repeatable classifier training inputs
@@ -751,6 +755,8 @@ Implemented so far:
   comparisons
 - `curve compare-training --markdown compare.md` for scan-friendly retraining
   comparisons
+- `curve training-gate --config training-gate.json` for repeatable retraining
+  acceptance decisions
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve refine --config refine.json` for repeatable bounded refinement runs
 - `curve segment --config segment.json` for repeatable segment proposal runs

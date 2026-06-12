@@ -504,6 +504,39 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Training Gate v1
+
+Written by `curve training-gate`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `comparison`: source training comparison JSON path
+- `decision`: `accept`, `manual_review`, or `reject`
+- `accepted`: boolean shortcut for `decision == "accept"`
+- `reasons`: machine-readable gate reasons
+- `gates`: active threshold values
+- `summary`: copied comparison summary
+
+`curve training-gate --markdown gate.md` writes a scan-friendly decision
+summary next to the JSON artifact.
+
+## Training Gate Config v1
+
+Read by `curve training-gate --config`.
+
+Supported fields:
+
+- `comparison`
+- `output`
+- `markdown`: optional Markdown report path
+- `min_train_examples_delta`
+- `min_best_accuracy_delta`
+- `max_worst_accuracy_drop`
+- `allow_unchanged`
+
+CLI arguments override values loaded from the config file.
+
 ## Retrain Config v1
 
 Read by `curve retrain --config`.
