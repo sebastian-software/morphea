@@ -114,6 +114,8 @@ Implemented so far:
   8-neighbor index checks instead of nested per-pixel neighbor range loops.
 - boundary-pixel detection and centroid calculation avoid repeated generator
   passes and per-pixel neighbor tuple allocation.
+- raster edge metrics use compact integer luma buffers instead of float lists
+  during preview/refinement comparisons.
 
 Remaining:
 
