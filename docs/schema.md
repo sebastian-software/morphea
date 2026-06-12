@@ -483,6 +483,10 @@ bounds that later stages should not fragment.
 `debug.svg` keeps the editable geometry but wraps each anchor with ids, bounds,
 and confidence labels for inspection.
 
+Markdown and HTML reports include a pipeline-stage diagnostic summary derived
+from manifest diagnostic codes. Current stage buckets are `preprocessing`,
+`palette`, `segmentation`, `runtime`, and `unknown`.
+
 ## Refinement Metadata v1
 
 Written by `curve refine`.
