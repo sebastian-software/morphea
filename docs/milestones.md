@@ -465,6 +465,8 @@ Implemented so far:
   Transformer classifier path
 - train/val/test evaluation sections in model artifact
 - confusion matrix output
+- `curve eval-classifier model.json dataset.json -o report.json` for
+  standalone evaluation of an existing primitive classifier artifact
 - optional `--classifier-model` prior during `curve vectorize`
 - `classifier_prior_error` metric in candidate manifests
 - `curve train` writes `ranking_evaluation` comparing heuristic-only candidate
@@ -678,6 +680,7 @@ Implemented so far:
 - `curve generate`
 - `curve train`
 - `curve train-mlx`
+- `curve eval-classifier`
 - `curve vectorize`
 - `curve profile`
 - `curve eval`

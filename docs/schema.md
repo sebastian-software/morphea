@@ -433,6 +433,27 @@ being expanded.
 backend is intentionally explicit; a future MLX-backed classifier can keep the
 same high-level source/evaluation fields while changing `model_type`.
 
+## Classifier Evaluation Report v1
+
+Written by `curve eval-classifier`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `model`
+- `dataset`
+- `model_type`
+- `feature_names`
+- `classes`
+- `splits`
+- `evaluation`: direct classifier accuracy/confusion by requested split
+- `ranking_evaluation`: heuristic-only versus classifier-prior ranking by
+  requested split
+
+The command can evaluate centroid models and MLX fallback artifacts because it
+loads models through the same deterministic `--classifier-model` path used by
+vectorization.
+
 ## Training Comparison v1
 
 Written by `curve compare-training`.
