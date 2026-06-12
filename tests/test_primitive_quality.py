@@ -103,6 +103,9 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "composition_ring_plus_dot": 3,
                 "composition_same_color_separated": 3,
                 "composition_square_plus_circle": 3,
+                "adjacent_different_color_rects": 3,
+                "adjacent_same_color_rects_merge": 3,
+                "adjacent_small_gap_rects": 3,
             },
         )
 

@@ -256,6 +256,8 @@ Current evidence:
 
 ### PQ5: Touching and Adjacent Primitive Compositions
 
+Status: implemented for adjacent rectangle merge/separate policy fixtures.
+
 Purpose: handle cases where primitive boundaries meet or nearly meet.
 
 Fixture families:
@@ -280,6 +282,19 @@ Exit criteria:
 - The pipeline can explain whether touching shapes were kept separate or
   intentionally merged.
 - Overlap does not create giant fallback regions or false arcs.
+
+Current evidence:
+
+- adjacent different-color rectangles stay as separate anchors.
+- adjacent same-color rectangles with a shared edge are accepted as a merged
+  filled rectangle.
+- same-color rectangles with a small visible gap stay separate.
+
+Remaining:
+
+- add stricter crossing/overlap fixtures for stroke-over-rectangle and
+  circle-touching-stroke cases once their merge policy is explicit enough to
+  avoid ambiguous contracts.
 
 ### PQ6: Cut-Outs, Holes, and Negative Space
 

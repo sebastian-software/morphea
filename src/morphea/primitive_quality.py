@@ -449,6 +449,84 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ),
         )
     )
+    specs.extend(
+        _composition_spec(case_id, "adjacent_different_color_rects", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "adjacent_different_color_rects_horizontal",
+                "horizontal",
+                (
+                    _rect_primitive("blue_rect", (8, 18, 31, 42), color=BLUE),
+                    _rect_primitive("gold_rect", (32, 18, 56, 42), color="#c99700"),
+                ),
+            ),
+            (
+                "adjacent_different_color_rects_vertical",
+                "vertical",
+                (
+                    _rect_primitive("red_rect", (18, 8, 42, 31), color="#dd2222"),
+                    _rect_primitive("blue_rect", (18, 32, 42, 56), color=BLUE),
+                ),
+            ),
+            (
+                "adjacent_different_color_rects_offset",
+                "offset",
+                (
+                    _rect_primitive("blue_rect", (8, 12, 32, 34), color=BLUE),
+                    _rect_primitive("red_rect", (33, 20, 56, 42), color="#dd2222"),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "adjacent_same_color_rects_merge", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "adjacent_same_color_rects_merge_horizontal",
+                "horizontal",
+                (_rect_primitive("merged_rect", (8, 18, 56, 42)),),
+            ),
+            (
+                "adjacent_same_color_rects_merge_vertical",
+                "vertical",
+                (_rect_primitive("merged_rect", (18, 8, 42, 56)),),
+            ),
+            (
+                "adjacent_same_color_rects_merge_wide",
+                "wide",
+                (_rect_primitive("merged_rect", (6, 24, 58, 38)),),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(case_id, "adjacent_small_gap_rects", variant, primitives)
+        for case_id, variant, primitives in (
+            (
+                "adjacent_small_gap_rects_horizontal",
+                "horizontal_gap",
+                (
+                    _rect_primitive("left_rect", (8, 18, 29, 42)),
+                    _rect_primitive("right_rect", (34, 18, 56, 42)),
+                ),
+            ),
+            (
+                "adjacent_small_gap_rects_vertical",
+                "vertical_gap",
+                (
+                    _rect_primitive("top_rect", (18, 8, 42, 29)),
+                    _rect_primitive("bottom_rect", (18, 34, 42, 56)),
+                ),
+            ),
+            (
+                "adjacent_small_gap_rects_offset",
+                "offset_gap",
+                (
+                    _rect_primitive("left_rect", (8, 14, 29, 36)),
+                    _rect_primitive("right_rect", (34, 22, 56, 44)),
+                ),
+            ),
+        )
+    )
     return tuple(specs)
 
 
