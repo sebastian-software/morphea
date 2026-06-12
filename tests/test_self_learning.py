@@ -14,6 +14,7 @@ from curve.self_learning import (
     create_review_file,
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
+    render_apply_review_markdown,
     render_harvest_markdown,
     render_review_markdown,
     render_training_comparison_markdown,
@@ -373,6 +374,70 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["rejected_count"], 1)
             self.assertEqual(result["pending_count"], 1)
 
+    def test_render_apply_review_markdown_summarizes_decisions(self):
+        markdown = render_apply_review_markdown(
+            {
+                "source_review": "review.json",
+                "accepted_count": 1,
+                "rejected_count": 1,
+                "pending_count": 1,
+                "accepted": [
+                    {
+                        "kind": "stroke_polyline",
+                        "review": {
+                            "corrected_kind": "stroke_polyline",
+                            "issues": ["wrong_primitive_type"],
+                        },
+                    }
+                ],
+                "rejected": [
+                    {
+                        "id": "review-00001",
+                        "reason": "bad cutout",
+                        "issues": ["bad_cutout"],
+                    }
+                ],
+                "pending": ["review-00002"],
+            }
+        )
+
+        self.assertIn("# Curve Apply Review", markdown)
+        self.assertIn("- Accepted: 1", markdown)
+        self.assertIn(
+            "| `stroke_polyline` | `stroke_polyline` | wrong_primitive_type |",
+            markdown,
+        )
+        self.assertIn("| `review-00001` | bad cutout | bad_cutout |", markdown)
+        self.assertIn("`review-00002`", markdown)
+
+    def test_apply_review_file_writes_markdown_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review = Path(temp_dir) / "review.json"
+            review.write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "id": "review-00000",
+                                "decision": "accept",
+                                "label": {"kind": "circle"},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = Path(temp_dir) / "accepted.json"
+            markdown = Path(temp_dir) / "accepted.md"
+
+            apply_review_file(review=review, output=output, markdown=markdown)
+
+            self.assertTrue(output.exists())
+            self.assertIn(
+                "# Curve Apply Review",
+                markdown.read_text(encoding="utf-8"),
+            )
+
     def test_apply_review_file_can_correct_kind_and_record_issues(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             review = Path(temp_dir) / "review.json"
@@ -420,6 +485,7 @@ class SelfLearningTests(unittest.TestCase):
             review = Path(temp_dir) / "review.json"
             markdown = Path(temp_dir) / "review.md"
             accepted = Path(temp_dir) / "accepted.json"
+            accepted_markdown = Path(temp_dir) / "accepted.md"
 
             with redirect_stdout(StringIO()):
                 main(
@@ -436,13 +502,26 @@ class SelfLearningTests(unittest.TestCase):
             data["items"][0]["decision"] = "accept"
             review.write_text(json.dumps(data), encoding="utf-8")
             with redirect_stdout(StringIO()):
-                main(["apply-review", str(review), "-o", str(accepted)])
+                main(
+                    [
+                        "apply-review",
+                        str(review),
+                        "-o",
+                        str(accepted),
+                        "--markdown",
+                        str(accepted_markdown),
+                    ]
+                )
 
             result = json.loads(accepted.read_text())
             self.assertEqual(result["accepted_count"], 1)
             self.assertIn(
                 "# Curve Review Queue",
                 markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "# Curve Apply Review",
+                accepted_markdown.read_text(encoding="utf-8"),
             )
 
     def test_review_cli_accepts_config_file(self):
@@ -480,6 +559,7 @@ class SelfLearningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             review = Path(temp_dir) / "review.json"
             accepted = Path(temp_dir) / "accepted.json"
+            markdown = Path(temp_dir) / "accepted.md"
             config = Path(temp_dir) / "apply-review-config.json"
             review.write_text(
                 json.dumps(
@@ -500,6 +580,7 @@ class SelfLearningTests(unittest.TestCase):
                     {
                         "review": str(review),
                         "output": str(accepted),
+                        "markdown": str(markdown),
                     }
                 ),
                 encoding="utf-8",
@@ -510,6 +591,10 @@ class SelfLearningTests(unittest.TestCase):
 
             result = json.loads(accepted.read_text(encoding="utf-8"))
             self.assertEqual(result["accepted_count"], 1)
+            self.assertIn(
+                "# Curve Apply Review",
+                markdown.read_text(encoding="utf-8"),
+            )
 
     def test_merge_reviewed_pseudo_labels_writes_trainable_dataset(self):
         with tempfile.TemporaryDirectory() as temp_dir:

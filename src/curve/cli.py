@@ -139,7 +139,7 @@ HARVEST_DEFAULT_CONFIG = {
     "max_anchor_quality_error": 1.0,
 }
 REVIEW_CONFIG_KEYS = {"pseudo_labels", "output", "markdown"}
-APPLY_REVIEW_CONFIG_KEYS = {"review", "output"}
+APPLY_REVIEW_CONFIG_KEYS = {"review", "output", "markdown"}
 MERGE_LABELS_CONFIG_KEYS = {"reviewed_labels", "output_dir"}
 
 
@@ -415,6 +415,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     apply_review.add_argument("review", type=Path, nargs="?")
     apply_review.add_argument("-o", "--output", type=Path)
+    apply_review.add_argument("--markdown", type=Path)
     apply_review.add_argument("--config", type=Path)
 
     merge_labels = subcommands.add_parser(
@@ -739,6 +740,7 @@ def main(argv: list[str] | None = None) -> None:
         reviewed = apply_review_file(
             review=review_config["review"],
             output=review_config["output"],
+            markdown=review_config.get("markdown"),
         )
         print(f"accepted {reviewed['accepted_count']} reviewed pseudo-labels")
         return
@@ -1111,6 +1113,8 @@ def _resolved_apply_review_config(args: argparse.Namespace) -> dict[str, Path]:
         config["review"] = args.review
     if args.output is not None:
         config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
     _require_config_paths(config, ("review", "output"), "apply-review")
     return config
 

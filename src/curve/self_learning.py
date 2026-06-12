@@ -524,6 +524,7 @@ def apply_review_file(
     *,
     review: str | Path,
     output: str | Path,
+    markdown: str | Path | None = None,
 ) -> dict[str, object]:
     review_data = json.loads(Path(review).read_text(encoding="utf-8"))
     accepted = []
@@ -558,7 +559,93 @@ def apply_review_file(
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_apply_review_markdown(result),
+            encoding="utf-8",
+        )
     return result
+
+
+def render_apply_review_markdown(result: dict[str, object]) -> str:
+    accepted = result.get("accepted", [])
+    if not isinstance(accepted, list):
+        accepted = []
+    rejected = result.get("rejected", [])
+    if not isinstance(rejected, list):
+        rejected = []
+    pending = result.get("pending", [])
+    if not isinstance(pending, list):
+        pending = []
+
+    lines = [
+        "# Curve Apply Review",
+        "",
+        f"- Source review: `{result.get('source_review', 'n/a')}`",
+        f"- Accepted: {_fmt_metric(result.get('accepted_count'))}",
+        f"- Rejected: {_fmt_metric(result.get('rejected_count'))}",
+        f"- Pending: {_fmt_metric(result.get('pending_count'))}",
+        "",
+        "## Accepted",
+        "",
+        "| Kind | Corrected kind | Issues |",
+        "| --- | --- | --- |",
+    ]
+    if accepted:
+        for label in accepted:
+            if not isinstance(label, dict):
+                continue
+            review = label.get("review", {})
+            if not isinstance(review, dict):
+                review = {}
+            issues = review.get("issues", [])
+            if not isinstance(issues, list):
+                issues = []
+            lines.append(
+                "| "
+                f"`{label.get('kind', 'n/a')}` | "
+                f"`{review.get('corrected_kind') or 'n/a'}` | "
+                f"{', '.join(str(issue) for issue in issues) or 'n/a'} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a |")
+
+    lines.extend(
+        [
+            "",
+            "## Rejected",
+            "",
+            "| ID | Reason | Issues |",
+            "| --- | --- | --- |",
+        ]
+    )
+    if rejected:
+        for item in rejected:
+            if not isinstance(item, dict):
+                continue
+            issues = item.get("issues", [])
+            if not isinstance(issues, list):
+                issues = []
+            lines.append(
+                "| "
+                f"`{item.get('id', 'n/a')}` | "
+                f"{item.get('reason', '') or 'n/a'} | "
+                f"{', '.join(str(issue) for issue in issues) or 'n/a'} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a |")
+
+    lines.extend(
+        [
+            "",
+            "## Pending",
+            "",
+            ", ".join(f"`{item}`" for item in pending) if pending else "n/a",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def _reviewed_label(item: dict[str, object]) -> dict[str, object]:
