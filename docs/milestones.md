@@ -684,7 +684,8 @@ Implemented so far:
   behind the same `curve refine --backend ...` interface, with an explicit
   not-installed/not-configured failure path until a renderer is wired
 - `curve refine --backend differentiable` now runs a built-in soft-raster
-  gradient backend for structure-preserving circle-radius refinement, including
+  gradient backend for structure-preserving circle-radius refinement and
+  quad-like (`rect`, `rounded_rect`, `quad`) transform refinement, including
   renderer metadata and objective deltas.
 - `curve refine --backend diffvg` remains the optional external adapter path
   with explicit not-installed/adapter-pending status until DiffVG is wired.
@@ -699,9 +700,8 @@ Implemented so far:
 
 Remaining:
 
-- extend the soft-raster differentiable backend beyond circle-radius
-  refinement and optionally wire DiffVG when it is practical in the target
-  local environment.
+- extend the soft-raster differentiable backend to stroke-like primitives and
+  optionally wire DiffVG when it is practical in the target local environment.
 
 ## M10: Curated Real-Image Suite
 
