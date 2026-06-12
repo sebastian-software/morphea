@@ -4,6 +4,7 @@ import json
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
@@ -11,6 +12,7 @@ from curve.cli import main
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
+    mlx_sam_runtime_status,
     proposals_to_manifest,
     segmenter_backend_status,
 )
@@ -77,28 +79,73 @@ class SegmenterTests(unittest.TestCase):
         self.assertIsNone(manifest[0]["rejection_reason"])
 
     def test_mlx_sam_segmenter_reports_not_configured(self):
-        with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
-            MlxSamSegmenter().propose("missing.png")
+        with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
+                MlxSamSegmenter().propose("missing.png")
+
+    def test_mlx_sam_runtime_status_reports_package_and_model_state(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam.mlx"
+            model_path.write_text("placeholder", encoding="utf-8")
+
+            with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
+                missing_model = mlx_sam_runtime_status(
+                    MlxSamSegmenter(model_path=str(model_path.with_name("missing.mlx")))
+                )
+                configured = mlx_sam_runtime_status(
+                    MlxSamSegmenter(model_path=str(model_path))
+                )
+
+            self.assertEqual(missing_model["status"], "model_missing")
+            self.assertTrue(missing_model["package_available"])
+            self.assertFalse(missing_model["model_exists"])
+            self.assertEqual(configured["status"], "adapter_pending")
+            self.assertTrue(configured["model_exists"])
+            self.assertFalse(configured["backend_available"])
+
+    def test_mlx_sam_runtime_status_requires_model_configuration(self):
+        with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
+            status = mlx_sam_runtime_status(MlxSamSegmenter())
+
+        self.assertEqual(status["status"], "not_configured")
+        self.assertTrue(status["package_available"])
+        self.assertFalse(status["model_configured"])
+
+    def test_mlx_sam_segmenter_keeps_adapter_pending_non_operational(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam.mlx"
+            model_path.write_text("placeholder", encoding="utf-8")
+
+            with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
+                with self.assertRaisesRegex(RuntimeError, "status=adapter_pending"):
+                    MlxSamSegmenter(model_path=str(model_path)).propose("input.png")
 
     def test_mlx_sam_segmenter_reports_runtime_config_in_error(self):
-        with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):
-            MlxSamSegmenter(
-                model_path="models/sam.mlx",
-                max_masks=12,
-                timeout_seconds=3.5,
-            ).propose("missing.png")
+        with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):
+                MlxSamSegmenter(
+                    model_path="models/sam.mlx",
+                    max_masks=12,
+                    timeout_seconds=3.5,
+                ).propose("missing.png")
 
     def test_segmenter_backend_status_reports_availability(self):
         flat = segmenter_backend_status(FlatColorSegmenter())
-        mlx = segmenter_backend_status(
-            MlxSamSegmenter(model_path="models/sam.mlx", max_masks=12)
-        )
+        with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+            mlx = segmenter_backend_status(
+                MlxSamSegmenter(model_path="models/sam.mlx", max_masks=12)
+            )
 
         self.assertTrue(flat["backend_available"])
         self.assertEqual(flat["status"], "available")
         self.assertFalse(mlx["backend_available"])
-        self.assertEqual(mlx["status"], "not_configured")
+        self.assertEqual(mlx["status"], "not_installed")
+        self.assertFalse(mlx["package_available"])
         self.assertEqual(mlx["model_path"], "models/sam.mlx")
+
+    def test_mlx_sam_segmenter_reports_not_configured_legacy_regex(self):
+        with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
+            MlxSamSegmenter().propose("missing.png")
 
     def test_segment_cli_writes_flat_color_manifest_from_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:

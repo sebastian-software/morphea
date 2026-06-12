@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -87,7 +88,9 @@ class MlxSamSegmenter:
     source: str = "mlx_sam"
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
+        status = mlx_sam_runtime_status(self)
         details = []
+        details.append(f"status={status['status']}")
         if self.model_path is not None:
             details.append(f"model_path={self.model_path}")
         if self.max_masks is not None:
@@ -97,6 +100,45 @@ class MlxSamSegmenter:
         suffix = f" ({', '.join(details)})" if details else ""
         msg = f"MLX SAM segmenter is not installed/configured yet{suffix}"
         raise RuntimeError(msg)
+
+
+def is_mlx_runtime_available() -> bool:
+    return importlib.util.find_spec("mlx") is not None
+
+
+def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
+    package_available = is_mlx_runtime_available()
+    model_configured = segmenter.model_path is not None
+    model_exists = (
+        Path(segmenter.model_path).expanduser().exists()
+        if segmenter.model_path is not None
+        else False
+    )
+    if not package_available:
+        status = "not_installed"
+        reason = "MLX runtime package is not installed"
+    elif not model_configured:
+        status = "not_configured"
+        reason = "MLX SAM model path is not configured"
+    elif not model_exists:
+        status = "model_missing"
+        reason = "MLX SAM model path does not exist"
+    else:
+        status = "adapter_pending"
+        reason = "MLX SAM proposal adapter is not wired yet"
+    return {
+        "source": segmenter.source,
+        "backend_available": False,
+        "status": status,
+        "reason": reason,
+        "package_available": package_available,
+        "model_configured": model_configured,
+        "model_exists": model_exists,
+        "model_path": segmenter.model_path,
+        "score_threshold": segmenter.score_threshold,
+        "max_masks": segmenter.max_masks,
+        "timeout_seconds": segmenter.timeout_seconds,
+    }
 
 
 def segmenter_backend_status(
@@ -110,16 +152,7 @@ def segmenter_backend_status(
             "reason": None,
         }
     if isinstance(segmenter, MlxSamSegmenter):
-        return {
-            "source": segmenter.source,
-            "backend_available": False,
-            "status": "not_configured",
-            "reason": "MLX SAM segmenter runtime is not installed/configured",
-            "model_path": segmenter.model_path,
-            "score_threshold": segmenter.score_threshold,
-            "max_masks": segmenter.max_masks,
-            "timeout_seconds": segmenter.timeout_seconds,
-        }
+        return mlx_sam_runtime_status(segmenter)
     return {
         "source": getattr(segmenter, "source", "unknown"),
         "backend_available": False,
