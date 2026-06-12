@@ -503,12 +503,16 @@ Implemented so far:
 - classifier feature extraction includes detected/generated
   `quad_subtype_code` values so trapezoid and parallelogram structure can
   influence candidate ranking without adding new top-level primitive classes
+- classifier training can extract fixed-size RGBA anchor-crop token sequences
+  from synthetic dataset images and manifests.
+- `curve train-mlx --crop-size N` records the raster token size, token shape,
+  channel order, and crop-token summary in the MLX training artifact.
 
 Remaining:
 
-- replace the current MLX feature-head with the full small Transformer over
-  mask/RGBA crop tokens plus geometric features once the local runtime and
-  data loader are ready
+- replace the current MLX feature-head optimizer with the full small
+  Transformer attention block over the now-available RGBA crop tokens plus
+  geometric features.
 
 ## M8: Self-Learning Loop
 

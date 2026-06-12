@@ -503,6 +503,7 @@ Supported fields:
 - `num_heads`
 - `num_layers`
 - `learning_rate`
+- `crop_size`: square RGBA anchor-crop size used by the MLX raster token loader
 - `allow_unavailable`: when true, writes a fallback artifact if MLX is not
   installed locally
 
@@ -718,9 +719,12 @@ and `fallback_centroids`. Runtime status distinguishes `not_installed` from an
 available MLX package. When MLX is available, status is `trained` and
 `mlx_training` stores an optimized normalized feature-head artifact with
 `weight_format`, `architecture`, `transformer_status`, `normalization`,
-`weights`, `bias`, and `loss_history`. The fallback centroids keep the artifact
-usable as a deterministic `--classifier-model` prior when MLX is not installed
-or while the full raster-crop Transformer encoder is still being expanded.
+`weights`, `bias`, `loss_history`, `crop_token_spec`, and
+`crop_token_summary`. `crop_token_spec` records the square RGBA token shape and
+normalization range derived from anchor crops in the source dataset. The
+fallback centroids keep the artifact usable as a deterministic
+`--classifier-model` prior when MLX is not installed or while the full
+raster-crop Transformer encoder is still being expanded.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. Its centroid
