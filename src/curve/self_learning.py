@@ -516,6 +516,160 @@ def _fmt_gate_value(value: object) -> str:
     return _fmt_metric(value)
 
 
+def run_self_learning_cycle(
+    *,
+    base_dataset: str | Path,
+    reviewed_labels: str | Path,
+    output_dir: str | Path,
+    validation_dataset: str | Path | None = None,
+    min_train_examples_delta: int = 1,
+    min_best_accuracy_delta: float = 0.0,
+    max_worst_accuracy_drop: float = 0.0,
+    allow_unchanged: bool = False,
+    markdown: str | Path | None = None,
+) -> dict[str, object]:
+    """Run the reviewed-label retraining decision loop as one repeatable cycle."""
+
+    output = Path(output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    pseudo_dir = output / "pseudo-dataset"
+    comparison_path = output / "comparison.json"
+    comparison_markdown = output / "comparison.md"
+    gate_path = output / "gate.json"
+    gate_markdown = output / "gate.md"
+    model_path = output / "model.json"
+
+    pseudo_dataset = merge_reviewed_pseudo_label_dataset(
+        reviewed_labels=reviewed_labels,
+        output_dir=pseudo_dir,
+    )
+    comparison = compare_retraining(
+        base_dataset=base_dataset,
+        pseudo_dataset=pseudo_dir / "dataset.json",
+        validation_dataset=validation_dataset,
+        output=comparison_path,
+        markdown=comparison_markdown,
+    )
+    gate = gate_training_comparison(
+        comparison=comparison_path,
+        output=gate_path,
+        markdown=gate_markdown,
+        min_train_examples_delta=min_train_examples_delta,
+        min_best_accuracy_delta=min_best_accuracy_delta,
+        max_worst_accuracy_drop=max_worst_accuracy_drop,
+        allow_unchanged=allow_unchanged,
+    )
+    model: dict[str, object] | None = None
+    if gate["accepted"]:
+        model = retrain_centroid_classifier(
+            base_dataset=base_dataset,
+            pseudo_dataset=pseudo_dir / "dataset.json",
+            validation_dataset=validation_dataset,
+            output=model_path,
+        )
+
+    result = {
+        "schema_version": 1,
+        "status": "retrained" if model is not None else "skipped_retrain",
+        "base_dataset": str(base_dataset),
+        "reviewed_labels": str(reviewed_labels),
+        "validation_dataset": str(validation_dataset or base_dataset),
+        "output_dir": str(output),
+        "artifacts": {
+            "pseudo_dataset": str(pseudo_dir / "dataset.json"),
+            "comparison": str(comparison_path),
+            "comparison_markdown": str(comparison_markdown),
+            "gate": str(gate_path),
+            "gate_markdown": str(gate_markdown),
+            "model": str(model_path) if model is not None else None,
+        },
+        "pseudo_dataset": {
+            "count": pseudo_dataset["count"],
+            "splits": pseudo_dataset["splits"],
+        },
+        "comparison_summary": comparison["summary"],
+        "gate": {
+            "decision": gate["decision"],
+            "accepted": gate["accepted"],
+            "reasons": gate["reasons"],
+        },
+        "model": (
+            {
+                "model_type": model["model_type"],
+                "train_examples": model["train_examples"],
+                "augmentation": model["augmentation"],
+            }
+            if model is not None
+            else None
+        ),
+    }
+    summary_path = output / "self-learning-cycle.json"
+    summary_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+    else:
+        markdown_path = output / "self-learning-cycle.md"
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(render_self_learning_cycle_markdown(result), encoding="utf-8")
+    result["artifacts"]["summary"] = str(summary_path)
+    result["artifacts"]["summary_markdown"] = str(markdown_path)
+    summary_path.write_text(
+        json.dumps(result, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return result
+
+
+def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
+    artifacts = result.get("artifacts", {})
+    if not isinstance(artifacts, dict):
+        artifacts = {}
+    gate = result.get("gate", {})
+    if not isinstance(gate, dict):
+        gate = {}
+    comparison = result.get("comparison_summary", {})
+    if not isinstance(comparison, dict):
+        comparison = {}
+    pseudo_dataset = result.get("pseudo_dataset", {})
+    if not isinstance(pseudo_dataset, dict):
+        pseudo_dataset = {}
+    lines = [
+        "# Curve Self-Learning Cycle",
+        "",
+        f"- Status: `{result.get('status', 'n/a')}`",
+        f"- Gate decision: `{gate.get('decision', 'n/a')}`",
+        f"- Gate accepted: `{gate.get('accepted', False)}`",
+        f"- Pseudo-label examples: {_fmt_metric(pseudo_dataset.get('count'))}",
+        f"- Comparison status: `{comparison.get('status', 'n/a')}`",
+        f"- Best accuracy delta: {_fmt_metric(comparison.get('best_accuracy_delta'))}",
+        f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
+        "",
+        "## Artifacts",
+        "",
+        "| Artifact | Path |",
+        "| --- | --- |",
+    ]
+    for key in sorted(artifacts):
+        value = artifacts.get(key)
+        if value is not None:
+            lines.append(f"| `{key}` | `{value}` |")
+    reasons = gate.get("reasons", [])
+    if not isinstance(reasons, list):
+        reasons = []
+    lines.extend(
+        [
+            "",
+            "## Gate Reasons",
+            "",
+            ", ".join(f"`{reason}`" for reason in reasons) if reasons else "n/a",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def retrain_centroid_classifier(
     *,
     base_dataset: str | Path,

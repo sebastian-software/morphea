@@ -44,6 +44,7 @@ from curve.self_learning import (
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
     retrain_centroid_classifier,
+    run_self_learning_cycle,
 )
 from curve.refinement import RefinementConfig, refine_manifest
 from curve.sweeps import run_sweep
@@ -115,6 +116,17 @@ COMPARE_TRAINING_CONFIG_KEYS = {
 TRAINING_GATE_CONFIG_KEYS = {
     "comparison",
     "output",
+    "markdown",
+    "min_train_examples_delta",
+    "min_best_accuracy_delta",
+    "max_worst_accuracy_drop",
+    "allow_unchanged",
+}
+SELF_LEARN_CONFIG_KEYS = {
+    "base_dataset",
+    "reviewed_labels",
+    "validation_dataset",
+    "output_dir",
     "markdown",
     "min_train_examples_delta",
     "min_best_accuracy_delta",
@@ -486,6 +498,21 @@ def main(argv: list[str] | None = None) -> None:
     training_gate.add_argument("--max-worst-accuracy-drop", type=float)
     training_gate.add_argument("--allow-unchanged", action="store_true")
     training_gate.add_argument("--config", type=Path)
+
+    self_learn = subcommands.add_parser(
+        "self-learn",
+        help="Run the reviewed-label self-learning retraining decision cycle.",
+    )
+    self_learn.add_argument("base_dataset", type=Path, nargs="?")
+    self_learn.add_argument("--reviewed-labels", type=Path)
+    self_learn.add_argument("--validation-dataset", type=Path)
+    self_learn.add_argument("-o", "--output-dir", type=Path)
+    self_learn.add_argument("--markdown", type=Path)
+    self_learn.add_argument("--min-train-examples-delta", type=int)
+    self_learn.add_argument("--min-best-accuracy-delta", type=float)
+    self_learn.add_argument("--max-worst-accuracy-drop", type=float)
+    self_learn.add_argument("--allow-unchanged", action="store_true")
+    self_learn.add_argument("--config", type=Path)
 
     retrain = subcommands.add_parser(
         "retrain",
@@ -863,6 +890,25 @@ def main(argv: list[str] | None = None) -> None:
         print(f"training gate decision: {result['decision']}")
         return
 
+    if args.command == "self-learn":
+        cycle_config = _resolved_self_learn_config(args)
+        result = run_self_learning_cycle(
+            base_dataset=cycle_config["base_dataset"],
+            reviewed_labels=cycle_config["reviewed_labels"],
+            validation_dataset=cycle_config.get("validation_dataset"),
+            output_dir=cycle_config["output_dir"],
+            markdown=cycle_config.get("markdown"),
+            min_train_examples_delta=int(cycle_config["min_train_examples_delta"]),
+            min_best_accuracy_delta=float(cycle_config["min_best_accuracy_delta"]),
+            max_worst_accuracy_drop=float(cycle_config["max_worst_accuracy_drop"]),
+            allow_unchanged=bool(cycle_config["allow_unchanged"]),
+        )
+        print(
+            f"self-learning cycle {result['status']} "
+            f"(gate={result['gate']['decision']})"
+        )
+        return
+
     if args.command == "retrain":
         retrain_config = _resolved_retrain_config(args)
         model = retrain_centroid_classifier(
@@ -1130,6 +1176,55 @@ def _resolved_training_gate_config(args: argparse.Namespace) -> dict[str, object
         config["allow_unchanged"] = True
     _require_config_paths(config, ("comparison", "output"), "training-gate")
     for key in ("comparison", "output", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
+    config: dict[str, object] = {
+        "min_train_examples_delta": 1,
+        "min_best_accuracy_delta": 0.0,
+        "max_worst_accuracy_drop": 0.0,
+        "allow_unchanged": False,
+    }
+    config.update(
+        _load_self_learn_config(args.config)
+        if args.config is not None
+        else {}
+    )
+    if args.base_dataset is not None:
+        config["base_dataset"] = args.base_dataset
+    if args.reviewed_labels is not None:
+        config["reviewed_labels"] = args.reviewed_labels
+    if args.validation_dataset is not None:
+        config["validation_dataset"] = args.validation_dataset
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    for key in (
+        "min_train_examples_delta",
+        "min_best_accuracy_delta",
+        "max_worst_accuracy_drop",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    if args.allow_unchanged:
+        config["allow_unchanged"] = True
+    _require_config_paths(
+        config,
+        ("base_dataset", "reviewed_labels", "output_dir"),
+        "self-learn",
+    )
+    for key in (
+        "base_dataset",
+        "reviewed_labels",
+        "validation_dataset",
+        "output_dir",
+        "markdown",
+    ):
         if config.get(key) is not None:
             config[key] = Path(str(config[key]))
     return config
@@ -1422,6 +1517,27 @@ def _load_training_gate_config(path: Path) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("comparison", "output", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_self_learn_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("self-learn config must be a JSON object")
+    unknown = sorted(set(loaded) - SELF_LEARN_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported self-learn config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in (
+        "base_dataset",
+        "reviewed_labels",
+        "validation_dataset",
+        "output_dir",
+        "markdown",
+    ):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

@@ -21,8 +21,10 @@ from curve.self_learning import (
     render_apply_review_markdown,
     render_harvest_markdown,
     render_review_markdown,
+    render_self_learning_cycle_markdown,
     render_training_gate_markdown,
     render_training_comparison_markdown,
+    run_self_learning_cycle,
     retrain_centroid_classifier,
 )
 
@@ -1113,6 +1115,120 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["decision"], "accept")
             self.assertTrue(result["gates"]["allow_unchanged"])
+
+    def test_self_learning_cycle_writes_decision_artifacts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=96,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            result = run_self_learning_cycle(
+                base_dataset=base_dir / "dataset.json",
+                reviewed_labels=reviewed,
+                output_dir=output_dir,
+                max_worst_accuracy_drop=1.0,
+                allow_unchanged=True,
+            )
+
+            self.assertIn(result["status"], {"retrained", "skipped_retrain"})
+            self.assertTrue((output_dir / "pseudo-dataset" / "dataset.json").exists())
+            self.assertTrue((output_dir / "comparison.json").exists())
+            self.assertTrue((output_dir / "comparison.md").exists())
+            self.assertTrue((output_dir / "gate.json").exists())
+            self.assertTrue((output_dir / "gate.md").exists())
+            self.assertTrue((output_dir / "self-learning-cycle.json").exists())
+            self.assertTrue((output_dir / "self-learning-cycle.md").exists())
+            if result["gate"]["accepted"]:
+                self.assertEqual(result["status"], "retrained")
+                self.assertTrue((output_dir / "model.json").exists())
+            else:
+                self.assertEqual(result["status"], "skipped_retrain")
+                self.assertFalse((output_dir / "model.json").exists())
+
+    def test_render_self_learning_cycle_markdown_summarizes_artifacts(self):
+        markdown = render_self_learning_cycle_markdown(
+            {
+                "status": "skipped_retrain",
+                "pseudo_dataset": {"count": 2},
+                "comparison_summary": {
+                    "status": "mixed",
+                    "best_accuracy_delta": 0.1,
+                    "worst_accuracy_delta": -0.1,
+                },
+                "gate": {
+                    "decision": "manual_review",
+                    "accepted": False,
+                    "reasons": ["comparison_status_mixed"],
+                },
+                "artifacts": {
+                    "comparison": "comparison.json",
+                    "gate": "gate.json",
+                },
+            }
+        )
+
+        self.assertIn("# Curve Self-Learning Cycle", markdown)
+        self.assertIn("- Status: `skipped_retrain`", markdown)
+        self.assertIn("| `gate` | `gate.json` |", markdown)
+        self.assertIn("`comparison_status_mixed`", markdown)
+
+    def test_self_learn_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            config = root / "self-learn.json"
+            markdown = root / "cycle.md"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=97,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            config.write_text(
+                json.dumps(
+                    {
+                        "base_dataset": str(base_dir / "dataset.json"),
+                        "reviewed_labels": str(reviewed),
+                        "output_dir": str(output_dir),
+                        "markdown": str(markdown),
+                        "max_worst_accuracy_drop": 1.0,
+                        "allow_unchanged": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["self-learn", "--config", str(config)])
+
+            result = json.loads(
+                (output_dir / "self-learning-cycle.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertIn(result["status"], {"retrained", "skipped_retrain"})
+            self.assertTrue(markdown.exists())
+            self.assertEqual(
+                result["artifacts"]["summary_markdown"],
+                str(markdown),
+            )
 
     def test_retrain_centroid_classifier_writes_augmented_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:

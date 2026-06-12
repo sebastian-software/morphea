@@ -93,8 +93,10 @@ from curve.self_learning import (
     render_apply_review_markdown,
     render_harvest_markdown,
     render_review_markdown,
+    render_self_learning_cycle_markdown,
     render_training_gate_markdown,
     render_training_comparison_markdown,
+    run_self_learning_cycle,
     retrain_centroid_classifier,
 )
 from curve.refinement import (
@@ -201,6 +203,7 @@ __all__ = [
     "render_harvest_markdown",
     "render_manifest_image",
     "render_review_markdown",
+    "render_self_learning_cycle_markdown",
     "render_snapshot_comparison",
     "render_snapshot_comparison_markdown",
     "render_sweep_markdown",
@@ -208,6 +211,7 @@ __all__ = [
     "render_training_comparison_markdown",
     "refine_manifest",
     "retrain_centroid_classifier",
+    "run_self_learning_cycle",
     "run_sweep",
     "write_manifest_preview",
     "write_html_report",
