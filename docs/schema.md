@@ -935,7 +935,8 @@ uses image-backed samples only.
 ## Classifier Evaluation Report v1
 
 Written by `curve eval-classifier`. `--markdown report.md` writes a
-scan-friendly table view derived from the JSON report.
+scan-friendly table view derived from the JSON report, including whether direct
+and ranking evaluation used raster-token inputs.
 
 Top-level fields:
 

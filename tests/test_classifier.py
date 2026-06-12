@@ -1058,6 +1058,8 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertFalse(report["uses_raster_tokens"])
             markdown = markdown_path.read_text(encoding="utf-8")
             self.assertIn("# Curve Classifier Evaluation", markdown)
+            self.assertIn("- Direct raster tokens: `False`", markdown)
+            self.assertIn("- Ranking raster tokens: `False`", markdown)
             self.assertIn("## Feature Importance", markdown)
 
     def test_eval_classifier_model_uses_raster_tokens_for_mlx_mixer(self):
@@ -1074,6 +1076,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             dataset = Path(temp_dir) / "dataset.json"
             model_path = Path(temp_dir) / "mlx-model.json"
             report_path = Path(temp_dir) / "classifier-eval.json"
+            markdown_path = Path(temp_dir) / "classifier-eval.md"
             mlx_module = types.ModuleType("mlx")
             mlx_core = types.ModuleType("mlx.core")
             mlx_core.__version__ = "test-mlx"
@@ -1092,6 +1095,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 model_path,
                 dataset,
                 output=report_path,
+                markdown=markdown_path,
                 splits=("val",),
             )
 
@@ -1106,6 +1110,9 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 ]
             )
             self.assertTrue(report_path.exists())
+            markdown = markdown_path.read_text(encoding="utf-8")
+            self.assertIn("- Direct raster tokens: `True`", markdown)
+            self.assertIn("- Ranking raster tokens: `True`", markdown)
 
     def test_eval_classifier_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

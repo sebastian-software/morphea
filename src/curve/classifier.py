@@ -601,6 +601,8 @@ def render_classifier_evaluation_markdown(report: dict[str, object]) -> str:
         f"- Model: `{report.get('model')}`",
         f"- Dataset: `{report.get('dataset')}`",
         f"- Model type: `{report.get('model_type')}`",
+        f"- Direct raster tokens: `{bool(report.get('uses_raster_tokens'))}`",
+        f"- Ranking raster tokens: `{bool(report.get('ranking_uses_raster_tokens'))}`",
         "",
         "| Split | Examples | Accuracy | Heuristic | Classifier | Improvement | Changed |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
