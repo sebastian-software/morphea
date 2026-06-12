@@ -441,6 +441,8 @@ Implemented so far:
   `anchor_metrics`, and `anchor_parameter_count` summaries from the geometry
   scorer, while deferred oversized proposals remain rejected without pretending
   to be accepted anchors.
+- segment proposal manifests include aggregate proposal status, downstream
+  status, and anchor-kind counts for quick scan/review.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

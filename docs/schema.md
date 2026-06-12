@@ -272,6 +272,8 @@ Top-level fields:
 - `config`
 - `backend`: segmenter availability/status metadata
 - `proposal_count`
+- `summary`: aggregate `status_counts`, `downstream_status_counts`, and
+  `anchor_kind_counts`
 - `proposals`
 
 Proposal fields:
