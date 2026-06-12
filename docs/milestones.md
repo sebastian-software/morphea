@@ -461,6 +461,12 @@ Implemented so far:
 - `curve segment --markdown proposals.md` renders a scan-friendly proposal
   report with backend status, aggregate counts, anchor kinds, and reservation
   reasons.
+- optional segment geometry gating can turn pending proposals into
+  `accepted` or `rejected` downstream decisions using primitive anchor quality
+  error and reservation requirements.
+- segment proposal manifests record `anchor_quality_error` and
+  `downstream_decision_reason` so later review/training stages can explain why
+  a proposal passed or failed the geometry gate.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

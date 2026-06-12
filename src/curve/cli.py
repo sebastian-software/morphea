@@ -30,6 +30,7 @@ from curve.runs import (
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
+    gate_segment_proposals,
     proposals_to_manifest,
     render_segment_proposal_markdown,
     segment_proposal_summary,
@@ -114,6 +115,9 @@ SEGMENT_CONFIG_DEFAULTS = {
     "mlx_score_threshold": 0.0,
     "mlx_max_masks": None,
     "mlx_timeout_seconds": None,
+    "geometry_gate": False,
+    "max_anchor_quality_error": 1.0,
+    "require_reserved_anchor": False,
 }
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
@@ -374,6 +378,29 @@ def main(argv: list[str] | None = None) -> None:
     segment.add_argument("--mlx-score-threshold", type=float)
     segment.add_argument("--mlx-max-masks", type=int)
     segment.add_argument("--mlx-timeout-seconds", type=float)
+    segment.add_argument(
+        "--geometry-gate",
+        dest="geometry_gate",
+        action="store_true",
+        default=None,
+    )
+    segment.add_argument(
+        "--no-geometry-gate",
+        dest="geometry_gate",
+        action="store_false",
+    )
+    segment.add_argument("--max-anchor-quality-error", type=float)
+    segment.add_argument(
+        "--require-reserved-anchor",
+        dest="require_reserved_anchor",
+        action="store_true",
+        default=None,
+    )
+    segment.add_argument(
+        "--allow-unreserved-anchor",
+        dest="require_reserved_anchor",
+        action="store_false",
+    )
     segment.add_argument(
         "--split-components",
         dest="split_components",
@@ -771,6 +798,18 @@ def main(argv: list[str] | None = None) -> None:
         segment_config = _resolved_segment_config(args)
         segmenter = _segmenter_from_config(segment_config)
         proposals = segmenter.propose(args.input)
+        if bool(segment_config["geometry_gate"]):
+            proposals = gate_segment_proposals(
+                proposals,
+                max_anchor_quality_error=(
+                    float(segment_config["max_anchor_quality_error"])
+                    if segment_config.get("max_anchor_quality_error") is not None
+                    else None
+                ),
+                require_reserved_anchor=bool(
+                    segment_config["require_reserved_anchor"]
+                ),
+            )
         manifest = {
             "schema_version": 1,
             "input": str(args.input),

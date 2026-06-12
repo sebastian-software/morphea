@@ -291,7 +291,8 @@ Top-level fields:
 - `backend`: segmenter availability/status metadata
 - `proposal_count`
 - `summary`: aggregate `status_counts`, `downstream_status_counts`,
-  `anchor_kind_counts`, and `reserved_anchor_count`
+  `anchor_kind_counts`, `reserved_anchor_count`, and
+  `downstream_decision_reason_counts`
 - `proposals`
 
 Proposal fields:
@@ -315,6 +316,12 @@ Proposal fields:
 - `reservation_reason`: nullable reservation reason, currently
   `simple_shape_anchor`
 - `reservation_bounds`: nullable reserved bounds for the proposal
+- `anchor_quality_error`: nullable geometry quality error used by optional
+  segment geometry gating
+- `downstream_decision_reason`: nullable machine-readable reason for the
+  downstream geometry gate decision, for example `geometry_gate_passed`,
+  `missing_anchor_summary`, `anchor_quality_error_too_high`, or
+  `anchor_not_reserved`
 
 `backend` records `source`, `backend_available`, `status`, and an optional
 `reason`. MLX SAM status distinguishes `not_installed`, `not_configured`,
@@ -359,6 +366,12 @@ Supported fields:
 - `mlx_score_threshold`
 - `mlx_max_masks`
 - `mlx_timeout_seconds`
+- `geometry_gate`: default `false`; when true, pending proposals are accepted
+  or rejected before serialization using primitive anchor geometry metrics
+- `max_anchor_quality_error`: nullable upper bound for gate acceptance,
+  default `1.0`
+- `require_reserved_anchor`: default `false`; when true, only proposals with a
+  reserved simple anchor can pass the geometry gate
 
 CLI arguments override values loaded from the config file.
 

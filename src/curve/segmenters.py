@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol
 
-from curve.anchors import choose_best_anchor
+from curve.anchors import choose_best_anchor, quality_metric_error
 from curve.detection import primitive_candidates_for_component
 from curve.images import ColorMask, flat_color_masks_from_image
 from curve.masks import MaskComponent, connected_components
@@ -30,6 +30,8 @@ class SegmentProposal:
     anchor_reserved: bool = False
     reservation_reason: str | None = None
     reservation_bounds: tuple[int, int, int, int] | None = None
+    anchor_quality_error: float | None = None
+    downstream_decision_reason: str | None = None
 
 
 class Segmenter(Protocol):
@@ -193,6 +195,8 @@ def proposals_to_manifest(
                 if proposal.reservation_bounds is not None
                 else None
             ),
+            "anchor_quality_error": proposal.anchor_quality_error,
+            "downstream_decision_reason": proposal.downstream_decision_reason,
         }
         for proposal in proposals
     ]
@@ -214,7 +218,30 @@ def segment_proposal_summary(
         "reserved_anchor_count": sum(
             1 for proposal in proposals if proposal.anchor_reserved
         ),
+        "downstream_decision_reason_counts": _counts(
+            proposal.downstream_decision_reason
+            for proposal in proposals
+            if proposal.downstream_decision_reason is not None
+        ),
     }
+
+
+def gate_segment_proposals(
+    proposals: tuple[SegmentProposal, ...],
+    *,
+    max_anchor_quality_error: float | None = 1.0,
+    require_reserved_anchor: bool = False,
+) -> tuple[SegmentProposal, ...]:
+    """Accept or reject pending proposals using anchor geometry quality."""
+
+    return tuple(
+        _gate_segment_proposal(
+            proposal,
+            max_anchor_quality_error=max_anchor_quality_error,
+            require_reserved_anchor=require_reserved_anchor,
+        )
+        for proposal in proposals
+    )
 
 
 def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
@@ -236,11 +263,14 @@ def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
         f"- Status counts: {_format_counts(summary.get('status_counts', {}))}",
         "- Downstream status counts: "
         f"{_format_counts(summary.get('downstream_status_counts', {}))}",
-        f"- Anchor kind counts: {_format_counts(summary.get('anchor_kind_counts', {}))}",
+        "- Anchor kind counts: "
+        f"{_format_counts(summary.get('anchor_kind_counts', {}))}",
         f"- Reserved anchors: `{summary.get('reserved_anchor_count', 0)}`",
+        "- Decision reason counts: "
+        f"{_format_counts(summary.get('downstream_decision_reason_counts', {}))}",
         "",
-        "| ID | Status | Downstream | Anchor | Reserved | Bounds | Reason |",
-        "| --- | --- | --- | --- | ---: | --- | --- |",
+        "| ID | Status | Downstream | Anchor | Quality | Reserved | Bounds | Reason |",
+        "| --- | --- | --- | --- | ---: | ---: | --- | --- |",
     ]
     proposals = manifest.get("proposals", [])
     if not isinstance(proposals, list):
@@ -254,9 +284,10 @@ def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
             f"`{proposal.get('status', 'unknown')}` | "
             f"`{proposal.get('downstream_status', 'unknown')}` | "
             f"`{proposal.get('anchor_kind') or 'n/a'}` | "
+            f"{_format_float(proposal.get('anchor_quality_error'))} | "
             f"{str(bool(proposal.get('anchor_reserved', False))).lower()} | "
             f"`{_format_bounds(proposal.get('bounds'))}` | "
-            f"{proposal.get('reservation_reason') or proposal.get('rejection_reason') or 'n/a'} |"
+            f"{_proposal_reason(proposal)} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -346,6 +377,66 @@ def _format_bounds(value: object) -> str:
     if not isinstance(value, (list, tuple)) or len(value) != 4:
         return "n/a"
     return ",".join(str(part) for part in value)
+
+
+def _proposal_reason(proposal: dict[str, object]) -> object:
+    return (
+        proposal.get("downstream_decision_reason")
+        or proposal.get("rejection_reason")
+        or proposal.get("reservation_reason")
+        or "n/a"
+    )
+
+
+def _format_float(value: object) -> str:
+    if not isinstance(value, (int, float)):
+        return "n/a"
+    return f"{value:.4f}"
+
+
+def _gate_segment_proposal(
+    proposal: SegmentProposal,
+    *,
+    max_anchor_quality_error: float | None,
+    require_reserved_anchor: bool,
+) -> SegmentProposal:
+    if proposal.downstream_status != "pending":
+        return proposal
+    if proposal.anchor_kind is None or proposal.anchor_metrics is None:
+        return replace(
+            proposal,
+            downstream_status="rejected",
+            rejection_reason="missing_anchor_summary",
+            downstream_decision_reason="missing_anchor_summary",
+        )
+
+    anchor_quality_error = quality_metric_error(proposal.anchor_metrics)
+    if (
+        max_anchor_quality_error is not None
+        and anchor_quality_error > max_anchor_quality_error
+    ):
+        return replace(
+            proposal,
+            downstream_status="rejected",
+            rejection_reason="anchor_quality_error_too_high",
+            anchor_quality_error=anchor_quality_error,
+            downstream_decision_reason="anchor_quality_error_too_high",
+        )
+    if require_reserved_anchor and not proposal.anchor_reserved:
+        return replace(
+            proposal,
+            downstream_status="rejected",
+            rejection_reason="anchor_not_reserved",
+            anchor_quality_error=anchor_quality_error,
+            downstream_decision_reason="anchor_not_reserved",
+        )
+    return replace(
+        proposal,
+        downstream_status="accepted",
+        rejection_reason=None,
+        anchor_quality_error=anchor_quality_error,
+        downstream_decision_reason="geometry_gate_passed",
+    )
 
 
 def _primitive_anchor_summary(component: MaskComponent) -> dict[str, object]:

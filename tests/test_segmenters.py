@@ -12,6 +12,8 @@ from curve.cli import main
 from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
+    SegmentProposal,
+    gate_segment_proposals,
     mlx_sam_runtime_status,
     proposals_to_manifest,
     render_segment_proposal_markdown,
@@ -105,6 +107,8 @@ class SegmenterTests(unittest.TestCase):
         self.assertTrue(manifest[0]["anchor_reserved"])
         self.assertEqual(manifest[0]["reservation_reason"], "simple_shape_anchor")
         self.assertEqual(manifest[0]["reservation_bounds"], manifest[0]["bounds"])
+        self.assertIsNone(manifest[0]["anchor_quality_error"])
+        self.assertIsNone(manifest[0]["downstream_decision_reason"])
 
     def test_segment_proposal_summary_counts_statuses_and_anchor_kinds(self):
         image_path = _write_same_color_component_image()
@@ -121,6 +125,50 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(summary["downstream_status_counts"]["rejected"], 1)
         self.assertEqual(summary["anchor_kind_counts"]["rect"], 1)
         self.assertEqual(summary["reserved_anchor_count"], 1)
+
+    def test_gate_segment_proposals_accepts_simple_anchor(self):
+        image_path = _write_two_color_image()
+        proposals = FlatColorSegmenter().propose(image_path)
+
+        gated = gate_segment_proposals(
+            proposals,
+            max_anchor_quality_error=1.0,
+            require_reserved_anchor=True,
+        )
+
+        self.assertEqual(gated[0].downstream_status, "accepted")
+        self.assertEqual(gated[0].downstream_decision_reason, "geometry_gate_passed")
+        self.assertEqual(gated[0].anchor_quality_error, 0.0)
+        self.assertIsNone(gated[0].rejection_reason)
+
+    def test_gate_segment_proposals_rejects_noisy_anchor_metrics(self):
+        proposal = SegmentProposal(
+            id="proposal-0001",
+            source="test",
+            confidence=0.8,
+            color="#003366",
+            bounds=(0, 0, 10, 10),
+            area=100,
+            anchor_kind="circle",
+            anchor_metrics={"circle_roundness_error": 2.0},
+            anchor_parameter_count=3,
+            anchor_reserved=True,
+            reservation_reason="simple_shape_anchor",
+            reservation_bounds=(0, 0, 10, 10),
+        )
+
+        gated = gate_segment_proposals(
+            (proposal,),
+            max_anchor_quality_error=0.5,
+        )
+
+        self.assertEqual(gated[0].downstream_status, "rejected")
+        self.assertEqual(gated[0].rejection_reason, "anchor_quality_error_too_high")
+        self.assertEqual(
+            gated[0].downstream_decision_reason,
+            "anchor_quality_error_too_high",
+        )
+        self.assertEqual(gated[0].anchor_quality_error, 2.0)
 
     def test_render_segment_proposal_markdown_summarizes_reservations(self):
         image_path = _write_two_color_image()
@@ -270,6 +318,61 @@ class SegmenterTests(unittest.TestCase):
             report = markdown.read_text(encoding="utf-8")
             self.assertIn("# Curve Segment Proposals", report)
             self.assertIn("- Reserved anchors: `0`", report)
+
+    def test_segment_cli_can_gate_proposals_by_geometry(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_two_color_image()
+            output = root / "segments.json"
+            markdown = root / "segments.md"
+            config = root / "segment-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "segmenter": "flat_color",
+                        "background": "#ffffff",
+                        "min_area": 4,
+                        "geometry_gate": True,
+                        "max_anchor_quality_error": 1.0,
+                        "require_reserved_anchor": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "segment",
+                        str(image_path),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--config",
+                        str(config),
+                    ]
+                )
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest["summary"]["downstream_status_counts"]["accepted"],
+                2,
+            )
+            self.assertEqual(
+                manifest["summary"]["downstream_decision_reason_counts"][
+                    "geometry_gate_passed"
+                ],
+                2,
+            )
+            self.assertEqual(
+                manifest["proposals"][0]["downstream_decision_reason"],
+                "geometry_gate_passed",
+            )
+            self.assertEqual(manifest["proposals"][0]["anchor_quality_error"], 0.0)
+            report = markdown.read_text(encoding="utf-8")
+            self.assertIn("- Decision reason counts: `geometry_gate_passed: 2`", report)
+            self.assertIn("geometry_gate_passed", report)
 
     def test_segment_cli_reports_mlx_sam_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:
