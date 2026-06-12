@@ -12,6 +12,7 @@ from morphea.anchors import (
     AnchorKind,
     ArcAnchor,
     EllipseAnchor,
+    PathAnchor,
     Point,
     QuadAnchor,
     parallel_spacing_error,
@@ -455,10 +456,14 @@ def anchor_to_svg_element(
         return f'<polygon points="{points}" fill="{escape(fill)}" />'
 
     if anchor.kind == AnchorKind.CUBIC_PATH and anchor.path is not None:
-        return (
-            f'<path d="{_closed_smooth_path(anchor.path.points)}" '
-            f'fill="{escape(fill)}" />'
-        )
+        if anchor.path.controls is not None:
+            path_data = _closed_bezier_path(
+                anchor.path.points,
+                anchor.path.controls,
+            )
+        else:
+            path_data = _closed_smooth_path(anchor.path.points)
+        return f'<path d="{path_data}" fill="{escape(fill)}" />'
 
     return _unsupported_anchor(anchor)
 
@@ -565,6 +570,14 @@ def anchor_to_manifest_with_index(
             "node_count": len(anchor.path.points),
             "fallback_reason": anchor.path.fallback_reason,
         }
+        if anchor.path.controls is not None:
+            data["path"]["controls"] = [
+                [
+                    {"x": control1.x, "y": control1.y},
+                    {"x": control2.x, "y": control2.y},
+                ]
+                for control1, control2 in anchor.path.controls
+            ]
     if anchor.ellipse is not None:
         data["ellipse"] = {
             "cx": anchor.ellipse.center.x,
@@ -1403,8 +1416,11 @@ def _cutout_mask_eligible(anchor: AnchorCandidate) -> bool:
 
 def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]:
     if anchor.path is not None and anchor.path.points:
-        xs = [point.x for point in anchor.path.points]
-        ys = [point.y for point in anchor.path.points]
+        # Fitted curves bulge past their sparse on-curve points, so bounds
+        # come from sampling the actual segments.
+        samples = _sampled_path_points(anchor.path)
+        xs = [point.x for point in samples]
+        ys = [point.y for point in samples]
         return (min(xs), min(ys), max(xs), max(ys))
     if anchor.ellipse is not None:
         center = anchor.ellipse.center
@@ -1433,6 +1449,27 @@ def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]
         ys = [point.y for point in anchor.quad.corners]
         return (min(xs), min(ys), max(xs), max(ys))
     return (0.0, 0.0, 0.0, 0.0)
+
+
+def _sampled_path_points(path: PathAnchor) -> tuple[Point, ...]:
+    if path.controls is None:
+        return path.points
+    count = len(path.points)
+    samples: list[Point] = []
+    for index in range(count):
+        p0 = path.points[index]
+        p3 = path.points[(index + 1) % count]
+        c1, c2 = path.controls[index]
+        for step in range(12):
+            t = step / 12
+            u = 1 - t
+            samples.append(
+                Point(
+                    u**3 * p0.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t**3 * p3.x,
+                    u**3 * p0.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t**3 * p3.y,
+                )
+            )
+    return tuple(samples)
 
 
 def _rect_svg_box(anchor: AnchorCandidate) -> tuple[float, float, float, float]:
@@ -1549,6 +1586,27 @@ def _arc_path(arc: ArcAnchor) -> str:
         f"{1 if arc.large_arc else 0} {1 if arc.sweep else 0} "
         f"{_fmt(end.x)} {_fmt(end.y)}"
     )
+
+
+def _closed_bezier_path(
+    points: tuple[Point, ...],
+    controls: tuple[tuple[Point, Point], ...],
+) -> str:
+    """Closed path from fitted on-curve points and their control pairs."""
+
+    commands = [f"M {_fmt(points[0].x)} {_fmt(points[0].y)}"]
+    count = len(points)
+    for index in range(count):
+        control1, control2 = controls[index]
+        end = points[(index + 1) % count]
+        commands.append(
+            "C "
+            f"{_fmt(control1.x)} {_fmt(control1.y)} "
+            f"{_fmt(control2.x)} {_fmt(control2.y)} "
+            f"{_fmt(end.x)} {_fmt(end.y)}"
+        )
+    commands.append("Z")
+    return " ".join(commands)
 
 
 def _closed_smooth_path(points: tuple[Point, ...]) -> str:

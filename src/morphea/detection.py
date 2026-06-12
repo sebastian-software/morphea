@@ -196,12 +196,14 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
             Point(max_x, max_y),
             Point(min_x, max_y),
         )
-    # Smooth away pixel staircase noise, then keep nodes where the curvature
-    # is (tips, lobes) instead of spreading them uniformly along the contour.
+    # Smooth away pixel staircase noise, then least-squares-fit cubic Bezier
+    # segments to the whole contour. Approximation averages the remaining
+    # noise out, unlike interpolation through individual contour pixels, and
+    # the adaptive splits land segment joints at the curvature extrema.
     smoothed = _smoothed_closed_outline(outline, window=2)
-    points = _simplified_closed_outline(
+    points, controls, fit_error = _fit_closed_bezier_outline(
         smoothed,
-        maximum=ORGANIC_FALLBACK_MAX_NODES,
+        max_segments=ORGANIC_FALLBACK_MAX_NODES,
     )
     smoothness = _curvature_jitter(points + points[:2])
     # Rank as if the outline used its full node budget: a compact fit must
@@ -213,10 +215,11 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
         raster_error=rank_penalty,
         node_count=len(points),
         parameter_count=len(points) * 2,
-        path=PathAnchor(points=points, closed=True),
+        path=PathAnchor(points=points, closed=True, controls=controls),
         metrics={
             "path_node_count": float(len(points)),
             "path_smoothness": smoothness,
+            "path_fit_max_error_px": fit_error,
         },
     )
 
@@ -276,21 +279,29 @@ def _smoothed_closed_outline(
     return tuple(smoothed)
 
 
-def _simplified_closed_outline(
+BezierSegment = tuple["Point", "Point", "Point", "Point"]
+
+
+def _fit_closed_bezier_outline(
     outline: tuple[Point, ...],
     *,
-    maximum: int,
-) -> tuple[Point, ...]:
-    """Curvature-adaptive closed-contour simplification (Douglas-Peucker).
+    max_segments: int,
+) -> tuple[tuple[Point, ...], tuple[tuple[Point, Point], ...], float]:
+    """Least-squares cubic Bezier fit of a closed contour (Schneider).
 
-    Splits the loop at its two most distant points and simplifies each half,
-    raising the tolerance until the node budget holds. Tips survive because
-    they are the farthest-from-chord points the algorithm keeps first.
+    Returns on-curve points, per-segment control pairs, and the maximum
+    fit error in pixels. The error tolerance widens until the segment
+    budget holds.
     """
 
     count = len(outline)
-    if count <= 4:
-        return outline
+    if count < 8:
+        controls = tuple(
+            _line_controls(outline[index], outline[(index + 1) % count])
+            for index in range(count)
+        )
+        return outline, controls, 0.0
+
     anchor_a = max(
         range(count),
         key=lambda index: outline[index].distance_to(outline[0]),
@@ -302,39 +313,244 @@ def _simplified_closed_outline(
     first, second = sorted((anchor_a, anchor_b))
     half_one = outline[first : second + 1]
     half_two = outline[second:] + outline[: first + 1]
+    # Shared joint tangents keep the two halves C1-continuous.
+    tangent_first = _normalized_direction(
+        outline[(first + 1) % count],
+        outline[(first - 1) % count],
+    )
+    tangent_second = _normalized_direction(
+        outline[(second + 1) % count],
+        outline[(second - 1) % count],
+    )
 
-    tolerance = 0.6
-    for _ in range(12):
-        kept_one = _rdp(half_one, tolerance)
-        kept_two = _rdp(half_two, tolerance)
-        # Halves share their endpoints; drop the duplicates when joining.
-        points = tuple(kept_one[:-1] + kept_two[:-1])
-        if 4 <= len(points) <= maximum:
-            return points
-        if len(points) < 4:
-            tolerance /= 1.5
-        else:
-            tolerance *= 1.4
-    return points[:maximum] if len(points) > maximum else points
+    tolerance = 0.45
+    segments: list[BezierSegment] = []
+    for _ in range(8):
+        segments = _fit_cubic(
+            half_one,
+            tangent_first,
+            _negated(tangent_second),
+            tolerance,
+        ) + _fit_cubic(
+            half_two,
+            tangent_second,
+            _negated(tangent_first),
+            tolerance,
+        )
+        if len(segments) <= max_segments:
+            break
+        tolerance *= 1.5
+
+    points = tuple(segment[0] for segment in segments)
+    controls = tuple((segment[1], segment[2]) for segment in segments)
+    max_error = 0.0
+    for sample in outline:
+        best = min(
+            _point_to_bezier_distance(sample, segment)
+            for segment in segments
+        )
+        max_error = max(max_error, best)
+    return points, controls, round(max_error, 4)
 
 
-def _rdp(points: tuple[Point, ...], tolerance: float) -> tuple[Point, ...]:
-    if len(points) < 3:
-        return points
+def _line_controls(start: Point, end: Point) -> tuple[Point, Point]:
+    return (
+        Point(start.x + (end.x - start.x) / 3, start.y + (end.y - start.y) / 3),
+        Point(start.x + (end.x - start.x) * 2 / 3, start.y + (end.y - start.y) * 2 / 3),
+    )
+
+
+def _normalized_direction(toward: Point, away: Point) -> Point:
+    dx = toward.x - away.x
+    dy = toward.y - away.y
+    length = hypot(dx, dy)
+    if length <= 0:
+        return Point(1.0, 0.0)
+    return Point(dx / length, dy / length)
+
+
+def _negated(direction: Point) -> Point:
+    return Point(-direction.x, -direction.y)
+
+
+def _fit_cubic(
+    points: tuple[Point, ...],
+    left_tangent: Point,
+    right_tangent: Point,
+    tolerance: float,
+) -> list[BezierSegment]:
+    if len(points) == 2:
+        distance = points[0].distance_to(points[1]) / 3
+        return [
+            (
+                points[0],
+                Point(
+                    points[0].x + left_tangent.x * distance,
+                    points[0].y + left_tangent.y * distance,
+                ),
+                Point(
+                    points[1].x + right_tangent.x * distance,
+                    points[1].y + right_tangent.y * distance,
+                ),
+                points[1],
+            )
+        ]
+
+    parameters = _chord_length_parameterize(points)
+    segment = _generate_bezier(points, parameters, left_tangent, right_tangent)
+    max_error, split_index = _max_fit_error(points, segment, parameters)
+    if max_error < tolerance:
+        return [segment]
+
+    if max_error < tolerance * 4:
+        for _ in range(4):
+            parameters = tuple(
+                _refine_parameter(point, segment, u)
+                for point, u in zip(points, parameters)
+            )
+            segment = _generate_bezier(
+                points,
+                parameters,
+                left_tangent,
+                right_tangent,
+            )
+            max_error, split_index = _max_fit_error(points, segment, parameters)
+            if max_error < tolerance:
+                return [segment]
+
+    split_index = min(max(split_index, 1), len(points) - 2)
+    center_tangent = _normalized_direction(
+        points[split_index - 1],
+        points[split_index + 1],
+    )
+    return _fit_cubic(
+        points[: split_index + 1],
+        left_tangent,
+        center_tangent,
+        tolerance,
+    ) + _fit_cubic(
+        points[split_index:],
+        _negated(center_tangent),
+        right_tangent,
+        tolerance,
+    )
+
+
+def _chord_length_parameterize(points: tuple[Point, ...]) -> tuple[float, ...]:
+    distances = [0.0]
+    for previous, current in zip(points, points[1:]):
+        distances.append(distances[-1] + previous.distance_to(current))
+    total = distances[-1] or 1.0
+    return tuple(distance / total for distance in distances)
+
+
+def _generate_bezier(
+    points: tuple[Point, ...],
+    parameters: tuple[float, ...],
+    left_tangent: Point,
+    right_tangent: Point,
+) -> BezierSegment:
     start = points[0]
     end = points[-1]
-    farthest_index = 0
-    farthest = 0.0
+    c00 = c01 = c11 = 0.0
+    x0 = x1 = 0.0
+    for point, u in zip(points, parameters):
+        b0 = (1 - u) ** 3
+        b1 = 3 * u * (1 - u) ** 2
+        b2 = 3 * u * u * (1 - u)
+        b3 = u**3
+        a0x = left_tangent.x * b1
+        a0y = left_tangent.y * b1
+        a1x = right_tangent.x * b2
+        a1y = right_tangent.y * b2
+        c00 += a0x * a0x + a0y * a0y
+        c01 += a0x * a1x + a0y * a1y
+        c11 += a1x * a1x + a1y * a1y
+        tx = point.x - (b0 + b1) * start.x - (b2 + b3) * end.x
+        ty = point.y - (b0 + b1) * start.y - (b2 + b3) * end.y
+        x0 += a0x * tx + a0y * ty
+        x1 += a1x * tx + a1y * ty
+    determinant = c00 * c11 - c01 * c01
+    if abs(determinant) > 1e-9:
+        alpha_left = (x0 * c11 - x1 * c01) / determinant
+        alpha_right = (c00 * x1 - c01 * x0) / determinant
+    else:
+        alpha_left = alpha_right = 0.0
+    segment_length = start.distance_to(end)
+    epsilon = 1e-6 * segment_length
+    if alpha_left < epsilon or alpha_right < epsilon:
+        alpha_left = alpha_right = segment_length / 3
+    return (
+        start,
+        Point(
+            start.x + left_tangent.x * alpha_left,
+            start.y + left_tangent.y * alpha_left,
+        ),
+        Point(
+            end.x + right_tangent.x * alpha_right,
+            end.y + right_tangent.y * alpha_right,
+        ),
+        end,
+    )
+
+
+def _bezier_point(segment: BezierSegment, u: float) -> Point:
+    p0, p1, p2, p3 = segment
+    v = 1 - u
+    return Point(
+        v**3 * p0.x + 3 * v * v * u * p1.x + 3 * v * u * u * p2.x + u**3 * p3.x,
+        v**3 * p0.y + 3 * v * v * u * p1.y + 3 * v * u * u * p2.y + u**3 * p3.y,
+    )
+
+
+def _max_fit_error(
+    points: tuple[Point, ...],
+    segment: BezierSegment,
+    parameters: tuple[float, ...],
+) -> tuple[float, int]:
+    worst = 0.0
+    worst_index = len(points) // 2
     for index in range(1, len(points) - 1):
-        distance = _point_line_distance(points[index], start, end)
-        if distance > farthest:
-            farthest = distance
-            farthest_index = index
-    if farthest <= tolerance:
-        return (start, end)
-    left = _rdp(points[: farthest_index + 1], tolerance)
-    right = _rdp(points[farthest_index:], tolerance)
-    return left[:-1] + right
+        distance = points[index].distance_to(
+            _bezier_point(segment, parameters[index])
+        )
+        if distance > worst:
+            worst = distance
+            worst_index = index
+    return worst, worst_index
+
+
+def _refine_parameter(point: Point, segment: BezierSegment, u: float) -> float:
+    """One Newton-Raphson step moving u toward the closest curve point."""
+
+    p0, p1, p2, p3 = segment
+    q = _bezier_point(segment, u)
+    v = 1 - u
+    d1x = 3 * (v * v * (p1.x - p0.x) + 2 * v * u * (p2.x - p1.x) + u * u * (p3.x - p2.x))
+    d1y = 3 * (v * v * (p1.y - p0.y) + 2 * v * u * (p2.y - p1.y) + u * u * (p3.y - p2.y))
+    d2x = 6 * (v * (p2.x - 2 * p1.x + p0.x) + u * (p3.x - 2 * p2.x + p1.x))
+    d2y = 6 * (v * (p2.y - 2 * p1.y + p0.y) + u * (p3.y - 2 * p2.y + p1.y))
+    numerator = (q.x - point.x) * d1x + (q.y - point.y) * d1y
+    denominator = d1x * d1x + d1y * d1y + (q.x - point.x) * d2x + (q.y - point.y) * d2y
+    if abs(denominator) < 1e-9:
+        return u
+    refined = u - numerator / denominator
+    return min(max(refined, 0.0), 1.0)
+
+
+def _point_to_bezier_distance(point: Point, segment: BezierSegment) -> float:
+    best = float("inf")
+    best_u = 0.0
+    for step in range(25):
+        u = step / 24
+        distance = point.distance_to(_bezier_point(segment, u))
+        if distance < best:
+            best = distance
+            best_u = u
+    refined_u = _refine_parameter(point, segment, best_u)
+    return min(best, point.distance_to(_bezier_point(segment, refined_u)))
+
+
 
 
 def _with_classifier_prior(

@@ -720,6 +720,14 @@ def _scale_path(path: PathAnchor | None, factor: float) -> PathAnchor | None:
         points=tuple(_scale_point(point, factor) for point in path.points),
         closed=path.closed,
         fallback_reason=path.fallback_reason,
+        controls=(
+            tuple(
+                (_scale_point(c1, factor), _scale_point(c2, factor))
+                for c1, c2 in path.controls
+            )
+            if path.controls is not None
+            else None
+        ),
     )
 
 

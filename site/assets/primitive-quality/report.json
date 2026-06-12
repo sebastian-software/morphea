@@ -46551,12 +46551,12 @@
       "family": "organic_blob",
       "geometry": {
         "actual_bounds": [
-          12.0,
-          11.6,
-          52.0,
-          47.0
+          11.88645,
+          11.164191,
+          53.187502,
+          47.317808
         ],
-        "bbox_iou": 0.91957,
+        "bbox_iou": 0.941934,
         "expected_bounds": [
           12.477562,
           11.622773,
@@ -46593,7 +46593,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.91957,
+          "bbox_iou": 0.941934,
           "expected_id": "organic_blob",
           "geometry_diff": {
             "actual": {
@@ -46622,19 +46622,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015858,
-        "raster_l1_error": 0.010156,
+        "raster_edge_error": 0.017127,
+        "raster_l1_error": 0.011133,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.016147,
-        "svg_raster_l1_error": 0.013473,
+        "svg_raster_edge_error": 0.017545,
+        "svg_raster_l1_error": 0.014679,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.01206,
-        "svg_vs_preview_l1_error": 0.008842
+        "svg_vs_preview_edge_error": 0.015122,
+        "svg_vs_preview_l1_error": 0.010735
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -46669,12 +46669,12 @@
       "family": "organic_blob",
       "geometry": {
         "actual_bounds": [
-          12.6,
-          12.0,
-          53.4,
-          53.6
+          12.45091,
+          12.176851,
+          53.800805,
+          53.75588
         ],
-        "bbox_iou": 0.943308,
+        "bbox_iou": 0.95669,
         "expected_bounds": [
           12.970385,
           12.778126,
@@ -46711,7 +46711,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.943308,
+          "bbox_iou": 0.95669,
           "expected_id": "organic_blob_soft",
           "geometry_diff": {
             "actual": {
@@ -46740,19 +46740,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.022836,
-        "raster_l1_error": 0.017578,
+        "raster_edge_error": 0.018184,
+        "raster_l1_error": 0.011719,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.020179,
-        "svg_raster_l1_error": 0.017699,
+        "svg_raster_edge_error": 0.017986,
+        "svg_raster_l1_error": 0.01493,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.014669,
-        "svg_vs_preview_l1_error": 0.010887
+        "svg_vs_preview_edge_error": 0.013987,
+        "svg_vs_preview_l1_error": 0.01035
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -46787,12 +46787,12 @@
       "family": "organic_blob",
       "geometry": {
         "actual_bounds": [
-          11.0,
-          16.0,
-          51.0,
-          49.6
+          11.050031,
+          15.972497,
+          50.908221,
+          49.815515
         ],
-        "bbox_iou": 0.946213,
+        "bbox_iou": 0.950509,
         "expected_bounds": [
           11.409459,
           16.358469,
@@ -46829,7 +46829,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.946213,
+          "bbox_iou": 0.950509,
           "expected_id": "organic_blob_lumpy",
           "geometry_diff": {
             "actual": {
@@ -46858,19 +46858,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.016493,
-        "raster_l1_error": 0.014063,
+        "raster_edge_error": 0.013744,
+        "raster_l1_error": 0.009375,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.017367,
-        "svg_raster_l1_error": 0.015081,
+        "svg_raster_edge_error": 0.014525,
+        "svg_raster_l1_error": 0.011925,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.012239,
-        "svg_vs_preview_l1_error": 0.009308
+        "svg_vs_preview_edge_error": 0.011378,
+        "svg_vs_preview_l1_error": 0.008634
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -46905,12 +46905,12 @@
       "family": "organic_leaf",
       "geometry": {
         "actual_bounds": [
+          9.810776,
           10.0,
-          10.0,
-          53.0,
+          53.150121,
           53.0
         ],
-        "bbox_iou": 0.95505,
+        "bbox_iou": 0.954355,
         "expected_bounds": [
           10.100401,
           10.100401,
@@ -46947,7 +46947,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.95505,
+          "bbox_iou": 0.954355,
           "expected_id": "organic_leaf",
           "geometry_diff": {
             "actual": {
@@ -46976,19 +46976,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015012,
-        "raster_l1_error": 0.011914,
+        "raster_edge_error": 0.012475,
+        "raster_l1_error": 0.009375,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.01578,
-        "svg_raster_l1_error": 0.013797,
+        "svg_raster_edge_error": 0.016658,
+        "svg_raster_l1_error": 0.014616,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.014438,
-        "svg_vs_preview_l1_error": 0.011858
+        "svg_vs_preview_edge_error": 0.012895,
+        "svg_vs_preview_l1_error": 0.010347
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47023,12 +47023,12 @@
       "family": "organic_leaf",
       "geometry": {
         "actual_bounds": [
-          10.0,
-          10.0,
-          53.0,
-          53.0
+          10.062031,
+          10.064638,
+          52.890769,
+          53.102422
         ],
-        "bbox_iou": 0.954876,
+        "bbox_iou": 0.957463,
         "expected_bounds": [
           10.423724,
           10.423724,
@@ -47065,7 +47065,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.954876,
+          "bbox_iou": 0.957463,
           "expected_id": "organic_leaf_narrow",
           "geometry_diff": {
             "actual": {
@@ -47094,19 +47094,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.014167,
-        "raster_l1_error": 0.010352,
+        "raster_edge_error": 0.011629,
+        "raster_l1_error": 0.008008,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.018387,
-        "svg_raster_l1_error": 0.016154,
+        "svg_raster_edge_error": 0.016012,
+        "svg_raster_l1_error": 0.01391,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.01497,
-        "svg_vs_preview_l1_error": 0.011887
+        "svg_vs_preview_edge_error": 0.012473,
+        "svg_vs_preview_l1_error": 0.009714
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47141,12 +47141,12 @@
       "family": "organic_leaf",
       "geometry": {
         "actual_bounds": [
-          7.6,
-          13.0,
-          55.6,
-          50.0
+          6.827605,
+          13.179029,
+          55.909329,
+          50.208475
         ],
-        "bbox_iou": 0.956155,
+        "bbox_iou": 0.958699,
         "expected_bounds": [
           7.563509,
           13.585914,
@@ -47183,7 +47183,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.956155,
+          "bbox_iou": 0.958699,
           "expected_id": "organic_leaf_tilted",
           "geometry_diff": {
             "actual": {
@@ -47212,19 +47212,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.018184,
-        "raster_l1_error": 0.014258,
+        "raster_edge_error": 0.013744,
+        "raster_l1_error": 0.00957,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.017937,
-        "svg_raster_l1_error": 0.015262,
+        "svg_raster_edge_error": 0.018076,
+        "svg_raster_l1_error": 0.015076,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.012152,
-        "svg_vs_preview_l1_error": 0.009662
+        "svg_vs_preview_edge_error": 0.013385,
+        "svg_vs_preview_l1_error": 0.010808
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47259,12 +47259,12 @@
       "family": "organic_asymmetric",
       "geometry": {
         "actual_bounds": [
-          18.0,
-          16.0,
-          54.0,
-          53.0
+          17.966105,
+          16.068166,
+          54.003355,
+          53.029642
         ],
-        "bbox_iou": 0.943788,
+        "bbox_iou": 0.945461,
         "expected_bounds": [
           18.499177,
           16.539457,
@@ -47301,7 +47301,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.943788,
+          "bbox_iou": 0.945461,
           "expected_id": "organic_asymmetric",
           "geometry_diff": {
             "actual": {
@@ -47330,19 +47330,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.01459,
-        "raster_l1_error": 0.00957,
+        "raster_edge_error": 0.015435,
+        "raster_l1_error": 0.009961,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.015159,
-        "svg_raster_l1_error": 0.011873,
+        "svg_raster_edge_error": 0.017163,
+        "svg_raster_l1_error": 0.01431,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.013174,
-        "svg_vs_preview_l1_error": 0.009319
+        "svg_vs_preview_edge_error": 0.012606,
+        "svg_vs_preview_l1_error": 0.008941
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47377,12 +47377,12 @@
       "family": "organic_asymmetric",
       "geometry": {
         "actual_bounds": [
-          18.0,
-          14.0,
-          53.0,
-          47.0
+          17.93031,
+          13.884723,
+          52.905497,
+          46.886028
         ],
-        "bbox_iou": 0.965152,
+        "bbox_iou": 0.954129,
         "expected_bounds": [
           18.207666,
           14.13865,
@@ -47419,7 +47419,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.965152,
+          "bbox_iou": 0.954129,
           "expected_id": "organic_asymmetric_heavy",
           "geometry_diff": {
             "actual": {
@@ -47448,19 +47448,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.013532,
-        "raster_l1_error": 0.009375,
+        "raster_edge_error": 0.01459,
+        "raster_l1_error": 0.010156,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.013267,
-        "svg_raster_l1_error": 0.010675,
+        "svg_raster_edge_error": 0.015201,
+        "svg_raster_l1_error": 0.012607,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.012023,
-        "svg_vs_preview_l1_error": 0.008829
+        "svg_vs_preview_edge_error": 0.011058,
+        "svg_vs_preview_l1_error": 0.008243
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47495,12 +47495,12 @@
       "family": "organic_asymmetric",
       "geometry": {
         "actual_bounds": [
-          15.0,
-          8.4,
-          54.0,
-          47.6
+          14.985717,
+          8.398262,
+          53.926701,
+          47.728495
         ],
-        "bbox_iou": 0.95933,
+        "bbox_iou": 0.960306,
         "expected_bounds": [
           15.14778,
           8.741521,
@@ -47537,7 +47537,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.95933,
+          "bbox_iou": 0.960306,
           "expected_id": "organic_asymmetric_soft",
           "geometry_diff": {
             "actual": {
@@ -47566,19 +47566,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.017761,
-        "raster_l1_error": 0.011719,
+        "raster_edge_error": 0.018184,
+        "raster_l1_error": 0.011914,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.017678,
-        "svg_raster_l1_error": 0.01505,
+        "svg_raster_edge_error": 0.017374,
+        "svg_raster_l1_error": 0.014375,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.014266,
-        "svg_vs_preview_l1_error": 0.010248
+        "svg_vs_preview_edge_error": 0.013838,
+        "svg_vs_preview_l1_error": 0.009823
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47613,12 +47613,12 @@
       "family": "organic_crescent",
       "geometry": {
         "actual_bounds": [
-          10.0,
+          9.91249,
           15.2,
-          48.6,
-          54.0
+          48.8,
+          53.801808
         ],
-        "bbox_iou": 0.773595,
+        "bbox_iou": 0.772284,
         "expected_bounds": [
           10.0,
           10.0,
@@ -47655,7 +47655,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.773595,
+          "bbox_iou": 0.772284,
           "expected_id": "organic_crescent",
           "geometry_diff": {
             "actual": {
@@ -47684,19 +47684,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015224,
-        "raster_l1_error": 0.010547,
+        "raster_edge_error": 0.018607,
+        "raster_l1_error": 0.013281,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.016958,
-        "svg_raster_l1_error": 0.013618,
+        "svg_raster_edge_error": 0.0179,
+        "svg_raster_l1_error": 0.0149,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.012812,
-        "svg_vs_preview_l1_error": 0.010013
+        "svg_vs_preview_edge_error": 0.014096,
+        "svg_vs_preview_l1_error": 0.011054
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47731,12 +47731,12 @@
       "family": "organic_crescent",
       "geometry": {
         "actual_bounds": [
-          8.0,
+          7.91249,
           17.2,
-          46.6,
-          56.0
+          46.8,
+          55.801808
         ],
-        "bbox_iou": 0.773595,
+        "bbox_iou": 0.772284,
         "expected_bounds": [
           8.0,
           12.0,
@@ -47773,7 +47773,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.773595,
+          "bbox_iou": 0.772284,
           "expected_id": "organic_crescent_low",
           "geometry_diff": {
             "actual": {
@@ -47802,19 +47802,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015224,
-        "raster_l1_error": 0.010547,
+        "raster_edge_error": 0.018607,
+        "raster_l1_error": 0.013281,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.016958,
-        "svg_raster_l1_error": 0.013618,
+        "svg_raster_edge_error": 0.0179,
+        "svg_raster_l1_error": 0.0149,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.012812,
-        "svg_vs_preview_l1_error": 0.010013
+        "svg_vs_preview_edge_error": 0.014096,
+        "svg_vs_preview_l1_error": 0.011054
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47849,12 +47849,12 @@
       "family": "organic_crescent",
       "geometry": {
         "actual_bounds": [
-          12.0,
-          8.0,
-          50.6,
+          11.91249,
+          8.198192,
+          50.8,
           46.8
         ],
-        "bbox_iou": 0.773595,
+        "bbox_iou": 0.772284,
         "expected_bounds": [
           12.0,
           8.0,
@@ -47891,7 +47891,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.773595,
+          "bbox_iou": 0.772284,
           "expected_id": "organic_crescent_high",
           "geometry_diff": {
             "actual": {
@@ -47920,19 +47920,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.017761,
-        "raster_l1_error": 0.011133,
+        "raster_edge_error": 0.018184,
+        "raster_l1_error": 0.011523,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.017035,
-        "svg_raster_l1_error": 0.012643,
+        "svg_raster_edge_error": 0.018879,
+        "svg_raster_l1_error": 0.014426,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.013938,
-        "svg_vs_preview_l1_error": 0.010308
+        "svg_vs_preview_edge_error": 0.014045,
+        "svg_vs_preview_l1_error": 0.010847
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -47967,12 +47967,12 @@
       "family": "organic_compound",
       "geometry": {
         "actual_bounds": [
-          9.0,
-          13.6,
-          53.2,
-          50.0
+          8.96149,
+          13.431064,
+          53.921052,
+          49.921052
         ],
-        "bbox_iou": 0.939188,
+        "bbox_iou": 0.947392,
         "expected_bounds": [
           9.488513,
           13.947803,
@@ -48009,7 +48009,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.939188,
+          "bbox_iou": 0.947392,
           "expected_id": "organic_compound",
           "geometry_diff": {
             "actual": {
@@ -48038,19 +48038,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.018607,
-        "raster_l1_error": 0.014648,
+        "raster_edge_error": 0.017973,
+        "raster_l1_error": 0.011523,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.01818,
-        "svg_raster_l1_error": 0.016011,
+        "svg_raster_edge_error": 0.019308,
+        "svg_raster_l1_error": 0.015428,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.013782,
-        "svg_vs_preview_l1_error": 0.010289
+        "svg_vs_preview_edge_error": 0.014798,
+        "svg_vs_preview_l1_error": 0.01053
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -48087,10 +48087,10 @@
         "actual_bounds": [
           17.0,
           9.0,
-          45.8,
+          46.05336,
           54.0
         ],
-        "bbox_iou": 0.917656,
+        "bbox_iou": 0.925823,
         "expected_bounds": [
           17.691238,
           9.604725,
@@ -48127,7 +48127,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.917656,
+          "bbox_iou": 0.925823,
           "expected_id": "organic_compound_tall",
           "geometry_diff": {
             "actual": {
@@ -48156,19 +48156,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.016915,
-        "raster_l1_error": 0.013867,
+        "raster_edge_error": 0.015435,
+        "raster_l1_error": 0.010937,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.017752,
-        "svg_raster_l1_error": 0.015986,
+        "svg_raster_edge_error": 0.01622,
+        "svg_raster_l1_error": 0.013933,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.012704,
-        "svg_vs_preview_l1_error": 0.009528
+        "svg_vs_preview_edge_error": 0.012213,
+        "svg_vs_preview_l1_error": 0.009061
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
@@ -48203,12 +48203,12 @@
       "family": "organic_compound",
       "geometry": {
         "actual_bounds": [
-          8.0,
-          15.0,
-          57.0,
-          49.8
+          8.081785,
+          15.089048,
+          56.950307,
+          50.359332
         ],
-        "bbox_iou": 0.935718,
+        "bbox_iou": 0.953737,
         "expected_bounds": [
           8.645304,
           15.535618,
@@ -48245,7 +48245,7 @@
         {
           "actual_index": 0,
           "actual_kind": "cubic_path",
-          "bbox_iou": 0.935718,
+          "bbox_iou": 0.953737,
           "expected_id": "organic_compound_wide",
           "geometry_diff": {
             "actual": {
@@ -48274,19 +48274,19 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.014378,
-        "raster_l1_error": 0.010547,
+        "raster_edge_error": 0.014167,
+        "raster_l1_error": 0.010156,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.015973,
-        "svg_raster_l1_error": 0.013599,
+        "svg_raster_edge_error": 0.017047,
+        "svg_raster_l1_error": 0.014867,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.013375,
-        "svg_vs_preview_l1_error": 0.010432
+        "svg_vs_preview_edge_error": 0.012659,
+        "svg_vs_preview_l1_error": 0.010039
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,

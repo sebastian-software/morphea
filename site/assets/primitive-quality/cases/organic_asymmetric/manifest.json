@@ -3,10 +3,10 @@
   "anchors": [
     {
       "color": "#003366",
-      "confidence": 0.415,
+      "confidence": 0.17,
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:cubic_path:0.415",
+        "debug_label": "anchor-0000:cubic_path:0.17",
         "editable": false,
         "mask_eligible": false
       },
@@ -14,37 +14,112 @@
       "kind": "cubic_path",
       "layer": "generic_paths",
       "metrics": {
-        "path_node_count": 15.0,
-        "path_smoothness": 0.31301956302516754,
-        "semantic_anchor_score": 0.9099999999999999,
+        "path_fit_max_error_px": 0.4461,
+        "path_node_count": 8.0,
+        "path_smoothness": 0.9185390721904791,
+        "semantic_anchor_score": 0.91,
         "simple_shape_priority_bonus": 0.0
       },
-      "node_count": 15,
-      "parameter_count": 30,
+      "node_count": 8,
+      "parameter_count": 16,
       "path": {
         "closed": true,
+        "controls": [
+          [
+            {
+              "x": 52.29070669079426,
+              "y": 24.403494683555984
+            },
+            {
+              "x": 53.26938098298777,
+              "y": 26.346904914938865
+            }
+          ],
+          [
+            {
+              "x": 55.31556938122591,
+              "y": 36.577846906129615
+            },
+            {
+              "x": 48.10443386627678,
+              "y": 39.82689629360624
+            }
+          ],
+          [
+            {
+              "x": 38.055611038211794,
+              "y": 46.86107227325176
+            },
+            {
+              "x": 34.49312408788835,
+              "y": 52.350687591211155
+            }
+          ],
+          [
+            {
+              "x": 25.8165235809037,
+              "y": 53.21834764190963
+            },
+            {
+              "x": 23.594113779027182,
+              "y": 52.21699002580194
+            }
+          ],
+          [
+            {
+              "x": 15.415189694739032,
+              "y": 44.94683528421247
+            },
+            {
+              "x": 20.662735910406532,
+              "y": 38.62735910406533
+            }
+          ],
+          [
+            {
+              "x": 19.558814868645044,
+              "y": 27.588148686450424
+            },
+            {
+              "x": 16.044327843520538,
+              "y": 23.314435629759313
+            }
+          ],
+          [
+            {
+              "x": 24.74906179200535,
+              "y": 12.122634838850253
+            },
+            {
+              "x": 30.94811006558316,
+              "y": 19.394811006558317
+            }
+          ],
+          [
+            {
+              "x": 41.70706643152553,
+              "y": 20.470706643152553
+            },
+            {
+              "x": 45.84866481668134,
+              "y": 19.894065371676938
+            }
+          ]
+        ],
         "fallback_reason": "organic_boundary_fit",
-        "node_count": 15,
+        "node_count": 8,
         "points": [
           {
             "x": 50.0,
             "y": 22.8
           },
           {
-            "x": 53.0,
-            "y": 26.0
+            "x": 53.8,
+            "y": 29.0
           },
           {
-            "x": 54.0,
-            "y": 30.0
-          },
-          {
-            "x": 52.4,
-            "y": 36.0
-          },
-          {
-            "x": 35.0,
-            "y": 50.2
+            "x": 43.0,
+            "y": 43.4
           },
           {
             "x": 28.0,
@@ -55,36 +130,16 @@
             "y": 50.8
           },
           {
-            "x": 18.8,
-            "y": 45.0
-          },
-          {
             "x": 20.0,
             "y": 32.0
-          },
-          {
-            "x": 18.0,
-            "y": 23.0
           },
           {
             "x": 19.4,
             "y": 19.0
           },
           {
-            "x": 22.0,
-            "y": 16.8
-          },
-          {
-            "x": 26.0,
-            "y": 16.0
-          },
-          {
-            "x": 35.0,
-            "y": 19.6
-          },
-          {
-            "x": 46.0,
-            "y": 20.8
+            "x": 37.0,
+            "y": 20.0
           }
         ]
       },
@@ -92,24 +147,24 @@
         "fitting": "fallback_path",
         "source": "primitive_anchor_detection"
       },
-      "raster_error": 0.385,
+      "raster_error": 0.63,
       "reserved": {
         "bounds": [
-          18.0,
-          16.0,
-          54.0,
-          53.0
+          17.96610456793025,
+          16.068166077983445,
+          54.00335532579406,
+          53.029641704204074
         ],
         "reason": "generic_fallback"
       },
       "source_mask": {
         "bounds": [
-          18.0,
-          16.0,
-          54.0,
-          53.0
+          17.96610456793025,
+          16.068166077983445,
+          54.00335532579406,
+          53.029641704204074
         ],
-        "bounds_area": 1332.0,
+        "bounds_area": 1331.989966,
         "id": "mask-0000",
         "source": "reserved_bounds"
       }
@@ -149,11 +204,11 @@
     "generic_path_count": 1,
     "group_count": 0,
     "negative_mask_candidate_count": 0,
-    "node_count": 15,
-    "parameter_count": 30,
+    "node_count": 8,
+    "parameter_count": 16,
     "raster_alpha_error": 0.0,
-    "raster_edge_error": 0.01459,
-    "raster_l1_error": 0.00957,
+    "raster_edge_error": 0.015435,
+    "raster_l1_error": 0.009961,
     "raster_size_match": true,
     "reserved_simple_shape_area": 0.0,
     "reserved_simple_shape_area_ratio": 0.0,
@@ -162,11 +217,11 @@
     "simple_shape_count": 0,
     "simple_shape_ratio": 0.0,
     "svg_alpha_error": 0.0,
-    "svg_raster_edge_error": 0.015159,
-    "svg_raster_l1_error": 0.011873,
+    "svg_raster_edge_error": 0.017163,
+    "svg_raster_l1_error": 0.01431,
     "svg_render_size_match": true,
-    "svg_vs_preview_edge_error": 0.013174,
-    "svg_vs_preview_l1_error": 0.009319
+    "svg_vs_preview_edge_error": 0.012606,
+    "svg_vs_preview_l1_error": 0.008941
   },
   "schema_version": 1,
   "width": 64

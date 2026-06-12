@@ -156,7 +156,15 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
             (float(point["x"]), float(point["y"]))
             for point in anchor["path"].get("points", [])
         ]
-        if len(points) >= 3:
+        if len(points) < 3:
+            return
+        controls = anchor["path"].get("controls")
+        if controls:
+            draw.polygon(
+                _sampled_closed_bezier(points, controls),
+                fill=color,
+            )
+        else:
             draw.polygon(_sampled_closed_catmull_rom(points), fill=color)
         return
     if kind in {"rect", "rounded_rect", "quad"} and "quad" in anchor:
@@ -166,6 +174,40 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         ]
         if len(points) >= 3:
             draw.polygon(points, fill=color)
+
+
+def _sampled_closed_bezier(
+    points: list[tuple[float, float]],
+    controls: list[list[dict[str, Any]]],
+) -> list[tuple[float, float]]:
+    """Sample the same fitted closed Bezier path the SVG export emits."""
+
+    sampled: list[tuple[float, float]] = []
+    count = len(points)
+    for index in range(count):
+        x0, y0 = points[index]
+        x3, y3 = points[(index + 1) % count]
+        control1, control2 = controls[index]
+        x1 = float(control1["x"])
+        y1 = float(control1["y"])
+        x2 = float(control2["x"])
+        y2 = float(control2["y"])
+        length = (
+            ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5
+            + ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+            + ((x3 - x2) ** 2 + (y3 - y2) ** 2) ** 0.5
+        )
+        steps = max(4, ceil(length))
+        for step in range(steps):
+            t = step / steps
+            u = 1 - t
+            sampled.append(
+                (
+                    u**3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t**3 * x3,
+                    u**3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t**3 * y3,
+                )
+            )
+    return sampled
 
 
 def _sampled_closed_catmull_rom(

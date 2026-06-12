@@ -4216,8 +4216,34 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
 def _anchor_visual_bounds(anchor: dict[str, Any]) -> tuple[float, float, float, float]:
     path = anchor.get("path")
     if isinstance(path, dict) and path.get("points"):
-        xs = [float(point.get("x", 0.0)) for point in path["points"]]
-        ys = [float(point.get("y", 0.0)) for point in path["points"]]
+        xs: list[float] = []
+        ys: list[float] = []
+        points = path["points"]
+        controls = path.get("controls")
+        count = len(points)
+        for index in range(count):
+            p0 = points[index]
+            p3 = points[(index + 1) % count]
+            if controls:
+                c1, c2 = controls[index]
+                for step in range(12):
+                    t = step / 12
+                    u = 1 - t
+                    xs.append(
+                        u**3 * float(p0["x"])
+                        + 3 * u * u * t * float(c1["x"])
+                        + 3 * u * t * t * float(c2["x"])
+                        + t**3 * float(p3["x"])
+                    )
+                    ys.append(
+                        u**3 * float(p0["y"])
+                        + 3 * u * u * t * float(c1["y"])
+                        + 3 * u * t * t * float(c2["y"])
+                        + t**3 * float(p3["y"])
+                    )
+            else:
+                xs.append(float(p0["x"]))
+                ys.append(float(p0["y"]))
         return min(xs), min(ys), max(xs), max(ys)
     ellipse = anchor.get("ellipse")
     if isinstance(ellipse, dict):

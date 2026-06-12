@@ -102,11 +102,18 @@ class QuadAnchor:
 
 @dataclass(frozen=True)
 class PathAnchor:
-    """Controlled organic fallback outline with a bounded node count."""
+    """Controlled organic fallback outline with a bounded node count.
+
+    When ``controls`` is present it holds one cubic Bezier control pair per
+    segment (segment ``i`` runs from ``points[i]`` to ``points[(i+1) % n]``)
+    produced by a least-squares fit; otherwise consumers derive a smooth
+    closed Catmull-Rom curve through ``points``.
+    """
 
     points: tuple[Point, ...]
     closed: bool = True
     fallback_reason: str = "organic_boundary_fit"
+    controls: tuple[tuple[Point, Point], ...] | None = None
 
 
 @dataclass(frozen=True)
