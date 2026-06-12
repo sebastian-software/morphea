@@ -7,9 +7,9 @@ counts, expectation outcomes, bounded configs, and metrics.
 Regenerate the current baseline:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
-  -o /private/tmp/curve-curated-report.json \
-  --output-dir /private/tmp/curve-curated-runs \
+PYTHONPATH=src python3 -m morphea.cli curated-check docs/real-images/suite.json \
+  -o /private/tmp/morphea-curated-report.json \
+  --output-dir /private/tmp/morphea-curated-runs \
   --snapshot docs/real-images/baselines/current-curated-snapshot.json \
   --run
 ```
@@ -17,22 +17,22 @@ PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
 Compare a new snapshot against the checked-in baseline:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli compare-snapshots \
+PYTHONPATH=src python3 -m morphea.cli compare-snapshots \
   docs/real-images/baselines/current-curated-snapshot.json \
-  /private/tmp/curve-curated-snapshot.json \
-  -o /private/tmp/curve-curated-comparison.json \
-  --markdown /private/tmp/curve-curated-comparison.md
+  /private/tmp/morphea-curated-snapshot.json \
+  -o /private/tmp/morphea-curated-comparison.json \
+  --markdown /private/tmp/morphea-curated-comparison.md
 ```
 
 Generate a snapshot from a git ref without checking out the current working
 tree:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli snapshot-git-ref HEAD \
+PYTHONPATH=src python3 -m morphea.cli snapshot-git-ref HEAD \
   --suite docs/real-images/suite.json \
-  -o /private/tmp/curve-head-curated-snapshot.json \
-  --report /private/tmp/curve-head-curated-report.json \
-  --output-dir /private/tmp/curve-head-curated-runs
+  -o /private/tmp/morphea-head-curated-snapshot.json \
+  --report /private/tmp/morphea-head-curated-report.json \
+  --output-dir /private/tmp/morphea-head-curated-runs
 ```
 
 Update the checked-in snapshot only when a detector behavior change is

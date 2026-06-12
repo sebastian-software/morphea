@@ -11,9 +11,9 @@ from pathlib import Path
 
 from PIL import Image
 
-from curve.diagnostics import diagnostic_stage_counts
-from curve.rendering import raster_fidelity_metrics, render_manifest_image
-from curve.scene import Scene, SvgStyle
+from morphea.diagnostics import diagnostic_stage_counts
+from morphea.rendering import raster_fidelity_metrics, render_manifest_image
+from morphea.scene import Scene, SvgStyle
 
 
 @dataclass(frozen=True)
@@ -179,7 +179,7 @@ def render_markdown_report(
         scoring = {}
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
-        "# Curve Vectorize Report",
+        "# Morphēa Vectorize Report",
         "",
         "## Summary",
         "",
@@ -267,7 +267,7 @@ def render_html_report(
         '<html lang="en">',
         "<head>",
         '  <meta charset="utf-8">',
-        "  <title>Curve Vectorize Report</title>",
+        "  <title>Morphēa Vectorize Report</title>",
         "  <style>",
         "    body{font-family:system-ui,sans-serif;margin:32px;max-width:980px}",
         "    table{border-collapse:collapse;width:100%;margin:16px 0}",
@@ -278,7 +278,7 @@ def render_html_report(
         "  </style>",
         "</head>",
         "<body>",
-        "  <h1>Curve Vectorize Report</h1>",
+        "  <h1>Morphēa Vectorize Report</h1>",
         "  <h2>Summary</h2>",
         "  <ul>",
         f"    <li>Size: {escape(str(manifest.get('width')))} x {escape(str(manifest.get('height')))}</li>",

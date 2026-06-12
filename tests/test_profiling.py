@@ -7,8 +7,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.profiling import profile_curated_suite, profile_vectorize
+from morphea.cli import main
+from morphea.profiling import profile_curated_suite, profile_vectorize
 
 
 class ProfilingTests(unittest.TestCase):

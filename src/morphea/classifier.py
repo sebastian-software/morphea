@@ -9,7 +9,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from curve.anchors import (
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,
@@ -18,8 +18,8 @@ from curve.anchors import (
     StrokeAnchor,
     semantic_anchor_score,
 )
-from curve.masks import MaskComponent
-from curve.token_transformer import token_transformer_embedding
+from morphea.masks import MaskComponent
+from morphea.token_transformer import token_transformer_embedding
 
 
 ClassifierModel = dict[str, object]
@@ -596,7 +596,7 @@ def evaluate_classifier_model(
 
 def render_classifier_evaluation_markdown(report: dict[str, object]) -> str:
     lines = [
-        "# Curve Classifier Evaluation",
+        "# Morphēa Classifier Evaluation",
         "",
         f"- Model: `{report.get('model')}`",
         f"- Dataset: `{report.get('dataset')}`",

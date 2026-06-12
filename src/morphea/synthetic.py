@@ -10,7 +10,7 @@ from random import Random
 
 from PIL import Image, ImageDraw
 
-from curve.anchors import (
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,
@@ -18,7 +18,7 @@ from curve.anchors import (
     QuadAnchor,
     StrokeAnchor,
 )
-from curve.scene import Scene
+from morphea.scene import Scene
 
 
 PALETTE = ("#003366", "#c99700", "#dd2222", "#e7d8ca")

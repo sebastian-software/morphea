@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Iterable
 
-from curve.anchors import Point
+from morphea.anchors import Point
 
 
 Pixel = tuple[int, int]

@@ -10,10 +10,10 @@ from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.classifier import examples_from_dataset
-from curve.dataset import generate_synthetic_dataset
-from curve.self_learning import (
+from morphea.cli import main
+from morphea.classifier import examples_from_dataset
+from morphea.dataset import generate_synthetic_dataset
+from morphea.self_learning import (
     apply_review_file,
     compare_retraining,
     create_review_file,
@@ -31,7 +31,7 @@ from curve.self_learning import (
     retrain_centroid_classifier,
     retrain_mlx_classifier,
 )
-from curve.mlx_classifier import MlxClassifierTrainingConfig
+from morphea.mlx_classifier import MlxClassifierTrainingConfig
 
 
 class SelfLearningTests(unittest.TestCase):
@@ -103,7 +103,7 @@ class SelfLearningTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Pseudo-Label Harvest", markdown)
+        self.assertIn("# Morphēa Pseudo-Label Harvest", markdown)
         self.assertIn("| `min_editability_score` | 0.8 |", markdown)
         self.assertIn("| `clean` | 0 | `circle` (perspective_grid) | 0.02 |", markdown)
         self.assertIn("| `noisy` | `too_many_run_diagnostics` | 2 |", markdown)
@@ -119,7 +119,7 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertTrue(output.exists())
             self.assertIn(
-                "# Curve Pseudo-Label Harvest",
+                "# Morphēa Pseudo-Label Harvest",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -308,7 +308,7 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["filters"]["min_editability_score"], 0.8)
             self.assertEqual(result["filters"]["max_raster_edge_error"], 0.5)
             self.assertIn(
-                "# Curve Pseudo-Label Harvest",
+                "# Morphēa Pseudo-Label Harvest",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -342,7 +342,7 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["filters"]["min_editability_score"], 0.8)
             self.assertEqual(result["filters"]["max_fragmentation_penalty"], 0.25)
             self.assertIn(
-                "# Curve Pseudo-Label Harvest",
+                "# Morphēa Pseudo-Label Harvest",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -378,7 +378,7 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["curated_checked_count"], 1)
             self.assertTrue(curated_report.exists())
             self.assertIn(
-                "Curve Pseudo-Label Harvest",
+                "Morphēa Pseudo-Label Harvest",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -454,7 +454,7 @@ class SelfLearningTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Review Queue", markdown)
+        self.assertIn("# Morphēa Review Queue", markdown)
         self.assertIn("- Source: `pseudo.json`", markdown)
         self.assertIn("- Issue counts: `bad_cutout: 1`", markdown)
         self.assertIn(
@@ -480,7 +480,7 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertTrue(output.exists())
             self.assertIn(
-                "# Curve Review Queue",
+                "# Morphēa Review Queue",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -576,7 +576,7 @@ class SelfLearningTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Apply Review", markdown)
+        self.assertIn("# Morphēa Apply Review", markdown)
         self.assertIn("- Accepted: 1", markdown)
         self.assertIn(
             "- Issue counts: `bad_cutout: 1, wrong_primitive_type: 1`",
@@ -617,7 +617,7 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertTrue(output.exists())
             self.assertIn(
-                "# Curve Apply Review",
+                "# Morphēa Apply Review",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -699,11 +699,11 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(accepted.read_text())
             self.assertEqual(result["accepted_count"], 1)
             self.assertIn(
-                "# Curve Review Queue",
+                "# Morphēa Review Queue",
                 markdown.read_text(encoding="utf-8"),
             )
             self.assertIn(
-                "# Curve Apply Review",
+                "# Morphēa Apply Review",
                 accepted_markdown.read_text(encoding="utf-8"),
             )
 
@@ -734,7 +734,7 @@ class SelfLearningTests(unittest.TestCase):
             data = json.loads(review.read_text(encoding="utf-8"))
             self.assertEqual(data["review_count"], 1)
             self.assertIn(
-                "# Curve Review Queue",
+                "# Morphēa Review Queue",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -775,7 +775,7 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(accepted.read_text(encoding="utf-8"))
             self.assertEqual(result["accepted_count"], 1)
             self.assertIn(
-                "# Curve Apply Review",
+                "# Morphēa Apply Review",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -961,7 +961,7 @@ class SelfLearningTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Training Comparison", markdown)
+        self.assertIn("# Morphēa Training Comparison", markdown)
         self.assertIn("- Status: `improved`", markdown)
         self.assertIn("| `val` | 0.5 | 0.6 | 0.1 |", markdown)
         self.assertIn("## Feature Importance Delta", markdown)
@@ -1045,7 +1045,7 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertTrue(output.exists())
             self.assertIn(
-                "# Curve Training Comparison",
+                "# Morphēa Training Comparison",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -1173,7 +1173,7 @@ class SelfLearningTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Training Gate", markdown)
+        self.assertIn("# Morphēa Training Gate", markdown)
         self.assertIn("- Decision: `reject`", markdown)
         self.assertIn("`worst_accuracy_delta_below_tolerance`", markdown)
 
@@ -1205,7 +1205,7 @@ class SelfLearningTests(unittest.TestCase):
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["decision"], "accept")
             self.assertIn(
-                "# Curve Training Gate",
+                "# Morphēa Training Gate",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -1311,7 +1311,7 @@ class SelfLearningTests(unittest.TestCase):
                 Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
                 return {"decision": "accept", "accepted": True, "reasons": []}
 
-            with patch("curve.self_learning.gate_training_comparison", accepted_gate):
+            with patch("morphea.self_learning.gate_training_comparison", accepted_gate):
                 result = run_self_learning_cycle(
                     base_dataset=base_dir / "dataset.json",
                     reviewed_labels=reviewed,
@@ -1392,7 +1392,7 @@ class SelfLearningTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Self-Learning Cycle", markdown)
+        self.assertIn("# Morphēa Self-Learning Cycle", markdown)
         self.assertIn("- Status: `skipped_retrain`", markdown)
         self.assertIn("| `gate` | `gate.json` |", markdown)
         self.assertIn("`comparison_status_mixed`", markdown)
@@ -1524,7 +1524,7 @@ class SelfLearningTests(unittest.TestCase):
             mlx_module.core = mlx_core
 
             with (
-                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
                 patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
             ):
                 model = retrain_mlx_classifier(

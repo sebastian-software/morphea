@@ -1,6 +1,6 @@
 import unittest
 
-from curve.diagnostics import diagnostic_stage, diagnostic_stage_counts
+from morphea.diagnostics import diagnostic_stage, diagnostic_stage_counts
 
 
 class DiagnosticStageTests(unittest.TestCase):

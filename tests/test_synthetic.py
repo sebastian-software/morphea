@@ -5,9 +5,9 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from curve.anchors import AnchorKind
-from curve.cli import main
-from curve.synthetic import generate_synthetic_sample
+from morphea.anchors import AnchorKind
+from morphea.cli import main
+from morphea.synthetic import generate_synthetic_sample
 
 
 class SyntheticGeneratorTests(unittest.TestCase):

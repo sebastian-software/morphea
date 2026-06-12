@@ -1,6 +1,6 @@
 # Config Sweeps
 
-`curve sweep` runs one input image through multiple bounded vectorize configs
+`morphea sweep` runs one input image through multiple bounded vectorize configs
 and writes comparable run directories.
 
 ## Schema
@@ -46,13 +46,13 @@ Supported config keys match the current `vectorize` runtime knobs:
 Run:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli sweep sweep.json -o runs/sweep
+PYTHONPATH=src python3 -m morphea.cli sweep sweep.json -o runs/sweep
 ```
 
 Optional Markdown comparison:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli sweep sweep.json -o runs/sweep --markdown runs/sweep.md
+PYTHONPATH=src python3 -m morphea.cli sweep sweep.json -o runs/sweep --markdown runs/sweep.md
 ```
 
 Output:

@@ -8,12 +8,12 @@ Accepted
 
 Raster-to-SVG systems can produce visually plausible output by layering many
 small path fragments. That is useful for resemblance, but it makes the SVG hard
-to inspect and edit. Curve is intended to explore a different quality target:
+to inspect and edit. Morphēa is intended to explore a different quality target:
 editable structure first.
 
 ## Decision
 
-Curve will optimize for semantic editability before pixel-perfect tracing.
+Morphēa will optimize for semantic editability before pixel-perfect tracing.
 Simple, meaningful primitives should beat fragmented path approximations when
 visual fidelity remains acceptable.
 

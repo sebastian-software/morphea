@@ -5,8 +5,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from curve.images import scene_from_flat_color_image
-from curve.runs import (
+from morphea.images import scene_from_flat_color_image
+from morphea.runs import (
     create_run_dir,
     render_html_report,
     render_markdown_report,
@@ -65,7 +65,7 @@ class RunWriterTests(unittest.TestCase):
                 run.report_path.read_text(encoding="utf-8"),
             )
             self.assertIn(
-                "Curve Vectorize Report",
+                "Morphēa Vectorize Report",
                 run.html_report_path.read_text(encoding="utf-8"),
             )
 
@@ -92,8 +92,8 @@ class RunWriterTests(unittest.TestCase):
             )
 
             svg = run.svg_path.read_text(encoding="utf-8")
-            self.assertIn('<mask id="curve-cutout-mask"', svg)
-            self.assertIn('mask="url(#curve-cutout-mask)"', svg)
+            self.assertIn('<mask id="morphea-cutout-mask"', svg)
+            self.assertIn('mask="url(#morphea-cutout-mask)"', svg)
             self.assertNotIn('stroke="#ffffff"', svg)
 
     def test_render_markdown_report_summarizes_anchor_types(self):
@@ -131,7 +131,7 @@ class RunWriterTests(unittest.TestCase):
             config={"command": "vectorize"},
         )
 
-        self.assertIn("# Curve Vectorize Report", report)
+        self.assertIn("# Morphēa Vectorize Report", report)
         self.assertIn("`circle`: 2", report)
         self.assertIn("- Layers: 1", report)
         self.assertIn("`filled_primitives`: 2", report)
@@ -184,7 +184,7 @@ class RunWriterTests(unittest.TestCase):
             config={"command": "vectorize"},
         )
 
-        self.assertIn("<h1>Curve Vectorize Report</h1>", report)
+        self.assertIn("<h1>Morphēa Vectorize Report</h1>", report)
         self.assertIn("<code>circle</code>", report)
         self.assertIn("<td>2</td>", report)
         self.assertIn("<code>filled_primitives</code>", report)

@@ -27,9 +27,9 @@ Observed via local inspection:
 Bounded run:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize \
+PYTHONPATH=src python3 -m morphea.cli vectorize \
   "/Users/sebastian/Downloads/ChatGPT Image 11. Juni 2026, 20_46_25.png" \
-  -o /private/tmp/curve-chatgpt-example.svg \
+  -o /private/tmp/morphea-chatgpt-example.svg \
   --color-tolerance 18 \
   --max-size 256 \
   --max-colors 10 \

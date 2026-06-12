@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from curve.synthetic import generate_synthetic_sample
+from morphea.synthetic import generate_synthetic_sample
 
 
 @dataclass(frozen=True)

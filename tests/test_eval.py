@@ -5,8 +5,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from curve.cli import main
-from curve.eval import evaluate_runs, render_eval_markdown, write_eval_summary
+from morphea.cli import main
+from morphea.eval import evaluate_runs, render_eval_markdown, write_eval_summary
 
 
 class EvalTests(unittest.TestCase):
@@ -44,7 +44,7 @@ class EvalTests(unittest.TestCase):
 
             self.assertTrue(output.exists())
             self.assertTrue(markdown.exists())
-            self.assertIn("# Curve Eval Summary", markdown.read_text())
+            self.assertIn("# Morphēa Eval Summary", markdown.read_text())
 
     def test_render_eval_markdown_lists_runs(self):
         markdown = render_eval_markdown(

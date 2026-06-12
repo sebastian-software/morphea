@@ -8,7 +8,7 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-from curve.classifier import (
+from morphea.classifier import (
     FEATURE_NAMES,
     RasterRankingExample,
     anchors_from_dataset,
@@ -30,11 +30,11 @@ from curve.classifier import (
     raster_ranking_examples_from_dataset,
     train_centroid_classifier,
 )
-from curve.cli import main
-from curve.dataset import generate_synthetic_dataset
-from curve.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
-from curve.masks import BinaryMask, connected_components
-from curve.mlx_classifier import (
+from morphea.cli import main
+from morphea.dataset import generate_synthetic_dataset
+from morphea.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
+from morphea.masks import BinaryMask, connected_components
+from morphea.mlx_classifier import (
     MLX_MODEL_TYPE,
     MlxClassifierTrainingConfig,
     mlx_classifier_runtime_status,
@@ -353,7 +353,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 test_count=1,
             )
 
-            with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+            with patch("morphea.mlx_classifier.is_mlx_available", return_value=False):
                 with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
                     train_mlx_transformer_classifier(
                         Path(temp_dir) / "dataset.json",
@@ -436,9 +436,9 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 )
 
     def test_mlx_classifier_runtime_status_reports_package_state(self):
-        with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+        with patch("morphea.mlx_classifier.is_mlx_available", return_value=False):
             unavailable = mlx_classifier_runtime_status()
-        with patch("curve.mlx_classifier.is_mlx_available", return_value=True):
+        with patch("morphea.mlx_classifier.is_mlx_available", return_value=True):
             available = mlx_classifier_runtime_status()
 
         self.assertEqual(unavailable["status"], "not_installed")
@@ -476,7 +476,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
             model_path = Path(temp_dir) / "mlx-model.json"
 
-            with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+            with patch("morphea.mlx_classifier.is_mlx_available", return_value=False):
                 model = train_mlx_transformer_classifier(
                     Path(temp_dir) / "dataset.json",
                     output=model_path,
@@ -531,7 +531,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+            with patch("morphea.mlx_classifier.is_mlx_available", return_value=False):
                 with redirect_stdout(StringIO()):
                     main(["train-mlx", "--config", str(config)])
 
@@ -558,7 +558,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             mlx_module.core = mlx_core
 
             with (
-                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
                 patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
             ):
                 model = train_mlx_transformer_classifier(
@@ -652,7 +652,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
 
             with (
-                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
                 patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
             ):
                 train_mlx_transformer_classifier(
@@ -1275,7 +1275,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertIn("test", report["ranking_evaluation"])
             self.assertFalse(report["uses_raster_tokens"])
             markdown = markdown_path.read_text(encoding="utf-8")
-            self.assertIn("# Curve Classifier Evaluation", markdown)
+            self.assertIn("# Morphēa Classifier Evaluation", markdown)
             self.assertIn("- Direct raster tokens: `False`", markdown)
             self.assertIn("- Ranking raster tokens: `False`", markdown)
             self.assertIn("## Feature Importance", markdown)
@@ -1300,7 +1300,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             mlx_core.__version__ = "test-mlx"
             mlx_module.core = mlx_core
             with (
-                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
                 patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
             ):
                 train_mlx_transformer_classifier(

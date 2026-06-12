@@ -7,8 +7,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.curated import (
+from morphea.cli import main
+from morphea.curated import (
     check_curated_suite,
     load_curated_suite,
     render_curated_markdown,
@@ -191,7 +191,7 @@ class CuratedSuiteTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Curated Check", markdown)
+        self.assertIn("# Morphēa Curated Check", markdown)
         self.assertIn("| `simple-circle` | `checked` | `false` | 1 | 0 | `editable-enough` |", markdown)
         self.assertIn("## simple-circle", markdown)
         self.assertIn("`circle`=1", markdown)
@@ -393,7 +393,7 @@ class CuratedSuiteTests(unittest.TestCase):
             snapshot_report = json.loads(snapshot.read_text(encoding="utf-8"))
             self.assertEqual(snapshot_report["cases"][0]["status"], "missing_source")
             self.assertIn(
-                "# Curve Curated Check",
+                "# Morphēa Curated Check",
                 markdown.read_text(encoding="utf-8"),
             )
 
@@ -447,7 +447,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 1,
             )
             self.assertTrue(snapshot.exists())
-            self.assertIn("# Curve Curated Check", markdown.read_text(encoding="utf-8"))
+            self.assertIn("# Morphēa Curated Check", markdown.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Deterministic raster rendering for Curve manifests."""
+"""Deterministic raster rendering for Morphēa manifests."""
 
 from __future__ import annotations
 

@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from curve.status import collect_runtime_status, render_runtime_status_markdown
+from morphea.status import collect_runtime_status, render_runtime_status_markdown
 
 
 class RuntimeStatusTests(unittest.TestCase):
@@ -13,9 +13,9 @@ class RuntimeStatusTests(unittest.TestCase):
             output = Path(temp_dir) / "status.json"
 
             with (
-                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
                 patch(
-                    "curve.status.mlx_classifier_runtime_status",
+                    "morphea.status.mlx_classifier_runtime_status",
                     return_value={
                         "backend": "mlx",
                         "backend_available": False,
@@ -24,7 +24,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     },
                 ),
                 patch(
-                    "curve.status.available_refinement_backends",
+                    "morphea.status.available_refinement_backends",
                     return_value={
                         "local": ["local_metric"],
                         "optional": ["diffvg"],
@@ -78,9 +78,9 @@ class RuntimeStatusTests(unittest.TestCase):
             model_path.write_text(json.dumps({"proposals": []}), encoding="utf-8")
 
             with (
-                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
                 patch(
-                    "curve.status.mlx_classifier_runtime_status",
+                    "morphea.status.mlx_classifier_runtime_status",
                     return_value={
                         "backend": "mlx",
                         "backend_available": True,
@@ -89,7 +89,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     },
                 ),
                 patch(
-                    "curve.status.available_refinement_backends",
+                    "morphea.status.available_refinement_backends",
                     return_value={
                         "local": ["local_metric"],
                         "optional": [],
@@ -170,7 +170,7 @@ class RuntimeStatusTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Runtime Status", markdown)
+        self.assertIn("# Morphēa Runtime Status", markdown)
         self.assertIn("`flat_color`", markdown)
         self.assertIn("segmenter/mlx_sam: not_configured", markdown)
         self.assertIn(

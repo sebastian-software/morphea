@@ -1,11 +1,11 @@
-"""Evaluation helpers for Curve run directories."""
+"""Evaluation helpers for Morphēa run directories."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from curve.diagnostics import diagnostic_stage_counts
+from morphea.diagnostics import diagnostic_stage_counts
 
 
 def evaluate_runs(run_root: str | Path) -> dict[str, object]:
@@ -66,7 +66,7 @@ def write_eval_summary(
 
 def render_eval_markdown(summary: dict[str, object]) -> str:
     lines = [
-        "# Curve Eval Summary",
+        "# Morphēa Eval Summary",
         "",
         f"- Runs: {summary.get('run_count', 0)}",
         "",

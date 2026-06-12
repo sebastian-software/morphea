@@ -12,7 +12,7 @@ environment.
 
 ## Decision
 
-Curve will use a local MLX-first approach. MLX SAM is the intended primary
+Morphēa will use a local MLX-first approach. MLX SAM is the intended primary
 segmenter, while classical segmentation and heuristics remain available as
 fallbacks and baselines.
 

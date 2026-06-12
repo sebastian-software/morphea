@@ -9,7 +9,7 @@ from time import monotonic
 
 from PIL import Image
 
-from curve.anchors import (
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,
@@ -19,20 +19,20 @@ from curve.anchors import (
     StrokeAnchor,
     choose_best_anchor,
 )
-from curve.classifier import (
+from morphea.classifier import (
     classifier_crop_size,
     classifier_uses_raster_tokens,
     component_raster_tokens,
     load_classifier_model,
 )
-from curve.detection import (
+from morphea.detection import (
     AnchorThresholdConfig,
     detect_cutout_strokes_for_component,
     detect_primitive_anchors,
     primitive_candidates_for_component,
 )
-from curve.masks import BinaryMask, MaskComponent, connected_components
-from curve.scene import Scene, merge_auto_mergeable_same_color_fragments
+from morphea.masks import BinaryMask, MaskComponent, connected_components
+from morphea.scene import Scene, merge_auto_mergeable_same_color_fragments
 
 
 Rgb = tuple[int, int, int]

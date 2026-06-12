@@ -12,7 +12,7 @@ produces SVGs that are harder to edit and often visually less clean.
 
 ## Decision
 
-Curve will represent strokes as first-class scene primitives with centerline,
+Morphēa will represent strokes as first-class scene primitives with centerline,
 width, cap, join, color, confidence, and source segment metadata.
 
 ## Consequences

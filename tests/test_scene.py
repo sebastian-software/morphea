@@ -1,7 +1,7 @@
 import unittest
 
-from curve.masks import BinaryMask
-from curve.anchors import (
+from morphea.masks import BinaryMask
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,
@@ -9,7 +9,7 @@ from curve.anchors import (
     QuadAnchor,
     StrokeAnchor,
 )
-from curve.scene import (
+from morphea.scene import (
     SCENE_MANIFEST_SCHEMA_VERSION,
     Scene,
     SvgStyle,
@@ -409,8 +409,8 @@ class SceneExportTests(unittest.TestCase):
             SvgStyle(cutout_strategy="negative_mask")
         )
 
-        self.assertIn('<mask id="curve-cutout-mask"', svg)
-        self.assertIn('mask="url(#curve-cutout-mask)"', svg)
+        self.assertIn('<mask id="morphea-cutout-mask"', svg)
+        self.assertIn('mask="url(#morphea-cutout-mask)"', svg)
         self.assertIn('stroke="black"', svg)
         self.assertIn('fill="#003366"', svg)
         self.assertNotIn('stroke="#ffffff"', svg)

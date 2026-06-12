@@ -4,8 +4,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from curve.anchors import AnchorKind
-from curve.images import flat_color_masks_from_image, scene_from_flat_color_image
+from morphea.anchors import AnchorKind
+from morphea.images import flat_color_masks_from_image, scene_from_flat_color_image
 
 
 class FlatColorImageTests(unittest.TestCase):

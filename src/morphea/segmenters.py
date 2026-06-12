@@ -12,10 +12,10 @@ from pathlib import Path
 from time import perf_counter
 from typing import Protocol
 
-from curve.anchors import choose_best_anchor, quality_metric_error
-from curve.detection import primitive_candidates_for_component
-from curve.images import ColorMask, flat_color_masks_from_image
-from curve.masks import MaskComponent, connected_components
+from morphea.anchors import choose_best_anchor, quality_metric_error
+from morphea.detection import primitive_candidates_for_component
+from morphea.images import ColorMask, flat_color_masks_from_image
+from morphea.masks import MaskComponent, connected_components
 
 
 @dataclass(frozen=True)
@@ -378,7 +378,7 @@ def render_segment_proposal_markdown(manifest: dict[str, object]) -> str:
     if not isinstance(backend, dict):
         backend = {}
     lines = [
-        "# Curve Segment Proposals",
+        "# Morphēa Segment Proposals",
         "",
         f"- Input: `{manifest.get('input', 'unknown')}`",
         f"- Source: `{backend.get('source', 'unknown')}`",
@@ -514,7 +514,7 @@ def _mlx_sam_package_proposals(
     checkpoint = Path(str(segmenter.model_path)).expanduser()
     predictor = SAM2VideoPredictor(checkpoint=checkpoint)
     proposals: list[SegmentProposal] = []
-    with tempfile.TemporaryDirectory(prefix="curve-mlx-sam-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="morphea-mlx-sam-") as temp_dir:
         frame_dir = Path(temp_dir)
         frame_path = frame_dir / "frame_000.png"
         shutil.copy2(source_path, frame_path)

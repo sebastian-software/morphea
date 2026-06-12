@@ -11,7 +11,7 @@ from time import monotonic
 
 from PIL import Image
 
-from curve.rendering import raster_fidelity_metrics, render_manifest_image
+from morphea.rendering import raster_fidelity_metrics, render_manifest_image
 
 
 LOCAL_REFINEMENT_BACKEND = "local_metric"
@@ -228,7 +228,7 @@ def render_refinement_gate_markdown(result: dict[str, object]) -> str:
     if not isinstance(reasons, list):
         reasons = []
     lines = [
-        "# Curve Refinement Gate",
+        "# Morphēa Refinement Gate",
         "",
         f"- Decision: `{result.get('decision', 'n/a')}`",
         f"- Accepted: `{result.get('accepted', False)}`",

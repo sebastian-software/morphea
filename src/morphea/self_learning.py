@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from curve.classifier import (
+from morphea.classifier import (
     FEATURE_NAMES,
     TrainingExample,
     anchors_from_dataset,
@@ -15,8 +15,8 @@ from curve.classifier import (
     examples_from_dataset,
     feature_importance_from_centroids,
 )
-from curve.curated import check_curated_suite
-from curve.mlx_classifier import (
+from morphea.curated import check_curated_suite
+from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
 )
@@ -241,7 +241,7 @@ def render_harvest_markdown(report: dict[str, object]) -> str:
         rejected_runs = []
 
     lines = [
-        "# Curve Pseudo-Label Harvest",
+        "# Morphēa Pseudo-Label Harvest",
         "",
         f"- Pseudo-labels: {_fmt_metric(report.get('pseudo_label_count'))}",
         f"- Rejected runs: {_fmt_metric(len(rejected_runs))}",
@@ -555,7 +555,7 @@ def render_training_gate_markdown(result: dict[str, object]) -> str:
     if not isinstance(reasons, list):
         reasons = []
     lines = [
-        "# Curve Training Gate",
+        "# Morphēa Training Gate",
         "",
         f"- Decision: `{result.get('decision', 'n/a')}`",
         f"- Accepted: `{result.get('accepted', False)}`",
@@ -782,7 +782,7 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
     if not isinstance(pseudo_dataset, dict):
         pseudo_dataset = {}
     lines = [
-        "# Curve Self-Learning Cycle",
+        "# Morphēa Self-Learning Cycle",
         "",
         f"- Status: `{result.get('status', 'n/a')}`",
         f"- Gate decision: `{gate.get('decision', 'n/a')}`",
@@ -1175,7 +1175,7 @@ def render_review_markdown(review: dict[str, object]) -> str:
     if not isinstance(items, list):
         items = []
     lines = [
-        "# Curve Review Queue",
+        "# Morphēa Review Queue",
         "",
         f"- Source: `{review.get('source', 'n/a')}`",
         f"- Items: {_fmt_metric(review.get('review_count'))}",
@@ -1274,7 +1274,7 @@ def render_apply_review_markdown(result: dict[str, object]) -> str:
         pending = []
 
     lines = [
-        "# Curve Apply Review",
+        "# Morphēa Apply Review",
         "",
         f"- Source review: `{result.get('source_review', 'n/a')}`",
         f"- Accepted: {_fmt_metric(result.get('accepted_count'))}",
@@ -1504,7 +1504,7 @@ def render_training_comparison_markdown(report: dict[str, object]) -> str:
     if not isinstance(summary, dict):
         summary = {}
     lines = [
-        "# Curve Training Comparison",
+        "# Morphēa Training Comparison",
         "",
         f"- Base dataset: `{report.get('base_dataset')}`",
         f"- Pseudo dataset: `{report.get('pseudo_dataset')}`",

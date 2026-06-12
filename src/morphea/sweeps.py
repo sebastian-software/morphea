@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from curve.diagnostics import diagnostic_stage_counts
-from curve.images import scene_from_flat_color_image
-from curve.runs import write_vectorize_run
+from morphea.diagnostics import diagnostic_stage_counts
+from morphea.images import scene_from_flat_color_image
+from morphea.runs import write_vectorize_run
 
 
 SWEEP_SCHEMA_VERSION = 1
@@ -167,7 +167,7 @@ def render_sweep_markdown(summary: dict[str, Any]) -> str:
     runs = list(summary.get("runs", []))
     ranked = _ranked_runs(runs)
     lines = [
-        "# Curve Sweep Summary",
+        "# Morphēa Sweep Summary",
         "",
         f"- Runs: {summary.get('run_count', len(runs))}",
         f"- Input: `{summary.get('input', '')}`",

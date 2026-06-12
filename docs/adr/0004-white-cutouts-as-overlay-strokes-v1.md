@@ -11,7 +11,7 @@ can be modeled as masks, holes, white shapes, or white strokes.
 
 ## Decision
 
-In v1, Curve will model cut-out-looking white lines as editable white overlay
+In v1, Morphēa will model cut-out-looking white lines as editable white overlay
 strokes.
 
 ## Consequences

@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.segmenters import (
+from morphea.cli import main
+from morphea.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
     SegmentProposal,
@@ -200,13 +200,13 @@ class SegmenterTests(unittest.TestCase):
 
         markdown = render_segment_proposal_markdown(manifest)
 
-        self.assertIn("# Curve Segment Proposals", markdown)
+        self.assertIn("# Morphēa Segment Proposals", markdown)
         self.assertIn("- Reserved anchors: `2`", markdown)
         self.assertIn("`rect`", markdown)
         self.assertIn("simple_shape_anchor", markdown)
 
     def test_mlx_sam_segmenter_reports_not_configured(self):
-        with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+        with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
                 MlxSamSegmenter().propose("missing.png")
 
@@ -215,7 +215,7 @@ class SegmenterTests(unittest.TestCase):
             model_path = Path(temp_dir) / "sam.mlx"
             model_path.write_text("placeholder", encoding="utf-8")
 
-            with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
+            with patch("morphea.segmenters.is_mlx_runtime_available", return_value=True):
                 missing_model = mlx_sam_runtime_status(
                     MlxSamSegmenter(model_path=str(model_path.with_name("missing.mlx")))
                 )
@@ -243,9 +243,9 @@ class SegmenterTests(unittest.TestCase):
             model_path.write_text("placeholder", encoding="utf-8")
 
             with (
-                patch("curve.segmenters.is_mlx_runtime_available", return_value=True),
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=True),
                 patch(
-                    "curve.segmenters.is_mlx_sam_package_available",
+                    "morphea.segmenters.is_mlx_sam_package_available",
                     return_value=True,
                 ),
             ):
@@ -262,7 +262,7 @@ class SegmenterTests(unittest.TestCase):
             )
 
     def test_mlx_sam_runtime_status_requires_model_configuration(self):
-        with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
+        with patch("morphea.segmenters.is_mlx_runtime_available", return_value=True):
             status = mlx_sam_runtime_status(MlxSamSegmenter())
 
         self.assertEqual(status["status"], "not_configured")
@@ -278,7 +278,7 @@ class SegmenterTests(unittest.TestCase):
             model_path = Path(temp_dir) / "sam.mlx"
             model_path.write_text("placeholder", encoding="utf-8")
 
-            with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
+            with patch("morphea.segmenters.is_mlx_runtime_available", return_value=True):
                 with self.assertRaisesRegex(RuntimeError, "status=adapter_pending"):
                     MlxSamSegmenter(model_path=str(model_path)).propose("input.png")
 
@@ -287,7 +287,7 @@ class SegmenterTests(unittest.TestCase):
             model_path = Path(temp_dir) / "sam-proposals.json"
             model_path.write_text(json.dumps({"proposals": []}), encoding="utf-8")
 
-            with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+            with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
                 status = mlx_sam_runtime_status(
                     MlxSamSegmenter(model_path=str(model_path))
                 )
@@ -412,7 +412,7 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(proposals, ())
 
     def test_mlx_sam_segmenter_reports_runtime_config_in_error(self):
-        with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+        with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):
                 MlxSamSegmenter(
                     model_path="models/sam.mlx",
@@ -422,7 +422,7 @@ class SegmenterTests(unittest.TestCase):
 
     def test_segmenter_backend_status_reports_availability(self):
         flat = segmenter_backend_status(FlatColorSegmenter())
-        with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+        with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
             mlx = segmenter_backend_status(
                 MlxSamSegmenter(model_path="models/sam.mlx", max_masks=12)
             )
@@ -497,7 +497,7 @@ class SegmenterTests(unittest.TestCase):
             self.assertIsNone(manifest["proposals"][0]["anchor_kind"])
             self.assertFalse(manifest["proposals"][0]["anchor_reserved"])
             report = markdown.read_text(encoding="utf-8")
-            self.assertIn("# Curve Segment Proposals", report)
+            self.assertIn("# Morphēa Segment Proposals", report)
             self.assertIn("- Reserved anchors: `0`", report)
 
     def test_segment_cli_reads_artifact_paths_from_config(self):
@@ -662,7 +662,7 @@ class SegmenterTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+            with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
                 with redirect_stdout(StringIO()):
                     main(["segment", "--config", str(config)])
 

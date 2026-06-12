@@ -7,8 +7,8 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-from curve.cli import main
-from curve.comparison import (
+from morphea.cli import main
+from morphea.comparison import (
     compare_git_snapshots,
     compare_segment_manifests,
     compare_snapshots,
@@ -256,7 +256,7 @@ class SnapshotComparisonTests(unittest.TestCase):
             self.assertEqual(result["added_group_ids"], ["proposal-group-0000"])
             self.assertTrue(output.exists())
             self.assertIn(
-                "Curve Segment Manifest Comparison",
+                "Morphēa Segment Manifest Comparison",
                 markdown.read_text(encoding="utf-8"),
             )
             self.assertIn(
@@ -506,7 +506,7 @@ class SnapshotComparisonTests(unittest.TestCase):
             self.assertEqual(result["item_kind"], "runs")
             self.assertTrue(output.exists())
             self.assertTrue(markdown.exists())
-            self.assertIn("Curve Snapshot Comparison", markdown.read_text())
+            self.assertIn("Morphēa Snapshot Comparison", markdown.read_text())
 
     def test_compare_snapshots_cli_writes_outputs(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -782,7 +782,7 @@ class SnapshotComparisonTests(unittest.TestCase):
                     report.write_text(json.dumps({"case_count": 1}), encoding="utf-8")
                 return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
-            with patch("curve.comparison.subprocess.run", side_effect=fake_run):
+            with patch("morphea.comparison.subprocess.run", side_effect=fake_run):
                 result = generate_git_curated_snapshot(
                     "HEAD",
                     suite=suite,
@@ -818,7 +818,7 @@ class SnapshotComparisonTests(unittest.TestCase):
             root = Path(temp_dir)
             output = root / "snapshot.json"
 
-            with patch("curve.cli.generate_git_curated_snapshot") as generate:
+            with patch("morphea.cli.generate_git_curated_snapshot") as generate:
                 generate.return_value = {
                     "git": {"ref": "HEAD"},
                     "case_count": 2,
@@ -870,7 +870,7 @@ class SnapshotComparisonTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch("curve.cli.generate_git_curated_snapshot") as generate:
+            with patch("morphea.cli.generate_git_curated_snapshot") as generate:
                 generate.return_value = {
                     "git": {"ref": "HEAD"},
                     "case_count": 2,
@@ -911,7 +911,7 @@ class SnapshotComparisonTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch("curve.cli.generate_git_curated_snapshot") as generate:
+            with patch("morphea.cli.generate_git_curated_snapshot") as generate:
                 generate.return_value = {
                     "git": {"ref": "HEAD"},
                     "case_count": 2,

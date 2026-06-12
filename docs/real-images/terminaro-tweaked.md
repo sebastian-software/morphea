@@ -27,9 +27,9 @@ Observed via local inspection:
 Updated M1 bounded run:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize \
+PYTHONPATH=src python3 -m morphea.cli vectorize \
   /Users/sebastian/Desktop/terminaro-tweaked.png \
-  -o /tmp/curve-terminaro-m1/terminaro.svg \
+  -o /tmp/morphea-terminaro-m1/terminaro.svg \
   --color-tolerance 18 \
   --max-size 256 \
   --max-colors 10 \
@@ -67,7 +67,7 @@ Curated suite entry:
 Suite command:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli curated-check docs/real-images/suite.json \
+PYTHONPATH=src python3 -m morphea.cli curated-check docs/real-images/suite.json \
   -o runs/curated-report.json \
   --output-dir runs/curated \
   --snapshot runs/curated-snapshot.json \
@@ -83,9 +83,9 @@ Earlier unbounded behavior:
 Temporary command attempted outside the repo:
 
 ```sh
-PYTHONPATH=src python3 -m curve.cli vectorize \
+PYTHONPATH=src python3 -m morphea.cli vectorize \
   /Users/sebastian/Desktop/terminaro-tweaked.png \
-  -o /tmp/curve-terminaro/terminaro.svg \
+  -o /tmp/morphea-terminaro/terminaro.svg \
   --color-tolerance 18 \
   --min-area 16
 ```

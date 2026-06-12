@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.dataset import generate_synthetic_dataset
-from curve.classifier import train_centroid_classifier
+from morphea.cli import main
+from morphea.dataset import generate_synthetic_dataset
+from morphea.classifier import train_centroid_classifier
 
 
 class CliTests(unittest.TestCase):
@@ -47,7 +47,7 @@ class CliTests(unittest.TestCase):
             markdown = Path(temp_dir) / "status.md"
 
             with (
-                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
                 redirect_stdout(StringIO()) as stdout,
             ):
                 main(["status", "-o", str(output), "--markdown", str(markdown)])
@@ -78,7 +78,7 @@ class CliTests(unittest.TestCase):
             )
 
             with (
-                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
                 redirect_stdout(StringIO()),
             ):
                 main(["status", "--config", str(config)])
@@ -108,7 +108,7 @@ class CliTests(unittest.TestCase):
             )
 
             with (
-                patch("curve.segmenters.is_mlx_runtime_available", return_value=False),
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
                 redirect_stdout(StringIO()),
             ):
                 main(
@@ -364,7 +364,7 @@ class CliTests(unittest.TestCase):
                 )
 
             svg = output_path.read_text(encoding="utf-8")
-            self.assertIn('<mask id="curve-cutout-mask"', svg)
+            self.assertIn('<mask id="morphea-cutout-mask"', svg)
 
     def test_vectorize_cutout_export_flag_overrides_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -396,7 +396,7 @@ class CliTests(unittest.TestCase):
                 )
 
             svg = output_path.read_text(encoding="utf-8")
-            self.assertNotIn('<mask id="curve-cutout-mask"', svg)
+            self.assertNotIn('<mask id="morphea-cutout-mask"', svg)
             self.assertIn('stroke="#ffffff"', svg)
 
     def test_vectorize_manifest_includes_cutout_strokes(self):
@@ -445,8 +445,8 @@ class CliTests(unittest.TestCase):
 
             svg = output_path.read_text(encoding="utf-8")
             manifest = json.loads(output_path.with_suffix(".json").read_text())
-            self.assertIn('<mask id="curve-cutout-mask"', svg)
-            self.assertIn('mask="url(#curve-cutout-mask)"', svg)
+            self.assertIn('<mask id="morphea-cutout-mask"', svg)
+            self.assertIn('mask="url(#morphea-cutout-mask)"', svg)
             self.assertIn('stroke="black"', svg)
             self.assertNotIn('stroke="#ffffff"', svg)
             self.assertEqual(
@@ -853,7 +853,7 @@ class CliTests(unittest.TestCase):
                 main(["report", str(manifest), "-o", str(output)])
 
             html = output.read_text(encoding="utf-8")
-            self.assertIn("<h1>Curve Vectorize Report</h1>", html)
+            self.assertIn("<h1>Morphēa Vectorize Report</h1>", html)
             self.assertIn("<code>quad</code>", html)
 
     def test_report_cli_accepts_command_config_file(self):
@@ -946,7 +946,7 @@ class CliTests(unittest.TestCase):
 
             self.assertFalse(config_output.exists())
             html = cli_output.read_text(encoding="utf-8")
-            self.assertIn("<h1>Curve Vectorize Report</h1>", html)
+            self.assertIn("<h1>Morphēa Vectorize Report</h1>", html)
             self.assertIn("<code>circle</code>", html)
 
 

@@ -1,22 +1,19 @@
-# Curve
+# Morphēa
 
-Curve is a local research prototype for semantic-first raster-to-SVG
-vectorization.
+Reveal the shape within.
 
-Most vectorizers optimize for visual similarity first. Curve optimizes for
-editable structure first: true circles should stay circles, strokes should stay
-strokes, perspective tiles should stay quads, and repeated structures should
+Morphēa reconstructs clean, editable SVG geometry from bitmap artwork. It is
+built for icons, logos, illustrations, UI captures, and technical graphics
+where the output should be something a person can inspect and edit.
+
+Most vectorizers trace pixels. Morphēa reconstructs form: circles stay circles,
+strokes stay strokes, perspective tiles stay quads, and repeated structures
 become coherent scene groups instead of noisy path fragments.
 
-The project is intentionally hybrid. Deterministic geometry establishes a
-trustworthy baseline; local ML, reviewed pseudo-labels, and refinement loops
-then help choose and improve semantic primitives without turning every image
-into dense, hard-to-edit paths.
+## Why Morphēa exists
 
-## Why Curve Exists
-
-AI-generated illustrations, logos, and UI screenshots often look flat enough
-to vectorize, but common tracing output is difficult to edit:
+AI-generated artwork and screenshots often look simple enough to vectorize, but
+common tracing output is hard to work with:
 
 - simple circles become lumpy Bezier paths;
 - clean strokes become filled blobs;
@@ -24,11 +21,11 @@ to vectorize, but common tracing output is difficult to edit:
 - perspective grids become many unrelated polygons;
 - antialiasing and palette drift create too many layers.
 
-Curve treats these as structure-recognition problems. Pixel fidelity still
-matters, but it is balanced against editability, primitive quality, layer
+Morphēa treats those cases as shape-reconstruction problems. Pixel fidelity
+still matters, but it is balanced against editability, primitive quality, layer
 fragmentation, and scene semantics.
 
-## Current Baseline
+## Current baseline
 
 The current baseline implements:
 
@@ -52,7 +49,7 @@ the longer roadmap.
 
 ## Quickstart
 
-Curve is a Python package with a CLI entrypoint. The project currently targets
+Morphēa is a Python package with a CLI entrypoint. The project currently targets
 Python 3.12 or newer.
 
 ```sh
@@ -68,27 +65,27 @@ python -m unittest discover -s tests
 Vectorize an image into editable SVG primitives:
 
 ```sh
-curve vectorize input.png -o output.svg
+morphea vectorize input.png -o output.svg
 ```
 
 For near-flat or antialiased images, group close colors before component
 detection:
 
 ```sh
-curve vectorize input.png -o output.svg --color-tolerance 18
+morphea vectorize input.png -o output.svg --color-tolerance 18
 ```
 
 Write a full run directory with input copy, SVG, preview, manifest, config, and
 reports:
 
 ```sh
-curve vectorize input.png -o output.svg --run-dir runs
+morphea vectorize input.png -o output.svg --run-dir runs
 ```
 
 Run the curated real-image suite metadata and bounded local cases:
 
 ```sh
-curve curated-check docs/real-images/suite.json \
+morphea curated-check docs/real-images/suite.json \
   -o runs/curated-report.json \
   --output-dir runs/curated \
   --run
@@ -97,36 +94,39 @@ curve curated-check docs/real-images/suite.json \
 Profile the curated suite:
 
 ```sh
-curve profile-curated docs/real-images/suite.json \
+morphea profile-curated docs/real-images/suite.json \
   -o runs/curated-profile.json \
   --markdown runs/curated-profile.md \
   --repeats 3
 ```
 
-## Common Workflows
+The old `curve` command remains available as a compatibility alias during the
+rename. New docs and scripts should use `morphea`.
+
+## Common workflows
 
 Generate labeled synthetic samples:
 
 ```sh
-curve generate -o runs/synthetic --count 10 --seed 1
+morphea generate -o runs/synthetic --count 10 --seed 1
 ```
 
 Train the primitive-classifier baseline:
 
 ```sh
-curve train runs/synthetic/dataset.json -o runs/model.json
+morphea train runs/synthetic/dataset.json -o runs/model.json
 ```
 
 Use a trained classifier as an optional vectorize ranking prior:
 
 ```sh
-curve vectorize input.png -o output.svg --classifier-model runs/model.json
+morphea vectorize input.png -o output.svg --classifier-model runs/model.json
 ```
 
 Harvest high-confidence pseudo-labels from run manifests:
 
 ```sh
-curve harvest runs -o runs/pseudo-labels.json \
+morphea harvest runs -o runs/pseudo-labels.json \
   --min-editability-score 0.8 \
   --max-fragmentation-penalty 0.2
 ```
@@ -134,14 +134,14 @@ curve harvest runs -o runs/pseudo-labels.json \
 Create and apply a human review queue:
 
 ```sh
-curve review runs/pseudo-labels.json -o runs/review.json
-curve apply-review runs/review.json -o runs/accepted-labels.json
+morphea review runs/pseudo-labels.json -o runs/review.json
+morphea apply-review runs/review.json -o runs/accepted-labels.json
 ```
 
 Run a reviewed-label self-learning cycle:
 
 ```sh
-curve self-learn runs/synthetic/dataset.json \
+morphea self-learn runs/synthetic/dataset.json \
   --reviewed-labels runs/accepted-labels.json \
   -o runs/self-learn
 ```
@@ -149,17 +149,19 @@ curve self-learn runs/synthetic/dataset.json \
 Run structure-preserving refinement:
 
 ```sh
-curve refine runs/manifest.json -o runs/refined-manifest.json
+morphea refine runs/manifest.json -o runs/refined-manifest.json
 ```
 
 Run a config-driven vectorize sweep:
 
 ```sh
-curve sweep sweep.json -o runs/sweep --markdown runs/sweep.md
+morphea sweep sweep.json -o runs/sweep --markdown runs/sweep.md
 ```
 
 ## Documentation
 
+- [Brand strategy](docs/brand-strategy.md): naming, positioning, voice, and
+  launch motions.
 - [Plan](docs/plan.md): semantic-first vectorization direction.
 - [Milestones](docs/milestones.md): implemented baselines and roadmap.
 - [Schema](docs/schema.md): manifests, reports, status files, and command
@@ -179,11 +181,11 @@ the repository.
 To enable deployment, set the repository Pages source to **GitHub Actions** in
 GitHub repository settings.
 
-## Development Notes
+## Development notes
 
 - Keep tests bounded. When running long checks locally, wrap subprocesses with
   an explicit timeout.
 - Do not use local real-image files as checked-in assets. Curated suite entries
   may point at local paths, but the files themselves stay outside git.
-- Curve prefers simple parametric shapes over generic paths unless fidelity
+- Morphēa prefers simple parametric shapes over generic paths unless fidelity
   would break materially.

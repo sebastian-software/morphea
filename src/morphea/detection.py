@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass
 from math import hypot, pi, sqrt
 
-from curve.anchors import (
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,
@@ -17,8 +17,8 @@ from curve.anchors import (
     choose_best_anchor,
     enrich_anchor_metrics,
 )
-from curve.classifier import ClassifierModel, classifier_prior_error
-from curve.masks import BinaryMask, MaskComponent, connected_components
+from morphea.classifier import ClassifierModel, classifier_prior_error
+from morphea.masks import BinaryMask, MaskComponent, connected_components
 
 
 @dataclass(frozen=True)

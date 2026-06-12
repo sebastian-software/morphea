@@ -181,7 +181,7 @@ def render_segment_manifest_comparison_markdown(
     comparison: dict[str, Any],
 ) -> str:
     lines = [
-        "# Curve Segment Manifest Comparison",
+        "# Morphēa Segment Manifest Comparison",
         "",
         f"- Before: `{comparison.get('before')}`",
         f"- After: `{comparison.get('after')}`",
@@ -279,7 +279,7 @@ def generate_git_curated_snapshot(
     if output_dir is not None:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory(prefix="curve-git-snapshot-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="morphea-git-snapshot-") as temp_dir:
         worktree = Path(temp_dir) / "worktree"
         _run_subprocess(
             ["git", "worktree", "add", "--detach", str(worktree), ref],
@@ -291,7 +291,7 @@ def generate_git_curated_snapshot(
             command = [
                 sys.executable,
                 "-m",
-                "curve.cli",
+                "morphea.cli",
                 "curated-check",
                 str(suite_arg),
                 "-o",
@@ -379,7 +379,7 @@ def render_snapshot_comparison(
 
 def render_snapshot_comparison_markdown(comparison: dict[str, Any]) -> str:
     lines = [
-        "# Curve Snapshot Comparison",
+        "# Morphēa Snapshot Comparison",
         "",
         f"- Before: `{comparison.get('before')}`",
         f"- After: `{comparison.get('after')}`",

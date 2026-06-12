@@ -1,7 +1,7 @@
 import unittest
 
-from curve.images import _bounded_connected_components
-from curve.masks import BinaryMask, connected_components
+from morphea.images import _bounded_connected_components
+from morphea.masks import BinaryMask, connected_components
 
 
 class MaskComponentHintTests(unittest.TestCase):

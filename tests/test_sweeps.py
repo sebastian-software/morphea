@@ -7,8 +7,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.sweeps import load_sweep_config, render_sweep_markdown, run_sweep
+from morphea.cli import main
+from morphea.sweeps import load_sweep_config, render_sweep_markdown, run_sweep
 
 
 class SweepTests(unittest.TestCase):
@@ -74,7 +74,7 @@ class SweepTests(unittest.TestCase):
 
             self.assertTrue(markdown.exists())
             text = markdown.read_text(encoding="utf-8")
-            self.assertIn("# Curve Sweep Summary", text)
+            self.assertIn("# Morphēa Sweep Summary", text)
             self.assertIn("| Rank | Run | Editability | Quality Max |", text)
             self.assertIn("Diagnostic Stages", text)
 
@@ -152,7 +152,7 @@ class SweepTests(unittest.TestCase):
             )
             self.assertEqual(summary["run_count"], 1)
             self.assertEqual(run_config["cutout_export"], "negative_mask")
-            self.assertIn('<mask id="curve-cutout-mask"', svg)
+            self.assertIn('<mask id="morphea-cutout-mask"', svg)
 
     def test_run_sweep_passes_background_to_vectorize_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:

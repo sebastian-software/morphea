@@ -5,8 +5,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from curve.cli import main
-from curve.dataset import generate_synthetic_dataset, split_counts
+from morphea.cli import main
+from morphea.dataset import generate_synthetic_dataset, split_counts
 
 
 class DatasetTests(unittest.TestCase):

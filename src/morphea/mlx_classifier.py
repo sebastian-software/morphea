@@ -9,7 +9,7 @@ from math import exp, log
 from pathlib import Path
 from typing import Any
 
-from curve.classifier import (
+from morphea.classifier import (
     FEATURE_NAMES,
     RasterTrainingExample,
     TrainingExample,
@@ -21,7 +21,7 @@ from curve.classifier import (
     feature_importance_from_centroids,
     raster_examples_from_dataset,
 )
-from curve.token_transformer import (
+from morphea.token_transformer import (
     TOKEN_PROJECTION_INPUT_NAMES,
     raster_grid_token_count,
     token_transformer_embedding,

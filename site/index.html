@@ -3,54 +3,56 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Curve - Semantic-first raster-to-SVG vectorization</title>
+    <title>Morphēa - Reveal the shape within</title>
     <meta
       name="description"
-      content="Curve is a local research prototype for semantic-first raster-to-SVG vectorization with editable primitives, reports, and self-learning loops."
+      content="Morphēa reconstructs clean, editable SVG geometry from bitmap artwork. Built for icons, logos, illustrations, UI captures, and technical graphics."
     >
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <header class="site-header" aria-label="Primary navigation">
-      <a class="brand" href="#top" aria-label="Curve home">
+      <a class="brand" href="#top" aria-label="Morphēa home">
         <span class="brand-mark" aria-hidden="true"></span>
-        <span>Curve</span>
+        <span>Morphēa</span>
       </a>
       <nav class="nav-links" aria-label="Documentation">
         <a href="#pipeline">Pipeline</a>
         <a href="#capabilities">Capabilities</a>
-        <a href="#docs">Docs</a>
         <a href="#quickstart">Quickstart</a>
+        <a href="#docs">Docs</a>
       </nav>
     </header>
 
     <main id="top">
       <section class="hero-section">
         <div class="hero-copy">
-          <p class="eyebrow">Local vectorization research</p>
-          <h1>SVGs that feel intentionally constructed.</h1>
+          <p class="eyebrow">Bitmap-to-vector reconstruction</p>
+          <h1>Reveal the shape within.</h1>
           <p class="lede">
-            Curve is a semantic-first raster-to-SVG prototype. It favors
-            editable primitives, clean strokes, cut-out semantics, and coherent
-            scene structure over dense pixel-tracing output.
+            Most vectorizers trace pixels. Morphēa reconstructs form, turning
+            bitmap artwork into clean, editable SVG geometry.
           </p>
           <div class="hero-actions" aria-label="Primary links">
             <a class="button primary" href="docs/plan.md">Read the plan</a>
-            <a class="button secondary" href="docs/milestones.md">View milestones</a>
+            <a class="button secondary" href="#quickstart">Run the CLI</a>
           </div>
         </div>
 
-        <div class="hero-visual" aria-label="Primitive vectorization diagram">
+        <div class="hero-visual" aria-label="Bitmap-to-vector reconstruction diagram">
           <svg viewBox="0 0 640 460" role="img" aria-labelledby="hero-title hero-desc">
-            <title id="hero-title">Editable vector primitives</title>
+            <title id="hero-title">Raster pixels reconstructed as editable vector form</title>
             <desc id="hero-desc">
-              A raster grid is translated into circles, strokes, cut-outs, and perspective quads.
+              Pixel blocks and noisy strokes resolve into a clean circle, curve, and perspective grid.
             </desc>
             <rect class="panel-fill" x="22" y="22" width="596" height="416" rx="6"></rect>
             <g class="raster-grid">
               <path d="M82 96h188M82 132h188M82 168h188M82 204h188M82 240h188"></path>
               <path d="M82 96v144M119 96v144M156 96v144M193 96v144M230 96v144M270 96v144"></path>
             </g>
+            <rect class="pixel p1" x="119" y="132" width="37" height="36"></rect>
+            <rect class="pixel p2" x="156" y="96" width="37" height="36"></rect>
+            <rect class="pixel p3" x="193" y="132" width="37" height="36"></rect>
             <circle class="gold-fill" cx="156" cy="154" r="38"></circle>
             <path class="blue-stroke thick" d="M106 252c48-26 99-22 148 10"></path>
             <path class="cutout-stroke" d="M114 252c39-15 78-13 118 5"></path>
@@ -65,8 +67,8 @@
               <path class="quad q3" d="M396 342h94l13 52H379z"></path>
               <path class="quad q4" d="M493 342h88l44 52H507z"></path>
             </g>
-            <text class="diagram-label" x="82" y="68">raster signal</text>
-            <text class="diagram-label" x="402" y="68">editable scene</text>
+            <text class="diagram-label" x="82" y="68">bitmap evidence</text>
+            <text class="diagram-label" x="402" y="68">editable SVG</text>
           </svg>
         </div>
       </section>
@@ -74,28 +76,28 @@
       <section id="pipeline" class="band">
         <div class="section-heading">
           <p class="eyebrow">Pipeline</p>
-          <h2>Geometry first, then learning and refinement.</h2>
+          <h2>Geometry first. Learning and refinement where they help.</h2>
         </div>
-        <div class="pipeline-diagram" aria-label="Curve pipeline steps">
+        <div class="pipeline-diagram" aria-label="Morphēa pipeline steps">
           <div class="pipeline-step">
             <span>1</span>
-            <h3>Preprocess</h3>
+            <h3>Read the bitmap</h3>
             <p>Normalize alpha, reduce palette drift, bound analysis size, and keep real images tractable.</p>
           </div>
           <div class="pipeline-step">
             <span>2</span>
-            <h3>Anchor</h3>
-            <p>Detect circles, strokes, rings, rectangles, quads, cut-outs, and regular grids before generic fitting.</p>
+            <h3>Recover anchors</h3>
+            <p>Find circles, strokes, rings, rectangles, quads, cut-outs, and regular grids before generic fitting.</p>
           </div>
           <div class="pipeline-step">
             <span>3</span>
-            <h3>Model</h3>
-            <p>Build a scene graph with layers, groups, reservations, metrics, and export policy metadata.</p>
+            <h3>Build the scene</h3>
+            <p>Write layers, groups, reservations, metrics, and export policy metadata instead of opaque paths.</p>
           </div>
           <div class="pipeline-step">
             <span>4</span>
-            <h3>Improve</h3>
-            <p>Use reports, curated checks, pseudo-label review, retraining, and structure-preserving refinement.</p>
+            <h3>Inspect and improve</h3>
+            <p>Use reports, curated checks, reviewed pseudo-labels, retraining, and structure-preserving refinement.</p>
           </div>
         </div>
       </section>
@@ -103,7 +105,7 @@
       <section id="capabilities" class="content-grid">
         <div class="section-heading">
           <p class="eyebrow">Current baseline</p>
-          <h2>Built around editability signals.</h2>
+          <h2>Designed for artwork that should stay editable.</h2>
         </div>
         <div class="capability-list">
           <article>
@@ -112,11 +114,11 @@
           </article>
           <article>
             <h3>Cut-out semantics</h3>
-            <p>White interior gaps can stay selectable as editable overlay strokes or SVG mask candidates.</p>
+            <p>White interior gaps can stay selectable as overlay strokes or become SVG mask candidates.</p>
           </article>
           <article>
-            <h3>Real-image runtime controls</h3>
-            <p>Bounded max size, palette quantization, component deferral, timeout diagnostics, and profile reports.</p>
+            <h3>Bounded local runs</h3>
+            <p>Max size, palette quantization, component deferral, timeout diagnostics, and profile reports.</p>
           </article>
           <article>
             <h3>Research loop</h3>
@@ -127,11 +129,11 @@
 
       <section class="primitive-section" aria-label="Primitive examples">
         <div class="primitive-copy">
-          <p class="eyebrow">Visual anchors</p>
-          <h2>Simple shapes get priority because people notice when they are wrong.</h2>
+          <p class="eyebrow">Shape reconstruction</p>
+          <h2>Circles stay circles. Strokes stay strokes. Grids stay coherent.</h2>
           <p>
             A slightly lumpy circle or uneven grid makes an illustration feel
-            broken immediately. Curve reserves simple forms early so later
+            broken immediately. Morphēa reserves simple forms early so later
             organic detail cannot fragment them.
           </p>
         </div>
@@ -155,24 +157,28 @@
         <div>
           <p class="eyebrow">Quickstart</p>
           <h2>Run the current baseline locally.</h2>
+          <p>
+            The legacy <code>curve</code> command remains as an alias, but new
+            scripts should use <code>morphea</code>.
+          </p>
         </div>
         <pre><code>python -m pip install -e .
 python -m unittest discover -s tests
-curve vectorize input.png -o output.svg --color-tolerance 18
-curve curated-check docs/real-images/suite.json -o runs/curated.json --run</code></pre>
+morphea vectorize input.png -o output.svg --color-tolerance 18
+morphea curated-check docs/real-images/suite.json -o runs/curated.json --run</code></pre>
       </section>
 
       <section id="docs" class="docs-section">
         <div class="section-heading">
           <p class="eyebrow">Repository docs</p>
-          <h2>Use the homepage as the front door, not the whole manual.</h2>
+          <h2>The homepage is the front door. The docs hold the machinery.</h2>
         </div>
         <div class="docs-list">
+          <a href="docs/brand-strategy.md"><span>Brand</span><small>Naming, positioning, voice, and launch motions</small></a>
           <a href="docs/plan.md"><span>Plan</span><small>Semantic-first direction</small></a>
           <a href="docs/milestones.md"><span>Milestones</span><small>Implemented baselines and roadmap</small></a>
           <a href="docs/schema.md"><span>Schema</span><small>Manifest and report contracts</small></a>
           <a href="docs/adr/0001-semantic-first-editability.md"><span>ADRs</span><small>Architecture decisions</small></a>
-          <a href="docs/real-images/terminaro-tweaked.md"><span>Real images</span><small>Curated local-case notes</small></a>
           <a href="docs/sweeps.md"><span>Sweeps</span><small>Experiment comparison workflow</small></a>
         </div>
       </section>
@@ -180,19 +186,19 @@ curve curated-check docs/real-images/suite.json -o runs/curated.json --run</code
       <section class="status-section">
         <div>
           <p class="eyebrow">Status</p>
-          <h2>Current baseline is implemented; optional adapters stay explicit.</h2>
+          <h2>The baseline is implemented; optional adapters stay explicit.</h2>
         </div>
         <p>
-          The deterministic baseline is test-covered and bounded for the
-          curated real-image suite. Optional MLX SAM and DiffVG adapters report
-          their configuration state instead of silently becoming requirements.
+          Morphēa runs with a deterministic baseline today. Optional MLX SAM
+          and DiffVG adapters report their configuration state instead of
+          silently becoming requirements.
         </p>
       </section>
     </main>
 
     <footer class="site-footer">
-      <span>Curve</span>
-      <span>Semantic-first raster-to-SVG research.</span>
+      <span>Morphēa</span>
+      <span>Reveal the shape within.</span>
     </footer>
   </body>
 </html>

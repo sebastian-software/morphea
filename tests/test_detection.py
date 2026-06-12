@@ -1,8 +1,8 @@
 import unittest
 
-from curve.anchors import AnchorKind
-from curve.anchors import Point
-from curve.detection import (
+from morphea.anchors import AnchorKind
+from morphea.anchors import Point
+from morphea.detection import (
     AnchorThresholdConfig,
     _fit_circle_from_boundary,
     _stroke_polyline_centerline,
@@ -10,8 +10,8 @@ from curve.detection import (
     detect_cutout_strokes_for_component,
     detect_primitive_anchors,
 )
-from curve.detection import detect_cutout_strokes
-from curve.masks import BinaryMask, MaskComponent, connected_components
+from morphea.detection import detect_cutout_strokes
+from morphea.masks import BinaryMask, MaskComponent, connected_components
 
 
 class MaskComponentTests(unittest.TestCase):

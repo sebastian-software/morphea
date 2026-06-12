@@ -1,14 +1,14 @@
 :root {
-  --paper: #f7f4ec;
-  --paper-deep: #ebe3d3;
-  --ink: #17201d;
-  --muted: #5b635f;
-  --blue: #113d62;
-  --blue-soft: #d7e6ee;
-  --gold: #bd870d;
-  --green: #2f6b4f;
-  --line: #cfc5b0;
-  --white: #fffdf8;
+  --paper: #f6f1e8;
+  --paper-deep: #e9decb;
+  --ink: #101719;
+  --muted: #596462;
+  --aegean: #165f68;
+  --aegean-soft: #d2e5e2;
+  --gold: #a87618;
+  --oxide: #2f746d;
+  --line: #cfc0a9;
+  --white: #fffaf2;
 }
 
 * {
@@ -23,7 +23,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   font-size: 18px;
   line-height: 1.55;
 }
@@ -48,7 +48,7 @@ a {
 .brand {
   align-items: center;
   display: inline-flex;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 18px;
   font-weight: 750;
   gap: 10px;
@@ -56,14 +56,43 @@ a {
 }
 
 .brand-mark {
-  background:
-    radial-gradient(circle at 50% 50%, var(--paper) 0 28%, transparent 30%),
-    conic-gradient(from 30deg, var(--gold), var(--blue), var(--green), var(--gold));
+  background: var(--white);
   border: 1px solid var(--ink);
-  border-radius: 50%;
+  border-radius: 4px;
   display: inline-block;
   height: 28px;
+  position: relative;
   width: 28px;
+}
+
+.brand-mark::before,
+.brand-mark::after {
+  content: "";
+  position: absolute;
+}
+
+.brand-mark::before {
+  background:
+    linear-gradient(var(--line) 0 0) 0 0 / 7px 7px,
+    linear-gradient(var(--line) 0 0) 7px 7px / 7px 7px,
+    linear-gradient(var(--line) 0 0) 0 14px / 7px 7px;
+  background-repeat: no-repeat;
+  height: 21px;
+  left: 4px;
+  top: 4px;
+  width: 14px;
+}
+
+.brand-mark::after {
+  border: 2px solid var(--aegean);
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 0 16px 0;
+  height: 18px;
+  right: 4px;
+  top: 3px;
+  transform: rotate(-18deg);
+  width: 15px;
 }
 
 .nav-links {
@@ -73,7 +102,7 @@ a {
 }
 
 .nav-links a {
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 14px;
   font-weight: 650;
   text-decoration-color: transparent;
@@ -103,8 +132,8 @@ main {
 }
 
 .eyebrow {
-  color: var(--green);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: var(--oxide);
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0;
@@ -128,6 +157,7 @@ h2 {
 h1 {
   font-size: 74px;
   margin-bottom: 26px;
+  max-width: 760px;
 }
 
 h2 {
@@ -136,7 +166,7 @@ h2 {
 }
 
 h3 {
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 18px;
   line-height: 1.25;
   margin-bottom: 10px;
@@ -159,7 +189,7 @@ h3 {
   border: 1px solid var(--ink);
   border-radius: 6px;
   display: inline-flex;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 15px;
   font-weight: 750;
   min-height: 44px;
@@ -205,7 +235,7 @@ h3 {
 
 .blue-stroke {
   fill: none;
-  stroke: var(--blue);
+  stroke: var(--aegean);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 12;
@@ -224,7 +254,7 @@ h3 {
 
 .circle-outline {
   fill: none;
-  stroke: var(--blue);
+  stroke: var(--aegean);
   stroke-width: 15;
 }
 
@@ -242,8 +272,8 @@ h3 {
 
 .arrow,
 .arrow-head {
-  fill: var(--green);
-  stroke: var(--green);
+  fill: var(--oxide);
+  stroke: var(--oxide);
 }
 
 .arrow {
@@ -254,9 +284,18 @@ h3 {
 
 .diagram-label {
   fill: var(--muted);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 16px;
   font-weight: 700;
+}
+
+.pixel {
+  fill: color-mix(in srgb, var(--line) 74%, var(--gold));
+}
+
+.p1,
+.p3 {
+  opacity: 0.64;
 }
 
 .band,
@@ -311,7 +350,7 @@ h3 {
 }
 
 .band .pipeline-step p {
-  color: color-mix(in srgb, var(--paper) 76%, var(--blue-soft));
+  color: color-mix(in srgb, var(--paper) 76%, var(--aegean-soft));
 }
 
 .content-grid {
@@ -351,7 +390,7 @@ h3 {
 }
 
 pre {
-  background: var(--blue);
+  background: var(--aegean);
   border: 1px solid var(--ink);
   border-radius: 6px;
   color: var(--paper);
@@ -387,18 +426,18 @@ pre {
 
 .docs-list a:hover,
 .docs-list a:focus-visible {
-  background: var(--blue-soft);
-  border-color: var(--blue);
+  background: var(--aegean-soft);
+  border-color: var(--aegean);
 }
 
 .docs-list span {
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-weight: 800;
 }
 
 .docs-list small {
   color: var(--muted);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 14px;
 }
 
@@ -414,7 +453,7 @@ pre {
   background: var(--ink);
   color: var(--paper);
   display: flex;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 14px;
   gap: 18px;
   justify-content: space-between;

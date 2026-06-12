@@ -6,14 +6,14 @@ Accepted
 
 ## Context
 
-Curve needs to improve on real generated images, not only synthetic fixtures.
+Morphēa needs to improve on real generated images, not only synthetic fixtures.
 Using external vectorizers as labels would make the system chase the wrong
 target: visually plausible but often fragmented, hard-to-edit SVG structure.
 At the same time, fully manual labels are too slow for iterative research.
 
 ## Decision
 
-Curve will collect high-confidence outputs from its own pipeline as
+Morphēa will collect high-confidence outputs from its own pipeline as
 pseudo-labels, expose them for human review, and retrain only from accepted or
 corrected reviewed labels. External vectorizer outputs may be used for visual
 comparison, but not as training labels.

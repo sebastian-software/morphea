@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Curve has optional local backends for MLX SAM segmentation, MLX primitive
+Morphēa has optional local backends for MLX SAM segmentation, MLX primitive
 classification, and differentiable refinement. Some milestones depend on
 external runtimes, model files, or adapter work that may not be present in every
 developer environment.
@@ -24,7 +24,7 @@ Backends continue to report `status`, `backend_available`, and `reason`.
 Optional backends may also report a `capabilities` object whose entries record
 `available`, `status`, and `reason`.
 
-`curve status` aggregates unavailable or pending capabilities into
+`morphea status` aggregates unavailable or pending capabilities into
 `blocked_capabilities` separately from `blocked_backends`.
 
 ## Consequences

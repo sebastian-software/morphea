@@ -1,6 +1,6 @@
 import unittest
 
-from curve.anchors import (
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,

@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from curve.images import scene_from_flat_color_image
-from curve.runs import write_vectorize_run
+from morphea.images import scene_from_flat_color_image
+from morphea.runs import write_vectorize_run
 
 
 VECTORIZE_CONFIG_KEYS = {
@@ -142,7 +142,7 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
     if not isinstance(cases, list):
         cases = []
     lines = [
-        "# Curve Curated Check",
+        "# Morphēa Curated Check",
         "",
         f"- Suite: `{report.get('suite', 'n/a')}`",
         f"- Run: `{str(report.get('run', False)).lower()}`",

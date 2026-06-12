@@ -1,4 +1,4 @@
-# Curve Milestone Plan
+# Morphēa Milestone Plan
 
 This document expands the implementation plan beyond the first base-form
 prototype. The long-term goal is a local, self-improving, semantic-first
@@ -6,7 +6,7 @@ raster-to-SVG research system.
 
 ## North Star
 
-Curve should produce SVGs that feel intentionally constructed by a human:
+Morphēa should produce SVGs that feel intentionally constructed by a human:
 simple shapes stay simple, strokes stay editable, cut-out lines stay clean,
 and repeated structures become coherent groups. Visual similarity matters, but
 editable semantic structure is the primary quality target.
@@ -31,7 +31,7 @@ Implemented capabilities:
 - Simple white cut-out gaps as overlay strokes.
 - Near-flat RGB grouping via `--color-tolerance`.
 - Plain SVG export and JSON recognition manifest.
-- CLI path: `curve vectorize input.png -o output.svg`.
+- CLI path: `morphea vectorize input.png -o output.svg`.
 
 Acceptance evidence:
 
@@ -73,7 +73,7 @@ Acceptance criteria:
 - Manifest reports major palette groups and skipped/deferred regions clearly.
 - Large background/transparent areas do not become vector candidates.
 - Tests include at least one antialiased and one transparent-background fixture.
-- `curve curated-check docs/real-images/suite.json --run` completes the
+- `morphea curated-check docs/real-images/suite.json --run` completes the
   current curated real-image suite with no failed expectations under an
   external timeout.
 
@@ -110,10 +110,10 @@ Implemented so far:
 - mask components can carry bounds hints from component scanning, and
   `row_spans` computes per-row extents in one pass instead of rescanning the
   component once per row.
-- `curve profile input.png -o profile.json` records bounded vectorize timings,
+- `morphea profile input.png -o profile.json` records bounded vectorize timings,
   anchor counts, diagnostics, diagnostic stage counts, and min/mean/max elapsed
   summaries for repeated runs.
-- `curve profile-curated suite.json -o profile.json` profiles every available
+- `morphea profile-curated suite.json -o profile.json` profiles every available
   curated real-image case with its recommended config, keeps missing sources
   visible, and reports the slowest case plus per-case min/mean/max timings.
 - component BFS in both generic masks and bounded image scanning uses direct
@@ -268,7 +268,7 @@ Implemented so far:
 - cut-out strokes are assigned to a `cutout_overlays` layer.
 - cut-out export policy records the default `overlay_stroke` strategy and
   whether the anchor is eligible for negative-mask SVG export.
-- `curve vectorize --cutout-export negative_mask` writes editable cut-out
+- `morphea vectorize --cutout-export negative_mask` writes editable cut-out
   strokes into an SVG mask instead of painting visible white overlay strokes;
   run directories apply the same export option to `output.svg`.
 - vectorize config files can set `cutout_export`, with an explicit CLI flag
@@ -279,7 +279,7 @@ Implemented so far:
 - scene metrics include `cutout_overlay_count` and
   `negative_mask_candidate_count` so reports can distinguish overlay exports
   from mask-capable cut-out semantics.
-- `curve vectorize --debug-svg` writes an inspectable SVG with anchor ids,
+- `morphea vectorize --debug-svg` writes an inspectable SVG with anchor ids,
   bounds, and confidence labels.
 - vectorize run directories include `debug.svg`.
 - reports, eval summaries, and sweep summaries include layer counts.
@@ -356,7 +356,7 @@ Implemented so far:
 - report summaries for scene groups, including same-color fragment groups
 - report summaries include same-color merge actions and decision reasons when
   present.
-- `curve eval` JSON/Markdown summaries over run directories
+- `morphea eval` JSON/Markdown summaries over run directories
 - scene-level `metrics` in manifests
 - `editability_score`
 - `fragmentation_penalty`
@@ -376,7 +376,7 @@ Implemented so far:
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
 - deterministic manifest preview renderer for current primitive types
-- `curve report` can render Markdown or HTML from an existing manifest
+- `morphea report` can render Markdown or HTML from an existing manifest
 - sweep summaries include `semantic_rank` and a top-level `ranking` list using
   semantic-first score ordering before raster error.
 - sweep run configs can pass `cutout_export` through to run-directory SVG
@@ -417,7 +417,7 @@ Acceptance criteria:
 
 Implemented so far:
 
-- deterministic `curve generate`
+- deterministic `morphea generate`
 - labeled PNG + JSON manifest pairs
 - `dataset.json` index
 - `dataset.json` records aggregate and per-sample anchor-kind counts so
@@ -469,7 +469,7 @@ Implemented so far:
 - `FlatColorSegmenter` baseline
 - `MlxSamSegmenter` adapter placeholder with explicit not-configured error
 - manifest-ready proposal serialization
-- `curve segment input.png -o proposals.json` writes segment proposal manifests
+- `morphea segment input.png -o proposals.json` writes segment proposal manifests
   from the flat-color baseline
 - segment proposal manifests include backend availability/status metadata so
   flat-color and future MLX runs can be compared explicitly.
@@ -486,7 +486,7 @@ Implemented so far:
 - segment proposal manifests include `proposal_tile_grid` groups for regular
   2D arrangements of reserved `rect`/`quad` proposals, including row/column
   counts, occupancy, spacing errors, and proposal ids in grid order.
-- `curve segment --markdown proposals.md` renders a scan-friendly proposal
+- `morphea segment --markdown proposals.md` renders a scan-friendly proposal
   report with backend status, aggregate counts, anchor kinds, and reservation
   reasons.
 - optional segment geometry gating can turn pending proposals into
@@ -495,7 +495,7 @@ Implemented so far:
 - segment proposal manifests record `anchor_quality_error` and
   `downstream_decision_reason` so later review/training stages can explain why
   a proposal passed or failed the geometry gate.
-- `curve compare-segments before.json after.json -o comparison.json` compares
+- `morphea compare-segments before.json after.json -o comparison.json` compares
   segment proposal manifests from different configs or segmenter backends,
   including summary-count deltas, config differences, added/removed proposals,
   changed downstream/anchor decisions, and added/removed/changed proposal
@@ -519,7 +519,7 @@ Implemented so far:
   environment and `mlx_model_path` points at a `.safetensors` checkpoint,
   `MlxSamSegmenter` can run bounded grid-point prompts and convert positive
   live SAM masks into the same proposal schema and geometry gate.
-- `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
+- `morphea segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed
 
 ## M7: Primitive Classifier Training
@@ -569,23 +569,23 @@ Implemented so far:
 
 - feature extraction from generated ground-truth manifests
 - trainable centroid primitive-classifier baseline
-- `curve train dataset.json -o model.json`
-- `curve train-mlx dataset.json -o model.json` for the optional MLX
+- `morphea train dataset.json -o model.json`
+- `morphea train-mlx dataset.json -o model.json` for the optional MLX
   Transformer classifier path
 - train/val/test evaluation sections in model artifact
 - confusion matrix output
-- `curve eval-classifier model.json dataset.json -o report.json` for
+- `morphea eval-classifier model.json dataset.json -o report.json` for
   standalone evaluation of an existing primitive classifier artifact
-- `curve eval-classifier --markdown report.md` for scan-friendly classifier
+- `morphea eval-classifier --markdown report.md` for scan-friendly classifier
   evaluation summaries
 - classifier artifacts and evaluation reports include centroid-spread
   `feature_importance`, making it visible when simple geometry and
   scene-group context signals separate primitive classes.
-- optional `--classifier-model` prior during `curve vectorize`
+- optional `--classifier-model` prior during `morphea vectorize`
 - `classifier_prior_error` metric in candidate manifests
-- `curve train` writes `ranking_evaluation` comparing heuristic-only candidate
+- `morphea train` writes `ranking_evaluation` comparing heuristic-only candidate
   ranking with classifier-prior-assisted ranking on validation/test splits
-- `curve train-mlx --allow-unavailable` writes a deterministic artifact with
+- `morphea train-mlx --allow-unavailable` writes a deterministic artifact with
   MLX backend status plus centroid fallback weights, so the training pipeline
   remains runnable when MLX is not installed locally
 - MLX classifier runtime status distinguishes missing MLX package from an
@@ -604,7 +604,7 @@ Implemented so far:
   into centroid and MLX training examples.
 - classifier training can extract fixed-size RGBA anchor-crop token sequences
   from synthetic dataset images and manifests.
-- `curve train-mlx --crop-size N` records the raster token size, token shape,
+- `morphea train-mlx --crop-size N` records the raster token size, token shape,
   channel order, and crop-token summary in the MLX training artifact.
 - available MLX training artifacts include `raster_token_mixer_v1`, a
   trainable attention-style pooling block over RGBA crop tokens with its own
@@ -629,9 +629,9 @@ Implemented so far:
 - runtime classifier loading prefers valid `mlx_token_transformer_v1` logits
   when crop tokens are available, then falls back through feature/raster fusion,
   raster-token mixer, feature head, and centroid fallback.
-- `curve eval-classifier` uses RGBA crop-token examples for direct
+- `morphea eval-classifier` uses RGBA crop-token examples for direct
   accuracy/confusion when evaluating a valid MLX raster-token mixer artifact.
-- `curve eval-classifier` also uses RGBA crop-token examples for
+- `morphea eval-classifier` also uses RGBA crop-token examples for
   candidate-ranking evaluation when a valid MLX raster mixer, fusion head, or
   token-transformer block is present.
 - `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
@@ -686,7 +686,7 @@ Acceptance criteria:
 
 Implemented so far:
 
-- `curve harvest` pseudo-label collection from run manifests
+- `morphea harvest` pseudo-label collection from run manifests
 - run-level warning-diagnostic filter
 - anchor-level `classifier_prior_error` filter
 - run-level `editability_score` minimum filter
@@ -695,21 +695,21 @@ Implemented so far:
 - anchor-level aggregate quality filter for unstable simple-shape metrics
 - output pseudo-label index with source manifest provenance
 - harvested pseudo-labels preserve scene `group_context` for groups that
-  contain the accepted anchor, and `curve merge-labels` carries that context
+  contain the accepted anchor, and `morphea merge-labels` carries that context
   into generated pseudo-sample manifests with source group provenance.
-- `curve harvest --markdown harvest.md` writes a scan-friendly pseudo-label
+- `morphea harvest --markdown harvest.md` writes a scan-friendly pseudo-label
   quality-gate report with accepted labels, filters, and rejected runs
-- `curve harvest-curated suite.json --run-root runs/curated -o pseudo.json`
+- `morphea harvest-curated suite.json --run-root runs/curated -o pseudo.json`
   runs bounded curated real-image cases and harvests pseudo-labels from the
   generated per-case manifests
-- human-editable review queue via `curve review`
-- `curve review --markdown review.md` writes a scan-friendly queue summary
+- human-editable review queue via `morphea review`
+- `morphea review --markdown review.md` writes a scan-friendly queue summary
   while keeping accept/reject decisions in JSON; review and apply-review
   Markdown reports surface harvested group context so reviewers can see when an
   anchor belongs to a grid, parallel stroke group, merge candidate, or
   reservation group.
-- accepted/rejected/pending split via `curve apply-review`
-- `curve apply-review --markdown accepted.md` writes a scan-friendly decision
+- accepted/rejected/pending split via `morphea apply-review`
+- `morphea apply-review --markdown accepted.md` writes a scan-friendly decision
   summary for accepted, rejected, and pending labels
 - review items support `corrected_kind` and structured issue tags for wrong
   primitive type, cut-out, and stroke-behavior feedback
@@ -717,8 +717,8 @@ Implemented so far:
   primitive-type, cut-out, and stroke-behavior problems are visible in JSON and
   Markdown summaries.
 - accepted reviewed pseudo-labels can be merged into a classifier-compatible
-  train split via `curve merge-labels`
-- `curve compare-training` compares baseline classifier training against
+  train split via `morphea merge-labels`
+- `morphea compare-training` compares baseline classifier training against
   reviewed pseudo-label augmentation on a fixed validation/test dataset
 - comparison reports include a scan-friendly augmentation verdict with
   best/worst accuracy deltas and train-example delta, so regressions are easier
@@ -726,31 +726,31 @@ Implemented so far:
 - comparison reports include feature-importance spread deltas so reviewed
   pseudo-labels can be audited for which geometry or group-context signals they
   strengthen.
-- `curve compare-training --markdown comparison.md` writes a scan-friendly
+- `morphea compare-training --markdown comparison.md` writes a scan-friendly
   retraining comparison table derived from the JSON report.
-- `curve training-gate comparison.json -o gate.json` turns a retraining
+- `morphea training-gate comparison.json -o gate.json` turns a retraining
   comparison into an accept/manual-review/reject decision using explicit
   regression tolerances
-- `curve self-learn base/dataset.json --reviewed-labels reviewed.json -o cycle`
+- `morphea self-learn base/dataset.json --reviewed-labels reviewed.json -o cycle`
   runs merge-labels, compare-training, training-gate, and accepted-gate
   retraining as one repeatable reviewed-label cycle
-- `curve self-learn --curated-suite suite.json` validates an accepted
+- `morphea self-learn --curated-suite suite.json` validates an accepted
   retrained model against the fixed curated real-image suite by passing the
   model as `classifier_model`; skipped gates do not pretend validation ran
-- `curve retrain` writes an augmented primitive classifier model from base plus
+- `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
-- `curve retrain --config retrain.json` supports repeatable self-learning
+- `morphea retrain --config retrain.json` supports repeatable self-learning
   retraining runs and can optionally write the comparison report next to the
   model
-- `curve retrain --backend mlx` writes an augmented MLX classifier artifact
+- `morphea retrain --backend mlx` writes an augmented MLX classifier artifact
   from base plus reviewed pseudo-label train examples, using the MLX
   train/fallback path and recording the generated augmented dataset index.
 - MLX retraining can consume reviewed pseudo-label manifests that do not carry
   source images: feature training includes those pseudo labels, while
   raster-token crops are trained from image-backed samples.
 - reviewed-label MLX retraining now uses the same end-to-end token projection
-  and attention-parameter training path as `curve train-mlx` for image-backed
+  and attention-parameter training path as `morphea train-mlx` for image-backed
   examples.
 
 Remaining:
@@ -782,7 +782,7 @@ Acceptance criteria:
 Implemented so far:
 
 - `RefinementConfig`
-- `curve refine manifest.json -o refined.json`
+- `morphea refine manifest.json -o refined.json`
 - `local_metric` backend
 - structure-preserving manifest output
 - refinement metadata and per-anchor metrics
@@ -799,21 +799,21 @@ Implemented so far:
   (`stroke_polyline`, `stroke_path`, `arc`) using bounded centerline
   translation and stroke-width steps
 - recognized optional differentiable backend names (`differentiable`, `diffvg`)
-  behind the same `curve refine --backend ...` interface, with an explicit
+  behind the same `morphea refine --backend ...` interface, with an explicit
   not-installed/not-configured failure path until a renderer is wired
-- `curve refine --backend differentiable` now runs a built-in soft-raster
+- `morphea refine --backend differentiable` now runs a built-in soft-raster
   gradient backend for structure-preserving circle-radius refinement and
   quad-like (`rect`, `rounded_rect`, `quad`) plus stroke-like
   (`stroke_polyline`, `stroke_path`, `arc`) transform refinement, including
   renderer metadata and objective deltas.
-- `curve refine --backend diffvg` remains the optional external adapter path
+- `morphea refine --backend diffvg` remains the optional external adapter path
   with explicit not-installed/adapter-pending status until DiffVG is wired.
 - refinement backend status reports distinguish active local metric refinement,
   missing optional renderer packages, and adapter-pending optional renderer
   states without allowing structure-changing refinement to run implicitly.
 - refinement config validates iteration, timeout, and raster-weight limits, and
   optimizer metadata records elapsed seconds, timeout state, and stopped reason
-- `curve refinement-gate refined.json -o gate.json` turns structure audit and
+- `morphea refinement-gate refined.json -o gate.json` turns structure audit and
   optimizer objective metrics into an accept/manual-review/reject decision so
   tiny pixel gains cannot silently break editability
 
@@ -851,8 +851,8 @@ Implemented so far:
 
 - `docs/real-images/suite.json` for local real-image metadata without checking
   large binaries into git.
-- `curve curated-check suite.json -o report.json` for suite validation.
-- `curve curated-check --config curated-check.json` for repeatable real-image
+- `morphea curated-check suite.json -o report.json` for suite validation.
+- `morphea curated-check --config curated-check.json` for repeatable real-image
   suite validation inputs.
 - optional `--run` mode using each case's bounded `recommended_config`.
 - per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
@@ -862,9 +862,9 @@ Implemented so far:
 - expectation checks for anchor kinds and scene group kinds.
 - metric expectation checks for curated cases, including editability,
   simple-shape ratio, and fragmentation envelopes.
-- deterministic `curve curated-check --snapshot snapshot.json` regression
+- deterministic `morphea curated-check --snapshot snapshot.json` regression
   summaries for important commits/configurations.
-- `curve curated-check --markdown report.md` writes scan-friendly real-image
+- `morphea curated-check --markdown report.md` writes scan-friendly real-image
   suite reports with case status, failed expectations, key metrics, and
   artifact directories.
 - second documented curated case:
@@ -891,12 +891,12 @@ Purpose: make the research loop pleasant enough to use repeatedly.
 Deliverables:
 
 - Commands:
-  - `curve generate`
-  - `curve train`
-  - `curve vectorize`
-  - `curve eval`
-  - `curve report`
-  - `curve sweep`
+  - `morphea generate`
+  - `morphea train`
+  - `morphea vectorize`
+  - `morphea eval`
+  - `morphea report`
+  - `morphea sweep`
 - Config files:
   - preprocessing
   - segmenters
@@ -913,79 +913,79 @@ Acceptance criteria:
 
 Implemented so far:
 
-- `curve generate`
-- `curve train`
-- `curve train-mlx`
-- `curve eval-classifier`
-- `curve vectorize`
-- `curve profile`
-- `curve eval`
-- `curve report`
-- `curve segment`
-- `curve sweep`
-- `curve merge-labels`
-- `curve harvest-curated`
-- `curve compare-training`
-- `curve training-gate`
-- `curve self-learn`
-- `curve retrain`
-- `curve refinement-gate`
-- `curve status`
-- `curve vectorize --config config.json` for repeatable input/output,
+- `morphea generate`
+- `morphea train`
+- `morphea train-mlx`
+- `morphea eval-classifier`
+- `morphea vectorize`
+- `morphea profile`
+- `morphea eval`
+- `morphea report`
+- `morphea segment`
+- `morphea sweep`
+- `morphea merge-labels`
+- `morphea harvest-curated`
+- `morphea compare-training`
+- `morphea training-gate`
+- `morphea self-learn`
+- `morphea retrain`
+- `morphea refinement-gate`
+- `morphea status`
+- `morphea vectorize --config config.json` for repeatable input/output,
   artifact, and runtime knob files
-- `curve generate --config generate.json` for repeatable synthetic corpus
+- `morphea generate --config generate.json` for repeatable synthetic corpus
   generation
-- `curve train --config train.json` for repeatable classifier training inputs
-- `curve eval-classifier --config eval-classifier.json` for repeatable
+- `morphea train --config train.json` for repeatable classifier training inputs
+- `morphea eval-classifier --config eval-classifier.json` for repeatable
   classifier evaluation reports
-- `curve eval --config eval.json` for repeatable run-directory summaries
-- `curve profile --config profile.json` for repeatable bounded runtime probes
-- `curve profile-curated --config profile-curated.json` for repeatable
+- `morphea eval --config eval.json` for repeatable run-directory summaries
+- `morphea profile --config profile.json` for repeatable bounded runtime probes
+- `morphea profile-curated --config profile-curated.json` for repeatable
   curated-family runtime profiling and Markdown summaries
-- `curve report --command-config report.json` for repeatable standalone report
+- `morphea report --command-config report.json` for repeatable standalone report
   rendering from existing manifests
-- `curve harvest --config harvest.json` for repeatable pseudo-label quality
+- `morphea harvest --config harvest.json` for repeatable pseudo-label quality
   gates
-- `curve harvest --markdown harvest.md` for scan-friendly pseudo-label quality
+- `morphea harvest --markdown harvest.md` for scan-friendly pseudo-label quality
   reports
-- `curve harvest-curated --config harvest-curated.json` for repeatable
+- `morphea harvest-curated --config harvest-curated.json` for repeatable
   curated real-image pseudo-label collection
-- `curve review --config review.json` and `curve apply-review --config
+- `morphea review --config review.json` and `morphea apply-review --config
   apply-review.json` for repeatable human-review queue processing
-- `curve review --markdown review.md` for scan-friendly review queue summaries
-- `curve apply-review --markdown accepted.md` for scan-friendly review decision
+- `morphea review --markdown review.md` for scan-friendly review queue summaries
+- `morphea apply-review --markdown accepted.md` for scan-friendly review decision
   summaries
-- `curve merge-labels --config merge-labels.json` for repeatable reviewed-label
+- `morphea merge-labels --config merge-labels.json` for repeatable reviewed-label
   dataset export
-- `curve compare-training --config compare.json` for repeatable retraining
+- `morphea compare-training --config compare.json` for repeatable retraining
   comparisons
-- `curve compare-training --markdown compare.md` for scan-friendly retraining
+- `morphea compare-training --markdown compare.md` for scan-friendly retraining
   comparisons
-- `curve training-gate --config training-gate.json` for repeatable retraining
+- `morphea training-gate --config training-gate.json` for repeatable retraining
   acceptance decisions
-- `curve self-learn --config self-learn.json` for repeatable reviewed-label
+- `morphea self-learn --config self-learn.json` for repeatable reviewed-label
   self-learning cycles, including optional curated-suite validation
-- `curve retrain --config retrain.json` for repeatable augmented model output
-- `curve refine --config refine.json` for repeatable bounded refinement runs
-- `curve refinement-gate --config refinement-gate.json` for repeatable
+- `morphea retrain --config retrain.json` for repeatable augmented model output
+- `morphea refine --config refine.json` for repeatable bounded refinement runs
+- `morphea refinement-gate --config refinement-gate.json` for repeatable
   structure-preserving refinement acceptance decisions
-- `curve status -o status.json --markdown status.md` for a single
+- `morphea status -o status.json --markdown status.md` for a single
   machine-readable report of segmenter, classifier, and refinement backend
   availability/blockers
-- `curve status --config status.json` for repeatable runtime/backend
+- `morphea status --config status.json` for repeatable runtime/backend
   availability checks
-- `curve status` reports blocked backend capabilities such as the live MLX SAM
+- `morphea status` reports blocked backend capabilities such as the live MLX SAM
   adapter and end-to-end MLX attention training separately from installed
   package status
-- `curve curated-check --config curated-check.json` for repeatable curated
+- `morphea curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
-- `curve segment --config segment.json` for repeatable input/output,
+- `morphea segment --config segment.json` for repeatable input/output,
   report, and segment proposal runs
-- `curve segment --markdown proposals.md` for scan-friendly segment proposal
+- `morphea segment --markdown proposals.md` for scan-friendly segment proposal
   reports
-- `curve compare-segments before.json after.json -o comparison.json` for
+- `morphea compare-segments before.json after.json -o comparison.json` for
   comparing segment proposal outputs across configs or backends
-- `curve compare-segments --config compare-segments.json` for repeatable
+- `morphea compare-segments --config compare-segments.json` for repeatable
   segment proposal comparisons
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
@@ -994,21 +994,21 @@ Implemented so far:
   simple-shape bonus
 - vectorize anchor threshold config for circle/ring, stroke, quad, rect, and
   rounded-rect candidate gates
-- `curve compare-snapshots before.json after.json` for comparing saved
+- `morphea compare-snapshots before.json after.json` for comparing saved
   summaries from different commits/configurations
-- `curve compare-snapshots --config compare-snapshots.json` for repeatable
+- `morphea compare-snapshots --config compare-snapshots.json` for repeatable
   saved-summary comparisons
-- `curve compare-git-snapshots before_ref after_ref --path snapshot.json` for
+- `morphea compare-git-snapshots before_ref after_ref --path snapshot.json` for
   comparing the same checked-in snapshot file across git refs without changing
   the working tree
-- `curve compare-git-snapshots --config compare-git-snapshots.json` for
+- `morphea compare-git-snapshots --config compare-git-snapshots.json` for
   repeatable git-ref snapshot comparisons
-- `curve snapshot-git-ref ref --suite suite.json -o snapshot.json` for
+- `morphea snapshot-git-ref ref --suite suite.json -o snapshot.json` for
   generating curated snapshots from a detached temporary worktree without
   checking out the current working tree
-- `curve snapshot-git-ref --config snapshot-git-ref.json` for repeatable
+- `morphea snapshot-git-ref --config snapshot-git-ref.json` for repeatable
   isolated git snapshot generation
-- `curve sweep` configs can carry output roots and Markdown report paths for
+- `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests

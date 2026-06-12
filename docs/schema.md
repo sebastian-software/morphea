@@ -1,6 +1,6 @@
 # Output Schemas
 
-Curve schemas are intentionally small while the project is still a research
+Morphēa schemas are intentionally small while the project is still a research
 prototype. New fields may be added, but existing schema-v1 field names should
 stay stable unless an ADR changes the contract.
 
@@ -8,8 +8,8 @@ stay stable unless an ADR changes the contract.
 
 Written by:
 
-- `curve vectorize`
-- `curve sweep`
+- `morphea vectorize`
+- `morphea sweep`
 - synthetic sample generation
 
 Top-level fields:
@@ -144,7 +144,7 @@ before a full vanishing-point solver is introduced.
 
 ## Sweep Summary v1
 
-Written by `curve sweep` as `sweep-summary.json`.
+Written by `morphea sweep` as `sweep-summary.json`.
 
 Top-level fields:
 
@@ -161,7 +161,7 @@ Each run summary also carries `editability_score`, `fragmentation_penalty`,
 `diagnostic_stage_counts` when the manifest contains those metrics and
 diagnostics.
 
-`curve sweep --markdown summary.md` writes a Markdown comparison view ranked by
+`morphea sweep --markdown summary.md` writes a Markdown comparison view ranked by
 editability score and raster error. It is derived from `sweep-summary.json` and
 does not change the JSON schema.
 
@@ -171,7 +171,7 @@ to primitive detection.
 
 ## Sweep Config v1
 
-Read by `curve sweep`.
+Read by `morphea sweep`.
 
 Top-level fields:
 
@@ -186,7 +186,7 @@ CLI `--output-dir` and `--markdown` arguments override `output_dir` and
 
 ## Eval Summary v1
 
-Written by `curve eval`.
+Written by `morphea eval`.
 
 Top-level fields:
 
@@ -200,7 +200,7 @@ Markdown/HTML run reports.
 
 ## Eval Config v1
 
-Read by `curve eval --config`.
+Read by `morphea eval --config`.
 
 Supported fields:
 
@@ -212,9 +212,9 @@ CLI arguments override values loaded from the config file.
 
 ## Profile Report v1
 
-Written by `curve profile`.
-`curve profile --config profile.json` accepts `input`, `output`, `repeats`,
-and the same bounded vectorize runtime knobs used by `curve vectorize --config`.
+Written by `morphea profile`.
+`morphea profile --config profile.json` accepts `input`, `output`, `repeats`,
+and the same bounded vectorize runtime knobs used by `morphea vectorize --config`.
 CLI arguments override matching config values.
 
 Top-level fields:
@@ -232,8 +232,8 @@ summary records min/mean/max elapsed seconds across all repeats.
 
 ## Curated Profile Report v1
 
-Written by `curve profile-curated`.
-`curve profile-curated --config profile-curated.json` accepts `suite`,
+Written by `morphea profile-curated`.
+`morphea profile-curated --config profile-curated.json` accepts `suite`,
 `output`, `markdown`, and `repeats`. CLI arguments override matching config
 values.
 
@@ -260,13 +260,13 @@ scan-friendly companion table for profile-guided hot-loop work.
 
 ## Curated Snapshot v1
 
-Written by `curve curated-check --snapshot snapshot.json`.
-`curve curated-check --markdown report.md` writes a scan-friendly companion
+Written by `morphea curated-check --snapshot snapshot.json`.
+`morphea curated-check --markdown report.md` writes a scan-friendly companion
 report from the same suite check result, including case status, failed
 expectations, key anchor/group counts, key metrics, and per-case artifact
 directories when `--output-dir` is used.
 
-`curve curated-check --config curated-check.json` accepts `suite`, `output`,
+`morphea curated-check --config curated-check.json` accepts `suite`, `output`,
 `output_dir`, `run`, `snapshot`, and `markdown`. CLI arguments override matching
 config values, and `run` must be a boolean when provided in JSON.
 
@@ -304,7 +304,7 @@ commits and configurations.
 
 ## Vectorize Config v1
 
-Read by `curve vectorize --config`.
+Read by `morphea vectorize --config`.
 
 Supported fields include artifact paths and current runtime knobs:
 
@@ -347,7 +347,7 @@ CLI arguments override values loaded from the config file.
 
 ## Report Config v1
 
-Read by `curve report --command-config`.
+Read by `morphea report --command-config`.
 
 Supported fields:
 
@@ -357,13 +357,13 @@ Supported fields:
 - `format`: optional `markdown` or `html`; when omitted, the output suffix
   selects HTML for `.html` and Markdown otherwise
 
-`curve report --config` remains the optional vectorize/run config file that is
+`morphea report --config` remains the optional vectorize/run config file that is
 rendered inside the report. CLI arguments override values loaded from
 `--command-config`.
 
 ## Segment Proposal Manifest v1
 
-Written by `curve segment`. `curve segment --markdown proposals.md` writes a
+Written by `morphea segment`. `morphea segment --markdown proposals.md` writes a
 scan-friendly Markdown report derived from the same manifest, including summary
 counts and a proposal table with anchor reservation state.
 
@@ -446,8 +446,8 @@ gate. Other non-JSON SAM model paths remain `adapter_pending`.
 
 ## Runtime Status Report v1
 
-Written by `curve status`.
-`curve status --config status.json` accepts `output`, `markdown`, and
+Written by `morphea status`.
+`morphea status --config status.json` accepts `output`, `markdown`, and
 `mlx_sam_model_path`. CLI arguments override matching config values.
 
 Top-level fields:
@@ -475,7 +475,7 @@ capabilities when MLX autograd is usable.
 
 ## Segment Config v1
 
-Read by `curve segment --config`.
+Read by `morphea segment --config`.
 
 Supported fields:
 
@@ -506,7 +506,7 @@ CLI arguments override values loaded from the config file.
 
 ## Pseudo-Label Harvest v1
 
-Written by `curve harvest`. `curve harvest --markdown harvest.md` writes a
+Written by `morphea harvest`. `morphea harvest --markdown harvest.md` writes a
 scan-friendly quality-gate report next to the JSON artifact.
 
 Top-level fields:
@@ -530,7 +530,7 @@ Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
 metrics, run metrics, `source_manifest` provenance, and `group_context` for
 scene groups that contained the harvested anchor.
 
-`curve harvest-curated` first runs a curated real-image suite with each case's
+`morphea harvest-curated` first runs a curated real-image suite with each case's
 bounded `recommended_config`, then harvests the generated run directories with
 the same quality gates. Its output keeps the normal harvest fields and adds:
 
@@ -545,7 +545,7 @@ the same quality gates. Its output keeps the normal harvest fields and adds:
 
 ## Harvest Config v1
 
-Read by `curve harvest --config`.
+Read by `morphea harvest --config`.
 
 Supported fields:
 
@@ -564,7 +564,7 @@ CLI arguments override values loaded from the config file.
 
 ## Harvest Curated Config v1
 
-Read by `curve harvest-curated --config`.
+Read by `morphea harvest-curated --config`.
 
 Supported fields:
 
@@ -586,8 +586,8 @@ CLI arguments override values loaded from the config file.
 
 ## Review Queue and Reviewed Labels v1
 
-Written by `curve review` and `curve apply-review`.
-`curve review --markdown review.md` writes a scan-friendly queue summary while
+Written by `morphea review` and `morphea apply-review`.
+`morphea review --markdown review.md` writes a scan-friendly queue summary while
 the editable decisions stay in the JSON review file.
 
 Review queue items contain `decision`, `reason`, `corrected_kind`, `issues`,
@@ -600,20 +600,20 @@ visible without scanning every item. Markdown review reports surface label
 `group_context` so humans can judge anchors in their grid, stroke-group,
 merge, or reservation context.
 
-`curve apply-review` writes accepted, rejected, and pending splits.
-`curve apply-review --markdown accepted.md` writes a scan-friendly decision
+`morphea apply-review` writes accepted, rejected, and pending splits.
+`morphea apply-review --markdown accepted.md` writes a scan-friendly decision
 summary next to the JSON artifact. Accepted labels include a `review`
 provenance object and apply `corrected_kind` to both the top-level label kind
 and embedded anchor kind when present.
 
-When harvested labels carry `group_context`, `curve merge-labels` preserves it
+When harvested labels carry `group_context`, `morphea merge-labels` preserves it
 in each generated pseudo-sample manifest as single-anchor groups with
 `source_group_id`, `source_anchor_indexes`, and `source_anchor_position`
 provenance.
 
 ## Review Config v1
 
-Read by `curve review --config`.
+Read by `morphea review --config`.
 
 Supported fields:
 
@@ -625,7 +625,7 @@ CLI arguments override values loaded from the config file.
 
 ## Apply Review Config v1
 
-Read by `curve apply-review --config`.
+Read by `morphea apply-review --config`.
 
 Supported fields:
 
@@ -637,7 +637,7 @@ CLI arguments override values loaded from the config file.
 
 ## Merge Labels Config v1
 
-Read by `curve merge-labels --config`.
+Read by `morphea merge-labels --config`.
 
 Supported fields:
 
@@ -648,7 +648,7 @@ CLI arguments override values loaded from the config file.
 
 ## Training Config v1
 
-Read by `curve train --config`.
+Read by `morphea train --config`.
 
 Supported fields:
 
@@ -659,7 +659,7 @@ CLI arguments override values loaded from the config file.
 
 ## Classifier Evaluation Config v1
 
-Read by `curve eval-classifier --config`.
+Read by `morphea eval-classifier --config`.
 
 Supported fields:
 
@@ -674,7 +674,7 @@ CLI arguments override values loaded from the config file.
 
 ## MLX Training Config v1
 
-Read by `curve train-mlx --config`.
+Read by `morphea train-mlx --config`.
 
 Supported fields:
 
@@ -693,7 +693,7 @@ CLI arguments override values loaded from the config file.
 
 ## Training Comparison Config v1
 
-Read by `curve compare-training --config`.
+Read by `morphea compare-training --config`.
 
 Supported fields:
 
@@ -707,7 +707,7 @@ CLI arguments override values loaded from the config file.
 
 ## Training Gate v1
 
-Written by `curve training-gate`.
+Written by `morphea training-gate`.
 
 Top-level fields:
 
@@ -719,12 +719,12 @@ Top-level fields:
 - `gates`: active threshold values
 - `summary`: copied comparison summary
 
-`curve training-gate --markdown gate.md` writes a scan-friendly decision
+`morphea training-gate --markdown gate.md` writes a scan-friendly decision
 summary next to the JSON artifact.
 
 ## Training Gate Config v1
 
-Read by `curve training-gate --config`.
+Read by `morphea training-gate --config`.
 
 Supported fields:
 
@@ -740,7 +740,7 @@ CLI arguments override values loaded from the config file.
 
 ## Self-Learning Cycle v1
 
-Written by `curve self-learn` as `self-learning-cycle.json` inside the output
+Written by `morphea self-learn` as `self-learning-cycle.json` inside the output
 directory.
 
 Top-level fields:
@@ -759,15 +759,15 @@ Top-level fields:
 - `curated_validation`: optional fixed-suite validation summary when
   `curated_suite` is configured
 
-`curve self-learn` always writes comparison and gate artifacts. It writes
+`morphea self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label
 augmentation. When `curated_suite` is configured and retraining is accepted,
-the cycle runs `curve curated-check` with the accepted model as
+the cycle runs `morphea curated-check` with the accepted model as
 `classifier_model` and writes curated validation artifacts.
 
 ## Self-Learning Config v1
 
-Read by `curve self-learn --config`.
+Read by `morphea self-learn --config`.
 
 Supported fields:
 
@@ -789,7 +789,7 @@ CLI arguments override values loaded from the config file.
 
 ## Retrain Config v1
 
-Read by `curve retrain --config`.
+Read by `morphea retrain --config`.
 
 Supported fields:
 
@@ -812,7 +812,7 @@ CLI arguments override values loaded from the config file.
 
 ## Refine Config v1
 
-Read by `curve refine --config`.
+Read by `morphea refine --config`.
 
 Supported fields:
 
@@ -829,7 +829,7 @@ CLI arguments override values loaded from the config file.
 
 ## Refinement Gate v1
 
-Written by `curve refinement-gate`.
+Written by `morphea refinement-gate`.
 
 Top-level fields:
 
@@ -848,7 +848,7 @@ review unless explicitly allowed.
 
 ## Refinement Gate Config v1
 
-Read by `curve refinement-gate --config`.
+Read by `morphea refinement-gate --config`.
 
 Supported fields:
 
@@ -862,7 +862,7 @@ CLI arguments override values loaded from the config file.
 
 ## Generate Config v1
 
-Read by `curve generate --config`.
+Read by `morphea generate --config`.
 
 Supported fields:
 
@@ -881,7 +881,7 @@ validation and one test slot where possible.
 
 ## Synthetic Dataset v1
 
-Written by `curve generate`.
+Written by `morphea generate`.
 
 `dataset.json` records:
 
@@ -918,7 +918,7 @@ labels.
 
 ## Primitive Classifier Model v1
 
-Written by `curve train`, `curve retrain`, and `curve train-mlx`.
+Written by `morphea train`, `morphea retrain`, and `morphea train-mlx`.
 
 Top-level fields:
 
@@ -931,15 +931,15 @@ Top-level fields:
   class-separating feature; each row records `feature`, `spread`, `min`, and
   `max`
 - `train_examples`
-- `source_datasets`: present for `curve retrain`, recording base,
+- `source_datasets`: present for `morphea retrain`, recording base,
   pseudo-label, and validation dataset paths
-- `augmentation`: present for `curve retrain`, recording base and reviewed
+- `augmentation`: present for `morphea retrain`, recording base and reviewed
   pseudo-label train example counts
 - `evaluation`: direct classifier accuracy/confusion for validation/test splits
 - `ranking_evaluation`: heuristic-only versus classifier-prior candidate
   ranking comparison for validation/test splits
 
-`curve train-mlx` writes `backend`, `backend_available`, `status`, `runtime`,
+`morphea train-mlx` writes `backend`, `backend_available`, `status`, `runtime`,
 `reason`, `training_implementation`, `training_config`, `fallback_model_type`,
 and `fallback_centroids`. Runtime status distinguishes `not_installed` from an
 available MLX package. When MLX is available, status is `trained` and
@@ -984,7 +984,7 @@ that token-encoder head first, including projection calibration when present,
 then falls back through feature/raster fusion, raster-token mixer, feature head,
 and finally centroid fallback.
 
-`curve retrain` persists the augmented model so it can be used as a
+`morphea retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. The default
 `centroid` backend keeps the original model schema. The `mlx` backend writes an
 `mlx_transformer_primitive_classifier` artifact via the train-MLX path, then
@@ -995,7 +995,7 @@ uses image-backed samples only.
 
 ## Classifier Evaluation Report v1
 
-Written by `curve eval-classifier`. `--markdown report.md` writes a
+Written by `morphea eval-classifier`. `--markdown report.md` writes a
 scan-friendly table view derived from the JSON report, including whether direct
 and ranking evaluation used raster-token inputs.
 
@@ -1026,7 +1026,7 @@ candidate-ranking evaluation also uses dataset crop tokens and records
 
 ## Training Comparison v1
 
-Written by `curve compare-training`.
+Written by `morphea compare-training`.
 
 Top-level fields:
 
@@ -1047,12 +1047,12 @@ Both `baseline` and `augmented` include validation/test `evaluation` and
 validation dataset. The report is
 intended to show whether reviewed pseudo-labels improve, degrade, or leave
 candidate ranking unchanged before a heavier retraining backend is introduced.
-`curve compare-training --markdown comparison.md` writes a scan-friendly
+`morphea compare-training --markdown comparison.md` writes a scan-friendly
 Markdown table derived from the same JSON report.
 
 ## Snapshot Comparison v1
 
-Written by `curve compare-snapshots` and `curve compare-git-snapshots`.
+Written by `morphea compare-snapshots` and `morphea compare-git-snapshots`.
 
 Top-level fields:
 
@@ -1073,13 +1073,13 @@ Each item records the shared `id`, `changed_metric_count`, and numeric
 that id as the flattened path segment. Boolean fields are not treated as
 numeric metrics.
 
-`curve compare-snapshots --markdown comparison.md` writes a scan-friendly table
+`morphea compare-snapshots --markdown comparison.md` writes a scan-friendly table
 for reviewing differences between saved reports from different commits or
 configurations.
 
 ## Snapshot Comparison Config v1
 
-Read by `curve compare-snapshots --config`.
+Read by `morphea compare-snapshots --config`.
 
 Supported fields:
 
@@ -1092,7 +1092,7 @@ CLI arguments override values loaded from the config file.
 
 ## Git Snapshot Comparison Config v1
 
-Read by `curve compare-git-snapshots --config`.
+Read by `morphea compare-git-snapshots --config`.
 
 Supported fields:
 
@@ -1105,13 +1105,13 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
-`curve compare-git-snapshots before_ref after_ref --path snapshot.json` reads
+`morphea compare-git-snapshots before_ref after_ref --path snapshot.json` reads
 the same checked-in snapshot file from two git refs with `git show` and does
 not modify the current working tree.
 
 ## Snapshot Git Ref Config v1
 
-Read by `curve snapshot-git-ref --config`.
+Read by `morphea snapshot-git-ref --config`.
 
 Supported fields:
 
@@ -1126,16 +1126,16 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
-`curve snapshot-git-ref REF --suite suite.json -o snapshot.json` creates a
-temporary detached git worktree for `REF`, runs `curve curated-check` inside
+`morphea snapshot-git-ref REF --suite suite.json -o snapshot.json` creates a
+temporary detached git worktree for `REF`, runs `morphea curated-check` inside
 that worktree, and writes a normal Curated Snapshot v1 file to the requested
 output path. The snapshot file intentionally stays compatible with
-`curve compare-snapshots`; git metadata is returned by the command result but
+`morphea compare-snapshots`; git metadata is returned by the command result but
 is not embedded into the deterministic snapshot.
 
 ## Segment Manifest Comparison v1
 
-Written by `curve compare-segments`.
+Written by `morphea compare-segments`.
 
 Top-level fields:
 
@@ -1163,13 +1163,13 @@ Top-level fields:
 - `proposal_group_changes`: changed group kind, proposal membership, and
   numeric group metrics for shared proposal group ids
 
-`curve compare-segments --markdown comparison.md` writes a scan-friendly
+`morphea compare-segments --markdown comparison.md` writes a scan-friendly
 Markdown summary for comparing flat-color and future MLX proposal outputs or
 for comparing gated and ungated segment configs.
 
 ## Segment Comparison Config v1
 
-Read by `curve compare-segments --config`.
+Read by `morphea compare-segments --config`.
 
 Supported fields:
 
@@ -1182,7 +1182,7 @@ CLI arguments override values loaded from the config file.
 
 ## Run Directory v1
 
-Written by `curve vectorize --run-dir` and by each `curve sweep` run.
+Written by `morphea vectorize --run-dir` and by each `morphea sweep` run.
 
 Files:
 
@@ -1216,7 +1216,7 @@ stage buckets are `preprocessing`, `palette`, `segmentation`, `fitting`,
 
 ## Refinement Metadata v1
 
-Written by `curve refine`.
+Written by `morphea refine`.
 
 Recognized backends:
 

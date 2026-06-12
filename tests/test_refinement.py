@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
-from curve.cli import main
-from curve.refinement import (
+from morphea.cli import main
+from morphea.refinement import (
     RefinementConfig,
     available_refinement_backends,
     gate_refinement_result,
@@ -386,7 +386,7 @@ class RefinementTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("# Curve Refinement Gate", markdown)
+        self.assertIn("# Morphēa Refinement Gate", markdown)
         self.assertIn("- Decision: `reject`", markdown)
         self.assertIn("`objective_regressed`", markdown)
 
@@ -547,7 +547,7 @@ class RefinementTests(unittest.TestCase):
             manifest = _write_manifest(Path(temp_dir))
 
             with patch(
-                "curve.refinement.is_optional_refinement_package_available",
+                "morphea.refinement.is_optional_refinement_package_available",
                 return_value=False,
             ):
                 with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
@@ -562,7 +562,7 @@ class RefinementTests(unittest.TestCase):
             manifest = _write_manifest(Path(temp_dir))
 
             with patch(
-                "curve.refinement.is_optional_refinement_package_available",
+                "morphea.refinement.is_optional_refinement_package_available",
                 return_value=True,
             ):
                 with self.assertRaisesRegex(RuntimeError, "status=adapter_pending"):
@@ -575,7 +575,7 @@ class RefinementTests(unittest.TestCase):
     def test_refinement_backend_status_reports_local_and_optional_state(self):
         local = refinement_backend_status("local_metric")
         with patch(
-            "curve.refinement.is_optional_refinement_package_available",
+            "morphea.refinement.is_optional_refinement_package_available",
             return_value=False,
         ):
             optional = refinement_backend_status("diffvg")

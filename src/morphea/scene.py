@@ -7,7 +7,7 @@ from html import escape
 from statistics import mean
 from typing import Iterable
 
-from curve.anchors import (
+from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     Point,
@@ -18,8 +18,8 @@ from curve.anchors import (
     semantic_anchor_score,
     simple_shape_priority_bonus,
 )
-from curve.detection import detect_primitive_anchors
-from curve.masks import BinaryMask
+from morphea.detection import detect_primitive_anchors
+from morphea.masks import BinaryMask
 
 
 SCENE_MANIFEST_SCHEMA_VERSION = 1
@@ -243,7 +243,7 @@ def _negative_cutout_mask_elements(
     height: int,
     style: SvgStyle,
 ) -> list[str]:
-    mask_id = "curve-cutout-mask"
+    mask_id = "morphea-cutout-mask"
     lines = [
         "  <defs>",
         f'    <mask id="{mask_id}" maskUnits="userSpaceOnUse">',

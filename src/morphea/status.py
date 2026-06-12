@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from curve.mlx_classifier import mlx_classifier_runtime_status
-from curve.refinement import available_refinement_backends
-from curve.segmenters import (
+from morphea.mlx_classifier import mlx_classifier_runtime_status
+from morphea.refinement import available_refinement_backends
+from morphea.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
     segmenter_backend_status,
@@ -67,7 +67,7 @@ def collect_runtime_status(
 def render_runtime_status_markdown(status: dict[str, Any]) -> str:
     rows = _status_rows(status)
     lines = [
-        "# Curve Runtime Status",
+        "# Morphēa Runtime Status",
         "",
         "| Area | Backend | Status | Available | Reason |",
         "| --- | --- | --- | ---: | --- |",

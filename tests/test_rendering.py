@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from curve.rendering import (
+from morphea.rendering import (
     raster_fidelity_metrics,
     render_manifest_image,
     write_manifest_preview,

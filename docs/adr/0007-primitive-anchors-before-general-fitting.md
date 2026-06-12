@@ -13,7 +13,7 @@ these forms before the pipeline has a chance to regularize them.
 
 ## Decision
 
-Curve will run primitive anchor detection before general segment fitting. It
+Morphēa will run primitive anchor detection before general segment fitting. It
 will detect, regularize, score, and reserve simple forms such as circles, rings,
 dots, lines, arcs, strokes, rectangles, rounded rectangles, perspective quads,
 trapezoids, parallelograms, and grid/tile structures.
