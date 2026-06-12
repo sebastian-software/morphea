@@ -475,7 +475,7 @@ def _stroke_candidate(
         centerline,
         fallback_width=stroke_width,
     )
-    cap_style = "butt" if coverage >= 0.85 else "round"
+    cap_style = _straight_stroke_cap_style(centerline, coverage)
     stroke = StrokeAnchor(
         centerline=centerline,
         width_samples=width_samples,
@@ -492,6 +492,17 @@ def _stroke_candidate(
         stroke=stroke,
     )
     return enrich_anchor_metrics(candidate)
+
+
+def _straight_stroke_cap_style(
+    centerline: tuple[Point, ...],
+    coverage: float,
+) -> str:
+    if len(centerline) != 2:
+        return "round"
+    # Oblique raster strokes have stair-stepped edges, so their oriented-box
+    # coverage lands below the ideal filled-rectangle value even with flat caps.
+    return "butt" if coverage >= 0.76 else "round"
 
 
 def _stroke_polyline_centerline(
@@ -1305,6 +1316,7 @@ def _cutout_centerline_candidate(
             centerline=centerline,
             width_samples=(float(width),),
             is_cutout=True,
+            cap_style="butt" if len(centerline) == 2 else "round",
         ),
     )
     return enrich_anchor_metrics(candidate)

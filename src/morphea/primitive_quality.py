@@ -2350,6 +2350,17 @@ def _stroke_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[s
                 f"{spec.coordinate_tolerance}",
             )
         )
+    expected_cap = spec.geometry.get("cap_style")
+    if expected_cap is None and len(expected) == 2:
+        expected_cap = "butt"
+    actual_cap = str(stroke.get("cap_style", "round"))
+    if expected_cap is not None and actual_cap != str(expected_cap):
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"expected cap_style {expected_cap}, got {actual_cap}",
+            )
+        )
     failures.extend(_stroke_width_failures(spec, anchor))
     return failures
 

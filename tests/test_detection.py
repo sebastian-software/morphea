@@ -222,6 +222,36 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(anchors[0].stroke.centerline), 2)
         self.assertEqual(anchors[0].stroke.width_samples, (4.0,))
 
+    def test_pillow_style_diagonal_stroke_uses_flat_caps(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((16, 54, 50, 10), fill="black", width=7)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertEqual(len(anchors[0].stroke.centerline), 2)
+        self.assertEqual(anchors[0].stroke.cap_style, "butt")
+
+    def test_round_capped_diagonal_stroke_keeps_round_caps(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        line = (16, 54, 50, 10)
+        width = 7
+        draw.line(line, fill="black", width=width)
+        radius = width / 2
+        for x, y in ((line[0], line[1]), (line[2], line[3])):
+            draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertEqual(anchors[0].stroke.cap_style, "round")
+
     def test_one_pixel_horizontal_stroke_remains_stroke(self):
         image = Image.new("RGB", (64, 64), "white")
         draw = ImageDraw.Draw(image)

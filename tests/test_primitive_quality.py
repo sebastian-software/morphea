@@ -77,6 +77,26 @@ class PrimitiveQualityTests(unittest.TestCase):
             ["horizontal_stroke_width_1", "vertical_stroke_width_1"],
         )
 
+    def test_diagonal_stroke_contract_requires_flat_svg_caps(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("diagonal_stroke_width_7",),
+            )
+
+            self.assertTrue(report["ok"])
+            manifest = json.loads(
+                (Path(temp_dir) / "diagonal_stroke_width_7" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            stroke = manifest["anchors"][0]["stroke"]
+            self.assertEqual(stroke["cap_style"], "butt")
+            svg = (
+                Path(temp_dir) / "diagonal_stroke_width_7" / "output.svg"
+            ).read_text(encoding="utf-8")
+            self.assertIn('stroke-linecap="butt"', svg)
+
     def test_primitive_quality_harness_matches_multiple_anchors(self):
         report = check_primitive_quality(cases=("composition_square_plus_circle_a",))
 

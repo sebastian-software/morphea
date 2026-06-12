@@ -7048,12 +7048,12 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          7.647639,
-          11.728893,
-          56.352361,
-          52.271107
+          8.462378,
+          12.227293,
+          55.537622,
+          51.772707
         ],
-        "bbox_iou": 0.890796,
+        "bbox_iou": 0.944861,
         "expected_bounds": [
           9.050143,
           12.839064,
@@ -7105,7 +7105,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.890796,
+          "bbox_iou": 0.944861,
           "expected_id": "diagonal_stroke_width_3",
           "geometry_diff": {
             "actual": {
@@ -7177,12 +7177,12 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          5.262688,
-          17.858527,
-          58.737312,
-          51.141473
+          6.512154,
+          18.201338,
+          57.487846,
+          50.798662
         ],
-        "bbox_iou": 0.883947,
+        "bbox_iou": 0.946783,
         "expected_bounds": [
           6.992258,
           18.272442,
@@ -7234,7 +7234,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.883947,
+          "bbox_iou": 0.946783,
           "expected_id": "diagonal_stroke_width_4",
           "geometry_diff": {
             "actual": {
@@ -7564,12 +7564,12 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          12.156231,
-          5.972169,
-          53.843769,
-          58.027831
+          12.918718,
+          7.412852,
+          53.081282,
+          56.587148
         ],
-        "bbox_iou": 0.87967,
+        "bbox_iou": 0.966573,
         "expected_bounds": [
           13.230502,
           7.859934,
@@ -7621,7 +7621,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.87967,
+          "bbox_iou": 0.966573,
           "expected_id": "diagonal_stroke_width_7",
           "geometry_diff": {
             "actual": {
@@ -7822,12 +7822,12 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          4.989667,
-          22.176016,
-          58.010333,
-          46.823984
+          6.37619,
+          22.347992,
+          56.62381,
+          46.652008
         ],
-        "bbox_iou": 0.896504,
+        "bbox_iou": 0.940362,
         "expected_bounds": [
           7.230769,
           22.153846,
@@ -7879,7 +7879,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.896504,
+          "bbox_iou": 0.940362,
           "expected_id": "diagonal_stroke_shallow",
           "geometry_diff": {
             "actual": {
@@ -7951,12 +7951,12 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          20.988834,
-          5.999518,
-          44.011166,
-          59.000482
+          21.146433,
+          7.590121,
+          43.853567,
+          57.409879
         ],
-        "bbox_iou": 0.880439,
+        "bbox_iou": 0.937168,
         "expected_bounds": [
           22.127342,
           7.297753,
@@ -8008,7 +8008,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.880439,
+          "bbox_iou": 0.937168,
           "expected_id": "diagonal_stroke_steep",
           "geometry_diff": {
             "actual": {
@@ -21239,7 +21239,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.965517,
+          "bbox_iou": 1.0,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -21460,7 +21460,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.96,
+          "bbox_iou": 1.0,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -21681,7 +21681,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.96,
+          "bbox_iou": 1.0,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -21902,7 +21902,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.965839,
+          "bbox_iou": 1.0,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -22123,7 +22123,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.965839,
+          "bbox_iou": 1.0,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -22344,7 +22344,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.955447,
+          "bbox_iou": 1.0,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
