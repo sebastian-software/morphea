@@ -361,6 +361,8 @@ CLI arguments override values loaded from the config file.
 ## Review Queue and Reviewed Labels v1
 
 Written by `curve review` and `curve apply-review`.
+`curve review --markdown review.md` writes a scan-friendly queue summary while
+the editable decisions stay in the JSON review file.
 
 Review queue items contain `decision`, `reason`, `corrected_kind`, `issues`,
 and the original `label`. `corrected_kind` lets a reviewer mark a wrong
@@ -380,6 +382,7 @@ Supported fields:
 
 - `pseudo_labels`
 - `output`
+- `markdown`: optional Markdown queue summary path
 
 CLI arguments override values loaded from the config file.
 
