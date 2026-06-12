@@ -16,7 +16,7 @@ from curve.anchors import (
     choose_best_anchor,
     enrich_anchor_metrics,
 )
-from curve.classifier import classifier_prior_error
+from curve.classifier import ClassifierModel, classifier_prior_error
 from curve.masks import BinaryMask, MaskComponent, connected_components
 
 
@@ -41,7 +41,7 @@ def detect_primitive_anchors(
     mask: BinaryMask,
     *,
     min_area: int = 8,
-    classifier_model: dict[str, tuple[float, ...]] | None = None,
+    classifier_model: ClassifierModel | dict[str, tuple[float, ...]] | None = None,
     scoring: ScoringConfig | None = None,
     thresholds: AnchorThresholdConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
@@ -100,7 +100,7 @@ def detect_cutout_strokes(
 def primitive_candidates_for_component(
     component: MaskComponent,
     *,
-    classifier_model: dict[str, tuple[float, ...]] | None = None,
+    classifier_model: ClassifierModel | dict[str, tuple[float, ...]] | None = None,
     thresholds: AnchorThresholdConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
     """Generate plausible simple-shape candidates for one component."""
@@ -149,7 +149,7 @@ def primitive_candidates_for_component(
 
 def _with_classifier_prior(
     candidate: AnchorCandidate,
-    classifier_model: dict[str, tuple[float, ...]],
+    classifier_model: ClassifierModel | dict[str, tuple[float, ...]],
 ) -> AnchorCandidate:
     metrics = dict(candidate.metrics)
     metrics["classifier_prior_error"] = classifier_prior_error(

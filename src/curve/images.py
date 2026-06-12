@@ -17,7 +17,7 @@ from curve.anchors import (
     ScoringConfig,
     StrokeAnchor,
 )
-from curve.classifier import load_centroid_model
+from curve.classifier import load_classifier_model
 from curve.detection import (
     AnchorThresholdConfig,
     detect_cutout_strokes,
@@ -257,7 +257,7 @@ def scene_from_flat_color_image(
     diagnostics = list(mask_result.diagnostics)
     started_at = monotonic()
     loaded_classifier = (
-        load_centroid_model(classifier_model)
+        load_classifier_model(classifier_model)
         if classifier_model is not None
         else None
     )

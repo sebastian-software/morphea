@@ -16,7 +16,10 @@ from curve.classifier import (
     evaluate_classifier_ranking,
     examples_from_dataset,
     features_from_anchor,
+    features_from_candidate,
+    load_classifier_model,
     load_centroid_model,
+    predict_classifier_label,
     raster_examples_from_dataset,
     train_centroid_classifier,
 )
@@ -377,6 +380,72 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 model["mlx_training"]["crop_token_summary"]["raster_example_count"],
                 model["train_examples"],
             )
+
+    def test_load_classifier_model_uses_mlx_feature_head_predictor(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=26,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            model_path = Path(temp_dir) / "mlx-model.json"
+            mlx_module = types.ModuleType("mlx")
+            mlx_core = types.ModuleType("mlx.core")
+            mlx_core.__version__ = "test-mlx"
+            mlx_module.core = mlx_core
+            candidate = AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                circle=CircleAnchor(center=Point(10, 10), radius=6),
+            )
+
+            with (
+                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
+            ):
+                train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=model_path,
+                    config=MlxClassifierTrainingConfig(epochs=1, crop_size=6),
+                )
+
+            classifier = load_classifier_model(model_path)
+            predicted = predict_classifier_label(
+                classifier,
+                features_from_candidate(candidate),
+            )
+
+            self.assertEqual(classifier["classifier_backend"], "mlx_feature_head")
+            self.assertIn(predicted, classifier["labels"])
+
+    def test_empty_mlx_fallback_prior_degrades_to_no_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "mlx-model.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "model_type": "mlx_transformer_primitive_classifier",
+                        "fallback_centroids": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            classifier = load_classifier_model(model_path)
+            candidate = AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                circle=CircleAnchor(center=Point(10, 10), radius=6),
+            )
+
+            self.assertEqual(classifier_prior_error(classifier, candidate), 0.0)
 
     def test_classifier_ranking_compares_heuristic_and_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -518,6 +518,63 @@ class CliTests(unittest.TestCase):
                 manifest["anchors"][0]["metrics"],
             )
 
+    def test_vectorize_accepts_mlx_feature_head_classifier_model(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "mlx-model.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "model_type": "mlx_transformer_primitive_classifier",
+                        "classes": ["circle", "cubic_path"],
+                        "fallback_centroids": {},
+                        "mlx_training": {
+                            "weight_format": "mlx_feature_head_v1",
+                            "labels": ["circle", "cubic_path"],
+                            "weights": [
+                                [
+                                    0.0, 0.0, 8.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0,
+                                ],
+                                [
+                                    0.0, 0.0, -8.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0,
+                                ],
+                            ],
+                            "bias": [0.0, 0.0],
+                            "normalization": {
+                                "mean": [0.0] * 11,
+                                "scale": [1.0] * 11,
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            input_path = Path(temp_dir) / "input.png"
+            output_path = Path(temp_dir) / "output.svg"
+            image = Image.new("RGB", (24, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((2, 2, 10, 10), fill="#dd2222")
+            image.save(input_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(input_path),
+                        "-o",
+                        str(output_path),
+                        "--classifier-model",
+                        str(model_path),
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertEqual(
+                manifest["anchors"][0]["metrics"]["classifier_prior_error"],
+                0.0,
+            )
+
     def test_report_cli_writes_markdown_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             manifest = Path(temp_dir) / "manifest.json"

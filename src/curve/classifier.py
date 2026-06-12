@@ -20,6 +20,9 @@ from curve.anchors import (
 )
 
 
+ClassifierModel = dict[str, object]
+
+
 FEATURE_NAMES = (
     "node_count",
     "parameter_count",
@@ -332,25 +335,26 @@ def evaluate_classifier_model(
     model_path = Path(model_json)
     dataset_path = Path(dataset_json)
     model = json.loads(model_path.read_text(encoding="utf-8"))
-    centroids = load_centroid_model(model_path)
+    classifier = load_classifier_model(model_path)
     report = {
         "schema_version": 1,
         "model": str(model_path),
         "dataset": str(dataset_path),
         "model_type": model.get("model_type"),
+        "classifier_backend": classifier.get("classifier_backend"),
         "feature_names": model.get("feature_names", list(FEATURE_NAMES)),
-        "classes": model.get("classes", sorted(centroids)),
+        "classes": model.get("classes", _classifier_labels(classifier)),
         "splits": list(splits),
         "evaluation": {
             split: evaluate_classifier(
-                centroids,
+                classifier,
                 examples_from_dataset(dataset_path, splits=(split,)),
             )
             for split in splits
         },
         "ranking_evaluation": {
             split: evaluate_classifier_ranking(
-                centroids,
+                classifier,
                 anchors_from_dataset(dataset_path, splits=(split,)),
             )
             for split in splits
@@ -458,14 +462,98 @@ def load_centroid_model(model_json: str | Path) -> dict[str, tuple[float, ...]]:
     }
 
 
+def load_classifier_model(model_json: str | Path) -> ClassifierModel:
+    model = json.loads(Path(model_json).read_text(encoding="utf-8"))
+    if model.get("model_type") == "centroid_primitive_classifier":
+        return {
+            "classifier_backend": "centroid",
+            "centroids": _tuple_mapping(model.get("centroids", {})),
+        }
+    if model.get("model_type") != "mlx_transformer_primitive_classifier":
+        msg = "unsupported classifier model type"
+        raise ValueError(msg)
+
+    fallback = _tuple_mapping(model.get("fallback_centroids", {}))
+    training = model.get("mlx_training", {})
+    if not isinstance(training, dict):
+        return {
+            "classifier_backend": "centroid_fallback",
+            "centroids": fallback,
+        }
+    if training.get("weight_format") != "mlx_feature_head_v1":
+        return {
+            "classifier_backend": "centroid_fallback",
+            "centroids": fallback,
+        }
+    labels = [
+        str(label)
+        for label in training.get("labels", [])
+        if isinstance(label, str)
+    ]
+    weights = _matrix(training.get("weights", []))
+    bias = _vector(training.get("bias", []))
+    normalization = training.get("normalization", {})
+    if not isinstance(normalization, dict):
+        normalization = {}
+    mean = _vector(normalization.get("mean", []))
+    scale = _vector(normalization.get("scale", []))
+    if (
+        not labels
+        or len(weights) != len(labels)
+        or len(bias) != len(labels)
+        or len(mean) != len(FEATURE_NAMES)
+        or len(scale) != len(FEATURE_NAMES)
+    ):
+        return {
+            "classifier_backend": "centroid_fallback",
+            "centroids": fallback,
+        }
+    return {
+        "classifier_backend": "mlx_feature_head",
+        "labels": tuple(labels),
+        "weights": tuple(tuple(row) for row in weights),
+        "bias": tuple(bias),
+        "normalization": {
+            "mean": tuple(mean),
+            "scale": tuple(scale),
+        },
+        "fallback_centroids": fallback,
+    }
+
+
 def classifier_prior_error(
-    centroids: dict[str, tuple[float, ...]],
+    classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     candidate: AnchorCandidate,
 ) -> float:
-    if not centroids:
+    if not classifier_model:
         return 0.0
-    predicted = predict_label(centroids, features_from_candidate(candidate))
+    try:
+        predicted = predict_classifier_label(
+            classifier_model,
+            features_from_candidate(candidate),
+        )
+    except ValueError:
+        return 0.0
     return 0.0 if predicted == candidate.kind.value else 0.35
+
+
+def predict_classifier_label(
+    classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
+    features: tuple[float, ...],
+) -> str:
+    if _is_centroid_mapping(classifier_model):
+        return predict_label(classifier_model, features)
+    backend = classifier_model.get("classifier_backend")
+    if backend == "mlx_feature_head":
+        return _predict_feature_head(classifier_model, features)
+    centroids = classifier_model.get("centroids")
+    if isinstance(centroids, dict) and centroids:
+        return predict_label(_tuple_mapping(centroids), features)
+    fallback = classifier_model.get("fallback_centroids")
+    if isinstance(fallback, dict) and fallback:
+        return predict_label(_tuple_mapping(fallback), features)
+    msg = "classifier model has no usable predictor"
+    raise ValueError(msg)
 
 
 def predict_label(
@@ -475,14 +563,91 @@ def predict_label(
     return min(centroids, key=lambda label: dist(features, centroids[label]))
 
 
+def _predict_feature_head(
+    classifier_model: dict[str, object],
+    features: tuple[float, ...],
+) -> str:
+    labels = tuple(str(label) for label in classifier_model.get("labels", ()))
+    weights = tuple(
+        tuple(float(value) for value in row)
+        for row in classifier_model.get("weights", ())
+        if isinstance(row, tuple)
+    )
+    bias = tuple(float(value) for value in classifier_model.get("bias", ()))
+    normalization = classifier_model.get("normalization", {})
+    if not isinstance(normalization, dict):
+        normalization = {}
+    mean = tuple(float(value) for value in normalization.get("mean", ()))
+    scale = tuple(float(value) for value in normalization.get("scale", ()))
+    normalized = tuple(
+        (features[index] - mean[index]) / scale[index]
+        for index in range(len(FEATURE_NAMES))
+    )
+    logits = [
+        bias[class_index]
+        + sum(
+            weights[class_index][feature_index] * normalized[feature_index]
+            for feature_index in range(len(FEATURE_NAMES))
+        )
+        for class_index in range(len(labels))
+    ]
+    return labels[max(range(len(logits)), key=logits.__getitem__)]
+
+
+def _is_centroid_mapping(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and bool(value)
+        and all(isinstance(item, tuple) for item in value.values())
+    )
+
+
+def _tuple_mapping(value: object) -> dict[str, tuple[float, ...]]:
+    if not isinstance(value, dict):
+        return {}
+    return {
+        str(label): tuple(float(item) for item in values)
+        for label, values in value.items()
+        if isinstance(values, (list, tuple))
+    }
+
+
+def _vector(value: object) -> list[float]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [float(item) for item in value if isinstance(item, (int, float))]
+
+
+def _matrix(value: object) -> list[list[float]]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [
+        _vector(row)
+        for row in value
+        if isinstance(row, (list, tuple))
+    ]
+
+
+def _classifier_labels(classifier_model: dict[str, object]) -> list[str]:
+    if classifier_model.get("classifier_backend") == "mlx_feature_head":
+        return [str(label) for label in classifier_model.get("labels", [])]
+    centroids = classifier_model.get("centroids")
+    if isinstance(centroids, dict):
+        return sorted(str(label) for label in centroids)
+    fallback = classifier_model.get("fallback_centroids")
+    if isinstance(fallback, dict):
+        return sorted(str(label) for label in fallback)
+    return []
+
+
 def evaluate_classifier(
-    centroids: dict[str, tuple[float, ...]],
+    classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     examples: tuple[TrainingExample, ...],
 ) -> dict[str, object]:
     confusion: dict[str, dict[str, int]] = {}
     correct = 0
     for example in examples:
-        predicted = predict_label(centroids, example.features)
+        predicted = predict_classifier_label(classifier_model, example.features)
         confusion.setdefault(example.label, {})
         confusion[example.label][predicted] = confusion[example.label].get(predicted, 0) + 1
         if predicted == example.label:
@@ -496,7 +661,7 @@ def evaluate_classifier(
 
 
 def evaluate_classifier_ranking(
-    centroids: dict[str, tuple[float, ...]],
+    classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     anchors: tuple[dict[str, object], ...],
 ) -> dict[str, object]:
     total = 0
@@ -514,7 +679,7 @@ def evaluate_classifier_ranking(
         total += 1
         heuristic_label = min(candidates, key=semantic_anchor_score).kind.value
         assisted_candidates = tuple(
-            _candidate_with_classifier_prior(candidate, centroids)
+            _candidate_with_classifier_prior(candidate, classifier_model)
             for candidate in candidates
         )
         classifier_label = min(
@@ -570,10 +735,13 @@ def _centroids(examples: tuple[TrainingExample, ...]) -> dict[str, tuple[float, 
 
 def _candidate_with_classifier_prior(
     candidate: AnchorCandidate,
-    centroids: dict[str, tuple[float, ...]],
+    classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
 ) -> AnchorCandidate:
     metrics = dict(candidate.metrics)
-    metrics["classifier_prior_error"] = classifier_prior_error(centroids, candidate)
+    metrics["classifier_prior_error"] = classifier_prior_error(
+        classifier_model,
+        candidate,
+    )
     return AnchorCandidate(
         kind=candidate.kind,
         raster_error=candidate.raster_error,
