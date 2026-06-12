@@ -1,17 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="rect">
-    <rect x="10" y="14" width="44" height="22" rx="0" ry="0" fill="#003366" />
-    <rect x="10" y="14" width="44" height="22" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="10" y="12" font-size="4" fill="#ff00ff">anchor-0000:rect:0.966667</text>
+    <rect x="10" y="14" width="44" height="36" rx="0" ry="0" fill="#003366" />
+    <rect x="10" y="14" width="44" height="36" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="10" y="12" font-size="4" fill="#ff00ff">anchor-0000:rect:1.0</text>
   </g>
-  <g id="anchor-0001" data-kind="rect">
-    <rect x="10" y="41" width="44" height="9" rx="0" ry="0" fill="#003366" />
-    <rect x="10" y="41" width="44" height="9" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="10" y="39" font-size="4" fill="#ff00ff">anchor-0001:rect:0.933962</text>
-  </g>
-  <g id="anchor-0002" data-kind="stroke_polyline">
+  <g id="anchor-0001" data-kind="stroke_polyline">
     <path d="M 6 38.5 L 58 38.5" fill="none" stroke="#dd2222" stroke-width="4" stroke-linecap="butt" stroke-linejoin="round" />
-    <rect x="4" y="36.5" width="56" height="4" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="4" y="34.5" font-size="4" fill="#ff00ff">anchor-0002:stroke_polyline:1.0</text>
+    <rect x="6" y="36.5" width="52" height="4" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="6" y="34.5" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
   </g>
 </svg>

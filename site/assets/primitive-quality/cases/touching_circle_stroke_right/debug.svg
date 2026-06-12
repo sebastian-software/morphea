@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="circle">
-    <circle cx="21.877" cy="31.993" r="10.046" fill="#003366" />
-    <rect x="11.831" y="21.947" width="20.092" height="20.092" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="11.831" y="19.947" font-size="4" fill="#ff00ff">anchor-0000:circle:0.967802</text>
+    <circle cx="22" cy="32" r="10" fill="#003366" />
+    <rect x="12" y="22" width="20" height="20" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="12" y="20" font-size="4" fill="#ff00ff">anchor-0000:circle:0.967533</text>
   </g>
   <g id="anchor-0001" data-kind="stroke_polyline">
     <path d="M 32 32.5 L 54 32.5" fill="none" stroke="#dd2222" stroke-width="4" stroke-linecap="butt" stroke-linejoin="round" />
-    <rect x="30" y="30.5" width="26" height="4" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="30" y="28.5" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
+    <rect x="32" y="30.5" width="22" height="4" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="32" y="28.5" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
   </g>
 </svg>

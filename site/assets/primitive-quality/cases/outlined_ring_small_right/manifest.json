@@ -36,21 +36,21 @@
       "raster_error": 0.1796768306420213,
       "reserved": {
         "bounds": [
-          31.5260165619945,
-          19.5260165619945,
-          56.473983438005504,
-          44.473983438005504
+          29.18217893672365,
+          17.18217893672365,
+          58.817821063276355,
+          46.817821063276355
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
-          31.5260165619945,
-          19.5260165619945,
-          56.473983438005504,
-          44.473983438005504
+          29.18217893672365,
+          17.18217893672365,
+          58.817821063276355,
+          46.817821063276355
         ],
-        "bounds_area": 622.401051,
+        "bounds_area": 878.271284,
         "id": "mask-0000",
         "source": "reserved_bounds"
       },
@@ -74,7 +74,7 @@
       "kind": "primitive_anchor_reservation",
       "metrics": {
         "reserved_anchor_count": 1,
-        "reserved_bounds_area": 622.401051
+        "reserved_bounds_area": 878.271284
       }
     }
   ],
@@ -142,8 +142,8 @@
     "raster_edge_error": 0.038905,
     "raster_l1_error": 0.053516,
     "raster_size_match": true,
-    "reserved_simple_shape_area": 622.401051,
-    "reserved_simple_shape_area_ratio": 0.151953,
+    "reserved_simple_shape_area": 878.271284,
+    "reserved_simple_shape_area_ratio": 0.214422,
     "reserved_simple_shape_count": 1,
     "shape_count": 1,
     "simple_shape_count": 1,

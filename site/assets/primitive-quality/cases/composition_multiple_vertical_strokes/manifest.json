@@ -30,20 +30,20 @@
       "reserved": {
         "bounds": [
           16.5,
-          6.5,
+          8.0,
           19.5,
-          57.5
+          56.0
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
           16.5,
-          6.5,
+          8.0,
           19.5,
-          57.5
+          56.0
         ],
-        "bounds_area": 153.0,
+        "bounds_area": 144.0,
         "id": "mask-0000",
         "source": "reserved_bounds"
       },
@@ -95,20 +95,20 @@
       "reserved": {
         "bounds": [
           44.5,
-          6.5,
+          8.0,
           47.5,
-          57.5
+          56.0
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
           44.5,
-          6.5,
+          8.0,
           47.5,
-          57.5
+          56.0
         ],
-        "bounds_area": 153.0,
+        "bounds_area": 144.0,
         "id": "mask-0001",
         "source": "reserved_bounds"
       },
@@ -160,34 +160,34 @@
         "auto_merge_allowed": false,
         "bounds": [
           16.5,
-          6.5,
+          8.0,
           47.5,
-          57.5
+          56.0
         ],
         "bounds_fill_ratio": 0.193548,
-        "combined_bounds_area": 1581.0,
+        "combined_bounds_area": 1488.0,
         "decision_reason": "sparse_same_color_bounds",
         "fragment_bounds": [
           [
             16.5,
-            6.5,
+            8.0,
             19.5,
-            57.5
+            56.0
           ],
           [
             44.5,
-            6.5,
+            8.0,
             47.5,
-            57.5
+            56.0
           ]
         ],
-        "fragment_bounds_area": 306.0,
+        "fragment_bounds_area": 288.0,
         "target_kind": "compound_shape"
       },
       "metrics": {
         "bounds_fill_ratio": 0.193548,
-        "combined_bounds_area": 1581.0,
-        "fragment_bounds_area": 306.0,
+        "combined_bounds_area": 1488.0,
+        "fragment_bounds_area": 288.0,
         "fragment_count": 2,
         "generic_path_count": 0,
         "merge_candidate": true
@@ -201,7 +201,7 @@
       "kind": "primitive_anchor_reservation",
       "metrics": {
         "reserved_anchor_count": 2,
-        "reserved_bounds_area": 306.0
+        "reserved_bounds_area": 288.0
       }
     }
   ],
@@ -260,8 +260,8 @@
     "raster_edge_error": 0.0,
     "raster_l1_error": 0.0,
     "raster_size_match": true,
-    "reserved_simple_shape_area": 306.0,
-    "reserved_simple_shape_area_ratio": 0.074707,
+    "reserved_simple_shape_area": 288.0,
+    "reserved_simple_shape_area_ratio": 0.070312,
     "reserved_simple_shape_count": 2,
     "shape_count": 2,
     "simple_shape_count": 2,

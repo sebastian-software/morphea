@@ -5,8 +5,8 @@
     <text x="8" y="6" font-size="4" fill="#ff00ff">anchor-0000:rect:1.0</text>
   </g>
   <g id="anchor-0001" data-kind="circle">
-    <circle cx="47" cy="47" r="8.94" fill="#003366" />
-    <rect x="38.06" y="38.06" width="17.88" height="17.88" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="38.06" y="36.06" font-size="4" fill="#ff00ff">anchor-0001:circle:0.94675</text>
+    <circle cx="47" cy="47" r="9" fill="#003366" />
+    <rect x="38" y="38" width="18" height="18" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="38" y="36" font-size="4" fill="#ff00ff">anchor-0001:circle:0.947678</text>
   </g>
 </svg>

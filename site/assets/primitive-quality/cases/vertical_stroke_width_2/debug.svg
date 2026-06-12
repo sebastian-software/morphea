@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="stroke_polyline">
     <path d="M 20.5 8 L 20.5 56" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="butt" stroke-linejoin="round" />
-    <rect x="19.5" y="7" width="2" height="50" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="19.5" y="5" font-size="4" fill="#ff00ff">anchor-0000:stroke_polyline:1.0</text>
+    <rect x="19.5" y="8" width="2" height="48" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="19.5" y="6" font-size="4" fill="#ff00ff">anchor-0000:stroke_polyline:1.0</text>
   </g>
 </svg>

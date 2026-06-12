@@ -102,6 +102,20 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].kind, AnchorKind.CIRCLE)
         self.assertIn("circle_roundness_error", anchors[0].metrics)
 
+    def test_pillow_style_filled_circle_regularizes_to_mask_bounds(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((12, 22, 32, 42), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.CIRCLE)
+        self.assertAlmostEqual(anchors[0].circle.center.x, 22.0)
+        self.assertAlmostEqual(anchors[0].circle.center.y, 32.0)
+        self.assertAlmostEqual(anchors[0].circle.radius, 10.0)
+
     def test_circle_threshold_config_can_reject_loose_circle_candidate(self):
         mask = BinaryMask.from_rows(
             (

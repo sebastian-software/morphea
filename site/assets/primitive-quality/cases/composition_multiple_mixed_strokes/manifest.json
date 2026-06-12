@@ -29,21 +29,21 @@
       "raster_error": 0.00808608629274391,
       "reserved": {
         "bounds": [
-          6.085786437626906,
-          30.085786437626904,
-          31.914213562373096,
-          55.91421356237309
+          6.646446609406727,
+          30.646446609406727,
+          31.353553390593273,
+          55.35355339059328
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
-          6.085786437626906,
-          30.085786437626904,
-          31.914213562373096,
-          55.91421356237309
+          6.646446609406727,
+          30.646446609406727,
+          31.353553390593273,
+          55.35355339059328
         ],
-        "bounds_area": 667.107648,
+        "bounds_area": 610.441125,
         "id": "mask-0000",
         "source": "reserved_bounds"
       },
@@ -95,20 +95,20 @@
       "reserved": {
         "bounds": [
           48.5,
-          28.5,
+          30.0,
           51.5,
-          59.5
+          58.0
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
           48.5,
-          28.5,
+          30.0,
           51.5,
-          59.5
+          58.0
         ],
-        "bounds_area": 93.0,
+        "bounds_area": 84.0,
         "id": "mask-0001",
         "source": "reserved_bounds"
       },
@@ -159,21 +159,21 @@
       "raster_error": 0.0,
       "reserved": {
         "bounds": [
-          6.5,
+          8.0,
           16.5,
-          35.5,
+          34.0,
           19.5
         ],
         "reason": "simple_shape_anchor"
       },
       "source_mask": {
         "bounds": [
-          6.5,
+          8.0,
           16.5,
-          35.5,
+          34.0,
           19.5
         ],
-        "bounds_area": 87.0,
+        "bounds_area": 78.0,
         "id": "mask-0002",
         "source": "reserved_bounds"
       },
@@ -212,41 +212,41 @@
         "action": "review_as_separate_fragments",
         "auto_merge_allowed": false,
         "bounds": [
-          6.085786437626906,
+          6.646446609406727,
           16.5,
           51.5,
-          59.5
+          58.0
         ],
-        "bounds_fill_ratio": 0.433789,
-        "combined_bounds_area": 1952.811183,
+        "bounds_fill_ratio": 0.414974,
+        "combined_bounds_area": 1861.422466,
         "decision_reason": "sparse_same_color_bounds",
         "fragment_bounds": [
           [
-            6.085786437626906,
-            30.085786437626904,
-            31.914213562373096,
-            55.91421356237309
+            6.646446609406727,
+            30.646446609406727,
+            31.353553390593273,
+            55.35355339059328
           ],
           [
             48.5,
-            28.5,
+            30.0,
             51.5,
-            59.5
+            58.0
           ],
           [
-            6.5,
+            8.0,
             16.5,
-            35.5,
+            34.0,
             19.5
           ]
         ],
-        "fragment_bounds_area": 847.107648,
+        "fragment_bounds_area": 772.441125,
         "target_kind": "compound_shape"
       },
       "metrics": {
-        "bounds_fill_ratio": 0.433789,
-        "combined_bounds_area": 1952.811183,
-        "fragment_bounds_area": 847.107648,
+        "bounds_fill_ratio": 0.414974,
+        "combined_bounds_area": 1861.422466,
+        "fragment_bounds_area": 772.441125,
         "fragment_count": 3,
         "generic_path_count": 0,
         "merge_candidate": true
@@ -261,7 +261,7 @@
       "kind": "primitive_anchor_reservation",
       "metrics": {
         "reserved_anchor_count": 3,
-        "reserved_bounds_area": 847.107648
+        "reserved_bounds_area": 772.441125
       }
     }
   ],
@@ -321,8 +321,8 @@
     "raster_edge_error": 0.0,
     "raster_l1_error": 0.0,
     "raster_size_match": true,
-    "reserved_simple_shape_area": 847.107648,
-    "reserved_simple_shape_area_ratio": 0.206813,
+    "reserved_simple_shape_area": 772.441125,
+    "reserved_simple_shape_area_ratio": 0.188584,
     "reserved_simple_shape_count": 3,
     "shape_count": 3,
     "simple_shape_count": 3,

@@ -540,7 +540,7 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
                 {
                     "kind": "primitive_contact_pair",
                     "anchor_count": 2,
-                    "relation": "overlapping",
+                    "relation": "touching",
                     "separation_policy": "separate_by_color",
                 },
             ),
@@ -580,14 +580,10 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             primitives,
             (
                 {
-                    "kind": "occluded_primitive_group",
-                    "anchor_count": 3,
-                    "fragment_count": 2,
-                    "occluder_count": 1,
-                    "base_color": BLUE,
-                    "target_kind": "rect",
-                    "draw_order": "base_then_occluder",
-                    "occlusion_policy": "visible_fragments_with_ordered_occluder",
+                    "kind": "primitive_contact_pair",
+                    "anchor_count": 2,
+                    "relation": "overlapping",
+                    "separation_policy": "separate_by_color",
                 },
             ),
         )
@@ -596,8 +592,7 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
                 "stroke_crossing_rectangle_horizontal",
                 "horizontal",
                 (
-                    _rect_primitive("top_fragment", (12, 20, 52, 30)),
-                    _rect_primitive("bottom_fragment", (12, 35, 52, 44)),
+                    _rect_primitive("base_rect", (12, 20, 52, 44)),
                     _stroke_primitive("stroke", (8, 32, 56, 32), 4, color="#dd2222"),
                 ),
             ),
@@ -605,8 +600,7 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
                 "stroke_crossing_rectangle_vertical",
                 "vertical",
                 (
-                    _rect_primitive("left_fragment", (20, 12, 30, 52)),
-                    _rect_primitive("right_fragment", (35, 12, 44, 52)),
+                    _rect_primitive("base_rect", (20, 12, 44, 52)),
                     _stroke_primitive("stroke", (32, 8, 32, 56), 4, color="#dd2222"),
                 ),
             ),
@@ -614,8 +608,7 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
                 "stroke_crossing_rectangle_low",
                 "low_horizontal",
                 (
-                    _rect_primitive("top_fragment", (10, 14, 54, 36)),
-                    _rect_primitive("bottom_fragment", (10, 41, 54, 50)),
+                    _rect_primitive("base_rect", (10, 14, 54, 50)),
                     _stroke_primitive("stroke", (6, 38, 58, 38), 4, color="#dd2222"),
                 ),
             ),
@@ -2377,10 +2370,11 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
     if spec.geometry_type == "stroke":
         points = spec.geometry["centerline"]
         width = float(spec.geometry["width"])
-        xs = [float(x) for x, _ in points]
-        ys = [float(y) for _, y in points]
-        pad = width / 2
-        return min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad
+        return _stroke_visual_bounds(
+            tuple((float(x), float(y)) for x, y in points),
+            width,
+            str(spec.geometry.get("cap_style", "butt")),
+        )
     return 0.0, 0.0, 0.0, 0.0
 
 
@@ -2403,11 +2397,17 @@ def _anchor_visual_bounds(anchor: dict[str, Any]) -> tuple[float, float, float, 
     stroke = anchor.get("stroke")
     if isinstance(stroke, dict):
         points = stroke.get("centerline", [])
-        xs = [float(point.get("x", 0.0)) for point in points]
-        ys = [float(point.get("y", 0.0)) for point in points]
-        if xs and ys:
-            pad = _stroke_width(anchor) / 2
-            return min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad
+        parsed_points = tuple(
+            (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
+            for point in points
+            if isinstance(point, dict)
+        )
+        if parsed_points:
+            return _stroke_visual_bounds(
+                parsed_points,
+                _stroke_width(anchor),
+                str(stroke.get("cap_style", "round")),
+            )
     return 0.0, 0.0, 0.0, 0.0
 
 
@@ -2417,6 +2417,42 @@ def _stroke_width(anchor: dict[str, Any]) -> float:
         return 1.0
     samples = [float(sample) for sample in stroke.get("width_samples", [])]
     return mean(samples) if samples else 1.0
+
+
+def _stroke_visual_bounds(
+    points: tuple[tuple[float, float], ...],
+    width: float,
+    cap_style: str,
+) -> tuple[float, float, float, float]:
+    if len(points) < 2:
+        x, y = points[0]
+        pad = width / 2
+        return x - pad, y - pad, x + pad, y + pad
+    if cap_style != "butt" or len(points) != 2:
+        xs = [x for x, _ in points]
+        ys = [y for _, y in points]
+        pad = width / 2
+        return min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad
+
+    (start_x, start_y), (end_x, end_y) = points
+    dx = end_x - start_x
+    dy = end_y - start_y
+    length = (dx * dx + dy * dy) ** 0.5
+    if length <= 0.0:
+        pad = width / 2
+        return start_x - pad, start_y - pad, start_x + pad, start_y + pad
+    normal_x = -dy / length
+    normal_y = dx / length
+    pad = width / 2
+    corners = (
+        (start_x + normal_x * pad, start_y + normal_y * pad),
+        (start_x - normal_x * pad, start_y - normal_y * pad),
+        (end_x + normal_x * pad, end_y + normal_y * pad),
+        (end_x - normal_x * pad, end_y - normal_y * pad),
+    )
+    xs = [x for x, _ in corners]
+    ys = [y for _, y in corners]
+    return min(xs), min(ys), max(xs), max(ys)
 
 
 def _bounds_outside_canvas(

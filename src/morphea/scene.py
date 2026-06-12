@@ -81,8 +81,10 @@ def scene_from_mask(mask: BinaryMask, *, min_area: int = 8) -> Scene:
         width=mask.width,
         height=mask.height,
         anchors=merge_auto_mergeable_same_color_fragments(
-            promote_occluded_rect_primitives(
-                detect_primitive_anchors(mask, min_area=min_area)
+            promote_occluded_rect_fragment_groups(
+                promote_occluded_rect_primitives(
+                    detect_primitive_anchors(mask, min_area=min_area)
+                )
             )
         ),
     )
@@ -138,6 +140,45 @@ def merge_auto_mergeable_same_color_fragments(
     )
 
 
+def promote_occluded_rect_fragment_groups(
+    anchors: tuple[AnchorCandidate, ...],
+) -> tuple[AnchorCandidate, ...]:
+    """Promote compact same-color rect fragments hidden by an occluder.
+
+    When a different-color primitive cuts through a filled rect, connected
+    component analysis only sees the visible fragments. SVG export should still
+    prefer the editable base rect drawn before the occluder instead of exposing
+    artificial transparent gaps between fragments.
+    """
+
+    color_groups: dict[str, list[int]] = {}
+    for index, anchor in enumerate(anchors):
+        if anchor.color is None:
+            continue
+        color_groups.setdefault(anchor.color, []).append(index)
+
+    replacements: dict[int, AnchorCandidate] = {}
+    removed: set[int] = set()
+    for indexes in color_groups.values():
+        if len(indexes) < 2:
+            continue
+        fragments = tuple(anchors[index] for index in indexes)
+        promoted = _promoted_occluded_rect_fragments(fragments, anchors)
+        if promoted is None:
+            continue
+        first, *rest = indexes
+        replacements[first] = promoted
+        removed.update(rest)
+
+    if not replacements:
+        return anchors
+    return tuple(
+        replacements.get(index, anchor)
+        for index, anchor in enumerate(anchors)
+        if index not in removed
+    )
+
+
 def _promoted_occluded_rect(
     anchor: AnchorCandidate,
     anchors: tuple[AnchorCandidate, ...],
@@ -181,6 +222,75 @@ def _promoted_occluded_rect(
             )
         ),
         metrics=metrics,
+    )
+
+
+def _promoted_occluded_rect_fragments(
+    fragments: tuple[AnchorCandidate, ...],
+    anchors: tuple[AnchorCandidate, ...],
+) -> AnchorCandidate | None:
+    if len(fragments) < 2:
+        return None
+    color = fragments[0].color
+    if color is None or any(fragment.color != color for fragment in fragments):
+        return None
+    if any(not _axis_aligned_rect_fragment(fragment) for fragment in fragments):
+        return None
+
+    merge_plan = _same_color_merge_plan(fragments, list(range(len(fragments))))
+    if not merge_plan["auto_merge_allowed"]:
+        return None
+    combined_bounds = tuple(float(value) for value in merge_plan["bounds"])
+    combined_area = _bounds_area(combined_bounds)
+    fragment_area = sum(_bounds_area(_anchor_bounds(fragment)) for fragment in fragments)
+    occluded_area = max(combined_area - fragment_area, 0.0)
+    if occluded_area <= 0.0:
+        return None
+
+    occluders = [
+        anchor
+        for anchor in anchors
+        if anchor.color is not None
+        and anchor.color != color
+        and _bounds_intersection_area(_anchor_bounds(anchor), combined_bounds) > 0.0
+    ]
+    if not occluders:
+        return None
+    occluder_area = sum(
+        _bounds_intersection_area(_anchor_bounds(anchor), combined_bounds)
+        for anchor in occluders
+    )
+    occlusion_coverage = min(occluder_area / occluded_area, 1.0)
+    if occlusion_coverage < 0.6:
+        return None
+
+    min_x, min_y, max_x, max_y = combined_bounds
+    return AnchorCandidate(
+        kind=AnchorKind.RECT,
+        raster_error=max(fragment.raster_error for fragment in fragments),
+        node_count=4,
+        parameter_count=4,
+        color=color,
+        quad=QuadAnchor(
+            corners=(
+                Point(min_x, min_y),
+                Point(max_x, min_y),
+                Point(max_x, max_y),
+                Point(min_x, max_y),
+            )
+        ),
+        metrics={
+            "occluded_rect_fragment_promotion": 1.0,
+            "source_fragment_count": float(len(fragments)),
+            "occluding_primitive_count": float(len(occluders)),
+            "occlusion_coverage": round(occlusion_coverage, 6),
+            "source_fragment_node_count": float(
+                sum(fragment.node_count for fragment in fragments)
+            ),
+            "source_fragment_parameter_count": float(
+                sum(fragment.parameter_count for fragment in fragments)
+            ),
+        },
     )
 
 
@@ -1213,6 +1323,8 @@ def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]
     if anchor.circle is not None:
         center = anchor.circle.center
         radius = anchor.circle.radius
+        if anchor.kind == AnchorKind.STROKE_CIRCLE:
+            radius += _stroke_width(anchor) / 2
         return (
             center.x - radius,
             center.y - radius,
@@ -1220,15 +1332,46 @@ def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]
             center.y + radius,
         )
     if anchor.stroke is not None and anchor.stroke.centerline:
-        xs = [point.x for point in anchor.stroke.centerline]
-        ys = [point.y for point in anchor.stroke.centerline]
-        pad = _stroke_width(anchor) / 2
-        return (min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad)
+        return _stroke_bounds(anchor.stroke, _stroke_width(anchor))
     if anchor.quad is not None:
         xs = [point.x for point in anchor.quad.corners]
         ys = [point.y for point in anchor.quad.corners]
         return (min(xs), min(ys), max(xs), max(ys))
     return (0.0, 0.0, 0.0, 0.0)
+
+
+def _stroke_bounds(stroke: StrokeAnchor, width: float) -> tuple[float, float, float, float]:
+    points = stroke.centerline
+    if len(points) < 2:
+        xs = [point.x for point in points]
+        ys = [point.y for point in points]
+        pad = width / 2
+        return (min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad)
+    if stroke.cap_style != "butt" or len(points) != 2:
+        xs = [point.x for point in points]
+        ys = [point.y for point in points]
+        pad = width / 2
+        return (min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad)
+
+    start, end = points
+    dx = end.x - start.x
+    dy = end.y - start.y
+    length = (dx * dx + dy * dy) ** 0.5
+    if length <= 0.0:
+        pad = width / 2
+        return (start.x - pad, start.y - pad, start.x + pad, start.y + pad)
+    normal_x = -dy / length
+    normal_y = dx / length
+    pad = width / 2
+    corners = (
+        (start.x + normal_x * pad, start.y + normal_y * pad),
+        (start.x - normal_x * pad, start.y - normal_y * pad),
+        (end.x + normal_x * pad, end.y + normal_y * pad),
+        (end.x - normal_x * pad, end.y - normal_y * pad),
+    )
+    xs = [x for x, _ in corners]
+    ys = [y for _, y in corners]
+    return (min(xs), min(ys), max(xs), max(ys))
 
 
 def _debug_label(anchor: AnchorCandidate, anchor_id: str | None) -> str:

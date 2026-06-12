@@ -289,6 +289,16 @@ def _circle_candidate(
         component,
         fallback_radius=fallback_radius,
     )
+    bounds_center, bounds_radius, bounds_residual = _bounds_regularized_circle(
+        component,
+    )
+    if bounds_residual <= max(
+        thresholds.circle_max_fit_residual,
+        fit_residual + 0.02,
+    ):
+        center = bounds_center
+        radius = bounds_radius
+        fit_residual = bounds_residual
     if diameter >= 12 and fit_residual > thresholds.circle_max_fit_residual:
         return None
     samples = tuple(Point(x, y) for x, y in component.boundary_pixels)
@@ -304,6 +314,27 @@ def _circle_candidate(
         "circle_fit_residual_error",
         fit_residual,
     )
+
+
+def _bounds_regularized_circle(
+    component: MaskComponent,
+) -> tuple[Point, float, float]:
+    min_x, min_y, max_x, max_y = component.bounds
+    diameter = max(max_x - min_x, max_y - min_y)
+    radius = max(diameter / 2, 0.5)
+    center = Point((min_x + max_x) / 2, (min_y + max_y) / 2)
+    samples = tuple(component.boundary_pixels)
+    if not samples:
+        return center, radius, 0.0
+    residual = (
+        sum(
+            abs(Point(x, y).distance_to(center) - radius)
+            for x, y in samples
+        )
+        / len(samples)
+        / radius
+    )
+    return center, radius, residual
 
 
 def _fit_circle_from_boundary(

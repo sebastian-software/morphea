@@ -3220,12 +3220,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          17.985722,
-          17.985722,
-          46.014278,
-          46.014278
+          18.0,
+          18.0,
+          46.0,
+          46.0
         ],
-        "bbox_iou": 0.997963,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           18.0,
           18.0,
@@ -3238,7 +3238,7 @@
           "geometry": {
             "cx": 32.0,
             "cy": 32.0,
-            "r": 14.014278,
+            "r": 14.0,
             "width": null
           },
           "kind": "circle",
@@ -3262,14 +3262,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.997963,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 14.014278,
+                "r": 14.0,
                 "width": null
               },
               "kind": "circle",
@@ -3291,8 +3291,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.012264,
-        "raster_l1_error": 0.00957,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3319,12 +3319,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          7.88636,
-          7.88636,
-          28.11364,
-          28.11364
+          8.0,
+          8.0,
+          28.0,
+          28.0
         ],
-        "bbox_iou": 0.977654,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           8.0,
@@ -3337,7 +3337,7 @@
           "geometry": {
             "cx": 18.0,
             "cy": 18.0,
-            "r": 10.11364,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -3361,14 +3361,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.977654,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_small_top_left",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 18.0,
                 "cy": 18.0,
-                "r": 10.11364,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -3390,8 +3390,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008881,
-        "raster_l1_error": 0.006836,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3418,12 +3418,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          33.974461,
-          7.974461,
-          56.025539,
-          30.025539
+          34.0,
+          8.0,
+          56.0,
+          30.0
         ],
-        "bbox_iou": 0.995373,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           34.0,
           8.0,
@@ -3436,7 +3436,7 @@
           "geometry": {
             "cx": 45.0,
             "cy": 19.0,
-            "r": 11.025539,
+            "r": 11.0,
             "width": null
           },
           "kind": "circle",
@@ -3460,14 +3460,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.995373,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_small_top_right",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 45.0,
                 "cy": 19.0,
-                "r": 11.025539,
+                "r": 11.0,
                 "width": null
               },
               "kind": "circle",
@@ -3489,8 +3489,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.009726,
-        "raster_l1_error": 0.008008,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3517,12 +3517,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          7.974461,
-          33.974461,
-          30.025539,
-          56.025539
+          8.0,
+          34.0,
+          30.0,
+          56.0
         ],
-        "bbox_iou": 0.995373,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           34.0,
@@ -3535,7 +3535,7 @@
           "geometry": {
             "cx": 19.0,
             "cy": 45.0,
-            "r": 11.025539,
+            "r": 11.0,
             "width": null
           },
           "kind": "circle",
@@ -3559,14 +3559,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.995373,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_small_bottom_left",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 19.0,
                 "cy": 45.0,
-                "r": 11.025539,
+                "r": 11.0,
                 "width": null
               },
               "kind": "circle",
@@ -3588,8 +3588,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.009726,
-        "raster_l1_error": 0.008008,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3616,12 +3616,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          23.9401,
-          3.9401,
-          60.0599,
-          40.0599
+          24.0,
+          4.0,
+          60.0,
+          40.0
         ],
-        "bbox_iou": 0.993377,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           24.0,
           4.0,
@@ -3634,7 +3634,7 @@
           "geometry": {
             "cx": 42.0,
             "cy": 22.0,
-            "r": 18.0599,
+            "r": 18.0,
             "width": null
           },
           "kind": "circle",
@@ -3658,14 +3658,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.993377,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_large_top_right",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 42.0,
                 "cy": 22.0,
-                "r": 18.0599,
+                "r": 18.0,
                 "width": null
               },
               "kind": "circle",
@@ -3687,8 +3687,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015647,
-        "raster_l1_error": 0.012305,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3715,12 +3715,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          4.048988,
-          24.048988,
-          35.951012,
-          55.951012
+          4.0,
+          24.0,
+          36.0,
+          56.0
         ],
-        "bbox_iou": 0.993886,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           4.0,
           24.0,
@@ -3733,7 +3733,7 @@
           "geometry": {
             "cx": 20.0,
             "cy": 40.0,
-            "r": 15.951012,
+            "r": 16.0,
             "width": null
           },
           "kind": "circle",
@@ -3757,14 +3757,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.993886,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_large_bottom_left",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 20.0,
                 "cy": 40.0,
-                "r": 15.951012,
+                "r": 16.0,
                 "width": null
               },
               "kind": "circle",
@@ -3786,8 +3786,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.013955,
-        "raster_l1_error": 0.010352,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3814,12 +3814,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          19.965735,
-          19.965735,
-          44.034265,
-          44.034265
+          20.0,
+          20.0,
+          44.0,
+          44.0
         ],
-        "bbox_iou": 0.994314,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           20.0,
           20.0,
@@ -3832,7 +3832,7 @@
           "geometry": {
             "cx": 32.0,
             "cy": 32.0,
-            "r": 12.034265,
+            "r": 12.0,
             "width": null
           },
           "kind": "circle",
@@ -3856,14 +3856,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.994314,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_medium_center",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 12.034265,
+                "r": 12.0,
                 "width": null
               },
               "kind": "circle",
@@ -3885,8 +3885,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.010572,
-        "raster_l1_error": 0.008398,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -3913,12 +3913,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          9.991073,
-          13.991073,
-          50.008927,
-          54.008927
+          10.0,
+          14.0,
+          50.0,
+          54.0
         ],
-        "bbox_iou": 0.999108,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           10.0,
           14.0,
@@ -3931,7 +3931,7 @@
           "geometry": {
             "cx": 30.0,
             "cy": 34.0,
-            "r": 20.008927,
+            "r": 20.0,
             "width": null
           },
           "kind": "circle",
@@ -3955,14 +3955,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.999108,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_large_center",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 30.0,
                 "cy": 34.0,
-                "r": 20.008927,
+                "r": 20.0,
                 "width": null
               },
               "kind": "circle",
@@ -3984,8 +3984,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.017338,
-        "raster_l1_error": 0.014648,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -4012,12 +4012,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          1.985722,
-          1.985722,
-          30.014278,
-          30.014278
+          2.0,
+          2.0,
+          30.0,
+          30.0
         ],
-        "bbox_iou": 0.997963,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           2.0,
           2.0,
@@ -4030,7 +4030,7 @@
           "geometry": {
             "cx": 16.0,
             "cy": 16.0,
-            "r": 14.014278,
+            "r": 14.0,
             "width": null
           },
           "kind": "circle",
@@ -4054,14 +4054,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.997963,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_near_origin",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 16.0,
                 "cy": 16.0,
-                "r": 14.014278,
+                "r": 14.0,
                 "width": null
               },
               "kind": "circle",
@@ -4083,8 +4083,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.012264,
-        "raster_l1_error": 0.00957,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -4111,12 +4111,12 @@
       "family": "filled_circle",
       "geometry": {
         "actual_bounds": [
-          31.985722,
-          31.985722,
-          60.014278,
-          60.014278
+          32.0,
+          32.0,
+          60.0,
+          60.0
         ],
-        "bbox_iou": 0.997963,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           32.0,
           32.0,
@@ -4129,7 +4129,7 @@
           "geometry": {
             "cx": 46.0,
             "cy": 46.0,
-            "r": 14.014278,
+            "r": 14.0,
             "width": null
           },
           "kind": "circle",
@@ -4153,14 +4153,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.997963,
+          "bbox_iou": 1.0,
           "expected_id": "filled_circle_near_corner",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 46.0,
                 "cy": 46.0,
-                "r": 14.014278,
+                "r": 14.0,
                 "width": null
               },
               "kind": "circle",
@@ -4182,8 +4182,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.012264,
-        "raster_l1_error": 0.00957,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -4210,16 +4210,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          10.0,
+          12.0,
           30.5,
-          54.0,
+          52.0,
           34.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          10.0,
+          12.0,
           30.5,
-          54.0,
+          52.0,
           34.5
         ]
       },
@@ -4339,16 +4339,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          7.5,
+          8.0,
           13.5,
-          56.5,
+          56.0,
           14.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          7.5,
+          8.0,
           13.5,
-          56.5,
+          56.0,
           14.5
         ]
       },
@@ -4468,16 +4468,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          7.0,
+          8.0,
           19.5,
-          57.0,
+          56.0,
           21.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          7.0,
+          8.0,
           19.5,
-          57.0,
+          56.0,
           21.5
         ]
       },
@@ -4597,16 +4597,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          8.5,
+          10.0,
           24.5,
-          55.5,
+          54.0,
           27.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          8.5,
+          10.0,
           24.5,
-          55.5,
+          54.0,
           27.5
         ]
       },
@@ -4726,16 +4726,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          5.5,
+          8.0,
           35.5,
-          58.5,
+          56.0,
           40.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          5.5,
+          8.0,
           35.5,
-          58.5,
+          56.0,
           40.5
         ]
       },
@@ -4855,16 +4855,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          9.0,
+          12.0,
           43.5,
-          55.0,
+          52.0,
           49.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          9.0,
+          12.0,
           43.5,
-          55.0,
+          52.0,
           49.5
         ]
       },
@@ -4984,16 +4984,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          6.0,
+          10.0,
           50.5,
-          58.0,
+          54.0,
           58.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          6.0,
+          10.0,
           50.5,
-          58.0,
+          54.0,
           58.5
         ]
       },
@@ -5113,16 +5113,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          16.0,
+          18.0,
           8.5,
-          44.0,
+          42.0,
           12.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          16.0,
+          18.0,
           8.5,
-          44.0,
+          42.0,
           12.5
         ]
       },
@@ -5242,16 +5242,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          2.0,
+          4.0,
           30.5,
-          36.0,
+          34.0,
           34.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          2.0,
+          4.0,
           30.5,
-          36.0,
+          34.0,
           34.5
         ]
       },
@@ -5371,16 +5371,16 @@
       "family": "horizontal_stroke",
       "geometry": {
         "actual_bounds": [
-          28.0,
+          30.0,
           30.5,
-          62.0,
+          60.0,
           34.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          28.0,
+          30.0,
           30.5,
-          62.0,
+          60.0,
           34.5
         ]
       },
@@ -5501,16 +5501,16 @@
       "geometry": {
         "actual_bounds": [
           30.5,
-          10.0,
+          12.0,
           34.5,
-          54.0
+          52.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           30.5,
-          10.0,
+          12.0,
           34.5,
-          54.0
+          52.0
         ]
       },
       "geometry_diff": {
@@ -5630,16 +5630,16 @@
       "geometry": {
         "actual_bounds": [
           13.5,
-          7.5,
+          8.0,
           14.5,
-          56.5
+          56.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           13.5,
-          7.5,
+          8.0,
           14.5,
-          56.5
+          56.0
         ]
       },
       "geometry_diff": {
@@ -5759,16 +5759,16 @@
       "geometry": {
         "actual_bounds": [
           19.5,
-          7.0,
+          8.0,
           21.5,
-          57.0
+          56.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           19.5,
-          7.0,
+          8.0,
           21.5,
-          57.0
+          56.0
         ]
       },
       "geometry_diff": {
@@ -5888,16 +5888,16 @@
       "geometry": {
         "actual_bounds": [
           24.5,
-          8.5,
+          10.0,
           27.5,
-          55.5
+          54.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           24.5,
-          8.5,
+          10.0,
           27.5,
-          55.5
+          54.0
         ]
       },
       "geometry_diff": {
@@ -6017,16 +6017,16 @@
       "geometry": {
         "actual_bounds": [
           35.5,
-          5.5,
+          8.0,
           40.5,
-          58.5
+          56.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           35.5,
-          5.5,
+          8.0,
           40.5,
-          58.5
+          56.0
         ]
       },
       "geometry_diff": {
@@ -6146,16 +6146,16 @@
       "geometry": {
         "actual_bounds": [
           43.5,
-          9.0,
+          12.0,
           49.5,
-          55.0
+          52.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           43.5,
-          9.0,
+          12.0,
           49.5,
-          55.0
+          52.0
         ]
       },
       "geometry_diff": {
@@ -6275,16 +6275,16 @@
       "geometry": {
         "actual_bounds": [
           50.5,
-          6.0,
+          10.0,
           58.5,
-          58.0
+          54.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           50.5,
-          6.0,
+          10.0,
           58.5,
-          58.0
+          54.0
         ]
       },
       "geometry_diff": {
@@ -6404,16 +6404,16 @@
       "geometry": {
         "actual_bounds": [
           8.5,
-          16.0,
+          18.0,
           12.5,
-          44.0
+          42.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           8.5,
-          16.0,
+          18.0,
           12.5,
-          44.0
+          42.0
         ]
       },
       "geometry_diff": {
@@ -6533,16 +6533,16 @@
       "geometry": {
         "actual_bounds": [
           30.5,
-          2.0,
+          4.0,
           34.5,
-          36.0
+          34.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           30.5,
-          2.0,
+          4.0,
           34.5,
-          36.0
+          34.0
         ]
       },
       "geometry_diff": {
@@ -6662,16 +6662,16 @@
       "geometry": {
         "actual_bounds": [
           30.5,
-          28.0,
+          30.0,
           34.5,
-          62.0
+          60.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           30.5,
-          28.0,
+          30.0,
           34.5,
-          62.0
+          60.0
         ]
       },
       "geometry_diff": {
@@ -6790,17 +6790,17 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          12.085786,
-          12.085786,
-          51.914214,
-          51.914214
+          12.646447,
+          12.646447,
+          51.353553,
+          51.353553
         ],
-        "bbox_iou": 0.958833,
+        "bbox_iou": 0.969961,
         "expected_bounds": [
-          12.5,
-          12.5,
-          51.5,
-          51.5
+          12.93934,
+          12.93934,
+          51.06066,
+          51.06066
         ]
       },
       "geometry_diff": {
@@ -6847,7 +6847,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.958833,
+          "bbox_iou": 0.969961,
           "expected_id": "diagonal_stroke",
           "geometry_diff": {
             "actual": {
@@ -6919,17 +6919,17 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          10.292893,
+          10.646447,
+          11.646447,
+          52.353553,
+          53.353553
+        ],
+        "bbox_iou": 0.953261,
+        "expected_bounds": [
+          11.292893,
           11.292893,
           52.707107,
-          53.707107
-        ],
-        "bbox_iou": 0.953934,
-        "expected_bounds": [
-          11.0,
-          11.0,
-          53.0,
-          53.0
+          52.707107
         ]
       },
       "geometry_diff": {
@@ -6976,7 +6976,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.953934,
+          "bbox_iou": 0.953261,
           "expected_id": "diagonal_stroke_width_2",
           "geometry_diff": {
             "actual": {
@@ -7053,12 +7053,12 @@
           56.352361,
           52.271107
         ],
-        "bbox_iou": 0.928291,
+        "bbox_iou": 0.890796,
         "expected_bounds": [
-          8.5,
-          12.5,
-          55.5,
-          51.5
+          9.050143,
+          12.839064,
+          54.949857,
+          51.160936
         ]
       },
       "geometry_diff": {
@@ -7105,7 +7105,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.928291,
+          "bbox_iou": 0.890796,
           "expected_id": "diagonal_stroke_width_3",
           "geometry_diff": {
             "actual": {
@@ -7182,12 +7182,12 @@
           58.737312,
           51.141473
         ],
-        "bbox_iou": 0.93494,
+        "bbox_iou": 0.883947,
         "expected_bounds": [
-          6.0,
-          18.0,
-          58.0,
-          50.0
+          6.992258,
+          18.272442,
+          57.007742,
+          49.727558
         ]
       },
       "geometry_diff": {
@@ -7234,7 +7234,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.93494,
+          "bbox_iou": 0.883947,
           "expected_id": "diagonal_stroke_width_4",
           "geometry_diff": {
             "actual": {
@@ -7306,17 +7306,17 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          10.085786,
-          10.085786,
-          53.914214,
-          53.914214
+          10.646447,
+          10.646447,
+          53.353553,
+          53.353553
         ],
-        "bbox_iou": 0.948608,
+        "bbox_iou": 0.962305,
         "expected_bounds": [
-          9.5,
-          9.5,
-          54.5,
-          54.5
+          10.232233,
+          10.232233,
+          53.767767,
+          53.767767
         ]
       },
       "geometry_diff": {
@@ -7363,7 +7363,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.948608,
+          "bbox_iou": 0.962305,
           "expected_id": "diagonal_stroke_width_5",
           "geometry_diff": {
             "actual": {
@@ -7435,17 +7435,17 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          4.87868,
+          5.646447,
+          6.646447,
+          57.353553,
+          58.353553
+        ],
+        "bbox_iou": 0.962374,
+        "expected_bounds": [
+          5.87868,
           5.87868,
           58.12132,
-          59.12132
-        ],
-        "bbox_iou": 0.963458,
-        "expected_bounds": [
-          5.0,
-          5.0,
-          59.0,
-          59.0
+          58.12132
         ]
       },
       "geometry_diff": {
@@ -7492,7 +7492,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.963458,
+          "bbox_iou": 0.962374,
           "expected_id": "diagonal_stroke_width_6",
           "geometry_diff": {
             "actual": {
@@ -7569,12 +7569,12 @@
           53.843769,
           58.027831
         ],
-        "bbox_iou": 0.963562,
+        "bbox_iou": 0.87967,
         "expected_bounds": [
-          12.5,
-          6.5,
-          53.5,
-          57.5
+          13.230502,
+          7.859934,
+          52.769498,
+          56.140066
         ]
       },
       "geometry_diff": {
@@ -7621,7 +7621,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.963562,
+          "bbox_iou": 0.87967,
           "expected_id": "diagonal_stroke_width_7",
           "geometry_diff": {
             "actual": {
@@ -7693,17 +7693,17 @@
       "family": "diagonal_stroke",
       "geometry": {
         "actual_bounds": [
-          5.816934,
-          12.414874,
-          58.183066,
-          52.585126
+          7.43881,
+          13.164845,
+          56.56119,
+          51.835155
         ],
-        "bbox_iou": 0.96861,
+        "bbox_iou": 0.966217,
         "expected_bounds": [
-          6.0,
-          12.0,
-          58.0,
-          52.0
+          7.647313,
+          12.765056,
+          56.352687,
+          51.234944
         ]
       },
       "geometry_diff": {
@@ -7750,7 +7750,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.96861,
+          "bbox_iou": 0.966217,
           "expected_id": "diagonal_stroke_width_8",
           "geometry_diff": {
             "actual": {
@@ -7827,12 +7827,12 @@
           58.010333,
           46.823984
         ],
-        "bbox_iou": 0.94137,
+        "bbox_iou": 0.896504,
         "expected_bounds": [
-          6.0,
-          22.0,
-          58.0,
-          46.0
+          7.230769,
+          22.153846,
+          56.769231,
+          45.846154
         ]
       },
       "geometry_diff": {
@@ -7879,7 +7879,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.94137,
+          "bbox_iou": 0.896504,
           "expected_id": "diagonal_stroke_shallow",
           "geometry_diff": {
             "actual": {
@@ -7956,12 +7956,12 @@
           44.011166,
           59.000482
         ],
-        "bbox_iou": 0.937547,
+        "bbox_iou": 0.880439,
         "expected_bounds": [
-          22.0,
-          6.0,
-          44.0,
-          58.0
+          22.127342,
+          7.297753,
+          43.872658,
+          56.702247
         ]
       },
       "geometry_diff": {
@@ -8008,7 +8008,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.937547,
+          "bbox_iou": 0.880439,
           "expected_id": "diagonal_stroke_steep",
           "geometry_diff": {
             "actual": {
@@ -12230,12 +12230,12 @@
       "family": "antialiased_circle",
       "geometry": {
         "actual_bounds": [
-          17.905667,
-          17.905667,
-          45.34875,
-          45.34875
+          18.0,
+          18.0,
+          45.0,
+          45.0
         ],
-        "bbox_iou": 0.947775,
+        "bbox_iou": 0.929847,
         "expected_bounds": [
           18.0,
           18.0,
@@ -12246,9 +12246,9 @@
       "geometry_diff": {
         "actual": {
           "geometry": {
-            "cx": 31.627208,
-            "cy": 31.627208,
-            "r": 13.721541,
+            "cx": 31.5,
+            "cy": 31.5,
+            "r": 13.5,
             "width": null
           },
           "kind": "circle",
@@ -12272,14 +12272,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.947775,
+          "bbox_iou": 0.929847,
           "expected_id": "antialiased_circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
-                "cx": 31.627208,
-                "cy": 31.627208,
-                "r": 13.721541,
+                "cx": 31.5,
+                "cy": 31.5,
+                "r": 13.5,
                 "width": null
               },
               "kind": "circle",
@@ -12301,8 +12301,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.014403,
-        "raster_l1_error": 0.011854,
+        "raster_edge_error": 0.007324,
+        "raster_l1_error": 0.005193,
         "raster_size_match": true
       },
       "ok": true,
@@ -12329,12 +12329,12 @@
       "family": "antialiased_circle",
       "geometry": {
         "actual_bounds": [
-          9.778651,
-          9.778651,
-          31.285097,
-          31.285097
+          10.0,
+          10.0,
+          31.0,
+          31.0
         ],
-        "bbox_iou": 0.918098,
+        "bbox_iou": 0.911157,
         "expected_bounds": [
           10.0,
           10.0,
@@ -12345,9 +12345,9 @@
       "geometry_diff": {
         "actual": {
           "geometry": {
-            "cx": 20.531874,
-            "cy": 20.531874,
-            "r": 10.753223,
+            "cx": 20.5,
+            "cy": 20.5,
+            "r": 10.5,
             "width": null
           },
           "kind": "circle",
@@ -12371,14 +12371,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.918098,
+          "bbox_iou": 0.911157,
           "expected_id": "antialiased_circle_small",
           "geometry_diff": {
             "actual": {
               "geometry": {
-                "cx": 20.531874,
-                "cy": 20.531874,
-                "r": 10.753223,
+                "cx": 20.5,
+                "cy": 20.5,
+                "r": 10.5,
                 "width": null
               },
               "kind": "circle",
@@ -12400,8 +12400,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011388,
-        "raster_l1_error": 0.009327,
+        "raster_edge_error": 0.006287,
+        "raster_l1_error": 0.004471,
         "raster_size_match": true
       },
       "ok": true,
@@ -12428,12 +12428,12 @@
       "family": "antialiased_circle",
       "geometry": {
         "actual_bounds": [
-          7.919066,
-          7.919066,
-          55.263208,
-          55.263208
+          8.0,
+          8.0,
+          55.0,
+          55.0
         ],
-        "bbox_iou": 0.966325,
+        "bbox_iou": 0.958767,
         "expected_bounds": [
           8.0,
           8.0,
@@ -12444,9 +12444,9 @@
       "geometry_diff": {
         "actual": {
           "geometry": {
-            "cx": 31.591137,
-            "cy": 31.591137,
-            "r": 23.672071,
+            "cx": 31.5,
+            "cy": 31.5,
+            "r": 23.5,
             "width": null
           },
           "kind": "circle",
@@ -12470,14 +12470,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.966325,
+          "bbox_iou": 0.958767,
           "expected_id": "antialiased_circle_large",
           "geometry_diff": {
             "actual": {
               "geometry": {
-                "cx": 31.591137,
-                "cy": 31.591137,
-                "r": 23.672071,
+                "cx": 31.5,
+                "cy": 31.5,
+                "r": 23.5,
                 "width": null
               },
               "kind": "circle",
@@ -12499,8 +12499,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.024665,
-        "raster_l1_error": 0.019969,
+        "raster_edge_error": 0.013717,
+        "raster_l1_error": 0.009866,
         "raster_size_match": true
       },
       "ok": true,
@@ -12830,16 +12830,16 @@
       "family": "antialiased_stroke",
       "geometry": {
         "actual_bounds": [
-          6.0,
+          8.0,
           29.5,
-          57.0,
+          55.0,
           33.5
         ],
-        "bbox_iou": 0.764454,
+        "bbox_iou": 0.763341,
         "expected_bounds": [
-          6.0,
+          8.0,
           30.0,
-          58.0,
+          56.0,
           34.0
         ]
       },
@@ -12887,7 +12887,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.764454,
+          "bbox_iou": 0.763341,
           "expected_id": "antialiased_stroke_horizontal",
           "geometry_diff": {
             "actual": {
@@ -12960,16 +12960,16 @@
       "geometry": {
         "actual_bounds": [
           29.5,
-          5.5,
+          8.0,
           34.5,
-          57.5
+          55.0
         ],
-        "bbox_iou": 0.981132,
+        "bbox_iou": 0.979167,
         "expected_bounds": [
           29.5,
-          5.5,
+          8.0,
           34.5,
-          58.5
+          56.0
         ]
       },
       "geometry_diff": {
@@ -13016,7 +13016,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.981132,
+          "bbox_iou": 0.979167,
           "expected_id": "antialiased_stroke_vertical",
           "geometry_diff": {
             "actual": {
@@ -13088,17 +13088,17 @@
       "family": "antialiased_stroke",
       "geometry": {
         "actual_bounds": [
-          9.473613,
-          9.443304,
-          54.021742,
-          54.052825
+          10.142703,
+          10.114878,
+          53.352651,
+          53.38125
         ],
-        "bbox_iou": 0.9742,
+        "bbox_iou": 0.976859,
         "expected_bounds": [
-          10.0,
-          10.0,
-          54.0,
-          54.0
+          10.585786,
+          10.585786,
+          53.414214,
+          53.414214
         ]
       },
       "geometry_diff": {
@@ -13145,7 +13145,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.9742,
+          "bbox_iou": 0.976859,
           "expected_id": "antialiased_stroke_diagonal",
           "geometry_diff": {
             "actual": {
@@ -13537,12 +13537,12 @@
       "family": "palette_drift_primitive",
       "geometry": {
         "actual_bounds": [
-          17.985722,
-          17.985722,
-          46.014278,
-          46.014278
+          18.0,
+          18.0,
+          46.0,
+          46.0
         ],
-        "bbox_iou": 0.997963,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           18.0,
           18.0,
@@ -13555,7 +13555,7 @@
           "geometry": {
             "cx": 32.0,
             "cy": 32.0,
-            "r": 14.014278,
+            "r": 14.0,
             "width": null
           },
           "kind": "circle",
@@ -13579,14 +13579,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.997963,
+          "bbox_iou": 1.0,
           "expected_id": "palette_drift_circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 14.014278,
+                "r": 14.0,
                 "width": null
               },
               "kind": "circle",
@@ -13608,8 +13608,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.012295,
-        "raster_l1_error": 0.009585,
+        "raster_edge_error": 3.2e-05,
+        "raster_l1_error": 1.5e-05,
         "raster_size_match": true
       },
       "ok": true,
@@ -13636,12 +13636,12 @@
       "family": "transparent_circle",
       "geometry": {
         "actual_bounds": [
-          17.985722,
-          17.985722,
-          46.014278,
-          46.014278
+          18.0,
+          18.0,
+          46.0,
+          46.0
         ],
-        "bbox_iou": 0.997963,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           18.0,
           18.0,
@@ -13654,7 +13654,7 @@
           "geometry": {
             "cx": 32.0,
             "cy": 32.0,
-            "r": 14.014278,
+            "r": 14.0,
             "width": null
           },
           "kind": "circle",
@@ -13678,14 +13678,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.997963,
+          "bbox_iou": 1.0,
           "expected_id": "transparent_circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 14.014278,
+                "r": 14.0,
                 "width": null
               },
               "kind": "circle",
@@ -13706,9 +13706,9 @@
         }
       ],
       "metrics": {
-        "raster_alpha_error": 0.011963,
-        "raster_edge_error": 0.012264,
-        "raster_l1_error": 0.00957,
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -13735,12 +13735,12 @@
       "family": "transparent_circle",
       "geometry": {
         "actual_bounds": [
-          9.974461,
-          9.974461,
-          32.025539,
-          32.025539
+          10.0,
+          10.0,
+          32.0,
+          32.0
         ],
-        "bbox_iou": 0.995373,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           10.0,
           10.0,
@@ -13753,7 +13753,7 @@
           "geometry": {
             "cx": 21.0,
             "cy": 21.0,
-            "r": 11.025539,
+            "r": 11.0,
             "width": null
           },
           "kind": "circle",
@@ -13777,14 +13777,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.995373,
+          "bbox_iou": 1.0,
           "expected_id": "transparent_circle_small",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 21.0,
                 "cy": 21.0,
-                "r": 11.025539,
+                "r": 11.0,
                 "width": null
               },
               "kind": "circle",
@@ -13805,9 +13805,9 @@
         }
       ],
       "metrics": {
-        "raster_alpha_error": 0.01001,
-        "raster_edge_error": 0.009726,
-        "raster_l1_error": 0.008008,
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -13834,12 +13834,12 @@
       "family": "transparent_circle",
       "geometry": {
         "actual_bounds": [
-          29.963726,
-          17.963726,
-          56.036274,
-          44.036274
+          30.0,
+          18.0,
+          56.0,
+          44.0
         ],
-        "bbox_iou": 0.994443,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           30.0,
           18.0,
@@ -13852,7 +13852,7 @@
           "geometry": {
             "cx": 43.0,
             "cy": 31.0,
-            "r": 13.036274,
+            "r": 13.0,
             "width": null
           },
           "kind": "circle",
@@ -13876,14 +13876,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.994443,
+          "bbox_iou": 1.0,
           "expected_id": "transparent_circle_offset",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 43.0,
                 "cy": 31.0,
-                "r": 13.036274,
+                "r": 13.0,
                 "width": null
               },
               "kind": "circle",
@@ -13904,9 +13904,9 @@
         }
       ],
       "metrics": {
-        "raster_alpha_error": 0.012451,
-        "raster_edge_error": 0.011418,
-        "raster_l1_error": 0.009961,
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -14284,14 +14284,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.986705,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 47.0,
                 "cy": 19.0,
-                "r": 8.939971,
+                "r": 9.0,
                 "width": null
               },
               "kind": "circle",
@@ -14313,8 +14313,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008035,
-        "raster_l1_error": 0.005664,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -14473,14 +14473,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.991477,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 48.0,
                 "cy": 44.0,
-                "r": 7.965836,
+                "r": 8.0,
                 "width": null
               },
               "kind": "circle",
@@ -14502,8 +14502,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.007189,
-        "raster_l1_error": 0.005273,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -14662,14 +14662,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.986705,
+          "bbox_iou": 1.0,
           "expected_id": "red_circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 47.0,
                 "cy": 43.0,
-                "r": 8.939971,
+                "r": 9.0,
                 "width": null
               },
               "kind": "circle",
@@ -14691,8 +14691,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.006233,
-        "raster_l1_error": 0.004405,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -14938,12 +14938,12 @@
       "family": "composition_different_color_separated",
       "geometry": {
         "actual_bounds": [
-          7.88636,
-          7.88636,
-          28.11364,
-          28.11364
+          8.0,
+          8.0,
+          28.0,
+          28.0
         ],
-        "bbox_iou": 0.977654,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           8.0,
@@ -14956,7 +14956,7 @@
           "geometry": {
             "cx": 18.0,
             "cy": 18.0,
-            "r": 10.11364,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -14980,14 +14980,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.977654,
+          "bbox_iou": 1.0,
           "expected_id": "red_circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 18.0,
                 "cy": 18.0,
-                "r": 10.11364,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -15068,8 +15068,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.006889,
-        "raster_l1_error": 0.005317,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -15096,12 +15096,12 @@
       "family": "composition_circle_plus_stroke",
       "geometry": {
         "actual_bounds": [
-          7.88636,
-          7.88636,
-          28.11364,
-          28.11364
+          8.0,
+          8.0,
+          28.0,
+          28.0
         ],
-        "bbox_iou": 0.977654,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           8.0,
@@ -15114,7 +15114,7 @@
           "geometry": {
             "cx": 18.0,
             "cy": 18.0,
-            "r": 10.11364,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -15138,14 +15138,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.977654,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 18.0,
                 "cy": 18.0,
-                "r": 10.11364,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -15211,8 +15211,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008881,
-        "raster_l1_error": 0.006836,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -15239,12 +15239,12 @@
       "family": "composition_circle_plus_stroke",
       "geometry": {
         "actual_bounds": [
-          35.88636,
-          7.88636,
-          56.11364,
-          28.11364
+          36.0,
+          8.0,
+          56.0,
+          28.0
         ],
-        "bbox_iou": 0.977654,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           36.0,
           8.0,
@@ -15257,7 +15257,7 @@
           "geometry": {
             "cx": 46.0,
             "cy": 18.0,
-            "r": 10.11364,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -15281,14 +15281,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.977654,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 46.0,
                 "cy": 18.0,
-                "r": 10.11364,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -15354,8 +15354,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008881,
-        "raster_l1_error": 0.006836,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -15382,12 +15382,12 @@
       "family": "composition_circle_plus_stroke",
       "geometry": {
         "actual_bounds": [
-          8.060029,
-          36.060029,
-          25.939971,
-          53.939971
+          8.0,
+          36.0,
+          26.0,
+          54.0
         ],
-        "bbox_iou": 0.986705,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           36.0,
@@ -15400,7 +15400,7 @@
           "geometry": {
             "cx": 17.0,
             "cy": 45.0,
-            "r": 8.939971,
+            "r": 9.0,
             "width": null
           },
           "kind": "circle",
@@ -15424,14 +15424,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.986705,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 17.0,
                 "cy": 45.0,
-                "r": 8.939971,
+                "r": 9.0,
                 "width": null
               },
               "kind": "circle",
@@ -15453,7 +15453,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.985753,
+          "bbox_iou": 0.989399,
           "expected_id": "stroke",
           "geometry_diff": {
             "actual": {
@@ -15497,8 +15497,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.017127,
-        "raster_l1_error": 0.010156,
+        "raster_edge_error": 0.009092,
+        "raster_l1_error": 0.004492,
         "raster_size_match": true
       },
       "ok": true,
@@ -15657,14 +15657,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.986705,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 47.0,
                 "cy": 47.0,
-                "r": 8.939971,
+                "r": 9.0,
                 "width": null
               },
               "kind": "circle",
@@ -15686,8 +15686,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008035,
-        "raster_l1_error": 0.005664,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -15846,14 +15846,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.986705,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 17.0,
                 "cy": 47.0,
-                "r": 8.939971,
+                "r": 9.0,
                 "width": null
               },
               "kind": "circle",
@@ -15875,8 +15875,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008035,
-        "raster_l1_error": 0.005664,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -16035,14 +16035,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.986705,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 17.0,
                 "cy": 47.0,
-                "r": 8.939971,
+                "r": 9.0,
                 "width": null
               },
               "kind": "circle",
@@ -16064,8 +16064,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.008035,
-        "raster_l1_error": 0.005664,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -16165,14 +16165,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.945946,
+          "bbox_iou": 1.0,
           "expected_id": "dot",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 51.0,
                 "cy": 51.0,
-                "r": 5.140873,
+                "r": 5.0,
                 "width": null
               },
               "kind": "circle",
@@ -16194,8 +16194,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.040174,
-        "raster_l1_error": 0.054102,
+        "raster_edge_error": 0.035522,
+        "raster_l1_error": 0.050391,
         "raster_size_match": true
       },
       "ok": true,
@@ -16295,14 +16295,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.945946,
+          "bbox_iou": 1.0,
           "expected_id": "dot",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 13.0,
                 "cy": 51.0,
-                "r": 5.140873,
+                "r": 5.0,
                 "width": null
               },
               "kind": "circle",
@@ -16324,8 +16324,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.040174,
-        "raster_l1_error": 0.054102,
+        "raster_edge_error": 0.035522,
+        "raster_l1_error": 0.050391,
         "raster_size_match": true
       },
       "ok": true,
@@ -16425,14 +16425,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.945946,
+          "bbox_iou": 1.0,
           "expected_id": "dot",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 51.0,
                 "cy": 13.0,
-                "r": 5.140873,
+                "r": 5.0,
                 "width": null
               },
               "kind": "circle",
@@ -16454,8 +16454,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.040174,
-        "raster_l1_error": 0.054102,
+        "raster_edge_error": 0.035522,
+        "raster_l1_error": 0.050391,
         "raster_size_match": true
       },
       "ok": true,
@@ -16482,12 +16482,12 @@
       "family": "composition_dot_row",
       "geometry": {
         "actual_bounds": [
-          8.041886,
-          28.041886,
-          15.958114,
-          35.958114
+          8.0,
+          28.0,
+          16.0,
+          36.0
         ],
-        "bbox_iou": 0.979167,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           28.0,
@@ -16500,7 +16500,7 @@
           "geometry": {
             "cx": 12.0,
             "cy": 32.0,
-            "r": 3.958114,
+            "r": 4.0,
             "width": null
           },
           "kind": "circle",
@@ -16524,14 +16524,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_0",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 12.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16553,14 +16553,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_1",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16582,14 +16582,14 @@
         {
           "actual_index": 2,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_2",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 52.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16611,8 +16611,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011418,
-        "raster_l1_error": 0.007617,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -16639,12 +16639,12 @@
       "family": "composition_dot_row",
       "geometry": {
         "actual_bounds": [
-          6.041886,
-          28.041886,
-          13.958114,
-          35.958114
+          6.0,
+          28.0,
+          14.0,
+          36.0
         ],
-        "bbox_iou": 0.979167,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           6.0,
           28.0,
@@ -16657,7 +16657,7 @@
           "geometry": {
             "cx": 10.0,
             "cy": 32.0,
-            "r": 3.958114,
+            "r": 4.0,
             "width": null
           },
           "kind": "circle",
@@ -16681,14 +16681,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_0",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 10.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16710,14 +16710,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_1",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 26.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16739,14 +16739,14 @@
         {
           "actual_index": 2,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_2",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 42.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16768,14 +16768,14 @@
         {
           "actual_index": 3,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_3",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 58.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16797,8 +16797,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015224,
-        "raster_l1_error": 0.010156,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -16825,12 +16825,12 @@
       "family": "composition_dot_row",
       "geometry": {
         "actual_bounds": [
-          28.041886,
-          6.041886,
-          35.958114,
-          13.958114
+          28.0,
+          6.0,
+          36.0,
+          14.0
         ],
-        "bbox_iou": 0.979167,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           28.0,
           6.0,
@@ -16843,7 +16843,7 @@
           "geometry": {
             "cx": 32.0,
             "cy": 10.0,
-            "r": 3.958114,
+            "r": 4.0,
             "width": null
           },
           "kind": "circle",
@@ -16867,14 +16867,14 @@
         {
           "actual_index": 2,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_0",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 10.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16896,14 +16896,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_1",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16925,14 +16925,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_2",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 54.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -16954,8 +16954,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011418,
-        "raster_l1_error": 0.007617,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -16982,16 +16982,16 @@
       "family": "composition_multiple_strokes",
       "geometry": {
         "actual_bounds": [
-          6.5,
+          8.0,
           16.5,
-          57.5,
+          56.0,
           19.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          6.5,
+          8.0,
           16.5,
-          57.5,
+          56.0,
           19.5
         ]
       },
@@ -17156,16 +17156,16 @@
       "geometry": {
         "actual_bounds": [
           16.5,
-          6.5,
+          8.0,
           19.5,
-          57.5
+          56.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           16.5,
-          6.5,
+          8.0,
           19.5,
-          57.5
+          56.0
         ]
       },
       "geometry_diff": {
@@ -17328,16 +17328,16 @@
       "family": "composition_multiple_strokes",
       "geometry": {
         "actual_bounds": [
-          6.5,
+          8.0,
           16.5,
-          35.5,
+          34.0,
           19.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          6.5,
+          8.0,
           16.5,
-          35.5,
+          34.0,
           19.5
         ]
       },
@@ -17473,7 +17473,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.93688,
+          "bbox_iou": 0.953144,
           "expected_id": "diagonal",
           "geometry_diff": {
             "actual": {
@@ -19339,12 +19339,12 @@
       "family": "touching_circle_stroke",
       "geometry": {
         "actual_bounds": [
-          11.830702,
-          21.947077,
-          31.923107,
-          42.039482
+          12.0,
+          22.0,
+          32.0,
+          42.0
         ],
-        "bbox_iou": 0.983268,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           12.0,
           22.0,
@@ -19355,9 +19355,9 @@
       "geometry_diff": {
         "actual": {
           "geometry": {
-            "cx": 21.876904,
-            "cy": 31.99328,
-            "r": 10.046202,
+            "cx": 22.0,
+            "cy": 32.0,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -19387,14 +19387,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.983268,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
-                "cx": 21.876904,
-                "cy": 31.99328,
-                "r": 10.046202,
+                "cx": 22.0,
+                "cy": 32.0,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -19460,8 +19460,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011206,
-        "raster_l1_error": 0.00918,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -19488,12 +19488,12 @@
       "family": "touching_circle_stroke",
       "geometry": {
         "actual_bounds": [
-          32.076893,
-          21.947077,
-          52.169298,
-          42.039482
+          32.0,
+          22.0,
+          52.0,
+          42.0
         ],
-        "bbox_iou": 0.983268,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           32.0,
           22.0,
@@ -19504,9 +19504,9 @@
       "geometry_diff": {
         "actual": {
           "geometry": {
-            "cx": 42.123096,
-            "cy": 31.99328,
-            "r": 10.046202,
+            "cx": 42.0,
+            "cy": 32.0,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -19536,14 +19536,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.983268,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
-                "cx": 42.123096,
-                "cy": 31.99328,
-                "r": 10.046202,
+                "cx": 42.0,
+                "cy": 32.0,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -19609,8 +19609,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.005662,
-        "raster_l1_error": 0.004102,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -19637,12 +19637,12 @@
       "family": "touching_circle_stroke",
       "geometry": {
         "actual_bounds": [
-          21.947077,
-          11.830702,
-          42.039482,
-          31.923107
+          22.0,
+          12.0,
+          42.0,
+          32.0
         ],
-        "bbox_iou": 0.983268,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           22.0,
           12.0,
@@ -19653,9 +19653,9 @@
       "geometry_diff": {
         "actual": {
           "geometry": {
-            "cx": 31.99328,
-            "cy": 21.876904,
-            "r": 10.046202,
+            "cx": 32.0,
+            "cy": 22.0,
+            "r": 10.0,
             "width": null
           },
           "kind": "circle",
@@ -19685,14 +19685,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.983268,
+          "bbox_iou": 1.0,
           "expected_id": "circle",
           "geometry_diff": {
             "actual": {
               "geometry": {
-                "cx": 31.99328,
-                "cy": 21.876904,
-                "r": 10.046202,
+                "cx": 32.0,
+                "cy": 22.0,
+                "r": 10.0,
                 "width": null
               },
               "kind": "circle",
@@ -19758,8 +19758,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011206,
-        "raster_l1_error": 0.00918,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -19769,7 +19769,7 @@
     },
     {
       "actual_kind": "rect",
-      "anchor_count": 3,
+      "anchor_count": 2,
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/debug.svg",
         "input": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/input.png",
@@ -19790,14 +19790,14 @@
           12.0,
           20.0,
           52.0,
-          30.0
+          44.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           12.0,
           20.0,
           52.0,
-          30.0
+          44.0
         ]
       },
       "geometry_diff": {
@@ -19814,11 +19814,11 @@
               ],
               [
                 52.0,
-                30.0
+                44.0
               ],
               [
                 12.0,
-                30.0
+                44.0
               ]
             ]
           },
@@ -19838,11 +19838,11 @@
               ],
               [
                 52.0,
-                30.0
+                44.0
               ],
               [
                 12.0,
-                30.0
+                44.0
               ]
             ]
           },
@@ -19855,9 +19855,9 @@
       },
       "group_matches": [
         {
-          "anchor_count": 3,
-          "expected_kind": "occluded_primitive_group",
-          "group_index": 3
+          "anchor_count": 2,
+          "expected_kind": "primitive_contact_pair",
+          "group_index": 0
         }
       ],
       "id": "stroke_crossing_rectangle_horizontal",
@@ -19866,7 +19866,7 @@
           "actual_index": 0,
           "actual_kind": "rect",
           "bbox_iou": 1.0,
-          "expected_id": "top_fragment",
+          "expected_id": "base_rect",
           "geometry_diff": {
             "actual": {
               "geometry": {
@@ -19881,11 +19881,11 @@
                   ],
                   [
                     52.0,
-                    30.0
+                    44.0
                   ],
                   [
                     12.0,
-                    30.0
+                    44.0
                   ]
                 ]
               },
@@ -19905,11 +19905,11 @@
                   ],
                   [
                     52.0,
-                    30.0
+                    44.0
                   ],
                   [
                     12.0,
-                    30.0
+                    44.0
                   ]
                 ]
               },
@@ -19923,65 +19923,6 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "rect",
-          "bbox_iou": 1.0,
-          "expected_id": "bottom_fragment",
-          "geometry_diff": {
-            "actual": {
-              "geometry": {
-                "corners": [
-                  [
-                    12.0,
-                    35.0
-                  ],
-                  [
-                    52.0,
-                    35.0
-                  ],
-                  [
-                    52.0,
-                    44.0
-                  ],
-                  [
-                    12.0,
-                    44.0
-                  ]
-                ]
-              },
-              "kind": "rect",
-              "type": "quad"
-            },
-            "expected": {
-              "geometry": {
-                "corners": [
-                  [
-                    12.0,
-                    35.0
-                  ],
-                  [
-                    52.0,
-                    35.0
-                  ],
-                  [
-                    52.0,
-                    44.0
-                  ],
-                  [
-                    12.0,
-                    44.0
-                  ]
-                ]
-              },
-              "kinds": [
-                "rect",
-                "quad"
-              ],
-              "type": "quad"
-            }
-          }
-        },
-        {
-          "actual_index": 2,
           "actual_kind": "stroke_polyline",
           "bbox_iou": 1.0,
           "expected_id": "stroke",
@@ -20038,7 +19979,7 @@
     },
     {
       "actual_kind": "rect",
-      "anchor_count": 3,
+      "anchor_count": 2,
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_vertical/debug.svg",
         "input": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_vertical/input.png",
@@ -20058,14 +19999,14 @@
         "actual_bounds": [
           20.0,
           12.0,
-          30.0,
+          44.0,
           52.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           20.0,
           12.0,
-          30.0,
+          44.0,
           52.0
         ]
       },
@@ -20078,11 +20019,11 @@
                 12.0
               ],
               [
-                30.0,
+                44.0,
                 12.0
               ],
               [
-                30.0,
+                44.0,
                 52.0
               ],
               [
@@ -20102,11 +20043,11 @@
                 12.0
               ],
               [
-                30.0,
+                44.0,
                 12.0
               ],
               [
-                30.0,
+                44.0,
                 52.0
               ],
               [
@@ -20124,9 +20065,9 @@
       },
       "group_matches": [
         {
-          "anchor_count": 3,
-          "expected_kind": "occluded_primitive_group",
-          "group_index": 3
+          "anchor_count": 2,
+          "expected_kind": "primitive_contact_pair",
+          "group_index": 0
         }
       ],
       "id": "stroke_crossing_rectangle_vertical",
@@ -20135,7 +20076,7 @@
           "actual_index": 0,
           "actual_kind": "rect",
           "bbox_iou": 1.0,
-          "expected_id": "left_fragment",
+          "expected_id": "base_rect",
           "geometry_diff": {
             "actual": {
               "geometry": {
@@ -20145,11 +20086,11 @@
                     12.0
                   ],
                   [
-                    30.0,
+                    44.0,
                     12.0
                   ],
                   [
-                    30.0,
+                    44.0,
                     52.0
                   ],
                   [
@@ -20169,11 +20110,11 @@
                     12.0
                   ],
                   [
-                    30.0,
+                    44.0,
                     12.0
                   ],
                   [
-                    30.0,
+                    44.0,
                     52.0
                   ],
                   [
@@ -20192,65 +20133,6 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "rect",
-          "bbox_iou": 1.0,
-          "expected_id": "right_fragment",
-          "geometry_diff": {
-            "actual": {
-              "geometry": {
-                "corners": [
-                  [
-                    35.0,
-                    12.0
-                  ],
-                  [
-                    44.0,
-                    12.0
-                  ],
-                  [
-                    44.0,
-                    52.0
-                  ],
-                  [
-                    35.0,
-                    52.0
-                  ]
-                ]
-              },
-              "kind": "rect",
-              "type": "quad"
-            },
-            "expected": {
-              "geometry": {
-                "corners": [
-                  [
-                    35.0,
-                    12.0
-                  ],
-                  [
-                    44.0,
-                    12.0
-                  ],
-                  [
-                    44.0,
-                    52.0
-                  ],
-                  [
-                    35.0,
-                    52.0
-                  ]
-                ]
-              },
-              "kinds": [
-                "rect",
-                "quad"
-              ],
-              "type": "quad"
-            }
-          }
-        },
-        {
-          "actual_index": 2,
           "actual_kind": "stroke_polyline",
           "bbox_iou": 1.0,
           "expected_id": "stroke",
@@ -20307,7 +20189,7 @@
     },
     {
       "actual_kind": "rect",
-      "anchor_count": 3,
+      "anchor_count": 2,
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_low/debug.svg",
         "input": "site/assets/primitive-quality/cases/stroke_crossing_rectangle_low/input.png",
@@ -20328,14 +20210,14 @@
           10.0,
           14.0,
           54.0,
-          36.0
+          50.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           10.0,
           14.0,
           54.0,
-          36.0
+          50.0
         ]
       },
       "geometry_diff": {
@@ -20352,11 +20234,11 @@
               ],
               [
                 54.0,
-                36.0
+                50.0
               ],
               [
                 10.0,
-                36.0
+                50.0
               ]
             ]
           },
@@ -20376,11 +20258,11 @@
               ],
               [
                 54.0,
-                36.0
+                50.0
               ],
               [
                 10.0,
-                36.0
+                50.0
               ]
             ]
           },
@@ -20393,9 +20275,9 @@
       },
       "group_matches": [
         {
-          "anchor_count": 3,
-          "expected_kind": "occluded_primitive_group",
-          "group_index": 3
+          "anchor_count": 2,
+          "expected_kind": "primitive_contact_pair",
+          "group_index": 0
         }
       ],
       "id": "stroke_crossing_rectangle_low",
@@ -20404,7 +20286,7 @@
           "actual_index": 0,
           "actual_kind": "rect",
           "bbox_iou": 1.0,
-          "expected_id": "top_fragment",
+          "expected_id": "base_rect",
           "geometry_diff": {
             "actual": {
               "geometry": {
@@ -20419,11 +20301,11 @@
                   ],
                   [
                     54.0,
-                    36.0
+                    50.0
                   ],
                   [
                     10.0,
-                    36.0
+                    50.0
                   ]
                 ]
               },
@@ -20443,11 +20325,11 @@
                   ],
                   [
                     54.0,
-                    36.0
+                    50.0
                   ],
                   [
                     10.0,
-                    36.0
+                    50.0
                   ]
                 ]
               },
@@ -20461,65 +20343,6 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "rect",
-          "bbox_iou": 1.0,
-          "expected_id": "bottom_fragment",
-          "geometry_diff": {
-            "actual": {
-              "geometry": {
-                "corners": [
-                  [
-                    10.0,
-                    41.0
-                  ],
-                  [
-                    54.0,
-                    41.0
-                  ],
-                  [
-                    54.0,
-                    50.0
-                  ],
-                  [
-                    10.0,
-                    50.0
-                  ]
-                ]
-              },
-              "kind": "rect",
-              "type": "quad"
-            },
-            "expected": {
-              "geometry": {
-                "corners": [
-                  [
-                    10.0,
-                    41.0
-                  ],
-                  [
-                    54.0,
-                    41.0
-                  ],
-                  [
-                    54.0,
-                    50.0
-                  ],
-                  [
-                    10.0,
-                    50.0
-                  ]
-                ]
-              },
-              "kinds": [
-                "rect",
-                "quad"
-              ],
-              "type": "quad"
-            }
-          }
-        },
-        {
-          "actual_index": 2,
           "actual_kind": "stroke_polyline",
           "bbox_iou": 1.0,
           "expected_id": "stroke",
@@ -21416,7 +21239,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.965517,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -21637,7 +21460,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.96,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -21858,7 +21681,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.96,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -22079,7 +21902,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.965839,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -22300,7 +22123,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.965839,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -22521,7 +22344,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 1.0,
+          "bbox_iou": 0.955447,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
@@ -22594,16 +22417,16 @@
       "family": "group_parallel_strokes",
       "geometry": {
         "actual_bounds": [
-          6.5,
+          8.0,
           16.5,
-          57.5,
+          56.0,
           19.5
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
-          6.5,
+          8.0,
           16.5,
-          57.5,
+          56.0,
           19.5
         ]
       },
@@ -22774,16 +22597,16 @@
       "geometry": {
         "actual_bounds": [
           16.5,
-          6.5,
+          8.0,
           19.5,
-          57.5
+          56.0
         ],
         "bbox_iou": 1.0,
         "expected_bounds": [
           16.5,
-          6.5,
+          8.0,
           19.5,
-          57.5
+          56.0
         ]
       },
       "geometry_diff": {
@@ -22952,17 +22775,17 @@
       "family": "group_parallel_strokes",
       "geometry": {
         "actual_bounds": [
-          8.085786,
-          24.085786,
-          35.914214,
-          51.914214
+          8.646447,
+          24.646447,
+          35.353553,
+          51.353553
         ],
-        "bbox_iou": 0.941348,
+        "bbox_iou": 0.956614,
         "expected_bounds": [
-          8.5,
-          24.5,
-          35.5,
-          51.5
+          8.93934,
+          24.93934,
+          35.06066,
+          51.06066
         ]
       },
       "geometry_diff": {
@@ -23015,7 +22838,7 @@
         {
           "actual_index": 1,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.941348,
+          "bbox_iou": 0.956614,
           "expected_id": "a",
           "geometry_diff": {
             "actual": {
@@ -23059,7 +22882,7 @@
         {
           "actual_index": 0,
           "actual_kind": "stroke_polyline",
-          "bbox_iou": 0.941348,
+          "bbox_iou": 0.956614,
           "expected_id": "b",
           "geometry_diff": {
             "actual": {
@@ -23131,12 +22954,12 @@
       "family": "group_dot_row",
       "geometry": {
         "actual_bounds": [
-          8.041886,
-          28.041886,
-          15.958114,
-          35.958114
+          8.0,
+          28.0,
+          16.0,
+          36.0
         ],
-        "bbox_iou": 0.979167,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           8.0,
           28.0,
@@ -23149,7 +22972,7 @@
           "geometry": {
             "cx": 12.0,
             "cy": 32.0,
-            "r": 3.958114,
+            "r": 4.0,
             "width": null
           },
           "kind": "circle",
@@ -23179,14 +23002,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_0",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 12.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23208,14 +23031,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_1",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23237,14 +23060,14 @@
         {
           "actual_index": 2,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_2",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 52.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23266,8 +23089,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011418,
-        "raster_l1_error": 0.007617,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -23294,12 +23117,12 @@
       "family": "group_dot_row",
       "geometry": {
         "actual_bounds": [
-          6.041886,
-          28.041886,
-          13.958114,
-          35.958114
+          6.0,
+          28.0,
+          14.0,
+          36.0
         ],
-        "bbox_iou": 0.979167,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           6.0,
           28.0,
@@ -23312,7 +23135,7 @@
           "geometry": {
             "cx": 10.0,
             "cy": 32.0,
-            "r": 3.958114,
+            "r": 4.0,
             "width": null
           },
           "kind": "circle",
@@ -23342,14 +23165,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_0",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 10.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23371,14 +23194,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_1",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 26.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23400,14 +23223,14 @@
         {
           "actual_index": 2,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_2",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 42.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23429,14 +23252,14 @@
         {
           "actual_index": 3,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_3",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 58.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23458,8 +23281,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.015224,
-        "raster_l1_error": 0.010156,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,
@@ -23486,12 +23309,12 @@
       "family": "group_dot_row",
       "geometry": {
         "actual_bounds": [
-          28.041886,
-          6.041886,
-          35.958114,
-          13.958114
+          28.0,
+          6.0,
+          36.0,
+          14.0
         ],
-        "bbox_iou": 0.979167,
+        "bbox_iou": 1.0,
         "expected_bounds": [
           28.0,
           6.0,
@@ -23504,7 +23327,7 @@
           "geometry": {
             "cx": 32.0,
             "cy": 10.0,
-            "r": 3.958114,
+            "r": 4.0,
             "width": null
           },
           "kind": "circle",
@@ -23534,14 +23357,14 @@
         {
           "actual_index": 2,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_0",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 10.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23563,14 +23386,14 @@
         {
           "actual_index": 0,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_1",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 32.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23592,14 +23415,14 @@
         {
           "actual_index": 1,
           "actual_kind": "circle",
-          "bbox_iou": 0.979167,
+          "bbox_iou": 1.0,
           "expected_id": "dot_2",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "cx": 32.0,
                 "cy": 54.0,
-                "r": 3.958114,
+                "r": 4.0,
                 "width": null
               },
               "kind": "circle",
@@ -23621,8 +23444,8 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.011418,
-        "raster_l1_error": 0.007617,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
         "raster_size_match": true
       },
       "ok": true,

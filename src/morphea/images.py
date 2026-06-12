@@ -35,6 +35,7 @@ from morphea.masks import BinaryMask, MaskComponent, connected_components
 from morphea.scene import (
     Scene,
     merge_auto_mergeable_same_color_fragments,
+    promote_occluded_rect_fragment_groups,
     promote_occluded_rect_primitives,
 )
 
@@ -381,7 +382,9 @@ def scene_from_flat_color_image(
         width=mask_result.width,
         height=mask_result.height,
         anchors=merge_auto_mergeable_same_color_fragments(
-            promote_occluded_rect_primitives(tuple(anchors))
+            promote_occluded_rect_fragment_groups(
+                promote_occluded_rect_primitives(tuple(anchors))
+            )
         ),
         diagnostics=tuple(diagnostics),
     )

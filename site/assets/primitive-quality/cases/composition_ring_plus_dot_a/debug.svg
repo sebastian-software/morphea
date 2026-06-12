@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="stroke_circle">
     <circle cx="21" cy="21" r="11.633" fill="none" stroke="#003366" stroke-width="4.568" />
-    <rect x="9.367" y="9.367" width="23.265" height="23.265" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="9.367" y="7.367" font-size="4" fill="#ff00ff">anchor-0000:stroke_circle:0.796422</text>
+    <rect x="7.084" y="7.084" width="27.833" height="27.833" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="7.084" y="5.084" font-size="4" fill="#ff00ff">anchor-0000:stroke_circle:0.796422</text>
   </g>
   <g id="anchor-0001" data-kind="circle">
-    <circle cx="51" cy="51" r="5.141" fill="#003366" />
-    <rect x="45.859" y="45.859" width="10.282" height="10.282" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="45.859" y="43.859" font-size="4" fill="#ff00ff">anchor-0001:circle:0.945753</text>
+    <circle cx="51" cy="51" r="5" fill="#003366" />
+    <rect x="46" y="46" width="10" height="10" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="46" y="44" font-size="4" fill="#ff00ff">anchor-0001:circle:0.945641</text>
   </g>
 </svg>

@@ -14,6 +14,7 @@ from morphea.scene import (
     Scene,
     SvgStyle,
     merge_auto_mergeable_same_color_fragments,
+    promote_occluded_rect_fragment_groups,
     promote_occluded_rect_primitives,
     scene_from_mask,
     scene_layers_to_manifest,
@@ -83,6 +84,46 @@ class SceneExportTests(unittest.TestCase):
         self.assertIn('stroke-linejoin="miter"', svg)
         self.assertEqual(manifest["anchors"][0]["stroke"]["cap_style"], "square")
         self.assertEqual(manifest["anchors"][0]["stroke"]["join_style"], "miter")
+
+    def test_butt_stroke_manifest_bounds_do_not_extend_along_centerline(self):
+        anchor = AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            stroke=StrokeAnchor(
+                centerline=(Point(10, 5), Point(20, 5)),
+                width_samples=(4.0,),
+                cap_style="butt",
+            ),
+        )
+
+        manifest = Scene(width=32, height=16, anchors=(anchor,)).to_manifest()
+
+        self.assertEqual(
+            manifest["anchors"][0]["reserved"]["bounds"],
+            [10.0, 3.0, 20.0, 7.0],
+        )
+
+    def test_square_stroke_manifest_bounds_extend_along_centerline(self):
+        anchor = AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            stroke=StrokeAnchor(
+                centerline=(Point(10, 5), Point(20, 5)),
+                width_samples=(4.0,),
+                cap_style="square",
+            ),
+        )
+
+        manifest = Scene(width=32, height=16, anchors=(anchor,)).to_manifest()
+
+        self.assertEqual(
+            manifest["anchors"][0]["reserved"]["bounds"],
+            [8.0, 3.0, 22.0, 7.0],
+        )
 
     def test_arc_exports_as_editable_svg_stroke(self):
         anchor = AnchorCandidate(
@@ -620,6 +661,51 @@ class SceneExportTests(unittest.TestCase):
             occlusion_group["occlusion_policy"],
             "visible_fragments_with_ordered_occluder",
         )
+
+    def test_occluded_rect_fragments_promote_to_full_base_rect(self):
+        top = AnchorCandidate(
+            kind=AnchorKind.RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=4,
+            color="#003366",
+            quad=QuadAnchor(
+                corners=(Point(12, 20), Point(52, 20), Point(52, 30), Point(12, 30)),
+            ),
+        )
+        bottom = AnchorCandidate(
+            kind=AnchorKind.RECT,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=4,
+            color="#003366",
+            quad=QuadAnchor(
+                corners=(Point(12, 35), Point(52, 35), Point(52, 44), Point(12, 44)),
+            ),
+        )
+        occluder = AnchorCandidate(
+            kind=AnchorKind.STROKE_POLYLINE,
+            raster_error=0.0,
+            node_count=2,
+            parameter_count=5,
+            color="#dd2222",
+            stroke=StrokeAnchor(
+                centerline=(Point(8, 32.5), Point(56, 32.5)),
+                width_samples=(4.0,),
+                cap_style="butt",
+            ),
+        )
+
+        promoted = promote_occluded_rect_fragment_groups((top, bottom, occluder))
+
+        self.assertEqual(len(promoted), 2)
+        self.assertEqual(promoted[0].kind, AnchorKind.RECT)
+        self.assertEqual(
+            promoted[0].quad.corners,
+            (Point(12, 20), Point(52, 20), Point(52, 44), Point(12, 44)),
+        )
+        self.assertEqual(promoted[0].metrics["occluded_rect_fragment_promotion"], 1.0)
+        self.assertEqual(promoted[1], occluder)
 
     def test_occluded_rect_like_quad_promotes_to_full_rect(self):
         base = AnchorCandidate(

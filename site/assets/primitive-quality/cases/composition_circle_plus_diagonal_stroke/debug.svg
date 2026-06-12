@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="circle">
-    <circle cx="17" cy="45" r="8.94" fill="#003366" />
-    <rect x="8.06" y="36.06" width="17.88" height="17.88" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="8.06" y="34.06" font-size="4" fill="#ff00ff">anchor-0000:circle:0.94675</text>
+    <circle cx="17" cy="45" r="9" fill="#003366" />
+    <rect x="8" y="36" width="18" height="18" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="8" y="34" font-size="4" fill="#ff00ff">anchor-0000:circle:0.947678</text>
   </g>
   <g id="anchor-0001" data-kind="stroke_polyline">
     <path d="M 58 8 L 38 28" fill="none" stroke="#003366" stroke-width="3.828" stroke-linecap="butt" stroke-linejoin="round" />
-    <rect x="36.086" y="6.086" width="23.828" height="23.828" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="36.086" y="4.086" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:0.991872</text>
+    <rect x="36.646" y="6.646" width="22.707" height="22.707" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="36.646" y="4.646" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:0.991872</text>
   </g>
 </svg>
