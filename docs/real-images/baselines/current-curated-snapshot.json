@@ -21,9 +21,23 @@
       "diagnostic_count": 2,
       "expectations": [
         {
+          "actual_value": 0.467213,
+          "id": "fragmentation-bounded",
+          "max_value": 0.6,
+          "metric": "fragmentation_penalty",
+          "ok": true
+        },
+        {
           "actual_count": 5,
           "id": "gold-circle-anchors",
           "min_count": 5,
+          "ok": true
+        },
+        {
+          "actual_value": 0.918033,
+          "id": "simple-shape-ratio",
+          "metric": "simple_shape_ratio",
+          "min_value": 0.85,
           "ok": true
         },
         {
@@ -99,9 +113,23 @@
       "diagnostic_count": 3,
       "expectations": [
         {
+          "actual_value": 0.45614,
+          "id": "fragmentation-bounded",
+          "max_value": 0.6,
+          "metric": "fragmentation_penalty",
+          "ok": true
+        },
+        {
           "actual_count": 5,
           "id": "gold-circle-anchors",
           "min_count": 5,
+          "ok": true
+        },
+        {
+          "actual_value": 0.859649,
+          "id": "simple-shape-ratio",
+          "metric": "simple_shape_ratio",
+          "min_value": 0.8,
           "ok": true
         },
         {
@@ -180,6 +208,13 @@
           "actual_count": 1,
           "id": "radio-circle-anchor",
           "min_count": 1,
+          "ok": true
+        },
+        {
+          "actual_value": 0.921348,
+          "id": "simple-shape-ratio",
+          "metric": "simple_shape_ratio",
+          "min_value": 0.85,
           "ok": true
         },
         {

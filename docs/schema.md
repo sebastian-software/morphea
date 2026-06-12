@@ -179,6 +179,12 @@ summary records min/mean/max elapsed seconds across all repeats.
 
 Written by `curve curated-check --snapshot snapshot.json`.
 
+Curated suite expectations support three mutually exclusive check types:
+`kind` with `min_count`, `group_kind` with `min_count`, or `metric` with
+`min_value` and/or `max_value`. Metric expectations read top-level manifest
+`metrics` values such as `editability_score`, `simple_shape_ratio`, and
+`fragmentation_penalty`.
+
 Top-level fields:
 
 - `schema_version`: currently `1`
@@ -193,7 +199,8 @@ Case snapshot fields:
 - `status`
 - `ok`
 - `source_exists`
-- `expectations`: sorted expectation outcomes with actual/minimum counts
+- `expectations`: sorted expectation outcomes with actual/minimum counts or
+  metric actual/bound values
 - `config`: bounded vectorize config when the case was run
 - `anchor_count`
 - `anchor_kind_counts`

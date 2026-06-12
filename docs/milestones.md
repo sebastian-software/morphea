@@ -621,6 +621,8 @@ Implemented so far:
 - curated artifacts are written through the same run writer as vectorize runs,
   including input copies and raster-fidelity metrics.
 - expectation checks for anchor kinds and scene group kinds.
+- metric expectation checks for curated cases, including editability,
+  simple-shape ratio, and fragmentation envelopes.
 - deterministic `curve curated-check --snapshot snapshot.json` regression
   summaries for important commits/configurations.
 - second documented curated case:

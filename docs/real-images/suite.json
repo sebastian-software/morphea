@@ -37,6 +37,18 @@
           "description": "Detected table quads should be grouped as a perspective grid."
         },
         {
+          "id": "simple-shape-ratio",
+          "metric": "simple_shape_ratio",
+          "min_value": 0.8,
+          "description": "Most accepted anchors should remain simple editable primitives."
+        },
+        {
+          "id": "fragmentation-bounded",
+          "metric": "fragmentation_penalty",
+          "max_value": 0.6,
+          "description": "Same-color fragmentation may exist but should stay within a bounded regression envelope."
+        },
+        {
           "id": "smooth-stroke-anchors",
           "kind": "stroke_polyline",
           "min_count": 8,
@@ -79,6 +91,18 @@
           "description": "Detected table quads should be grouped as a perspective grid."
         },
         {
+          "id": "simple-shape-ratio",
+          "metric": "simple_shape_ratio",
+          "min_value": 0.85,
+          "description": "Most accepted anchors should remain simple editable primitives."
+        },
+        {
+          "id": "fragmentation-bounded",
+          "metric": "fragmentation_penalty",
+          "max_value": 0.6,
+          "description": "Same-color fragmentation may exist but should stay within a bounded regression envelope."
+        },
+        {
           "id": "smooth-stroke-anchors",
           "kind": "stroke_polyline",
           "min_count": 12,
@@ -113,6 +137,12 @@
           "kind": "stroke_polyline",
           "min_count": 10,
           "description": "Anti-aliased text and UI strokes should remain bounded as editable stroke-like primitives rather than hanging the pipeline."
+        },
+        {
+          "id": "simple-shape-ratio",
+          "metric": "simple_shape_ratio",
+          "min_value": 0.85,
+          "description": "The UI screenshot should stay mostly decomposed into simple stroke/circle primitives rather than generic paths."
         }
       ]
     }
