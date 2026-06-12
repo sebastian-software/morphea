@@ -143,6 +143,8 @@ SEGMENT_CONFIG_DEFAULTS = {
     "require_reserved_anchor": False,
 }
 SEGMENT_ARTIFACT_CONFIG_KEYS = {"input", "output", "markdown"}
+COMPARE_SNAPSHOTS_CONFIG_KEYS = {"before", "after", "output", "markdown"}
+COMPARE_SEGMENTS_CONFIG_KEYS = {"before", "after", "output", "markdown"}
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
     "pseudo_dataset",
@@ -639,19 +641,21 @@ def main(argv: list[str] | None = None) -> None:
         "compare-snapshots",
         help="Compare two saved experiment JSON snapshots.",
     )
-    compare_snapshots_parser.add_argument("before", type=Path)
-    compare_snapshots_parser.add_argument("after", type=Path)
-    compare_snapshots_parser.add_argument("-o", "--output", type=Path, required=True)
+    compare_snapshots_parser.add_argument("before", type=Path, nargs="?")
+    compare_snapshots_parser.add_argument("after", type=Path, nargs="?")
+    compare_snapshots_parser.add_argument("-o", "--output", type=Path)
     compare_snapshots_parser.add_argument("--markdown", type=Path)
+    compare_snapshots_parser.add_argument("--config", type=Path)
 
     compare_segments_parser = subcommands.add_parser(
         "compare-segments",
         help="Compare two segment proposal manifests.",
     )
-    compare_segments_parser.add_argument("before", type=Path)
-    compare_segments_parser.add_argument("after", type=Path)
-    compare_segments_parser.add_argument("-o", "--output", type=Path, required=True)
+    compare_segments_parser.add_argument("before", type=Path, nargs="?")
+    compare_segments_parser.add_argument("after", type=Path, nargs="?")
+    compare_segments_parser.add_argument("-o", "--output", type=Path)
     compare_segments_parser.add_argument("--markdown", type=Path)
+    compare_segments_parser.add_argument("--config", type=Path)
 
     compare_git_snapshots_parser = subcommands.add_parser(
         "compare-git-snapshots",
@@ -1136,21 +1140,23 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "compare-snapshots":
+        compare_config = _resolved_compare_snapshots_config(args)
         result = compare_snapshots(
-            args.before,
-            args.after,
-            output=args.output,
-            markdown=args.markdown,
+            compare_config["before"],
+            compare_config["after"],
+            output=compare_config["output"],
+            markdown=compare_config.get("markdown"),
         )
         print(f"compared {result['item_count']} snapshot items")
         return
 
     if args.command == "compare-segments":
+        compare_config = _resolved_compare_segments_config(args)
         result = compare_segment_manifests(
-            args.before,
-            args.after,
-            output=args.output,
-            markdown=args.markdown,
+            compare_config["before"],
+            compare_config["after"],
+            output=compare_config["output"],
+            markdown=compare_config.get("markdown"),
         )
         print(f"compared {result['shared_proposal_count']} segment proposals")
         return
@@ -1691,6 +1697,42 @@ def _resolved_retrain_config(args: argparse.Namespace) -> dict[str, object]:
         ("base_dataset", "pseudo_dataset", "output"),
         "retrain",
     )
+    return config
+
+
+def _resolved_compare_snapshots_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(
+        args.config,
+        COMPARE_SNAPSHOTS_CONFIG_KEYS,
+        "compare-snapshots",
+    )
+    if args.before is not None:
+        config["before"] = args.before
+    if args.after is not None:
+        config["after"] = args.after
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("before", "after", "output"), "compare-snapshots")
+    return config
+
+
+def _resolved_compare_segments_config(args: argparse.Namespace) -> dict[str, Path]:
+    config = _load_path_config(
+        args.config,
+        COMPARE_SEGMENTS_CONFIG_KEYS,
+        "compare-segments",
+    )
+    if args.before is not None:
+        config["before"] = args.before
+    if args.after is not None:
+        config["after"] = args.after
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("before", "after", "output"), "compare-segments")
     return config
 
 

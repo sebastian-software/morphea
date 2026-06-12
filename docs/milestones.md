@@ -941,6 +941,8 @@ Implemented so far:
   reports
 - `curve compare-segments before.json after.json -o comparison.json` for
   comparing segment proposal outputs across configs or backends
+- `curve compare-segments --config compare-segments.json` for repeatable
+  segment proposal comparisons
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
   MLX backend to be installed
@@ -950,6 +952,8 @@ Implemented so far:
   rounded-rect candidate gates
 - `curve compare-snapshots before.json after.json` for comparing saved
   summaries from different commits/configurations
+- `curve compare-snapshots --config compare-snapshots.json` for repeatable
+  saved-summary comparisons
 - `curve compare-git-snapshots before_ref after_ref --path snapshot.json` for
   comparing the same checked-in snapshot file across git refs without changing
   the working tree

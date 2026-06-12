@@ -1030,6 +1030,19 @@ numeric metrics.
 for reviewing differences between saved reports from different commits or
 configurations.
 
+## Snapshot Comparison Config v1
+
+Read by `curve compare-snapshots --config`.
+
+Supported fields:
+
+- `before`
+- `after`
+- `output`
+- `markdown`: optional Markdown comparison path
+
+CLI arguments override values loaded from the config file.
+
 `curve compare-git-snapshots before_ref after_ref --path snapshot.json` reads
 the same checked-in snapshot file from two git refs with `git show` and does
 not modify the current working tree.
@@ -1074,6 +1087,19 @@ Top-level fields:
 `curve compare-segments --markdown comparison.md` writes a scan-friendly
 Markdown summary for comparing flat-color and future MLX proposal outputs or
 for comparing gated and ungated segment configs.
+
+## Segment Comparison Config v1
+
+Read by `curve compare-segments --config`.
+
+Supported fields:
+
+- `before`
+- `after`
+- `output`
+- `markdown`: optional Markdown comparison path
+
+CLI arguments override values loaded from the config file.
 
 ## Run Directory v1
 

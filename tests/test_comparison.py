@@ -268,6 +268,133 @@ class SnapshotComparisonTests(unittest.TestCase):
             )
             self.assertEqual(cli_result["proposal_changes"][0]["id"], "flat_color-0000")
 
+    def test_compare_segment_manifests_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            before = root / "before-segments.json"
+            after = root / "after-segments.json"
+            output = root / "segment-comparison.json"
+            markdown = root / "segment-comparison.md"
+            config = root / "compare-segments.json"
+            before.write_text(
+                json.dumps(
+                    _segment_manifest(
+                        summary={"downstream_status_counts": {"pending": 1}},
+                        proposals=[
+                            {
+                                "id": "flat_color-0000",
+                                "source": "flat_color",
+                                "status": "proposed",
+                                "downstream_status": "pending",
+                            }
+                        ],
+                    )
+                ),
+                encoding="utf-8",
+            )
+            after.write_text(
+                json.dumps(
+                    _segment_manifest(
+                        summary={"downstream_status_counts": {"accepted": 1}},
+                        proposals=[
+                            {
+                                "id": "flat_color-0000",
+                                "source": "flat_color",
+                                "status": "proposed",
+                                "downstream_status": "accepted",
+                            }
+                        ],
+                    )
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "before": str(before),
+                        "after": str(after),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["compare-segments", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["shared_proposal_count"], 1)
+            self.assertTrue(markdown.exists())
+
+    def test_compare_segment_manifests_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config_before = root / "config-before-segments.json"
+            config_after = root / "config-after-segments.json"
+            before = root / "before-segments.json"
+            after = root / "after-segments.json"
+            config_output = root / "config-comparison.json"
+            output = root / "segment-comparison.json"
+            config = root / "compare-segments.json"
+            config_before.write_text(json.dumps(_segment_manifest()))
+            config_after.write_text(json.dumps(_segment_manifest()))
+            before.write_text(
+                json.dumps(
+                    _segment_manifest(
+                        proposals=[
+                            {
+                                "id": "flat_color-0000",
+                                "source": "flat_color",
+                                "status": "proposed",
+                                "downstream_status": "pending",
+                            }
+                        ],
+                    )
+                )
+            )
+            after.write_text(
+                json.dumps(
+                    _segment_manifest(
+                        proposals=[
+                            {
+                                "id": "flat_color-0000",
+                                "source": "flat_color",
+                                "status": "proposed",
+                                "downstream_status": "accepted",
+                            }
+                        ],
+                    )
+                )
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "before": str(config_before),
+                        "after": str(config_after),
+                        "output": str(config_output),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-segments",
+                        str(before),
+                        str(after),
+                        "-o",
+                        str(output),
+                        "--config",
+                        str(config),
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(len(result["proposal_changes"]), 1)
+            self.assertFalse(config_output.exists())
+
     def test_render_snapshot_comparison_reports_case_metric_deltas(self):
         comparison = render_snapshot_comparison(
             {
@@ -410,6 +537,77 @@ class SnapshotComparisonTests(unittest.TestCase):
                 "`anchor_count`",
                 markdown.read_text(encoding="utf-8"),
             )
+
+    def test_compare_snapshots_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            before = root / "before.json"
+            after = root / "after.json"
+            output = root / "comparison.json"
+            markdown = root / "comparison.md"
+            config = root / "compare-snapshots.json"
+            before.write_text(json.dumps({"cases": [{"id": "a", "anchor_count": 1}]}))
+            after.write_text(json.dumps({"cases": [{"id": "a", "anchor_count": 2}]}))
+            config.write_text(
+                json.dumps(
+                    {
+                        "before": str(before),
+                        "after": str(after),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["compare-snapshots", "--config", str(config)])
+
+            comparison = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(comparison["items"][0]["metric_deltas"][0]["delta"], 1.0)
+            self.assertTrue(markdown.exists())
+
+    def test_compare_snapshots_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config_before = root / "config-before.json"
+            config_after = root / "config-after.json"
+            before = root / "before.json"
+            after = root / "after.json"
+            config_output = root / "config-comparison.json"
+            output = root / "comparison.json"
+            config = root / "compare-snapshots.json"
+            config_before.write_text(json.dumps({"cases": [{"id": "a", "anchor_count": 1}]}))
+            config_after.write_text(json.dumps({"cases": [{"id": "a", "anchor_count": 1}]}))
+            before.write_text(json.dumps({"cases": [{"id": "a", "anchor_count": 2}]}))
+            after.write_text(json.dumps({"cases": [{"id": "a", "anchor_count": 5}]}))
+            config.write_text(
+                json.dumps(
+                    {
+                        "before": str(config_before),
+                        "after": str(config_after),
+                        "output": str(config_output),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-snapshots",
+                        str(before),
+                        str(after),
+                        "-o",
+                        str(output),
+                        "--config",
+                        str(config),
+                    ]
+                )
+
+            comparison = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(comparison["items"][0]["metric_deltas"][0]["delta"], 3.0)
+            self.assertFalse(config_output.exists())
 
     def test_render_snapshot_comparison_markdown_handles_no_changes(self):
         markdown = render_snapshot_comparison_markdown(
