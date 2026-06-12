@@ -113,6 +113,39 @@ class RefinementTests(unittest.TestCase):
                 1.0,
             )
 
+    def test_differentiable_refinement_adjusts_circle_radius_from_source(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = _write_circle_manifest(root, radius=3)
+            source = _write_circle_source(root, radius=4)
+            output = root / "refined.json"
+
+            result = refine_manifest(
+                manifest=manifest,
+                output=output,
+                config=RefinementConfig(
+                    backend="differentiable",
+                    max_iterations=5,
+                    timeout_seconds=1.0,
+                    source_image=source,
+                ),
+            )
+
+            self.assertEqual(result["refinement"]["backend"], "differentiable")
+            self.assertEqual(
+                result["refinement"]["optimizer"]["renderer"],
+                "soft_raster_circle",
+            )
+            self.assertGreater(result["anchors"][0]["circle"]["r"], 3.0)
+            self.assertLess(
+                result["refinement"]["optimizer"]["final_objective"],
+                result["refinement"]["optimizer"]["initial_objective"],
+            )
+            self.assertIn(
+                "differentiable_radius_gradient",
+                result["anchors"][0]["metrics"],
+            )
+
     def test_refine_cli_accepts_source_image(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -415,7 +448,7 @@ class RefinementTests(unittest.TestCase):
                             config=config,
                         )
 
-    def test_optional_differentiable_backend_reports_not_configured(self):
+    def test_optional_diffvg_backend_reports_not_configured(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             manifest = _write_manifest(Path(temp_dir))
 
@@ -427,7 +460,7 @@ class RefinementTests(unittest.TestCase):
                     refine_manifest(
                         manifest=manifest,
                         output=Path(temp_dir) / "refined.json",
-                        config=RefinementConfig(backend="differentiable"),
+                        config=RefinementConfig(backend="diffvg"),
                     )
 
     def test_optional_differentiable_backend_stays_pending_when_package_exists(self):
@@ -458,14 +491,17 @@ class RefinementTests(unittest.TestCase):
         self.assertFalse(optional["backend_available"])
         self.assertEqual(optional["status"], "not_installed")
         self.assertIn("pydiffvg", optional["package_candidates"])
+        self.assertTrue(refinement_backend_status("differentiable")["backend_available"])
 
     def test_available_refinement_backends_lists_optional_diffvg(self):
         backends = available_refinement_backends()
 
         self.assertIn("local_metric", backends["local"])
+        self.assertIn("differentiable", backends["local"])
         self.assertIn("diffvg", backends["optional"])
         self.assertIn("details", backends)
         self.assertEqual(backends["details"]["local_metric"]["status"], "available")
+        self.assertEqual(backends["details"]["differentiable"]["status"], "available")
 
 
 def _write_manifest(root: Path) -> Path:

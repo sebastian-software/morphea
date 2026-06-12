@@ -15,9 +15,9 @@ from curve.rendering import raster_fidelity_metrics, render_manifest_image
 
 
 LOCAL_REFINEMENT_BACKEND = "local_metric"
-OPTIONAL_DIFFERENTIABLE_BACKENDS = ("differentiable", "diffvg")
+DIFFERENTIABLE_REFINEMENT_BACKEND = "differentiable"
+OPTIONAL_DIFFERENTIABLE_BACKENDS = ("diffvg",)
 OPTIONAL_REFINEMENT_BACKEND_PACKAGES = {
-    "differentiable": ("pydiffvg", "diffvg"),
     "diffvg": ("pydiffvg", "diffvg"),
 }
 
@@ -42,7 +42,10 @@ def refine_manifest(
     _validate_refinement_config(config)
     if config.backend in OPTIONAL_DIFFERENTIABLE_BACKENDS:
         _raise_differentiable_backend_unavailable(config.backend)
-    if config.backend != LOCAL_REFINEMENT_BACKEND:
+    if config.backend not in {
+        LOCAL_REFINEMENT_BACKEND,
+        DIFFERENTIABLE_REFINEMENT_BACKEND,
+    }:
         msg = f"unsupported refinement backend: {config.backend}"
         raise ValueError(msg)
 
@@ -58,7 +61,12 @@ def refine_manifest(
         "stopped_reason": "not_attempted",
     }
     if config.source_image is not None and config.max_iterations > 0:
-        optimized_data, optimizer_metrics = _optimize_local_geometry(
+        optimizer = (
+            _optimize_differentiable_geometry
+            if config.backend == DIFFERENTIABLE_REFINEMENT_BACKEND
+            else _optimize_local_geometry
+        )
+        optimized_data, optimizer_metrics = optimizer(
             data,
             source_image=Path(config.source_image),
             max_iterations=config.max_iterations,
@@ -263,11 +271,15 @@ def _fmt_refinement_value(value: object) -> str:
 
 def available_refinement_backends() -> dict[str, object]:
     return {
-        "local": [LOCAL_REFINEMENT_BACKEND],
+        "local": [LOCAL_REFINEMENT_BACKEND, DIFFERENTIABLE_REFINEMENT_BACKEND],
         "optional": list(OPTIONAL_DIFFERENTIABLE_BACKENDS),
         "details": {
             backend: refinement_backend_status(backend)
-            for backend in (LOCAL_REFINEMENT_BACKEND, *OPTIONAL_DIFFERENTIABLE_BACKENDS)
+            for backend in (
+                LOCAL_REFINEMENT_BACKEND,
+                DIFFERENTIABLE_REFINEMENT_BACKEND,
+                *OPTIONAL_DIFFERENTIABLE_BACKENDS,
+            )
         },
     }
 
@@ -288,6 +300,15 @@ def refinement_backend_status(backend: str) -> dict[str, object]:
             "reason": None,
             "package_available": True,
             "implementation": "local_metric",
+        }
+    if backend == DIFFERENTIABLE_REFINEMENT_BACKEND:
+        return {
+            "backend": backend,
+            "backend_available": True,
+            "status": "available",
+            "reason": None,
+            "package_available": True,
+            "implementation": "soft_raster_gradient",
         }
     if backend in OPTIONAL_DIFFERENTIABLE_BACKENDS:
         package_available = is_optional_refinement_package_available(backend)
@@ -608,6 +629,125 @@ def _optimize_local_geometry(
     }
 
 
+def _optimize_differentiable_geometry(
+    data: dict[str, object],
+    *,
+    source_image: Path,
+    max_iterations: int,
+    started_at: float,
+    timeout_seconds: float | None,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> tuple[dict[str, object], dict[str, object]]:
+    result = deepcopy(data)
+    if not source_image.exists():
+        msg = f"refinement source image does not exist: {source_image}"
+        raise FileNotFoundError(msg)
+
+    with Image.open(source_image) as source:
+        source_rgba = source.convert("RGBA")
+        initial_hard_metrics = _manifest_raster_metrics(
+            result,
+            source_rgba,
+            raster_l1_weight=raster_l1_weight,
+            raster_edge_weight=raster_edge_weight,
+        )
+        current_metrics = _manifest_soft_raster_metrics(
+            result,
+            source_rgba,
+            raster_l1_weight=raster_l1_weight,
+            raster_edge_weight=raster_edge_weight,
+        )
+        initial_metrics = current_metrics
+        iterations = 0
+        timeout_reached = False
+        stopped_reason = "max_iterations"
+        optimized_kinds: set[str] = set()
+        for _ in range(max_iterations):
+            if _deadline_exceeded(started_at, timeout_seconds):
+                timeout_reached = True
+                stopped_reason = "timeout"
+                break
+            improved = False
+            for anchor in result.get("anchors", []):
+                if _deadline_exceeded(started_at, timeout_seconds):
+                    timeout_reached = True
+                    stopped_reason = "timeout"
+                    break
+                if not isinstance(anchor, dict) or anchor.get("kind") != "circle":
+                    continue
+                circle = anchor.get("circle")
+                if not isinstance(circle, dict):
+                    continue
+                gradient = _soft_circle_radius_gradient(
+                    result,
+                    anchor,
+                    source_rgba,
+                    raster_l1_weight=raster_l1_weight,
+                    raster_edge_weight=raster_edge_weight,
+                )
+                if abs(gradient) < 1e-6:
+                    continue
+                old_radius = float(circle.get("r", 0.0))
+                candidate_radius = max(0.5, old_radius - gradient * 18.0)
+                if abs(candidate_radius - old_radius) < 1e-6:
+                    continue
+                candidate = _with_circle_radius(result, anchor, candidate_radius)
+                candidate_metrics = _manifest_soft_raster_metrics(
+                    candidate,
+                    source_rgba,
+                    raster_l1_weight=raster_l1_weight,
+                    raster_edge_weight=raster_edge_weight,
+                )
+                if candidate_metrics["objective"] >= current_metrics["objective"]:
+                    continue
+                circle["r"] = candidate_radius
+                metrics = dict(anchor.get("metrics", {}))
+                metrics["refinement_radius_delta"] = (
+                    metrics.get("refinement_radius_delta", 0.0)
+                    + candidate_radius
+                    - old_radius
+                )
+                metrics["differentiable_radius_gradient"] = gradient
+                anchor["metrics"] = metrics
+                current_metrics = candidate_metrics
+                optimized_kinds.add("circle")
+                improved = True
+            iterations += 1
+            if timeout_reached:
+                break
+            if not improved:
+                stopped_reason = "converged"
+                break
+
+    hard_metrics = _manifest_raster_metrics(
+        result,
+        source_rgba,
+        raster_l1_weight=raster_l1_weight,
+        raster_edge_weight=raster_edge_weight,
+    )
+    metrics = dict(result.get("metrics", {}))
+    metrics["raster_l1_error"] = hard_metrics["raster_l1_error"]
+    metrics["raster_edge_error"] = hard_metrics["raster_edge_error"]
+    metrics["refinement_objective"] = current_metrics["objective"]
+    result["metrics"] = metrics
+    return result, {
+        "attempted": True,
+        "iterations": iterations,
+        "objective": "soft_raster_l1_gradient_plus_edge",
+        "initial_raster_l1_error": initial_hard_metrics["raster_l1_error"],
+        "final_raster_l1_error": hard_metrics["raster_l1_error"],
+        "initial_raster_edge_error": initial_hard_metrics["raster_edge_error"],
+        "final_raster_edge_error": hard_metrics["raster_edge_error"],
+        "initial_objective": initial_metrics["objective"],
+        "final_objective": current_metrics["objective"],
+        "optimized_parameter_kinds": sorted(optimized_kinds),
+        "timeout_reached": timeout_reached,
+        "stopped_reason": stopped_reason,
+        "renderer": "soft_raster_circle",
+    }
+
+
 def _manifest_raster_metrics(
     manifest: dict[str, object],
     source: Image.Image,
@@ -624,6 +764,126 @@ def _manifest_raster_metrics(
         "raster_edge_error": edge_error,
         "objective": (l1_error * raster_l1_weight) + (edge_error * raster_edge_weight),
     }
+
+
+def _manifest_soft_raster_metrics(
+    manifest: dict[str, object],
+    source: Image.Image,
+    *,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> dict[str, float]:
+    source_rgba = source.convert("RGBA")
+    source_pixels = source_rgba.load()
+    width, height = source_rgba.size
+    rgb_error = 0.0
+    for y in range(height):
+        for x in range(width):
+            rendered = _soft_raster_rgb(manifest, x + 0.5, y + 0.5)
+            source_red, source_green, source_blue, _ = source_pixels[x, y]
+            rgb_error += (
+                abs(rendered[0] - source_red)
+                + abs(rendered[1] - source_green)
+                + abs(rendered[2] - source_blue)
+            )
+    pixel_count = max(width * height, 1)
+    l1_error = rgb_error / (pixel_count * 3 * 255)
+    edge_error = float(
+        raster_fidelity_metrics(
+            source=source_rgba,
+            rendered=render_manifest_image(manifest),
+        )["raster_edge_error"]
+    )
+    return {
+        "raster_l1_error": l1_error,
+        "raster_edge_error": edge_error,
+        "objective": (l1_error * raster_l1_weight) + (edge_error * raster_edge_weight),
+    }
+
+
+def _soft_circle_radius_gradient(
+    manifest: dict[str, object],
+    target_anchor: dict[str, object],
+    source: Image.Image,
+    *,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> float:
+    del raster_edge_weight
+    circle = target_anchor.get("circle")
+    if not isinstance(circle, dict):
+        return 0.0
+    cx = float(circle.get("cx", 0.0))
+    cy = float(circle.get("cy", 0.0))
+    radius = float(circle.get("r", 0.0))
+    color = _hex_rgb(str(target_anchor.get("color") or "#0b2d5f"))
+    source_rgba = source.convert("RGBA")
+    source_pixels = source_rgba.load()
+    width, height = source_rgba.size
+    softness = 2.0
+    gradient = 0.0
+    for y in range(height):
+        py = y + 0.5
+        for x in range(width):
+            px = x + 0.5
+            distance = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
+            edge_value = 0.5 + (radius - distance) / softness
+            if edge_value <= 0.0 or edge_value >= 1.0:
+                continue
+            d_alpha = 1.0 / softness
+            rendered = _soft_raster_rgb(manifest, px, py)
+            source_red, source_green, source_blue, _ = source_pixels[x, y]
+            for channel_index, source_value in enumerate(
+                (source_red, source_green, source_blue)
+            ):
+                channel_delta = rendered[channel_index] - source_value
+                if channel_delta == 0:
+                    continue
+                sign = 1.0 if channel_delta > 0 else -1.0
+                d_channel = (color[channel_index] - 255) * d_alpha
+                gradient += sign * d_channel
+    pixel_count = max(width * height, 1)
+    return gradient * raster_l1_weight / (pixel_count * 3 * 255)
+
+
+def _soft_raster_rgb(
+    manifest: dict[str, object],
+    px: float,
+    py: float,
+) -> tuple[float, float, float]:
+    red = green = blue = 255.0
+    for anchor in manifest.get("anchors", []):
+        if not isinstance(anchor, dict):
+            continue
+        if anchor.get("kind") != "circle":
+            continue
+        circle = anchor.get("circle")
+        if not isinstance(circle, dict):
+            continue
+        cx = float(circle.get("cx", 0.0))
+        cy = float(circle.get("cy", 0.0))
+        radius = float(circle.get("r", 0.0))
+        distance = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
+        alpha = min(1.0, max(0.0, 0.5 + (radius - distance) / 2.0))
+        color = _hex_rgb(str(anchor.get("color") or "#0b2d5f"))
+        red = red * (1.0 - alpha) + color[0] * alpha
+        green = green * (1.0 - alpha) + color[1] * alpha
+        blue = blue * (1.0 - alpha) + color[2] * alpha
+    return red, green, blue
+
+
+def _hex_rgb(color: str) -> tuple[int, int, int]:
+    value = color.strip().removeprefix("#")
+    if len(value) < 6:
+        return (11, 45, 95)
+    try:
+        return (
+            int(value[0:2], 16),
+            int(value[2:4], 16),
+            int(value[4:6], 16),
+        )
+    except ValueError:
+        return (11, 45, 95)
 
 
 def _manifest_objective(
