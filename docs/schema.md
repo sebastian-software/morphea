@@ -585,6 +585,8 @@ Top-level fields:
 - `augmented`: centroid classifier summary trained on base plus reviewed
   pseudo-label train examples
 - `delta`: training-count and accuracy changes from baseline to augmented
+- `summary`: scan-friendly augmentation verdict with status, metric count,
+  best/worst accuracy deltas, and train-example delta
 
 Both `baseline` and `augmented` include validation/test `evaluation` and
 `ranking_evaluation` sections using the same validation dataset. The report is

@@ -550,6 +550,9 @@ Implemented so far:
   train split via `curve merge-labels`
 - `curve compare-training` compares baseline classifier training against
   reviewed pseudo-label augmentation on a fixed validation/test dataset
+- comparison reports include a scan-friendly augmentation verdict with
+  best/worst accuracy deltas and train-example delta, so regressions are easier
+  to spot before retraining is accepted.
 - `curve retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
