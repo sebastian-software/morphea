@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from curve.classifier import train_centroid_classifier
+from curve.classifier import evaluate_classifier_model, train_centroid_classifier
 from curve.comparison import (
     compare_git_snapshots,
     compare_snapshots,
@@ -331,6 +331,20 @@ def main(argv: list[str] | None = None) -> None:
     )
     train_mlx.add_argument("--config", type=Path)
 
+    eval_classifier = subcommands.add_parser(
+        "eval-classifier",
+        help="Evaluate a primitive classifier model against a generated dataset.",
+    )
+    eval_classifier.add_argument("model", type=Path)
+    eval_classifier.add_argument("dataset", type=Path)
+    eval_classifier.add_argument("-o", "--output", type=Path, required=True)
+    eval_classifier.add_argument(
+        "--splits",
+        nargs="+",
+        default=["val", "test"],
+        help="Dataset splits to evaluate. Defaults to val test.",
+    )
+
     harvest = subcommands.add_parser(
         "harvest",
         help="Collect high-confidence pseudo-labels from vectorize runs.",
@@ -621,6 +635,19 @@ def main(argv: list[str] | None = None) -> None:
         print(
             f"trained {model['model_type']} with {model['train_examples']} examples "
             f"(status={model['status']})"
+        )
+        return
+
+    if args.command == "eval-classifier":
+        report = evaluate_classifier_model(
+            args.model,
+            args.dataset,
+            output=args.output,
+            splits=tuple(args.splits),
+        )
+        print(
+            f"evaluated {report['model_type']} on "
+            f"{len(report['splits'])} dataset splits"
         )
         return
 

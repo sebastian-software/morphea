@@ -206,6 +206,50 @@ def train_centroid_classifier(
     return model
 
 
+def evaluate_classifier_model(
+    model_json: str | Path,
+    dataset_json: str | Path,
+    *,
+    output: str | Path | None = None,
+    splits: tuple[str, ...] = ("val", "test"),
+) -> dict[str, object]:
+    model_path = Path(model_json)
+    dataset_path = Path(dataset_json)
+    model = json.loads(model_path.read_text(encoding="utf-8"))
+    centroids = load_centroid_model(model_path)
+    report = {
+        "schema_version": 1,
+        "model": str(model_path),
+        "dataset": str(dataset_path),
+        "model_type": model.get("model_type"),
+        "feature_names": model.get("feature_names", list(FEATURE_NAMES)),
+        "classes": model.get("classes", sorted(centroids)),
+        "splits": list(splits),
+        "evaluation": {
+            split: evaluate_classifier(
+                centroids,
+                examples_from_dataset(dataset_path, splits=(split,)),
+            )
+            for split in splits
+        },
+        "ranking_evaluation": {
+            split: evaluate_classifier_ranking(
+                centroids,
+                anchors_from_dataset(dataset_path, splits=(split,)),
+            )
+            for split in splits
+        },
+    }
+    if output is not None:
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            json.dumps(report, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+    return report
+
+
 def centroids_from_examples(
     examples: tuple[TrainingExample, ...],
 ) -> dict[str, tuple[float, ...]]:

@@ -10,6 +10,7 @@ from curve.classifier import (
     FEATURE_NAMES,
     anchors_from_dataset,
     classifier_prior_error,
+    evaluate_classifier_model,
     evaluate_classifier_ranking,
     examples_from_dataset,
     features_from_anchor,
@@ -286,6 +287,69 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 ranking["heuristic_accuracy"],
             )
             self.assertGreater(ranking["changed_decisions"], 0)
+
+    def test_evaluate_classifier_model_writes_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=41,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            dataset = Path(temp_dir) / "dataset.json"
+            model_path = Path(temp_dir) / "model.json"
+            report_path = Path(temp_dir) / "classifier-eval.json"
+            train_centroid_classifier(dataset, output=model_path)
+
+            report = evaluate_classifier_model(
+                model_path,
+                dataset,
+                output=report_path,
+                splits=("val",),
+            )
+
+            self.assertTrue(report_path.exists())
+            self.assertEqual(report["schema_version"], 1)
+            self.assertEqual(report["splits"], ["val"])
+            self.assertEqual(report["evaluation"]["val"]["examples"], 15)
+            self.assertEqual(report["ranking_evaluation"]["val"]["examples"], 15)
+
+    def test_eval_classifier_cli_writes_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=42,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            dataset = Path(temp_dir) / "dataset.json"
+            model_path = Path(temp_dir) / "model.json"
+            report_path = Path(temp_dir) / "classifier-eval.json"
+            train_centroid_classifier(dataset, output=model_path)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "eval-classifier",
+                        str(model_path),
+                        str(dataset),
+                        "-o",
+                        str(report_path),
+                        "--splits",
+                        "test",
+                    ]
+                )
+
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["splits"], ["test"])
+            self.assertIn("test", report["evaluation"])
+            self.assertIn("test", report["ranking_evaluation"])
 
     def test_load_model_and_score_matching_candidate(self):
         with tempfile.TemporaryDirectory() as temp_dir:
