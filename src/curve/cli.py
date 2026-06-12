@@ -44,6 +44,7 @@ from curve.self_learning import (
     harvest_pseudo_labels,
     merge_reviewed_pseudo_label_dataset,
     retrain_centroid_classifier,
+    retrain_mlx_classifier,
     run_self_learning_cycle,
 )
 from curve.refinement import (
@@ -149,6 +150,14 @@ RETRAIN_CONFIG_KEYS = {
     "validation_dataset",
     "output",
     "comparison_output",
+    "backend",
+    "epochs",
+    "hidden_dim",
+    "num_heads",
+    "num_layers",
+    "learning_rate",
+    "crop_size",
+    "allow_unavailable",
 }
 REFINE_CONFIG_KEYS = {
     "manifest",
@@ -545,6 +554,14 @@ def main(argv: list[str] | None = None) -> None:
     retrain.add_argument("--validation-dataset", type=Path)
     retrain.add_argument("-o", "--output", type=Path)
     retrain.add_argument("--comparison-output", type=Path)
+    retrain.add_argument("--backend", choices=("centroid", "mlx"))
+    retrain.add_argument("--epochs", type=int)
+    retrain.add_argument("--hidden-dim", type=int)
+    retrain.add_argument("--num-heads", type=int)
+    retrain.add_argument("--num-layers", type=int)
+    retrain.add_argument("--learning-rate", type=float)
+    retrain.add_argument("--crop-size", type=int)
+    retrain.add_argument("--allow-unavailable", action="store_true")
     retrain.add_argument("--config", type=Path)
 
     compare_snapshots_parser = subcommands.add_parser(
@@ -961,13 +978,23 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.command == "retrain":
         retrain_config = _resolved_retrain_config(args)
-        model = retrain_centroid_classifier(
-            base_dataset=retrain_config["base_dataset"],
-            pseudo_dataset=retrain_config["pseudo_dataset"],
-            validation_dataset=retrain_config.get("validation_dataset"),
-            output=retrain_config["output"],
-            comparison_output=retrain_config.get("comparison_output"),
-        )
+        if retrain_config.get("backend", "centroid") == "mlx":
+            model = retrain_mlx_classifier(
+                base_dataset=retrain_config["base_dataset"],
+                pseudo_dataset=retrain_config["pseudo_dataset"],
+                validation_dataset=retrain_config.get("validation_dataset"),
+                output=retrain_config["output"],
+                comparison_output=retrain_config.get("comparison_output"),
+                config=_retrain_mlx_config(retrain_config),
+            )
+        else:
+            model = retrain_centroid_classifier(
+                base_dataset=retrain_config["base_dataset"],
+                pseudo_dataset=retrain_config["pseudo_dataset"],
+                validation_dataset=retrain_config.get("validation_dataset"),
+                output=retrain_config["output"],
+                comparison_output=retrain_config.get("comparison_output"),
+            )
         print(
             f"retrained {model['model_type']} with {model['train_examples']} examples"
         )
@@ -1323,12 +1350,8 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
     return config
 
 
-def _resolved_retrain_config(args: argparse.Namespace) -> dict[str, Path]:
-    config = _load_path_config(
-        args.config,
-        RETRAIN_CONFIG_KEYS,
-        "retrain",
-    )
+def _resolved_retrain_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_retrain_config(args.config)
     if args.base_dataset is not None:
         config["base_dataset"] = args.base_dataset
     if args.pseudo_dataset is not None:
@@ -1339,12 +1362,62 @@ def _resolved_retrain_config(args: argparse.Namespace) -> dict[str, Path]:
         config["output"] = args.output
     if args.comparison_output is not None:
         config["comparison_output"] = args.comparison_output
+    if args.backend is not None:
+        config["backend"] = args.backend
+    for key in (
+        "epochs",
+        "hidden_dim",
+        "num_heads",
+        "num_layers",
+        "learning_rate",
+        "crop_size",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    if args.allow_unavailable:
+        config["allow_unavailable"] = True
     _require_config_paths(
         config,
         ("base_dataset", "pseudo_dataset", "output"),
         "retrain",
     )
     return config
+
+
+def _load_retrain_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("retrain config must be a JSON object")
+    unknown = sorted(set(loaded) - RETRAIN_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported retrain config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in (
+        "base_dataset",
+        "pseudo_dataset",
+        "validation_dataset",
+        "output",
+        "comparison_output",
+    ):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _retrain_mlx_config(config: dict[str, object]) -> MlxClassifierTrainingConfig:
+    return MlxClassifierTrainingConfig(
+        epochs=int(config.get("epochs", 25)),
+        hidden_dim=int(config.get("hidden_dim", 32)),
+        num_heads=int(config.get("num_heads", 4)),
+        num_layers=int(config.get("num_layers", 1)),
+        learning_rate=float(config.get("learning_rate", 0.001)),
+        crop_size=int(config.get("crop_size", 16)),
+        allow_unavailable=bool(config.get("allow_unavailable", False)),
+    )
 
 
 def _resolved_refine_config(args: argparse.Namespace) -> dict[str, object]:

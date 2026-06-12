@@ -15,6 +15,10 @@ from curve.classifier import (
     examples_from_dataset,
 )
 from curve.curated import check_curated_suite
+from curve.mlx_classifier import (
+    MlxClassifierTrainingConfig,
+    train_mlx_transformer_classifier,
+)
 
 
 HARVEST_FILTER_DEFAULTS = {
@@ -826,6 +830,131 @@ def retrain_centroid_classifier(
         )
 
     return model
+
+
+def retrain_mlx_classifier(
+    *,
+    base_dataset: str | Path,
+    pseudo_dataset: str | Path,
+    output: str | Path,
+    validation_dataset: str | Path | None = None,
+    comparison_output: str | Path | None = None,
+    config: MlxClassifierTrainingConfig | None = None,
+) -> dict[str, object]:
+    """Train and persist an augmented MLX model from reviewed labels."""
+
+    validation_source = validation_dataset or base_dataset
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    augmented_dataset = output_path.with_name(
+        f"{output_path.stem}-augmented-dataset.json"
+    )
+    baseline_train = examples_from_dataset(base_dataset, splits=("train",))
+    pseudo_train = examples_from_dataset(pseudo_dataset, splits=("train",))
+    _write_augmented_retraining_dataset(
+        base_dataset=base_dataset,
+        pseudo_dataset=pseudo_dataset,
+        validation_dataset=validation_source,
+        output=augmented_dataset,
+    )
+    model = train_mlx_transformer_classifier(
+        augmented_dataset,
+        output=output_path,
+        config=config,
+    )
+    model["source_datasets"] = {
+        "base_dataset": str(base_dataset),
+        "pseudo_dataset": str(pseudo_dataset),
+        "validation_dataset": str(validation_source),
+        "augmented_dataset": str(augmented_dataset),
+    }
+    model["augmentation"] = {
+        "base_train_examples": len(baseline_train),
+        "pseudo_train_examples": len(pseudo_train),
+    }
+    model["retraining_backend"] = "mlx"
+    output_path.write_text(
+        json.dumps(model, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    if comparison_output is not None:
+        compare_retraining(
+            base_dataset=base_dataset,
+            pseudo_dataset=pseudo_dataset,
+            validation_dataset=validation_dataset,
+            output=comparison_output,
+        )
+
+    return model
+
+
+def _write_augmented_retraining_dataset(
+    *,
+    base_dataset: str | Path,
+    pseudo_dataset: str | Path,
+    validation_dataset: str | Path,
+    output: str | Path,
+) -> dict[str, object]:
+    base_path = Path(base_dataset)
+    pseudo_path = Path(pseudo_dataset)
+    validation_path = Path(validation_dataset)
+    samples: list[dict[str, object]] = []
+    samples.extend(_absolute_dataset_samples(base_path, splits=("train",)))
+    samples.extend(_absolute_dataset_samples(pseudo_path, splits=("train",)))
+    samples.extend(_absolute_dataset_samples(validation_path, splits=("val", "test")))
+    split_counts: dict[str, int] = {}
+    for sample in samples:
+        split = str(sample.get("split", "train"))
+        split_counts[split] = split_counts.get(split, 0) + 1
+    dataset = {
+        "count": len(samples),
+        "seed": None,
+        "width": None,
+        "height": None,
+        "difficulty": "reviewed_pseudo_augmented",
+        "splits": split_counts,
+        "samples": samples,
+        "source_datasets": {
+            "base_dataset": str(base_dataset),
+            "pseudo_dataset": str(pseudo_dataset),
+            "validation_dataset": str(validation_dataset),
+        },
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(dataset, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return dataset
+
+
+def _absolute_dataset_samples(
+    dataset_path: Path,
+    *,
+    splits: tuple[str, ...],
+) -> list[dict[str, object]]:
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    root = dataset_path.parent
+    samples: list[dict[str, object]] = []
+    for sample in dataset.get("samples", []):
+        if sample.get("split") not in splits:
+            continue
+        copied = dict(sample)
+        copied["manifest"] = _absolute_sample_path(root, sample.get("manifest"))
+        copied["image"] = _absolute_sample_path(root, sample.get("image"))
+        samples.append(copied)
+    return samples
+
+
+def _absolute_sample_path(root: Path, value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        path = root / path
+    return str(path)
 
 
 def merge_reviewed_pseudo_label_dataset(

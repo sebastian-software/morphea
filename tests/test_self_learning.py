@@ -1,5 +1,7 @@
 import json
+import sys
 import tempfile
+import types
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -27,7 +29,9 @@ from curve.self_learning import (
     render_training_comparison_markdown,
     run_self_learning_cycle,
     retrain_centroid_classifier,
+    retrain_mlx_classifier,
 )
+from curve.mlx_classifier import MlxClassifierTrainingConfig
 
 
 class SelfLearningTests(unittest.TestCase):
@@ -1373,6 +1377,62 @@ class SelfLearningTests(unittest.TestCase):
                 str(pseudo_dir / "dataset.json"),
             )
 
+    def test_retrain_mlx_classifier_writes_augmented_model(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            model_path = root / "mlx-model.json"
+            compare_path = root / "compare.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=94,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+            mlx_module = types.ModuleType("mlx")
+            mlx_core = types.ModuleType("mlx.core")
+            mlx_core.__version__ = "test-mlx"
+            mlx_module.core = mlx_core
+
+            with (
+                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
+            ):
+                model = retrain_mlx_classifier(
+                    base_dataset=base_dir / "dataset.json",
+                    pseudo_dataset=pseudo_dir / "dataset.json",
+                    output=model_path,
+                    comparison_output=compare_path,
+                    config=MlxClassifierTrainingConfig(epochs=1, crop_size=6),
+                )
+
+            augmented_dataset = Path(model["source_datasets"]["augmented_dataset"])
+            self.assertTrue(model_path.exists())
+            self.assertTrue(compare_path.exists())
+            self.assertTrue(augmented_dataset.exists())
+            self.assertEqual(model["model_type"], "mlx_transformer_primitive_classifier")
+            self.assertEqual(model["retraining_backend"], "mlx")
+            self.assertEqual(model["augmentation"]["pseudo_train_examples"], 1)
+            self.assertEqual(
+                model["train_examples"],
+                model["augmentation"]["base_train_examples"] + 1,
+            )
+            self.assertEqual(
+                model["source_datasets"]["pseudo_dataset"],
+                str(pseudo_dir / "dataset.json"),
+            )
+            self.assertIn("token_transformer", model["mlx_training"])
+
     def test_retrain_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -1415,6 +1475,52 @@ class SelfLearningTests(unittest.TestCase):
             comparison = json.loads(compare_path.read_text(encoding="utf-8"))
             self.assertEqual(model["augmentation"]["pseudo_train_examples"], 1)
             self.assertEqual(comparison["delta"]["train_examples"], 1)
+
+    def test_retrain_cli_accepts_mlx_backend_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            pseudo_dir = root / "pseudo"
+            reviewed = root / "reviewed.json"
+            model_path = root / "mlx-model.json"
+            config = root / "retrain-mlx.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=95,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=pseudo_dir,
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "backend": "mlx",
+                        "base_dataset": str(base_dir / "dataset.json"),
+                        "pseudo_dataset": str(pseudo_dir / "dataset.json"),
+                        "output": str(model_path),
+                        "epochs": 1,
+                        "crop_size": 6,
+                        "allow_unavailable": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["retrain", "--config", str(config)])
+
+            model = json.loads(model_path.read_text(encoding="utf-8"))
+            self.assertEqual(model["model_type"], "mlx_transformer_primitive_classifier")
+            self.assertEqual(model["retraining_backend"], "mlx")
+            self.assertEqual(model["augmentation"]["pseudo_train_examples"], 1)
+            self.assertIn("augmented_dataset", model["source_datasets"])
 
 
 def _write_manifest(

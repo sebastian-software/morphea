@@ -175,7 +175,10 @@ def raster_examples_from_dataset(
     for sample in dataset.get("samples", []):
         if sample.get("split") not in splits:
             continue
-        image = Image.open(root / sample["image"]).convert("RGBA")
+        image_ref = sample.get("image")
+        if not isinstance(image_ref, str):
+            continue
+        image = Image.open(root / image_ref).convert("RGBA")
         manifest = json.loads((root / sample["manifest"]).read_text(encoding="utf-8"))
         for anchor_index, anchor in enumerate(manifest.get("anchors", [])):
             bounds = _anchor_crop_bounds(anchor, image.size)
