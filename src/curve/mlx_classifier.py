@@ -5,11 +5,13 @@ from __future__ import annotations
 import importlib.util
 import json
 from dataclasses import dataclass
+from math import exp, log
 from pathlib import Path
 from typing import Any
 
 from curve.classifier import (
     FEATURE_NAMES,
+    TrainingExample,
     anchors_from_dataset,
     centroids_from_examples,
     evaluate_classifier,
@@ -47,7 +49,7 @@ def mlx_classifier_runtime_status() -> dict[str, object]:
             else "MLX primitive classifier runtime is not installed"
         ),
         "training_implementation": (
-            "metadata_hook" if available else "centroid_fallback"
+            "mlx_feature_head" if available else "centroid_fallback"
         ),
     }
 
@@ -82,7 +84,7 @@ def train_mlx_transformer_classifier(
         "model_type": MLX_MODEL_TYPE,
         "backend": "mlx",
         "backend_available": mlx_available,
-        "status": "training_hook_pending" if mlx_available else "unavailable",
+        "status": "trained" if mlx_available else "unavailable",
         "runtime": runtime,
         "reason": runtime["reason"],
         "training_implementation": runtime["training_implementation"],
@@ -136,29 +138,152 @@ def train_mlx_transformer_classifier(
 
 
 def _train_mlx_weights(
-    train_examples: object,
+    train_examples: tuple[TrainingExample, ...],
     labels: list[str],
     config: MlxClassifierTrainingConfig,
 ) -> dict[str, Any]:
-    """Return MLX training metadata.
+    """Return an optimized MLX feature-head artifact.
 
     The import is intentionally local so the project remains usable without
-    MLX installed. The current repository tests the unavailable path; this
-    hook is where the real Transformer weight training is extended once MLX is
-    present in the local environment.
+    MLX installed. The first implemented MLX-backed head trains over the
+    semantic feature sequence and keeps the centroid fallback as the runtime
+    ranking prior until the full raster-crop Transformer is wired.
     """
 
     import mlx.core as mx  # type: ignore[import-not-found]
 
+    head = _train_feature_head(train_examples, labels, config)
+    head["backend_version"] = getattr(mx, "__version__", "unknown")
+    head["backend_array_api"] = "mlx.core"
+    return head
+
+
+def _train_feature_head(
+    train_examples: tuple[TrainingExample, ...],
+    labels: list[str],
+    config: MlxClassifierTrainingConfig,
+) -> dict[str, Any]:
+    feature_count = len(FEATURE_NAMES)
+    label_to_index = {label: index for index, label in enumerate(labels)}
+    means, scales = _feature_normalization(train_examples)
+    rows = [
+        (
+            _normalize_features(example.features, means, scales),
+            label_to_index[example.label],
+        )
+        for example in train_examples
+        if example.label in label_to_index
+    ]
+    if not rows:
+        msg = "training examples do not match classifier labels"
+        raise ValueError(msg)
+
+    weights = [[0.0 for _ in range(feature_count)] for _ in labels]
+    bias = [0.0 for _ in labels]
+    loss_history: list[dict[str, float | int]] = []
+    epochs = max(1, config.epochs)
+    learning_rate = config.learning_rate
+    for epoch in range(epochs):
+        grad_weights = [[0.0 for _ in range(feature_count)] for _ in labels]
+        grad_bias = [0.0 for _ in labels]
+        loss = 0.0
+        correct = 0
+        for features, target_index in rows:
+            logits = [
+                bias[class_index]
+                + sum(
+                    weights[class_index][feature_index] * features[feature_index]
+                    for feature_index in range(feature_count)
+                )
+                for class_index in range(len(labels))
+            ]
+            probabilities = _softmax(logits)
+            loss -= log(max(probabilities[target_index], 1e-12))
+            if _argmax(probabilities) == target_index:
+                correct += 1
+            for class_index, probability in enumerate(probabilities):
+                coefficient = probability - (
+                    1.0 if class_index == target_index else 0.0
+                )
+                grad_bias[class_index] += coefficient
+                for feature_index, feature_value in enumerate(features):
+                    grad_weights[class_index][feature_index] += (
+                        coefficient * feature_value
+                    )
+
+        scale = 1 / len(rows)
+        for class_index in range(len(labels)):
+            bias[class_index] -= learning_rate * grad_bias[class_index] * scale
+            for feature_index in range(feature_count):
+                weights[class_index][feature_index] -= (
+                    learning_rate * grad_weights[class_index][feature_index] * scale
+                )
+        loss_history.append(
+            {
+                "epoch": epoch + 1,
+                "loss": loss * scale,
+                "accuracy": correct / len(rows),
+            }
+        )
+
     return {
-        "weight_format": "mlx",
-        "parameter_count": 0,
+        "weight_format": "mlx_feature_head_v1",
+        "architecture": "normalized_feature_softmax_head",
+        "transformer_status": "pending_raster_crop_encoder",
+        "parameter_count": len(labels) * (feature_count + 1),
         "epochs": config.epochs,
         "class_count": len(labels),
         "feature_count": len(FEATURE_NAMES),
-        "backend_version": getattr(mx, "__version__", "unknown"),
+        "labels": list(labels),
+        "feature_names": list(FEATURE_NAMES),
+        "normalization": {
+            "mean": list(means),
+            "scale": list(scales),
+        },
+        "weights": weights,
+        "bias": bias,
+        "loss_history": loss_history,
         "note": (
-            "MLX backend detected; Transformer weight training hook is active "
-            "but currently emits metadata plus centroid fallback weights."
+            "MLX backend detected; this artifact contains optimized feature-head "
+            "weights while the raster-crop Transformer encoder remains pending."
         ),
     }
+
+
+def _feature_normalization(
+    train_examples: tuple[TrainingExample, ...],
+) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    feature_count = len(FEATURE_NAMES)
+    means = tuple(
+        sum(example.features[index] for example in train_examples) / len(train_examples)
+        for index in range(feature_count)
+    )
+    variances = tuple(
+        sum((example.features[index] - means[index]) ** 2 for example in train_examples)
+        / len(train_examples)
+        for index in range(feature_count)
+    )
+    scales = tuple(max(variance ** 0.5, 1.0) for variance in variances)
+    return means, scales
+
+
+def _normalize_features(
+    features: tuple[float, ...],
+    means: tuple[float, ...],
+    scales: tuple[float, ...],
+) -> tuple[float, ...]:
+    return tuple(
+        (features[index] - means[index]) / scales[index]
+        for index in range(len(FEATURE_NAMES))
+    )
+
+
+def _softmax(logits: list[float]) -> list[float]:
+    offset = max(logits)
+    exps = [exp(logit - offset) for logit in logits]
+    total = sum(exps)
+    return [value / total for value in exps]
+
+
+def _argmax(values: list[float]) -> int:
+    return max(range(len(values)), key=values.__getitem__)

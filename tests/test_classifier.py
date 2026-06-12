@@ -1,5 +1,7 @@
 import json
+import sys
 import tempfile
+import types
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -201,7 +203,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
         self.assertEqual(unavailable["training_implementation"], "centroid_fallback")
         self.assertEqual(available["status"], "available")
         self.assertTrue(available["backend_available"])
-        self.assertEqual(available["training_implementation"], "metadata_hook")
+        self.assertEqual(available["training_implementation"], "mlx_feature_head")
 
     def test_train_mlx_can_write_unavailable_fallback_artifact(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -277,7 +279,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(model["model_type"], MLX_MODEL_TYPE)
             self.assertEqual(model["training_config"]["learning_rate"], 0.002)
 
-    def test_train_mlx_records_available_runtime_as_pending_hook(self):
+    def test_train_mlx_records_available_runtime_with_trained_feature_head(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             generate_synthetic_dataset(
                 output_dir=temp_dir,
@@ -289,13 +291,14 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 test_count=1,
             )
             model_path = Path(temp_dir) / "mlx-model.json"
+            mlx_module = types.ModuleType("mlx")
+            mlx_core = types.ModuleType("mlx.core")
+            mlx_core.__version__ = "test-mlx"
+            mlx_module.core = mlx_core
 
             with (
                 patch("curve.mlx_classifier.is_mlx_available", return_value=True),
-                patch(
-                    "curve.mlx_classifier._train_mlx_weights",
-                    return_value={"weight_format": "mlx", "parameter_count": 0},
-                ),
+                patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
             ):
                 model = train_mlx_transformer_classifier(
                     Path(temp_dir) / "dataset.json",
@@ -303,10 +306,17 @@ class PrimitiveClassifierTests(unittest.TestCase):
                     config=MlxClassifierTrainingConfig(epochs=1),
                 )
 
-            self.assertEqual(model["status"], "training_hook_pending")
+            self.assertEqual(model["status"], "trained")
             self.assertEqual(model["runtime"]["status"], "available")
-            self.assertEqual(model["training_implementation"], "metadata_hook")
-            self.assertEqual(model["mlx_training"]["weight_format"], "mlx")
+            self.assertEqual(model["training_implementation"], "mlx_feature_head")
+            self.assertEqual(
+                model["mlx_training"]["weight_format"],
+                "mlx_feature_head_v1",
+            )
+            self.assertGreater(model["mlx_training"]["parameter_count"], 0)
+            self.assertEqual(model["mlx_training"]["backend_version"], "test-mlx")
+            self.assertEqual(len(model["mlx_training"]["loss_history"]), 1)
+            self.assertIn("weights", model["mlx_training"])
 
     def test_classifier_ranking_compares_heuristic_and_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:
