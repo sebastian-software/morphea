@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from math import hypot, pi, sqrt
+from statistics import mean
 
 from morphea.anchors import (
     AnchorCandidate,
@@ -16,6 +17,7 @@ from morphea.anchors import (
     StrokeAnchor,
     choose_best_anchor,
     enrich_anchor_metrics,
+    stroke_width_variance,
 )
 from morphea.classifier import ClassifierModel, classifier_prior_error
 from morphea.masks import BinaryMask, MaskComponent, connected_components
@@ -434,17 +436,20 @@ def _stroke_candidate(
         fallback_width=stroke_width,
     )
     cap_style = "butt" if coverage >= 0.85 else "round"
+    stroke = StrokeAnchor(
+        centerline=centerline,
+        width_samples=width_samples,
+        cap_style=cap_style,
+        join_style="round",
+    )
+    if _stroke_bounds_exceed_component(stroke, component):
+        return None
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=abs(1.0 - coverage) * 0.1,
         node_count=len(centerline),
         parameter_count=len(width_samples) + len(centerline) * 2,
-        stroke=StrokeAnchor(
-            centerline=centerline,
-            width_samples=width_samples,
-            cap_style=cap_style,
-            join_style="round",
-        ),
+        stroke=stroke,
     )
     return enrich_anchor_metrics(candidate)
 
@@ -463,7 +468,7 @@ def _stroke_polyline_centerline(
         key=lambda point: _point_line_distance(point, start, end),
     )
     deviation = _point_line_distance(control, start, end)
-    if deviation < max(0.75, stroke_width * 0.35):
+    if deviation < max(0.75, stroke_width * 0.5):
         return straight_centerline
     return (start, control, end)
 
@@ -567,21 +572,61 @@ def _arc_candidate(
         centerline,
         fallback_width=stroke_width,
     )
-    return AnchorCandidate(
+    if mean(width_samples) > min(width, height) * 0.7:
+        return None
+    stroke = StrokeAnchor(
+        centerline=centerline,
+        width_samples=width_samples,
+        cap_style="round",
+        join_style="round",
+    )
+    if _stroke_bounds_exceed_component(stroke, component):
+        return None
+    candidate = AnchorCandidate(
         kind=AnchorKind.ARC,
         raster_error=max(0.0, 0.12 - bow_ratio),
         node_count=3,
         parameter_count=len(width_samples) + len(centerline) * 2,
-        stroke=StrokeAnchor(
-            centerline=centerline,
-            width_samples=width_samples,
-            cap_style="round",
-            join_style="round",
-        ),
+        stroke=stroke,
         metrics={
             "arc_bow_ratio": bow_ratio,
-            "stroke_width_variance": 0.0,
+            "stroke_width_variance": stroke_width_variance(width_samples),
         },
+    )
+    return candidate
+
+
+def _stroke_bounds_exceed_component(
+    stroke: StrokeAnchor,
+    component: MaskComponent,
+    *,
+    max_area_ratio: float = 2.25,
+    max_side_ratio: float = 1.7,
+) -> bool:
+    if not stroke.centerline:
+        return False
+    width = mean(stroke.width_samples) if stroke.width_samples else 1.0
+    pad = width / 2
+    xs = [point.x for point in stroke.centerline]
+    ys = [point.y for point in stroke.centerline]
+    stroke_width = max(xs) - min(xs) + width
+    stroke_height = max(ys) - min(ys) + width
+    component_width = max(component.width, 1)
+    component_height = max(component.height, 1)
+    stroke_area = max(stroke_width, 0.0) * max(stroke_height, 0.0)
+    component_area = component_width * component_height
+    if stroke_area / component_area > max_area_ratio:
+        return True
+    if stroke_width / component_width > max_side_ratio:
+        return True
+    if stroke_height / component_height > max_side_ratio:
+        return True
+    min_x, min_y, max_x, max_y = component.bounds
+    return (
+        min(xs) - pad < min_x - component_width * 0.35
+        or max(xs) + pad > max_x + component_width * 0.35
+        or min(ys) - pad < min_y - component_height * 0.35
+        or max(ys) + pad > max_y + component_height * 0.35
     )
 
 

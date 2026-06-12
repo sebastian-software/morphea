@@ -1,5 +1,7 @@
 import unittest
 
+from PIL import Image, ImageDraw
+
 from morphea.anchors import AnchorKind
 from morphea.anchors import Point
 from morphea.detection import (
@@ -162,6 +164,18 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].kind, AnchorKind.STROKE_CIRCLE)
         self.assertGreater(anchors[0].stroke.width_samples[0], 1)
 
+    def test_pillow_style_ring_prefers_stroke_circle_over_oversized_arc(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((18, 18, 46, 46), outline="black", width=4)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_CIRCLE)
+        self.assertLess(anchors[0].stroke.width_samples[0], 8.0)
+
     def test_straight_horizontal_component_is_detected_as_stroke(self):
         mask = BinaryMask.from_rows(
             (
@@ -180,6 +194,19 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(anchors[0].stroke.width_samples, (2.0,))
         self.assertEqual(anchors[0].stroke.cap_style, "butt")
         self.assertEqual(anchors[0].stroke.join_style, "round")
+
+    def test_pillow_style_horizontal_stroke_remains_two_point_stroke(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((12, 32, 52, 32), fill="black", width=4)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertEqual(len(anchors[0].stroke.centerline), 2)
+        self.assertEqual(anchors[0].stroke.width_samples, (4.0,))
 
     def test_stroke_threshold_config_can_require_longer_thin_shapes(self):
         mask = BinaryMask.from_rows(
@@ -476,6 +503,16 @@ class CutoutDetectionTests(unittest.TestCase):
         )
 
         self.assertEqual(detect_cutout_strokes(mask, min_length=4), ())
+
+
+def _mask_from_non_white_pixels(image: Image.Image) -> BinaryMask:
+    pixels = {
+        (x, y)
+        for y in range(image.height)
+        for x in range(image.width)
+        if image.getpixel((x, y)) != (255, 255, 255)
+    }
+    return BinaryMask(width=image.width, height=image.height, pixels=frozenset(pixels))
 
 
 if __name__ == "__main__":

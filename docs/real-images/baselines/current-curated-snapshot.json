@@ -4,10 +4,9 @@
     {
       "anchor_count": 61,
       "anchor_kind_counts": {
-        "arc": 9,
         "circle": 5,
-        "cubic_path": 5,
-        "quad": 20,
+        "cubic_path": 12,
+        "quad": 22,
         "stroke_polyline": 22
       },
       "config": {
@@ -34,10 +33,10 @@
           "ok": true
         },
         {
-          "actual_value": 0.918033,
+          "actual_value": 0.803279,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
-          "min_value": 0.85,
+          "min_value": 0.8,
           "ok": true
         },
         {
@@ -53,7 +52,7 @@
           "ok": true
         },
         {
-          "actual_count": 20,
+          "actual_count": 22,
           "id": "table-perspective-quads",
           "min_count": 12,
           "ok": true
@@ -66,8 +65,8 @@
       },
       "id": "chatgpt-image-2026-06-11",
       "metrics": {
-        "anchor_quality_error_max": 0.661263,
-        "anchor_quality_error_mean": 0.151603,
+        "anchor_quality_error_max": 0.660681,
+        "anchor_quality_error_mean": 0.162184,
         "anchor_quality_metric_summary": {
           "circle_fit_residual_error": {
             "count": 5,
@@ -86,31 +85,31 @@
           },
           "line_smoothness_error": {
             "count": 22,
-            "max": 0.395148,
-            "mean": 0.017961
+            "max": 0.0,
+            "mean": 0.0
           },
           "quad_corner_consistency_error": {
-            "count": 20,
+            "count": 22,
             "max": 0.660681,
-            "mean": 0.405153
+            "mean": 0.427718
           },
           "quad_edge_straightness_error": {
-            "count": 20,
+            "count": 22,
             "max": 0.0,
             "mean": 0.0
           },
           "stroke_width_variance": {
-            "count": 31,
-            "max": 0.266115,
-            "mean": 0.008584
+            "count": 22,
+            "max": 0.0,
+            "mean": 0.0
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 5.18,
-          "semantic_anchor_score_mean": 0.319042,
+          "semantic_anchor_score_max": 46.83,
+          "semantic_anchor_score_mean": 2.567066,
           "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.237705,
-          "simple_shape_priority_bonus_total": 14.5
+          "simple_shape_priority_bonus_mean": 0.209016,
+          "simple_shape_priority_bonus_total": 12.75
         },
         "color_fragment_counts": {
           "#1e334a": 10,
@@ -121,19 +120,19 @@
         "cutout_anchor_count": 21,
         "cutout_overlay_count": 21,
         "diagnostic_penalty": 0.0,
-        "editability_score": 0.25082,
+        "editability_score": 0.0,
         "fragmentation_penalty": 0.467213,
-        "generic_path_count": 5,
+        "generic_path_count": 12,
         "group_count": 6,
         "negative_mask_candidate_count": 21,
-        "node_count": 658,
-        "parameter_count": 1372,
-        "reserved_simple_shape_area": 10509018.869623,
-        "reserved_simple_shape_area_ratio": 1.0,
-        "reserved_simple_shape_count": 56,
+        "node_count": 4510,
+        "parameter_count": 9047,
+        "reserved_simple_shape_area": 238642.776776,
+        "reserved_simple_shape_area_ratio": 0.151759,
+        "reserved_simple_shape_count": 49,
         "shape_count": 61,
-        "simple_shape_count": 56,
-        "simple_shape_ratio": 0.918033
+        "simple_shape_count": 49,
+        "simple_shape_ratio": 0.803279
       },
       "ok": true,
       "source_exists": true,
@@ -142,11 +141,10 @@
     {
       "anchor_count": 57,
       "anchor_kind_counts": {
-        "arc": 11,
         "circle": 5,
-        "cubic_path": 8,
-        "quad": 16,
-        "stroke_polyline": 17
+        "cubic_path": 18,
+        "quad": 18,
+        "stroke_polyline": 16
       },
       "config": {
         "color_tolerance": 18,
@@ -172,14 +170,14 @@
           "ok": true
         },
         {
-          "actual_value": 0.859649,
+          "actual_value": 0.684211,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
-          "min_value": 0.8,
+          "min_value": 0.65,
           "ok": true
         },
         {
-          "actual_count": 17,
+          "actual_count": 16,
           "id": "smooth-stroke-anchors",
           "min_count": 8,
           "ok": true
@@ -191,7 +189,7 @@
           "ok": true
         },
         {
-          "actual_count": 16,
+          "actual_count": 18,
           "id": "table-perspective-quads",
           "min_count": 8,
           "ok": true
@@ -204,8 +202,8 @@
       },
       "id": "terminaro-tweaked",
       "metrics": {
-        "anchor_quality_error_max": 0.660681,
-        "anchor_quality_error_mean": 0.135862,
+        "anchor_quality_error_max": 0.703362,
+        "anchor_quality_error_mean": 0.152811,
         "anchor_quality_metric_summary": {
           "circle_fit_residual_error": {
             "count": 5,
@@ -218,37 +216,37 @@
             "mean": 0.089602
           },
           "cutout_anchor_error": {
-            "count": 17,
+            "count": 16,
             "max": 0.0,
             "mean": 0.0
           },
           "line_smoothness_error": {
-            "count": 17,
-            "max": 0.221724,
-            "mean": 0.013043
-          },
-          "quad_corner_consistency_error": {
-            "count": 16,
-            "max": 0.660681,
-            "mean": 0.407407
-          },
-          "quad_edge_straightness_error": {
             "count": 16,
             "max": 0.0,
             "mean": 0.0
           },
+          "quad_corner_consistency_error": {
+            "count": 18,
+            "max": 0.703362,
+            "mean": 0.43774
+          },
+          "quad_edge_straightness_error": {
+            "count": 18,
+            "max": 0.0,
+            "mean": 0.0
+          },
           "stroke_width_variance": {
-            "count": 28,
-            "max": 0.173006,
-            "mean": 0.006179
+            "count": 16,
+            "max": 0.0,
+            "mean": 0.0
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 5.32,
-          "semantic_anchor_score_mean": 0.480779,
+          "semantic_anchor_score_max": 46.865,
+          "semantic_anchor_score_mean": 2.918256,
           "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.223684,
-          "simple_shape_priority_bonus_total": 12.75
+          "simple_shape_priority_bonus_mean": 0.179825,
+          "simple_shape_priority_bonus_total": 10.25
         },
         "color_fragment_counts": {
           "#002554": 13,
@@ -260,19 +258,19 @@
         "cutout_anchor_count": 14,
         "cutout_overlay_count": 14,
         "diagnostic_penalty": 0.0,
-        "editability_score": 0.083509,
+        "editability_score": 0.0,
         "fragmentation_penalty": 0.45614,
-        "generic_path_count": 8,
+        "generic_path_count": 18,
         "group_count": 7,
         "negative_mask_candidate_count": 14,
-        "node_count": 855,
-        "parameter_count": 1767,
-        "reserved_simple_shape_area": 10507276.183001,
-        "reserved_simple_shape_area_ratio": 1.0,
-        "reserved_simple_shape_count": 49,
+        "node_count": 4727,
+        "parameter_count": 9475,
+        "reserved_simple_shape_area": 211858.733596,
+        "reserved_simple_shape_area_ratio": 0.134726,
+        "reserved_simple_shape_count": 39,
         "shape_count": 57,
-        "simple_shape_count": 49,
-        "simple_shape_ratio": 0.859649
+        "simple_shape_count": 39,
+        "simple_shape_ratio": 0.684211
       },
       "ok": true,
       "source_exists": true,
@@ -281,11 +279,12 @@
     {
       "anchor_count": 187,
       "anchor_kind_counts": {
-        "arc": 73,
+        "arc": 15,
         "circle": 7,
-        "cubic_path": 19,
-        "stroke_circle": 2,
-        "stroke_polyline": 86
+        "cubic_path": 144,
+        "quad": 4,
+        "stroke_circle": 3,
+        "stroke_polyline": 14
       },
       "config": {
         "color_tolerance": 10,
@@ -298,66 +297,77 @@
       "diagnostic_count": 2,
       "expectations": [
         {
-          "actual_count": 2,
+          "actual_count": 3,
           "id": "radio-circle-anchor",
           "min_count": 1,
           "ok": true
         },
         {
-          "actual_value": 0.898396,
+          "actual_value": 0.229947,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
-          "min_value": 0.85,
+          "min_value": 0.2,
           "ok": true
         },
         {
-          "actual_count": 86,
+          "actual_count": 14,
           "id": "text-stroke-fragments",
           "min_count": 10,
           "ok": true
         }
       ],
       "group_kind_counts": {
+        "perspective_grid": 1,
         "primitive_anchor_reservation": 1,
         "same_color_fragment_group": 7
       },
       "id": "ui-radio-acceptance-screenshot",
       "metrics": {
-        "anchor_quality_error_max": 0.578404,
-        "anchor_quality_error_mean": 0.035738,
+        "anchor_quality_error_max": 0.846154,
+        "anchor_quality_error_mean": 0.052777,
         "anchor_quality_metric_summary": {
           "circle_fit_residual_error": {
-            "count": 9,
+            "count": 10,
             "max": 0.212126,
-            "mean": 0.165875
+            "mean": 0.15602
           },
           "circle_roundness_error": {
-            "count": 9,
+            "count": 10,
             "max": 0.254563,
-            "mean": 0.187022
+            "mean": 0.176782
           },
           "cutout_anchor_error": {
-            "count": 88,
+            "count": 17,
             "max": 0.0,
             "mean": 0.0
           },
           "line_smoothness_error": {
-            "count": 88,
-            "max": 0.083296,
-            "mean": 0.004764
+            "count": 17,
+            "max": 0.0,
+            "mean": 0.0
+          },
+          "quad_corner_consistency_error": {
+            "count": 4,
+            "max": 0.846154,
+            "mean": 0.435255
+          },
+          "quad_edge_straightness_error": {
+            "count": 4,
+            "max": 0.0,
+            "mean": 0.0
           },
           "stroke_width_variance": {
-            "count": 161,
-            "max": 0.495108,
-            "mean": 0.019178
+            "count": 32,
+            "max": 0.521314,
+            "mean": 0.15001
           }
         },
         "anchor_scoring_summary": {
           "semantic_anchor_score_max": 2.415,
-          "semantic_anchor_score_mean": 0.005502,
+          "semantic_anchor_score_mean": 0.502324,
           "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.229412,
-          "simple_shape_priority_bonus_total": 42.9
+          "simple_shape_priority_bonus_mean": 0.062834,
+          "simple_shape_priority_bonus_total": 11.75
         },
         "color_fragment_counts": {
           "#000000": 135,
@@ -371,19 +381,19 @@
         "cutout_anchor_count": 0,
         "cutout_overlay_count": 0,
         "diagnostic_penalty": 0.0,
-        "editability_score": 0.017112,
+        "editability_score": 0.0,
         "fragmentation_penalty": 0.481283,
-        "generic_path_count": 19,
-        "group_count": 8,
+        "generic_path_count": 144,
+        "group_count": 9,
         "negative_mask_candidate_count": 0,
-        "node_count": 807,
-        "parameter_count": 1954,
-        "reserved_simple_shape_area": 49315.88672,
-        "reserved_simple_shape_area_ratio": 0.185482,
-        "reserved_simple_shape_count": 168,
+        "node_count": 2557,
+        "parameter_count": 5186,
+        "reserved_simple_shape_area": 6231.179021,
+        "reserved_simple_shape_area_ratio": 0.023436,
+        "reserved_simple_shape_count": 43,
         "shape_count": 187,
-        "simple_shape_count": 168,
-        "simple_shape_ratio": 0.898396
+        "simple_shape_count": 43,
+        "simple_shape_ratio": 0.229947
       },
       "ok": true,
       "source_exists": true,

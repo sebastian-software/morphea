@@ -14,6 +14,9 @@ editable semantic structure is the primary quality target.
 The system should evolve from deterministic geometry first, then add local AI,
 then add training and self-learning loops.
 
+The active step-by-step quality track for primary forms and primitive
+compositions lives in [primitive-quality-roadmap.md](primitive-quality-roadmap.md).
+
 ## M0: Primitive Anchor Prototype
 
 Status: implemented.
@@ -1018,6 +1021,141 @@ Remaining:
 
 - add new schema entries when future milestones introduce new commands or real
   MLX model execution.
+
+## M12: Primitive Fidelity Harness
+
+Status: implemented for the current fixed-fixture baseline.
+
+Purpose: make the simplest shapes the primary quality gate before homepage or
+curated-image polish.
+
+Implemented so far:
+
+- `morphea primitive-check` generates deterministic primitive raster fixtures,
+  vectorizes them, renders the recognized scene back to pixels, and writes a
+  machine-readable report.
+- Optional per-case artifacts include `input.png`, `output.svg`, `debug.svg`,
+  `manifest.json`, and `preview.png`.
+- The fixed fixture set covers filled square, filled rectangle, filled circle,
+  horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a
+  simple quad.
+- The report records pass/fail status, selected primitive kind, raster L1/edge
+  errors, bounding-box IoU, geometry bounds, and concrete failure reasons.
+
+Acceptance evidence:
+
+- `PYTHONPATH=src python3 -m morphea.cli primitive-check -o /tmp/primitive.json`
+- `PYTHONPATH=src python3 -m unittest tests.test_primitive_quality`
+
+Remaining:
+
+- add randomized variants only after the fixed basic cases remain stable.
+
+## M13: Ground-Truth Primitive Specs
+
+Status: implemented for the current hand-authored fixture baseline.
+
+Purpose: keep primitive expectations explicit and separate from broad synthetic
+training data.
+
+Implemented so far:
+
+- each built-in primitive fixture records canvas size, background, expected
+  primitive kind, expected color, expected geometry, coordinate tolerance, raster
+  thresholds, and minimum bounding-box IoU.
+- fixtures are generated from hand-authored specs at runtime rather than
+  checked in as binary assets.
+- square/rectangle/quad contracts assert four-corner geometry; circle/ring
+  contracts assert center/radius; stroke contracts assert two-point centerlines
+  and width.
+
+Remaining:
+
+- move specs to external JSON only if users need to edit the fixture set without
+  touching Python.
+
+## M14: Geometry Contract Tests
+
+Status: implemented for the current primitive contract baseline.
+
+Purpose: fail on wrong semantic geometry even when aggregate scene metrics look
+acceptable.
+
+Implemented so far:
+
+- primitive quality checks fail wrong primitive kinds, unexpected `cubic_path`
+  fallbacks, loose coordinates, poor bounding-box IoU, out-of-canvas bounds, and
+  visual round-trip regressions.
+- regression tests cover square, circle, stroke, ring, and CLI report behavior.
+- the ring/stroke regressions that produced oversized arc or curved-stroke
+  candidates are now covered by focused detector tests.
+
+Remaining:
+
+- add contract cases for nested/cut-out primitives after the single-primitive
+  set stays stable.
+
+## M15: Visual Round-Trip Gates
+
+Status: implemented for the current manifest-rendered preview baseline.
+
+Purpose: compare source raster fixtures against rendered recognized scenes, not
+just primitive counts.
+
+Implemented so far:
+
+- primitive-check records `raster_l1_error`, `raster_edge_error`,
+  `raster_alpha_error`, `raster_size_match`, and bounding-box IoU per case.
+- strict thresholds are used for filled square, rectangle, and quad; slightly
+  looser thresholds are used for circles, rings, rounded rectangles, and
+  diagonal strokes where rasterization differs by edge pixels.
+- per-case artifacts make input/output inspection possible without rerunning
+  the harness.
+
+Remaining:
+
+- add an SVG-raster backend only if manifest-rendered previews diverge from the
+  browser/editor SVG rendering path.
+
+## M16: Detector Tightening Loop
+
+Status: started and implemented for the first primitive failures.
+
+Purpose: use failing primitive cases to tighten recognition before broader real
+image tuning.
+
+Implemented so far:
+
+- straight thick strokes no longer receive artificial control points from edge
+  pixels; horizontal and vertical Pillow-style strokes remain two-point
+  `stroke_polyline` anchors.
+- arc candidates with width samples or visual stroke bounds far outside their
+  source component are rejected, preventing outlined rings from becoming giant
+  arc strokes.
+- arc scoring avoids treating the intended bend of a three-point arc as line
+  jitter while still preserving width-variance pressure.
+
+Remaining:
+
+- add rejection diagnostics if future failures need inspectable candidate-level
+  reject reasons.
+- keep each detector change paired with a primitive contract or focused
+  detector regression test.
+
+## M17: Honest Basic Gallery
+
+Status: pending.
+
+Purpose: publish only examples that are backed by passing primitive contracts.
+
+Planned behavior:
+
+- generate a small static gallery from `primitive-check` artifacts after the
+  basic gate is stable.
+- show bitmap input, rendered SVG preview, primitive contract summary, selected
+  kind, coordinates, node count, and raster errors.
+- keep complex illustrations out of the homepage until their own semantic and
+  visual contracts are strong enough.
 
 ## Commit Discipline
 

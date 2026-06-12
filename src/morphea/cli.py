@@ -22,6 +22,7 @@ from morphea.mlx_classifier import (
     train_mlx_transformer_classifier,
 )
 from morphea.profiling import profile_curated_suite, profile_vectorize
+from morphea.primitive_quality import write_primitive_quality_report
 from morphea.runs import (
     create_run_dir,
     write_html_report,
@@ -229,6 +230,7 @@ REFINEMENT_GATE_CONFIG_KEYS = {
 }
 STATUS_CONFIG_KEYS = {"output", "markdown", "mlx_sam_model_path"}
 REPORT_CONFIG_KEYS = {"manifest", "output", "config", "format"}
+PRIMITIVE_CHECK_CONFIG_KEYS = {"output", "output_dir", "markdown"}
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
@@ -764,6 +766,19 @@ def main(argv: list[str] | None = None) -> None:
     status.add_argument("--mlx-sam-model-path", type=Path)
     status.add_argument("--config", type=Path)
 
+    primitive_check = subcommands.add_parser(
+        "primitive-check",
+        help="Run deterministic primitive round-trip quality checks.",
+    )
+    primitive_check.add_argument("-o", "--output", type=Path)
+    primitive_check.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Optional directory for per-case input, SVG, manifest, and preview artifacts.",
+    )
+    primitive_check.add_argument("--markdown", type=Path)
+    primitive_check.add_argument("--config", type=Path)
+
     curated_check = subcommands.add_parser(
         "curated-check",
         help="Validate a curated real-image suite and optionally run it.",
@@ -1283,6 +1298,20 @@ def main(argv: list[str] | None = None) -> None:
             "wrote runtime status with "
             f"{len(result['blocked_backends'])} backend blockers and "
             f"{len(result.get('blocked_capabilities', []))} capability blockers"
+        )
+        return
+
+    if args.command == "primitive-check":
+        primitive_config = _resolved_primitive_check_config(args)
+        result = write_primitive_quality_report(
+            output=primitive_config["output"],
+            output_dir=primitive_config.get("output_dir"),
+            markdown=primitive_config.get("markdown"),
+        )
+        print(
+            "checked "
+            f"{result['case_count']} primitive cases "
+            f"({result['failed_count']} failed)"
         )
         return
 
@@ -2022,6 +2051,21 @@ def _resolved_status_config(args: argparse.Namespace) -> dict[str, object]:
     return config
 
 
+def _resolved_primitive_check_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_primitive_check_config(args.config)
+    if args.output is not None:
+        config["output"] = args.output
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("output",), "primitive-check")
+    for key in ("output", "output_dir", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
     config = dict(HARVEST_DEFAULT_CONFIG)
     if args.config is not None:
@@ -2355,6 +2399,23 @@ def _load_status_config(path: Path | None) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("output", "markdown", "mlx_sam_model_path"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_primitive_check_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("primitive-check config must be a JSON object")
+    unknown = sorted(set(loaded) - PRIMITIVE_CHECK_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported primitive-check config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("output", "output_dir", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

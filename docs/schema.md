@@ -210,6 +210,50 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Primitive Quality Report v1
+
+Written by `morphea primitive-check`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `case_count`
+- `passed_count`
+- `failed_count`
+- `ok`
+- `cases`: fixed primitive fixture results
+
+Each case records:
+
+- `id`
+- `expected_kinds`
+- `actual_kind`
+- `anchor_count`
+- `metrics`: includes `raster_l1_error`, `raster_edge_error`,
+  `raster_alpha_error`, and `raster_size_match`
+- `geometry`: expected bounds, actual bounds, and `bbox_iou`
+- `failures`: contract failures such as wrong kind, fallback path, loose
+  coordinates, out-of-canvas bounds, or visual round-trip regression
+- `artifacts`: present when `--output-dir` is used; includes input PNG,
+  output SVG, debug SVG, manifest JSON, and rendered preview PNG
+
+The built-in fixture set covers filled square, filled rectangle, filled circle,
+horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a
+simple quad. These cases are intentionally boring and should stay stricter than
+the curated real-image suite.
+
+## Primitive Check Config v1
+
+Read by `morphea primitive-check --config`.
+
+Supported fields:
+
+- `output`
+- `output_dir`: optional per-case artifact root
+- `markdown`: optional Markdown summary path
+
+CLI arguments override values loaded from the config file.
+
 ## Profile Report v1
 
 Written by `morphea profile`.

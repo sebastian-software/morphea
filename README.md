@@ -62,6 +62,14 @@ Run the test suite:
 python -m unittest discover -s tests
 ```
 
+Run the primitive round-trip quality gate:
+
+```sh
+morphea primitive-check -o runs/primitive-quality.json \
+  --output-dir runs/primitive-quality \
+  --markdown runs/primitive-quality.md
+```
+
 Vectorize an image into editable SVG primitives:
 
 ```sh
@@ -164,6 +172,8 @@ morphea sweep sweep.json -o runs/sweep --markdown runs/sweep.md
   launch motions.
 - [Plan](docs/plan.md): semantic-first vectorization direction.
 - [Milestones](docs/milestones.md): implemented baselines and roadmap.
+- [Primitive quality roadmap](docs/primitive-quality-roadmap.md): step-by-step
+  gates for primary forms and primitive compositions.
 - [Schema](docs/schema.md): manifests, reports, status files, and command
   schemas.
 - [Sweeps](docs/sweeps.md): config-driven experiment comparisons.
