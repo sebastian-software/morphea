@@ -178,6 +178,9 @@ Implemented so far:
   parallelograms while preserving `quad` as the editable primitive kind.
 - stroke payloads preserve `cap_style` and `join_style`.
 - straight high-coverage stroke components classify as `butt` caps.
+- stroke-polyline candidates keep straight strokes as two-point editable
+  centerlines, but add a conservative control point when the component visibly
+  deviates from the principal-axis line.
 - sparse curved stroke components can classify as editable `arc` anchors with a
   three-point centerline when their bow is large enough to beat a straight
   stroke interpretation.
