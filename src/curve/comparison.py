@@ -127,6 +127,8 @@ def render_segment_manifest_comparison(
 ) -> dict[str, Any]:
     before_proposals = _index_by_id(_list_value(before_data.get("proposals")))
     after_proposals = _index_by_id(_list_value(after_data.get("proposals")))
+    before_groups = _index_by_id(_list_value(before_data.get("proposal_groups")))
+    after_groups = _index_by_id(_list_value(after_data.get("proposal_groups")))
     shared_ids = sorted(set(before_proposals) & set(after_proposals))
     proposal_changes = []
     for proposal_id in shared_ids:
@@ -136,6 +138,15 @@ def render_segment_manifest_comparison(
         )
         if changes:
             proposal_changes.append({"id": proposal_id, "changes": changes})
+    shared_group_ids = sorted(set(before_groups) & set(after_groups))
+    group_changes = []
+    for group_id in shared_group_ids:
+        changes = _proposal_group_changes(
+            before_groups[group_id],
+            after_groups[group_id],
+        )
+        if changes:
+            group_changes.append({"id": group_id, "changes": changes})
 
     return {
         "schema_version": 1,
@@ -150,6 +161,9 @@ def render_segment_manifest_comparison(
         "shared_proposal_count": len(shared_ids),
         "added_ids": sorted(set(after_proposals) - set(before_proposals)),
         "removed_ids": sorted(set(before_proposals) - set(after_proposals)),
+        "shared_group_count": len(shared_group_ids),
+        "added_group_ids": sorted(set(after_groups) - set(before_groups)),
+        "removed_group_ids": sorted(set(before_groups) - set(after_groups)),
         "summary_deltas": _summary_count_deltas(
             _dict_value(before_data.get("summary")),
             _dict_value(after_data.get("summary")),
@@ -159,6 +173,7 @@ def render_segment_manifest_comparison(
             _dict_value(after_data.get("config")),
         ),
         "proposal_changes": proposal_changes,
+        "proposal_group_changes": group_changes,
     }
 
 
@@ -177,6 +192,9 @@ def render_segment_manifest_comparison_markdown(
         f"- Shared proposals: `{comparison.get('shared_proposal_count', 0)}`",
         f"- Added: {_id_list(comparison.get('added_ids', []))}",
         f"- Removed: {_id_list(comparison.get('removed_ids', []))}",
+        f"- Shared groups: `{comparison.get('shared_group_count', 0)}`",
+        f"- Added groups: {_id_list(comparison.get('added_group_ids', []))}",
+        f"- Removed groups: {_id_list(comparison.get('removed_group_ids', []))}",
         "",
         "## Summary Deltas",
         "",
@@ -213,6 +231,25 @@ def render_segment_manifest_comparison_markdown(
                 f"`{change.get('before')}` | `{change.get('after')}` |"
             )
     if change_count == 0:
+        lines.append("| n/a | n/a | n/a | n/a |")
+
+    lines.extend(["", "## Proposal Group Changes", ""])
+    lines.extend(
+        [
+            "| Group | Field | Before | After |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    group_change_count = 0
+    for group in _list_value(comparison.get("proposal_group_changes")):
+        for change in _list_value(group.get("changes")):
+            group_change_count += 1
+            lines.append(
+                "| "
+                f"`{group.get('id')}` | `{change.get('field')}` | "
+                f"`{change.get('before')}` | `{change.get('after')}` |"
+            )
+    if group_change_count == 0:
         lines.append("| n/a | n/a | n/a | n/a |")
 
     return "\n".join(lines) + "\n"
@@ -486,6 +523,41 @@ def _proposal_field_changes(
                 "field": "bounds",
                 "before": before.get("bounds"),
                 "after": after.get("bounds"),
+            }
+        )
+    return changes
+
+
+def _proposal_group_changes(
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> list[dict[str, Any]]:
+    changes = []
+    for field in ("kind", "proposal_ids"):
+        before_value = before.get(field)
+        after_value = after.get(field)
+        if before_value == after_value:
+            continue
+        changes.append(
+            {
+                "field": field,
+                "before": before_value,
+                "after": after_value,
+            }
+        )
+
+    before_metrics = _flatten_numbers(_dict_value(before.get("metrics")))
+    after_metrics = _flatten_numbers(_dict_value(after.get("metrics")))
+    for path in sorted(set(before_metrics) | set(after_metrics)):
+        before_value = before_metrics.get(path)
+        after_value = after_metrics.get(path)
+        if before_value == after_value:
+            continue
+        changes.append(
+            {
+                "field": f"metrics.{path}",
+                "before": before_value,
+                "after": after_value,
             }
         )
     return changes

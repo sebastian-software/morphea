@@ -940,6 +940,9 @@ Top-level fields:
 - `shared_proposal_count`
 - `added_ids`
 - `removed_ids`
+- `shared_group_count`
+- `added_group_ids`
+- `removed_group_ids`
 - `summary_deltas`: count deltas across segment summary groups such as
   `downstream_status_counts`, `anchor_kind_counts`, and
   `downstream_decision_reason_counts`
@@ -947,6 +950,8 @@ Top-level fields:
 - `proposal_changes`: changed fields for shared proposal ids, including
   downstream status, rejection reason, anchor kind, reservation state,
   anchor-quality error, decision reason, and bounds
+- `proposal_group_changes`: changed group kind, proposal membership, and
+  numeric group metrics for shared proposal group ids
 
 `curve compare-segments --markdown comparison.md` writes a scan-friendly
 Markdown summary for comparing flat-color and future MLX proposal outputs or

@@ -50,6 +50,24 @@ class SnapshotComparisonTests(unittest.TestCase):
                         "anchor_reserved": True,
                     },
                 ],
+                proposal_groups=[
+                    {
+                        "id": "proposal-group-0000",
+                        "kind": "proposal_tile_grid",
+                        "proposal_ids": ["flat_color-0000", "flat_color-0001"],
+                        "metrics": {
+                            "row_count": 1.0,
+                            "column_count": 2.0,
+                            "grid_occupancy_ratio": 1.0,
+                        },
+                    },
+                    {
+                        "id": "proposal-group-removed",
+                        "kind": "proposal_tile_grid",
+                        "proposal_ids": ["flat_color-0001"],
+                        "metrics": {"tile_count": 1.0},
+                    },
+                ],
             ),
             _segment_manifest(
                 config={"geometry_gate": True},
@@ -85,6 +103,24 @@ class SnapshotComparisonTests(unittest.TestCase):
                         "anchor_reserved": True,
                     },
                 ],
+                proposal_groups=[
+                    {
+                        "id": "proposal-group-0000",
+                        "kind": "proposal_tile_grid",
+                        "proposal_ids": ["flat_color-0000", "flat_color-0002"],
+                        "metrics": {
+                            "row_count": 1.0,
+                            "column_count": 2.0,
+                            "grid_occupancy_ratio": 0.5,
+                        },
+                    },
+                    {
+                        "id": "proposal-group-added",
+                        "kind": "proposal_tile_grid",
+                        "proposal_ids": ["flat_color-0002"],
+                        "metrics": {"tile_count": 1.0},
+                    },
+                ],
             ),
             before="pending.json",
             after="gated.json",
@@ -93,6 +129,9 @@ class SnapshotComparisonTests(unittest.TestCase):
         self.assertEqual(comparison["shared_proposal_count"], 1)
         self.assertEqual(comparison["added_ids"], ["flat_color-0002"])
         self.assertEqual(comparison["removed_ids"], ["flat_color-0001"])
+        self.assertEqual(comparison["shared_group_count"], 1)
+        self.assertEqual(comparison["added_group_ids"], ["proposal-group-added"])
+        self.assertEqual(comparison["removed_group_ids"], ["proposal-group-removed"])
         self.assertIn(
             {
                 "group": "downstream_status_counts",
@@ -125,6 +164,23 @@ class SnapshotComparisonTests(unittest.TestCase):
         self.assertIn(
             {"key": "geometry_gate", "before": False, "after": True},
             comparison["config_deltas"],
+        )
+        group_changes = comparison["proposal_group_changes"][0]["changes"]
+        self.assertIn(
+            {
+                "field": "metrics.grid_occupancy_ratio",
+                "before": 1.0,
+                "after": 0.5,
+            },
+            group_changes,
+        )
+        self.assertIn(
+            {
+                "field": "proposal_ids",
+                "before": ["flat_color-0000", "flat_color-0001"],
+                "after": ["flat_color-0000", "flat_color-0002"],
+            },
+            group_changes,
         )
 
     def test_compare_segment_manifests_cli_writes_json_and_markdown(self):
@@ -164,6 +220,14 @@ class SnapshotComparisonTests(unittest.TestCase):
                                 "downstream_decision_reason": "geometry_gate_passed",
                             }
                         ],
+                        proposal_groups=[
+                            {
+                                "id": "proposal-group-0000",
+                                "kind": "proposal_tile_grid",
+                                "proposal_ids": ["flat_color-0000"],
+                                "metrics": {"tile_count": 1.0},
+                            }
+                        ],
                     )
                 ),
                 encoding="utf-8",
@@ -189,9 +253,14 @@ class SnapshotComparisonTests(unittest.TestCase):
                 )
 
             self.assertEqual(result["shared_proposal_count"], 1)
+            self.assertEqual(result["added_group_ids"], ["proposal-group-0000"])
             self.assertTrue(output.exists())
             self.assertIn(
                 "Curve Segment Manifest Comparison",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "Added groups: `proposal-group-0000`",
                 markdown.read_text(encoding="utf-8"),
             )
             cli_result = json.loads(
@@ -523,10 +592,12 @@ def _segment_manifest(
     config=None,
     summary=None,
     proposals=None,
+    proposal_groups=None,
 ):
     config = config or {}
     summary = summary or {}
     proposals = proposals or []
+    proposal_groups = proposal_groups or []
     return {
         "schema_version": 1,
         "input": "input.png",
@@ -534,6 +605,7 @@ def _segment_manifest(
         "backend": {"source": "flat_color", "status": "available"},
         "proposal_count": len(proposals),
         "summary": summary,
+        "proposal_groups": proposal_groups,
         "proposals": proposals,
     }
 
