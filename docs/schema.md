@@ -43,6 +43,11 @@ Anchor fields:
 - `metrics`
 - geometry payload, one of `circle`, `stroke`, or `quad`
 
+Anchor metrics always include `simple_shape_priority_bonus` and
+`semantic_anchor_score` so reviews and self-learning reports can audit why a
+simple editable primitive beat or lost to another candidate. Additional
+primitive-quality metrics are included when relevant.
+
 Anti-aliased neutral UI rings may be recovered from a composite grayscale mask
 when individual palette fragments are below per-color component thresholds. The
 resulting anchor is still emitted as a normal `circle` or `stroke_circle` with

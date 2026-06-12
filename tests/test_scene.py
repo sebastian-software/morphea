@@ -266,6 +266,8 @@ class SceneExportTests(unittest.TestCase):
         self.assertGreater(anchor["source_mask"]["bounds_area"], 0.0)
         self.assertEqual(anchor["provenance"]["source"], "primitive_anchor_detection")
         self.assertTrue(anchor["export_policy"]["editable"])
+        self.assertGreater(anchor["metrics"]["simple_shape_priority_bonus"], 0.0)
+        self.assertIn("semantic_anchor_score", anchor["metrics"])
         self.assertGreater(anchor["confidence"], 0.0)
         self.assertEqual(manifest["layers"][0]["name"], "filled_primitives")
         self.assertEqual(manifest["layers"][0]["anchor_indexes"], [0])

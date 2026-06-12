@@ -347,6 +347,9 @@ Implemented so far:
 - aggregate anchor-quality summaries expose mean/max quality error and
   per-metric counts/means/maxima for primitive fit metrics such as circle
   roundness, line smoothness, stroke-width variance, and quad/grid errors.
+- anchor manifests include `simple_shape_priority_bonus` and
+  `semantic_anchor_score`, making simple-form preference visible in reports,
+  reviews, and pseudo-label harvesting.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

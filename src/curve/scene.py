@@ -15,6 +15,8 @@ from curve.anchors import (
     parallel_spacing_error,
     perspective_grid_consistency_error,
     quality_metric_error,
+    semantic_anchor_score,
+    simple_shape_priority_bonus,
 )
 from curve.detection import detect_primitive_anchors
 from curve.masks import BinaryMask
@@ -301,7 +303,7 @@ def anchor_to_manifest_with_index(
         "raster_error": anchor.raster_error,
         "node_count": anchor.node_count,
         "parameter_count": anchor.parameter_count,
-        "metrics": dict(sorted(anchor.metrics.items())),
+        "metrics": _anchor_manifest_metrics(anchor),
     }
     if anchor.circle is not None:
         data["circle"] = {
@@ -328,6 +330,13 @@ def anchor_to_manifest_with_index(
             ]
         }
     return data
+
+
+def _anchor_manifest_metrics(anchor: AnchorCandidate) -> dict[str, float]:
+    metrics = dict(anchor.metrics)
+    metrics["simple_shape_priority_bonus"] = simple_shape_priority_bonus(anchor)
+    metrics["semantic_anchor_score"] = semantic_anchor_score(anchor)
+    return dict(sorted(metrics.items()))
 
 
 def scene_groups_to_manifest(
