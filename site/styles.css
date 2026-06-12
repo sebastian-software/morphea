@@ -208,94 +208,102 @@ h3 {
 
 .hero-visual {
   align-self: center;
-}
-
-.hero-visual svg,
-.primitive-board {
-  display: block;
-  height: auto;
   width: 100%;
 }
 
-.panel-fill {
-  fill: var(--white);
-  stroke: var(--ink);
-  stroke-width: 2;
+.hero-proof-panel {
+  background: var(--white);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  padding: clamp(16px, 2.4vw, 28px);
 }
 
-.raster-grid path {
-  fill: none;
-  stroke: var(--line);
-  stroke-width: 2;
+.hero-proof-header {
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  padding-bottom: 16px;
 }
 
-.gold-fill {
-  fill: var(--gold);
+.hero-proof-header .eyebrow {
+  margin-bottom: 8px;
 }
 
-.blue-stroke {
-  fill: none;
-  stroke: var(--aegean);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 12;
+.hero-proof-header h2 {
+  font-size: clamp(24px, 3vw, 34px);
+  margin: 0;
+  max-width: 520px;
 }
 
-.blue-stroke.thick {
-  stroke-width: 28;
-}
-
-.cutout-stroke {
-  fill: none;
-  stroke: var(--paper);
-  stroke-linecap: round;
-  stroke-width: 8;
-}
-
-.circle-outline {
-  fill: none;
-  stroke: var(--aegean);
-  stroke-width: 15;
-}
-
-.quad {
-  fill: color-mix(in srgb, var(--paper-deep) 82%, var(--white));
-  stroke: var(--white);
-  stroke-linejoin: round;
-  stroke-width: 7;
-}
-
-.q2,
-.q3 {
-  fill: color-mix(in srgb, var(--paper-deep) 70%, var(--gold));
-}
-
-.arrow,
-.arrow-head {
-  fill: var(--oxide);
-  stroke: var(--oxide);
-}
-
-.arrow {
-  fill: none;
-  stroke-linecap: round;
-  stroke-width: 4;
-}
-
-.diagram-label {
-  fill: var(--muted);
+.hero-proof-status {
+  border: 1px solid var(--oxide);
+  color: var(--oxide);
   font-family: Optima, Avenir, "Avenir Next", sans-serif;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+  padding: 6px 8px;
+}
+
+.hero-proof-cases {
+  display: grid;
+  gap: 14px;
+}
+
+.hero-proof-case {
+  background: color-mix(in srgb, var(--paper) 40%, var(--white));
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.hero-proof-case header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.hero-proof-case h3 {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 850;
+  margin: 0;
 }
 
-.pixel {
-  fill: color-mix(in srgb, var(--line) 74%, var(--gold));
+.hero-proof-case header span {
+  color: var(--muted);
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
-.p1,
-.p3 {
-  opacity: 0.64;
+.hero-proof-pair {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hero-proof-frame {
+  max-width: none;
+}
+
+.hero-proof-meta {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
+  font-size: 12px;
+  font-weight: 750;
+  gap: 6px 10px;
+  line-height: 1.25;
+  margin: 0;
 }
 
 .band,
@@ -448,11 +456,13 @@ h3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.demo-pair figure {
+.demo-pair figure,
+.hero-proof-pair figure {
   margin: 0;
 }
 
-.demo-pair figcaption {
+.demo-pair figcaption,
+.hero-proof-pair figcaption {
   color: var(--oxide);
   font-family: Optima, Avenir, "Avenir Next", sans-serif;
   font-size: 10px;

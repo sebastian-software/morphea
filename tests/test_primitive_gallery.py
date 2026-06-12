@@ -78,6 +78,42 @@ class PrimitiveGalleryTests(unittest.TestCase):
             self.assertIn("Primitive quality gallery: 1 passing cases", updated)
             self.assertIn("filled_square/input.png", updated)
 
+    def test_gallery_generator_refreshes_homepage_hero_markers(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            homepage = root / "site" / "index.html"
+            homepage.parent.mkdir(parents=True)
+            homepage.write_text(
+                "\n".join(
+                    [
+                        "<section>",
+                        "<!-- primitive-gallery-hero:start -->",
+                        "old hero",
+                        "<!-- primitive-gallery-hero:end -->",
+                        "<!-- primitive-gallery-teaser:start -->",
+                        "old teaser",
+                        "<!-- primitive-gallery-teaser:end -->",
+                        "</section>",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            write_primitive_gallery_site(
+                output=root / "site" / "assets" / "primitive-quality" / "report.json",
+                output_dir=root / "site" / "assets" / "primitive-quality" / "cases",
+                markdown=root / "site" / "assets" / "primitive-quality" / "report.md",
+                html_output=root / "site" / "primitive-quality" / "index.html",
+                homepage=homepage,
+                cases=("filled_square",),
+            )
+
+            updated = homepage.read_text(encoding="utf-8")
+            self.assertNotIn("old hero", updated)
+            self.assertIn("hero-proof-panel", updated)
+            self.assertIn("Bitmap and exported SVG, same canvas.", updated)
+            self.assertIn("filled_square/output.svg", updated)
+
     def test_primitive_gallery_cli_writes_static_site(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

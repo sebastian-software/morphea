@@ -18,8 +18,14 @@ DEFAULT_CASES_DIR = Path("site/assets/primitive-quality/cases")
 DEFAULT_MARKDOWN_PATH = Path("site/assets/primitive-quality/report.md")
 DEFAULT_HTML_PATH = Path("site/primitive-quality/index.html")
 DEFAULT_HOMEPAGE_PATH = Path("site/index.html")
+HERO_START = "<!-- primitive-gallery-hero:start -->"
+HERO_END = "<!-- primitive-gallery-hero:end -->"
 TEASER_START = "<!-- primitive-gallery-teaser:start -->"
 TEASER_END = "<!-- primitive-gallery-teaser:end -->"
+DEFAULT_HERO_CASE_IDS = (
+    "touching_circle_stroke_right",
+    "stroke_crossing_rectangle_horizontal",
+)
 DEFAULT_TEASER_CASE_IDS = (
     "filled_square",
     "filled_circle",
@@ -44,6 +50,7 @@ def write_primitive_gallery_site(
     homepage: str | Path | None = DEFAULT_HOMEPAGE_PATH,
     cases: Iterable[str] = (),
     filter_pattern: str | None = None,
+    hero_cases: Iterable[str] = DEFAULT_HERO_CASE_IDS,
     teaser_cases: Iterable[str] = DEFAULT_TEASER_CASE_IDS,
     clean: bool = True,
 ) -> dict[str, Any]:
@@ -71,6 +78,17 @@ def write_primitive_gallery_site(
     if homepage is not None:
         homepage_path = Path(homepage)
         if homepage_path.exists():
+            if _has_homepage_block(homepage_path, HERO_START, HERO_END):
+                _update_homepage_block(
+                    homepage_path,
+                    HERO_START,
+                    HERO_END,
+                    render_homepage_hero_html(
+                        report,
+                        homepage_path=homepage_path,
+                        hero_cases=tuple(hero_cases),
+                    ),
+                )
             _update_homepage_teaser(
                 homepage_path,
                 render_homepage_teaser_html(
@@ -209,6 +227,51 @@ def render_homepage_teaser_html(
         </div>"""
 
 
+def render_homepage_hero_html(
+    report: dict[str, Any],
+    *,
+    homepage_path: str | Path,
+    hero_cases: tuple[str, ...] = DEFAULT_HERO_CASE_IDS,
+) -> str:
+    homepage_path = Path(homepage_path)
+    selected = _select_passing_cases(report, hero_cases, limit=2)
+    cards = "\n".join(_render_hero_case(case, homepage_path) for case in selected)
+    return f"""          <div class="hero-proof-panel" aria-label="Generated primitive round-trip examples">
+            <div class="hero-proof-header">
+              <div>
+                <p class="eyebrow">Live quality artifacts</p>
+                <h2>Bitmap and exported SVG, same canvas.</h2>
+              </div>
+              <span class="hero-proof-status">PASS</span>
+            </div>
+            <div class="hero-proof-cases">
+{cards}
+            </div>
+          </div>"""
+
+
+def _render_hero_case(case: dict[str, Any], homepage_path: Path) -> str:
+    case_id = str(case.get("id"))
+    title = _short_title(case_id)
+    kind = _summary_kind(case)
+    metrics = case.get("metrics", {})
+    return f"""              <article class="hero-proof-case">
+                <header>
+                  <h3>{_esc(title)}</h3>
+                  <span>{_esc(kind)}</span>
+                </header>
+                <div class="hero-proof-pair">
+                  {_render_media_figure("Bitmap", _artifact_uri(case, "input", homepage_path), case_id + " bitmap", frame_class="demo-frame hero-proof-frame")}
+                  {_render_media_figure("SVG", _artifact_uri(case, "output_svg", homepage_path), case_id + " SVG", frame_class="demo-frame hero-proof-frame")}
+                </div>
+                <p class="hero-proof-meta">
+                  <span>{_anchor_count_text(case)}</span>
+                  <span>L1 {_metric_text(metrics, "raster_l1_error")}</span>
+                  <span>edge {_metric_text(metrics, "raster_edge_error")}</span>
+                </p>
+              </article>"""
+
+
 def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
     case_id = str(case.get("id"))
     family = str(case.get("family"))
@@ -271,27 +334,70 @@ def _render_teaser_card(case: dict[str, Any], homepage_path: Path) -> str:
           </article>"""
 
 
-def _render_media_figure(label: str, src: str, alt: str) -> str:
+def _render_media_figure(
+    label: str,
+    src: str,
+    alt: str,
+    *,
+    frame_class: str = "demo-frame",
+) -> str:
     return f"""<figure>
                 <figcaption>{_esc(label)}</figcaption>
-                <span class="demo-frame"><img src="{_esc(src)}" width="64" height="64" alt="{_esc(alt)}"></span>
+                <span class="{_esc(frame_class)}"><img src="{_esc(src)}" width="64" height="64" alt="{_esc(alt)}"></span>
               </figure>"""
 
 
 def _update_homepage_teaser(homepage: Path, replacement: str) -> None:
+    _update_homepage_block(homepage, TEASER_START, TEASER_END, replacement)
+
+
+def _has_homepage_block(homepage: Path, start_marker: str, end_marker: str) -> bool:
     source = homepage.read_text(encoding="utf-8")
-    start = source.find(TEASER_START)
-    end = source.find(TEASER_END)
+    start = source.find(start_marker)
+    end = source.find(end_marker)
+    return start >= 0 and end > start
+
+
+def _update_homepage_block(
+    homepage: Path,
+    start_marker: str,
+    end_marker: str,
+    replacement: str,
+) -> None:
+    source = homepage.read_text(encoding="utf-8")
+    start = source.find(start_marker)
+    end = source.find(end_marker)
     if start < 0 or end < 0 or end <= start:
-        raise ValueError(f"{homepage} is missing primitive gallery teaser markers")
+        raise ValueError(f"{homepage} is missing primitive gallery markers")
     updated = (
-        source[: start + len(TEASER_START)]
+        source[: start + len(start_marker)]
         + "\n"
         + replacement
         + "\n"
         + source[end:]
     )
     homepage.write_text(updated, encoding="utf-8")
+
+
+def _select_passing_cases(
+    report: dict[str, Any],
+    preferred_ids: tuple[str, ...],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    cases = [case for case in report.get("cases", []) if case.get("ok")]
+    cases_by_id = {str(case.get("id")): case for case in cases}
+    selected: list[dict[str, Any]] = [
+        cases_by_id[case_id] for case_id in preferred_ids if case_id in cases_by_id
+    ]
+    selected_ids = {str(case.get("id")) for case in selected}
+    for case in cases:
+        if len(selected) >= limit:
+            break
+        if str(case.get("id")) not in selected_ids:
+            selected.append(case)
+            selected_ids.add(str(case.get("id")))
+    return selected[:limit]
 
 
 def _artifact_uri(case: dict[str, Any], key: str, html_path: Path) -> str:

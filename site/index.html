@@ -39,37 +39,62 @@
           </div>
         </div>
 
-        <div class="hero-visual" aria-label="Bitmap-to-vector reconstruction diagram">
-          <svg viewBox="0 0 640 460" role="img" aria-labelledby="hero-title hero-desc">
-            <title id="hero-title">Raster pixels reconstructed as editable vector form</title>
-            <desc id="hero-desc">
-              Pixel blocks and noisy strokes resolve into a clean circle, curve, and perspective grid.
-            </desc>
-            <rect class="panel-fill" x="22" y="22" width="596" height="416" rx="6"></rect>
-            <g class="raster-grid">
-              <path d="M82 96h188M82 132h188M82 168h188M82 204h188M82 240h188"></path>
-              <path d="M82 96v144M119 96v144M156 96v144M193 96v144M230 96v144M270 96v144"></path>
-            </g>
-            <rect class="pixel p1" x="119" y="132" width="37" height="36"></rect>
-            <rect class="pixel p2" x="156" y="96" width="37" height="36"></rect>
-            <rect class="pixel p3" x="193" y="132" width="37" height="36"></rect>
-            <circle class="gold-fill" cx="156" cy="154" r="38"></circle>
-            <path class="blue-stroke thick" d="M106 252c48-26 99-22 148 10"></path>
-            <path class="cutout-stroke" d="M114 252c39-15 78-13 118 5"></path>
-            <path class="arrow" d="M314 168h64"></path>
-            <path class="arrow-head" d="M378 168l-13-9v18z"></path>
-            <g class="vector-scene">
-              <circle class="circle-outline" cx="474" cy="132" r="45"></circle>
-              <path class="blue-stroke" d="M430 230c34-28 87-27 124 1"></path>
-              <path class="cutout-stroke" d="M441 228c28-14 64-13 91 2"></path>
-              <path class="quad q1" d="M402 296h70l16 42h-92z"></path>
-              <path class="quad q2" d="M475 296h72l31 42h-89z"></path>
-              <path class="quad q3" d="M396 342h94l13 52H379z"></path>
-              <path class="quad q4" d="M493 342h88l44 52H507z"></path>
-            </g>
-            <text class="diagram-label" x="82" y="68">bitmap evidence</text>
-            <text class="diagram-label" x="402" y="68">editable SVG</text>
-          </svg>
+        <div class="hero-visual" aria-label="Generated primitive round-trip evidence">
+<!-- primitive-gallery-hero:start -->
+          <div class="hero-proof-panel" aria-label="Generated primitive round-trip examples">
+            <div class="hero-proof-header">
+              <div>
+                <p class="eyebrow">Live quality artifacts</p>
+                <h2>Bitmap and exported SVG, same canvas.</h2>
+              </div>
+              <span class="hero-proof-status">PASS</span>
+            </div>
+            <div class="hero-proof-cases">
+              <article class="hero-proof-case">
+                <header>
+                  <h3>Touching circle and stroke</h3>
+                  <span>primitive_contact_pair</span>
+                </header>
+                <div class="hero-proof-pair">
+                  <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame hero-proof-frame"><img src="assets/primitive-quality/cases/touching_circle_stroke_right/input.png" width="64" height="64" alt="touching_circle_stroke_right bitmap"></span>
+              </figure>
+                  <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame hero-proof-frame"><img src="assets/primitive-quality/cases/touching_circle_stroke_right/output.svg" width="64" height="64" alt="touching_circle_stroke_right SVG"></span>
+              </figure>
+                </div>
+                <p class="hero-proof-meta">
+                  <span>2 anchors</span>
+                  <span>L1 0.000000</span>
+                  <span>edge 0.000000</span>
+                </p>
+              </article>
+              <article class="hero-proof-case">
+                <header>
+                  <h3>Stroke crossing rectangle</h3>
+                  <span>primitive_contact_pair</span>
+                </header>
+                <div class="hero-proof-pair">
+                  <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame hero-proof-frame"><img src="assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/input.png" width="64" height="64" alt="stroke_crossing_rectangle_horizontal bitmap"></span>
+              </figure>
+                  <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame hero-proof-frame"><img src="assets/primitive-quality/cases/stroke_crossing_rectangle_horizontal/output.svg" width="64" height="64" alt="stroke_crossing_rectangle_horizontal SVG"></span>
+              </figure>
+                </div>
+                <p class="hero-proof-meta">
+                  <span>2 anchors</span>
+                  <span>L1 0.000000</span>
+                  <span>edge 0.000000</span>
+                </p>
+              </article>
+            </div>
+          </div>
+<!-- primitive-gallery-hero:end -->
         </div>
       </section>
 
