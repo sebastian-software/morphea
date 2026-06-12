@@ -17,6 +17,11 @@ from morphea.images import scene_from_flat_color_image
 from morphea.refinement import RefinementConfig, refine_manifest
 from morphea.rendering import raster_fidelity_metrics, render_manifest_image
 from morphea.scene import SvgStyle
+from morphea.svg_raster import (
+    rasterize_svg,
+    svg_raster_capability,
+    svg_raster_metrics,
+)
 
 
 Geometry = dict[str, Any]
@@ -31,6 +36,17 @@ CURVE_ANCHOR_KINDS = (
     "stroke_ellipse",
     "cubic_path",
 )
+
+# The exported SVG is rasterized with the builtin supersampling backend and
+# compared against the source. SVG strokes center on the centerline and
+# polygons cover the mathematical area, while the PIL-drawn sources and
+# previews use inclusive pixel conventions, so derived defaults allow a small
+# documented offset on top of each family's manifest-preview thresholds.
+# Families can pin stricter explicit values.
+SVG_L1_TOLERANCE_OFFSET = 0.03
+SVG_EDGE_TOLERANCE_OFFSET = 0.035
+SVG_ALPHA_TOLERANCE_OFFSET = 0.02
+SVG_VS_PREVIEW_TOLERANCE_OFFSET = 0.02
 
 
 @dataclass(frozen=True)
@@ -69,6 +85,10 @@ class PrimitiveSpec:
     max_raster_l1_error: float = 0.02
     max_raster_edge_error: float = 0.03
     max_raster_alpha_error: float = 0.001
+    max_svg_raster_l1_error: float | None = None
+    max_svg_raster_edge_error: float | None = None
+    max_svg_alpha_error: float | None = None
+    max_svg_vs_preview_l1_error: float | None = None
     min_bbox_iou: float = 0.9
     max_anchor_count: int = 1
 
@@ -1498,6 +1518,7 @@ def check_primitive_quality(
             kind: anchor_kind_counts.get(kind, 0)
             for kind in CURVE_ANCHOR_KINDS
         },
+        "svg_raster_capability": svg_raster_capability(),
         "selection": {
             "cases": list(requested_cases),
             "filter": filter_pattern,
@@ -1561,12 +1582,13 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-        "| Case | OK | Actual | L1 | Edge | IoU | Failures |",
-        "| --- | ---: | --- | ---: | ---: | ---: | --- |",
+        "| Case | OK | Actual | L1 | Edge | SVG L1 | SVG Edge | IoU | Failures |",
+        "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |",
         ]
     )
     for case in report.get("cases", []):
         metrics = case.get("metrics", {})
+        svg_metrics = case.get("svg_metrics") or {}
         geometry = case.get("geometry", {})
         failures = case.get("failures", [])
         failure_categories = case.get("failure_categories", [])
@@ -1580,6 +1602,8 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
             f"`{case.get('actual_kind', 'n/a')}` | "
             f"{metrics.get('raster_l1_error', 'n/a')} | "
             f"{metrics.get('raster_edge_error', 'n/a')} | "
+            f"{svg_metrics.get('svg_raster_l1_error', 'n/a')} | "
+            f"{svg_metrics.get('svg_raster_edge_error', 'n/a')} | "
             f"{geometry.get('bbox_iou', 'n/a')} | "
             f"{failure_text} |"
         )
@@ -1669,10 +1693,24 @@ def _run_case(
 
     svg_path = case_root / "output.svg"
     debug_svg_path = case_root / "debug.svg"
+    svg_render_path = case_root / "svg-render.png"
     negative_mask_svg_path = case_root / "negative-mask.svg"
     manifest_path = case_root / "manifest.json"
     preview_path = case_root / "preview.png"
     overlay_svg = scene.to_svg(SvgStyle(cutout_strategy="overlay_stroke"))
+    svg_metrics = svg_raster_metrics(
+        source=source,
+        svg_text=overlay_svg,
+        preview=preview,
+        background=spec.background,
+    )
+    manifest["metrics"].update(
+        {
+            key: value
+            for key, value in svg_metrics.items()
+            if key != "svg_raster_backend"
+        }
+    )
     if output_root is not None:
         svg_path.write_text(overlay_svg, encoding="utf-8")
         debug_svg_path.write_text(scene.to_debug_svg(), encoding="utf-8")
@@ -1681,8 +1719,9 @@ def _run_case(
             encoding="utf-8",
         )
         preview.save(preview_path)
+        rasterize_svg(overlay_svg, background=spec.background).save(svg_render_path)
 
-    case = _evaluate_case(spec, manifest, metrics)
+    case = _evaluate_case(spec, manifest, metrics, svg_metrics=svg_metrics)
     if spec.compare_cutout_exports:
         export_result = _compare_cutout_exports(
             spec=spec,
@@ -1741,6 +1780,7 @@ def _run_case(
             "debug_svg": str(debug_svg_path),
             "manifest": str(manifest_path),
             "preview": str(preview_path),
+            "svg_render": str(svg_render_path),
         }
         if spec.compare_cutout_exports:
             case["artifacts"]["negative_mask_svg"] = str(negative_mask_svg_path)
@@ -1893,6 +1933,8 @@ def _evaluate_case(
     spec: PrimitiveSpec,
     manifest: dict[str, Any],
     metrics: dict[str, Any],
+    *,
+    svg_metrics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     anchors = list(manifest.get("anchors", []))
     failure_details: list[dict[str, str]] = []
@@ -1943,6 +1985,8 @@ def _evaluate_case(
                 f"{metrics.get('raster_alpha_error')} exceeds {spec.max_raster_alpha_error}",
             )
         )
+    if svg_metrics is not None:
+        failure_details.extend(_svg_gate_failures(spec, svg_metrics))
 
     match_result = _match_expected_primitives(spec, anchors)
     failure_details.extend(match_result["failure_details"])
@@ -1958,11 +2002,63 @@ def _evaluate_case(
         bbox_iou=bbox_iou,
         anchor_count=len(anchors),
         anchor_kind_counts=_anchor_kind_counts(anchors),
+        svg_metrics=svg_metrics,
         matches=match_result["matches"],
         unmatched_expected=match_result["unmatched_expected"],
         unexpected_actual=match_result["unexpected_actual"],
         group_matches=group_result["matches"],
     )
+
+
+def effective_svg_thresholds(spec: PrimitiveSpec) -> dict[str, float]:
+    """Resolve the SVG raster gate thresholds for one fixture spec."""
+
+    return {
+        "svg_raster_l1_error": (
+            spec.max_svg_raster_l1_error
+            if spec.max_svg_raster_l1_error is not None
+            else spec.max_raster_l1_error + SVG_L1_TOLERANCE_OFFSET
+        ),
+        "svg_raster_edge_error": (
+            spec.max_svg_raster_edge_error
+            if spec.max_svg_raster_edge_error is not None
+            else spec.max_raster_edge_error + SVG_EDGE_TOLERANCE_OFFSET
+        ),
+        "svg_alpha_error": (
+            spec.max_svg_alpha_error
+            if spec.max_svg_alpha_error is not None
+            else spec.max_raster_alpha_error + SVG_ALPHA_TOLERANCE_OFFSET
+        ),
+        "svg_vs_preview_l1_error": (
+            spec.max_svg_vs_preview_l1_error
+            if spec.max_svg_vs_preview_l1_error is not None
+            else spec.max_raster_l1_error + SVG_VS_PREVIEW_TOLERANCE_OFFSET
+        ),
+    }
+
+
+def _svg_gate_failures(
+    spec: PrimitiveSpec,
+    svg_metrics: dict[str, Any],
+) -> list[dict[str, str]]:
+    failures: list[dict[str, str]] = []
+    if not bool(svg_metrics.get("svg_render_size_match", False)):
+        failures.append(
+            _failure("svg_visual_drift", "exported SVG render size does not match source")
+        )
+    thresholds = effective_svg_thresholds(spec)
+    for key, threshold in thresholds.items():
+        if key not in svg_metrics:
+            continue
+        value = float(svg_metrics.get(key, 1.0))
+        if value > threshold:
+            failures.append(
+                _failure(
+                    "svg_visual_drift",
+                    f"{key} {value} exceeds {round(threshold, 6)}",
+                )
+            )
+    return failures
 
 
 def _anchor_kind_counts(anchors: list[dict[str, Any]]) -> dict[str, int]:
@@ -1982,6 +2078,7 @@ def _case_result(
     bbox_iou: float,
     anchor_count: int,
     anchor_kind_counts: dict[str, int],
+    svg_metrics: dict[str, Any] | None,
     matches: list[dict[str, Any]],
     unmatched_expected: list[dict[str, Any]],
     unexpected_actual: list[dict[str, Any]],
@@ -1999,6 +2096,11 @@ def _case_result(
         "anchor_count": anchor_count,
         "anchor_kind_counts": anchor_kind_counts,
         "metrics": metrics,
+        "svg_metrics": dict(svg_metrics) if svg_metrics is not None else None,
+        "svg_thresholds": {
+            key: round(value, 6)
+            for key, value in effective_svg_thresholds(spec).items()
+        },
         "geometry": {
             "expected_bounds": _rounded_bounds(_expected_visual_bounds(spec)),
             "actual_bounds": (

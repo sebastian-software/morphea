@@ -83,6 +83,49 @@ class PrimitiveQualityTests(unittest.TestCase):
             {"circle": 1, "rect": 1},
         )
 
+    def test_primitive_quality_report_includes_svg_raster_gate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=(
+                    "adjacent_different_color_rects_horizontal",
+                    "filled_square",
+                ),
+            )
+
+            self.assertTrue(report["ok"])
+            self.assertEqual(
+                report["svg_raster_capability"]["backend"],
+                "builtin",
+            )
+            for case in report["cases"]:
+                svg_metrics = case["svg_metrics"]
+                self.assertEqual(svg_metrics["svg_raster_backend"], "builtin")
+                self.assertTrue(svg_metrics["svg_render_size_match"])
+                thresholds = case["svg_thresholds"]
+                self.assertLessEqual(
+                    svg_metrics["svg_raster_l1_error"],
+                    thresholds["svg_raster_l1_error"],
+                )
+                self.assertLessEqual(
+                    svg_metrics["svg_raster_edge_error"],
+                    thresholds["svg_raster_edge_error"],
+                )
+                self.assertLessEqual(
+                    svg_metrics["svg_vs_preview_l1_error"],
+                    thresholds["svg_vs_preview_l1_error"],
+                )
+                case_dir = Path(temp_dir) / case["id"]
+                self.assertTrue((case_dir / "svg-render.png").exists())
+            # The adjacent rect contact case renders the actual exported SVG
+            # with zero divergence; a regression that reopens the gap fails.
+            adjacent = next(
+                case
+                for case in report["cases"]
+                if case["id"] == "adjacent_different_color_rects_horizontal"
+            )
+            self.assertEqual(adjacent["svg_metrics"]["svg_raster_l1_error"], 0.0)
+
     def test_primitive_quality_harness_filters_cases(self):
         report = check_primitive_quality(cases=("filled_square",))
 

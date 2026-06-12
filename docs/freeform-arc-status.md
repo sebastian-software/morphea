@@ -41,10 +41,17 @@ ambitions. See `freeform-arc-quality-roadmap.md` for the plan.
 
 - `render_manifest_image` draws arcs and stroke paths as straight polylines
   between centerline points. A detected arc therefore renders as two chords.
-- All primitive fixtures compare the manifest-rendered preview with the
-  source. The exported SVG text itself is only checked structurally (cut-out
-  export comparison); it is never rasterized. The adjacent-rect gap bug showed
-  this is not enough.
+- Since FQ1 every fixture also rasterizes the actual exported SVG through the
+  builtin supersampling backend in `svg_raster.py` and gates
+  `svg_raster_l1_error`, `svg_raster_edge_error`, `svg_alpha_error`, and
+  `svg_vs_preview_l1_error` per family. The backend handles the exported
+  subset including `A`/`Q`/`C` path commands and the negative cut-out mask,
+  and is cross-checked against `rsvg-convert` when that binary is installed.
+- Known systematic offsets the derived SVG thresholds account for: SVG
+  polygons cover the mathematical area while PIL sources fill inclusive
+  pixels (quads measure up to 0.03 L1), and SVG centers ring strokes on the
+  radius while the manifest preview paints them inward (ring
+  `svg_vs_preview_l1_error` up to 0.16 with the SVG closer to the source).
 
 ## Fixtures and Gallery
 

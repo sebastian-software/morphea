@@ -299,6 +299,7 @@ def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
     variant = str(case.get("variant"))
     kind = str(case.get("actual_kind") or "n/a")
     metrics = case.get("metrics", {})
+    svg_metrics = case.get("svg_metrics") or {}
     geometry = case.get("geometry", {})
     group_matches = case.get("group_matches", [])
     contract_tokens = _contract_tokens(case)
@@ -331,6 +332,8 @@ def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
           <div><dt>Nodes</dt><dd>{_node_count(case)}</dd></div>
           <div><dt>L1</dt><dd>{_metric_text(metrics, "raster_l1_error")}</dd></div>
           <div><dt>Edge</dt><dd>{_metric_text(metrics, "raster_edge_error")}</dd></div>
+          <div><dt>SVG L1</dt><dd>{_metric_text(svg_metrics, "svg_raster_l1_error")}</dd></div>
+          <div><dt>SVG Edge</dt><dd>{_metric_text(svg_metrics, "svg_raster_edge_error")}</dd></div>
           <div><dt>BBox IoU</dt><dd>{_metric_text(geometry, "bbox_iou")}</dd></div>
         </dl>
         <div class="badges">{_badge_html(case)}</div>
