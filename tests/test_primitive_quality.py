@@ -635,6 +635,8 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "corner_star": 3,
                 "corner_arrow": 3,
                 "corner_notch": 3,
+                "cutout_curve_s": 3,
+                "cutout_curve_wave": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

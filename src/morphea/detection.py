@@ -2204,15 +2204,18 @@ def _arc_endpoints(component: MaskComponent) -> tuple[Point, Point]:
 
 
 def _point_line_distance(point: Point, start: Point, end: Point) -> float:
+    return abs(_signed_point_line_distance(point, start, end))
+
+
+def _signed_point_line_distance(point: Point, start: Point, end: Point) -> float:
     dx = end.x - start.x
     dy = end.y - start.y
     denominator = hypot(dx, dy)
     if denominator == 0:
         return point.distance_to(start)
     return (
-        abs(dy * point.x - dx * point.y + end.x * start.y - end.y * start.x)
-        / denominator
-    )
+        dy * point.x - dx * point.y + end.x * start.y - end.y * start.x
+    ) / denominator
 
 
 def _principal_axis(
@@ -2385,8 +2388,19 @@ def _has_compact_fill_defect(component: MaskComponent, inside) -> bool:
         ys = [y for _, y in region]
         region_w = max(xs) - min(xs) + 1
         region_h = max(ys) - min(ys) + 1
-        extent = max(region_w, region_h)
-        if len(region) / extent <= 2.5:
+        # Thickness via perimeter (a thin band's perimeter is roughly twice
+        # its length): the box extent underestimates the length of slits
+        # that wind diagonally, misclassifying an S-shaped cut as chunky.
+        region_set = set(region)
+        perimeter = sum(
+            1
+            for x, y in region
+            if (x - 1, y) not in region_set
+            or (x + 1, y) not in region_set
+            or (x, y - 1) not in region_set
+            or (x, y + 1) not in region_set
+        )
+        if 2 * len(region) / max(perimeter, 1) <= 3.0:
             continue
         rectangular = len(region) / (region_w * region_h) >= 0.85
         touches_edge = (
@@ -2802,6 +2816,17 @@ def _freeform_cutout_candidate(
 
     start = samples[0]
     end = samples[-1]
+    # A slit with an inflection (S or wave) bends to both sides of its
+    # chord; one circular arc cannot follow the sign change and a single
+    # midpoint control sags to one side, so the centerline keeps enough
+    # points to trace each bend.
+    deviation_limit = max(1.0, stroke_width * 0.6)
+    signed = [
+        _signed_point_line_distance(point, start, end) for point in samples
+    ]
+    if max(signed) >= deviation_limit and -min(signed) >= deviation_limit:
+        centerline = _downsampled_control_points(samples, maximum=7)
+        return _cutout_centerline_candidate(centerline, stroke_width, color)
     control = max(
         samples,
         key=lambda point: _point_line_distance(point, start, end),

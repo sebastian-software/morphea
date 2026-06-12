@@ -1376,6 +1376,29 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _s_cutout_spec(case_id, family, variant, host, controls, width)
+        for case_id, family, variant, host, controls, width in (
+            ("cutout_curve_s", "cutout_curve_s", "base",
+             ("rect", (8, 14, 56, 50)),
+             ((12, 22), (28, 14), (36, 50), (52, 42)), 2),
+            ("cutout_curve_s_steep", "cutout_curve_s", "steep",
+             ("rect", (8, 12, 56, 52)),
+             ((12, 20), (30, 8), (34, 56), (52, 44)), 2),
+            ("cutout_curve_s_flat", "cutout_curve_s", "flat",
+             ("rect", (8, 16, 56, 48)),
+             ((12, 26), (28, 20), (36, 44), (52, 38)), 2),
+            ("cutout_curve_wave", "cutout_curve_wave", "base",
+             ("rect", (6, 14, 58, 50)),
+             ((10, 32), (20, 16), (32, 48), (44, 16), (54, 32)), 2),
+            ("cutout_curve_wave_low", "cutout_curve_wave", "low",
+             ("rect", (6, 16, 58, 52)),
+             ((10, 36), (20, 22), (32, 50), (44, 22), (54, 36)), 2),
+            ("cutout_curve_wave_circle", "cutout_curve_wave", "circle",
+             ("circle", (10, 10, 54, 54)),
+             ((14, 36), (24, 22), (34, 46), (46, 26), (50, 32)), 2),
+        )
+    )
+    specs.extend(
         _composition_spec(
             case_id,
             "group_parallel_strokes",
@@ -2689,6 +2712,74 @@ def _curved_cutout_spec(
         # reflect the measured suite (<= 0.007 plain, <= 0.061 on rings).
         max_raster_l1_error=0.08 if is_ring else 0.02,
         max_raster_edge_error=0.08 if is_ring else 0.035,
+        min_bbox_iou=0.78,
+    )
+
+
+def _s_cutout_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    host: CutoutHost,
+    controls: CurveControls,
+    width: int,
+) -> PrimitiveSpec:
+    """A slit with an inflection (S or wave) cut out of a filled host.
+
+    A circular arc cannot follow the sign change and a three-point
+    centerline sags to one side, so these pin the multi-point smooth
+    cut-out centerline.
+    """
+
+    host_kind = host[0]
+    if host_kind == "rect":
+        host_primitive = _rect_primitive("host", host[1])
+    else:
+        host_primitive = _circle_primitive("host", host[1])
+
+    samples = _bezier_samples(controls, steps=32)
+    cutout_primitive = ExpectedPrimitive(
+        id="cutout",
+        expected_kinds=("stroke_path",),
+        geometry_type="stroke_path",
+        geometry={
+            "curve_samples": samples,
+            "start": samples[0],
+            "end": samples[-1],
+            "width": float(width),
+            "width_tolerance": 1.5,
+            "cap_style": "round",
+            "max_control_points": CURVE_MAX_CONTROL_POINTS,
+            "is_cutout": True,
+            "draw": ("smooth_curve", controls, width, "#ffffff"),
+        },
+        color="#ffffff",
+        color_tolerance=12.0,
+        coordinate_tolerance=3.0,
+        min_bbox_iou=0.55,
+    )
+
+    primitives = (host_primitive, cutout_primitive)
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=host_primitive.expected_kinds,
+        geometry_type=host_primitive.geometry_type,
+        geometry=host_primitive.geometry,
+        color=host_primitive.color,
+        expected_primitives=primitives,
+        compare_cutout_exports=True,
+        draw=lambda draw, primitives=primitives: _draw_expected_primitives(
+            draw,
+            primitives,
+        ),
+        max_anchor_count=len(primitives),
+        coordinate_tolerance=2.0,
+        # A seven-point centerline through 1.5 wave periods measures 0.021;
+        # the budget reflects that honest ceiling for inflected slits.
+        max_raster_l1_error=0.025,
+        max_raster_edge_error=0.035,
         min_bbox_iou=0.78,
     )
 

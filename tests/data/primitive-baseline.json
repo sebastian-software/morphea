@@ -1,5 +1,5 @@
 {
-  "case_count": 318,
+  "case_count": 324,
   "cases": {
     "adjacent_different_color_rects_horizontal": {
       "anchor_count": 2,
@@ -1915,6 +1915,90 @@
       "ok": true,
       "svg_edge": 0.068336,
       "svg_l1": 0.064796
+    },
+    "cutout_curve_s": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "quad": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.004652,
+      "kind": "quad",
+      "l1": 0.003906,
+      "ok": true,
+      "svg_edge": 0.022414,
+      "svg_l1": 0.020219
+    },
+    "cutout_curve_s_flat": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "quad": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.00296,
+      "kind": "quad",
+      "l1": 0.00293,
+      "ok": true,
+      "svg_edge": 0.021738,
+      "svg_l1": 0.020056
+    },
+    "cutout_curve_s_steep": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "quad": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.005075,
+      "kind": "quad",
+      "l1": 0.004102,
+      "ok": true,
+      "svg_edge": 0.023858,
+      "svg_l1": 0.021802
+    },
+    "cutout_curve_wave": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "quad": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.018184,
+      "kind": "quad",
+      "l1": 0.020508,
+      "ok": true,
+      "svg_edge": 0.031603,
+      "svg_l1": 0.035952
+    },
+    "cutout_curve_wave_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.012898,
+      "kind": "circle",
+      "l1": 0.015234,
+      "ok": true,
+      "svg_edge": 0.033443,
+      "svg_l1": 0.034924
+    },
+    "cutout_curve_wave_low": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "quad": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.013744,
+      "kind": "quad",
+      "l1": 0.016992,
+      "ok": true,
+      "svg_edge": 0.030268,
+      "svg_l1": 0.031911
     },
     "cutout_diagonal_gap_down": {
       "anchor_count": 2,
