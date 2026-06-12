@@ -325,7 +325,8 @@ Implemented so far:
   attributed to preprocessing, palette, segmentation, fitting, cleanup,
   scoring, export, runtime, or unknown sources.
 - report summaries for scene groups, including same-color fragment groups
-- report summaries include same-color merge actions when present.
+- report summaries include same-color merge actions and decision reasons when
+  present.
 - `curve eval` JSON/Markdown summaries over run directories
 - scene-level `metrics` in manifests
 - `editability_score`
