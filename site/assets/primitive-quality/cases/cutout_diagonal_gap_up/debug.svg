@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="rect">
+    <rect x="8" y="14" width="48" height="36" rx="0" ry="0" fill="#003366" />
+    <rect x="8" y="14" width="48" height="36" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="8" y="12" font-size="4" fill="#ff00ff">anchor-0000:rect:0.9754</text>
+  </g>
+  <g id="anchor-0001" data-kind="stroke_polyline">
+    <path d="M 38 24 L 22 40" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="21.5" y="23.5" width="17" height="17" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="21.5" y="21.5" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:1.0</text>
+  </g>
+</svg>

@@ -51,6 +51,11 @@ from morphea.profiling import (
     profile_vectorize,
     render_curated_profile_markdown,
 )
+from morphea.primitive_gallery import (
+    render_full_gallery_html,
+    render_homepage_teaser_html,
+    write_primitive_gallery_site,
+)
 from morphea.comparison import (
     compare_git_snapshots,
     compare_segment_manifests,
@@ -241,6 +246,9 @@ __all__ = [
     "render_segment_manifest_comparison_markdown",
     "profile_curated_suite",
     "profile_vectorize",
+    "render_full_gallery_html",
+    "render_homepage_teaser_html",
+    "write_primitive_gallery_site",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
     "scene_layers_to_manifest",

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="quad">
+    <polygon points="12,24 52,24 44,54 20,54" fill="#003366" />
+    <rect x="12" y="24" width="40" height="30" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="12" y="22" font-size="4" fill="#ff00ff">anchor-0000:quad:0.981992</text>
+  </g>
+</svg>

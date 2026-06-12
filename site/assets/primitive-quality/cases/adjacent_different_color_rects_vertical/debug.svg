@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="rect">
+    <rect x="18" y="32" width="24" height="24" rx="0" ry="0" fill="#003366" />
+    <rect x="18" y="32" width="24" height="24" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="18" y="30" font-size="4" fill="#ff00ff">anchor-0000:rect:1.0</text>
+  </g>
+  <g id="anchor-0001" data-kind="rect">
+    <rect x="18" y="8" width="24" height="23" rx="0" ry="0" fill="#dd2222" />
+    <rect x="18" y="8" width="24" height="23" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="18" y="6" font-size="4" fill="#ff00ff">anchor-0001:rect:0.997872</text>
+  </g>
+</svg>

@@ -1,0 +1,259 @@
+{
+  "anchor_count": 2,
+  "anchors": [
+    {
+      "circle": {
+        "cx": 21.0,
+        "cy": 21.0,
+        "r": 11.632632833397421
+      },
+      "color": "#003366",
+      "confidence": 0.796422,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:stroke_circle:0.796422",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "stroke_circle",
+      "layer": "strokes",
+      "metrics": {
+        "circle_fit_residual_error": 0.12045222972004316,
+        "circle_roundness_error": 0.12603814165869914,
+        "cutout_anchor_error": 0.0,
+        "line_smoothness_error": 0.0,
+        "semantic_anchor_score": 0.13041884913163104,
+        "simple_shape_priority_bonus": 0.35,
+        "stroke_width_variance": 0.0
+      },
+      "node_count": 1,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.17892847775288873,
+      "reserved": {
+        "bounds": [
+          9.367367166602579,
+          9.367367166602579,
+          32.63263283339742,
+          32.63263283339742
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          9.367367166602579,
+          9.367367166602579,
+          32.63263283339742,
+          32.63263283339742
+        ],
+        "bounds_area": 541.272587,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      },
+      "stroke": {
+        "cap_style": "round",
+        "centerline": [],
+        "is_cutout": false,
+        "join_style": "round",
+        "width_samples": [
+          4.567550063202635
+        ]
+      }
+    },
+    {
+      "circle": {
+        "cx": 51.0,
+        "cy": 51.0,
+        "r": 5.14087263298475
+      },
+      "color": "#003366",
+      "confidence": 0.945753,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0001:circle:0.945753",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0001",
+      "kind": "circle",
+      "layer": "filled_primitives",
+      "metrics": {
+        "circle_fit_residual_error": 0.027647015179434683,
+        "circle_roundness_error": 0.03139556165207744,
+        "semantic_anchor_score": -0.19761424402780706,
+        "simple_shape_priority_bonus": 0.35
+      },
+      "node_count": 1,
+      "parameter_count": 3,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.0483431791406808,
+      "reserved": {
+        "bounds": [
+          45.85912736701525,
+          45.85912736701525,
+          56.14087263298475,
+          56.14087263298475
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          45.85912736701525,
+          45.85912736701525,
+          56.14087263298475,
+          56.14087263298475
+        ],
+        "bounds_area": 105.714286,
+        "id": "mask-0001",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "color": "#003366",
+      "id": "color-003366",
+      "kind": "same_color_fragment_group",
+      "merge_plan": {
+        "action": "review_as_separate_fragments",
+        "auto_merge_allowed": false,
+        "bounds": [
+          9.367367166602579,
+          9.367367166602579,
+          56.14087263298475,
+          56.14087263298475
+        ],
+        "bounds_fill_ratio": 0.29573,
+        "combined_bounds_area": 2187.760814,
+        "decision_reason": "sparse_same_color_bounds",
+        "fragment_bounds": [
+          [
+            9.367367166602579,
+            9.367367166602579,
+            32.63263283339742,
+            32.63263283339742
+          ],
+          [
+            45.85912736701525,
+            45.85912736701525,
+            56.14087263298475,
+            56.14087263298475
+          ]
+        ],
+        "fragment_bounds_area": 646.986872,
+        "target_kind": "compound_shape"
+      },
+      "metrics": {
+        "bounds_fill_ratio": 0.29573,
+        "combined_bounds_area": 2187.760814,
+        "fragment_bounds_area": 646.986872,
+        "fragment_count": 2,
+        "generic_path_count": 0,
+        "merge_candidate": true
+      }
+    },
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 2,
+        "reserved_bounds_area": 646.986872
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        1
+      ],
+      "name": "filled_primitives"
+    },
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "strokes"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.24649,
+    "anchor_quality_error_mean": 0.152766,
+    "anchor_quality_metric_summary": {
+      "circle_fit_residual_error": {
+        "count": 2,
+        "max": 0.120452,
+        "mean": 0.07405
+      },
+      "circle_roundness_error": {
+        "count": 2,
+        "max": 0.126038,
+        "mean": 0.078717
+      },
+      "cutout_anchor_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "line_smoothness_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "stroke_width_variance": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 0.130419,
+      "semantic_anchor_score_mean": -0.033598,
+      "semantic_anchor_score_min": -0.197614,
+      "simple_shape_priority_bonus_mean": 0.35,
+      "simple_shape_priority_bonus_total": 0.7
+    },
+    "color_fragment_counts": {
+      "#003366": 2
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 0.75,
+    "fragmentation_penalty": 0.25,
+    "generic_path_count": 0,
+    "group_count": 2,
+    "negative_mask_candidate_count": 0,
+    "node_count": 2,
+    "parameter_count": 7,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.040174,
+    "raster_l1_error": 0.054102,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 646.986872,
+    "reserved_simple_shape_area_ratio": 0.157956,
+    "reserved_simple_shape_count": 2,
+    "shape_count": 2,
+    "simple_shape_count": 2,
+    "simple_shape_ratio": 1.0
+  },
+  "schema_version": 1,
+  "width": 64
+}

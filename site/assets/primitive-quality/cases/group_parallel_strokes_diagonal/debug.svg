@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="stroke_polyline">
+    <path d="M 54 32 L 30 56" fill="none" stroke="#003366" stroke-width="3.828" stroke-linecap="butt" stroke-linejoin="round" />
+    <rect x="28.086" y="30.086" width="27.828" height="27.828" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="28.086" y="28.086" font-size="4" fill="#ff00ff">anchor-0000:stroke_polyline:0.991949</text>
+  </g>
+  <g id="anchor-0001" data-kind="stroke_polyline">
+    <path d="M 34 26 L 10 50" fill="none" stroke="#003366" stroke-width="3.828" stroke-linecap="butt" stroke-linejoin="round" />
+    <rect x="8.086" y="24.086" width="27.828" height="27.828" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="8.086" y="22.086" font-size="4" fill="#ff00ff">anchor-0001:stroke_polyline:0.991949</text>
+  </g>
+</svg>

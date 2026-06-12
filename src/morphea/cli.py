@@ -22,6 +22,7 @@ from morphea.mlx_classifier import (
     train_mlx_transformer_classifier,
 )
 from morphea.profiling import profile_curated_suite, profile_vectorize
+from morphea.primitive_gallery import write_primitive_gallery_site
 from morphea.primitive_quality import write_primitive_quality_report
 from morphea.runs import (
     create_run_dir,
@@ -804,6 +805,60 @@ def main(argv: list[str] | None = None) -> None:
     primitive_check.add_argument("--refinement-iterations", type=int, default=None)
     primitive_check.add_argument("--config", type=Path)
 
+    primitive_gallery = subcommands.add_parser(
+        "primitive-gallery",
+        help="Generate the static primitive quality gallery site.",
+    )
+    primitive_gallery.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path("site/assets/primitive-quality/report.json"),
+    )
+    primitive_gallery.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("site/assets/primitive-quality/cases"),
+        help="Directory for per-case gallery artifacts.",
+    )
+    primitive_gallery.add_argument(
+        "--markdown",
+        type=Path,
+        default=Path("site/assets/primitive-quality/report.md"),
+    )
+    primitive_gallery.add_argument(
+        "--html",
+        type=Path,
+        default=Path("site/primitive-quality/index.html"),
+        help="Output path for the full static gallery page.",
+    )
+    primitive_gallery.add_argument(
+        "--homepage",
+        type=Path,
+        default=Path("site/index.html"),
+        help="Homepage path whose primitive teaser block should be refreshed.",
+    )
+    primitive_gallery.add_argument(
+        "--no-homepage",
+        action="store_true",
+        help="Skip updating the homepage teaser block.",
+    )
+    primitive_gallery.add_argument(
+        "--case",
+        action="append",
+        default=None,
+        help="Generate only a specific primitive case. May be repeated.",
+    )
+    primitive_gallery.add_argument(
+        "--filter",
+        help="Generate cases whose id or family matches a shell-style pattern.",
+    )
+    primitive_gallery.add_argument(
+        "--no-clean",
+        action="store_true",
+        help="Keep existing files in the artifact output directory.",
+    )
+
     curated_check = subcommands.add_parser(
         "curated-check",
         help="Validate a curated real-image suite and optionally run it.",
@@ -1342,6 +1397,26 @@ def main(argv: list[str] | None = None) -> None:
         print(
             "checked "
             f"{result['case_count']} primitive cases "
+            f"({result['failed_count']} failed)"
+        )
+        if not result["ok"]:
+            raise SystemExit(1)
+        return
+
+    if args.command == "primitive-gallery":
+        result = write_primitive_gallery_site(
+            output=args.output,
+            output_dir=args.output_dir,
+            markdown=args.markdown,
+            html_output=args.html,
+            homepage=None if args.no_homepage else args.homepage,
+            cases=args.case or (),
+            filter_pattern=args.filter,
+            clean=not args.no_clean,
+        )
+        print(
+            "wrote primitive gallery with "
+            f"{result['case_count']} cases "
             f"({result['failed_count']} failed)"
         )
         if not result["ok"]:

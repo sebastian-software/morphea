@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="stroke_polyline">
+    <path d="M 50.158 9.658 L 15.842 54.342" fill="none" stroke="#003366" stroke-width="7.371" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="12.156" y="5.972" width="41.688" height="52.056" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="12.156" y="3.972" font-size="4" fill="#ff00ff">anchor-0000:stroke_polyline:0.98494</text>
+  </g>
+</svg>

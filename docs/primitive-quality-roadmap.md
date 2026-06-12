@@ -447,8 +447,8 @@ Current evidence:
 
 ### PQ10: Honest Basic Gallery
 
-Status: implemented as a static homepage gallery generated from passing
-primitive-check artifacts.
+Status: implemented as a generated static gallery and compact homepage teaser
+from passing primitive-check artifacts.
 
 Purpose: publish examples only after they are backed by passing contracts.
 
@@ -469,8 +469,13 @@ Exit criteria:
 Current evidence:
 
 - `site/assets/primitive-quality/report.json` records 8 passing gallery cases.
-- Homepage panels show `input.png` next to the generated `output.svg` at the
-  same displayed size.
+- `site/assets/primitive-quality/report.json` records all 159 current primitive
+  cases.
+- `morphea primitive-gallery` regenerates report artifacts, the full
+  `site/primitive-quality/index.html` gallery, and the marked homepage teaser.
+- Homepage panels show representative `input.png` fixtures next to generated
+  `output.svg` files at the same displayed size, with a link to the full
+  159-case gallery.
 - The old hand-drawn primitive board has been replaced with artifact-backed
   examples only.
 

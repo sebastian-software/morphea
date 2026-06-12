@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="rounded_rect">
+    <rect x="20" y="8" width="30" height="48" rx="6" ry="6" fill="#003366" />
+    <rect x="20" y="8" width="30" height="48" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="20" y="6" font-size="4" fill="#ff00ff">anchor-0000:rounded_rect:0.950757</text>
+  </g>
+</svg>

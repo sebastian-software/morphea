@@ -261,6 +261,21 @@ horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a
 simple quad. These cases are intentionally boring and should stay stricter than
 the curated real-image suite.
 
+## Primitive Gallery Site v1
+
+Written by `morphea primitive-gallery`.
+
+Default outputs:
+
+- `site/assets/primitive-quality/report.json`
+- `site/assets/primitive-quality/report.md`
+- `site/assets/primitive-quality/cases/<case-id>/...`
+- `site/primitive-quality/index.html`
+
+The command reuses `primitive-check`, supports the same `--case` and `--filter`
+selection options, and refreshes the marked homepage teaser block by default.
+The generated HTML is deterministic and contains no timestamps.
+
 ## Primitive Check Config v1
 
 Read by `morphea primitive-check --config`.

@@ -1,0 +1,160 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "circle": {
+        "cx": 31.59005760629573,
+        "cy": 31.589325132490565,
+        "r": 12.087701719513014
+      },
+      "color": "#00285e",
+      "confidence": 0.819582,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:stroke_circle:0.819582",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "stroke_circle",
+      "layer": "strokes",
+      "metrics": {
+        "circle_fit_residual_error": 0.13166417073946776,
+        "circle_roundness_error": 0.1402887803920415,
+        "cutout_anchor_error": 0.0,
+        "line_smoothness_error": 0.0,
+        "semantic_anchor_score": 0.13017560056057714,
+        "simple_shape_priority_bonus": 0.35,
+        "stroke_width_variance": 0.0
+      },
+      "node_count": 1,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.1532226494290678,
+      "reserved": {
+        "bounds": [
+          19.502355886782716,
+          19.50162341297755,
+          43.67775932580874,
+          43.67702685200358
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          19.502355886782716,
+          19.50162341297755,
+          43.67775932580874,
+          43.67702685200358
+        ],
+        "bounds_area": 584.450131,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      },
+      "stroke": {
+        "cap_style": "round",
+        "centerline": [],
+        "is_cutout": false,
+        "join_style": "round",
+        "width_samples": [
+          5.400370813253877
+        ]
+      }
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "palette_quantized",
+      "level": "info",
+      "max_colors": 2
+    }
+  ],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 1,
+        "reserved_bounds_area": 584.450131
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "strokes"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.271953,
+    "anchor_quality_error_mean": 0.271953,
+    "anchor_quality_metric_summary": {
+      "circle_fit_residual_error": {
+        "count": 1,
+        "max": 0.131664,
+        "mean": 0.131664
+      },
+      "circle_roundness_error": {
+        "count": 1,
+        "max": 0.140289,
+        "mean": 0.140289
+      },
+      "cutout_anchor_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "line_smoothness_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "stroke_width_variance": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 0.130176,
+      "semantic_anchor_score_mean": 0.130176,
+      "semantic_anchor_score_min": 0.130176,
+      "simple_shape_priority_bonus_mean": 0.35,
+      "simple_shape_priority_bonus_total": 0.35
+    },
+    "color_fragment_counts": {
+      "#00285e": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 1.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 0,
+    "group_count": 1,
+    "negative_mask_candidate_count": 0,
+    "node_count": 1,
+    "parameter_count": 4,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.03744,
+    "raster_l1_error": 0.057211,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 584.450131,
+    "reserved_simple_shape_area_ratio": 0.142688,
+    "reserved_simple_shape_count": 1,
+    "shape_count": 1,
+    "simple_shape_count": 1,
+    "simple_shape_ratio": 1.0
+  },
+  "schema_version": 1,
+  "width": 64
+}

@@ -1,0 +1,235 @@
+{
+  "anchor_count": 2,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.997872,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:rect:0.997872",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "rect",
+      "layer": "filled_primitives",
+      "metrics": {
+        "quad_corner_consistency_error": 0.02127659574468085,
+        "quad_edge_straightness_error": 0.0,
+        "rect_fill_error": 0.0,
+        "semantic_anchor_score": -0.12872340425531914,
+        "simple_shape_priority_bonus": 0.25
+      },
+      "node_count": 4,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "quad": {
+        "corners": [
+          {
+            "x": 8,
+            "y": 18
+          },
+          {
+            "x": 31,
+            "y": 18
+          },
+          {
+            "x": 31,
+            "y": 42
+          },
+          {
+            "x": 8,
+            "y": 42
+          }
+        ]
+      },
+      "raster_error": 0.0,
+      "reserved": {
+        "bounds": [
+          8,
+          18,
+          31,
+          42
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          8,
+          18,
+          31,
+          42
+        ],
+        "bounds_area": 552,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    },
+    {
+      "color": "#c99700",
+      "confidence": 1.0,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0001:rect:1.0",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0001",
+      "kind": "rect",
+      "layer": "filled_primitives",
+      "metrics": {
+        "quad_corner_consistency_error": 0.0,
+        "quad_edge_straightness_error": 0.0,
+        "rect_fill_error": 0.0,
+        "semantic_anchor_score": -0.15,
+        "simple_shape_priority_bonus": 0.25
+      },
+      "node_count": 4,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "quad": {
+        "corners": [
+          {
+            "x": 32,
+            "y": 18
+          },
+          {
+            "x": 56,
+            "y": 18
+          },
+          {
+            "x": 56,
+            "y": 42
+          },
+          {
+            "x": 32,
+            "y": 42
+          }
+        ]
+      },
+      "raster_error": 0.0,
+      "reserved": {
+        "bounds": [
+          32,
+          18,
+          56,
+          42
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          32,
+          18,
+          56,
+          42
+        ],
+        "bounds_area": 576,
+        "id": "mask-0001",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "colors": [
+        "#003366",
+        "#c99700"
+      ],
+      "kind": "primitive_contact_pair",
+      "metrics": {
+        "bounds_gap": 1.0,
+        "bounds_iou": 0.0
+      },
+      "relation": "touching",
+      "separation_policy": "separate_by_color"
+    },
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 2,
+        "reserved_bounds_area": 1128.0
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 2,
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "name": "filled_primitives"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.021277,
+    "anchor_quality_error_mean": 0.010638,
+    "anchor_quality_metric_summary": {
+      "quad_corner_consistency_error": {
+        "count": 2,
+        "max": 0.021277,
+        "mean": 0.010638
+      },
+      "quad_edge_straightness_error": {
+        "count": 2,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "rect_fill_error": {
+        "count": 2,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": -0.128723,
+      "semantic_anchor_score_mean": -0.139362,
+      "semantic_anchor_score_min": -0.15,
+      "simple_shape_priority_bonus_mean": 0.25,
+      "simple_shape_priority_bonus_total": 0.5
+    },
+    "color_fragment_counts": {
+      "#003366": 1,
+      "#c99700": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 1.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 0,
+    "group_count": 2,
+    "negative_mask_candidate_count": 0,
+    "node_count": 8,
+    "parameter_count": 8,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.0,
+    "raster_l1_error": 0.0,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 1128.0,
+    "reserved_simple_shape_area_ratio": 0.275391,
+    "reserved_simple_shape_count": 2,
+    "shape_count": 2,
+    "simple_shape_count": 2,
+    "simple_shape_ratio": 1.0
+  },
+  "schema_version": 1,
+  "width": 64
+}

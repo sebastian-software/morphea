@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="circle">
+    <circle cx="31.591" cy="31.591" r="23.672" fill="#003366" />
+    <rect x="7.919" y="7.919" width="47.344" height="47.344" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="7.919" y="5.919" font-size="4" fill="#ff00ff">anchor-0000:circle:0.97902</text>
+  </g>
+</svg>

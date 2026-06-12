@@ -1,0 +1,263 @@
+{
+  "anchor_count": 2,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.995652,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:rect:0.995652",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "rect",
+      "layer": "filled_primitives",
+      "metrics": {
+        "quad_corner_consistency_error": 0.043478260869565216,
+        "quad_edge_straightness_error": 0.0,
+        "rect_fill_error": 0.0,
+        "semantic_anchor_score": -0.10652173913043478,
+        "simple_shape_priority_bonus": 0.25
+      },
+      "node_count": 4,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "quad": {
+        "corners": [
+          {
+            "x": 18,
+            "y": 34
+          },
+          {
+            "x": 42,
+            "y": 34
+          },
+          {
+            "x": 42,
+            "y": 56
+          },
+          {
+            "x": 18,
+            "y": 56
+          }
+        ]
+      },
+      "raster_error": 0.0,
+      "reserved": {
+        "bounds": [
+          18,
+          34,
+          42,
+          56
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          18,
+          34,
+          42,
+          56
+        ],
+        "bounds_area": 528,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    },
+    {
+      "color": "#003366",
+      "confidence": 0.993333,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0001:rect:0.993333",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0001",
+      "kind": "rect",
+      "layer": "filled_primitives",
+      "metrics": {
+        "quad_corner_consistency_error": 0.06666666666666667,
+        "quad_edge_straightness_error": 0.0,
+        "rect_fill_error": 0.0,
+        "semantic_anchor_score": -0.08333333333333331,
+        "simple_shape_priority_bonus": 0.25
+      },
+      "node_count": 4,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "quad": {
+        "corners": [
+          {
+            "x": 18,
+            "y": 8
+          },
+          {
+            "x": 42,
+            "y": 8
+          },
+          {
+            "x": 42,
+            "y": 29
+          },
+          {
+            "x": 18,
+            "y": 29
+          }
+        ]
+      },
+      "raster_error": 0.0,
+      "reserved": {
+        "bounds": [
+          18,
+          8,
+          42,
+          29
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          18,
+          8,
+          42,
+          29
+        ],
+        "bounds_area": 504,
+        "id": "mask-0001",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "color": "#003366",
+      "id": "color-003366",
+      "kind": "same_color_fragment_group",
+      "merge_plan": {
+        "action": "merge_adjacent_fragments",
+        "auto_merge_allowed": true,
+        "bounds": [
+          18,
+          8,
+          42,
+          56
+        ],
+        "bounds_fill_ratio": 0.895833,
+        "combined_bounds_area": 1152,
+        "decision_reason": "compact_same_color_bounds",
+        "fragment_bounds": [
+          [
+            18,
+            34,
+            42,
+            56
+          ],
+          [
+            18,
+            8,
+            42,
+            29
+          ]
+        ],
+        "fragment_bounds_area": 1032,
+        "target_kind": "compound_shape"
+      },
+      "metrics": {
+        "bounds_fill_ratio": 0.895833,
+        "combined_bounds_area": 1152,
+        "fragment_bounds_area": 1032,
+        "fragment_count": 2,
+        "generic_path_count": 0,
+        "merge_candidate": true
+      }
+    },
+    {
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 2,
+        "reserved_bounds_area": 1032.0
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 2,
+      "anchor_indexes": [
+        0,
+        1
+      ],
+      "name": "filled_primitives"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.066667,
+    "anchor_quality_error_mean": 0.055072,
+    "anchor_quality_metric_summary": {
+      "quad_corner_consistency_error": {
+        "count": 2,
+        "max": 0.066667,
+        "mean": 0.055072
+      },
+      "quad_edge_straightness_error": {
+        "count": 2,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "rect_fill_error": {
+        "count": 2,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": -0.083333,
+      "semantic_anchor_score_mean": -0.094928,
+      "semantic_anchor_score_min": -0.106522,
+      "simple_shape_priority_bonus_mean": 0.25,
+      "simple_shape_priority_bonus_total": 0.5
+    },
+    "color_fragment_counts": {
+      "#003366": 2
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 0.75,
+    "fragmentation_penalty": 0.25,
+    "generic_path_count": 0,
+    "group_count": 2,
+    "negative_mask_candidate_count": 0,
+    "node_count": 8,
+    "parameter_count": 8,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.0,
+    "raster_l1_error": 0.0,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 1032.0,
+    "reserved_simple_shape_area_ratio": 0.251953,
+    "reserved_simple_shape_count": 2,
+    "shape_count": 2,
+    "simple_shape_count": 2,
+    "simple_shape_ratio": 1.0
+  },
+  "schema_version": 1,
+  "width": 64
+}
