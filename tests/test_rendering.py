@@ -116,6 +116,15 @@ class RenderingTests(unittest.TestCase):
         self.assertGreater(changed["raster_l1_error"], 0.0)
         self.assertGreater(changed["raster_edge_error"], 0.0)
 
+    def test_raster_fidelity_ignores_rgb_when_both_pixels_are_transparent(self):
+        source = Image.new("RGBA", (2, 2), (0, 0, 0, 0))
+        rendered = Image.new("RGBA", (2, 2), (255, 255, 255, 0))
+
+        metrics = raster_fidelity_metrics(source=source, rendered=rendered)
+
+        self.assertEqual(metrics["raster_l1_error"], 0.0)
+        self.assertEqual(metrics["raster_alpha_error"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

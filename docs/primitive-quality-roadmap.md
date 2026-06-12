@@ -174,6 +174,9 @@ Current evidence:
 
 ### PQ3: Anti-Aliased and Palette-Drift Primitives
 
+Status: implemented for deterministic RGB anti-aliasing, near-flat palette
+drift, and transparent-circle fixtures.
+
 Purpose: handle the exact kind of raster edges produced by design tools and AI
 image outputs without fragmenting simple shapes.
 
@@ -199,6 +202,15 @@ Exit criteria:
 - The same fixture fails without the needed preprocessing when that failure is
   expected and documented.
 - Transparent background handling does not create phantom shapes.
+
+Current evidence:
+
+- anti-aliased circle, ring, and stroke families each have 3 deterministic
+  variants using high-resolution source rendering and downsampling.
+- palette-drift fixtures use explicit color tolerance while preserving the
+  intended representative primitive color.
+- transparent circle fixtures validate alpha-aware raster comparison and do not
+  create background phantom anchors.
 
 ### PQ4: Non-Touching Primitive Compositions
 

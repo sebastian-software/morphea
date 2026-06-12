@@ -55,6 +55,8 @@ def raster_fidelity_metrics(
     rgb_error = 0.0
     alpha_error = 0.0
     for index in range(0, len(source_pixels), 4):
+        if source_pixels[index + 3] == 0 and rendered_pixels[index + 3] == 0:
+            continue
         rgb_error += (
             abs(source_pixels[index] - rendered_pixels[index])
             + abs(source_pixels[index + 1] - rendered_pixels[index + 1])

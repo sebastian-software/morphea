@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from math import hypot
 from pathlib import Path
@@ -20,6 +20,7 @@ from morphea.scene import SvgStyle
 
 Geometry = dict[str, Any]
 DrawFunction = Callable[[ImageDraw.ImageDraw], None]
+SourceFunction = Callable[[], Image.Image]
 BLUE = "#003366"
 
 
@@ -32,14 +33,18 @@ class PrimitiveSpec:
     draw: DrawFunction
     family: str | None = None
     variant: str = "fixed"
+    source_factory: SourceFunction | None = None
+    vectorize_config: dict[str, Any] = field(default_factory=dict)
     width: int = 64
     height: int = 64
     background: str = "#ffffff"
     color: str = "#003366"
+    color_tolerance: float = 0.0
     min_area: int = 4
     coordinate_tolerance: float = 1.5
     max_raster_l1_error: float = 0.02
     max_raster_edge_error: float = 0.03
+    max_raster_alpha_error: float = 0.001
     min_bbox_iou: float = 0.9
     max_anchor_count: int = 1
 
@@ -179,6 +184,61 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ("simple_quad_trapezoid_7", "trapezoid_7", ((16, 30), (48, 30), (58, 56), (6, 56))),
             ("simple_quad_trapezoid_8", "trapezoid_8", ((24, 8), (54, 8), (48, 40), (12, 40))),
             ("simple_quad_trapezoid_9", "trapezoid_9", ((12, 24), (52, 24), (44, 54), (20, 54))),
+        )
+    )
+    specs.extend(
+        _antialiased_circle_spec(case_id, variant, box)
+        for case_id, variant, box in (
+            ("antialiased_circle", "base", (18, 18, 46, 46)),
+            ("antialiased_circle_small", "small", (10, 10, 32, 32)),
+            ("antialiased_circle_large", "large", (8, 8, 56, 56)),
+        )
+    )
+    specs.extend(
+        _antialiased_ring_spec(case_id, variant, box, width)
+        for case_id, variant, box, width in (
+            ("antialiased_ring", "base", (18, 18, 46, 46), 4),
+            ("antialiased_ring_medium", "medium", (14, 14, 50, 50), 5),
+            ("antialiased_ring_large", "large", (10, 10, 54, 54), 6),
+        )
+    )
+    specs.extend(
+        _antialiased_stroke_spec(case_id, variant, line, width)
+        for case_id, variant, line, width in (
+            ("antialiased_stroke_horizontal", "horizontal", (8, 32, 56, 32), 4),
+            ("antialiased_stroke_vertical", "vertical", (32, 8, 32, 56), 5),
+            ("antialiased_stroke_diagonal", "diagonal", (12, 52, 52, 12), 4),
+        )
+    )
+    specs.extend(
+        _palette_drift_spec(case_id, variant, box, drift_pixels)
+        for case_id, variant, box, drift_pixels in (
+            (
+                "palette_drift_square",
+                "square",
+                (16, 16, 47, 47),
+                (((18, 18), "#073a6d"), ((30, 30), "#002f62"), ((42, 42), "#0b3867")),
+            ),
+            (
+                "palette_drift_rectangle",
+                "rectangle",
+                (10, 22, 54, 38),
+                (((12, 24), "#083b70"), ((32, 30), "#003061"), ((50, 36), "#0d3a69")),
+            ),
+            (
+                "palette_drift_circle",
+                "circle",
+                (18, 18, 46, 46),
+                (((32, 20), "#07396c"), ((26, 32), "#002f61"), ((38, 38), "#0b3968")),
+            ),
+        )
+    )
+    specs.extend(
+        _transparent_circle_spec(case_id, variant, box)
+        for case_id, variant, box in (
+            ("transparent_circle", "base", (18, 18, 46, 46)),
+            ("transparent_circle_small", "small", (10, 10, 32, 32)),
+            ("transparent_circle_offset", "offset", (30, 18, 56, 44)),
         )
     )
     return tuple(specs)
@@ -379,6 +439,198 @@ def _quad_spec(
     )
 
 
+def _antialiased_circle_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family="antialiased_circle",
+        variant=variant,
+        expected_kinds=("circle",),
+        geometry_type="circle",
+        geometry={"cx": (x0 + x1) / 2, "cy": (y0 + y1) / 2, "r": (x1 - x0) / 2},
+        draw=lambda draw: None,
+        source_factory=lambda box=box: _antialiased_source(
+            lambda draw, scale: draw.ellipse(
+                tuple(value * scale for value in box),
+                fill=BLUE,
+            )
+        ),
+        vectorize_config={"max_colors": 2},
+        coordinate_tolerance=2.0,
+        max_raster_l1_error=0.055,
+        max_raster_edge_error=0.03,
+        min_bbox_iou=0.84,
+    )
+
+
+def _antialiased_ring_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    outer_radius = (x1 - x0) / 2
+    return PrimitiveSpec(
+        id=case_id,
+        family="antialiased_ring",
+        variant=variant,
+        expected_kinds=("stroke_circle",),
+        geometry_type="stroke_circle",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "r": outer_radius - width / 2 + 0.5,
+            "width": width + 0.5,
+        },
+        draw=lambda draw: None,
+        source_factory=lambda box=box, width=width: _antialiased_source(
+            lambda draw, scale: draw.ellipse(
+                tuple(value * scale for value in box),
+                outline=BLUE,
+                width=width * scale,
+            )
+        ),
+        vectorize_config={"max_colors": 2},
+        color_tolerance=35.0,
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=0.16,
+        max_raster_edge_error=0.075,
+        min_bbox_iou=0.78,
+    )
+
+
+def _antialiased_stroke_spec(
+    case_id: str,
+    variant: str,
+    line: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = line
+    return PrimitiveSpec(
+        id=case_id,
+        family="antialiased_stroke",
+        variant=variant,
+        expected_kinds=("stroke_polyline",),
+        geometry_type="stroke",
+        geometry={
+            "centerline": ((float(x0), float(y0)), (float(x1), float(y1))),
+            "width": float(width),
+        },
+        draw=lambda draw: None,
+        source_factory=lambda line=line, width=width: _antialiased_source(
+            lambda draw, scale: draw.line(
+                tuple(value * scale for value in line),
+                fill=BLUE,
+                width=width * scale,
+            )
+        ),
+        vectorize_config={"max_colors": 2},
+        color_tolerance=45.0,
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=0.035,
+        max_raster_edge_error=0.04,
+        min_bbox_iou=0.74,
+    )
+
+
+def _palette_drift_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+    drift_pixels: tuple[tuple[tuple[int, int], str], ...],
+) -> PrimitiveSpec:
+    if "circle" in case_id:
+        base = _circle_spec(case_id, variant, box)
+        geometry_type = "circle"
+        expected_kinds = ("circle",)
+        geometry = base.geometry
+        draw_shape = lambda draw, box=box: draw.ellipse(box, fill=BLUE)
+    else:
+        base = _rectangle_spec(case_id, variant, box, family="palette_drift_primitive")
+        geometry_type = "quad"
+        expected_kinds = ("rect", "quad")
+        geometry = base.geometry
+        draw_shape = lambda draw, box=box: draw.rectangle(box, fill=BLUE)
+    return PrimitiveSpec(
+        id=case_id,
+        family="palette_drift_primitive",
+        variant=variant,
+        expected_kinds=expected_kinds,
+        geometry_type=geometry_type,
+        geometry=geometry,
+        draw=lambda draw: None,
+        source_factory=lambda draw_shape=draw_shape, drift_pixels=drift_pixels: _palette_drift_source(
+            draw_shape,
+            drift_pixels,
+        ),
+        vectorize_config={"color_tolerance": 18.0},
+        coordinate_tolerance=1.75,
+        max_raster_l1_error=0.01,
+        max_raster_edge_error=0.015,
+        min_bbox_iou=0.88,
+    )
+
+
+def _transparent_circle_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family="transparent_circle",
+        variant=variant,
+        expected_kinds=("circle",),
+        geometry_type="circle",
+        geometry={"cx": (x0 + x1) / 2, "cy": (y0 + y1) / 2, "r": (x1 - x0) / 2},
+        draw=lambda draw: None,
+        source_factory=lambda box=box: _transparent_circle_source(box),
+        vectorize_config={"background": "#ffffff"},
+        background="#ffffff00",
+        coordinate_tolerance=1.75,
+        max_raster_l1_error=0.018,
+        max_raster_edge_error=0.024,
+        max_raster_alpha_error=0.02,
+        min_bbox_iou=0.88,
+    )
+
+
+def _antialiased_source(
+    draw_function: Callable[[ImageDraw.ImageDraw, int], None],
+    *,
+    scale: int = 4,
+) -> Image.Image:
+    high_res = Image.new("RGB", (64 * scale, 64 * scale), "#ffffff")
+    draw = ImageDraw.Draw(high_res)
+    draw_function(draw, scale)
+    return high_res.resize((64, 64), Image.Resampling.LANCZOS)
+
+
+def _palette_drift_source(
+    draw_shape: DrawFunction,
+    drift_pixels: tuple[tuple[tuple[int, int], str], ...],
+) -> Image.Image:
+    image = Image.new("RGB", (64, 64), "#ffffff")
+    draw = ImageDraw.Draw(image)
+    draw_shape(draw)
+    for point, color in drift_pixels:
+        draw.point(point, fill=color)
+    return image
+
+
+def _transparent_circle_source(box: tuple[int, int, int, int]) -> Image.Image:
+    image = Image.new("RGBA", (64, 64), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(image)
+    draw.ellipse(box, fill=BLUE)
+    return image
+
+
 def check_primitive_quality(
     *,
     output_dir: str | Path | None = None,
@@ -550,7 +802,11 @@ def _run_case(
     source = _draw_source(spec)
     source.save(input_path)
 
-    scene = scene_from_flat_color_image(input_path, min_area=spec.min_area)
+    scene = scene_from_flat_color_image(
+        input_path,
+        min_area=spec.min_area,
+        **spec.vectorize_config,
+    )
     manifest = scene.to_manifest()
     preview = render_manifest_image(manifest, background=spec.background)
     metrics = raster_fidelity_metrics(source=source, rendered=preview)
@@ -582,6 +838,8 @@ def _run_case(
 
 
 def _draw_source(spec: PrimitiveSpec) -> Image.Image:
+    if spec.source_factory is not None:
+        return spec.source_factory()
     image = Image.new("RGB", (spec.width, spec.height), spec.background)
     draw = ImageDraw.Draw(image)
     spec.draw(draw)
@@ -642,9 +900,14 @@ def _evaluate_case(
                 f"{'/'.join(spec.expected_kinds)}, got {actual_kind}",
             )
         )
-    if str(anchor.get("color")) != spec.color:
+    actual_color = str(anchor.get("color"))
+    color_delta = _color_distance(actual_color, spec.color)
+    if color_delta > spec.color_tolerance:
         failure_details.append(
-            _failure("color_drift", f"expected color {spec.color}, got {anchor.get('color')}")
+            _failure(
+                "color_drift",
+                f"expected color {spec.color}, got {anchor.get('color')}",
+            )
         )
     if not bool(metrics.get("raster_size_match", False)):
         failure_details.append(
@@ -664,6 +927,14 @@ def _evaluate_case(
                 "visual_drift",
                 "raster_edge_error "
                 f"{metrics.get('raster_edge_error')} exceeds {spec.max_raster_edge_error}",
+            )
+        )
+    if float(metrics.get("raster_alpha_error", 1.0)) > spec.max_raster_alpha_error:
+        failure_details.append(
+            _failure(
+                "visual_drift",
+                "raster_alpha_error "
+                f"{metrics.get('raster_alpha_error')} exceeds {spec.max_raster_alpha_error}",
             )
         )
 
@@ -1035,3 +1306,23 @@ def _spec_family(spec: PrimitiveSpec) -> str:
 
 def _failure(category: str, message: str) -> dict[str, str]:
     return {"category": category, "message": message}
+
+
+def _color_distance(left: str, right: str) -> float:
+    try:
+        left_rgb = _hex_rgb(left)
+        right_rgb = _hex_rgb(right)
+    except ValueError:
+        return float("inf")
+    return (
+        (left_rgb[0] - right_rgb[0]) ** 2
+        + (left_rgb[1] - right_rgb[1]) ** 2
+        + (left_rgb[2] - right_rgb[2]) ** 2
+    ) ** 0.5
+
+
+def _hex_rgb(color: str) -> tuple[int, int, int]:
+    value = color.strip().removeprefix("#")
+    if len(value) not in {6, 8}:
+        raise ValueError("expected #rrggbb or #rrggbbaa color")
+    return int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16)

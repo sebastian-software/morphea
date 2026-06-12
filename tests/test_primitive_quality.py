@@ -78,6 +78,11 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "rounded_rectangle": 10,
                 "simple_quad": 10,
                 "vertical_stroke": 10,
+                "antialiased_circle": 3,
+                "antialiased_ring": 3,
+                "antialiased_stroke": 3,
+                "palette_drift_primitive": 3,
+                "transparent_circle": 3,
             },
         )
 

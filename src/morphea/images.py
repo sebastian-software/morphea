@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic
@@ -189,9 +189,14 @@ def _flat_color_masks_result(
     for color, indexes in pixel_indexes_by_color.items():
         if len(indexes) < min_area:
             continue
+        representative_color = _representative_mask_color(
+            indexes,
+            flattened_pixels,
+            fallback=color,
+        )
         masks.append(
             ColorMask(
-                color=_hex_color(color),
+                color=_hex_color(representative_color),
                 mask=BinaryMask(
                     width=width,
                     height=height,
@@ -208,6 +213,22 @@ def _flat_color_masks_result(
         scale=scale,
         diagnostics=tuple(diagnostics),
     )
+
+
+def _representative_mask_color(
+    indexes: list[int],
+    pixels: list[tuple[int, ...]],
+    *,
+    fallback: Rgb,
+) -> Rgb:
+    counts: Counter[Rgb] = Counter()
+    for index in indexes:
+        pixel = pixels[index]
+        if len(pixel) >= 3:
+            counts[(int(pixel[0]), int(pixel[1]), int(pixel[2]))] += 1
+    if not counts:
+        return fallback
+    return counts.most_common(1)[0][0]
 
 
 def _infer_background_color(image: Image.Image) -> Rgb:
