@@ -98,6 +98,9 @@ Implemented so far:
   data instead of calling `getpixel` for every pixel.
 - flat-color mask extraction stores linear pixel indexes during palette
   grouping and materializes `(x, y)` coordinates only for retained masks.
+- exact-color mask extraction bypasses palette membership scans, while
+  tolerant grouping caches repeated source colors to avoid repeated nearest
+  palette searches.
 - mask components can carry bounds hints from component scanning, and
   `row_spans` computes per-row extents in one pass instead of rescanning the
   component once per row.
