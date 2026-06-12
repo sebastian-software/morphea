@@ -3,7 +3,7 @@
   "anchors": [
     {
       "color": "#003366",
-      "confidence": 0.956352,
+      "confidence": 0.960802,
       "ellipse": {
         "cx": 31.5,
         "cy": 31.5,
@@ -13,7 +13,7 @@
       },
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:ellipse:0.956352",
+        "debug_label": "anchor-0000:ellipse:0.960802",
         "editable": true,
         "mask_eligible": false
       },
@@ -21,9 +21,9 @@
       "kind": "ellipse",
       "layer": "filled_primitives",
       "metrics": {
-        "ellipse_area_mismatch": 0.02566518881443662,
-        "ellipse_fit_residual_px": 0.35964723893342676,
-        "semantic_anchor_score": -0.15135244923889205,
+        "ellipse_area_mismatch": 0.020360024044706777,
+        "ellipse_fit_residual_px": 0.3767573840030302,
+        "semantic_anchor_score": -0.15580210675514172,
         "simple_shape_priority_bonus": 0.25
       },
       "node_count": 1,
@@ -32,7 +32,7 @@
         "fitting": "primitive_fit",
         "source": "primitive_anchor_detection"
       },
-      "raster_error": 0.04364755076110796,
+      "raster_error": 0.03919789324485829,
       "reserved": {
         "bounds": [
           13.5,
@@ -59,7 +59,10 @@
     {
       "code": "palette_quantized",
       "level": "info",
-      "max_colors": 2
+      "max_colors": 2,
+      "palette": [
+        "#003366"
+      ]
     }
   ],
   "groups": [
@@ -89,9 +92,9 @@
     "anchor_quality_error_mean": 0,
     "anchor_quality_metric_summary": {},
     "anchor_scoring_summary": {
-      "semantic_anchor_score_max": -0.151352,
-      "semantic_anchor_score_mean": -0.151352,
-      "semantic_anchor_score_min": -0.151352,
+      "semantic_anchor_score_max": -0.155802,
+      "semantic_anchor_score_mean": -0.155802,
+      "semantic_anchor_score_min": -0.155802,
       "simple_shape_priority_bonus_mean": 0.25,
       "simple_shape_priority_bonus_total": 0.25
     },

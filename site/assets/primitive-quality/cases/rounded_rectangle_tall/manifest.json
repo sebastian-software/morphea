@@ -3,10 +3,10 @@
   "anchors": [
     {
       "color": "#003366",
-      "confidence": 0.964861,
+      "confidence": 0.963333,
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:rounded_rect:0.964861",
+        "debug_label": "anchor-0000:rounded_rect:0.963333",
         "editable": true,
         "mask_eligible": false
       },
@@ -15,8 +15,8 @@
       "layer": "filled_primitives",
       "metrics": {
         "corner_radius": 5.0,
-        "rounded_rect_fill_error": 0.03194444444444444,
-        "semantic_anchor_score": -0.07611111111111113,
+        "rounded_rect_fill_error": 0.033333333333333326,
+        "semantic_anchor_score": -0.07333333333333336,
         "simple_shape_priority_bonus": 0.25
       },
       "node_count": 4,
@@ -45,7 +45,7 @@
           }
         ]
       },
-      "raster_error": 0.03194444444444444,
+      "raster_error": 0.033333333333333326,
       "reserved": {
         "bounds": [
           20,
@@ -72,7 +72,10 @@
     {
       "code": "palette_quantized",
       "level": "info",
-      "max_colors": 2
+      "max_colors": 2,
+      "palette": [
+        "#003366"
+      ]
     }
   ],
   "groups": [
@@ -98,19 +101,19 @@
     }
   ],
   "metrics": {
-    "anchor_quality_error_max": 0.031944,
-    "anchor_quality_error_mean": 0.031944,
+    "anchor_quality_error_max": 0.033333,
+    "anchor_quality_error_mean": 0.033333,
     "anchor_quality_metric_summary": {
       "rounded_rect_fill_error": {
         "count": 1,
-        "max": 0.031944,
-        "mean": 0.031944
+        "max": 0.033333,
+        "mean": 0.033333
       }
     },
     "anchor_scoring_summary": {
-      "semantic_anchor_score_max": -0.076111,
-      "semantic_anchor_score_mean": -0.076111,
-      "semantic_anchor_score_min": -0.076111,
+      "semantic_anchor_score_max": -0.073333,
+      "semantic_anchor_score_mean": -0.073333,
+      "semantic_anchor_score_min": -0.073333,
       "simple_shape_priority_bonus_mean": 0.25,
       "simple_shape_priority_bonus_total": 0.25
     },

@@ -71,7 +71,10 @@
     {
       "code": "palette_quantized",
       "level": "info",
-      "max_colors": 2
+      "max_colors": 2,
+      "palette": [
+        "#033668"
+      ]
     }
   ],
   "groups": [

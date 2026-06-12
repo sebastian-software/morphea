@@ -8,10 +8,10 @@
         "r": 10.5
       },
       "color": "#003366",
-      "confidence": 0.935022,
+      "confidence": 0.959894,
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:circle:0.935022",
+        "debug_label": "anchor-0000:circle:0.959894",
         "editable": true,
         "mask_eligible": false
       },
@@ -19,9 +19,9 @@
       "kind": "circle",
       "layer": "filled_primitives",
       "metrics": {
-        "circle_fit_residual_error": 0.02396283251718397,
-        "circle_roundness_error": 0.021387039452703795,
-        "semantic_anchor_score": -0.19920717025331236,
+        "circle_fit_residual_error": 0.020335669858949298,
+        "circle_roundness_error": 0.02301782402753915,
+        "semantic_anchor_score": -0.22587599272610603,
         "simple_shape_priority_bonus": 0.35
       },
       "node_count": 1,
@@ -30,7 +30,7 @@
         "fitting": "primitive_fit",
         "source": "primitive_anchor_detection"
       },
-      "raster_error": 0.060442957776799866,
+      "raster_error": 0.03577051338740548,
       "reserved": {
         "bounds": [
           10.0,
@@ -57,7 +57,10 @@
     {
       "code": "palette_quantized",
       "level": "info",
-      "max_colors": 2
+      "max_colors": 2,
+      "palette": [
+        "#003366"
+      ]
     }
   ],
   "groups": [
@@ -83,24 +86,24 @@
     }
   ],
   "metrics": {
-    "anchor_quality_error_max": 0.04535,
-    "anchor_quality_error_mean": 0.04535,
+    "anchor_quality_error_max": 0.043353,
+    "anchor_quality_error_mean": 0.043353,
     "anchor_quality_metric_summary": {
       "circle_fit_residual_error": {
         "count": 1,
-        "max": 0.023963,
-        "mean": 0.023963
+        "max": 0.020336,
+        "mean": 0.020336
       },
       "circle_roundness_error": {
         "count": 1,
-        "max": 0.021387,
-        "mean": 0.021387
+        "max": 0.023018,
+        "mean": 0.023018
       }
     },
     "anchor_scoring_summary": {
-      "semantic_anchor_score_max": -0.199207,
-      "semantic_anchor_score_mean": -0.199207,
-      "semantic_anchor_score_min": -0.199207,
+      "semantic_anchor_score_max": -0.225876,
+      "semantic_anchor_score_mean": -0.225876,
+      "semantic_anchor_score_min": -0.225876,
       "simple_shape_priority_bonus_mean": 0.35,
       "simple_shape_priority_bonus_total": 0.35
     },

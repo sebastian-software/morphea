@@ -3,10 +3,10 @@
   "anchors": [
     {
       "color": "#003366",
-      "confidence": 0.933929,
+      "confidence": 0.929464,
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:rounded_rect:0.933929",
+        "debug_label": "anchor-0000:rounded_rect:0.929464",
         "editable": true,
         "mask_eligible": false
       },
@@ -15,8 +15,8 @@
       "layer": "filled_primitives",
       "metrics": {
         "corner_radius": 7.0,
-        "rounded_rect_fill_error": 0.06006493506493504,
-        "semantic_anchor_score": -0.019870129870129927,
+        "rounded_rect_fill_error": 0.06412337662337664,
+        "semantic_anchor_score": -0.011753246753246738,
         "simple_shape_priority_bonus": 0.25
       },
       "node_count": 4,
@@ -45,7 +45,7 @@
           }
         ]
       },
-      "raster_error": 0.06006493506493504,
+      "raster_error": 0.06412337662337664,
       "reserved": {
         "bounds": [
           10,
@@ -72,7 +72,10 @@
     {
       "code": "palette_quantized",
       "level": "info",
-      "max_colors": 2
+      "max_colors": 2,
+      "palette": [
+        "#003366"
+      ]
     }
   ],
   "groups": [
@@ -98,19 +101,19 @@
     }
   ],
   "metrics": {
-    "anchor_quality_error_max": 0.060065,
-    "anchor_quality_error_mean": 0.060065,
+    "anchor_quality_error_max": 0.064123,
+    "anchor_quality_error_mean": 0.064123,
     "anchor_quality_metric_summary": {
       "rounded_rect_fill_error": {
         "count": 1,
-        "max": 0.060065,
-        "mean": 0.060065
+        "max": 0.064123,
+        "mean": 0.064123
       }
     },
     "anchor_scoring_summary": {
-      "semantic_anchor_score_max": -0.01987,
-      "semantic_anchor_score_mean": -0.01987,
-      "semantic_anchor_score_min": -0.01987,
+      "semantic_anchor_score_max": -0.011753,
+      "semantic_anchor_score_mean": -0.011753,
+      "semantic_anchor_score_min": -0.011753,
       "simple_shape_priority_bonus_mean": 0.25,
       "simple_shape_priority_bonus_total": 0.25
     },

@@ -15,6 +15,7 @@
       "layer": "generic_paths",
       "metrics": {
         "path_fit_max_error_px": 0.4497,
+        "path_hole_count": 0.0,
         "path_node_count": 7.0,
         "path_smoothness": 0.8734381704463309,
         "semantic_anchor_score": 0.91,
