@@ -529,6 +529,9 @@ Implemented so far:
   combines them with geometric feature tokens, runs scaled dot-product
   self-attention layers, and trains a classifier head on the pooled encoder
   embedding.
+- `mlx_token_transformer_v1` now records a learned projection calibration over
+  encoder dimensions, so token embeddings are no longer purely deterministic
+  before classifier-head training.
 - runtime classifier loading prefers valid `mlx_token_transformer_v1` logits
   when crop tokens are available, then falls back through feature/raster fusion,
   raster-token mixer, feature head, and centroid fallback.
@@ -543,9 +546,9 @@ Implemented so far:
 
 Remaining:
 
-- move the deterministic encoder projection inside `mlx_token_transformer_v1`
-  to end-to-end learned MLX attention/projection weights once local MLX
-  execution is available in the target environment.
+- replace the current learned projection calibration with full end-to-end MLX
+  attention/projection backpropagation once local MLX execution is available in
+  the target environment.
 
 ## M8: Self-Learning Loop
 
@@ -633,8 +636,9 @@ Implemented so far:
 
 Remaining:
 
-- add true end-to-end MLX fine-tuning of token/projection weights once the
-  local MLX runtime path moves beyond serialized encoder-head training.
+- add true end-to-end MLX fine-tuning of attention/projection weights once the
+  local MLX runtime path moves beyond serialized encoder-head training and
+  projection calibration.
 
 ## M9: Differentiable and Local Refinement
 

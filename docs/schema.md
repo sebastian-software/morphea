@@ -742,10 +742,12 @@ encoder path. Its `tokenization` section records feature tokens, crop size,
 raster grid size, raster token count, and channel order. Its `encoder` section
 records hidden dimension, head count, layer count, projection policy, attention
 type, and pooling policy. Its classifier head stores weights, bias,
-normalization, and loss history over the pooled encoder embedding. The fallback
-centroids keep the artifact usable as a deterministic `--classifier-model`
-prior when MLX is not installed or while end-to-end learned MLX attention
-weights are still being expanded.
+normalization, and loss history over the pooled encoder embedding.
+`projection_calibration` records training-derived per-dimension scale and bias
+values for the token-transformer projection path, plus strategy and training
+example count. The fallback centroids keep the artifact usable as a
+deterministic `--classifier-model` prior when MLX is not installed or while
+end-to-end learned MLX attention weights are still being expanded.
 When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
 uses the serialized MLX feature-head weights for prediction; malformed or
 unavailable MLX artifacts degrade to `fallback_centroids`.
@@ -756,8 +758,9 @@ attention logits with feature-head logits. If a valid
 learned feature/raster logits when crop tokens are available and falls back to
 the separate feature-head plus raster-token mixer otherwise.
 If a valid `mlx_token_transformer_v1` block is present, runtime prediction uses
-that token-encoder head first, then falls back through feature/raster fusion,
-raster-token mixer, feature head, and finally centroid fallback.
+that token-encoder head first, including projection calibration when present,
+then falls back through feature/raster fusion, raster-token mixer, feature head,
+and finally centroid fallback.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. The default
