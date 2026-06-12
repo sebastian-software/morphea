@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol
@@ -99,6 +100,8 @@ class MlxSamSegmenter:
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
         status = mlx_sam_runtime_status(self)
+        if status["status"] == "json_adapter_available":
+            return _json_adapter_proposals(self, image_path)
         details = []
         details.append(f"status={status['status']}")
         if self.model_path is not None:
@@ -119,12 +122,25 @@ def is_mlx_runtime_available() -> bool:
 def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
     package_available = is_mlx_runtime_available()
     model_configured = segmenter.model_path is not None
-    model_exists = (
-        Path(segmenter.model_path).expanduser().exists()
+    model_path = (
+        Path(segmenter.model_path).expanduser()
         if segmenter.model_path is not None
+        else None
+    )
+    model_exists = (
+        model_path.exists()
+        if model_path is not None
         else False
     )
-    if not package_available:
+    json_adapter_available = (
+        model_path is not None
+        and model_exists
+        and model_path.suffix.lower() == ".json"
+    )
+    if json_adapter_available:
+        status = "json_adapter_available"
+        reason = None
+    elif not package_available:
         status = "not_installed"
         reason = "MLX runtime package is not installed"
     elif not model_configured:
@@ -138,13 +154,14 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         reason = "MLX SAM proposal adapter is not wired yet"
     return {
         "source": segmenter.source,
-        "backend_available": False,
+        "backend_available": json_adapter_available,
         "status": status,
         "reason": reason,
         "package_available": package_available,
         "model_configured": model_configured,
         "model_exists": model_exists,
         "model_path": segmenter.model_path,
+        "adapter": "json_proposals" if json_adapter_available else None,
         "score_threshold": segmenter.score_threshold,
         "max_masks": segmenter.max_masks,
         "timeout_seconds": segmenter.timeout_seconds,
@@ -386,6 +403,89 @@ def _proposal_from_component(
         status=status,
         downstream_status=downstream_status,
         rejection_reason=rejection_reason,
+        **anchor_summary,
+    )
+
+
+def _json_adapter_proposals(
+    segmenter: MlxSamSegmenter,
+    image_path: str | Path,
+) -> tuple[SegmentProposal, ...]:
+    model_path = Path(str(segmenter.model_path)).expanduser()
+    payload = json.loads(model_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("MLX SAM JSON adapter model must be a JSON object")
+    proposals = payload.get("proposals", [])
+    if not isinstance(proposals, list):
+        raise ValueError("MLX SAM JSON adapter requires a proposals list")
+
+    accepted: list[SegmentProposal] = []
+    for item in proposals:
+        if not isinstance(item, dict):
+            continue
+        confidence = float(item.get("confidence", item.get("score", 1.0)))
+        if confidence < segmenter.score_threshold:
+            continue
+        bounds = _json_adapter_bounds(item)
+        if bounds is None:
+            continue
+        color = item.get("color")
+        accepted.append(
+            _proposal_from_adapter_bounds(
+                len(accepted),
+                segmenter.source,
+                str(color) if isinstance(color, str) else None,
+                bounds,
+                confidence=confidence,
+            )
+        )
+        if segmenter.max_masks is not None and len(accepted) >= segmenter.max_masks:
+            break
+    return tuple(accepted)
+
+
+def _json_adapter_bounds(item: dict[str, object]) -> tuple[int, int, int, int] | None:
+    bounds = item.get("bounds")
+    if isinstance(bounds, list) and len(bounds) == 4:
+        left, top, right, bottom = (int(float(value)) for value in bounds)
+    else:
+        bbox = item.get("bbox")
+        if not isinstance(bbox, list) or len(bbox) != 4:
+            return None
+        left = int(float(bbox[0]))
+        top = int(float(bbox[1]))
+        right = left + int(float(bbox[2])) - 1
+        bottom = top + int(float(bbox[3])) - 1
+    if right < left or bottom < top:
+        return None
+    return left, top, right, bottom
+
+
+def _proposal_from_adapter_bounds(
+    index: int,
+    source: str,
+    color: str | None,
+    bounds: tuple[int, int, int, int],
+    *,
+    confidence: float,
+) -> SegmentProposal:
+    left, top, right, bottom = bounds
+    pixels = {
+        (x, y)
+        for y in range(top, bottom + 1)
+        for x in range(left, right + 1)
+    }
+    component = MaskComponent(frozenset(pixels), bounds_hint=bounds)
+    anchor_summary = _primitive_anchor_summary(component)
+    return SegmentProposal(
+        id=f"{source}-{index:04d}",
+        source=source,
+        confidence=confidence,
+        color=color,
+        bounds=bounds,
+        area=component.area,
+        status="proposed",
+        downstream_status="pending",
         **anchor_summary,
     )
 

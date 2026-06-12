@@ -486,6 +486,10 @@ Implemented so far:
 - MLX SAM status reporting distinguishes missing MLX package, missing model
   configuration, missing model file, and adapter-pending states without
   allowing AI proposals to bypass the geometry pipeline.
+- `MlxSamSegmenter` can consume local JSON proposal payloads through the same
+  segment proposal schema, score threshold, mask limit, and downstream
+  geometry gate; this gives M6 an operational adapter contract before live SAM
+  weights are wired.
 - `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed
 

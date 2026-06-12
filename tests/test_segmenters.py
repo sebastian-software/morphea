@@ -247,6 +247,61 @@ class SegmenterTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "status=adapter_pending"):
                     MlxSamSegmenter(model_path=str(model_path)).propose("input.png")
 
+    def test_mlx_sam_json_adapter_reports_available_without_mlx_package(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam-proposals.json"
+            model_path.write_text(json.dumps({"proposals": []}), encoding="utf-8")
+
+            with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+                status = mlx_sam_runtime_status(
+                    MlxSamSegmenter(model_path=str(model_path))
+                )
+
+            self.assertEqual(status["status"], "json_adapter_available")
+            self.assertTrue(status["backend_available"])
+            self.assertEqual(status["adapter"], "json_proposals")
+            self.assertFalse(status["package_available"])
+
+    def test_mlx_sam_json_adapter_filters_and_limits_proposals(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam-proposals.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "proposals": [
+                            {
+                                "bounds": [1, 1, 6, 6],
+                                "confidence": 0.95,
+                                "color": "#003366",
+                            },
+                            {
+                                "bounds": [8, 1, 11, 4],
+                                "confidence": 0.50,
+                            },
+                            {
+                                "bbox": [12, 1, 4, 4],
+                                "confidence": 0.90,
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            segmenter = MlxSamSegmenter(
+                model_path=str(model_path),
+                score_threshold=0.75,
+                max_masks=1,
+            )
+
+            proposals = segmenter.propose("input.png")
+
+            self.assertEqual(len(proposals), 1)
+            self.assertEqual(proposals[0].source, "mlx_sam")
+            self.assertEqual(proposals[0].confidence, 0.95)
+            self.assertEqual(proposals[0].bounds, (1, 1, 6, 6))
+            self.assertEqual(proposals[0].anchor_kind, "rect")
+            self.assertTrue(proposals[0].anchor_reserved)
+
     def test_mlx_sam_segmenter_reports_runtime_config_in_error(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):
@@ -460,6 +515,61 @@ class SegmenterTests(unittest.TestCase):
             report = markdown.read_text(encoding="utf-8")
             self.assertIn("- Decision reason counts: `geometry_gate_passed: 2`", report)
             self.assertIn("geometry_gate_passed", report)
+
+    def test_segment_cli_runs_mlx_sam_json_adapter_with_geometry_gate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_two_color_image()
+            model_path = root / "sam-proposals.json"
+            output = root / "segments.json"
+            markdown = root / "segments.md"
+            config = root / "segment-config.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "proposals": [
+                            {
+                                "bounds": [1, 1, 6, 6],
+                                "confidence": 0.92,
+                                "color": "#003366",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "input": str(image_path),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                        "segmenter": "mlx_sam",
+                        "mlx_model_path": str(model_path),
+                        "geometry_gate": True,
+                        "require_reserved_anchor": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
+                with redirect_stdout(StringIO()):
+                    main(["segment", "--config", str(config)])
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["backend"]["status"], "json_adapter_available")
+            self.assertEqual(manifest["backend"]["adapter"], "json_proposals")
+            self.assertEqual(manifest["proposal_count"], 1)
+            self.assertEqual(
+                manifest["summary"]["downstream_status_counts"]["accepted"],
+                1,
+            )
+            self.assertEqual(
+                manifest["proposals"][0]["downstream_decision_reason"],
+                "geometry_gate_passed",
+            )
+            self.assertIn("json_adapter_available", markdown.read_text(encoding="utf-8"))
 
     def test_segment_cli_writes_tile_grid_proposal_groups(self):
         with tempfile.TemporaryDirectory() as temp_dir:

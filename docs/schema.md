@@ -392,10 +392,21 @@ Proposal group fields:
   `grid_occupancy_ratio`, row/column spacing errors, and mean tile dimensions
 
 `backend` records `source`, `backend_available`, `status`, and an optional
-`reason`. MLX SAM status distinguishes `not_installed`, `not_configured`,
-`model_missing`, and `adapter_pending`; it also records `package_available`,
-`model_configured`, `model_exists`, and the runtime knobs. It will write the
-same proposal schema once the local model runtime is installed and wired.
+`reason`. MLX SAM status distinguishes `json_adapter_available`,
+`not_installed`, `not_configured`, `model_missing`, and `adapter_pending`; it
+also records `package_available`, `model_configured`, `model_exists`, adapter
+name, and the runtime knobs. The JSON adapter is a local bridge for checked-in
+or generated proposal payloads shaped as:
+
+- `proposals`: list of proposal objects
+- each proposal may contain `bounds` as `[left, top, right, bottom]` or `bbox`
+  as `[left, top, width, height]`
+- optional `confidence`/`score`
+- optional `color`
+
+JSON adapter proposals use the same proposal schema and downstream geometry
+gate as future live SAM proposals. Non-JSON SAM model paths remain
+`adapter_pending` until the real local model runtime is wired.
 
 ## Runtime Status Report v1
 
