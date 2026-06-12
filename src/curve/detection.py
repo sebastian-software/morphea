@@ -406,13 +406,17 @@ def _stroke_candidate(
         stroke_width=stroke_width,
     )
     coverage = min(component.area / (length * stroke_width), 1.0)
-    width_samples = (float(stroke_width),)
+    width_samples = _stroke_width_samples_along_centerline(
+        component,
+        centerline,
+        fallback_width=stroke_width,
+    )
     cap_style = "butt" if coverage >= 0.85 else "round"
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=abs(1.0 - coverage) * 0.1,
         node_count=len(centerline),
-        parameter_count=1 + len(centerline) * 2,
+        parameter_count=len(width_samples) + len(centerline) * 2,
         stroke=StrokeAnchor(
             centerline=centerline,
             width_samples=width_samples,
@@ -440,6 +444,68 @@ def _stroke_polyline_centerline(
     if deviation < max(0.75, stroke_width * 0.35):
         return straight_centerline
     return (start, control, end)
+
+
+def _stroke_width_samples_along_centerline(
+    component: MaskComponent,
+    centerline: tuple[Point, ...],
+    *,
+    fallback_width: float,
+) -> tuple[float, ...]:
+    if len(centerline) <= 2:
+        return (float(fallback_width),)
+    return tuple(
+        _local_stroke_width_sample(
+            component,
+            centerline,
+            index,
+            fallback_width=fallback_width,
+        )
+        for index in range(len(centerline))
+    )
+
+
+def _local_stroke_width_sample(
+    component: MaskComponent,
+    centerline: tuple[Point, ...],
+    index: int,
+    *,
+    fallback_width: float,
+) -> float:
+    point = centerline[index]
+    if index == 0:
+        tangent_end = centerline[1]
+        tangent_x = tangent_end.x - point.x
+        tangent_y = tangent_end.y - point.y
+    elif index == len(centerline) - 1:
+        tangent_start = centerline[index - 1]
+        tangent_x = point.x - tangent_start.x
+        tangent_y = point.y - tangent_start.y
+    else:
+        tangent_start = centerline[index - 1]
+        tangent_end = centerline[index + 1]
+        tangent_x = tangent_end.x - tangent_start.x
+        tangent_y = tangent_end.y - tangent_start.y
+
+    tangent_length = hypot(tangent_x, tangent_y)
+    if tangent_length <= 0:
+        return float(fallback_width)
+    tangent_x /= tangent_length
+    tangent_y /= tangent_length
+    normal_x = -tangent_y
+    normal_y = tangent_x
+    window = max(float(fallback_width) * 1.5, 2.0)
+    distances = []
+    for x, y in component.pixels:
+        offset_x = x - point.x
+        offset_y = y - point.y
+        along = abs((offset_x * tangent_x) + (offset_y * tangent_y))
+        if along > window:
+            continue
+        distances.append(abs((offset_x * normal_x) + (offset_y * normal_y)))
+    if not distances:
+        return float(fallback_width)
+    return max(1.0, (max(distances) * 2.0) + 1.0)
 
 
 def _arc_candidate(
@@ -473,14 +539,20 @@ def _arc_candidate(
         1.0,
         round(component.area / max(start.distance_to(end), 1.0) * 0.75),
     )
+    centerline = (start, control, end)
+    width_samples = _stroke_width_samples_along_centerline(
+        component,
+        centerline,
+        fallback_width=stroke_width,
+    )
     return AnchorCandidate(
         kind=AnchorKind.ARC,
         raster_error=max(0.0, 0.12 - bow_ratio),
         node_count=3,
-        parameter_count=6,
+        parameter_count=len(width_samples) + len(centerline) * 2,
         stroke=StrokeAnchor(
-            centerline=(start, control, end),
-            width_samples=(float(stroke_width),),
+            centerline=centerline,
+            width_samples=width_samples,
             cap_style="round",
             join_style="round",
         ),

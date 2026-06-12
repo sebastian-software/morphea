@@ -6,6 +6,7 @@ from curve.detection import (
     AnchorThresholdConfig,
     _fit_circle_from_boundary,
     _stroke_polyline_centerline,
+    _stroke_width_samples_along_centerline,
     detect_primitive_anchors,
 )
 from curve.detection import detect_cutout_strokes
@@ -255,6 +256,34 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(centerline), 3)
         self.assertIn(centerline[1], {Point(2, 2), Point(3, 2)})
 
+    def test_curved_stroke_width_samples_follow_centerline_points(self):
+        component = MaskComponent(
+            pixels=frozenset(
+                {
+                    (0, 0),
+                    (1, 0),
+                    (2, 1),
+                    (2, 2),
+                    (2, 3),
+                    (3, 1),
+                    (3, 2),
+                    (3, 3),
+                    (4, 0),
+                    (5, 0),
+                }
+            ),
+        )
+
+        samples = _stroke_width_samples_along_centerline(
+            component,
+            (Point(0, 0), Point(2.5, 2), Point(5, 0)),
+            fallback_width=1.0,
+        )
+
+        self.assertEqual(len(samples), 3)
+        self.assertGreater(samples[1], samples[0])
+        self.assertGreater(samples[1], samples[2])
+
     def test_thin_curved_component_is_detected_as_arc(self):
         mask = BinaryMask.from_rows(
             (
@@ -270,6 +299,8 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertEqual(len(anchors), 1)
         self.assertEqual(anchors[0].kind, AnchorKind.ARC)
         self.assertEqual(len(anchors[0].stroke.centerline), 3)
+        self.assertEqual(len(anchors[0].stroke.width_samples), 3)
+        self.assertEqual(anchors[0].parameter_count, 9)
         self.assertIn("arc_bow_ratio", anchors[0].metrics)
 
     def test_filled_axis_aligned_block_is_detected_as_rect(self):
