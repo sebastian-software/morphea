@@ -291,6 +291,8 @@ Implemented so far:
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - deterministic manifest preview renderer for current primitive types
 - `curve report` can render Markdown or HTML from an existing manifest
+- sweep summaries include `semantic_rank` and a top-level `ranking` list using
+  semantic-first score ordering before raster error.
 - optional Markdown comparison reports for config sweeps
 
 ## M5: Synthetic Dataset Generator
