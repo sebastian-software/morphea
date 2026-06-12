@@ -133,6 +133,9 @@ Implemented so far:
   `connected_components` hint path during real-image profiling.
 - principal-axis fitting computes projection bounds in one streaming pass
   instead of allocating per-component projection lists.
+- temporary interior-gap scans avoid redundant seed-list allocation, and
+  enclosed-gap bound checks use component bounds instead of rescanning every
+  gap pixel.
 
 Remaining:
 

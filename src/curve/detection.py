@@ -1026,7 +1026,7 @@ def _interior_gap_components(
 
     host_pixels = component.pixels
     grid = bytearray(interior_width * interior_height)
-    seeds: list[int] = []
+    has_gap = False
     for local_y, y in enumerate(range(min_y + 1, max_y)):
         row_offset = local_y * interior_width
         for local_x, x in enumerate(range(min_x + 1, max_x)):
@@ -1034,10 +1034,12 @@ def _interior_gap_components(
                 continue
             index = row_offset + local_x
             grid[index] = 1
-            seeds.append(index)
+            has_gap = True
+    if not has_gap:
+        return ()
 
     components: list[MaskComponent] = []
-    for seed in seeds:
+    for seed in range(len(grid)):
         if not grid[seed]:
             continue
         grid[seed] = 0
@@ -1208,9 +1210,14 @@ def _touches_bounds(
     bounds: tuple[int, int, int, int],
 ) -> bool:
     min_x, min_y, max_x, max_y = bounds
-    return any(
-        x <= min_x or x >= max_x or y <= min_y or y >= max_y
-        for x, y in component.pixels
+    component_min_x, component_min_y, component_max_x, component_max_y = (
+        component.bounds
+    )
+    return (
+        component_min_x <= min_x
+        or component_max_x >= max_x
+        or component_min_y <= min_y
+        or component_max_y >= max_y
     )
 
 
