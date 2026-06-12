@@ -901,14 +901,17 @@ Written by `curve refine`.
 Recognized backends:
 
 - `local_metric`: active structure-preserving local optimizer
-- `differentiable` and `diffvg`: optional differentiable-renderer backend names
-  that currently fail with an explicit not-installed/not-configured error
+- `differentiable`: active built-in soft-raster gradient backend, currently
+  scoped to structure-preserving circle-radius refinement
+- `diffvg`: optional external differentiable-renderer backend name that fails
+  with an explicit not-installed/not-configured error until the adapter is
+  wired
 
 `available_refinement_backends()` also exposes per-backend `details`. Optional
-backend status distinguishes `not_installed` from `adapter_pending`, records
-`package_available`, and lists package candidates such as `pydiffvg`/`diffvg`.
-Even when a package is present, optional backends remain unavailable until a
-renderer adapter is wired.
+backend status for `diffvg` distinguishes `not_installed` from
+`adapter_pending`, records `package_available`, and lists package candidates
+such as `pydiffvg`/`diffvg`. Even when a package is present, `diffvg` remains
+unavailable until a renderer adapter is wired.
 
 Top-level `refinement` fields:
 
@@ -926,6 +929,11 @@ The local metric optimizer uses a weighted objective of raster L1 and raster
 edge error. Optimizer metadata stores initial/final L1, edge, and combined
 objective values so geometry changes can be judged against visual edge quality,
 not only average pixel color.
+The differentiable backend uses a soft circle rasterizer and analytic
+radius-gradient step for editable circle anchors. Its optimizer metadata
+records `renderer: soft_raster_circle`, soft objective deltas, optimized
+parameter kinds, timeout state, and the same hard raster L1/edge metrics used
+by gates and reports.
 
 `max_iterations` must be non-negative, `timeout_seconds` must be positive when
 set, and raster objective weights must be non-negative with at least one

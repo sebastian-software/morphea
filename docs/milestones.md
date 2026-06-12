@@ -683,6 +683,11 @@ Implemented so far:
 - recognized optional differentiable backend names (`differentiable`, `diffvg`)
   behind the same `curve refine --backend ...` interface, with an explicit
   not-installed/not-configured failure path until a renderer is wired
+- `curve refine --backend differentiable` now runs a built-in soft-raster
+  gradient backend for structure-preserving circle-radius refinement, including
+  renderer metadata and objective deltas.
+- `curve refine --backend diffvg` remains the optional external adapter path
+  with explicit not-installed/adapter-pending status until DiffVG is wired.
 - refinement backend status reports distinguish active local metric refinement,
   missing optional renderer packages, and adapter-pending optional renderer
   states without allowing structure-changing refinement to run implicitly.
@@ -694,8 +699,9 @@ Implemented so far:
 
 Remaining:
 
-- wire a real differentiable renderer behind the recognized optional backend
-  names.
+- extend the soft-raster differentiable backend beyond circle-radius
+  refinement and optionally wire DiffVG when it is practical in the target
+  local environment.
 
 ## M10: Curated Real-Image Suite
 
