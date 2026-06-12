@@ -72,6 +72,7 @@ from curve.mlx_classifier import (
     MLX_MODEL_TYPE,
     MlxClassifierTrainingConfig,
     is_mlx_available,
+    mlx_classifier_runtime_status,
     train_mlx_transformer_classifier,
 )
 from curve.segmenters import (
@@ -118,6 +119,7 @@ __all__ = [
     "MlxSamSegmenter",
     "MLX_MODEL_TYPE",
     "MlxClassifierTrainingConfig",
+    "mlx_classifier_runtime_status",
     "Point",
     "LOCAL_REFINEMENT_BACKEND",
     "OPTIONAL_DIFFERENTIABLE_BACKENDS",

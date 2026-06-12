@@ -35,6 +35,23 @@ def is_mlx_available() -> bool:
     return importlib.util.find_spec("mlx") is not None
 
 
+def mlx_classifier_runtime_status() -> dict[str, object]:
+    available = is_mlx_available()
+    return {
+        "backend": "mlx",
+        "backend_available": available,
+        "status": "available" if available else "not_installed",
+        "reason": (
+            None
+            if available
+            else "MLX primitive classifier runtime is not installed"
+        ),
+        "training_implementation": (
+            "metadata_hook" if available else "centroid_fallback"
+        ),
+    }
+
+
 def train_mlx_transformer_classifier(
     dataset_json: str | Path,
     *,
@@ -50,10 +67,12 @@ def train_mlx_transformer_classifier(
         raise ValueError(msg)
 
     fallback_centroids = centroids_from_examples(train_examples)
-    mlx_available = is_mlx_available()
+    runtime = mlx_classifier_runtime_status()
+    mlx_available = bool(runtime["backend_available"])
     if not mlx_available and not training_config.allow_unavailable:
         msg = (
-            "MLX primitive classifier backend is not installed/configured; "
+            "MLX primitive classifier backend is not installed/configured "
+            f"(status={runtime['status']}); "
             "rerun with allow_unavailable to write a fallback artifact"
         )
         raise RuntimeError(msg)
@@ -63,7 +82,10 @@ def train_mlx_transformer_classifier(
         "model_type": MLX_MODEL_TYPE,
         "backend": "mlx",
         "backend_available": mlx_available,
-        "status": "trained" if mlx_available else "unavailable",
+        "status": "training_hook_pending" if mlx_available else "unavailable",
+        "runtime": runtime,
+        "reason": runtime["reason"],
+        "training_implementation": runtime["training_implementation"],
         "feature_names": list(FEATURE_NAMES),
         "classes": labels,
         "train_examples": len(train_examples),

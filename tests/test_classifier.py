@@ -23,6 +23,7 @@ from curve.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
 from curve.mlx_classifier import (
     MLX_MODEL_TYPE,
     MlxClassifierTrainingConfig,
+    mlx_classifier_runtime_status,
     train_mlx_transformer_classifier,
 )
 
@@ -183,11 +184,24 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
 
             with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
-                with self.assertRaisesRegex(RuntimeError, "MLX primitive classifier"):
+                with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
                     train_mlx_transformer_classifier(
                         Path(temp_dir) / "dataset.json",
                         output=Path(temp_dir) / "mlx-model.json",
                     )
+
+    def test_mlx_classifier_runtime_status_reports_package_state(self):
+        with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
+            unavailable = mlx_classifier_runtime_status()
+        with patch("curve.mlx_classifier.is_mlx_available", return_value=True):
+            available = mlx_classifier_runtime_status()
+
+        self.assertEqual(unavailable["status"], "not_installed")
+        self.assertFalse(unavailable["backend_available"])
+        self.assertEqual(unavailable["training_implementation"], "centroid_fallback")
+        self.assertEqual(available["status"], "available")
+        self.assertTrue(available["backend_available"])
+        self.assertEqual(available["training_implementation"], "metadata_hook")
 
     def test_train_mlx_can_write_unavailable_fallback_artifact(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -218,6 +232,8 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertTrue(model_path.exists())
             self.assertEqual(model["model_type"], MLX_MODEL_TYPE)
             self.assertEqual(model["status"], "unavailable")
+            self.assertEqual(model["runtime"]["status"], "not_installed")
+            self.assertEqual(model["training_implementation"], "centroid_fallback")
             self.assertEqual(model["training_config"]["epochs"], 3)
             self.assertIn("circle", model["fallback_centroids"])
             self.assertIn("circle", centroids)
@@ -260,6 +276,37 @@ class PrimitiveClassifierTests(unittest.TestCase):
             model = json.loads(model_path.read_text(encoding="utf-8"))
             self.assertEqual(model["model_type"], MLX_MODEL_TYPE)
             self.assertEqual(model["training_config"]["learning_rate"], 0.002)
+
+    def test_train_mlx_records_available_runtime_as_pending_hook(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=25,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            model_path = Path(temp_dir) / "mlx-model.json"
+
+            with (
+                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch(
+                    "curve.mlx_classifier._train_mlx_weights",
+                    return_value={"weight_format": "mlx", "parameter_count": 0},
+                ),
+            ):
+                model = train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=model_path,
+                    config=MlxClassifierTrainingConfig(epochs=1),
+                )
+
+            self.assertEqual(model["status"], "training_hook_pending")
+            self.assertEqual(model["runtime"]["status"], "available")
+            self.assertEqual(model["training_implementation"], "metadata_hook")
+            self.assertEqual(model["mlx_training"]["weight_format"], "mlx")
 
     def test_classifier_ranking_compares_heuristic_and_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:
