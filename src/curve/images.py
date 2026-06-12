@@ -390,6 +390,7 @@ def _bounded_connected_components(
         sum_x = 0
         sum_y = 0
         row_spans: dict[int, tuple[int, int]] = {}
+        boundary_indexes: list[int] = []
         store_pixels = True
 
         while queue:
@@ -413,6 +414,8 @@ def _bounded_connected_components(
             max_y = max(max_y, y)
             if store_pixels:
                 pixel_indexes.append(index)
+                if _is_boundary_index(mask.pixels, x, y):
+                    boundary_indexes.append(index)
                 if y not in row_spans:
                     row_spans[y] = (x, x)
                 else:
@@ -421,6 +424,7 @@ def _bounded_connected_components(
             if max_component_area is not None and area > max_component_area:
                 store_pixels = False
                 pixel_indexes.clear()
+                boundary_indexes.clear()
                 row_spans.clear()
 
             _enqueue_neighbors8(
@@ -454,6 +458,10 @@ def _bounded_connected_components(
                 ),
                 bounds_hint=(min_x, min_y, max_x, max_y),
                 centroid_hint=Point(sum_x / area, sum_y / area),
+                boundary_pixels_hint=frozenset(
+                    _pixel_from_index(index, mask.width)
+                    for index in boundary_indexes
+                ),
                 row_spans_hint=tuple(
                     (y, *row_spans[y]) for y in sorted(row_spans)
                 ),
@@ -463,6 +471,15 @@ def _bounded_connected_components(
     return ComponentScanResult(
         components=_sort_components(components),
         diagnostics=tuple(diagnostics),
+    )
+
+
+def _is_boundary_index(pixels: frozenset[tuple[int, int]], x: int, y: int) -> bool:
+    return (
+        (x - 1, y) not in pixels
+        or (x + 1, y) not in pixels
+        or (x, y - 1) not in pixels
+        or (x, y + 1) not in pixels
     )
 
 

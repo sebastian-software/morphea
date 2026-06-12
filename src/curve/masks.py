@@ -153,6 +153,7 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
         sum_x = 0
         sum_y = 0
         row_spans: dict[int, tuple[int, int]] = {}
+        boundary_pixels: list[Pixel] = []
         queue: deque[int] = deque([seed])
         while queue:
             index = queue.popleft()
@@ -170,6 +171,8 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
             else:
                 row_min_x, row_max_x = row_spans[y]
                 row_spans[y] = (min(row_min_x, x), max(row_max_x, x))
+            if _is_boundary_pixel(mask.pixels, x, y):
+                boundary_pixels.append((x, y))
             _enqueue_neighbors8(
                 grid,
                 queue,
@@ -185,6 +188,7 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
                     frozenset(pixels),
                     bounds_hint=(min_x, min_y, max_x, max_y),
                     centroid_hint=Point(sum_x / area, sum_y / area),
+                    boundary_pixels_hint=frozenset(boundary_pixels),
                     row_spans_hint=tuple(
                         (y, *row_spans[y]) for y in sorted(row_spans)
                     ),
@@ -192,6 +196,15 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
             )
 
     return tuple(sorted(components, key=lambda component: component.area, reverse=True))
+
+
+def _is_boundary_pixel(pixels: frozenset[Pixel], x: int, y: int) -> bool:
+    return (
+        (x - 1, y) not in pixels
+        or (x + 1, y) not in pixels
+        or (x, y - 1) not in pixels
+        or (x, y + 1) not in pixels
+    )
 
 
 def _indexed_mask(mask: BinaryMask) -> tuple[bytearray, tuple[int, ...]]:

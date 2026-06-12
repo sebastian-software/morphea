@@ -20,6 +20,11 @@ class MaskComponentHintTests(unittest.TestCase):
         component = components[0]
         self.assertEqual(component.bounds_hint, (0, 0, 2, 1))
         self.assertEqual(component.row_spans_hint, ((0, 0, 1), (1, 1, 2)))
+        self.assertEqual(
+            component.boundary_pixels_hint,
+            frozenset({(0, 0), (1, 0), (1, 1), (2, 1)}),
+        )
+        self.assertIs(component.boundary_pixels, component.boundary_pixels_hint)
         self.assertAlmostEqual(component.centroid.x, 1.0)
         self.assertAlmostEqual(component.centroid.y, 0.5)
 
@@ -45,6 +50,11 @@ class MaskComponentHintTests(unittest.TestCase):
         largest = result.components[0]
         self.assertEqual(largest.bounds_hint, (0, 0, 1, 1))
         self.assertEqual(largest.row_spans_hint, ((0, 0, 1), (1, 1, 1)))
+        self.assertEqual(
+            largest.boundary_pixels_hint,
+            frozenset({(0, 0), (1, 0), (1, 1)}),
+        )
+        self.assertIs(largest.boundary_pixels, largest.boundary_pixels_hint)
         self.assertAlmostEqual(largest.centroid.x, 2 / 3)
         self.assertAlmostEqual(largest.centroid.y, 1 / 3)
 
