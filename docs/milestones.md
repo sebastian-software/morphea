@@ -957,9 +957,13 @@ Implemented so far:
 - `curve compare-git-snapshots before_ref after_ref --path snapshot.json` for
   comparing the same checked-in snapshot file across git refs without changing
   the working tree
+- `curve compare-git-snapshots --config compare-git-snapshots.json` for
+  repeatable git-ref snapshot comparisons
 - `curve snapshot-git-ref ref --suite suite.json -o snapshot.json` for
   generating curated snapshots from a detached temporary worktree without
   checking out the current working tree
+- `curve snapshot-git-ref --config snapshot-git-ref.json` for repeatable
+  isolated git snapshot generation
 - `curve sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

@@ -1043,9 +1043,41 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Git Snapshot Comparison Config v1
+
+Read by `curve compare-git-snapshots --config`.
+
+Supported fields:
+
+- `before_ref`
+- `after_ref`
+- `path`: checked-in snapshot path to read from both refs
+- `output`
+- `markdown`: optional Markdown comparison path
+- `repo`: optional repository root, defaults to `.`
+
+CLI arguments override values loaded from the config file.
+
 `curve compare-git-snapshots before_ref after_ref --path snapshot.json` reads
 the same checked-in snapshot file from two git refs with `git show` and does
 not modify the current working tree.
+
+## Snapshot Git Ref Config v1
+
+Read by `curve snapshot-git-ref --config`.
+
+Supported fields:
+
+- `ref`
+- `suite`
+- `output`
+- `report`: optional curated-check report path
+- `output_dir`: optional curated-check output directory
+- `repo`: optional repository root, defaults to `.`
+- `timeout_seconds`: optional curated-check timeout, defaults to `120`
+- `run`: optional boolean, defaults to `true`
+
+CLI arguments override values loaded from the config file.
 
 `curve snapshot-git-ref REF --suite suite.json -o snapshot.json` creates a
 temporary detached git worktree for `REF`, runs `curve curated-check` inside

@@ -145,6 +145,24 @@ SEGMENT_CONFIG_DEFAULTS = {
 SEGMENT_ARTIFACT_CONFIG_KEYS = {"input", "output", "markdown"}
 COMPARE_SNAPSHOTS_CONFIG_KEYS = {"before", "after", "output", "markdown"}
 COMPARE_SEGMENTS_CONFIG_KEYS = {"before", "after", "output", "markdown"}
+COMPARE_GIT_SNAPSHOTS_CONFIG_KEYS = {
+    "before_ref",
+    "after_ref",
+    "path",
+    "output",
+    "markdown",
+    "repo",
+}
+SNAPSHOT_GIT_REF_CONFIG_KEYS = {
+    "ref",
+    "suite",
+    "output",
+    "report",
+    "output_dir",
+    "repo",
+    "timeout_seconds",
+    "run",
+}
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
     "pseudo_dataset",
@@ -661,35 +679,36 @@ def main(argv: list[str] | None = None) -> None:
         "compare-git-snapshots",
         help="Compare the same saved snapshot file across two git refs.",
     )
-    compare_git_snapshots_parser.add_argument("before_ref")
-    compare_git_snapshots_parser.add_argument("after_ref")
-    compare_git_snapshots_parser.add_argument("--path", type=Path, required=True)
+    compare_git_snapshots_parser.add_argument("before_ref", nargs="?")
+    compare_git_snapshots_parser.add_argument("after_ref", nargs="?")
+    compare_git_snapshots_parser.add_argument("--path", type=Path)
     compare_git_snapshots_parser.add_argument(
         "-o",
         "--output",
         type=Path,
-        required=True,
     )
     compare_git_snapshots_parser.add_argument("--markdown", type=Path)
-    compare_git_snapshots_parser.add_argument("--repo", type=Path, default=Path("."))
+    compare_git_snapshots_parser.add_argument("--repo", type=Path)
+    compare_git_snapshots_parser.add_argument("--config", type=Path)
 
     snapshot_git_ref = subcommands.add_parser(
         "snapshot-git-ref",
         help="Generate a curated snapshot for a git ref in an isolated worktree.",
     )
-    snapshot_git_ref.add_argument("ref")
-    snapshot_git_ref.add_argument("--suite", type=Path, required=True)
-    snapshot_git_ref.add_argument("-o", "--output", type=Path, required=True)
+    snapshot_git_ref.add_argument("ref", nargs="?")
+    snapshot_git_ref.add_argument("--suite", type=Path)
+    snapshot_git_ref.add_argument("-o", "--output", type=Path)
     snapshot_git_ref.add_argument("--report", type=Path)
     snapshot_git_ref.add_argument("--output-dir", type=Path)
-    snapshot_git_ref.add_argument("--repo", type=Path, default=Path("."))
-    snapshot_git_ref.add_argument("--timeout-seconds", type=float, default=120.0)
+    snapshot_git_ref.add_argument("--repo", type=Path)
+    snapshot_git_ref.add_argument("--timeout-seconds", type=float)
+    snapshot_git_ref.add_argument("--run", dest="run", action="store_true", default=None)
     snapshot_git_ref.add_argument(
         "--no-run",
         dest="run",
         action="store_false",
-        default=True,
     )
+    snapshot_git_ref.add_argument("--config", type=Path)
 
     refine = subcommands.add_parser(
         "refine",
@@ -1162,27 +1181,29 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "compare-git-snapshots":
+        compare_config = _resolved_compare_git_snapshots_config(args)
         result = compare_git_snapshots(
-            args.before_ref,
-            args.after_ref,
-            snapshot_path=args.path,
-            output=args.output,
-            markdown=args.markdown,
-            repo=args.repo,
+            compare_config["before_ref"],
+            compare_config["after_ref"],
+            snapshot_path=compare_config["path"],
+            output=compare_config["output"],
+            markdown=compare_config.get("markdown"),
+            repo=compare_config["repo"],
         )
         print(f"compared {result['item_count']} git snapshot items")
         return
 
     if args.command == "snapshot-git-ref":
+        snapshot_config = _resolved_snapshot_git_ref_config(args)
         result = generate_git_curated_snapshot(
-            args.ref,
-            suite=args.suite,
-            output=args.output,
-            report=args.report,
-            output_dir=args.output_dir,
-            repo=args.repo,
-            run=args.run,
-            timeout_seconds=args.timeout_seconds,
+            snapshot_config["ref"],
+            suite=snapshot_config["suite"],
+            output=snapshot_config["output"],
+            report=snapshot_config.get("report"),
+            output_dir=snapshot_config.get("output_dir"),
+            repo=snapshot_config["repo"],
+            run=bool(snapshot_config["run"]),
+            timeout_seconds=float(snapshot_config["timeout_seconds"]),
         )
         print(
             f"generated git snapshot for {result['git']['ref']} with "
@@ -1733,6 +1754,105 @@ def _resolved_compare_segments_config(args: argparse.Namespace) -> dict[str, Pat
     if args.markdown is not None:
         config["markdown"] = args.markdown
     _require_config_paths(config, ("before", "after", "output"), "compare-segments")
+    return config
+
+
+def _resolved_compare_git_snapshots_config(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    config = _load_compare_git_snapshots_config(args.config)
+    config.setdefault("repo", Path("."))
+    if args.before_ref is not None:
+        config["before_ref"] = args.before_ref
+    if args.after_ref is not None:
+        config["after_ref"] = args.after_ref
+    if args.path is not None:
+        config["path"] = args.path
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    if args.repo is not None:
+        config["repo"] = args.repo
+    _require_config_paths(
+        config,
+        ("before_ref", "after_ref", "path", "output", "repo"),
+        "compare-git-snapshots",
+    )
+    for key in ("path", "output", "markdown", "repo"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    config["before_ref"] = str(config["before_ref"])
+    config["after_ref"] = str(config["after_ref"])
+    return config
+
+
+def _resolved_snapshot_git_ref_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_snapshot_git_ref_config(args.config)
+    config.setdefault("repo", Path("."))
+    config.setdefault("timeout_seconds", 120.0)
+    config.setdefault("run", True)
+    if args.ref is not None:
+        config["ref"] = args.ref
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.output is not None:
+        config["output"] = args.output
+    if args.report is not None:
+        config["report"] = args.report
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.repo is not None:
+        config["repo"] = args.repo
+    if args.timeout_seconds is not None:
+        config["timeout_seconds"] = args.timeout_seconds
+    if args.run is not None:
+        config["run"] = args.run
+    _require_config_paths(
+        config,
+        ("ref", "suite", "output", "repo"),
+        "snapshot-git-ref",
+    )
+    for key in ("suite", "output", "report", "output_dir", "repo"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    config["ref"] = str(config["ref"])
+    config["timeout_seconds"] = float(config["timeout_seconds"])
+    config["run"] = bool(config["run"])
+    return config
+
+
+def _load_compare_git_snapshots_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("compare-git-snapshots config must be a JSON object")
+    unknown = sorted(set(loaded) - COMPARE_GIT_SNAPSHOTS_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported compare-git-snapshots config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("path", "output", "markdown", "repo"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_snapshot_git_ref_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("snapshot-git-ref config must be a JSON object")
+    unknown = sorted(set(loaded) - SNAPSHOT_GIT_REF_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported snapshot-git-ref config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("suite", "output", "report", "output_dir", "repo"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
     return config
 
 

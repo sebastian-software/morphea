@@ -671,6 +671,68 @@ class SnapshotComparisonTests(unittest.TestCase):
                 "docs/real-images/baselines/current-curated-snapshot.json",
             )
 
+    def test_compare_git_snapshots_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config = root / "compare-git-snapshots.json"
+            output = root / "git-comparison.json"
+            markdown = root / "git-comparison.md"
+            config.write_text(
+                json.dumps(
+                    {
+                        "before_ref": "HEAD",
+                        "after_ref": "HEAD",
+                        "path": "docs/real-images/baselines/current-curated-snapshot.json",
+                        "output": str(output),
+                        "markdown": str(markdown),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["compare-git-snapshots", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["git"]["before_ref"], "HEAD")
+            self.assertEqual(
+                result["git"]["snapshot_path"],
+                "docs/real-images/baselines/current-curated-snapshot.json",
+            )
+            self.assertTrue(markdown.exists())
+
+    def test_compare_git_snapshots_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config = root / "compare-git-snapshots.json"
+            config_output = root / "config-output.json"
+            output = root / "cli-output.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "before_ref": "HEAD",
+                        "after_ref": "HEAD",
+                        "path": "docs/real-images/baselines/current-curated-snapshot.json",
+                        "output": str(config_output),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "compare-git-snapshots",
+                        "--config",
+                        str(config),
+                        "-o",
+                        str(output),
+                    ]
+                )
+
+            self.assertTrue(output.exists())
+            self.assertFalse(config_output.exists())
+
     def test_generate_git_curated_snapshot_uses_isolated_worktree(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -780,6 +842,102 @@ class SnapshotComparisonTests(unittest.TestCase):
             generate.assert_called_once()
             _, kwargs = generate.call_args
             self.assertEqual(kwargs["suite"], Path("docs/real-images/suite.json"))
+            self.assertEqual(kwargs["output"], output)
+            self.assertEqual(kwargs["timeout_seconds"], 7)
+            self.assertFalse(kwargs["run"])
+
+    def test_snapshot_git_ref_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config = root / "snapshot-git-ref.json"
+            suite = root / "suite.json"
+            output = root / "snapshot.json"
+            report = root / "report.json"
+            output_dir = root / "runs"
+            config.write_text(
+                json.dumps(
+                    {
+                        "ref": "HEAD",
+                        "suite": str(suite),
+                        "output": str(output),
+                        "report": str(report),
+                        "output_dir": str(output_dir),
+                        "repo": ".",
+                        "timeout_seconds": 9,
+                        "run": False,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("curve.cli.generate_git_curated_snapshot") as generate:
+                generate.return_value = {
+                    "git": {"ref": "HEAD"},
+                    "case_count": 2,
+                    "snapshot": str(output),
+                }
+                with redirect_stdout(StringIO()):
+                    main(["snapshot-git-ref", "--config", str(config)])
+
+            generate.assert_called_once()
+            args, kwargs = generate.call_args
+            self.assertEqual(args, ("HEAD",))
+            self.assertEqual(kwargs["suite"], suite)
+            self.assertEqual(kwargs["output"], output)
+            self.assertEqual(kwargs["report"], report)
+            self.assertEqual(kwargs["output_dir"], output_dir)
+            self.assertEqual(kwargs["repo"], Path("."))
+            self.assertEqual(kwargs["timeout_seconds"], 9)
+            self.assertFalse(kwargs["run"])
+
+    def test_snapshot_git_ref_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config = root / "snapshot-git-ref.json"
+            config_suite = root / "config-suite.json"
+            suite = root / "cli-suite.json"
+            config_output = root / "config-snapshot.json"
+            output = root / "cli-snapshot.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "ref": "CONFIG",
+                        "suite": str(config_suite),
+                        "output": str(config_output),
+                        "timeout_seconds": 30,
+                        "run": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("curve.cli.generate_git_curated_snapshot") as generate:
+                generate.return_value = {
+                    "git": {"ref": "HEAD"},
+                    "case_count": 2,
+                    "snapshot": str(output),
+                }
+                with redirect_stdout(StringIO()):
+                    main(
+                        [
+                            "snapshot-git-ref",
+                            "HEAD",
+                            "--config",
+                            str(config),
+                            "--suite",
+                            str(suite),
+                            "-o",
+                            str(output),
+                            "--timeout-seconds",
+                            "7",
+                            "--no-run",
+                        ]
+                    )
+
+            generate.assert_called_once()
+            args, kwargs = generate.call_args
+            self.assertEqual(args, ("HEAD",))
+            self.assertEqual(kwargs["suite"], suite)
             self.assertEqual(kwargs["output"], output)
             self.assertEqual(kwargs["timeout_seconds"], 7)
             self.assertFalse(kwargs["run"])
