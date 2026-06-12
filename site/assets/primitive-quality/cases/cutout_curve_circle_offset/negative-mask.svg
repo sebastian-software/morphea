@@ -2,7 +2,7 @@
   <defs>
     <mask id="morphea-cutout-mask" maskUnits="userSpaceOnUse">
       <rect x="0" y="0" width="64" height="64" fill="white" />
-      <path d="M 22 34.25 C 23 33.958 24.167 32.5 28 32.5 C 31.833 32.5 42.167 33.958 45 34.25" fill="none" stroke="black" stroke-width="2.167" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 21.84 34.645 A 28.371 28.371 0 0 1 45.16 34.645" fill="none" stroke="black" stroke-width="2.167" stroke-linecap="round" stroke-linejoin="round" />
     </mask>
   </defs>
   <g mask="url(#morphea-cutout-mask)">

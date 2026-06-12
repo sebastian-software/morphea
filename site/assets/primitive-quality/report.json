@@ -1,6 +1,6 @@
 {
   "anchor_kind_counts": {
-    "arc": 43,
+    "arc": 57,
     "circle": 65,
     "cubic_path": 15,
     "ellipse": 21,
@@ -9,7 +9,7 @@
     "rounded_rect": 10,
     "stroke_circle": 19,
     "stroke_ellipse": 3,
-    "stroke_path": 57,
+    "stroke_path": 43,
     "stroke_polyline": 64
   },
   "case_count": 291,
@@ -54855,8 +54855,8 @@
       "actual_kind": "quad",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "quad": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_rect/debug.svg",
@@ -55022,29 +55022,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.851753,
+          "actual_kind": "arc",
+          "bbox_iou": 0.954557,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    17.0,
-                    32.0
+                    17.178368,
+                    32.278076
                   ],
                   [
-                    26.0,
-                    28.5
+                    31.5,
+                    28.079605
                   ],
                   [
-                    46.0,
-                    32.0
+                    45.821632,
+                    32.278076
                   ]
                 ],
                 "width": 2.16789
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -55067,6 +55067,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -55076,25 +55077,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.010995,
-        "raster_l1_error": 0.010156,
+        "raster_edge_error": 0.003595,
+        "raster_l1_error": 0.002344,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.022449,
-        "svg_raster_l1_error": 0.020327,
+        "svg_raster_edge_error": 0.02017,
+        "svg_raster_l1_error": 0.017871,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.018616,
-        "svg_vs_preview_l1_error": 0.016544
+        "svg_vs_preview_edge_error": 0.018972,
+        "svg_vs_preview_l1_error": 0.017138
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -55104,8 +55105,8 @@
       "actual_kind": "quad",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "quad": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_rect_high/debug.svg",
@@ -55271,29 +55272,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.776154,
+          "actual_kind": "arc",
+          "bbox_iou": 0.87678,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    18.0,
-                    30.0
+                    18.282203,
+                    30.533799
                   ],
                   [
-                    27.0,
-                    27.5
+                    31.5,
+                    27.254886
                   ],
                   [
-                    45.0,
-                    30.0
+                    44.717797,
+                    30.533799
                   ]
                 ],
                 "width": 2.142857
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -55316,6 +55317,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -55325,25 +55327,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.009092,
-        "raster_l1_error": 0.007031,
+        "raster_edge_error": 0.00296,
+        "raster_l1_error": 0.001758,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.019273,
-        "svg_raster_l1_error": 0.017497,
+        "svg_raster_edge_error": 0.018899,
+        "svg_raster_l1_error": 0.016882,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.017241,
-        "svg_vs_preview_l1_error": 0.015347
+        "svg_vs_preview_edge_error": 0.017712,
+        "svg_vs_preview_l1_error": 0.015782
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -55353,8 +55355,8 @@
       "actual_kind": "quad",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "quad": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_rect_low/debug.svg",
@@ -55520,29 +55522,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.834043,
+          "actual_kind": "arc",
+          "bbox_iou": 0.960389,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    16.0,
-                    34.25
+                    15.864203,
+                    34.79324
                   ],
                   [
-                    26.0,
-                    30.5
+                    31.5,
+                    30.117679
                   ],
                   [
-                    47.0,
-                    34.25
+                    47.135797,
+                    34.79324
                   ]
                 ],
                 "width": 2.217694
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -55565,6 +55567,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -55574,25 +55577,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.010995,
-        "raster_l1_error": 0.010547,
+        "raster_edge_error": 0.004229,
+        "raster_l1_error": 0.002734,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.023086,
-        "svg_raster_l1_error": 0.021073,
+        "svg_raster_edge_error": 0.020439,
+        "svg_raster_l1_error": 0.018421,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.018622,
-        "svg_vs_preview_l1_error": 0.016581
+        "svg_vs_preview_edge_error": 0.019262,
+        "svg_vs_preview_l1_error": 0.017345
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -55602,8 +55605,8 @@
       "actual_kind": "circle",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "circle": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "circle": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_circle/debug.svg",
@@ -55708,29 +55711,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.830112,
+          "actual_kind": "arc",
+          "bbox_iou": 0.87482,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    19.0,
-                    34.5
+                    18.953423,
+                    34.900056
                   ],
                   [
-                    37.0,
-                    32.5
+                    31.934057,
+                    32.151485
                   ],
                   [
-                    45.0,
-                    35.0
+                    44.802286,
+                    35.385703
                   ]
                 ],
                 "width": 2.148148
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -55753,6 +55756,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -55762,25 +55766,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.00592,
-        "raster_l1_error": 0.004492,
+        "raster_edge_error": 0.002326,
+        "raster_l1_error": 0.001758,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.024067,
-        "svg_raster_l1_error": 0.019631,
+        "svg_raster_edge_error": 0.024769,
+        "svg_raster_l1_error": 0.020582,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.023693,
-        "svg_vs_preview_l1_error": 0.019313
+        "svg_vs_preview_edge_error": 0.024391,
+        "svg_vs_preview_l1_error": 0.020336
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -55941,6 +55945,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -55967,8 +55972,8 @@
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -55978,8 +55983,8 @@
       "actual_kind": "circle",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "circle": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "circle": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_circle_offset/debug.svg",
@@ -56084,29 +56089,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.786978,
+          "actual_kind": "arc",
+          "bbox_iou": 0.934686,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    22.0,
-                    34.25
+                    21.839853,
+                    34.644763
                   ],
                   [
-                    28.0,
-                    32.5
+                    33.5,
+                    32.137941
                   ],
                   [
-                    45.0,
-                    34.25
+                    45.160147,
+                    34.644763
                   ]
                 ],
                 "width": 2.166667
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -56129,6 +56134,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -56138,25 +56144,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.006343,
-        "raster_l1_error": 0.005273,
+        "raster_edge_error": 0.002114,
+        "raster_l1_error": 0.001953,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.023633,
-        "svg_raster_l1_error": 0.019497,
+        "svg_raster_edge_error": 0.024044,
+        "svg_raster_l1_error": 0.020117,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.022226,
-        "svg_vs_preview_l1_error": 0.018277
+        "svg_vs_preview_edge_error": 0.023939,
+        "svg_vs_preview_l1_error": 0.019993
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -56166,8 +56172,8 @@
       "actual_kind": "stroke_circle",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "stroke_circle": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "stroke_circle": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_ring/debug.svg",
@@ -56274,29 +56280,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.864616,
+          "actual_kind": "arc",
+          "bbox_iou": 0.925862,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    14.0,
-                    21.75
+                    14.370936,
+                    22.609326
                   ],
                   [
-                    27.0,
-                    13.5
+                    31.5,
+                    13.083622
                   ],
                   [
-                    49.0,
-                    21.75
+                    48.629064,
+                    22.609326
                   ]
                 ],
                 "width": 2.326312
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -56319,6 +56325,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -56328,25 +56335,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.069565,
-        "raster_l1_error": 0.068359,
+        "raster_edge_error": 0.062164,
+        "raster_l1_error": 0.054883,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.063313,
-        "svg_raster_l1_error": 0.060494,
+        "svg_raster_edge_error": 0.059494,
+        "svg_raster_l1_error": 0.051044,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.034692,
-        "svg_vs_preview_l1_error": 0.026081
+        "svg_vs_preview_edge_error": 0.037083,
+        "svg_vs_preview_l1_error": 0.028099
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.115,
-        "svg_raster_l1_error": 0.13,
-        "svg_vs_preview_l1_error": 0.12
+        "svg_raster_l1_error": 0.11,
+        "svg_vs_preview_l1_error": 0.1
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -56356,8 +56363,8 @@
       "actual_kind": "stroke_circle",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "stroke_circle": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "stroke_circle": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_ring_thick/debug.svg",
@@ -56464,29 +56471,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.850193,
+          "actual_kind": "arc",
+          "bbox_iou": 0.933605,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    14.0,
-                    19.75
+                    14.392507,
+                    20.535073
                   ],
                   [
-                    27.0,
-                    12.5
+                    31.5,
+                    12.085151
                   ],
                   [
-                    49.0,
-                    19.75
+                    48.607493,
+                    20.535073
                   ]
                 ],
                 "width": 2.290086
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -56509,6 +56516,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -56518,25 +56526,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.068296,
-        "raster_l1_error": 0.073047,
+        "raster_edge_error": 0.061318,
+        "raster_l1_error": 0.060742,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.072361,
-        "svg_raster_l1_error": 0.07271,
+        "svg_raster_edge_error": 0.068336,
+        "svg_raster_l1_error": 0.064796,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.0414,
-        "svg_vs_preview_l1_error": 0.03267
+        "svg_vs_preview_edge_error": 0.042409,
+        "svg_vs_preview_l1_error": 0.033446
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.115,
-        "svg_raster_l1_error": 0.13,
-        "svg_vs_preview_l1_error": 0.12
+        "svg_raster_l1_error": 0.11,
+        "svg_vs_preview_l1_error": 0.1
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -56546,8 +56554,8 @@
       "actual_kind": "stroke_circle",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "stroke_circle": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "stroke_circle": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_ring_offset/debug.svg",
@@ -56654,29 +56662,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.849274,
+          "actual_kind": "arc",
+          "bbox_iou": 0.903346,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    14.0,
-                    22.75
+                    14.443271,
+                    23.62918
                   ],
                   [
-                    26.0,
-                    15.5
+                    30.5,
+                    15.031607
                   ],
                   [
-                    47.0,
-                    22.75
+                    46.556729,
+                    23.62918
                   ]
                 ],
                 "width": 2.337414
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -56699,6 +56707,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -56708,25 +56717,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.065124,
-        "raster_l1_error": 0.069727,
+        "raster_edge_error": 0.058358,
+        "raster_l1_error": 0.057227,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.058195,
-        "svg_raster_l1_error": 0.056716,
+        "svg_raster_edge_error": 0.054578,
+        "svg_raster_l1_error": 0.049103,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.041745,
-        "svg_vs_preview_l1_error": 0.032794
+        "svg_vs_preview_edge_error": 0.043042,
+        "svg_vs_preview_l1_error": 0.033848
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.115,
-        "svg_raster_l1_error": 0.13,
-        "svg_vs_preview_l1_error": 0.12
+        "svg_raster_l1_error": 0.11,
+        "svg_vs_preview_l1_error": 0.1
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -56736,9 +56745,9 @@
       "actual_kind": "quad",
       "anchor_count": 3,
       "anchor_kind_counts": {
+        "arc": 1,
         "circle": 1,
-        "quad": 1,
-        "stroke_path": 1
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_crossing/debug.svg",
@@ -56904,29 +56913,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.838525,
+          "actual_kind": "arc",
+          "bbox_iou": 0.941445,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    14.0,
-                    32.25
+                    13.835484,
+                    32.657066
                   ],
                   [
-                    29.0,
-                    30.5
+                    24.962641,
+                    30.207723
                   ],
                   [
-                    36.0,
-                    32.5
+                    36.017056,
+                    32.966854
                   ]
                 ],
                 "width": 2.173913
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -56949,6 +56958,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -56987,25 +56997,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.003595,
-        "raster_l1_error": 0.00293,
+        "raster_edge_error": 0.002749,
+        "raster_l1_error": 0.002148,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.02005,
-        "svg_raster_l1_error": 0.017186,
+        "svg_raster_edge_error": 0.020589,
+        "svg_raster_l1_error": 0.018096,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.019343,
-        "svg_vs_preview_l1_error": 0.016646
+        "svg_vs_preview_edge_error": 0.019986,
+        "svg_vs_preview_l1_error": 0.017509
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -57015,9 +57025,9 @@
       "actual_kind": "quad",
       "anchor_count": 3,
       "anchor_kind_counts": {
+        "arc": 1,
         "circle": 1,
-        "quad": 1,
-        "stroke_path": 1
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_crossing_low/debug.svg",
@@ -57183,29 +57193,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.838525,
+          "actual_kind": "arc",
+          "bbox_iou": 0.941445,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    14.0,
-                    26.25
+                    13.835484,
+                    26.657066
                   ],
                   [
-                    29.0,
-                    24.5
+                    24.962641,
+                    24.207723
                   ],
                   [
-                    36.0,
-                    26.5
+                    36.017056,
+                    26.966854
                   ]
                 ],
                 "width": 2.173913
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -57228,6 +57238,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -57266,25 +57277,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.003595,
-        "raster_l1_error": 0.00293,
+        "raster_edge_error": 0.002749,
+        "raster_l1_error": 0.002148,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.02005,
-        "svg_raster_l1_error": 0.017186,
+        "svg_raster_edge_error": 0.020589,
+        "svg_raster_l1_error": 0.018096,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.019343,
-        "svg_vs_preview_l1_error": 0.016646
+        "svg_vs_preview_edge_error": 0.019986,
+        "svg_vs_preview_l1_error": 0.017509
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -57294,9 +57305,9 @@
       "actual_kind": "quad",
       "anchor_count": 3,
       "anchor_kind_counts": {
+        "arc": 1,
         "circle": 1,
-        "quad": 1,
-        "stroke_path": 1
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_curve_crossing_right/debug.svg",
@@ -57462,29 +57473,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.838525,
+          "actual_kind": "arc",
+          "bbox_iou": 0.941445,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    28.0,
-                    32.25
+                    27.835484,
+                    32.657066
                   ],
                   [
-                    43.0,
-                    30.5
+                    38.962641,
+                    30.207723
                   ],
                   [
-                    50.0,
-                    32.5
+                    50.017056,
+                    32.966854
                   ]
                 ],
                 "width": 2.173913
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -57507,6 +57518,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -57545,25 +57557,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.003595,
-        "raster_l1_error": 0.00293,
+        "raster_edge_error": 0.002749,
+        "raster_l1_error": 0.002148,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.02005,
-        "svg_raster_l1_error": 0.017186,
+        "svg_raster_edge_error": 0.020589,
+        "svg_raster_l1_error": 0.018096,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.019343,
-        "svg_vs_preview_l1_error": 0.016646
+        "svg_vs_preview_edge_error": 0.019986,
+        "svg_vs_preview_l1_error": 0.017509
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -57573,8 +57585,8 @@
       "actual_kind": "quad",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "quad": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_near_background/debug.svg",
@@ -57740,29 +57752,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.851753,
+          "actual_kind": "arc",
+          "bbox_iou": 0.954557,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    17.0,
-                    32.0
+                    17.178368,
+                    32.278076
                   ],
                   [
-                    26.0,
-                    28.5
+                    31.5,
+                    28.079605
                   ],
                   [
-                    46.0,
-                    32.0
+                    45.821632,
+                    32.278076
                   ]
                 ],
                 "width": 2.16789
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -57785,6 +57797,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -57794,25 +57807,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.010936,
-        "raster_l1_error": 0.010233,
+        "raster_edge_error": 0.003703,
+        "raster_l1_error": 0.002641,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.022272,
-        "svg_raster_l1_error": 0.02026,
+        "svg_raster_edge_error": 0.020027,
+        "svg_raster_l1_error": 0.017862,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.018616,
-        "svg_vs_preview_l1_error": 0.016544
+        "svg_vs_preview_edge_error": 0.018972,
+        "svg_vs_preview_l1_error": 0.017138
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -57822,8 +57835,8 @@
       "actual_kind": "quad",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "quad": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_near_background_light/debug.svg",
@@ -57989,29 +58002,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.776154,
+          "actual_kind": "arc",
+          "bbox_iou": 0.87678,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    18.0,
-                    30.0
+                    18.282203,
+                    30.533799
                   ],
                   [
-                    27.0,
-                    27.5
+                    31.5,
+                    27.254886
                   ],
                   [
-                    45.0,
-                    30.0
+                    44.717797,
+                    30.533799
                   ]
                 ],
                 "width": 2.142857
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -58034,6 +58047,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -58043,25 +58057,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.00903,
-        "raster_l1_error": 0.007273,
+        "raster_edge_error": 0.003165,
+        "raster_l1_error": 0.002223,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.019033,
-        "svg_raster_l1_error": 0.01748,
+        "svg_raster_edge_error": 0.018668,
+        "svg_raster_l1_error": 0.016899,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.017241,
-        "svg_vs_preview_l1_error": 0.015347
+        "svg_vs_preview_edge_error": 0.017712,
+        "svg_vs_preview_l1_error": 0.015782
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -58071,8 +58085,8 @@
       "actual_kind": "quad",
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "quad": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "quad": 1
       },
       "artifacts": {
         "debug_svg": "site/assets/primitive-quality/cases/cutout_near_background_offwhite/debug.svg",
@@ -58238,29 +58252,29 @@
         },
         {
           "actual_index": 1,
-          "actual_kind": "stroke_path",
-          "bbox_iou": 0.834043,
+          "actual_kind": "arc",
+          "bbox_iou": 0.960389,
           "expected_id": "cutout",
           "geometry_diff": {
             "actual": {
               "geometry": {
                 "centerline": [
                   [
-                    16.0,
-                    34.25
+                    15.864203,
+                    34.79324
                   ],
                   [
-                    26.0,
-                    30.5
+                    31.5,
+                    30.117679
                   ],
                   [
-                    47.0,
-                    34.25
+                    47.135797,
+                    34.79324
                   ]
                 ],
                 "width": 2.217694
               },
-              "kind": "stroke_path",
+              "kind": "arc",
               "type": "stroke"
             },
             "expected": {
@@ -58283,6 +58297,7 @@
                 "width": 2.0
               },
               "kinds": [
+                "arc",
                 "stroke_path"
               ],
               "type": "stroke"
@@ -58292,25 +58307,25 @@
       ],
       "metrics": {
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.010955,
-        "raster_l1_error": 0.010623,
+        "raster_edge_error": 0.004324,
+        "raster_l1_error": 0.002979,
         "raster_size_match": true
       },
       "ok": true,
       "svg_metrics": {
         "svg_alpha_error": 0.0,
         "svg_raster_backend": "builtin",
-        "svg_raster_edge_error": 0.022936,
-        "svg_raster_l1_error": 0.021012,
+        "svg_raster_edge_error": 0.020331,
+        "svg_raster_l1_error": 0.018437,
         "svg_render_size_match": true,
-        "svg_vs_preview_edge_error": 0.018622,
-        "svg_vs_preview_l1_error": 0.016581
+        "svg_vs_preview_edge_error": 0.019262,
+        "svg_vs_preview_l1_error": 0.017345
       },
       "svg_thresholds": {
         "svg_alpha_error": 0.021,
         "svg_raster_edge_error": 0.07,
-        "svg_raster_l1_error": 0.065,
-        "svg_vs_preview_l1_error": 0.055
+        "svg_raster_l1_error": 0.05,
+        "svg_vs_preview_l1_error": 0.04
       },
       "unexpected_actual": [],
       "unmatched_expected": [],
@@ -60439,11 +60454,11 @@
     }
   ],
   "curve_anchor_kind_counts": {
-    "arc": 43,
+    "arc": 57,
     "cubic_path": 15,
     "ellipse": 21,
     "stroke_ellipse": 3,
-    "stroke_path": 57
+    "stroke_path": 43
   },
   "failed_count": 0,
   "family_summaries": [

@@ -139,8 +139,7 @@ def render_full_gallery_html(
       <div>
         <p class="eyebrow">Primitive quality gallery</p>
         <h1>{report.get("case_count", 0)} deterministic round-trip cases</h1>
-        <p class="lede">Every card is generated from a passing <code>primitive-check</code> artifact. Bitmap and SVG are shown in the same fixed viewport so geometry drift is visible.</p>
-        <p class="lede">{_curve_coverage_text(report)}</p>
+        <p class="lede">Every card is a <code>primitive-check</code> artifact: source bitmap and exported SVG in the same 64&thinsp;px viewport, so geometry drift is visible at a glance. {_curve_coverage_text(report)}</p>
       </div>
     </header>
 
@@ -151,6 +150,16 @@ def render_full_gallery_html(
         <span><strong>{len(families)}</strong> families</span>
         <span><strong>{_range_text(l1_values)}</strong> L1</span>
         <span><strong>{_range_text(edge_values)}</strong> edge</span>
+        <button type="button" id="details-toggle" aria-pressed="false">Show QA details</button>
+        <details class="metric-legend">
+          <summary>What the numbers mean</summary>
+          <dl>
+            <div><dt>Preview L1 / edge</dt><dd>Mean per-pixel color and edge-structure difference between the manifest-rendered preview and the source bitmap. 0 is identical; family budgets sit between 0.001 and 0.08.</dd></div>
+            <div><dt>SVG L1 / edge</dt><dd>The same two measures against the rasterized <em>exported SVG</em>, the file you would actually use.</dd></div>
+            <div><dt>BBox IoU</dt><dd>Bounding-box overlap between detected and expected geometry; 1.0 is a perfect match.</dd></div>
+            <div><dt>Anchors / nodes</dt><dd>How many primitives the scene uses and how many control points they carry. Fewer means easier to edit.</dd></div>
+          </dl>
+        </details>
       </div>
       <div class="filter-row">
         <label>
@@ -303,9 +312,9 @@ def _curve_coverage_text(report: dict[str, Any]) -> str:
             "quality roadmap."
         )
     summary = ", ".join(
-        f"{kind}: {count}" for kind, count in sorted(present.items())
+        f"{count} {kind}" for kind, count in sorted(present.items())
     )
-    return f"Freeform curve anchors in passing cases — {summary}."
+    return f"Passing cases include {summary} anchors."
 
 
 def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
@@ -328,6 +337,8 @@ def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
             " ".join(str(match.get("expected_kind")) for match in group_matches),
         ]
     )
+    anchor_count = int(case.get("anchor_count", 0))
+    anchor_noun = "anchor" if anchor_count == 1 else "anchors"
     return f"""      <article class="case-card" data-family="{_esc(family)}" data-kind="{_esc(kind)}" data-contracts="{_esc(' '.join(contract_tokens))}" data-ok="{str(bool(case.get("ok"))).lower()}" data-search="{_esc(search_text.lower())}">
         <header>
           <div>
@@ -338,21 +349,22 @@ def _render_full_case_card(case: dict[str, Any], html_path: Path) -> str:
         </header>
         <div class="media-pair">
           {_render_media_figure("Bitmap", _artifact_uri(case, "input", html_path), case_id + " bitmap")}
-          {_render_media_figure("SVG", _artifact_uri(case, "output_svg", html_path), case_id + " SVG")}
-          {_render_svg_raster_figure(case, html_path)}
+          {_render_media_figure("SVG", _artifact_uri(case, "output_svg", html_path), case_id + " exported SVG")}
         </div>
-        <dl class="fact-grid">
-          <div><dt>Kind</dt><dd>{_esc(kind)}</dd></div>
-          <div><dt>Variant</dt><dd>{_esc(variant)}</dd></div>
-          <div><dt>Anchors</dt><dd>{case.get("anchor_count", "n/a")}</dd></div>
-          <div><dt>Nodes</dt><dd>{_node_count(case)}</dd></div>
-          <div><dt>L1</dt><dd>{_metric_text(metrics, "raster_l1_error")}</dd></div>
-          <div><dt>Edge</dt><dd>{_metric_text(metrics, "raster_edge_error")}</dd></div>
-          <div><dt>SVG L1</dt><dd>{_metric_text(svg_metrics, "svg_raster_l1_error")}</dd></div>
-          <div><dt>SVG Edge</dt><dd>{_metric_text(svg_metrics, "svg_raster_edge_error")}</dd></div>
-          <div><dt>BBox IoU</dt><dd>{_metric_text(geometry, "bbox_iou")}</dd></div>
-        </dl>
-        <div class="badges">{_badge_html(case)}</div>
+        <p class="case-facts"><code>{_esc(kind)}</code><span>{anchor_count} {anchor_noun} · {_node_count(case)} nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>{_metric_text(metrics, "raster_l1_error")} / {_metric_text(metrics, "raster_edge_error")}</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>{_metric_text(svg_metrics, "svg_raster_l1_error")} / {_metric_text(svg_metrics, "svg_raster_edge_error")}</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>{_metric_text(geometry, "bbox_iou")}</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>{_esc(variant)}</td></tr>
+            </table>
+            {_render_svg_raster_figure(case, html_path)}
+            <div class="badges">{_badge_html(case)}</div>
+          </div>
+        </details>
       </article>"""
 
 
@@ -378,11 +390,12 @@ def _render_svg_raster_figure(case: dict[str, Any], html_path: Path) -> str:
     artifacts = case.get("artifacts", {})
     if not isinstance(artifacts, dict) or "svg_render" not in artifacts:
         return ""
-    return _render_media_figure(
-        "SVG raster",
-        _artifact_uri(case, "svg_render", html_path),
-        str(case.get("id")) + " rasterized SVG",
-    )
+    return f"""<figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="{_esc(_artifact_uri(case, "svg_render", html_path))}" alt="{_esc(str(case.get("id")) + " rasterized SVG")}" loading="lazy" decoding="async">
+              </div>
+            </figure>"""
 
 
 def _render_media_figure(
@@ -394,7 +407,7 @@ def _render_media_figure(
 ) -> str:
     return f"""<figure>
                 <figcaption>{_esc(label)}</figcaption>
-                <span class="{_esc(frame_class)}"><img src="{_esc(src)}" width="64" height="64" alt="{_esc(alt)}"></span>
+                <span class="{_esc(frame_class)}"><img src="{_esc(src)}" width="64" height="64" alt="{_esc(alt)}" loading="lazy" decoding="async"></span>
               </figure>"""
 
 
@@ -586,7 +599,7 @@ def _metric(case: dict[str, Any], key: str) -> float:
 
 def _metric_text(metrics: dict[str, Any], key: str) -> str:
     try:
-        return f"{float(metrics.get(key, 0.0)):.6f}"
+        return f"{float(metrics.get(key, 0.0)):.4f}"
     except (TypeError, ValueError):
         return "n/a"
 
@@ -606,12 +619,15 @@ _FULL_GALLERY_CSS = r"""
   --paper: #f5efe3;
   --panel: #fffaf2;
   --ink: #101719;
-  --muted: #5d6764;
+  --muted: #57615e;
   --line: #cdbc9f;
+  --line-soft: #ddd0b8;
   --teal: #17656b;
   --gold: #ad7b1e;
   --red: #b83b33;
   --green: #2f746d;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --mono: "SFMono-Regular", Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -624,7 +640,8 @@ body {
 }
 
 code {
-  font-family: "SFMono-Regular", Consolas, monospace;
+  font-family: var(--mono);
+  font-size: 0.92em;
 }
 
 .gallery-header {
@@ -646,6 +663,12 @@ code {
   width: max-content;
 }
 
+.home-link:hover,
+.home-link:focus-visible {
+  background: var(--ink);
+  color: var(--panel);
+}
+
 .eyebrow {
   color: var(--teal);
   font-size: 12px;
@@ -656,19 +679,20 @@ code {
 }
 
 h1 {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  font-size: clamp(34px, 5vw, 74px);
+  font-family: var(--serif);
+  font-size: clamp(34px, 5vw, 64px);
   letter-spacing: 0;
-  line-height: .94;
+  line-height: .96;
   margin: 0;
+  text-wrap: balance;
 }
 
 .lede {
   color: var(--muted);
-  font-size: 17px;
-  line-height: 1.45;
-  margin: 18px 0 0;
-  max-width: 820px;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 14px 0 0;
+  max-width: 72ch;
 }
 
 .gallery-controls {
@@ -681,6 +705,7 @@ h1 {
 }
 
 .stat-strip {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -699,6 +724,57 @@ h1 {
 
 .stat-strip strong {
   color: var(--ink);
+}
+
+#details-toggle {
+  background: var(--panel);
+  border: 1px solid var(--teal);
+  color: var(--teal);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: auto;
+  padding: 5px 10px;
+}
+
+#details-toggle[aria-pressed="true"] {
+  background: var(--teal);
+  color: var(--panel);
+}
+
+.metric-legend {
+  flex-basis: 100%;
+}
+
+.metric-legend summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  width: max-content;
+}
+
+.metric-legend summary:hover { color: var(--ink); }
+
+.metric-legend dl {
+  display: grid;
+  gap: 6px 18px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin: 10px 0 2px;
+  max-width: 1200px;
+}
+
+.metric-legend dt {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metric-legend dd {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 2px 0 0;
 }
 
 .filter-row {
@@ -731,6 +807,15 @@ select {
   padding: 7px 10px;
 }
 
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+.home-link:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .visible-count {
   color: var(--muted);
   font-size: 13px;
@@ -740,15 +825,16 @@ select {
 .case-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   padding: 24px 40px 48px;
 }
 
 .case-card {
+  align-content: start;
   background: var(--panel);
   border: 1px solid var(--line);
   display: grid;
-  gap: 14px;
+  gap: 12px;
   padding: 14px;
 }
 
@@ -767,13 +853,14 @@ select {
   color: var(--teal);
   font-size: 11px;
   font-weight: 850;
+  letter-spacing: .04em;
   margin: 0 0 4px;
   text-transform: uppercase;
 }
 
 .case-card h2 {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  font-size: 22px;
+  font-family: var(--serif);
+  font-size: 21px;
   line-height: 1.05;
   margin: 0;
 }
@@ -786,7 +873,7 @@ select {
 }
 
 .status.pass { color: var(--green); }
-.status.fail { color: var(--red); }
+.status.fail { background: var(--red); border-color: var(--red); color: var(--panel); }
 
 .media-pair,
 .demo-pair {
@@ -830,36 +917,99 @@ figcaption {
   width: 100%;
 }
 
-.fact-grid {
-  display: grid;
-  gap: 1px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.case-facts {
+  align-items: baseline;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  justify-content: space-between;
   margin: 0;
+  padding-top: 10px;
 }
 
-.fact-grid div {
-  background: color-mix(in srgb, var(--paper) 70%, var(--panel));
-  padding: 7px;
-}
-
-dt {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 850;
-  text-transform: uppercase;
-}
-
-dd {
+.case-facts code {
   font-size: 13px;
-  font-weight: 750;
-  margin: 2px 0 0;
-  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.case-facts span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.case-details summary {
+  color: var(--teal);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  list-style: none;
+  text-transform: uppercase;
+  width: max-content;
+}
+
+.case-details summary::-webkit-details-marker { display: none; }
+
+.case-details summary::before {
+  content: "+";
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1);
+}
+
+.case-details[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.case-details summary:hover { color: var(--ink); }
+
+.details-body {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.metric-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.metric-table th,
+.metric-table td {
+  border-top: 1px solid var(--line-soft);
+  font-size: 12.5px;
+  padding: 5px 0;
+  text-align: left;
+}
+
+.metric-table th {
+  color: var(--muted);
+  cursor: help;
+  font-weight: 700;
+  text-decoration: underline dotted color-mix(in srgb, var(--muted) 55%, transparent);
+  text-underline-offset: 3px;
+  width: 46%;
+}
+
+.metric-table td {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.raster-proof .demo-frame {
+  max-width: 96px;
 }
 
 .badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-details summary::before {
+    transition: none;
+  }
 }
 
 @media (max-width: 820px) {
@@ -878,6 +1028,15 @@ dd {
   .case-grid {
     grid-template-columns: 1fr;
   }
+
+  #details-toggle {
+    margin-left: 0;
+  }
+
+  /* The stacked filter block would pin half the viewport if it stayed sticky. */
+  .gallery-controls {
+    position: static;
+  }
 }
 """
 
@@ -889,6 +1048,7 @@ const family = document.querySelector('#family-filter');
 const kind = document.querySelector('#kind-filter');
 const contract = document.querySelector('#contract-filter');
 const count = document.querySelector('#visible-count');
+const detailsToggle = document.querySelector('#details-toggle');
 
 function applyFilters() {
   const query = search.value.trim().toLowerCase();
@@ -912,4 +1072,13 @@ for (const control of [search, family, kind, contract]) {
   control.addEventListener('input', applyFilters);
 }
 applyFilters();
+
+detailsToggle.addEventListener('click', () => {
+  const open = detailsToggle.getAttribute('aria-pressed') !== 'true';
+  detailsToggle.setAttribute('aria-pressed', String(open));
+  detailsToggle.textContent = open ? 'Hide QA details' : 'Show QA details';
+  for (const details of document.querySelectorAll('.case-details')) {
+    details.open = open;
+  }
+});
 """

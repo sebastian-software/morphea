@@ -4,9 +4,9 @@
     <rect x="14" y="12" width="40" height="40" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
     <text x="14" y="10" font-size="4" fill="#ff00ff">anchor-0000:circle:0.912619</text>
   </g>
-  <g id="anchor-0001" data-kind="stroke_path">
-    <path d="M 22 34.25 C 23 33.958 24.167 32.5 28 32.5 C 31.833 32.5 42.167 33.958 45 34.25" fill="none" stroke="#ffffff" stroke-width="2.167" stroke-linecap="round" stroke-linejoin="round" />
-    <rect x="20.917" y="31.417" width="25.167" height="3.917" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="20.917" y="29.417" font-size="4" fill="#ff00ff">anchor-0001:stroke_path:0.97132</text>
+  <g id="anchor-0001" data-kind="arc">
+    <path d="M 21.84 34.645 A 28.371 28.371 0 0 1 45.16 34.645" fill="none" stroke="#ffffff" stroke-width="2.167" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="20.757" y="31.055" width="25.487" height="4.673" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="20.757" y="29.055" font-size="4" fill="#ff00ff">anchor-0001:arc:0.977012</text>
   </g>
 </svg>

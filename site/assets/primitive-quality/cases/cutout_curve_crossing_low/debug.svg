@@ -4,10 +4,10 @@
     <rect x="6" y="14" width="38" height="26" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
     <text x="6" y="12" font-size="4" fill="#ff00ff">anchor-0000:quad:0.933767</text>
   </g>
-  <g id="anchor-0001" data-kind="stroke_path">
-    <path d="M 14 26.25 C 16.5 25.958 25.333 24.458 29 24.5 C 32.667 24.542 34.833 26.167 36 26.5" fill="none" stroke="#ffffff" stroke-width="2.174" stroke-linecap="round" stroke-linejoin="round" />
-    <rect x="12.913" y="23.413" width="24.174" height="4.174" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="12.913" y="21.413" font-size="4" fill="#ff00ff">anchor-0001:stroke_path:0.970705</text>
+  <g id="anchor-0001" data-kind="arc">
+    <path d="M 13.835 26.657 A 24.921 24.921 0 0 1 36.017 26.967" fill="none" stroke="#ffffff" stroke-width="2.174" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="12.749" y="23.121" width="24.355" height="4.933" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="12.749" y="21.121" font-size="4" fill="#ff00ff">anchor-0001:arc:0.977544</text>
   </g>
   <g id="anchor-0002" data-kind="circle">
     <circle cx="54" cy="50" r="6" fill="#dd2222" />
