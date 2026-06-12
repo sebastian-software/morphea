@@ -426,13 +426,21 @@ def _same_color_merge_plan(
         if combined_bounds_area > 0
         else 0.0
     )
+    auto_merge_allowed = bounds_fill_ratio >= 0.55
     merge_action = (
         "merge_adjacent_fragments"
-        if bounds_fill_ratio >= 0.55
+        if auto_merge_allowed
         else "review_as_separate_fragments"
+    )
+    decision_reason = (
+        "compact_same_color_bounds"
+        if auto_merge_allowed
+        else "sparse_same_color_bounds"
     )
     return {
         "action": merge_action,
+        "auto_merge_allowed": auto_merge_allowed,
+        "decision_reason": decision_reason,
         "target_kind": "compound_shape",
         "bounds": list(combined_bounds),
         "fragment_bounds": [list(bounds) for bounds in fragment_bounds],

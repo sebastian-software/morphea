@@ -479,6 +479,11 @@ class SceneExportTests(unittest.TestCase):
             fragment_groups[0]["merge_plan"]["action"],
             "review_as_separate_fragments",
         )
+        self.assertFalse(fragment_groups[0]["merge_plan"]["auto_merge_allowed"])
+        self.assertEqual(
+            fragment_groups[0]["merge_plan"]["decision_reason"],
+            "sparse_same_color_bounds",
+        )
         self.assertEqual(
             fragment_groups[0]["merge_plan"]["target_kind"],
             "compound_shape",
@@ -517,6 +522,11 @@ class SceneExportTests(unittest.TestCase):
         ][0]
 
         self.assertEqual(group["merge_plan"]["action"], "merge_adjacent_fragments")
+        self.assertTrue(group["merge_plan"]["auto_merge_allowed"])
+        self.assertEqual(
+            group["merge_plan"]["decision_reason"],
+            "compact_same_color_bounds",
+        )
         self.assertEqual(group["merge_plan"]["bounds"], [0, 0, 8, 4])
         self.assertEqual(group["metrics"]["bounds_fill_ratio"], 1.0)
 
