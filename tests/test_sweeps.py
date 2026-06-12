@@ -245,6 +245,62 @@ class SweepTests(unittest.TestCase):
             self.assertEqual(summary["run_count"], 2)
             self.assertTrue(markdown.exists())
 
+    def test_sweep_cli_reads_output_paths_from_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_input_image(root)
+            config = root / "sweep.json"
+            output_dir = root / "configured-runs"
+            markdown = root / "configured-summary.md"
+            _write_sweep_config_body(
+                config,
+                image_path,
+                output_dir=output_dir,
+                markdown=markdown,
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["sweep", str(config)])
+
+            summary = json.loads(
+                (output_dir / "sweep-summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary["run_count"], 2)
+            self.assertTrue(markdown.exists())
+
+    def test_sweep_cli_args_override_config_output_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_input_image(root)
+            config = root / "sweep.json"
+            config_output_dir = root / "configured-runs"
+            output_dir = root / "override-runs"
+            config_markdown = root / "configured-summary.md"
+            markdown = root / "override-summary.md"
+            _write_sweep_config_body(
+                config,
+                image_path,
+                output_dir=config_output_dir,
+                markdown=config_markdown,
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "sweep",
+                        str(config),
+                        "-o",
+                        str(output_dir),
+                        "--markdown",
+                        str(markdown),
+                    ]
+                )
+
+            self.assertTrue((output_dir / "sweep-summary.json").exists())
+            self.assertTrue(markdown.exists())
+            self.assertFalse((config_output_dir / "sweep-summary.json").exists())
+            self.assertFalse(config_markdown.exists())
+
 
 def _write_input_image(root: Path) -> Path:
     image_path = root / "input.png"
@@ -277,30 +333,43 @@ def _write_top_left_foreground_image(root: Path) -> Path:
 
 def _write_sweep_config(root: Path, image_path: Path) -> Path:
     config = root / "sweep.json"
-    config.write_text(
-        json.dumps(
+    _write_sweep_config_body(config, image_path)
+    return config
+
+
+def _write_sweep_config_body(
+    config: Path,
+    image_path: Path,
+    *,
+    output_dir: Path | None = None,
+    markdown: Path | None = None,
+) -> None:
+    body = {
+        "version": 1,
+        "input": str(image_path),
+        "runs": [
             {
-                "version": 1,
-                "input": str(image_path),
-                "runs": [
-                    {
-                        "id": "baseline",
-                        "config": {"min_area": 8, "timeout_seconds": 5},
-                    },
-                    {
-                        "id": "tolerant",
-                        "config": {
-                            "min_area": 8,
-                            "color_tolerance": 10,
-                            "timeout_seconds": 5,
-                        },
-                    },
-                ],
-            }
-        ),
+                "id": "baseline",
+                "config": {"min_area": 8, "timeout_seconds": 5},
+            },
+            {
+                "id": "tolerant",
+                "config": {
+                    "min_area": 8,
+                    "color_tolerance": 10,
+                    "timeout_seconds": 5,
+                },
+            },
+        ],
+    }
+    if output_dir is not None:
+        body["output_dir"] = str(output_dir)
+    if markdown is not None:
+        body["markdown"] = str(markdown)
+    config.write_text(
+        json.dumps(body),
         encoding="utf-8",
     )
-    return config
 
 
 if __name__ == "__main__":

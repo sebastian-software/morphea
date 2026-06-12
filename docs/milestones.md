@@ -945,7 +945,8 @@ Implemented so far:
 - `curve snapshot-git-ref ref --suite suite.json -o snapshot.json` for
   generating curated snapshots from a detached temporary worktree without
   checking out the current working tree
-- `curve sweep --markdown summary.md` for scan-friendly config comparisons
+- `curve sweep` configs can carry output roots and Markdown report paths for
+  repeatable config comparisons
 - schema-v1 sweep configs
 - schema-v1 scene manifests
 - `sweep-summary.json` experiment metadata

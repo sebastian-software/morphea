@@ -169,6 +169,21 @@ Sweep run configs may include `cutout_export` with `overlay_stroke` or
 `negative_mask`; this affects the run directory `output.svg` but is not passed
 to primitive detection.
 
+## Sweep Config v1
+
+Read by `curve sweep`.
+
+Top-level fields:
+
+- `version`: currently `1`
+- `input`: source image path
+- `runs`: non-empty list of run objects with `id` and optional `config`
+- `output_dir`: optional run output root for CLI execution
+- `markdown`: optional Markdown summary path for CLI execution
+
+CLI `--output-dir` and `--markdown` arguments override `output_dir` and
+`markdown` loaded from the sweep config.
+
 ## Eval Summary v1
 
 Written by `curve eval`.

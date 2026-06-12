@@ -758,7 +758,7 @@ def main(argv: list[str] | None = None) -> None:
         help="Run a config-driven vectorize sweep.",
     )
     sweep.add_argument("config", type=Path)
-    sweep.add_argument("-o", "--output-dir", type=Path, required=True)
+    sweep.add_argument("-o", "--output-dir", type=Path)
     sweep.add_argument("--markdown", type=Path)
 
     args = parser.parse_args(argv)
@@ -1239,10 +1239,11 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "sweep":
+        sweep_config = _resolved_sweep_command_config(args)
         result = run_sweep(
-            args.config,
-            output_dir=args.output_dir,
-            markdown=args.markdown,
+            sweep_config["config"],
+            output_dir=sweep_config["output_dir"],
+            markdown=sweep_config.get("markdown"),
         )
         print(f"ran {result['run_count']} sweep runs")
         return
@@ -1404,6 +1405,27 @@ def _resolved_generate_config(args: argparse.Namespace) -> dict[str, object]:
     for key in ("count", "seed", "width", "height", "val_count", "test_count"):
         config[key] = int(config[key])
     config["difficulty"] = str(config["difficulty"])
+    return config
+
+
+def _resolved_sweep_command_config(args: argparse.Namespace) -> dict[str, object]:
+    loaded = json.loads(args.config.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("sweep config must be a JSON object")
+    config: dict[str, object] = {
+        "config": args.config,
+        "output_dir": loaded.get("output_dir"),
+        "markdown": loaded.get("markdown"),
+    }
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+
+    _require_config_paths(config, ("output_dir",), "sweep")
+    config["output_dir"] = Path(str(config["output_dir"]))
+    if config.get("markdown") is not None:
+        config["markdown"] = Path(str(config["markdown"]))
     return config
 
 
