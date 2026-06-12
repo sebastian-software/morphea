@@ -361,15 +361,20 @@ def scene_groups_to_manifest(
     for color, indexes in sorted(color_groups.items()):
         if len(indexes) < 2:
             continue
+        merge_plan = _same_color_merge_plan(anchors, indexes)
         groups.append(
             {
                 "kind": "same_color_fragment_group",
                 "id": f"color-{color.removeprefix('#')}",
                 "color": color,
                 "anchor_indexes": indexes,
+                "merge_plan": merge_plan,
                 "metrics": {
                     "fragment_count": len(indexes),
                     "merge_candidate": True,
+                    "combined_bounds_area": merge_plan["combined_bounds_area"],
+                    "fragment_bounds_area": merge_plan["fragment_bounds_area"],
+                    "bounds_fill_ratio": merge_plan["bounds_fill_ratio"],
                     "generic_path_count": sum(
                         1
                         for index in indexes
@@ -402,6 +407,39 @@ def scene_groups_to_manifest(
         )
 
     return groups
+
+
+def _same_color_merge_plan(
+    anchors: tuple[AnchorCandidate, ...],
+    indexes: list[int],
+) -> dict[str, object]:
+    fragment_bounds = [_anchor_bounds(anchors[index]) for index in indexes]
+    min_x = min(bounds[0] for bounds in fragment_bounds)
+    min_y = min(bounds[1] for bounds in fragment_bounds)
+    max_x = max(bounds[2] for bounds in fragment_bounds)
+    max_y = max(bounds[3] for bounds in fragment_bounds)
+    combined_bounds = (min_x, min_y, max_x, max_y)
+    combined_bounds_area = _bounds_area(combined_bounds)
+    fragment_bounds_area = sum(_bounds_area(bounds) for bounds in fragment_bounds)
+    bounds_fill_ratio = (
+        min(fragment_bounds_area / combined_bounds_area, 1.0)
+        if combined_bounds_area > 0
+        else 0.0
+    )
+    merge_action = (
+        "merge_adjacent_fragments"
+        if bounds_fill_ratio >= 0.55
+        else "review_as_separate_fragments"
+    )
+    return {
+        "action": merge_action,
+        "target_kind": "compound_shape",
+        "bounds": list(combined_bounds),
+        "fragment_bounds": [list(bounds) for bounds in fragment_bounds],
+        "combined_bounds_area": round(combined_bounds_area, 6),
+        "fragment_bounds_area": round(fragment_bounds_area, 6),
+        "bounds_fill_ratio": round(bounds_fill_ratio, 6),
+    }
 
 
 def scene_layers_to_manifest(

@@ -202,11 +202,7 @@ def render_markdown_report(
     lines.extend(["", "## Groups", ""])
     if groups:
         for group in groups:
-            indexes = group.get("anchor_indexes", [])
-            details = f"{len(indexes)} anchors"
-            if group.get("color") is not None:
-                details = f"{details}, color `{group.get('color')}`"
-            lines.append(f"- `{group.get('kind')}`: {details}")
+            lines.append(f"- `{group.get('kind')}`: {_group_report_details(group)}")
     else:
         lines.append("- none")
 
@@ -363,6 +359,9 @@ def _group_report_details(group: dict[str, object]) -> str:
     details = f"{count} anchors"
     if group.get("color") is not None:
         details = f"{details}, color {group.get('color')}"
+    merge_plan = group.get("merge_plan", {})
+    if isinstance(merge_plan, dict) and merge_plan.get("action") is not None:
+        details = f"{details}, action {merge_plan.get('action')}"
     return details
 
 

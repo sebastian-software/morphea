@@ -475,6 +475,50 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(fragment_groups[0]["color"], "#dd2222")
         self.assertEqual(fragment_groups[0]["anchor_indexes"], [0, 1])
         self.assertTrue(fragment_groups[0]["metrics"]["merge_candidate"])
+        self.assertEqual(
+            fragment_groups[0]["merge_plan"]["action"],
+            "review_as_separate_fragments",
+        )
+        self.assertEqual(
+            fragment_groups[0]["merge_plan"]["target_kind"],
+            "compound_shape",
+        )
+        self.assertIn("bounds_fill_ratio", fragment_groups[0]["metrics"])
+
+    def test_same_color_adjacent_fragments_get_merge_plan(self):
+        fragments = (
+            AnchorCandidate(
+                kind=AnchorKind.RECT,
+                raster_error=0.0,
+                node_count=4,
+                parameter_count=4,
+                color="#003366",
+                quad=QuadAnchor(
+                    corners=(Point(0, 0), Point(4, 0), Point(4, 4), Point(0, 4)),
+                ),
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.RECT,
+                raster_error=0.0,
+                node_count=4,
+                parameter_count=4,
+                color="#003366",
+                quad=QuadAnchor(
+                    corners=(Point(4, 0), Point(8, 0), Point(8, 4), Point(4, 4)),
+                ),
+            ),
+        )
+
+        fragment_groups = scene_groups_to_manifest(fragments)
+        group = [
+            group
+            for group in fragment_groups
+            if group["kind"] == "same_color_fragment_group"
+        ][0]
+
+        self.assertEqual(group["merge_plan"]["action"], "merge_adjacent_fragments")
+        self.assertEqual(group["merge_plan"]["bounds"], [0, 0, 8, 4])
+        self.assertEqual(group["metrics"]["bounds_fill_ratio"], 1.0)
 
 
 if __name__ == "__main__":
