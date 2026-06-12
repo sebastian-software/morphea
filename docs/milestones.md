@@ -150,6 +150,8 @@ Implemented so far:
 - circle/ring metrics for roundness and stroke width.
 - stroke width, smoothness, cut-out error metrics.
 - quad edge/corner metrics and perspective grid consistency metric.
+- quad detection adds numeric subtype markers for trapezoids and
+  parallelograms while preserving `quad` as the editable primitive kind.
 - stroke payloads preserve `cap_style` and `join_style`.
 - straight high-coverage stroke components classify as `butt` caps.
 - sparse curved stroke components can classify as editable `arc` anchors with a
