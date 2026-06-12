@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
+import tempfile
 from dataclasses import dataclass, replace
+from math import ceil, exp
 from pathlib import Path
 from time import perf_counter
 from typing import Protocol
@@ -103,6 +106,8 @@ class MlxSamSegmenter:
         status = mlx_sam_runtime_status(self)
         if status["status"] == "json_adapter_available":
             return _json_adapter_proposals(self, image_path)
+        if status["status"] == "mlx_sam_package_available":
+            return _mlx_sam_package_proposals(self, image_path)
         details = []
         details.append(f"status={status['status']}")
         if self.model_path is not None:
@@ -120,8 +125,13 @@ def is_mlx_runtime_available() -> bool:
     return importlib.util.find_spec("mlx") is not None
 
 
+def is_mlx_sam_package_available() -> bool:
+    return importlib.util.find_spec("mlx_sam") is not None
+
+
 def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
     package_available = is_mlx_runtime_available()
+    sam_package_available = is_mlx_sam_package_available()
     model_configured = segmenter.model_path is not None
     model_path = (
         Path(segmenter.model_path).expanduser()
@@ -138,8 +148,16 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         and model_exists
         and model_path.suffix.lower() == ".json"
     )
+    package_adapter_candidate = (
+        model_path is not None
+        and model_exists
+        and model_path.suffix.lower() == ".safetensors"
+    )
     if json_adapter_available:
         status = "json_adapter_available"
+        reason = None
+    elif package_available and sam_package_available and package_adapter_candidate:
+        status = "mlx_sam_package_available"
         reason = None
     elif not package_available:
         status = "not_installed"
@@ -152,25 +170,38 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         reason = "MLX SAM model path does not exist"
     else:
         status = "adapter_pending"
-        reason = "MLX SAM proposal adapter is not wired yet"
+        reason = "MLX SAM package adapter requires mlx-sam and a .safetensors checkpoint"
     return {
         "source": segmenter.source,
-        "backend_available": json_adapter_available,
+        "backend_available": status in {
+            "json_adapter_available",
+            "mlx_sam_package_available",
+        },
         "status": status,
         "reason": reason,
         "package_available": package_available,
+        "sam_package_available": sam_package_available,
         "model_configured": model_configured,
         "model_exists": model_exists,
         "model_path": segmenter.model_path,
-        "adapter": "json_proposals" if json_adapter_available else None,
+        "adapter": (
+            "json_proposals"
+            if json_adapter_available
+            else "mlx_sam_grid_points"
+            if status == "mlx_sam_package_available"
+            else None
+        ),
         "score_threshold": segmenter.score_threshold,
         "max_masks": segmenter.max_masks,
         "timeout_seconds": segmenter.timeout_seconds,
         "capabilities": _mlx_sam_capabilities(
             package_available=package_available,
+            sam_package_available=sam_package_available,
             model_configured=model_configured,
             model_exists=model_exists,
             json_adapter_available=json_adapter_available,
+            package_adapter_candidate=package_adapter_candidate,
+            package_adapter_available=status == "mlx_sam_package_available",
         ),
     }
 
@@ -178,12 +209,15 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
 def _mlx_sam_capabilities(
     *,
     package_available: bool,
+    sam_package_available: bool,
     model_configured: bool,
     model_exists: bool,
     json_adapter_available: bool,
+    package_adapter_candidate: bool,
+    package_adapter_available: bool,
 ) -> dict[str, dict[str, object]]:
     live_status = "pending_implementation"
-    live_reason = "MLX SAM live model proposal adapter is not wired yet"
+    live_reason = "MLX SAM package adapter requires mlx-sam and a .safetensors checkpoint"
     if not package_available:
         live_status = "not_installed"
         live_reason = "MLX runtime package is not installed"
@@ -193,6 +227,15 @@ def _mlx_sam_capabilities(
     elif not model_exists:
         live_status = "model_missing"
         live_reason = "MLX SAM model path does not exist"
+    elif not package_adapter_candidate:
+        live_status = "pending_implementation"
+        live_reason = "MLX SAM package adapter requires a .safetensors checkpoint"
+    elif not sam_package_available:
+        live_status = "mlx_sam_package_missing"
+        live_reason = "mlx-sam package is not installed in this Python environment"
+    elif package_adapter_available:
+        live_status = "available"
+        live_reason = None
 
     return {
         "json_proposal_adapter": {
@@ -209,7 +252,7 @@ def _mlx_sam_capabilities(
             ),
         },
         "live_sam_model_adapter": {
-            "available": False,
+            "available": package_adapter_available,
             "status": live_status,
             "reason": live_reason,
         },
@@ -453,6 +496,110 @@ def _proposal_from_component(
         rejection_reason=rejection_reason,
         **anchor_summary,
     )
+
+
+def _mlx_sam_package_proposals(
+    segmenter: MlxSamSegmenter,
+    image_path: str | Path,
+) -> tuple[SegmentProposal, ...]:
+    from mlx_sam import SAM2VideoPredictor  # type: ignore[import-not-found]
+    import numpy as np  # type: ignore[import-not-found]
+    from PIL import Image
+
+    started = perf_counter()
+    source_path = Path(image_path)
+    with Image.open(source_path) as image:
+        width, height = image.size
+
+    checkpoint = Path(str(segmenter.model_path)).expanduser()
+    predictor = SAM2VideoPredictor(checkpoint=checkpoint)
+    proposals: list[SegmentProposal] = []
+    with tempfile.TemporaryDirectory(prefix="curve-mlx-sam-") as temp_dir:
+        frame_dir = Path(temp_dir)
+        frame_path = frame_dir / "frame_000.png"
+        shutil.copy2(source_path, frame_path)
+        state = predictor.init_state(
+            frame_dir,
+            precompute_image_features=True,
+            feature_batch_size=1,
+        )
+        for obj_id, point in enumerate(_sam_grid_points(width, height, segmenter), 1):
+            if (
+                segmenter.timeout_seconds is not None
+                and perf_counter() - started > segmenter.timeout_seconds
+            ):
+                break
+            _, obj_ids, masks = predictor.add_new_points_or_box(
+                state,
+                frame_idx=0,
+                obj_id=obj_id,
+                points=np.array([point], dtype=np.float32),
+                labels=np.array([1], dtype=np.int32),
+            )
+            object_index = list(obj_ids).index(obj_id)
+            mask = masks[object_index, 0]
+            confidence = _sam_mask_confidence(mask)
+            if confidence < segmenter.score_threshold:
+                continue
+            component = _component_from_sam_mask(mask)
+            if component is None:
+                continue
+            proposals.append(
+                _proposal_from_adapter_component(
+                    len(proposals),
+                    segmenter.source,
+                    None,
+                    component,
+                    confidence=confidence,
+                )
+            )
+    return tuple(proposals)
+
+
+def _sam_grid_points(
+    width: int,
+    height: int,
+    segmenter: MlxSamSegmenter,
+) -> list[tuple[float, float]]:
+    target_count = max(1, min(int(segmenter.max_masks or 9), 64))
+    columns = max(1, ceil(target_count ** 0.5))
+    rows = max(1, ceil(target_count / columns))
+    points: list[tuple[float, float]] = []
+    for row in range(rows):
+        for column in range(columns):
+            if len(points) >= target_count:
+                return points
+            points.append(
+                (
+                    (column + 0.5) * width / columns,
+                    (row + 0.5) * height / rows,
+                )
+            )
+    return points
+
+
+def _sam_mask_confidence(mask: object) -> float:
+    positive = [float(value) for value in mask.flatten() if float(value) > 0]
+    if not positive:
+        return 0.0
+    mean_logit = sum(positive) / len(positive)
+    return 1.0 / (1.0 + exp(-mean_logit))
+
+
+def _component_from_sam_mask(mask: object) -> MaskComponent | None:
+    pixels = {
+        (int(x), int(y))
+        for y, row in enumerate(mask)
+        for x, value in enumerate(row)
+        if float(value) > 0
+    }
+    if not pixels:
+        return None
+    left = min(x for x, _ in pixels)
+    top = min(y for _, y in pixels)
+    right = max(x for x, _ in pixels)
+    bottom = max(y for _, y in pixels)
+    return MaskComponent(frozenset(pixels), bounds_hint=(left, top, right, bottom))
 
 
 def _json_adapter_proposals(

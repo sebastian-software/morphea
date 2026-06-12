@@ -487,7 +487,7 @@ Implemented so far:
   configuration, missing model file, and adapter-pending states without
   allowing AI proposals to bypass the geometry pipeline.
 - MLX SAM status includes per-capability diagnostics for the JSON proposal
-  adapter and the still-pending live SAM model adapter.
+  adapter and the optional live SAM model adapter.
 - `MlxSamSegmenter` can consume local JSON proposal payloads through the same
   segment proposal schema, score threshold, mask limit, and downstream
   geometry gate; this gives M6 an operational adapter contract before live SAM
@@ -495,6 +495,10 @@ Implemented so far:
 - JSON proposal payloads can carry either rectangular bounds/bboxes or
   mask-row payloads, so local adapter tests can exercise non-rectangular
   region proposals before the live SAM runtime is connected.
+- when the optional `mlx-sam` package is available in a compatible Python
+  environment and `mlx_model_path` points at a `.safetensors` checkpoint,
+  `MlxSamSegmenter` can run bounded grid-point prompts and convert positive
+  live SAM masks into the same proposal schema and geometry gate.
 - `curve segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed
 

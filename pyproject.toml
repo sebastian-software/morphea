@@ -11,6 +11,9 @@ dependencies = [
 mlx = [
     "mlx>=0.31",
 ]
+sam = [
+    "mlx-sam>=0.3; python_version >= '3.14'",
+]
 
 [project.scripts]
 curve = "curve.cli:main"

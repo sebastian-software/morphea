@@ -393,9 +393,10 @@ Proposal group fields:
 
 `backend` records `source`, `backend_available`, `status`, and an optional
 `reason`. MLX SAM status distinguishes `json_adapter_available`,
-`not_installed`, `not_configured`, `model_missing`, and `adapter_pending`; it
-also records `package_available`, `model_configured`, `model_exists`, adapter
-name, runtime knobs, and per-capability status for `json_proposal_adapter` and
+`mlx_sam_package_available`, `not_installed`, `not_configured`,
+`model_missing`, and `adapter_pending`; it also records `package_available`,
+`sam_package_available`, `model_configured`, `model_exists`, adapter name,
+runtime knobs, and per-capability status for `json_proposal_adapter` and
 `live_sam_model_adapter`. The JSON adapter is a local bridge for checked-in or
 generated proposal payloads shaped as:
 
@@ -409,8 +410,11 @@ generated proposal payloads shaped as:
 - optional `color`
 
 JSON adapter proposals use the same proposal schema and downstream geometry
-gate as future live SAM proposals. Non-JSON SAM model paths remain
-`adapter_pending` until the real local model runtime is wired.
+gate as live SAM proposals. When `mlx-sam` is installed in a compatible Python
+environment and `mlx_model_path` points at a `.safetensors` checkpoint, the
+`mlx_sam_grid_points` adapter prompts the model with bounded grid points,
+converts positive masks to proposal components, and then uses the same geometry
+gate. Other non-JSON SAM model paths remain `adapter_pending`.
 
 ## Runtime Status Report v1
 

@@ -237,6 +237,30 @@ class SegmenterTests(unittest.TestCase):
                 configured["capabilities"]["live_sam_model_adapter"]["available"]
             )
 
+    def test_mlx_sam_runtime_status_reports_package_adapter_available(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam.safetensors"
+            model_path.write_text("placeholder", encoding="utf-8")
+
+            with (
+                patch("curve.segmenters.is_mlx_runtime_available", return_value=True),
+                patch(
+                    "curve.segmenters.is_mlx_sam_package_available",
+                    return_value=True,
+                ),
+            ):
+                status = mlx_sam_runtime_status(
+                    MlxSamSegmenter(model_path=str(model_path))
+                )
+
+            self.assertEqual(status["status"], "mlx_sam_package_available")
+            self.assertTrue(status["backend_available"])
+            self.assertEqual(status["adapter"], "mlx_sam_grid_points")
+            self.assertTrue(status["sam_package_available"])
+            self.assertTrue(
+                status["capabilities"]["live_sam_model_adapter"]["available"]
+            )
+
     def test_mlx_sam_runtime_status_requires_model_configuration(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=True):
             status = mlx_sam_runtime_status(MlxSamSegmenter())
