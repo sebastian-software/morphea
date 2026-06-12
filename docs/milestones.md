@@ -380,6 +380,8 @@ Implemented so far:
 - deterministic `curve generate`
 - labeled PNG + JSON manifest pairs
 - `dataset.json` index
+- `dataset.json` records aggregate and per-sample anchor-kind counts so
+  generated training corpora can be audited without reopening every manifest
 - deterministic `train` / `val` / `test` split folders
 - core primitive ground truth for circles, point dots, circle strokes, line
   strokes, curved strokes, arc strokes, rects, rounded rects, quads, and

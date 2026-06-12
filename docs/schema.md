@@ -688,10 +688,15 @@ Written by `curve generate`.
 - `count`, `seed`, `width`, `height`
 - `difficulty`: currently `basic`, `dense`, `grid`, or `logo`
 - `splits`
+- `anchor_kind_counts`: aggregate ground-truth primitive counts
+- `split_anchor_kind_counts`: aggregate ground-truth counts per train/val/test
+  split
 - `samples`
 
 Each generated sample manifest also includes `seed` and `difficulty` so a
 single PNG/JSON pair is reproducible outside the dataset index.
+Each dataset sample entry records `anchor_count` and `anchor_kind_counts` so a
+training corpus can be audited without reopening every manifest.
 
 Quad anchors may include numeric `metrics.quad_subtype_code` values: `1.0` for
 trapezoid and `2.0` for parallelogram. They remain `quad` anchors so the
