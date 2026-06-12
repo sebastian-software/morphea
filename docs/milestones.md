@@ -702,6 +702,8 @@ Implemented so far:
   gates
 - `curve review --config review.json` and `curve apply-review --config
   apply-review.json` for repeatable human-review queue processing
+- `curve merge-labels --config merge-labels.json` for repeatable reviewed-label
+  dataset export
 - `curve compare-training --config compare.json` for repeatable retraining
   comparisons
 - `curve retrain --config retrain.json` for repeatable augmented model output

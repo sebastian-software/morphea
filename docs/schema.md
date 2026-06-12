@@ -376,6 +376,17 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Merge Labels Config v1
+
+Read by `curve merge-labels --config`.
+
+Supported fields:
+
+- `reviewed_labels`
+- `output_dir`
+
+CLI arguments override values loaded from the config file.
+
 ## Training Config v1
 
 Read by `curve train --config`.
