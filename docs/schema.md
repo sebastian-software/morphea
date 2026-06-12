@@ -132,8 +132,9 @@ Top-level fields:
 - `runs`: per-run summaries with anchor/group/diagnostic counts
 
 Each run summary also carries `editability_score`, `fragmentation_penalty`,
-`raster_l1_error`, `raster_edge_error`, and `semantic_rank` when the manifest
-contains those metrics.
+`raster_l1_error`, `raster_edge_error`, `semantic_rank`, and
+`diagnostic_stage_counts` when the manifest contains those metrics and
+diagnostics.
 
 `curve sweep --markdown summary.md` writes a Markdown comparison view ranked by
 editability score and raster error. It is derived from `sweep-summary.json` and
@@ -142,6 +143,20 @@ does not change the JSON schema.
 Sweep run configs may include `cutout_export` with `overlay_stroke` or
 `negative_mask`; this affects the run directory `output.svg` but is not passed
 to primitive detection.
+
+## Eval Summary v1
+
+Written by `curve eval`.
+
+Top-level fields:
+
+- `run_count`
+- `runs`: per-run summaries for discovered run directories
+
+Each run summary records anchor, layer, group, diagnostic, metric, and
+anchor-type counts. Diagnostic data includes both raw `diagnostic_codes` and
+stage-oriented `diagnostic_stage_counts` using the same stage buckets as
+Markdown/HTML run reports.
 
 ## Profile Report v1
 

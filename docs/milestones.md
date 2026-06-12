@@ -301,6 +301,8 @@ Implemented so far:
 - node, parameter, simple-shape, generic-path, cut-out, and color-fragment
   counts
 - metrics surfaced in reports, eval summaries, and sweep summaries
+- diagnostic stage counts surfaced in reports, eval summaries, and sweep
+  summaries for cross-run failure attribution.
 - deterministic manifest preview renderer for current primitive types
 - `curve report` can render Markdown or HTML from an existing manifest
 - sweep summaries include `semantic_rank` and a top-level `ranking` list using
