@@ -1,0 +1,1253 @@
+{
+  "case_count": 8,
+  "cases": [
+    {
+      "actual_kind": "rect",
+      "anchor_count": 1,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/filled_square/debug.svg",
+        "input": "site/assets/primitive-quality/cases/filled_square/input.png",
+        "manifest": "site/assets/primitive-quality/cases/filled_square/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/filled_square/output.svg",
+        "preview": "site/assets/primitive-quality/cases/filled_square/preview.png"
+      },
+      "expected_kinds": [
+        "rect",
+        "quad"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "filled_square",
+      "geometry": {
+        "actual_bounds": [
+          16.0,
+          16.0,
+          47.0,
+          47.0
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          16.0,
+          16.0,
+          47.0,
+          47.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "corners": [
+              [
+                16.0,
+                16.0
+              ],
+              [
+                47.0,
+                16.0
+              ],
+              [
+                47.0,
+                47.0
+              ],
+              [
+                16.0,
+                47.0
+              ]
+            ]
+          },
+          "kind": "rect",
+          "type": "quad"
+        },
+        "expected": {
+          "geometry": {
+            "corners": [
+              [
+                16.0,
+                16.0
+              ],
+              [
+                47.0,
+                16.0
+              ],
+              [
+                47.0,
+                47.0
+              ],
+              [
+                16.0,
+                47.0
+              ]
+            ]
+          },
+          "kinds": [
+            "rect",
+            "quad"
+          ],
+          "type": "quad"
+        }
+      },
+      "group_matches": [],
+      "id": "filled_square",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "filled_square",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    16.0,
+                    16.0
+                  ],
+                  [
+                    47.0,
+                    16.0
+                  ],
+                  [
+                    47.0,
+                    47.0
+                  ],
+                  [
+                    16.0,
+                    47.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    16.0,
+                    16.0
+                  ],
+                  [
+                    47.0,
+                    16.0
+                  ],
+                  [
+                    47.0,
+                    47.0
+                  ],
+                  [
+                    16.0,
+                    47.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "base"
+    },
+    {
+      "actual_kind": "circle",
+      "anchor_count": 1,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/filled_circle/debug.svg",
+        "input": "site/assets/primitive-quality/cases/filled_circle/input.png",
+        "manifest": "site/assets/primitive-quality/cases/filled_circle/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/filled_circle/output.svg",
+        "preview": "site/assets/primitive-quality/cases/filled_circle/preview.png"
+      },
+      "expected_kinds": [
+        "circle"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "filled_circle",
+      "geometry": {
+        "actual_bounds": [
+          17.985722,
+          17.985722,
+          46.014278,
+          46.014278
+        ],
+        "bbox_iou": 0.997963,
+        "expected_bounds": [
+          18.0,
+          18.0,
+          46.0,
+          46.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "cx": 32.0,
+            "cy": 32.0,
+            "r": 14.014278,
+            "width": null
+          },
+          "kind": "circle",
+          "type": "circle"
+        },
+        "expected": {
+          "geometry": {
+            "cx": 32.0,
+            "cy": 32.0,
+            "r": 14.0
+          },
+          "kinds": [
+            "circle"
+          ],
+          "type": "circle"
+        }
+      },
+      "group_matches": [],
+      "id": "filled_circle",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "circle",
+          "bbox_iou": 0.997963,
+          "expected_id": "filled_circle",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "cx": 32.0,
+                "cy": 32.0,
+                "r": 14.014278,
+                "width": null
+              },
+              "kind": "circle",
+              "type": "circle"
+            },
+            "expected": {
+              "geometry": {
+                "cx": 32.0,
+                "cy": 32.0,
+                "r": 14.0
+              },
+              "kinds": [
+                "circle"
+              ],
+              "type": "circle"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.012264,
+        "raster_l1_error": 0.00957,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "base"
+    },
+    {
+      "actual_kind": "stroke_polyline",
+      "anchor_count": 1,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/horizontal_stroke/debug.svg",
+        "input": "site/assets/primitive-quality/cases/horizontal_stroke/input.png",
+        "manifest": "site/assets/primitive-quality/cases/horizontal_stroke/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/horizontal_stroke/output.svg",
+        "preview": "site/assets/primitive-quality/cases/horizontal_stroke/preview.png"
+      },
+      "expected_kinds": [
+        "stroke_polyline"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "horizontal_stroke",
+      "geometry": {
+        "actual_bounds": [
+          10.0,
+          30.5,
+          54.0,
+          34.5
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          10.0,
+          30.5,
+          54.0,
+          34.5
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "centerline": [
+              [
+                12.0,
+                32.5
+              ],
+              [
+                52.0,
+                32.5
+              ]
+            ],
+            "width": 4.0
+          },
+          "kind": "stroke_polyline",
+          "type": "stroke"
+        },
+        "expected": {
+          "geometry": {
+            "centerline": [
+              [
+                12.0,
+                32.5
+              ],
+              [
+                52.0,
+                32.5
+              ]
+            ],
+            "width": 4.0
+          },
+          "kinds": [
+            "stroke_polyline"
+          ],
+          "type": "stroke"
+        }
+      },
+      "group_matches": [],
+      "id": "horizontal_stroke",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "stroke_polyline",
+          "bbox_iou": 1.0,
+          "expected_id": "horizontal_stroke",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "centerline": [
+                  [
+                    12.0,
+                    32.5
+                  ],
+                  [
+                    52.0,
+                    32.5
+                  ]
+                ],
+                "width": 4.0
+              },
+              "kind": "stroke_polyline",
+              "type": "stroke"
+            },
+            "expected": {
+              "geometry": {
+                "centerline": [
+                  [
+                    12.0,
+                    32.5
+                  ],
+                  [
+                    52.0,
+                    32.5
+                  ]
+                ],
+                "width": 4.0
+              },
+              "kinds": [
+                "stroke_polyline"
+              ],
+              "type": "stroke"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "base"
+    },
+    {
+      "actual_kind": "stroke_circle",
+      "anchor_count": 1,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/outlined_ring/debug.svg",
+        "input": "site/assets/primitive-quality/cases/outlined_ring/input.png",
+        "manifest": "site/assets/primitive-quality/cases/outlined_ring/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/outlined_ring/output.svg",
+        "preview": "site/assets/primitive-quality/cases/outlined_ring/preview.png"
+      },
+      "expected_kinds": [
+        "stroke_circle"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "outlined_ring",
+      "geometry": {
+        "actual_bounds": [
+          17.182179,
+          17.182179,
+          46.817821,
+          46.817821
+        ],
+        "bbox_iou": 0.990867,
+        "expected_bounds": [
+          17.25,
+          17.25,
+          46.75,
+          46.75
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "cx": 32.0,
+            "cy": 32.0,
+            "r": 12.473983,
+            "width": 4.687675
+          },
+          "kind": "stroke_circle",
+          "type": "circle"
+        },
+        "expected": {
+          "geometry": {
+            "cx": 32.0,
+            "cy": 32.0,
+            "r": 12.5,
+            "width": 4.5
+          },
+          "kinds": [
+            "stroke_circle"
+          ],
+          "type": "stroke_circle"
+        }
+      },
+      "group_matches": [],
+      "id": "outlined_ring",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "stroke_circle",
+          "bbox_iou": 0.990867,
+          "expected_id": "outlined_ring",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "cx": 32.0,
+                "cy": 32.0,
+                "r": 12.473983,
+                "width": 4.687675
+              },
+              "kind": "stroke_circle",
+              "type": "circle"
+            },
+            "expected": {
+              "geometry": {
+                "cx": 32.0,
+                "cy": 32.0,
+                "r": 12.5,
+                "width": 4.5
+              },
+              "kinds": [
+                "stroke_circle"
+              ],
+              "type": "stroke_circle"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.038905,
+        "raster_l1_error": 0.053516,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "base"
+    },
+    {
+      "actual_kind": "circle",
+      "anchor_count": 1,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/antialiased_circle/debug.svg",
+        "input": "site/assets/primitive-quality/cases/antialiased_circle/input.png",
+        "manifest": "site/assets/primitive-quality/cases/antialiased_circle/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/antialiased_circle/output.svg",
+        "preview": "site/assets/primitive-quality/cases/antialiased_circle/preview.png"
+      },
+      "expected_kinds": [
+        "circle"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "antialiased_circle",
+      "geometry": {
+        "actual_bounds": [
+          17.905667,
+          17.905667,
+          45.34875,
+          45.34875
+        ],
+        "bbox_iou": 0.947775,
+        "expected_bounds": [
+          18.0,
+          18.0,
+          46.0,
+          46.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "cx": 31.627208,
+            "cy": 31.627208,
+            "r": 13.721541,
+            "width": null
+          },
+          "kind": "circle",
+          "type": "circle"
+        },
+        "expected": {
+          "geometry": {
+            "cx": 32.0,
+            "cy": 32.0,
+            "r": 14.0
+          },
+          "kinds": [
+            "circle"
+          ],
+          "type": "circle"
+        }
+      },
+      "group_matches": [],
+      "id": "antialiased_circle",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "circle",
+          "bbox_iou": 0.947775,
+          "expected_id": "antialiased_circle",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "cx": 31.627208,
+                "cy": 31.627208,
+                "r": 13.721541,
+                "width": null
+              },
+              "kind": "circle",
+              "type": "circle"
+            },
+            "expected": {
+              "geometry": {
+                "cx": 32.0,
+                "cy": 32.0,
+                "r": 14.0
+              },
+              "kinds": [
+                "circle"
+              ],
+              "type": "circle"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.014403,
+        "raster_l1_error": 0.011854,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "base"
+    },
+    {
+      "actual_kind": "rect",
+      "anchor_count": 2,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/composition_square_plus_circle_a/debug.svg",
+        "input": "site/assets/primitive-quality/cases/composition_square_plus_circle_a/input.png",
+        "manifest": "site/assets/primitive-quality/cases/composition_square_plus_circle_a/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/composition_square_plus_circle_a/output.svg",
+        "preview": "site/assets/primitive-quality/cases/composition_square_plus_circle_a/preview.png"
+      },
+      "expected_kinds": [
+        "rect",
+        "quad"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "composition_square_plus_circle",
+      "geometry": {
+        "actual_bounds": [
+          8.0,
+          8.0,
+          26.0,
+          26.0
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          8.0,
+          8.0,
+          26.0,
+          26.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "corners": [
+              [
+                8.0,
+                8.0
+              ],
+              [
+                26.0,
+                8.0
+              ],
+              [
+                26.0,
+                26.0
+              ],
+              [
+                8.0,
+                26.0
+              ]
+            ]
+          },
+          "kind": "rect",
+          "type": "quad"
+        },
+        "expected": {
+          "geometry": {
+            "corners": [
+              [
+                8.0,
+                8.0
+              ],
+              [
+                26.0,
+                8.0
+              ],
+              [
+                26.0,
+                26.0
+              ],
+              [
+                8.0,
+                26.0
+              ]
+            ]
+          },
+          "kinds": [
+            "rect",
+            "quad"
+          ],
+          "type": "quad"
+        }
+      },
+      "group_matches": [],
+      "id": "composition_square_plus_circle_a",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "square",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    8.0,
+                    8.0
+                  ],
+                  [
+                    26.0,
+                    8.0
+                  ],
+                  [
+                    26.0,
+                    26.0
+                  ],
+                  [
+                    8.0,
+                    26.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    8.0,
+                    8.0
+                  ],
+                  [
+                    26.0,
+                    8.0
+                  ],
+                  [
+                    26.0,
+                    26.0
+                  ],
+                  [
+                    8.0,
+                    26.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        },
+        {
+          "actual_index": 1,
+          "actual_kind": "circle",
+          "bbox_iou": 0.986705,
+          "expected_id": "circle",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "cx": 47.0,
+                "cy": 47.0,
+                "r": 8.939971,
+                "width": null
+              },
+              "kind": "circle",
+              "type": "circle"
+            },
+            "expected": {
+              "geometry": {
+                "cx": 47.0,
+                "cy": 47.0,
+                "r": 9.0
+              },
+              "kinds": [
+                "circle"
+              ],
+              "type": "circle"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.008035,
+        "raster_l1_error": 0.005664,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "a"
+    },
+    {
+      "actual_kind": "rect",
+      "anchor_count": 2,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/debug.svg",
+        "input": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/input.png",
+        "manifest": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/output.svg",
+        "preview": "site/assets/primitive-quality/cases/cutout_horizontal_gap_center/preview.png"
+      },
+      "expected_kinds": [
+        "rect",
+        "quad"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "cutout_horizontal_gap",
+      "geometry": {
+        "actual_bounds": [
+          8.0,
+          20.0,
+          56.0,
+          44.0
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          8.0,
+          20.0,
+          56.0,
+          44.0
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "corners": [
+              [
+                8.0,
+                20.0
+              ],
+              [
+                56.0,
+                20.0
+              ],
+              [
+                56.0,
+                44.0
+              ],
+              [
+                8.0,
+                44.0
+              ]
+            ]
+          },
+          "kind": "rect",
+          "type": "quad"
+        },
+        "expected": {
+          "geometry": {
+            "corners": [
+              [
+                8.0,
+                20.0
+              ],
+              [
+                56.0,
+                20.0
+              ],
+              [
+                56.0,
+                44.0
+              ],
+              [
+                8.0,
+                44.0
+              ]
+            ]
+          },
+          "kinds": [
+            "rect",
+            "quad"
+          ],
+          "type": "quad"
+        }
+      },
+      "group_matches": [],
+      "id": "cutout_horizontal_gap_center",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "rect",
+          "bbox_iou": 1.0,
+          "expected_id": "fill",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "corners": [
+                  [
+                    8.0,
+                    20.0
+                  ],
+                  [
+                    56.0,
+                    20.0
+                  ],
+                  [
+                    56.0,
+                    44.0
+                  ],
+                  [
+                    8.0,
+                    44.0
+                  ]
+                ]
+              },
+              "kind": "rect",
+              "type": "quad"
+            },
+            "expected": {
+              "geometry": {
+                "corners": [
+                  [
+                    8.0,
+                    20.0
+                  ],
+                  [
+                    56.0,
+                    20.0
+                  ],
+                  [
+                    56.0,
+                    44.0
+                  ],
+                  [
+                    8.0,
+                    44.0
+                  ]
+                ]
+              },
+              "kinds": [
+                "rect",
+                "quad"
+              ],
+              "type": "quad"
+            }
+          }
+        },
+        {
+          "actual_index": 1,
+          "actual_kind": "stroke_polyline",
+          "bbox_iou": 1.0,
+          "expected_id": "cutout",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "centerline": [
+                  [
+                    18.0,
+                    32.0
+                  ],
+                  [
+                    46.0,
+                    32.0
+                  ]
+                ],
+                "width": 1.0
+              },
+              "kind": "stroke_polyline",
+              "type": "stroke"
+            },
+            "expected": {
+              "geometry": {
+                "centerline": [
+                  [
+                    18.0,
+                    32.0
+                  ],
+                  [
+                    46.0,
+                    32.0
+                  ]
+                ],
+                "is_cutout": 1.0,
+                "width": 1.0
+              },
+              "kinds": [
+                "stroke_polyline"
+              ],
+              "type": "stroke"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "center"
+    },
+    {
+      "actual_kind": "stroke_polyline",
+      "anchor_count": 2,
+      "artifacts": {
+        "debug_svg": "site/assets/primitive-quality/cases/group_parallel_strokes_horizontal/debug.svg",
+        "input": "site/assets/primitive-quality/cases/group_parallel_strokes_horizontal/input.png",
+        "manifest": "site/assets/primitive-quality/cases/group_parallel_strokes_horizontal/manifest.json",
+        "output_svg": "site/assets/primitive-quality/cases/group_parallel_strokes_horizontal/output.svg",
+        "preview": "site/assets/primitive-quality/cases/group_parallel_strokes_horizontal/preview.png"
+      },
+      "expected_kinds": [
+        "stroke_polyline"
+      ],
+      "failure_categories": [],
+      "failure_details": [],
+      "failures": [],
+      "family": "group_parallel_strokes",
+      "geometry": {
+        "actual_bounds": [
+          6.5,
+          16.5,
+          57.5,
+          19.5
+        ],
+        "bbox_iou": 1.0,
+        "expected_bounds": [
+          6.5,
+          16.5,
+          57.5,
+          19.5
+        ]
+      },
+      "geometry_diff": {
+        "actual": {
+          "geometry": {
+            "centerline": [
+              [
+                8.0,
+                18.0
+              ],
+              [
+                56.0,
+                18.0
+              ]
+            ],
+            "width": 3.0
+          },
+          "kind": "stroke_polyline",
+          "type": "stroke"
+        },
+        "expected": {
+          "geometry": {
+            "centerline": [
+              [
+                8.0,
+                18.0
+              ],
+              [
+                56.0,
+                18.0
+              ]
+            ],
+            "width": 3.0
+          },
+          "kinds": [
+            "stroke_polyline"
+          ],
+          "type": "stroke"
+        }
+      },
+      "group_matches": [
+        {
+          "anchor_count": 2,
+          "expected_kind": "parallel_stroke_group",
+          "group_index": 0
+        }
+      ],
+      "id": "group_parallel_strokes_horizontal",
+      "matches": [
+        {
+          "actual_index": 0,
+          "actual_kind": "stroke_polyline",
+          "bbox_iou": 1.0,
+          "expected_id": "top",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "centerline": [
+                  [
+                    8.0,
+                    18.0
+                  ],
+                  [
+                    56.0,
+                    18.0
+                  ]
+                ],
+                "width": 3.0
+              },
+              "kind": "stroke_polyline",
+              "type": "stroke"
+            },
+            "expected": {
+              "geometry": {
+                "centerline": [
+                  [
+                    8.0,
+                    18.0
+                  ],
+                  [
+                    56.0,
+                    18.0
+                  ]
+                ],
+                "width": 3.0
+              },
+              "kinds": [
+                "stroke_polyline"
+              ],
+              "type": "stroke"
+            }
+          }
+        },
+        {
+          "actual_index": 1,
+          "actual_kind": "stroke_polyline",
+          "bbox_iou": 1.0,
+          "expected_id": "bottom",
+          "geometry_diff": {
+            "actual": {
+              "geometry": {
+                "centerline": [
+                  [
+                    8.0,
+                    44.0
+                  ],
+                  [
+                    56.0,
+                    44.0
+                  ]
+                ],
+                "width": 3.0
+              },
+              "kind": "stroke_polyline",
+              "type": "stroke"
+            },
+            "expected": {
+              "geometry": {
+                "centerline": [
+                  [
+                    8.0,
+                    44.0
+                  ],
+                  [
+                    56.0,
+                    44.0
+                  ]
+                ],
+                "width": 3.0
+              },
+              "kinds": [
+                "stroke_polyline"
+              ],
+              "type": "stroke"
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.0,
+        "raster_l1_error": 0.0,
+        "raster_size_match": true
+      },
+      "ok": true,
+      "unexpected_actual": [],
+      "unmatched_expected": [],
+      "variant": "horizontal"
+    }
+  ],
+  "failed_count": 0,
+  "family_summaries": [
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "antialiased_circle",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "composition_square_plus_circle",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "cutout_horizontal_gap",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "filled_circle",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "filled_square",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "group_parallel_strokes",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "horizontal_stroke",
+      "ok": true,
+      "passed_count": 1
+    },
+    {
+      "case_count": 1,
+      "failed_count": 0,
+      "family": "outlined_ring",
+      "ok": true,
+      "passed_count": 1
+    }
+  ],
+  "ok": true,
+  "passed_count": 8,
+  "schema_version": 1,
+  "selected_case_ids": [
+    "filled_square",
+    "filled_circle",
+    "horizontal_stroke",
+    "outlined_ring",
+    "antialiased_circle",
+    "composition_square_plus_circle_a",
+    "cutout_horizontal_gap_center",
+    "group_parallel_strokes_horizontal"
+  ],
+  "selection": {
+    "cases": [
+      "filled_square",
+      "filled_circle",
+      "horizontal_stroke",
+      "outlined_ring",
+      "antialiased_circle",
+      "composition_square_plus_circle_a",
+      "cutout_horizontal_gap_center",
+      "group_parallel_strokes_horizontal"
+    ],
+    "filter": null,
+    "refine": false,
+    "refinement_iterations": 1
+  }
+}

@@ -444,6 +444,9 @@ Current evidence:
 
 ### PQ10: Honest Basic Gallery
 
+Status: implemented as a static homepage gallery generated from passing
+primitive-check artifacts.
+
 Purpose: publish examples only after they are backed by passing contracts.
 
 Implementation work:
@@ -459,6 +462,14 @@ Exit criteria:
 - Every gallery panel points to a passing report case.
 - The homepage no longer uses hand-drawn diagrams as proof of vectorization
   quality.
+
+Current evidence:
+
+- `site/assets/primitive-quality/report.json` records 8 passing gallery cases.
+- Homepage panels show `input.png` next to the generated `output.svg` at the
+  same displayed size.
+- The old hand-drawn primitive board has been replaced with artifact-backed
+  examples only.
 
 ## Suggested Work Order
 

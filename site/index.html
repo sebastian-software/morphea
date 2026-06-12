@@ -127,30 +127,130 @@
         </div>
       </section>
 
-      <section class="primitive-section" aria-label="Primitive examples">
+      <section class="primitive-section" aria-label="Passing primitive quality demos">
         <div class="primitive-copy">
-          <p class="eyebrow">Shape reconstruction</p>
-          <h2>Circles stay circles. Strokes stay strokes. Grids stay coherent.</h2>
+          <p class="eyebrow">Primitive quality gate</p>
+          <h2>Bitmap fixtures rendered back as editable SVG primitives.</h2>
           <p>
-            A slightly lumpy circle or uneven grid makes an illustration feel
-            broken immediately. Morphēa reserves simple forms early so later
-            organic detail cannot fragment them.
+            These panels are generated from passing <code>primitive-check</code>
+            artifacts. Each pair uses the same viewport size for the source
+            bitmap and the SVG output.
           </p>
         </div>
-        <svg class="primitive-board" viewBox="0 0 720 240" role="img" aria-labelledby="primitive-title">
-          <title id="primitive-title">Primitive examples</title>
-          <circle class="circle-outline" cx="100" cy="110" r="50"></circle>
-          <circle class="gold-fill" cx="100" cy="110" r="16"></circle>
-          <path class="blue-stroke thick" d="M210 154c34-74 108-83 150-10"></path>
-          <path class="cutout-stroke" d="M222 146c31-41 83-44 124-7"></path>
-          <path class="quad q1" d="M428 70h90l24 56h-122z"></path>
-          <path class="quad q2" d="M520 70h92l58 56h-127z"></path>
-          <path class="quad q3" d="M419 130h125l22 72H388z"></path>
-          <path class="quad q4" d="M548 130h124l34 72H568z"></path>
-          <text class="diagram-label" x="57" y="205">circle</text>
-          <text class="diagram-label" x="246" y="205">stroke + cut-out</text>
-          <text class="diagram-label" x="504" y="222">quad grid</text>
-        </svg>
+        <div class="primitive-gallery">
+          <article class="demo-item">
+            <h3>Filled square</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/filled_square/input.png" width="64" height="64" alt="Filled square bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/filled_square/output.svg" width="64" height="64" alt="Filled square rendered as SVG">
+              </figure>
+            </div>
+            <p><code>rect</code> · 1 anchor · L1 0.000000 · edge 0.000000</p>
+          </article>
+          <article class="demo-item">
+            <h3>Filled circle</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/filled_circle/input.png" width="64" height="64" alt="Filled circle bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/filled_circle/output.svg" width="64" height="64" alt="Filled circle rendered as SVG">
+              </figure>
+            </div>
+            <p><code>circle</code> · 1 anchor · L1 0.009570 · edge 0.012264</p>
+          </article>
+          <article class="demo-item">
+            <h3>Horizontal stroke</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/horizontal_stroke/input.png" width="64" height="64" alt="Horizontal stroke bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/horizontal_stroke/output.svg" width="64" height="64" alt="Horizontal stroke rendered as SVG">
+              </figure>
+            </div>
+            <p><code>stroke_polyline</code> · 1 anchor · L1 0.000000 · edge 0.000000</p>
+          </article>
+          <article class="demo-item">
+            <h3>Outlined ring</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/outlined_ring/input.png" width="64" height="64" alt="Outlined ring bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/outlined_ring/output.svg" width="64" height="64" alt="Outlined ring rendered as SVG">
+              </figure>
+            </div>
+            <p><code>stroke_circle</code> · 1 anchor · L1 0.053516 · edge 0.038905</p>
+          </article>
+          <article class="demo-item">
+            <h3>Anti-aliased circle</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/antialiased_circle/input.png" width="64" height="64" alt="Anti-aliased circle bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/antialiased_circle/output.svg" width="64" height="64" alt="Anti-aliased circle rendered as SVG">
+              </figure>
+            </div>
+            <p><code>circle</code> · 1 anchor · L1 0.011854 · edge 0.014403</p>
+          </article>
+          <article class="demo-item">
+            <h3>Square plus circle</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/composition_square_plus_circle_a/input.png" width="64" height="64" alt="Square and circle composition bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/composition_square_plus_circle_a/output.svg" width="64" height="64" alt="Square and circle composition rendered as SVG">
+              </figure>
+            </div>
+            <p><code>rect + circle</code> · 2 anchors · L1 0.005664 · edge 0.008035</p>
+          </article>
+          <article class="demo-item">
+            <h3>Cut-out stroke</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/cutout_horizontal_gap_center/input.png" width="64" height="64" alt="Rectangle with white cut-out bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/cutout_horizontal_gap_center/output.svg" width="64" height="64" alt="Rectangle with editable cut-out rendered as SVG">
+              </figure>
+            </div>
+            <p><code>quad + cutout stroke</code> · 2 anchors · L1 0.000000 · edge 0.000000</p>
+          </article>
+          <article class="demo-item">
+            <h3>Parallel strokes</h3>
+            <div class="demo-pair">
+              <figure>
+                <figcaption>Bitmap</figcaption>
+                <img src="assets/primitive-quality/cases/group_parallel_strokes_horizontal/input.png" width="64" height="64" alt="Parallel strokes bitmap fixture">
+              </figure>
+              <figure>
+                <figcaption>SVG</figcaption>
+                <img src="assets/primitive-quality/cases/group_parallel_strokes_horizontal/output.svg" width="64" height="64" alt="Parallel strokes rendered as SVG">
+              </figure>
+            </div>
+            <p><code>parallel_stroke_group</code> · 2 anchors · L1 0.000000 · edge 0.000000</p>
+          </article>
+        </div>
       </section>
 
       <section id="quickstart" class="terminal-section">

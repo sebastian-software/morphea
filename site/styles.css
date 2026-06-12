@@ -382,6 +382,66 @@ h3 {
   max-width: 520px;
 }
 
+.primitive-gallery {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.demo-item {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.demo-item h3 {
+  margin-bottom: 12px;
+}
+
+.demo-item p {
+  color: var(--muted);
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+  margin: 12px 0 0;
+}
+
+.demo-pair {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.demo-pair figure {
+  margin: 0;
+}
+
+.demo-pair figcaption {
+  color: var(--oxide);
+  font-family: Optima, Avenir, "Avenir Next", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.demo-pair img {
+  aspect-ratio: 1;
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--line) 34%, transparent) 25%, transparent 25%) 0 0 / 12px 12px,
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--line) 34%, transparent) 75%) 0 0 / 12px 12px,
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--line) 34%, transparent) 75%) 6px 6px / 12px 12px,
+    linear-gradient(45deg, color-mix(in srgb, var(--line) 34%, transparent) 25%, var(--white) 25%) 6px 6px / 12px 12px;
+  border: 1px solid var(--line);
+  display: block;
+  height: auto;
+  image-rendering: pixelated;
+  max-width: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
 .terminal-section {
   align-items: start;
   display: grid;
@@ -475,7 +535,8 @@ pre {
   }
 
   .pipeline-diagram,
-  .capability-list {
+  .capability-list,
+  .primitive-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -523,6 +584,7 @@ pre {
 
   .pipeline-diagram,
   .capability-list,
+  .primitive-gallery,
   .docs-list a {
     grid-template-columns: 1fr;
   }
