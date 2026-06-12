@@ -780,6 +780,25 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Generate Config v1
+
+Read by `curve generate --config`.
+
+Supported fields:
+
+- `output_dir`
+- `count`
+- `seed`
+- `width`
+- `height`
+- `difficulty`: currently `basic`, `dense`, `grid`, or `logo`
+- `val_count`
+- `test_count`
+
+CLI arguments override values loaded from the config file. Omitted fields use
+the same defaults as the direct CLI: one 96x96 `basic` sample with one
+validation and one test slot where possible.
+
 ## Synthetic Dataset v1
 
 Written by `curve generate`.

@@ -163,6 +163,79 @@ class SyntheticGeneratorTests(unittest.TestCase):
             self.assertTrue((output / "test" / "sample-0001.png").exists())
             self.assertTrue((output / "test" / "sample-0001.json").exists())
 
+    def test_generate_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "dataset"
+            config_path = Path(temp_dir) / "generate.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "output_dir": str(output_dir),
+                        "count": 2,
+                        "seed": 41,
+                        "width": 64,
+                        "height": 64,
+                        "difficulty": "grid",
+                        "val_count": 0,
+                        "test_count": 1,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["generate", "--config", str(config_path)])
+
+            index = json.loads((output_dir / "dataset.json").read_text())
+            self.assertEqual(index["count"], 2)
+            self.assertEqual(index["seed"], 41)
+            self.assertEqual(index["width"], 64)
+            self.assertEqual(index["height"], 64)
+            self.assertEqual(index["difficulty"], "grid")
+            self.assertTrue((output_dir / "test" / "sample-0001.json").exists())
+
+    def test_generate_cli_args_override_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_output_dir = Path(temp_dir) / "config-dataset"
+            output_dir = Path(temp_dir) / "override-dataset"
+            config_path = Path(temp_dir) / "generate.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "output_dir": str(config_output_dir),
+                        "count": 1,
+                        "seed": 50,
+                        "difficulty": "logo",
+                        "val_count": 0,
+                        "test_count": 0,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "generate",
+                        "--config",
+                        str(config_path),
+                        "-o",
+                        str(output_dir),
+                        "--count",
+                        "2",
+                        "--seed",
+                        "60",
+                        "--difficulty",
+                        "grid",
+                    ]
+                )
+
+            index = json.loads((output_dir / "dataset.json").read_text())
+            self.assertEqual(index["count"], 2)
+            self.assertEqual(index["seed"], 60)
+            self.assertEqual(index["difficulty"], "grid")
+            self.assertFalse((config_output_dir / "dataset.json").exists())
+
     def test_generate_cli_accepts_logo_difficulty(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             with redirect_stdout(StringIO()):

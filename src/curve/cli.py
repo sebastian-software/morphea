@@ -90,6 +90,17 @@ VECTORIZE_DEFAULT_CONFIG = {
     "rounded_rect_max_fill_error": 0.30,
 }
 CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
+GENERATE_DEFAULT_CONFIG = {
+    "output_dir": None,
+    "count": 1,
+    "seed": 1,
+    "width": 96,
+    "height": 96,
+    "difficulty": "basic",
+    "val_count": 1,
+    "test_count": 1,
+}
+GENERATE_CONFIG_KEYS = set(GENERATE_DEFAULT_CONFIG)
 TRAIN_CONFIG_KEYS = {"dataset", "output"}
 EVAL_CONFIG_KEYS = {"run_root", "output", "markdown"}
 PROFILE_CONFIG_KEYS = set(VECTORIZE_DEFAULT_CONFIG) | {"input", "output", "repeats"}
@@ -355,14 +366,15 @@ def main(argv: list[str] | None = None) -> None:
         "generate",
         help="Generate synthetic flat-color primitive training samples.",
     )
-    generate.add_argument("-o", "--output-dir", type=Path, required=True)
-    generate.add_argument("--count", type=int, default=1)
-    generate.add_argument("--seed", type=int, default=1)
-    generate.add_argument("--width", type=int, default=96)
-    generate.add_argument("--height", type=int, default=96)
-    generate.add_argument("--difficulty", default="basic")
-    generate.add_argument("--val-count", type=int, default=1)
-    generate.add_argument("--test-count", type=int, default=1)
+    generate.add_argument("-o", "--output-dir", type=Path)
+    generate.add_argument("--count", type=int, default=None)
+    generate.add_argument("--seed", type=int, default=None)
+    generate.add_argument("--width", type=int, default=None)
+    generate.add_argument("--height", type=int, default=None)
+    generate.add_argument("--difficulty", default=None)
+    generate.add_argument("--val-count", type=int, default=None)
+    generate.add_argument("--test-count", type=int, default=None)
+    generate.add_argument("--config", type=Path)
 
     eval_parser = subcommands.add_parser(
         "eval",
@@ -797,17 +809,22 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "generate":
+        generate_config = _resolved_generate_config(args)
         generate_synthetic_dataset(
-            output_dir=args.output_dir,
-            count=args.count,
-            seed=args.seed,
-            width=args.width,
-            height=args.height,
-            difficulty=args.difficulty,
-            val_count=args.val_count,
-            test_count=args.test_count,
+            output_dir=generate_config["output_dir"],
+            count=generate_config["count"],
+            seed=generate_config["seed"],
+            width=generate_config["width"],
+            height=generate_config["height"],
+            difficulty=generate_config["difficulty"],
+            val_count=generate_config["val_count"],
+            test_count=generate_config["test_count"],
         )
-        print(f"wrote {args.count} synthetic samples to {args.output_dir}")
+        print(
+            "wrote "
+            f"{generate_config['count']} synthetic samples to "
+            f"{generate_config['output_dir']}"
+        )
         return
 
     if args.command == "eval":
@@ -1301,6 +1318,22 @@ def _resolved_profile_config(args: argparse.Namespace) -> dict[str, object]:
     config["input"] = Path(str(config["input"]))
     config["output"] = Path(str(config["output"]))
     config["repeats"] = int(config["repeats"])
+    return config
+
+
+def _resolved_generate_config(args: argparse.Namespace) -> dict[str, object]:
+    config = dict(GENERATE_DEFAULT_CONFIG)
+    config.update(_load_generate_config(args.config))
+    for key in GENERATE_DEFAULT_CONFIG:
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+
+    _require_config_paths(config, ("output_dir",), "generate")
+    config["output_dir"] = Path(str(config["output_dir"]))
+    for key in ("count", "seed", "width", "height", "val_count", "test_count"):
+        config[key] = int(config[key])
+    config["difficulty"] = str(config["difficulty"])
     return config
 
 
@@ -1828,6 +1861,22 @@ def _load_report_config(path: Path | None) -> dict[str, object]:
     for key in ("manifest", "output", "config"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_generate_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("generate config must be a JSON object")
+    unknown = sorted(set(loaded) - GENERATE_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported generate config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    if config.get("output_dir") is not None:
+        config["output_dir"] = Path(str(config["output_dir"]))
     return config
 
 
