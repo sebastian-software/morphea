@@ -106,6 +106,7 @@ def _flat_color_masks_result(
     width, height = image.size
     pixel_indexes_by_color: dict[Rgb, list[int]] = {}
     palette: list[Rgb] = []
+    palette_bucket_cache: dict[Rgb, Rgb] = {}
     inferred_background = background or _infer_background_color(image)
     flattened_rgb = _flatten_rgba_image(image, inferred_background)
     quantized_rgb = None
@@ -143,10 +144,16 @@ def _flat_color_masks_result(
         )
         if _color_distance(color, inferred_background) <= color_tolerance:
             continue
-        bucket = _nearest_palette_color(color, palette, color_tolerance)
-        if bucket is None:
+        if color_tolerance <= 0:
             bucket = color
-            palette.append(bucket)
+        elif color in palette_bucket_cache:
+            bucket = palette_bucket_cache[color]
+        else:
+            bucket = _nearest_palette_color(color, palette, color_tolerance)
+            if bucket is None:
+                bucket = color
+                palette.append(bucket)
+            palette_bucket_cache[color] = bucket
         pixel_indexes_by_color.setdefault(bucket, []).append(index)
 
     if transparent_pixel_count:
