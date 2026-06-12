@@ -101,6 +101,15 @@ class QuadAnchor:
 
 
 @dataclass(frozen=True)
+class PathAnchor:
+    """Controlled organic fallback outline with a bounded node count."""
+
+    points: tuple[Point, ...]
+    closed: bool = True
+    fallback_reason: str = "organic_boundary_fit"
+
+
+@dataclass(frozen=True)
 class AnchorCandidate:
     kind: AnchorKind
     raster_error: float
@@ -112,6 +121,7 @@ class AnchorCandidate:
     quad: QuadAnchor | None = None
     arc: ArcAnchor | None = None
     ellipse: EllipseAnchor | None = None
+    path: PathAnchor | None = None
     metrics: dict[str, float] = field(default_factory=dict)
 
     @property
@@ -360,6 +370,7 @@ def enrich_anchor_metrics(candidate: AnchorCandidate) -> AnchorCandidate:
         quad=candidate.quad,
         arc=candidate.arc,
         ellipse=candidate.ellipse,
+        path=candidate.path,
         metrics=metrics,
     )
 

@@ -454,6 +454,12 @@ def anchor_to_svg_element(
         points = " ".join(_point_pair(point) for point in anchor.quad.corners)
         return f'<polygon points="{points}" fill="{escape(fill)}" />'
 
+    if anchor.kind == AnchorKind.CUBIC_PATH and anchor.path is not None:
+        return (
+            f'<path d="{_closed_smooth_path(anchor.path.points)}" '
+            f'fill="{escape(fill)}" />'
+        )
+
     return _unsupported_anchor(anchor)
 
 
@@ -548,6 +554,16 @@ def anchor_to_manifest_with_index(
                 {"x": point.x, "y": point.y}
                 for point in anchor.quad.corners
             ]
+        }
+    if anchor.path is not None:
+        data["path"] = {
+            "points": [
+                {"x": point.x, "y": point.y}
+                for point in anchor.path.points
+            ],
+            "closed": anchor.path.closed,
+            "node_count": len(anchor.path.points),
+            "fallback_reason": anchor.path.fallback_reason,
         }
     if anchor.ellipse is not None:
         data["ellipse"] = {
@@ -1386,6 +1402,10 @@ def _cutout_mask_eligible(anchor: AnchorCandidate) -> bool:
 
 
 def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]:
+    if anchor.path is not None and anchor.path.points:
+        xs = [point.x for point in anchor.path.points]
+        ys = [point.y for point in anchor.path.points]
+        return (min(xs), min(ys), max(xs), max(ys))
     if anchor.ellipse is not None:
         center = anchor.ellipse.center
         rx = anchor.ellipse.rx
@@ -1529,6 +1549,41 @@ def _arc_path(arc: ArcAnchor) -> str:
         f"{1 if arc.large_arc else 0} {1 if arc.sweep else 0} "
         f"{_fmt(end.x)} {_fmt(end.y)}"
     )
+
+
+def _closed_smooth_path(points: tuple[Point, ...]) -> str:
+    """Closed Catmull-Rom outline as cubic Bezier segments ending in Z."""
+
+    if len(points) < 3:
+        return _polyline_path(points) + " Z"
+    commands = [f"M {_fmt(points[0].x)} {_fmt(points[0].y)}"]
+    for control1, control2, end in catmull_rom_segments_closed(points):
+        commands.append(
+            "C "
+            f"{_fmt(control1.x)} {_fmt(control1.y)} "
+            f"{_fmt(control2.x)} {_fmt(control2.y)} "
+            f"{_fmt(end.x)} {_fmt(end.y)}"
+        )
+    commands.append("Z")
+    return " ".join(commands)
+
+
+def catmull_rom_segments_closed(
+    points: tuple[Point, ...],
+) -> list[tuple[Point, Point, Point]]:
+    """Closed-loop Catmull-Rom control pairs wrapping around the outline."""
+
+    count = len(points)
+    segments: list[tuple[Point, Point, Point]] = []
+    for index in range(count):
+        p0 = points[(index - 1) % count]
+        p1 = points[index]
+        p2 = points[(index + 1) % count]
+        p3 = points[(index + 2) % count]
+        control1 = Point(p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6)
+        control2 = Point(p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6)
+        segments.append((control1, control2, p2))
+    return segments
 
 
 def _smooth_curve_path(points: tuple[Point, ...]) -> str:

@@ -15,6 +15,7 @@ from morphea.anchors import (
     ArcAnchor,
     CircleAnchor,
     EllipseAnchor,
+    PathAnchor,
     Point,
     QuadAnchor,
     ScoringConfig,
@@ -604,6 +605,7 @@ def _with_color(anchor: AnchorCandidate, color: str) -> AnchorCandidate:
         quad=anchor.quad,
         arc=anchor.arc,
         ellipse=anchor.ellipse,
+        path=anchor.path,
         metrics=anchor.metrics,
     )
 
@@ -706,7 +708,18 @@ def _scale_anchor(anchor: AnchorCandidate, analysis_scale: float) -> AnchorCandi
         quad=_scale_quad(anchor.quad, factor),
         arc=_scale_arc(anchor.arc, factor),
         ellipse=_scale_ellipse(anchor.ellipse, factor),
+        path=_scale_path(anchor.path, factor),
         metrics=anchor.metrics,
+    )
+
+
+def _scale_path(path: PathAnchor | None, factor: float) -> PathAnchor | None:
+    if path is None:
+        return None
+    return PathAnchor(
+        points=tuple(_scale_point(point, factor) for point in path.points),
+        closed=path.closed,
+        fallback_reason=path.fallback_reason,
     )
 
 

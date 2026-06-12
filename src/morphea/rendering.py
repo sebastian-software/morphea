@@ -151,6 +151,14 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         ):
             _draw_round_caps(draw, (points[0], points[-1]), width, color)
         return
+    if kind == "cubic_path" and "path" in anchor:
+        points = [
+            (float(point["x"]), float(point["y"]))
+            for point in anchor["path"].get("points", [])
+        ]
+        if len(points) >= 3:
+            draw.polygon(_sampled_closed_catmull_rom(points), fill=color)
+        return
     if kind in {"rect", "rounded_rect", "quad"} and "quad" in anchor:
         points = [
             (float(point["x"]), float(point["y"]))
@@ -158,6 +166,43 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         ]
         if len(points) >= 3:
             draw.polygon(points, fill=color)
+
+
+def _sampled_closed_catmull_rom(
+    points: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    from morphea.scene import Point, catmull_rom_segments_closed
+
+    control = tuple(Point(x, y) for x, y in points)
+    sampled: list[tuple[float, float]] = []
+    current = control[0]
+    for control1, control2, end in catmull_rom_segments_closed(control):
+        steps = max(
+            4,
+            ceil(
+                current.distance_to(control1)
+                + control1.distance_to(control2)
+                + control2.distance_to(end)
+            ),
+        )
+        for step in range(1, steps + 1):
+            t = step / steps
+            u = 1 - t
+            x = (
+                u * u * u * current.x
+                + 3 * u * u * t * control1.x
+                + 3 * u * t * t * control2.x
+                + t * t * t * end.x
+            )
+            y = (
+                u * u * u * current.y
+                + 3 * u * u * t * control1.y
+                + 3 * u * t * t * control2.y
+                + t * t * t * end.y
+            )
+            sampled.append((x, y))
+        current = end
+    return sampled
 
 
 def _sampled_catmull_rom_points(

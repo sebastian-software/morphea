@@ -1748,6 +1748,7 @@ def _candidate_with_classifier_prior(
         quad=candidate.quad,
         arc=candidate.arc,
         ellipse=candidate.ellipse,
+        path=candidate.path,
         metrics=metrics,
     )
 
@@ -1807,6 +1808,7 @@ def _candidate_as_kind(candidate: AnchorCandidate, kind: AnchorKind) -> AnchorCa
         quad=candidate.quad,
         arc=candidate.arc,
         ellipse=candidate.ellipse,
+        path=candidate.path,
         metrics={},
     )
 

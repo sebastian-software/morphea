@@ -249,6 +249,35 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertIn('stroke="#ffffff"', svg)
                 self.assertIn(" C ", svg)
 
+    def test_organic_fallback_is_controlled_and_inspectable(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("organic_blob", "organic_crescent"),
+            )
+
+            self.assertTrue(report["ok"])
+            for case in report["cases"]:
+                self.assertEqual(case["actual_kind"], "cubic_path")
+                manifest = json.loads(
+                    (Path(temp_dir) / case["id"] / "manifest.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                anchor = manifest["anchors"][0]
+                self.assertLessEqual(anchor["path"]["node_count"], 16)
+                self.assertEqual(
+                    anchor["path"]["fallback_reason"],
+                    "organic_boundary_fit",
+                )
+                self.assertIn("path_smoothness", anchor["metrics"])
+                svg = (Path(temp_dir) / case["id"] / "output.svg").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn(" C ", svg)
+                self.assertIn("Z", svg)
+            self.assertEqual(report["curve_anchor_kind_counts"]["cubic_path"], 2)
+
     def test_curve_compositions_keep_groups_and_kinds(self):
         report = check_primitive_quality(
             cases=(
@@ -568,6 +597,11 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "composition_ellipse_stroke": 3,
                 "composition_parallel_arcs": 3,
                 "composition_curve_group": 3,
+                "organic_blob": 3,
+                "organic_leaf": 3,
+                "organic_asymmetric": 3,
+                "organic_crescent": 3,
+                "organic_compound": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

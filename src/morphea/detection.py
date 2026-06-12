@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from math import asin, atan2, cos, hypot, pi, sin, sqrt
-from statistics import mean
+from statistics import mean, pstdev
 
 from morphea.anchors import (
     AnchorCandidate,
@@ -13,6 +13,7 @@ from morphea.anchors import (
     ArcAnchor,
     CircleAnchor,
     EllipseAnchor,
+    PathAnchor,
     Point,
     QuadAnchor,
     ScoringConfig,
@@ -162,13 +163,7 @@ def primitive_candidates_for_component(
     if quad is not None:
         candidates.append(quad)
 
-    fallback = AnchorCandidate(
-        kind=AnchorKind.CUBIC_PATH,
-        raster_error=0.0,
-        node_count=max(4, min(component.area, len(component.boundary_pixels))),
-        parameter_count=max(8, min(component.area * 2, len(component.boundary_pixels) * 2)),
-    )
-    candidates.append(fallback)
+    candidates.append(_organic_fallback_candidate(component))
     if classifier_model is not None:
         return tuple(
             _with_classifier_prior(
@@ -179,6 +174,86 @@ def primitive_candidates_for_component(
             for candidate in candidates
         )
     return tuple(candidates)
+
+
+ORGANIC_FALLBACK_MAX_NODES = 16
+# The roadmap ranking demands that the generic fallback only wins when no
+# semantic candidate passes its plausibility gates, so the candidate carries
+# a flat ranking penalty on top of its node complexity.
+ORGANIC_FALLBACK_RANK_PENALTY = 0.35
+
+
+def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
+    """Controlled organic outline fallback with a bounded node count."""
+
+    outline = _traced_outline(component)
+    if outline is None:
+        # Degenerate components fall back to their bounding box.
+        min_x, min_y, max_x, max_y = component.bounds
+        outline = (
+            Point(min_x, min_y),
+            Point(max_x, min_y),
+            Point(max_x, max_y),
+            Point(min_x, max_y),
+        )
+    points = _downsampled_outline(outline, maximum=ORGANIC_FALLBACK_MAX_NODES)
+    smoothness = _curvature_jitter(points + points[:2])
+    return AnchorCandidate(
+        kind=AnchorKind.CUBIC_PATH,
+        raster_error=ORGANIC_FALLBACK_RANK_PENALTY,
+        node_count=len(points),
+        parameter_count=len(points) * 2,
+        path=PathAnchor(points=points, closed=True),
+        metrics={
+            "path_node_count": float(len(points)),
+            "path_smoothness": smoothness,
+        },
+    )
+
+
+def _traced_outline(component: MaskComponent) -> tuple[Point, ...] | None:
+    """Moore-neighbor boundary trace returning an ordered closed outline."""
+
+    pixels = component.pixels
+    if len(pixels) < 4:
+        return None
+    start = min(pixels, key=lambda pixel: (pixel[1], pixel[0]))
+    # Clockwise Moore neighborhood starting west.
+    offsets = ((-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1))
+    contour: list[Point] = [Point(*start)]
+    current = start
+    entry = 0
+    max_steps = len(pixels) * 4 + 16
+    for _ in range(max_steps):
+        found = False
+        for step in range(8):
+            index = (entry + step) % 8
+            dx, dy = offsets[index]
+            candidate = (current[0] + dx, current[1] + dy)
+            if candidate in pixels:
+                if candidate == start and len(contour) > 2:
+                    return tuple(contour)
+                contour.append(Point(*candidate))
+                current = candidate
+                entry = (index + 5) % 8
+                found = True
+                break
+        if not found:
+            return tuple(contour) if len(contour) > 3 else None
+    return tuple(contour) if len(contour) > 3 else None
+
+
+def _downsampled_outline(
+    outline: tuple[Point, ...],
+    *,
+    maximum: int,
+) -> tuple[Point, ...]:
+    if len(outline) <= maximum:
+        return outline
+    return tuple(
+        outline[round(len(outline) * index / maximum) % len(outline)]
+        for index in range(maximum)
+    )
 
 
 def _with_classifier_prior(
@@ -204,6 +279,7 @@ def _with_classifier_prior(
         quad=candidate.quad,
         arc=candidate.arc,
         ellipse=candidate.ellipse,
+        path=candidate.path,
         metrics=metrics,
     )
 
@@ -293,11 +369,15 @@ def _circle_candidate(
     bounds_center, bounds_radius, bounds_residual = _bounds_regularized_circle(
         component,
     )
+    roundness_samples = tuple(component.boundary_pixels)
     if fit_residual > thresholds.circle_max_fit_residual:
         # Interior cut-out gaps add inner boundary pixels that wreck the fit;
         # retry against the outer boundary only.
-        outer = _boundary_without_gap_edges(component)
-        if outer is not None:
+        gap_free = _boundary_without_gap_edges(component)
+        if gap_free is not None and len(gap_free[0]) >= len(
+            component.boundary_pixels
+        ) * 0.6:
+            outer, gap_area = gap_free
             center, radius, fit_residual = _fit_circle_from_samples(
                 outer,
                 fallback_center=component.centroid,
@@ -306,6 +386,17 @@ def _circle_candidate(
             bounds_center, bounds_radius, bounds_residual = (
                 _bounds_regularized_circle(component, samples=outer)
             )
+            roundness_samples = outer
+            # The retried circle minus its enclosed gaps must still account
+            # for the filled area closely; a lens refit through its two flat
+            # arcs lands far off while a cut circle host stays within a few
+            # percent.
+            refit_area = pi * radius * radius - gap_area
+            if (
+                refit_area <= 0
+                or abs(component.area - refit_area) / refit_area > 0.12
+            ):
+                return None
     if bounds_residual <= max(
         thresholds.circle_max_fit_residual,
         fit_residual + 0.02,
@@ -316,6 +407,15 @@ def _circle_candidate(
     if diameter >= 12 and fit_residual > thresholds.circle_max_fit_residual:
         return None
     samples = tuple(Point(x, y) for x, y in component.boundary_pixels)
+    distances = [
+        center.distance_to(Point(x, y)) for x, y in roundness_samples
+    ]
+    if distances and radius > 0:
+        spread = pstdev(distances) / radius
+        # Real circles measure <= 0.08 here even anti-aliased; lens and blob
+        # outlines spread far wider and must fall through to the organic path.
+        if diameter >= 12 and spread > 0.12:
+            return None
     candidate = AnchorCandidate(
         kind=AnchorKind.CIRCLE,
         raster_error=area_error + aspect_error + fit_residual,
@@ -503,10 +603,19 @@ def _bounds_regularized_circle(
 
 def _boundary_without_gap_edges(
     component: MaskComponent,
-) -> tuple[tuple[int, int], ...] | None:
-    """Boundary pixels that do not border an enclosed interior gap."""
+) -> tuple[tuple[tuple[int, int], ...], int] | None:
+    """Boundary pixels away from enclosed interior gaps, plus the gap area.
 
-    gaps = _interior_gap_components(component, min_area=1)
+    Single-pixel jaggies along pointed organic outlines must not count as
+    gaps, otherwise this retry would shave off exactly the boundary parts
+    that disqualify a lens from being a circle.
+    """
+
+    gaps = tuple(
+        gap
+        for gap in _interior_gap_components(component, min_area=4)
+        if not _gap_open_to_background(gap, component)
+    )
     if not gaps:
         return None
     gap_pixels = frozenset(
@@ -523,7 +632,9 @@ def _boundary_without_gap_edges(
             for dy in (-1, 0, 1)
         )
     )
-    return outer if len(outer) >= 8 else None
+    if len(outer) < 8:
+        return None
+    return outer, len(gap_pixels)
 
 
 def _fit_circle_from_boundary(
@@ -635,6 +746,7 @@ def _with_metric(
         quad=candidate.quad,
         arc=candidate.arc,
         ellipse=candidate.ellipse,
+        path=candidate.path,
         metrics=metrics,
     )
 
@@ -1003,6 +1115,10 @@ def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
     ) / len(bin_midpoints)
     if midpoint_residual > 0.42:
         return None
+    # A constant-width stroke band keeps a uniform radial spread along the
+    # arc; crescents and other tapered fills swing from thick to thin.
+    if _radial_band_uniformity(pixels, center, mean_angle, theta_min, span) > 1.8:
+        return None
 
     # Two width estimators with opposite biases: area / arc-length counts cap
     # angles into the length and underestimates wide strokes, while the radial
@@ -1058,6 +1174,42 @@ def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
         "apex": apex,
         "end": end,
     }
+
+
+def _radial_band_uniformity(
+    pixels: tuple[tuple[int, int], ...],
+    center: Point,
+    mean_angle: float,
+    theta_min: float,
+    span: float,
+) -> float:
+    """Max/min ratio of radial band widths across eight angular bins.
+
+    Coarser windows let crescent horns blend into their thick neighbors;
+    eight bins keep the taper visible while staying noise-tolerant through
+    the 10th-90th percentile spread.
+    """
+
+    if span <= 0:
+        return 1.0
+    bin_count = 8
+    bins: list[list[float]] = [[] for _ in range(bin_count)]
+    for x, y in pixels:
+        offset = _wrapped_angle(atan2(y - center.y, x - center.x) - mean_angle)
+        position = (offset - theta_min) / span
+        index = min(bin_count - 1, max(0, int(position * bin_count)))
+        bins[index].append(hypot(x - center.x, y - center.y))
+    widths = []
+    for bucket in bins:
+        if len(bucket) < 6:
+            continue
+        bucket.sort()
+        p10 = bucket[int(len(bucket) * 0.1)]
+        p90 = bucket[min(int(len(bucket) * 0.9), len(bucket) - 1)]
+        widths.append(max(p90 - p10, 0.5))
+    if len(widths) < 3:
+        return 1.0
+    return max(widths) / min(widths)
 
 
 def _refit_arc_through_bin_midpoints(
@@ -1200,6 +1352,10 @@ def _smooth_stroke_path_candidate(
         horizontal=horizontal,
         fallback_width=stroke_width,
     )
+    # A smooth stroke keeps a near-constant width; tapered fills such as
+    # crescents swing far wider and belong to the organic path fallback.
+    if stroke_width_variance(width_samples) > 0.35:
+        return None
     stroke = StrokeAnchor(
         centerline=control_points,
         width_samples=width_samples,
@@ -1219,12 +1375,13 @@ def _smooth_stroke_path_candidate(
         parameter_count=len(width_samples) + len(control_points) * 2,
         stroke=stroke,
         metrics={
-            # The residual already enters the ranking as raster_error; keep
-            # the metric name free of the _error suffix to avoid counting it
-            # twice in quality_metric_error.
+            # The residual already enters the ranking as raster_error, and
+            # direction change along a deliberate curve is intent rather than
+            # a defect, so neither metric carries the _error suffix that
+            # quality_metric_error would charge to the ranking.
             "smooth_path_fit_residual": residual,
             "smooth_path_bow_ratio": bow / max(chord, 1.0),
-            "curvature_jitter_error": _curvature_jitter(control_points),
+            "curvature_jitter": _curvature_jitter(control_points),
             "stroke_width_variance": stroke_width_variance(width_samples),
         },
     )
@@ -1333,9 +1490,16 @@ def _functional_width_samples(
 
     samples = []
     last = len(control_points) - 1
-    # Sample away from the endpoints: the outermost columns only contain the
-    # cap tip and would report a sliver width.
-    for index in (round(last * 0.15), last // 2, round(last * 0.85)):
+    # Sample away from the endpoints (the outermost columns only contain the
+    # cap tip) but densely enough that tapered fills cannot hide their swing
+    # between probes.
+    for index in (
+        round(last * 0.1),
+        round(last * 0.3),
+        last // 2,
+        round(last * 0.7),
+        round(last * 0.9),
+    ):
         point = control_points[index]
         key = round(point.x if horizontal else point.y)
         count = columns.get(key, 0)

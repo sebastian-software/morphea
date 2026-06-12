@@ -99,6 +99,7 @@ class PrimitiveSpec:
     max_svg_vs_preview_l1_error: float | None = None
     min_bbox_iou: float = 0.9
     max_anchor_count: int = 1
+    allow_cubic_path: bool = False
 
 
 def primitive_specs() -> tuple[PrimitiveSpec, ...]:
@@ -909,6 +910,41 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
                     _cutout_stroke_primitive("cutout", (26, 26, 38, 38), 1, tolerance=2.25),
                 ),
             ),
+        )
+    )
+    specs.extend(
+        _organic_fallback_spec(case_id, family, variant, mode, params)
+        for case_id, family, variant, mode, params in (
+            ("organic_blob", "organic_blob", "base", "blob",
+             (32, 32, 18, ((3, 0.18, 0.5), (5, 0.08, 1.2)))),
+            ("organic_blob_soft", "organic_blob", "soft", "blob",
+             (32, 32, 19, ((3, 0.12, 1.8), (4, 0.1, 0.4)))),
+            ("organic_blob_lumpy", "organic_blob", "lumpy", "blob",
+             (31, 33, 17, ((2, 0.14, 0.9), (5, 0.12, 2.2)))),
+            ("organic_leaf", "organic_leaf", "base", "blob",
+             (32, 32, 19, ((2, 0.35, 0.0),))),
+            ("organic_leaf_narrow", "organic_leaf", "narrow", "blob",
+             (32, 32, 18, ((2, 0.42, 0.0),))),
+            ("organic_leaf_tilted", "organic_leaf", "tilted", "blob",
+             (32, 32, 19, ((2, 0.35, 0.7),))),
+            ("organic_asymmetric", "organic_asymmetric", "base", "blob",
+             (32, 32, 17, ((1, 0.18, 0.8), (3, 0.22, 2.0)))),
+            ("organic_asymmetric_heavy", "organic_asymmetric", "heavy", "blob",
+             (32, 33, 16, ((1, 0.22, 1.6), (3, 0.18, 0.3)))),
+            ("organic_asymmetric_soft", "organic_asymmetric", "soft", "blob",
+             (33, 31, 16, ((1, 0.2, 2.4), (4, 0.24, 1.0)))),
+            ("organic_crescent", "organic_crescent", "base", "crescent",
+             ((10, 10, 54, 54), (16, 4, 60, 48))),
+            ("organic_crescent_low", "organic_crescent", "low", "crescent",
+             ((8, 12, 52, 56), (14, 6, 58, 50))),
+            ("organic_crescent_high", "organic_crescent", "high", "crescent",
+             ((12, 8, 56, 52), (18, 14, 62, 58))),
+            ("organic_compound", "organic_compound", "base", "compound",
+             ((24, 30, 14, ((3, 0.15, 0.3),)), (40, 36, 13, ((4, 0.12, 1.1),)))),
+            ("organic_compound_tall", "organic_compound", "tall", "compound",
+             ((30, 24, 13, ((3, 0.14, 1.0),)), (34, 42, 12, ((4, 0.1, 0.2),)))),
+            ("organic_compound_wide", "organic_compound", "wide", "compound",
+             ((22, 27, 12, ((2, 0.16, 0.6),)), (42, 37, 13, ((3, 0.18, 1.4),)))),
         )
     )
     specs.extend(
@@ -1868,6 +1904,80 @@ def _antialiased_ellipse_spec(
         max_raster_edge_error=0.035,
         min_bbox_iou=0.86,
     )
+
+
+def _organic_fallback_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    mode: str,
+    params: tuple,
+) -> PrimitiveSpec:
+    if mode == "blob":
+        polygon = _blob_polygon(*params)
+        draw_fn = lambda draw, polygon=polygon: draw.polygon(polygon, fill=BLUE)
+        xs = [x for x, _ in polygon]
+        ys = [y for _, y in polygon]
+    elif mode == "compound":
+        polygons = [_blob_polygon(*blob) for blob in params]
+        def draw_fn(draw, polygons=polygons):
+            for polygon in polygons:
+                draw.polygon(polygon, fill=BLUE)
+        xs = [x for polygon in polygons for x, _ in polygon]
+        ys = [y for polygon in polygons for _, y in polygon]
+    else:
+        outer, inner = params
+        def draw_fn(draw, outer=outer, inner=inner):
+            draw.ellipse(outer, fill=BLUE)
+            draw.ellipse(inner, fill="#ffffff")
+        xs = [outer[0], outer[2]]
+        ys = [outer[1], outer[3]]
+    bounds = (min(xs), min(ys), max(xs), max(ys))
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("cubic_path",),
+        geometry_type="cubic_path",
+        geometry={
+            "bounds": bounds,
+            "max_nodes": 16,
+            # Crescents only keep the part of the outer disk the inner disk
+            # leaves visible, so their tracked bounds stay loose.
+            "loose_bounds": mode == "crescent",
+        },
+        draw=draw_fn,
+        allow_cubic_path=True,
+        coordinate_tolerance=2.5,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.05,
+        max_svg_raster_l1_error=0.06,
+        max_svg_raster_edge_error=0.06,
+        max_svg_vs_preview_l1_error=0.03,
+        min_bbox_iou=0.55 if mode == "crescent" else 0.85,
+    )
+
+
+def _blob_polygon(
+    cx: float,
+    cy: float,
+    radius: float,
+    harmonics: tuple[tuple[int, float, float], ...],
+    *,
+    steps: int = 180,
+) -> list[tuple[float, float]]:
+    points = []
+    for index in range(steps):
+        t = 2 * pi * index / steps
+        r = radius * (
+            1
+            + sum(
+                amplitude * sin(order * t + phase)
+                for order, amplitude, phase in harmonics
+            )
+        )
+        points.append((cx + r * cos(t), cy + r * sin(t)))
+    return points
 
 
 def _antialiased_arc_spec(
@@ -3072,7 +3182,7 @@ def _evaluate_case(
     anchors = list(manifest.get("anchors", []))
     failure_details: list[dict[str, str]] = []
     for anchor in anchors:
-        if anchor.get("kind") == "cubic_path":
+        if anchor.get("kind") == "cubic_path" and not spec.allow_cubic_path:
             failure_details.append(
                 _failure("fallback_path", "unexpected cubic_path fallback")
             )
@@ -3536,6 +3646,8 @@ def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict
         return _arc_failures(spec, anchor)
     if spec.geometry_type == "stroke_path":
         return _stroke_path_failures(spec, anchor)
+    if spec.geometry_type == "cubic_path":
+        return _cubic_path_failures(spec, anchor)
     if spec.geometry_type == "ellipse":
         return _ellipse_geometry_failures(spec, anchor)
     if spec.geometry_type == "stroke_ellipse":
@@ -3652,7 +3764,7 @@ def _stroke_path_failures(
 
     metrics = anchor.get("metrics", {})
     metrics = metrics if isinstance(metrics, dict) else {}
-    jitter = float(metrics.get("curvature_jitter_error", 0.0))
+    jitter = float(metrics.get("curvature_jitter", 0.0))
     if jitter > CURVE_MAX_CURVATURE_JITTER:
         failures.append(
             _failure(
@@ -3668,6 +3780,36 @@ def _stroke_path_failures(
                 f"stroke width variance {round(width_variance, 6)} exceeds "
                 f"{CURVE_MAX_WIDTH_VARIANCE}",
             )
+        )
+    return failures
+
+
+def _cubic_path_failures(
+    spec: PrimitiveSpec,
+    anchor: dict[str, Any],
+) -> list[dict[str, str]]:
+    path = anchor.get("path")
+    if not isinstance(path, dict):
+        return [_failure("geometry_drift", "missing organic path geometry")]
+    failures: list[dict[str, str]] = []
+    node_count = int(path.get("node_count", 0))
+    max_nodes = int(spec.geometry.get("max_nodes", 16))
+    if not 4 <= node_count <= max_nodes:
+        failures.append(
+            _failure(
+                "editability_drift",
+                f"expected 4..{max_nodes} path nodes, got {node_count}",
+            )
+        )
+    if not str(path.get("fallback_reason", "")):
+        failures.append(
+            _failure("editability_drift", "organic path lacks fallback_reason")
+        )
+    metrics = anchor.get("metrics", {})
+    metrics = metrics if isinstance(metrics, dict) else {}
+    if "path_smoothness" not in metrics:
+        failures.append(
+            _failure("editability_drift", "organic path lacks path_smoothness metric")
         )
     return failures
 
@@ -3963,10 +4105,23 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
             (float(x), float(y)) for x, y in spec.geometry["curve_samples"]
         )
         return _stroke_visual_bounds(points, float(spec.geometry["width"]), "round")
+    if spec.geometry_type == "cubic_path":
+        bounds = spec.geometry["bounds"]
+        return (
+            float(bounds[0]),
+            float(bounds[1]),
+            float(bounds[2]),
+            float(bounds[3]),
+        )
     return 0.0, 0.0, 0.0, 0.0
 
 
 def _anchor_visual_bounds(anchor: dict[str, Any]) -> tuple[float, float, float, float]:
+    path = anchor.get("path")
+    if isinstance(path, dict) and path.get("points"):
+        xs = [float(point.get("x", 0.0)) for point in path["points"]]
+        ys = [float(point.get("y", 0.0)) for point in path["points"]]
+        return min(xs), min(ys), max(xs), max(ys)
     ellipse = anchor.get("ellipse")
     if isinstance(ellipse, dict):
         rx = float(ellipse.get("rx", 0.0))
@@ -4181,8 +4336,8 @@ def _rounded_geometry(geometry: Geometry) -> Geometry:
     for key, value in geometry.items():
         if key == "draw":
             continue
-        if _is_point_pair(value):
-            rounded[key] = [round(float(value[0]), 6), round(float(value[1]), 6)]
+        if _is_number_tuple(value):
+            rounded[key] = [round(float(item), 6) for item in value]
         elif isinstance(value, tuple):
             rounded[key] = _rounded_points(value)
         elif isinstance(value, float | int):
@@ -4192,10 +4347,10 @@ def _rounded_geometry(geometry: Geometry) -> Geometry:
     return rounded
 
 
-def _is_point_pair(value: object) -> bool:
+def _is_number_tuple(value: object) -> bool:
     return (
         isinstance(value, tuple)
-        and len(value) == 2
+        and bool(value)
         and all(isinstance(item, (int, float)) for item in value)
     )
 
