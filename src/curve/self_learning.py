@@ -359,6 +359,8 @@ def create_review_file(
                 "id": f"review-{index:05d}",
                 "decision": "pending",
                 "reason": "",
+                "corrected_kind": "",
+                "issues": [],
                 "label": label,
             }
         )
@@ -385,12 +387,14 @@ def apply_review_file(
     for item in review_data.get("items", []):
         decision = item.get("decision")
         if decision == "accept":
-            accepted.append(item["label"])
+            accepted.append(_reviewed_label(item))
         elif decision == "reject":
             rejected.append(
                 {
                     "id": item.get("id"),
                     "reason": item.get("reason", ""),
+                    "corrected_kind": _corrected_kind(item),
+                    "issues": _review_issues(item),
                     "label": item.get("label"),
                 }
             )
@@ -410,6 +414,38 @@ def apply_review_file(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
     return result
+
+
+def _reviewed_label(item: dict[str, object]) -> dict[str, object]:
+    label = dict(item.get("label", {}))
+    corrected_kind = _corrected_kind(item)
+    issues = _review_issues(item)
+    if corrected_kind is not None:
+        label["kind"] = corrected_kind
+        anchor = label.get("anchor")
+        if isinstance(anchor, dict):
+            changed_anchor = dict(anchor)
+            changed_anchor["kind"] = corrected_kind
+            label["anchor"] = changed_anchor
+    label["review"] = {
+        "corrected_kind": corrected_kind,
+        "issues": issues,
+    }
+    return label
+
+
+def _corrected_kind(item: dict[str, object]) -> str | None:
+    value = item.get("corrected_kind")
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _review_issues(item: dict[str, object]) -> list[str]:
+    issues = item.get("issues", [])
+    if not isinstance(issues, list):
+        return []
+    return [issue for issue in issues if isinstance(issue, str) and issue]
 
 
 def _training_comparison_model(

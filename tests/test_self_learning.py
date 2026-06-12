@@ -194,6 +194,8 @@ class SelfLearningTests(unittest.TestCase):
 
             self.assertEqual(review["review_count"], 1)
             self.assertEqual(review["items"][0]["decision"], "pending")
+            self.assertEqual(review["items"][0]["corrected_kind"], "")
+            self.assertEqual(review["items"][0]["issues"], [])
             self.assertTrue(output.exists())
 
     def test_apply_review_file_splits_accept_reject_pending(self):
@@ -231,6 +233,43 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["accepted_count"], 1)
             self.assertEqual(result["rejected_count"], 1)
             self.assertEqual(result["pending_count"], 1)
+
+    def test_apply_review_file_can_correct_kind_and_record_issues(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review = Path(temp_dir) / "review.json"
+            review.write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "id": "review-00000",
+                                "decision": "accept",
+                                "corrected_kind": "stroke_polyline",
+                                "issues": ["wrong_primitive_type", "bad_cutout"],
+                                "label": {
+                                    "kind": "circle",
+                                    "anchor": {
+                                        "kind": "circle",
+                                        "metrics": {},
+                                    },
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = Path(temp_dir) / "accepted.json"
+
+            result = apply_review_file(review=review, output=output)
+
+            accepted = result["accepted"][0]
+            self.assertEqual(accepted["kind"], "stroke_polyline")
+            self.assertEqual(accepted["anchor"]["kind"], "stroke_polyline")
+            self.assertEqual(
+                accepted["review"]["issues"],
+                ["wrong_primitive_type", "bad_cutout"],
+            )
 
     def test_review_cli_roundtrip(self):
         with tempfile.TemporaryDirectory() as temp_dir:
