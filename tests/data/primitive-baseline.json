@@ -1,5 +1,5 @@
 {
-  "case_count": 324,
+  "case_count": 333,
   "cases": {
     "adjacent_different_color_rects_horizontal": {
       "anchor_count": 2,
@@ -3987,6 +3987,123 @@
       "ok": true,
       "svg_edge": 0.02552,
       "svg_l1": 0.020282
+    },
+    "tiny_dot": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012691,
+      "svg_l1": 0.008338
+    },
+    "tiny_dot_five": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 0.857143,
+      "edge": 0.015864,
+      "kind": "circle",
+      "l1": 0.009722,
+      "ok": true,
+      "svg_edge": 0.015271,
+      "svg_l1": 0.010771
+    },
+    "tiny_dot_six": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.019037,
+      "svg_l1": 0.011284
+    },
+    "tiny_rect": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "tiny_rect_five": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "tiny_rect_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "tiny_ring": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.973306,
+      "edge": 0.038074,
+      "kind": "stroke_circle",
+      "l1": 0.025,
+      "ok": true,
+      "svg_edge": 0.036073,
+      "svg_l1": 0.02603
+    },
+    "tiny_ring_ten": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.997494,
+      "edge": 0.050765,
+      "kind": "stroke_circle",
+      "l1": 0.041667,
+      "ok": true,
+      "svg_edge": 0.047385,
+      "svg_l1": 0.038008
+    },
+    "tiny_ring_twelve": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.984342,
+      "edge": 0.057111,
+      "kind": "stroke_circle",
+      "l1": 0.052778,
+      "ok": true,
+      "svg_edge": 0.061085,
+      "svg_l1": 0.044944
     },
     "touching_circle_stroke_bottom": {
       "anchor_count": 2,

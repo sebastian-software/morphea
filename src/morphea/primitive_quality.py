@@ -1399,6 +1399,20 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _tiny_spec(case_id, family, variant, mode, box)
+        for case_id, family, variant, mode, box in (
+            ("tiny_dot", "tiny_dot", "base", "dot", (10, 10, 13, 13)),
+            ("tiny_dot_five", "tiny_dot", "five", "dot", (9, 9, 13, 13)),
+            ("tiny_dot_six", "tiny_dot", "six", "dot", (9, 9, 14, 14)),
+            ("tiny_ring", "tiny_ring", "base", "ring", (8, 8, 15, 15)),
+            ("tiny_ring_ten", "tiny_ring", "ten", "ring", (7, 7, 16, 16)),
+            ("tiny_ring_twelve", "tiny_ring", "twelve", "ring", (6, 6, 17, 17)),
+            ("tiny_rect", "tiny_rect", "base", "rect", (10, 10, 13, 13)),
+            ("tiny_rect_wide", "tiny_rect", "wide", "rect", (9, 10, 14, 13)),
+            ("tiny_rect_five", "tiny_rect", "five", "rect", (9, 9, 13, 13)),
+        )
+    )
+    specs.extend(
         _composition_spec(
             case_id,
             "group_parallel_strokes",
@@ -1662,6 +1676,76 @@ def _ring_spec(
         max_raster_l1_error=0.18,
         max_raster_edge_error=0.08,
         min_bbox_iou=0.8,
+    )
+
+
+def _tiny_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    mode: str,
+    box: tuple[int, int, int, int],
+    *,
+    ring_width: int = 2,
+) -> PrimitiveSpec:
+    """A primitive at the size floor on a 24 px canvas.
+
+    Compass-rose node dots and rings sit at 4-8 px in real logos; pixel
+    discretization there breaks gates tuned on 64 px fixtures (angular
+    coverage, roundness), so these pin the floor explicitly. The small
+    canvas keeps raster metrics meaningful for a handful of ink pixels.
+    """
+
+    x0, y0, x1, y1 = box
+    if mode == "dot":
+        expected_kinds = ("circle",)
+        geometry_type = "circle"
+        geometry = {
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "r": (x1 - x0) / 2,
+        }
+        draw_fn = lambda draw, box=box: draw.ellipse(box, fill=BLUE)
+    elif mode == "ring":
+        expected_kinds = ("stroke_circle",)
+        geometry_type = "stroke_circle"
+        geometry = {
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "r": (x1 - x0) / 2 - ring_width / 2 + 0.5,
+            "width": ring_width + 0.5,
+        }
+        draw_fn = lambda draw, box=box, ring_width=ring_width: draw.ellipse(
+            box,
+            outline=BLUE,
+            width=ring_width,
+        )
+    else:
+        expected_kinds = ("rect",)
+        geometry_type = "quad"
+        geometry = {
+            "corners": ((x0, y0), (x1, y0), (x1, y1), (x0, y1)),
+        }
+        draw_fn = lambda draw, box=box: draw.rectangle(box, fill=BLUE)
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=expected_kinds,
+        geometry_type=geometry_type,
+        geometry=geometry,
+        draw=draw_fn,
+        width=24,
+        height=24,
+        # One pixel of drift is a large relative error at this size; the
+        # budgets reflect the discretization floor, not sloppiness.
+        coordinate_tolerance=1.75,
+        max_raster_l1_error=0.06,
+        max_raster_edge_error=0.10,
+        max_svg_raster_l1_error=0.08,
+        max_svg_raster_edge_error=0.12,
+        max_svg_vs_preview_l1_error=0.05,
+        min_bbox_iou=0.55,
     )
 
 

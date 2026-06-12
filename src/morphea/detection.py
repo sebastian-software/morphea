@@ -849,7 +849,9 @@ def _stroke_circle_candidate(
     # A ring severed by a channel (a bay open to the background) still
     # passes the area gates because the cut costs only a few percent, but
     # a closed stroke circle would paint the channel shut. Reject when the
-    # angular coverage has a real gap; closed rings stay far below it.
+    # angular coverage has a real gap, measured as arc length: pixel
+    # discretization on small rings opens angular gaps of 1/r while a
+    # genuine channel is several pixels wide at any radius.
     angles = sorted(
         atan2(y - center.y, x - center.x) for x, y in component.pixels
     )
@@ -858,7 +860,8 @@ def _stroke_circle_candidate(
         default=0.0,
     )
     wraparound = angles[0] + 2 * pi - angles[-1]
-    if max(angular_gap, wraparound) > 0.2:
+    mid_radius = (inner_radius + outer_radius) / 2
+    if max(angular_gap, wraparound) * mid_radius > 2.5:
         return None
 
     radius = (inner_radius + outer_radius) / 2
