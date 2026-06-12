@@ -184,6 +184,40 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertIn("<circle", ring_svg)
             self.assertNotIn("<path", ring_svg)
 
+    def test_smooth_curves_export_cubic_segments_with_bounded_controls(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=("curve_s", "curve_wave", "curve_square_caps"),
+            )
+
+            self.assertTrue(report["ok"])
+            for case in report["cases"]:
+                self.assertEqual(case["actual_kind"], "stroke_path")
+                svg = (Path(temp_dir) / case["id"] / "output.svg").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn(" C ", svg)
+                self.assertNotIn(" A ", svg)
+                manifest = json.loads(
+                    (Path(temp_dir) / case["id"] / "manifest.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                centerline = manifest["anchors"][0]["stroke"]["centerline"]
+                self.assertLessEqual(len(centerline), 9)
+                self.assertGreaterEqual(len(centerline), 3)
+            caps = {
+                case["id"]: json.loads(
+                    (Path(temp_dir) / case["id"] / "manifest.json").read_text(
+                        encoding="utf-8"
+                    )
+                )["anchors"][0]["stroke"]["cap_style"]
+                for case in report["cases"]
+            }
+            self.assertEqual(caps["curve_s"], "round")
+            self.assertEqual(caps["curve_square_caps"], "butt")
+
     def test_arc_contract_failures_report_endpoint_bow_and_width(self):
         from morphea.primitive_quality import _arc_failures, primitive_specs
 
@@ -386,6 +420,13 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "arc_steep": 3,
                 "arc_thick": 3,
                 "arc_small_radius": 3,
+                "curve_quadratic": 3,
+                "curve_s": 3,
+                "curve_wave": 3,
+                "curve_asymmetric": 3,
+                "curve_diagonal": 3,
+                "curve_square_caps": 3,
+                "curve_round_caps": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

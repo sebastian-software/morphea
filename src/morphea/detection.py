@@ -148,6 +148,10 @@ def primitive_candidates_for_component(
     if arc is not None:
         candidates.append(arc)
 
+    smooth_path = _smooth_stroke_path_candidate(component, thresholds)
+    if smooth_path is not None:
+        candidates.append(smooth_path)
+
     stroke = _stroke_candidate(component, thresholds)
     if stroke is not None:
         candidates.append(stroke)
@@ -461,10 +465,13 @@ def _stroke_candidate(
         Point(center.x + dx * min_major, center.y + dy * min_major),
         Point(center.x + dx * max_major, center.y + dy * max_major),
     )
+    # The oriented minor span absorbs any bow, so it cannot serve as the bow
+    # reference; area / length estimates the true ink width instead.
+    ink_width = max(component.area / max(length, 1.0), 1.0)
     centerline = _stroke_polyline_centerline(
         component,
         straight_centerline,
-        stroke_width=stroke_width,
+        stroke_width=ink_width,
     )
     coverage = min(component.area / (length * stroke_width), 1.0)
     if (
@@ -472,6 +479,10 @@ def _stroke_candidate(
         and stroke_width > 8.0
         and _axis_aligned_filled_rect_component(component)
     ):
+        return None
+    # A straight-stroke story that covers less than 45% of its own oriented
+    # box is not a stroke; curved bands belong to arc or stroke_path.
+    if len(centerline) == 2 and coverage < 0.45:
         return None
     width_samples = _stroke_width_samples_along_centerline(
         component,
@@ -526,7 +537,10 @@ def _stroke_polyline_centerline(
         key=lambda point: _point_line_distance(point, start, end),
     )
     deviation = _point_line_distance(control, start, end)
-    if deviation < max(0.75, stroke_width * 0.5):
+    # stroke_width here is the ink width (area / length); staircase corner
+    # pixels of straight oblique strokes sit up to half a width plus over a
+    # pixel away from the axis, hence the extra margin.
+    if deviation < max(0.75, stroke_width * 0.5 + 1.25):
         return straight_centerline
     return (start, control, end)
 
@@ -724,19 +738,30 @@ def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
         theta_min=theta_min,
         theta_max=theta_max,
     )
-    if refit is not None:
-        center, mid_radius = refit
-        angles = [atan2(y - center.y, x - center.x) for x, y in pixels]
-        mean_angle = atan2(
-            sum(sin(a) for a in angles),
-            sum(cos(a) for a in angles),
-        )
-        centered = sorted(_wrapped_angle(a - mean_angle) for a in angles)
-        theta_min = centered[0]
-        theta_max = centered[-1]
-        span = theta_max - theta_min
-        if span < 0.3 or span > 5.9:
-            return None
+    if refit is None:
+        return None
+    center, mid_radius, bin_midpoints = refit
+    angles = [atan2(y - center.y, x - center.x) for x, y in pixels]
+    mean_angle = atan2(
+        sum(sin(a) for a in angles),
+        sum(cos(a) for a in angles),
+    )
+    centered = sorted(_wrapped_angle(a - mean_angle) for a in angles)
+    theta_min = centered[0]
+    theta_max = centered[-1]
+    span = theta_max - theta_min
+    if span < 0.3 or span > 5.9:
+        return None
+    # The bin midpoints sit on the stroke centerline. On a true circular arc
+    # they deviate from the refit circle only by sampling noise (measured
+    # <= 0.35 px across the fixture suite); parabolic and asymmetric curves
+    # keep a systematic residual and belong to stroke_path instead.
+    midpoint_residual = sum(
+        abs(hypot(x - center.x, y - center.y) - mid_radius)
+        for x, y in bin_midpoints
+    ) / len(bin_midpoints)
+    if midpoint_residual > 0.42:
+        return None
 
     # Two width estimators with opposite biases: area / arc-length counts cap
     # angles into the length and underestimates wide strokes, while the radial
@@ -801,7 +826,7 @@ def _refit_arc_through_bin_midpoints(
     mean_angle: float,
     theta_min: float,
     theta_max: float,
-) -> tuple[Point, float] | None:
+) -> tuple[Point, float, tuple[tuple[float, float], ...]] | None:
     span = theta_max - theta_min
     if span <= 0:
         return None
@@ -825,7 +850,7 @@ def _refit_arc_through_bin_midpoints(
     refit_center, refit_radius = _kasa_circle_fit(midpoints)
     if refit_center is None or refit_radius is None or refit_radius < 2.0:
         return None
-    return refit_center, refit_radius
+    return refit_center, refit_radius, midpoints
 
 
 def _kasa_circle_fit(
@@ -869,6 +894,290 @@ def _arc_point(center: Point, radius: float, theta: float) -> Point:
         center.x + radius * cos(theta),
         center.y + radius * sin(theta),
     )
+
+
+def _smooth_stroke_path_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
+    """Fit a bounded-control-point smooth centerline to a thin curved band.
+
+    Covers S-curves, waves, and asymmetric curves that a single circular arc
+    cannot represent. The centerline is extracted as per-column (or per-row)
+    means along the dominant axis, so the component must be functional along
+    that axis.
+    """
+
+    width = component.width
+    height = component.height
+    if max(width, height) < thresholds.stroke_min_length * 2:
+        return None
+    density = component.area / max(width * height, 1)
+    if density > 0.55:
+        return None
+
+    horizontal = width >= height
+    samples = _functional_centerline_samples(component, horizontal=horizontal)
+    if samples is None or len(samples) < 5:
+        return None
+
+    path_length = sum(
+        a.distance_to(b) for a, b in zip(samples, samples[1:])
+    )
+    if path_length < thresholds.stroke_min_length * 2:
+        return None
+    stroke_width = max(component.area / max(path_length, 1.0), 1.0)
+    if stroke_width > min(width, height) * 0.8:
+        return None
+    if path_length / stroke_width < thresholds.stroke_min_length_width_ratio:
+        return None
+
+    cap_style = _smooth_path_cap_style(component, samples, stroke_width)
+    if cap_style == "round" and stroke_width >= 4.0:
+        # Round caps extend the pixel columns past the true curve endpoints
+        # by half a stroke width; trim that overhang off the centerline
+        # before judging curvature, otherwise a straight capped stroke looks
+        # tilted against its own chord.
+        trimmed = _trimmed_centerline_samples(samples, stroke_width / 2)
+        if len(trimmed) >= 5:
+            samples = trimmed
+
+    control_points = _downsampled_control_points(samples, maximum=7)
+    chord = control_points[0].distance_to(control_points[-1])
+    # Caps distort the outermost column means on straight strokes, so only
+    # interior control points may claim curvature.
+    bow = max(
+        _point_line_distance(point, control_points[0], control_points[-1])
+        for point in control_points[1:-1]
+    )
+    if chord <= 0 or bow / max(chord, 1.0) < 0.03:
+        return None
+
+    width_samples = _functional_width_samples(
+        component,
+        control_points,
+        horizontal=horizontal,
+        fallback_width=stroke_width,
+    )
+    stroke = StrokeAnchor(
+        centerline=control_points,
+        width_samples=width_samples,
+        cap_style=cap_style,
+        join_style="round",
+    )
+    if _stroke_bounds_exceed_component(stroke, component):
+        return None
+    residual = _centerline_fit_residual(samples, control_points)
+    # Direction change along a smooth curve is intent, not noise, so the
+    # generic line_smoothness_error does not apply here. Quality is the
+    # centerline fit residual plus turn-angle jitter (second differences).
+    return AnchorCandidate(
+        kind=AnchorKind.STROKE_PATH,
+        raster_error=residual * 0.1,
+        node_count=len(control_points),
+        parameter_count=len(width_samples) + len(control_points) * 2,
+        stroke=stroke,
+        metrics={
+            # The residual already enters the ranking as raster_error; keep
+            # the metric name free of the _error suffix to avoid counting it
+            # twice in quality_metric_error.
+            "smooth_path_fit_residual": residual,
+            "smooth_path_bow_ratio": bow / max(chord, 1.0),
+            "curvature_jitter_error": _curvature_jitter(control_points),
+            "stroke_width_variance": stroke_width_variance(width_samples),
+        },
+    )
+
+
+def _curvature_jitter(points: tuple[Point, ...]) -> float:
+    """Mean absolute second difference of segment turn angles."""
+
+    if len(points) < 4:
+        return 0.0
+    turns: list[float] = []
+    for previous, current, following in zip(points, points[1:], points[2:]):
+        first = atan2(current.y - previous.y, current.x - previous.x)
+        second = atan2(following.y - current.y, following.x - current.x)
+        turns.append(_wrapped_angle(second - first))
+    diffs = [abs(b - a) for a, b in zip(turns, turns[1:])]
+    if not diffs:
+        return 0.0
+    return sum(diffs) / len(diffs)
+
+
+def _functional_centerline_samples(
+    component: MaskComponent,
+    *,
+    horizontal: bool,
+) -> tuple[Point, ...] | None:
+    columns: dict[int, list[int]] = {}
+    for x, y in component.pixels:
+        key, value = (x, y) if horizontal else (y, x)
+        columns.setdefault(key, []).append(value)
+
+    if len(columns) < 5:
+        return None
+    spans = []
+    means = []
+    for key in sorted(columns):
+        values = columns[key]
+        spans.append(max(values) - min(values) + 1)
+        means.append((key, sum(values) / len(values)))
+    typical_span = sorted(spans)[len(spans) // 2]
+    # Multi-valued columns mean the curve folds back along this axis (for
+    # example a steep arc); the per-column mean would cut across the fold.
+    wild_columns = sum(1 for span in spans if span > typical_span * 2 + 2)
+    if wild_columns > len(spans) * 0.1:
+        return None
+
+    smoothed: list[Point] = []
+    for index, (key, value) in enumerate(means):
+        window = means[max(0, index - 1) : index + 2]
+        smoothed_value = sum(item[1] for item in window) / len(window)
+        point = (
+            Point(float(key), smoothed_value)
+            if horizontal
+            else Point(smoothed_value, float(key))
+        )
+        smoothed.append(point)
+    return tuple(smoothed)
+
+
+def _trimmed_centerline_samples(
+    samples: tuple[Point, ...],
+    overhang: float,
+) -> tuple[Point, ...]:
+    if overhang <= 0 or len(samples) < 3:
+        return samples
+    front = 0
+    travelled = 0.0
+    while front < len(samples) - 1 and travelled < overhang:
+        travelled += samples[front].distance_to(samples[front + 1])
+        front += 1
+    back = len(samples) - 1
+    travelled = 0.0
+    while back > 0 and travelled < overhang:
+        travelled += samples[back].distance_to(samples[back - 1])
+        back -= 1
+    if back <= front:
+        return samples
+    return samples[front : back + 1]
+
+
+def _downsampled_control_points(
+    samples: tuple[Point, ...],
+    *,
+    maximum: int,
+) -> tuple[Point, ...]:
+    if len(samples) <= maximum:
+        return samples
+    last = len(samples) - 1
+    return tuple(
+        samples[round(last * index / (maximum - 1))]
+        for index in range(maximum)
+    )
+
+
+def _functional_width_samples(
+    component: MaskComponent,
+    control_points: tuple[Point, ...],
+    *,
+    horizontal: bool,
+    fallback_width: float,
+) -> tuple[float, ...]:
+    columns: dict[int, int] = {}
+    for x, y in component.pixels:
+        key = x if horizontal else y
+        columns[key] = columns.get(key, 0) + 1
+
+    samples = []
+    last = len(control_points) - 1
+    # Sample away from the endpoints: the outermost columns only contain the
+    # cap tip and would report a sliver width.
+    for index in (round(last * 0.15), last // 2, round(last * 0.85)):
+        point = control_points[index]
+        key = round(point.x if horizontal else point.y)
+        count = columns.get(key, 0)
+        if count <= 0:
+            samples.append(float(fallback_width))
+            continue
+        slope = _local_centerline_slope(control_points, index, horizontal=horizontal)
+        samples.append(max(count / sqrt(1 + slope * slope), 1.0))
+    return tuple(samples)
+
+
+def _local_centerline_slope(
+    control_points: tuple[Point, ...],
+    index: int,
+    *,
+    horizontal: bool,
+) -> float:
+    previous = control_points[max(0, index - 1)]
+    following = control_points[min(len(control_points) - 1, index + 1)]
+    run = (following.x - previous.x) if horizontal else (following.y - previous.y)
+    rise = (following.y - previous.y) if horizontal else (following.x - previous.x)
+    if abs(run) < 1e-6:
+        return 0.0
+    return rise / run
+
+
+def _smooth_path_cap_style(
+    component: MaskComponent,
+    samples: tuple[Point, ...],
+    stroke_width: float,
+) -> str:
+    """Classify stroke ends by taper: round caps thin out, flat ones do not.
+
+    Square caps are indistinguishable from butt caps here because the
+    column-mean centerline already extends through the cap, so flat ends
+    report `butt` with accordingly longer endpoints.
+    """
+
+    if stroke_width < 4.0:
+        return "round"
+    horizontal = component.width >= component.height
+    columns: dict[int, int] = {}
+    for x, y in component.pixels:
+        key = x if horizontal else y
+        columns[key] = columns.get(key, 0) + 1
+    keys = sorted(columns)
+    if len(keys) < 6:
+        return "round"
+    interior = sorted(columns[key] for key in keys[2:-2])
+    typical = interior[len(interior) // 2]
+    if typical <= 0:
+        return "round"
+    end_counts = (columns[keys[0]], columns[keys[-1]])
+    if all(count >= typical * 0.75 for count in end_counts):
+        return "butt"
+    return "round"
+
+
+def _centerline_fit_residual(
+    samples: tuple[Point, ...],
+    control_points: tuple[Point, ...],
+) -> float:
+    if len(control_points) < 2:
+        return 1.0
+    total = 0.0
+    for sample in samples:
+        best = min(
+            _point_segment_distance_points(sample, a, b)
+            for a, b in zip(control_points, control_points[1:])
+        )
+        total += best
+    return total / len(samples)
+
+
+def _point_segment_distance_points(point: Point, start: Point, end: Point) -> float:
+    dx = end.x - start.x
+    dy = end.y - start.y
+    length_squared = dx * dx + dy * dy
+    if length_squared <= 0:
+        return point.distance_to(start)
+    t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / length_squared
+    t = max(0.0, min(1.0, t))
+    return point.distance_to(Point(start.x + dx * t, start.y + dy * t))
 
 
 def _stroke_bounds_exceed_component(

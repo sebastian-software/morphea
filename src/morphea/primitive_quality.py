@@ -268,6 +268,32 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _smooth_curve_spec(case_id, family, variant, controls, width, cap, *extra)
+        for case_id, family, variant, controls, width, cap, *extra in (
+            ("curve_quadratic", "curve_quadratic", "base", ((8, 46), (32, 10), (56, 46)), 3, "round"),
+            ("curve_quadratic_narrow", "curve_quadratic", "narrow", ((12, 48), (32, 14), (52, 48)), 3, "round"),
+            ("curve_quadratic_offset", "curve_quadratic", "offset", ((8, 42), (28, 8), (54, 46)), 3, "round"),
+            ("curve_s", "curve_s", "base", ((8, 44), (28, 10), (36, 54), (56, 20)), 3, "round"),
+            ("curve_s_mirrored", "curve_s", "mirrored", ((8, 20), (28, 54), (36, 10), (56, 44)), 3, "round"),
+            ("curve_s_tight", "curve_s", "tight", ((10, 46), (26, 14), (38, 52), (54, 18)), 3, "round"),
+            ("curve_wave", "curve_wave", "base", ((6, 32), (18, 14), (32, 50), (46, 14), (58, 32)), 3, "round"),
+            ("curve_wave_inverted", "curve_wave", "inverted", ((6, 32), (18, 50), (32, 14), (46, 50), (58, 32)), 3, "round"),
+            ("curve_wave_offset", "curve_wave", "offset", ((8, 30), (20, 12), (32, 48), (44, 16), (56, 34)), 3, "round"),
+            ("curve_asymmetric", "curve_asymmetric", "base", ((8, 50), (16, 12), (56, 38)), 3, "round"),
+            ("curve_asymmetric_right", "curve_asymmetric", "right", ((8, 38), (48, 10), (56, 50)), 3, "round"),
+            ("curve_asymmetric_low", "curve_asymmetric", "low", ((8, 36), (20, 8), (58, 46)), 3, "round"),
+            ("curve_diagonal", "curve_diagonal", "base", ((10, 54), (24, 40), (44, 34), (54, 10)), 3, "round", 0.04),
+            ("curve_diagonal_up", "curve_diagonal", "up", ((10, 10), (24, 24), (44, 30), (54, 54)), 3, "round", 0.04),
+            ("curve_diagonal_steep", "curve_diagonal", "steep", ((8, 52), (22, 36), (46, 30), (56, 8)), 3, "round", 0.04),
+            ("curve_square_caps", "curve_square_caps", "base", ((8, 44), (22, 44), (42, 16), (56, 16)), 5, "square"),
+            ("curve_square_caps_down", "curve_square_caps", "down", ((8, 20), (22, 20), (42, 46), (56, 46)), 5, "square"),
+            ("curve_square_caps_long", "curve_square_caps", "long", ((8, 40), (24, 40), (40, 14), (58, 14)), 5, "square"),
+            ("curve_round_caps", "curve_round_caps", "base", ((8, 44), (22, 44), (42, 16), (56, 16)), 5, "round"),
+            ("curve_round_caps_down", "curve_round_caps", "down", ((8, 20), (22, 20), (42, 46), (56, 46)), 5, "round"),
+            ("curve_round_caps_long", "curve_round_caps", "long", ((8, 40), (24, 40), (40, 14), (58, 14)), 5, "round"),
+        )
+    )
+    specs.extend(
         _antialiased_circle_spec(case_id, variant, box)
         for case_id, variant, box in (
             ("antialiased_circle", "base", (18, 18, 46, 46)),
@@ -1111,6 +1137,144 @@ def _quad_spec(
 
 
 ArcParams = tuple[float, float, float, float, float, int]
+CurveControls = tuple[tuple[float, float], ...]
+
+# Smooth stroke paths export Catmull-Rom cubic segments; preview and SVG
+# sample the same spline.
+CURVE_MAX_RASTER_L1_ERROR = 0.025
+CURVE_MAX_RASTER_EDGE_ERROR = 0.032
+CURVE_MAX_SVG_RASTER_L1_ERROR = 0.032
+CURVE_MAX_SVG_RASTER_EDGE_ERROR = 0.032
+CURVE_MAX_SVG_VS_PREVIEW_L1_ERROR = 0.02
+CURVE_MAX_CONTROL_POINTS = 9
+CURVE_MAX_CURVATURE_JITTER = 0.6
+CURVE_MAX_WIDTH_VARIANCE = 0.25
+
+
+def _smooth_curve_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    controls: CurveControls,
+    width: int,
+    cap: str,
+    max_edge: float = CURVE_MAX_RASTER_EDGE_ERROR,
+) -> PrimitiveSpec:
+    samples = _bezier_samples(controls, steps=32)
+    expected_cap = "butt" if cap in {"square", "butt"} else "round"
+    start, end = samples[0], samples[-1]
+    if cap == "square":
+        # The detected centerline runs through the flat cap, so expected
+        # endpoints extend half a width along the end tangents and the
+        # reference curve gains those extensions for control-point matching.
+        start = _extended_endpoint(samples[0], samples[1], width / 2)
+        end = _extended_endpoint(samples[-1], samples[-2], width / 2)
+        samples = (start, *samples, end)
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("stroke_path",),
+        geometry_type="stroke_path",
+        geometry={
+            "curve_samples": samples,
+            "start": start,
+            "end": end,
+            "width": float(width),
+            "width_tolerance": 1.5,
+            "cap_style": expected_cap,
+            "max_control_points": CURVE_MAX_CONTROL_POINTS,
+        },
+        draw=lambda draw, controls=controls, width=width, cap=cap: _draw_smooth_curve(
+            draw,
+            controls,
+            width,
+            cap,
+        ),
+        coordinate_tolerance=2.75,
+        max_raster_l1_error=CURVE_MAX_RASTER_L1_ERROR,
+        max_raster_edge_error=max_edge,
+        max_svg_raster_l1_error=CURVE_MAX_SVG_RASTER_L1_ERROR,
+        max_svg_raster_edge_error=max(CURVE_MAX_SVG_RASTER_EDGE_ERROR, max_edge),
+        max_svg_vs_preview_l1_error=CURVE_MAX_SVG_VS_PREVIEW_L1_ERROR,
+        min_bbox_iou=0.72,
+    )
+
+
+def _bezier_samples(
+    controls: CurveControls,
+    *,
+    steps: int,
+) -> tuple[tuple[float, float], ...]:
+    degree = len(controls) - 1
+    samples = []
+    for index in range(steps + 1):
+        t = index / steps
+        x = 0.0
+        y = 0.0
+        for k, (px, py) in enumerate(controls):
+            weight = _binomial(degree, k) * (1 - t) ** (degree - k) * t**k
+            x += weight * px
+            y += weight * py
+        samples.append((x, y))
+    return tuple(samples)
+
+
+def _binomial(n: int, k: int) -> int:
+    result = 1
+    for index in range(1, k + 1):
+        result = result * (n - index + 1) // index
+    return result
+
+
+def _extended_endpoint(
+    end: tuple[float, float],
+    inner: tuple[float, float],
+    distance: float,
+) -> tuple[float, float]:
+    dx = end[0] - inner[0]
+    dy = end[1] - inner[1]
+    length = hypot(dx, dy)
+    if length <= 0:
+        return end
+    return (end[0] + dx / length * distance, end[1] + dy / length * distance)
+
+
+def _draw_smooth_curve(
+    draw: ImageDraw.ImageDraw,
+    controls: CurveControls,
+    width: int,
+    cap: str,
+) -> None:
+    points = list(_bezier_samples(controls, steps=64))
+    draw.line(points, fill=BLUE, width=width, joint="curve")
+    half = width / 2
+    if cap == "round":
+        for point in (points[0], points[-1]):
+            draw.ellipse(
+                (point[0] - half, point[1] - half, point[0] + half - 1, point[1] + half - 1),
+                fill=BLUE,
+            )
+    elif cap == "square":
+        for end, inner in ((points[0], points[1]), (points[-1], points[-2])):
+            dx = end[0] - inner[0]
+            dy = end[1] - inner[1]
+            length = hypot(dx, dy)
+            if length <= 0:
+                continue
+            dx /= length
+            dy /= length
+            tip = (end[0] + dx * half, end[1] + dy * half)
+            normal = (-dy * half, dx * half)
+            draw.polygon(
+                [
+                    (end[0] + normal[0], end[1] + normal[1]),
+                    (tip[0] + normal[0], tip[1] + normal[1]),
+                    (tip[0] - normal[0], tip[1] - normal[1]),
+                    (end[0] - normal[0], end[1] - normal[1]),
+                ],
+                fill=BLUE,
+            )
 
 
 def _arc_spec(
@@ -2520,7 +2684,138 @@ def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict
         return _stroke_failures(spec, anchor)
     if spec.geometry_type == "arc":
         return _arc_failures(spec, anchor)
+    if spec.geometry_type == "stroke_path":
+        return _stroke_path_failures(spec, anchor)
     return [_failure("geometry_drift", f"unsupported geometry contract {spec.geometry_type}")]
+
+
+def _stroke_path_failures(
+    spec: PrimitiveSpec,
+    anchor: dict[str, Any],
+) -> list[dict[str, str]]:
+    stroke = anchor.get("stroke")
+    if not isinstance(stroke, dict):
+        return [_failure("geometry_drift", "missing stroke path geometry")]
+    centerline = tuple(
+        (float(point.get("x", 0.0)), float(point.get("y", 0.0)))
+        for point in stroke.get("centerline", [])
+    )
+    failures: list[dict[str, str]] = []
+    max_controls = int(spec.geometry.get("max_control_points", CURVE_MAX_CONTROL_POINTS))
+    if not 3 <= len(centerline) <= max_controls:
+        failures.append(
+            _failure(
+                "editability_drift",
+                f"expected 3..{max_controls} control points, got {len(centerline)}",
+            )
+        )
+    if len(centerline) < 2:
+        return failures
+
+    curve = tuple(
+        (float(x), float(y)) for x, y in spec.geometry["curve_samples"]
+    )
+    worst_control_distance = max(
+        _point_polyline_distance(point, curve) for point in centerline
+    )
+    if worst_control_distance > spec.coordinate_tolerance:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                "control point distance to curve "
+                f"{round(worst_control_distance, 6)} exceeds {spec.coordinate_tolerance}",
+            )
+        )
+
+    expected_start = tuple(float(value) for value in spec.geometry["start"])
+    expected_end = tuple(float(value) for value in spec.geometry["end"])
+    endpoint_error = min(
+        max(
+            _point_distance(centerline[0], expected_start),
+            _point_distance(centerline[-1], expected_end),
+        ),
+        max(
+            _point_distance(centerline[0], expected_end),
+            _point_distance(centerline[-1], expected_start),
+        ),
+    )
+    if endpoint_error > spec.coordinate_tolerance:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"curve endpoint distance {round(endpoint_error, 6)} exceeds "
+                f"{spec.coordinate_tolerance}",
+            )
+        )
+
+    expected_cap = str(spec.geometry.get("cap_style", "round"))
+    actual_cap = str(stroke.get("cap_style", "round"))
+    if actual_cap != expected_cap:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"expected cap_style {expected_cap}, got {actual_cap}",
+            )
+        )
+
+    width_samples = [float(sample) for sample in stroke.get("width_samples", [])]
+    actual_width = mean(width_samples) if width_samples else 1.0
+    expected_width = float(spec.geometry["width"])
+    width_tolerance = float(spec.geometry.get("width_tolerance", 1.5))
+    if abs(actual_width - expected_width) > width_tolerance:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"stroke width delta {round(abs(actual_width - expected_width), 6)} "
+                f"exceeds {width_tolerance}",
+            )
+        )
+
+    metrics = anchor.get("metrics", {})
+    metrics = metrics if isinstance(metrics, dict) else {}
+    jitter = float(metrics.get("curvature_jitter_error", 0.0))
+    if jitter > CURVE_MAX_CURVATURE_JITTER:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"curvature jitter {round(jitter, 6)} exceeds {CURVE_MAX_CURVATURE_JITTER}",
+            )
+        )
+    width_variance = float(metrics.get("stroke_width_variance", 0.0))
+    if width_variance > CURVE_MAX_WIDTH_VARIANCE:
+        failures.append(
+            _failure(
+                "geometry_drift",
+                f"stroke width variance {round(width_variance, 6)} exceeds "
+                f"{CURVE_MAX_WIDTH_VARIANCE}",
+            )
+        )
+    return failures
+
+
+def _point_polyline_distance(
+    point: tuple[float, float],
+    polyline: tuple[tuple[float, float], ...],
+) -> float:
+    return min(
+        _point_segment_distance_xy(point, a, b)
+        for a, b in zip(polyline, polyline[1:])
+    )
+
+
+def _point_segment_distance_xy(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length_squared = dx * dx + dy * dy
+    if length_squared <= 0:
+        return _point_distance(point, start)
+    t = ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length_squared
+    t = max(0.0, min(1.0, t))
+    return _point_distance(point, (start[0] + dx * t, start[1] + dy * t))
 
 
 def _arc_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict[str, str]]:
@@ -2773,6 +3068,11 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
                 spec.geometry["apex"],
                 spec.geometry["end"],
             )
+        )
+        return _stroke_visual_bounds(points, float(spec.geometry["width"]), "round")
+    if spec.geometry_type == "stroke_path":
+        points = tuple(
+            (float(x), float(y)) for x, y in spec.geometry["curve_samples"]
         )
         return _stroke_visual_bounds(points, float(spec.geometry["width"]), "round")
     return 0.0, 0.0, 0.0, 0.0

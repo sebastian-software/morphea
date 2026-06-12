@@ -388,6 +388,11 @@ def anchor_to_svg_element(
             return _unsupported_anchor(anchor)
         if anchor.kind == AnchorKind.ARC and anchor.arc is not None:
             path = _arc_path(anchor.arc)
+        elif (
+            anchor.kind == AnchorKind.STROKE_PATH
+            and len(anchor.stroke.centerline) >= 3
+        ):
+            path = _smooth_curve_path(anchor.stroke.centerline)
         else:
             path = _polyline_path(anchor.stroke.centerline)
         width = _stroke_width(anchor)
@@ -1473,6 +1478,44 @@ def _arc_path(arc: ArcAnchor) -> str:
         f"{1 if arc.large_arc else 0} {1 if arc.sweep else 0} "
         f"{_fmt(end.x)} {_fmt(end.y)}"
     )
+
+
+def _smooth_curve_path(points: tuple[Point, ...]) -> str:
+    """Render control points as Catmull-Rom-derived cubic Bezier segments."""
+
+    commands = [f"M {_fmt(points[0].x)} {_fmt(points[0].y)}"]
+    for control1, control2, end in catmull_rom_segments(points):
+        commands.append(
+            "C "
+            f"{_fmt(control1.x)} {_fmt(control1.y)} "
+            f"{_fmt(control2.x)} {_fmt(control2.y)} "
+            f"{_fmt(end.x)} {_fmt(end.y)}"
+        )
+    return " ".join(commands)
+
+
+def catmull_rom_segments(
+    points: tuple[Point, ...],
+) -> list[tuple[Point, Point, Point]]:
+    """Cubic Bezier control pairs for a Catmull-Rom spline through points."""
+
+    segments: list[tuple[Point, Point, Point]] = []
+    extended = (points[0], *points, points[-1])
+    for index in range(1, len(extended) - 2):
+        p0 = extended[index - 1]
+        p1 = extended[index]
+        p2 = extended[index + 1]
+        p3 = extended[index + 2]
+        control1 = Point(
+            p1.x + (p2.x - p0.x) / 6,
+            p1.y + (p2.y - p0.y) / 6,
+        )
+        control2 = Point(
+            p2.x - (p3.x - p1.x) / 6,
+            p2.y - (p3.y - p1.y) / 6,
+        )
+        segments.append((control1, control2, p2))
+    return segments
 
 
 def _point_pair(point: Point) -> str:
