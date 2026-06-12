@@ -105,6 +105,13 @@
             "mean": 0.008584
           }
         },
+        "anchor_scoring_summary": {
+          "semantic_anchor_score_max": 5.18,
+          "semantic_anchor_score_mean": 0.319042,
+          "semantic_anchor_score_min": -0.17,
+          "simple_shape_priority_bonus_mean": 0.237705,
+          "simple_shape_priority_bonus_total": 14.5
+        },
         "color_fragment_counts": {
           "#1e334a": 10,
           "#d0b383": 8,
@@ -236,6 +243,13 @@
             "mean": 0.006179
           }
         },
+        "anchor_scoring_summary": {
+          "semantic_anchor_score_max": 5.32,
+          "semantic_anchor_score_mean": 0.480779,
+          "semantic_anchor_score_min": -0.17,
+          "simple_shape_priority_bonus_mean": 0.223684,
+          "simple_shape_priority_bonus_total": 12.75
+        },
         "color_fragment_counts": {
           "#002554": 13,
           "#b67f13": 8,
@@ -337,6 +351,13 @@
             "max": 0.495108,
             "mean": 0.019178
           }
+        },
+        "anchor_scoring_summary": {
+          "semantic_anchor_score_max": 2.415,
+          "semantic_anchor_score_mean": 0.005502,
+          "semantic_anchor_score_min": -0.17,
+          "simple_shape_priority_bonus_mean": 0.229412,
+          "simple_shape_priority_bonus_total": 42.9
         },
         "color_fragment_counts": {
           "#000000": 135,
