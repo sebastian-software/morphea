@@ -31,6 +31,7 @@ from curve.segmenters import (
     FlatColorSegmenter,
     MlxSamSegmenter,
     proposals_to_manifest,
+    segment_proposal_summary,
     segmenter_backend_status,
 )
 from curve.scene import SvgStyle
@@ -774,6 +775,7 @@ def main(argv: list[str] | None = None) -> None:
             "config": segment_config,
             "backend": segmenter_backend_status(segmenter),
             "proposal_count": len(proposals),
+            "summary": segment_proposal_summary(proposals),
             "proposals": proposals_to_manifest(proposals),
         }
         args.output.parent.mkdir(parents=True, exist_ok=True)

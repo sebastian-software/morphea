@@ -14,6 +14,7 @@ from curve.segmenters import (
     MlxSamSegmenter,
     mlx_sam_runtime_status,
     proposals_to_manifest,
+    segment_proposal_summary,
     segmenter_backend_status,
 )
 
@@ -90,6 +91,21 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(manifest[0]["anchor_kind"], "rect")
         self.assertIn("rect_fill_error", manifest[0]["anchor_metrics"])
         self.assertEqual(manifest[0]["anchor_parameter_count"], 4)
+
+    def test_segment_proposal_summary_counts_statuses_and_anchor_kinds(self):
+        image_path = _write_same_color_component_image()
+        proposals = FlatColorSegmenter(
+            min_area=4,
+            max_component_area=30,
+        ).propose(image_path)
+
+        summary = segment_proposal_summary(proposals)
+
+        self.assertEqual(summary["status_counts"]["deferred"], 1)
+        self.assertEqual(summary["status_counts"]["proposed"], 1)
+        self.assertEqual(summary["downstream_status_counts"]["pending"], 1)
+        self.assertEqual(summary["downstream_status_counts"]["rejected"], 1)
+        self.assertEqual(summary["anchor_kind_counts"]["rect"], 1)
 
     def test_mlx_sam_segmenter_reports_not_configured(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
@@ -201,6 +217,12 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(manifest["config"]["max_component_area"], 10)
             self.assertTrue(manifest["config"]["split_components"])
             self.assertEqual(manifest["proposal_count"], 2)
+            self.assertEqual(manifest["summary"]["status_counts"]["deferred"], 2)
+            self.assertEqual(
+                manifest["summary"]["downstream_status_counts"]["rejected"],
+                2,
+            )
+            self.assertEqual(manifest["summary"]["anchor_kind_counts"], {})
             self.assertEqual(manifest["proposals"][0]["status"], "deferred")
             self.assertEqual(
                 manifest["proposals"][0]["downstream_status"],

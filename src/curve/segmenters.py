@@ -188,6 +188,22 @@ def proposals_to_manifest(
     ]
 
 
+def segment_proposal_summary(
+    proposals: tuple[SegmentProposal, ...],
+) -> dict[str, object]:
+    return {
+        "status_counts": _counts(proposal.status for proposal in proposals),
+        "downstream_status_counts": _counts(
+            proposal.downstream_status for proposal in proposals
+        ),
+        "anchor_kind_counts": _counts(
+            proposal.anchor_kind
+            for proposal in proposals
+            if proposal.anchor_kind is not None
+        ),
+    }
+
+
 def _proposal_from_color_mask(
     index: int,
     source: str,
@@ -252,6 +268,14 @@ def _downstream_status(status: str) -> tuple[str, str | None]:
     if status == "deferred":
         return "rejected", "max_component_area_exceeded"
     return "pending", None
+
+
+def _counts(values: object) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _primitive_anchor_summary(component: MaskComponent) -> dict[str, object]:
