@@ -672,6 +672,12 @@ Recognized backends:
 - `differentiable` and `diffvg`: optional differentiable-renderer backend names
   that currently fail with an explicit not-installed/not-configured error
 
+`available_refinement_backends()` also exposes per-backend `details`. Optional
+backend status distinguishes `not_installed` from `adapter_pending`, records
+`package_available`, and lists package candidates such as `pydiffvg`/`diffvg`.
+Even when a package is present, optional backends remain unavailable until a
+renderer adapter is wired.
+
 Top-level `refinement` fields:
 
 - `backend`
