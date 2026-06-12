@@ -68,6 +68,15 @@ class RasterTrainingExample:
     anchor_index: int
 
 
+@dataclass(frozen=True)
+class RasterRankingExample:
+    label: str
+    anchor: dict[str, object]
+    crop_tokens: tuple[tuple[float, float, float, float], ...]
+    sample_id: str
+    anchor_index: int
+
+
 def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
     circle = anchor.get("circle")
     stroke = anchor.get("stroke")
@@ -217,6 +226,50 @@ def raster_examples_from_dataset(
                     ),
                     crop_tokens=_rgba_crop_tokens(image, bounds, crop_size),
                     bounds=bounds,
+                    sample_id=str(sample.get("id", "")),
+                    anchor_index=anchor_index,
+                )
+            )
+    return tuple(examples)
+
+
+def raster_ranking_examples_from_dataset(
+    dataset_json: str | Path,
+    *,
+    crop_size: int = 16,
+    splits: tuple[str, ...] = ("train",),
+) -> tuple[RasterRankingExample, ...]:
+    if crop_size <= 0:
+        msg = "crop_size must be positive"
+        raise ValueError(msg)
+    dataset_path = Path(dataset_json)
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    root = dataset_path.parent
+    examples: list[RasterRankingExample] = []
+    for sample in dataset.get("samples", []):
+        if sample.get("split") not in splits:
+            continue
+        image_ref = sample.get("image")
+        if not isinstance(image_ref, str):
+            continue
+        image = Image.open(root / image_ref).convert("RGBA")
+        manifest = json.loads((root / sample["manifest"]).read_text(encoding="utf-8"))
+        for anchor_index, anchor in enumerate(manifest.get("anchors", [])):
+            if not isinstance(anchor, dict):
+                continue
+            label = anchor.get("kind")
+            if not isinstance(label, str):
+                continue
+            bounds = _anchor_crop_bounds(anchor, image.size)
+            examples.append(
+                RasterRankingExample(
+                    label=label,
+                    anchor=_anchor_with_group_context(
+                        manifest,
+                        anchor_index,
+                        anchor,
+                    ),
+                    crop_tokens=_rgba_crop_tokens(image, bounds, crop_size),
                     sample_id=str(sample.get("id", "")),
                     anchor_index=anchor_index,
                 )
@@ -482,6 +535,7 @@ def evaluate_classifier_model(
         "model_type": model.get("model_type"),
         "classifier_backend": classifier.get("classifier_backend"),
         "uses_raster_tokens": use_raster_eval,
+        "ranking_uses_raster_tokens": use_raster_eval,
         "feature_names": model.get("feature_names", list(FEATURE_NAMES)),
         "feature_importance": model.get("feature_importance", []),
         "classes": model.get("classes", _classifier_labels(classifier)),
@@ -505,9 +559,20 @@ def evaluate_classifier_model(
             for split in splits
         },
         "ranking_evaluation": {
-            split: evaluate_classifier_ranking(
-                classifier,
-                anchors_from_dataset(dataset_path, splits=(split,)),
+            split: (
+                evaluate_raster_classifier_ranking(
+                    classifier,
+                    raster_ranking_examples_from_dataset(
+                        dataset_path,
+                        crop_size=crop_size,
+                        splits=(split,),
+                    ),
+                )
+                if use_raster_eval
+                else evaluate_classifier_ranking(
+                    classifier,
+                    anchors_from_dataset(dataset_path, splits=(split,)),
+                )
             )
             for split in splits
         },
@@ -1416,6 +1481,61 @@ def evaluate_raster_classifier(
     }
 
 
+def evaluate_raster_classifier_ranking(
+    classifier_model: dict[str, object],
+    examples: tuple[RasterRankingExample, ...],
+) -> dict[str, object]:
+    total = 0
+    heuristic_correct = 0
+    classifier_correct = 0
+    changed = 0
+    decisions: list[dict[str, object]] = []
+    for example in examples:
+        candidates = _candidate_alternatives(example.anchor)
+        if not candidates:
+            continue
+        total += 1
+        heuristic_label = min(candidates, key=semantic_anchor_score).kind.value
+        assisted_candidates = tuple(
+            _candidate_with_classifier_prior(
+                candidate,
+                classifier_model,
+                crop_tokens=example.crop_tokens,
+            )
+            for candidate in candidates
+        )
+        classifier_label = min(
+            assisted_candidates,
+            key=semantic_anchor_score,
+        ).kind.value
+        if heuristic_label == example.label:
+            heuristic_correct += 1
+        if classifier_label == example.label:
+            classifier_correct += 1
+        if heuristic_label != classifier_label:
+            changed += 1
+        decisions.append(
+            {
+                "label": example.label,
+                "heuristic": heuristic_label,
+                "classifier": classifier_label,
+                "sample_id": example.sample_id,
+                "anchor_index": example.anchor_index,
+                "uses_raster_tokens": True,
+            }
+        )
+
+    result = _ranking_result(
+        total=total,
+        heuristic_correct=heuristic_correct,
+        classifier_correct=classifier_correct,
+        changed=changed,
+        decisions=decisions,
+    )
+    result["uses_raster_tokens"] = True
+    return result
+
+
 def evaluate_classifier_ranking(
     classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     anchors: tuple[dict[str, object], ...],
@@ -1456,6 +1576,23 @@ def evaluate_classifier_ranking(
             }
         )
 
+    return _ranking_result(
+        total=total,
+        heuristic_correct=heuristic_correct,
+        classifier_correct=classifier_correct,
+        changed=changed,
+        decisions=examples,
+    )
+
+
+def _ranking_result(
+    *,
+    total: int,
+    heuristic_correct: int,
+    classifier_correct: int,
+    changed: int,
+    decisions: list[dict[str, object]],
+) -> dict[str, object]:
     heuristic_accuracy = heuristic_correct / total if total else None
     classifier_accuracy = classifier_correct / total if total else None
     improvement = (
@@ -1471,7 +1608,7 @@ def evaluate_classifier_ranking(
         "classifier_accuracy": classifier_accuracy,
         "accuracy_improvement": improvement,
         "changed_decisions": changed,
-        "decisions": examples,
+        "decisions": decisions,
     }
 
 
@@ -1492,11 +1629,14 @@ def _centroids(examples: tuple[TrainingExample, ...]) -> dict[str, tuple[float, 
 def _candidate_with_classifier_prior(
     candidate: AnchorCandidate,
     classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
+    *,
+    crop_tokens: tuple[tuple[float, float, float, float], ...] | None = None,
 ) -> AnchorCandidate:
     metrics = dict(candidate.metrics)
     metrics["classifier_prior_error"] = classifier_prior_error(
         classifier_model,
         candidate,
+        crop_tokens=crop_tokens,
     )
     return AnchorCandidate(
         kind=candidate.kind,

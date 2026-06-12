@@ -946,6 +946,8 @@ Top-level fields:
 - `classifier_backend`: `centroid`, `mlx_feature_head`, or `centroid_fallback`
 - `uses_raster_tokens`: true when direct evaluation uses stored RGBA crop-token
   inputs for an MLX raster-token mixer
+- `ranking_uses_raster_tokens`: true when candidate-ranking evaluation also
+  passes stored RGBA crop tokens through the MLX prior
 - `feature_names`
 - `classes`
 - `splits`
@@ -957,8 +959,8 @@ The command can evaluate centroid models, MLX fallback artifacts, and
 `mlx_feature_head_v1` artifacts. When a valid `raster_token_mixer_v1`,
 `mlx_feature_raster_fusion_v1`, or `mlx_token_transformer_v1` block is present,
 direct accuracy/confusion use RGBA crop tokens from the dataset;
-candidate-ranking evaluation remains feature-based until vectorize candidates
-carry runtime crop tokens.
+candidate-ranking evaluation also uses dataset crop tokens and records
+`uses_raster_tokens` on each ranking split.
 
 ## Training Comparison v1
 

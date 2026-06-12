@@ -594,6 +594,9 @@ Implemented so far:
   raster-token mixer, feature head, and centroid fallback.
 - `curve eval-classifier` uses RGBA crop-token examples for direct
   accuracy/confusion when evaluating a valid MLX raster-token mixer artifact.
+- `curve eval-classifier` also uses RGBA crop-token examples for
+  candidate-ranking evaluation when a valid MLX raster mixer, fusion head, or
+  token-transformer block is present.
 - `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
   serialized weights as the candidate-ranking prior, while malformed or
   unavailable MLX artifacts degrade to centroid fallback weights.

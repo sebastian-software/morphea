@@ -10,12 +10,14 @@ from unittest.mock import patch
 
 from curve.classifier import (
     FEATURE_NAMES,
+    RasterRankingExample,
     anchors_from_dataset,
     classifier_prior_error,
     component_raster_tokens,
     evaluate_classifier_model,
     evaluate_classifier_ranking,
     evaluate_raster_classifier,
+    evaluate_raster_classifier_ranking,
     examples_from_dataset,
     feature_importance_from_centroids,
     features_from_anchor,
@@ -25,6 +27,7 @@ from curve.classifier import (
     predict_classifier_label,
     predict_label,
     raster_examples_from_dataset,
+    raster_ranking_examples_from_dataset,
     train_centroid_classifier,
 )
 from curve.cli import main
@@ -788,6 +791,76 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
         self.assertEqual(predicted, "circle")
 
+    def test_raster_classifier_ranking_uses_crop_tokens(self):
+        classifier = {
+            "classifier_backend": "mlx_feature_head",
+            "labels": ("circle", "stroke_circle"),
+            "weights": (
+                (0.0,) * len(FEATURE_NAMES),
+                (0.0,) * len(FEATURE_NAMES),
+            ),
+            "bias": (0.0, 0.0),
+            "normalization": {
+                "mean": (0.0,) * len(FEATURE_NAMES),
+                "scale": (1.0,) * len(FEATURE_NAMES),
+            },
+            "crop_token_spec": {"crop_size": 2},
+            "token_transformer": {
+                "labels": ("circle", "stroke_circle"),
+                "weights": (
+                    (0.0, 0.0, 0.0),
+                    (0.0, 0.0, 0.0),
+                ),
+                "bias": (10.0, -10.0),
+                "normalization": {
+                    "mean": (0.0, 0.0, 0.0),
+                    "scale": (1.0, 1.0, 1.0),
+                },
+                "tokenization": {
+                    "crop_size": 2,
+                    "raster_grid_size": 2,
+                },
+                "encoder": {
+                    "hidden_dim": 3,
+                    "num_heads": 1,
+                    "num_layers": 1,
+                },
+                "projection_calibration": {
+                    "scale": (1.0, 1.0, 1.0),
+                    "bias": (0.0, 0.0, 0.0),
+                },
+            },
+        }
+        anchor = {
+            "kind": "circle",
+            "node_count": 1,
+            "parameter_count": 3,
+            "circle": {"cx": 5.0, "cy": 5.0, "r": 3.0},
+            "color": "#dd2222",
+            "metrics": {},
+        }
+        examples = (
+            RasterRankingExample(
+                label="circle",
+                anchor=anchor,
+                crop_tokens=(
+                    (0.0, 0.0, 0.0, 1.0),
+                    (1.0, 1.0, 1.0, 1.0),
+                    (1.0, 1.0, 1.0, 1.0),
+                    (1.0, 1.0, 1.0, 1.0),
+                ),
+                sample_id="sample-0000",
+                anchor_index=0,
+            ),
+        )
+
+        ranking = evaluate_raster_classifier_ranking(classifier, examples)
+
+        self.assertTrue(ranking["uses_raster_tokens"])
+        self.assertEqual(ranking["examples"], 1)
+        self.assertEqual(ranking["decisions"][0]["classifier"], "circle")
+        self.assertTrue(ranking["decisions"][0]["uses_raster_tokens"])
+
     def test_mlx_feature_raster_fusion_wins_when_crop_tokens_are_available(self):
         classifier = {
             "classifier_backend": "mlx_feature_head",
@@ -1023,8 +1096,15 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
 
             self.assertTrue(report["uses_raster_tokens"])
+            self.assertTrue(report["ranking_uses_raster_tokens"])
             self.assertEqual(report["classifier_backend"], "mlx_feature_head")
             self.assertIn("val", report["evaluation"])
+            self.assertTrue(report["ranking_evaluation"]["val"]["uses_raster_tokens"])
+            self.assertTrue(
+                report["ranking_evaluation"]["val"]["decisions"][0][
+                    "uses_raster_tokens"
+                ]
+            )
             self.assertTrue(report_path.exists())
 
     def test_eval_classifier_cli_accepts_config_file(self):
