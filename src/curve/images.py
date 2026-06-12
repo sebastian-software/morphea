@@ -17,7 +17,12 @@ from curve.anchors import (
     ScoringConfig,
     StrokeAnchor,
 )
-from curve.classifier import load_classifier_model
+from curve.classifier import (
+    classifier_crop_size,
+    classifier_uses_raster_tokens,
+    component_raster_tokens,
+    load_classifier_model,
+)
 from curve.detection import (
     AnchorThresholdConfig,
     detect_cutout_strokes,
@@ -314,10 +319,21 @@ def scene_from_flat_color_image(
         for component in component_result.components:
 
             component_mask = _mask_from_component(color_mask.mask, component)
+            crop_tokens = (
+                component_raster_tokens(
+                    component,
+                    color=color_mask.color,
+                    crop_size=classifier_crop_size(loaded_classifier),
+                )
+                if loaded_classifier is not None
+                and classifier_uses_raster_tokens(loaded_classifier)
+                else None
+            )
             for anchor in detect_primitive_anchors(
                 component_mask,
                 min_area=min_area,
                 classifier_model=loaded_classifier,
+                classifier_crop_tokens=crop_tokens,
                 scoring=scoring,
                 thresholds=thresholds,
             ):

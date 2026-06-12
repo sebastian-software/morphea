@@ -12,6 +12,7 @@ from curve.classifier import (
     FEATURE_NAMES,
     anchors_from_dataset,
     classifier_prior_error,
+    component_raster_tokens,
     evaluate_classifier_model,
     evaluate_classifier_ranking,
     evaluate_raster_classifier,
@@ -27,6 +28,7 @@ from curve.classifier import (
 from curve.cli import main
 from curve.dataset import generate_synthetic_dataset
 from curve.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
+from curve.masks import BinaryMask, connected_components
 from curve.mlx_classifier import (
     MLX_MODEL_TYPE,
     MlxClassifierTrainingConfig,
@@ -125,6 +127,23 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
             self.assertGreater(examples[0].bounds[2], examples[0].bounds[0])
             self.assertEqual(examples[0].sample_id, "sample-0000")
+
+    def test_component_raster_tokens_sample_runtime_mask_crop(self):
+        mask = BinaryMask.from_rows(
+            [
+                "....",
+                ".##.",
+                ".##.",
+                "....",
+            ]
+        )
+        component = connected_components(mask)[0]
+
+        tokens = component_raster_tokens(component, color="#dd2222", crop_size=4)
+
+        self.assertEqual(len(tokens), 16)
+        self.assertIn((221 / 255, 34 / 255, 34 / 255, 1.0), tokens)
+        self.assertIn((1.0, 1.0, 1.0, 1.0), tokens)
 
     def test_train_centroid_classifier_writes_model_with_evaluation(self):
         with tempfile.TemporaryDirectory() as temp_dir:

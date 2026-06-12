@@ -42,6 +42,7 @@ def detect_primitive_anchors(
     *,
     min_area: int = 8,
     classifier_model: ClassifierModel | dict[str, tuple[float, ...]] | None = None,
+    classifier_crop_tokens: tuple[tuple[float, float, float, float], ...] | None = None,
     scoring: ScoringConfig | None = None,
     thresholds: AnchorThresholdConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
@@ -52,6 +53,7 @@ def detect_primitive_anchors(
         candidates = primitive_candidates_for_component(
             component,
             classifier_model=classifier_model,
+            classifier_crop_tokens=classifier_crop_tokens,
             thresholds=thresholds,
         )
         if candidates:
@@ -101,6 +103,7 @@ def primitive_candidates_for_component(
     component: MaskComponent,
     *,
     classifier_model: ClassifierModel | dict[str, tuple[float, ...]] | None = None,
+    classifier_crop_tokens: tuple[tuple[float, float, float, float], ...] | None = None,
     thresholds: AnchorThresholdConfig | None = None,
 ) -> tuple[AnchorCandidate, ...]:
     """Generate plausible simple-shape candidates for one component."""
@@ -143,18 +146,28 @@ def primitive_candidates_for_component(
     )
     candidates.append(fallback)
     if classifier_model is not None:
-        return tuple(_with_classifier_prior(candidate, classifier_model) for candidate in candidates)
+        return tuple(
+            _with_classifier_prior(
+                candidate,
+                classifier_model,
+                classifier_crop_tokens=classifier_crop_tokens,
+            )
+            for candidate in candidates
+        )
     return tuple(candidates)
 
 
 def _with_classifier_prior(
     candidate: AnchorCandidate,
     classifier_model: ClassifierModel | dict[str, tuple[float, ...]],
+    *,
+    classifier_crop_tokens: tuple[tuple[float, float, float, float], ...] | None,
 ) -> AnchorCandidate:
     metrics = dict(candidate.metrics)
     metrics["classifier_prior_error"] = classifier_prior_error(
         classifier_model,
         candidate,
+        crop_tokens=classifier_crop_tokens,
     )
     return AnchorCandidate(
         kind=candidate.kind,

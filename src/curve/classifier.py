@@ -18,6 +18,7 @@ from curve.anchors import (
     StrokeAnchor,
     semantic_anchor_score,
 )
+from curve.masks import MaskComponent
 
 
 ClassifierModel = dict[str, object]
@@ -190,6 +191,39 @@ def raster_examples_from_dataset(
     return tuple(examples)
 
 
+def component_raster_tokens(
+    component: MaskComponent,
+    *,
+    color: str,
+    crop_size: int,
+) -> tuple[tuple[float, float, float, float], ...]:
+    if crop_size <= 0:
+        msg = "crop_size must be positive"
+        raise ValueError(msg)
+    foreground = _hex_to_rgb(color)
+    left, top, right, bottom = _component_crop_bounds(component)
+    source_width = max(1, right - left)
+    source_height = max(1, bottom - top)
+    pixels = component.pixels
+    tokens: list[tuple[float, float, float, float]] = []
+    for out_y in range(crop_size):
+        source_y = top + min(
+            source_height - 1,
+            int(out_y * source_height / crop_size),
+        )
+        for out_x in range(crop_size):
+            source_x = left + min(
+                source_width - 1,
+                int(out_x * source_width / crop_size),
+            )
+            if (source_x, source_y) in pixels:
+                red, green, blue = foreground
+            else:
+                red = green = blue = 255
+            tokens.append((red / 255, green / 255, blue / 255, 1.0))
+    return tuple(tokens)
+
+
 def anchors_from_dataset(
     dataset_json: str | Path,
     *,
@@ -205,6 +239,30 @@ def anchors_from_dataset(
         manifest = json.loads((root / sample["manifest"]).read_text(encoding="utf-8"))
         anchors.extend(anchor for anchor in manifest.get("anchors", []))
     return tuple(anchors)
+
+
+def _component_crop_bounds(component: MaskComponent) -> tuple[int, int, int, int]:
+    min_x, min_y, max_x, max_y = component.bounds
+    return (
+        max(0, int(min_x) - 2),
+        max(0, int(min_y) - 2),
+        int(max_x) + 3,
+        int(max_y) + 3,
+    )
+
+
+def _hex_to_rgb(color: str) -> tuple[int, int, int]:
+    value = color.removeprefix("#")
+    if len(value) != 6:
+        return (0, 0, 0)
+    try:
+        return (
+            int(value[0:2], 16),
+            int(value[2:4], 16),
+            int(value[4:6], 16),
+        )
+    except ValueError:
+        return (0, 0, 0)
 
 
 def _anchor_crop_bounds(
@@ -540,6 +598,8 @@ def load_classifier_model(model_json: str | Path) -> ClassifierModel:
 def classifier_prior_error(
     classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     candidate: AnchorCandidate,
+    *,
+    crop_tokens: tuple[tuple[float, float, float, float], ...] | None = None,
 ) -> float:
     if not classifier_model:
         return 0.0
@@ -547,6 +607,7 @@ def classifier_prior_error(
         predicted = predict_classifier_label(
             classifier_model,
             features_from_candidate(candidate),
+            crop_tokens=crop_tokens,
         )
     except ValueError:
         return 0.0
@@ -831,11 +892,19 @@ def _classifier_uses_raster_tokens(classifier_model: dict[str, object]) -> bool:
     )
 
 
+def classifier_uses_raster_tokens(classifier_model: dict[str, object]) -> bool:
+    return _classifier_uses_raster_tokens(classifier_model)
+
+
 def _classifier_crop_size(classifier_model: dict[str, object]) -> int:
     crop_spec = classifier_model.get("crop_token_spec", {})
     if isinstance(crop_spec, dict) and isinstance(crop_spec.get("crop_size"), int):
         return int(crop_spec["crop_size"])
     return 16
+
+
+def classifier_crop_size(classifier_model: dict[str, object]) -> int:
+    return _classifier_crop_size(classifier_model)
 
 
 def evaluate_classifier(
