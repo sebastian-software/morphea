@@ -114,6 +114,39 @@ class PrimitiveQualityTests(unittest.TestCase):
         self.assertTrue(refinement["ok"])
         self.assertTrue(refinement["structure_audit"]["structure_preserved"])
 
+    def test_primitive_quality_harness_compares_cutout_exports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                cases=("cutout_horizontal_gap_center",),
+                output_dir=temp_dir,
+            )
+
+            self.assertTrue(report["ok"])
+            case = report["cases"][0]
+            comparison = case["export_comparison"]
+            self.assertTrue(comparison["ok"])
+            self.assertEqual(comparison["cutout_anchor_count"], 1)
+            self.assertTrue(
+                comparison["overlay_stroke"]["has_visible_cutout_stroke"]
+            )
+            self.assertFalse(comparison["overlay_stroke"]["has_mask"])
+            self.assertTrue(comparison["negative_mask"]["has_mask"])
+            self.assertTrue(comparison["negative_mask"]["uses_mask_group"])
+            self.assertTrue(
+                comparison["negative_mask"]["has_editable_mask_stroke"]
+            )
+            self.assertFalse(
+                comparison["negative_mask"]["has_visible_cutout_stroke"]
+            )
+            negative_svg = Path(
+                case["artifacts"]["negative_mask_svg"]
+            ).read_text(encoding="utf-8")
+            overlay_svg = Path(case["artifacts"]["output_svg"]).read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('<mask id="morphea-cutout-mask"', negative_svg)
+            self.assertNotIn('<mask id="morphea-cutout-mask"', overlay_svg)
+
     def test_primitive_specs_have_ten_variants_per_family(self):
         counts: dict[str, int] = {}
         for spec in primitive_specs():

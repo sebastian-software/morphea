@@ -55,6 +55,7 @@ class PrimitiveSpec:
     color_tolerance: float = 0.0
     expected_primitives: tuple[ExpectedPrimitive, ...] = ()
     expected_groups: tuple[dict[str, Any], ...] = ()
+    compare_cutout_exports: bool = False
     min_area: int = 4
     coordinate_tolerance: float = 1.5
     max_raster_l1_error: float = 0.02
@@ -663,7 +664,13 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
-        _composition_spec(case_id, "cutout_horizontal_gap", variant, primitives)
+        _composition_spec(
+            case_id,
+            "cutout_horizontal_gap",
+            variant,
+            primitives,
+            compare_cutout_exports=True,
+        )
         for case_id, variant, primitives in (
             (
                 "cutout_horizontal_gap_center",
@@ -692,7 +699,13 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
-        _composition_spec(case_id, "cutout_diagonal_gap", variant, primitives)
+        _composition_spec(
+            case_id,
+            "cutout_diagonal_gap",
+            variant,
+            primitives,
+            compare_cutout_exports=True,
+        )
         for case_id, variant, primitives in (
             (
                 "cutout_diagonal_gap_down",
@@ -1229,6 +1242,8 @@ def _composition_spec(
     variant: str,
     primitives: tuple[ExpectedPrimitive, ...],
     expected_groups: tuple[dict[str, Any], ...] = (),
+    *,
+    compare_cutout_exports: bool = False,
 ) -> PrimitiveSpec:
     first = primitives[0]
     max_l1 = 0.08 if "ring" in family else 0.025
@@ -1243,6 +1258,7 @@ def _composition_spec(
         color=first.color,
         expected_primitives=primitives,
         expected_groups=expected_groups,
+        compare_cutout_exports=compare_cutout_exports,
         draw=lambda draw, primitives=primitives: _draw_expected_primitives(draw, primitives),
         max_anchor_count=len(primitives),
         max_raster_l1_error=max_l1,
@@ -1625,10 +1641,12 @@ def _run_case(
 
     svg_path = case_root / "output.svg"
     debug_svg_path = case_root / "debug.svg"
+    negative_mask_svg_path = case_root / "negative-mask.svg"
     manifest_path = case_root / "manifest.json"
     preview_path = case_root / "preview.png"
+    overlay_svg = scene.to_svg(SvgStyle(cutout_strategy="overlay_stroke"))
     if output_root is not None:
-        svg_path.write_text(scene.to_svg(SvgStyle()), encoding="utf-8")
+        svg_path.write_text(overlay_svg, encoding="utf-8")
         debug_svg_path.write_text(scene.to_debug_svg(), encoding="utf-8")
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True),
@@ -1637,6 +1655,32 @@ def _run_case(
         preview.save(preview_path)
 
     case = _evaluate_case(spec, manifest, metrics)
+    if spec.compare_cutout_exports:
+        export_result = _compare_cutout_exports(
+            spec=spec,
+            scene=scene,
+            manifest=manifest,
+            overlay_svg=overlay_svg,
+            negative_mask_svg_path=(
+                negative_mask_svg_path if output_root is not None else None
+            ),
+        )
+        case["export_comparison"] = export_result["summary"]
+        if export_result["failure_details"]:
+            case["failure_details"].extend(export_result["failure_details"])
+            case["failures"].extend(
+                failure["message"] for failure in export_result["failure_details"]
+            )
+            case["failure_categories"] = sorted(
+                {
+                    *case["failure_categories"],
+                    *(
+                        failure["category"]
+                        for failure in export_result["failure_details"]
+                    ),
+                }
+            )
+            case["ok"] = False
     if refine:
         refinement_result = _run_refinement_gate(
             manifest=manifest,
@@ -1670,7 +1714,93 @@ def _run_case(
             "manifest": str(manifest_path),
             "preview": str(preview_path),
         }
+        if spec.compare_cutout_exports:
+            case["artifacts"]["negative_mask_svg"] = str(negative_mask_svg_path)
     return case
+
+
+def _compare_cutout_exports(
+    *,
+    spec: PrimitiveSpec,
+    scene: Any,
+    manifest: dict[str, Any],
+    overlay_svg: str,
+    negative_mask_svg_path: Path | None,
+) -> dict[str, Any]:
+    negative_svg = scene.to_svg(SvgStyle(cutout_strategy="negative_mask"))
+    if negative_mask_svg_path is not None:
+        negative_mask_svg_path.write_text(negative_svg, encoding="utf-8")
+    cutout_count = int(manifest.get("metrics", {}).get("cutout_anchor_count", 0))
+    overlay_has_visible_cutout = 'stroke="#ffffff"' in overlay_svg
+    overlay_has_mask = '<mask id="morphea-cutout-mask"' in overlay_svg
+    negative_has_mask = '<mask id="morphea-cutout-mask"' in negative_svg
+    negative_uses_mask_group = 'mask="url(#morphea-cutout-mask)"' in negative_svg
+    negative_has_editable_mask_stroke = 'stroke="black"' in negative_svg
+    negative_has_visible_cutout = 'stroke="#ffffff"' in negative_svg
+    same_viewbox = _svg_viewbox(overlay_svg) == _svg_viewbox(negative_svg)
+    failure_details: list[dict[str, str]] = []
+    if cutout_count <= 0:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: expected at least one cut-out anchor")
+        )
+    if not overlay_has_visible_cutout:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: overlay export lacks visible cut-out stroke")
+        )
+    if overlay_has_mask:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: overlay export unexpectedly contains mask")
+        )
+    if not negative_has_mask:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: negative-mask export lacks mask definition")
+        )
+    if not negative_uses_mask_group:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: negative-mask export lacks masked group")
+        )
+    if not negative_has_editable_mask_stroke:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: negative-mask export lacks editable mask stroke")
+        )
+    if negative_has_visible_cutout:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: negative-mask export still paints white cut-out")
+        )
+    if not same_viewbox:
+        failure_details.append(
+            _failure("export_drift", f"{spec.id}: cut-out exports use different viewBox")
+        )
+    return {
+        "summary": {
+            "ok": not failure_details,
+            "cutout_anchor_count": cutout_count,
+            "overlay_stroke": {
+                "has_visible_cutout_stroke": overlay_has_visible_cutout,
+                "has_mask": overlay_has_mask,
+            },
+            "negative_mask": {
+                "has_mask": negative_has_mask,
+                "uses_mask_group": negative_uses_mask_group,
+                "has_editable_mask_stroke": negative_has_editable_mask_stroke,
+                "has_visible_cutout_stroke": negative_has_visible_cutout,
+            },
+            "same_viewbox": same_viewbox,
+        },
+        "failure_details": failure_details,
+    }
+
+
+def _svg_viewbox(svg: str) -> str | None:
+    marker = 'viewBox="'
+    start = svg.find(marker)
+    if start < 0:
+        return None
+    start += len(marker)
+    end = svg.find('"', start)
+    if end < 0:
+        return None
+    return svg[start:end]
 
 
 def _run_refinement_gate(

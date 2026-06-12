@@ -242,6 +242,8 @@ Each case records:
 - `unmatched_expected`: expected primitives that could not be matched
 - `unexpected_actual`: extra actual primitives left after matching
 - `group_matches`: expected manifest group contracts that matched
+- `export_comparison`: present for cut-out export gate cases; compares
+  `overlay_stroke` and `negative_mask` SVG output from the same scene
 - `refinement`: present when `primitive-check --refine` is used; records
   structure audit and before/after raster metrics
 - `failures`: contract failures such as wrong kind, fallback path, loose
@@ -251,7 +253,8 @@ Each case records:
   `group_drift`
 - `failure_details`: category/message pairs for machine-readable diagnostics
 - `artifacts`: present when `--output-dir` is used; includes input PNG,
-  output SVG, debug SVG, manifest JSON, and rendered preview PNG
+  output SVG, debug SVG, manifest JSON, rendered preview PNG, and
+  `negative_mask_svg` for cut-out export gate cases
 
 The built-in fixture set covers filled square, filled rectangle, filled circle,
 horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a

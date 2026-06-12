@@ -300,8 +300,8 @@ Current evidence:
 
 ### PQ6: Cut-Outs, Holes, and Negative Space
 
-Status: implemented for editable thin horizontal and diagonal cut-out stroke
-fixtures.
+Status: implemented for editable thin cut-out stroke fixtures and fixture-level
+export comparison.
 
 Purpose: make white/near-background interior marks editable without treating
 every hole as a destructive topology problem.
@@ -335,11 +335,12 @@ Current evidence:
 - each cut-out fixture family has 3 deterministic variants.
 - focused detector tests already cover the negative case where a large hole must
   not become a thin cut-out stroke.
-
-Remaining:
-
-- add fixture-level `negative_mask` vs `overlay_stroke` export comparisons after
-  the homepage gallery can expose both SVG outputs cleanly.
+- cut-out fixture results now include `export_comparison`, proving that
+  `overlay_stroke` paints an editable visible cut-out stroke while
+  `negative_mask` moves the same editable stroke into an SVG mask without
+  changing the semantic manifest.
+- `--output-dir` writes an additional `negative-mask.svg` artifact for cut-out
+  export gate cases.
 
 ### PQ7: Repeated Structures and Groups
 
