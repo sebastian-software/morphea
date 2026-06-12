@@ -128,6 +128,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("`filled_primitives`: 2", report)
         self.assertIn("`same_color_fragment_group`: 2 anchors, color #dd2222", report)
         self.assertIn("action merge_adjacent_fragments", report)
+        self.assertIn("## Pipeline Stages", report)
+        self.assertIn("`segmentation`: 1", report)
         self.assertIn("`warning` `component_deferred`", report)
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn("`fragmentation_penalty`: 0.1", report)
@@ -166,6 +168,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("<code>same_color_fragment_group</code>", report)
         self.assertIn("2 anchors, color #dd2222", report)
         self.assertIn("action merge_adjacent_fragments", report)
+        self.assertIn("<h2>Pipeline Stages</h2>", report)
+        self.assertIn("<code>segmentation</code>", report)
         self.assertIn("<td>component_deferred</td>", report)
         self.assertIn("<code>raster_l1_error</code>", report)
 

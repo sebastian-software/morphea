@@ -173,6 +173,7 @@ def render_markdown_report(
     groups = list(manifest.get("groups", []))
     layers = list(manifest.get("layers", []))
     metrics = dict(manifest.get("metrics", {}))
+    stage_counts = _diagnostic_stage_counts(diagnostics)
     lines = [
         "# Curve Vectorize Report",
         "",
@@ -203,6 +204,13 @@ def render_markdown_report(
     if groups:
         for group in groups:
             lines.append(f"- `{group.get('kind')}`: {_group_report_details(group)}")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Pipeline Stages", ""])
+    if stage_counts:
+        for stage, count in stage_counts.items():
+            lines.append(f"- `{stage}`: {count}")
     else:
         lines.append("- none")
 
@@ -242,6 +250,7 @@ def render_html_report(
     layers = list(manifest.get("layers", []))
     metrics = dict(manifest.get("metrics", {}))
     anchor_counts = _counts(anchor.get("kind") for anchor in anchors)
+    stage_counts = _diagnostic_stage_counts(diagnostics)
     lines = [
         "<!doctype html>",
         '<html lang="en">',
@@ -290,6 +299,10 @@ def render_html_report(
             ),
         )
         if groups
+        else "  <p>none</p>",
+        "  <h2>Pipeline Stages</h2>",
+        _html_table(("Stage", "Diagnostics"), stage_counts.items())
+        if stage_counts
         else "  <p>none</p>",
         "  <h2>Diagnostics</h2>",
         _html_table(
@@ -363,6 +376,32 @@ def _group_report_details(group: dict[str, object]) -> str:
     if isinstance(merge_plan, dict) and merge_plan.get("action") is not None:
         details = f"{details}, action {merge_plan.get('action')}"
     return details
+
+
+def _diagnostic_stage_counts(diagnostics: list[object]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for diagnostic in diagnostics:
+        if not isinstance(diagnostic, dict):
+            continue
+        stage = _diagnostic_stage(str(diagnostic.get("code", "unknown")))
+        counts[stage] = counts.get(stage, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _diagnostic_stage(code: str) -> str:
+    if code in {
+        "transparent_pixels_ignored",
+        "partial_alpha_flattened",
+        "image_resized_for_analysis",
+    }:
+        return "preprocessing"
+    if code == "palette_quantized":
+        return "palette"
+    if code in {"color_mask_split_for_components", "component_deferred"}:
+        return "segmentation"
+    if code == "timeout_reached":
+        return "runtime"
+    return "unknown"
 
 
 def _anchors_artifact(manifest: dict[str, object]) -> dict[str, object]:
