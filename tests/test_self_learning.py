@@ -396,6 +396,7 @@ class SelfLearningTests(unittest.TestCase):
             review = create_review_file(pseudo_labels=pseudo, output=output)
 
             self.assertEqual(review["review_count"], 1)
+            self.assertEqual(review["issue_counts"], {})
             self.assertEqual(review["items"][0]["decision"], "pending")
             self.assertEqual(review["items"][0]["corrected_kind"], "")
             self.assertEqual(review["items"][0]["issues"], [])
@@ -422,6 +423,7 @@ class SelfLearningTests(unittest.TestCase):
 
         self.assertIn("# Curve Review Queue", markdown)
         self.assertIn("- Source: `pseudo.json`", markdown)
+        self.assertIn("- Issue counts: `bad_cutout: 1`", markdown)
         self.assertIn(
             "| `review-00000` | `pending` | `circle` | 0.03 | bad_cutout |",
             markdown,
@@ -459,17 +461,20 @@ class SelfLearningTests(unittest.TestCase):
                             {
                                 "id": "review-00000",
                                 "decision": "accept",
+                                "issues": ["bad_stroke"],
                                 "label": {"kind": "circle"},
                             },
                             {
                                 "id": "review-00001",
                                 "decision": "reject",
                                 "reason": "wrong type",
+                                "issues": ["wrong_primitive_type"],
                                 "label": {"kind": "quad"},
                             },
                             {
                                 "id": "review-00002",
                                 "decision": "pending",
+                                "issues": ["bad_cutout"],
                                 "label": {"kind": "stroke_polyline"},
                             },
                         ]
@@ -484,6 +489,14 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["accepted_count"], 1)
             self.assertEqual(result["rejected_count"], 1)
             self.assertEqual(result["pending_count"], 1)
+            self.assertEqual(
+                result["issue_counts"],
+                {
+                    "bad_cutout": 1,
+                    "bad_stroke": 1,
+                    "wrong_primitive_type": 1,
+                },
+            )
 
     def test_render_apply_review_markdown_summarizes_decisions(self):
         markdown = render_apply_review_markdown(
@@ -492,6 +505,10 @@ class SelfLearningTests(unittest.TestCase):
                 "accepted_count": 1,
                 "rejected_count": 1,
                 "pending_count": 1,
+                "issue_counts": {
+                    "bad_cutout": 1,
+                    "wrong_primitive_type": 1,
+                },
                 "accepted": [
                     {
                         "kind": "stroke_polyline",
@@ -514,6 +531,10 @@ class SelfLearningTests(unittest.TestCase):
 
         self.assertIn("# Curve Apply Review", markdown)
         self.assertIn("- Accepted: 1", markdown)
+        self.assertIn(
+            "- Issue counts: `bad_cutout: 1, wrong_primitive_type: 1`",
+            markdown,
+        )
         self.assertIn(
             "| `stroke_polyline` | `stroke_polyline` | wrong_primitive_type |",
             markdown,

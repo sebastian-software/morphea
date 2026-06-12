@@ -1064,6 +1064,7 @@ def create_review_file(
     review = {
         "source": str(pseudo_labels),
         "review_count": len(review_items),
+        "issue_counts": _issue_counts_from_review_items(review_items),
         "items": review_items,
     }
     output = Path(output)
@@ -1085,6 +1086,7 @@ def render_review_markdown(review: dict[str, object]) -> str:
         "",
         f"- Source: `{review.get('source', 'n/a')}`",
         f"- Items: {_fmt_metric(review.get('review_count'))}",
+        f"- Issue counts: {_format_issue_counts(_review_issue_counts(review, items))}",
         "",
         "| ID | Decision | Kind | Quality error | Issues |",
         "| --- | --- | --- | ---: | --- |",
@@ -1146,6 +1148,11 @@ def apply_review_file(
         "accepted": accepted,
         "rejected": rejected,
         "pending": pending,
+        "issue_counts": _issue_counts_from_apply_result(
+            accepted=accepted,
+            rejected=rejected,
+            pending_items=_pending_review_items(review_data.get("items", [])),
+        ),
         "source_review": str(review),
     }
     output = Path(output)
@@ -1179,6 +1186,7 @@ def render_apply_review_markdown(result: dict[str, object]) -> str:
         f"- Accepted: {_fmt_metric(result.get('accepted_count'))}",
         f"- Rejected: {_fmt_metric(result.get('rejected_count'))}",
         f"- Pending: {_fmt_metric(result.get('pending_count'))}",
+        f"- Issue counts: {_format_issue_counts(_apply_issue_counts(result))}",
         "",
         "## Accepted",
         "",
@@ -1240,6 +1248,91 @@ def render_apply_review_markdown(result: dict[str, object]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _review_issue_counts(
+    review: dict[str, object],
+    items: list[object],
+) -> dict[str, int]:
+    issue_counts = review.get("issue_counts")
+    if isinstance(issue_counts, dict):
+        return {
+            str(issue): int(count)
+            for issue, count in issue_counts.items()
+            if isinstance(count, (int, float))
+        }
+    return _issue_counts_from_review_items(items)
+
+
+def _apply_issue_counts(result: dict[str, object]) -> dict[str, int]:
+    issue_counts = result.get("issue_counts")
+    if isinstance(issue_counts, dict):
+        return {
+            str(issue): int(count)
+            for issue, count in issue_counts.items()
+            if isinstance(count, (int, float))
+        }
+    accepted = result.get("accepted", [])
+    rejected = result.get("rejected", [])
+    return _issue_counts_from_apply_result(
+        accepted=accepted if isinstance(accepted, list) else [],
+        rejected=rejected if isinstance(rejected, list) else [],
+        pending_items=[],
+    )
+
+
+def _issue_counts_from_review_items(items: list[object]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        _add_issue_counts(counts, _review_issues(item))
+    return dict(sorted(counts.items()))
+
+
+def _issue_counts_from_apply_result(
+    *,
+    accepted: list[object],
+    rejected: list[object],
+    pending_items: list[object],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for label in accepted:
+        if not isinstance(label, dict):
+            continue
+        review = label.get("review", {})
+        if isinstance(review, dict):
+            _add_issue_counts(counts, _issues_from_value(review.get("issues", [])))
+    for item in rejected:
+        if isinstance(item, dict):
+            _add_issue_counts(counts, _issues_from_value(item.get("issues", [])))
+    for item in pending_items:
+        if isinstance(item, dict):
+            _add_issue_counts(counts, _review_issues(item))
+    return dict(sorted(counts.items()))
+
+
+def _pending_review_items(items: object) -> list[object]:
+    if not isinstance(items, list):
+        return []
+    return [
+        item
+        for item in items
+        if isinstance(item, dict) and item.get("decision") not in {"accept", "reject"}
+    ]
+
+
+def _add_issue_counts(counts: dict[str, int], issues: list[str]) -> None:
+    for issue in issues:
+        counts[issue] = counts.get(issue, 0) + 1
+
+
+def _format_issue_counts(issue_counts: dict[str, int]) -> str:
+    if not issue_counts:
+        return "`none`"
+    return "`" + ", ".join(
+        f"{issue}: {count}" for issue, count in sorted(issue_counts.items())
+    ) + "`"
+
+
 def _reviewed_label(item: dict[str, object]) -> dict[str, object]:
     label = dict(item.get("label", {}))
     corrected_kind = _corrected_kind(item)
@@ -1266,7 +1359,11 @@ def _corrected_kind(item: dict[str, object]) -> str | None:
 
 
 def _review_issues(item: dict[str, object]) -> list[str]:
-    issues = item.get("issues", [])
+    return _issues_from_value(item.get("issues", []))
+
+
+def _issues_from_value(value: object) -> list[str]:
+    issues = value
     if not isinstance(issues, list):
         return []
     return [issue for issue in issues if isinstance(issue, str) and issue]

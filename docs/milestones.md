@@ -628,6 +628,9 @@ Implemented so far:
   summary for accepted, rejected, and pending labels
 - review items support `corrected_kind` and structured issue tags for wrong
   primitive type, cut-out, and stroke-behavior feedback
+- review queue and apply-review artifacts aggregate `issue_counts` so repeated
+  primitive-type, cut-out, and stroke-behavior problems are visible in JSON and
+  Markdown summaries.
 - accepted reviewed pseudo-labels can be merged into a classifier-compatible
   train split via `curve merge-labels`
 - `curve compare-training` compares baseline classifier training against
