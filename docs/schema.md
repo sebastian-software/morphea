@@ -537,6 +537,47 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Self-Learning Cycle v1
+
+Written by `curve self-learn` as `self-learning-cycle.json` inside the output
+directory.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `status`: `retrained` or `skipped_retrain`
+- `base_dataset`
+- `reviewed_labels`
+- `validation_dataset`
+- `output_dir`
+- `artifacts`: pseudo dataset, comparison, gate, optional model, and summaries
+- `pseudo_dataset`: pseudo-label train example count and split counts
+- `comparison_summary`: copied training comparison summary
+- `gate`: copied gate decision, accepted flag, and reasons
+- `model`: compact model summary when retraining was accepted
+
+`curve self-learn` always writes comparison and gate artifacts. It writes
+`model.json` only when the training gate accepts the reviewed-label
+augmentation.
+
+## Self-Learning Config v1
+
+Read by `curve self-learn --config`.
+
+Supported fields:
+
+- `base_dataset`
+- `reviewed_labels`
+- `validation_dataset`
+- `output_dir`
+- `markdown`: optional cycle Markdown summary path
+- `min_train_examples_delta`
+- `min_best_accuracy_delta`
+- `max_worst_accuracy_drop`
+- `allow_unchanged`
+
+CLI arguments override values loaded from the config file.
+
 ## Retrain Config v1
 
 Read by `curve retrain --config`.

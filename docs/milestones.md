@@ -567,6 +567,9 @@ Implemented so far:
 - `curve training-gate comparison.json -o gate.json` turns a retraining
   comparison into an accept/manual-review/reject decision using explicit
   regression tolerances
+- `curve self-learn base/dataset.json --reviewed-labels reviewed.json -o cycle`
+  runs merge-labels, compare-training, training-gate, and accepted-gate
+  retraining as one repeatable reviewed-label cycle
 - `curve retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
@@ -732,6 +735,7 @@ Implemented so far:
 - `curve harvest-curated`
 - `curve compare-training`
 - `curve training-gate`
+- `curve self-learn`
 - `curve retrain`
 - `curve vectorize --config config.json` for repeatable runtime knob files
 - `curve train --config train.json` for repeatable classifier training inputs
@@ -757,6 +761,8 @@ Implemented so far:
   comparisons
 - `curve training-gate --config training-gate.json` for repeatable retraining
   acceptance decisions
+- `curve self-learn --config self-learn.json` for repeatable reviewed-label
+  self-learning cycles
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve refine --config refine.json` for repeatable bounded refinement runs
 - `curve segment --config segment.json` for repeatable segment proposal runs
