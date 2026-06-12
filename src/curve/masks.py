@@ -80,17 +80,25 @@ class MaskComponent:
 
     @property
     def centroid(self) -> Point:
-        return Point(
-            sum(x for x, _ in self.pixels) / self.area,
-            sum(y for _, y in self.pixels) / self.area,
-        )
+        sum_x = 0
+        sum_y = 0
+        for x, y in self.pixels:
+            sum_x += x
+            sum_y += y
+        return Point(sum_x / self.area, sum_y / self.area)
 
     @property
     def boundary_pixels(self) -> frozenset[Pixel]:
         boundary: set[Pixel] = set()
+        pixels = self.pixels
         for pixel in self.pixels:
             x, y = pixel
-            if any(neighbor not in self.pixels for neighbor in _neighbors4(x, y)):
+            if (
+                (x - 1, y) not in pixels
+                or (x + 1, y) not in pixels
+                or (x, y - 1) not in pixels
+                or (x, y + 1) not in pixels
+            ):
                 boundary.add(pixel)
         return frozenset(boundary)
 
@@ -201,7 +209,3 @@ def _enqueue_neighbors8(
         if can_right and grid[bottom + 1]:
             grid[bottom + 1] = 0
             queue.append(bottom + 1)
-
-
-def _neighbors4(x: int, y: int) -> tuple[Pixel, Pixel, Pixel, Pixel]:
-    return ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))
