@@ -616,6 +616,15 @@ Supported fields:
 - `validation_dataset`
 - `output`
 - `comparison_output`
+- `backend`: `centroid` or `mlx`; defaults to `centroid`
+- `epochs`: MLX backend only
+- `hidden_dim`: MLX backend only
+- `num_heads`: MLX backend only
+- `num_layers`: MLX backend only
+- `learning_rate`: MLX backend only
+- `crop_size`: MLX backend only
+- `allow_unavailable`: MLX backend only; writes an MLX fallback artifact when
+  the optional runtime is not installed
 
 CLI arguments override values loaded from the config file.
 
@@ -751,9 +760,13 @@ that token-encoder head first, then falls back through feature/raster fusion,
 raster-token mixer, feature head, and finally centroid fallback.
 
 `curve retrain` persists the augmented model so it can be used as a
-`--classifier-model` prior in later vectorize/profile runs. Its centroid
-backend is intentionally explicit; a future MLX-backed classifier can keep the
-same high-level source/evaluation fields while changing `model_type`.
+`--classifier-model` prior in later vectorize/profile runs. The default
+`centroid` backend keeps the original model schema. The `mlx` backend writes an
+`mlx_transformer_primitive_classifier` artifact via the train-MLX path, then
+adds `source_datasets`, `augmentation`, `retraining_backend`, and the generated
+`augmented_dataset` index path. Reviewed pseudo-label samples may omit source
+images; they still contribute feature examples, while raster-token training
+uses image-backed samples only.
 
 ## Classifier Evaluation Report v1
 

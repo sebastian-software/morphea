@@ -615,11 +615,17 @@ Implemented so far:
 - `curve retrain --config retrain.json` supports repeatable self-learning
   retraining runs and can optionally write the comparison report next to the
   model
+- `curve retrain --backend mlx` writes an augmented MLX classifier artifact
+  from base plus reviewed pseudo-label train examples, using the MLX
+  train/fallback path and recording the generated augmented dataset index.
+- MLX retraining can consume reviewed pseudo-label manifests that do not carry
+  source images: feature training includes those pseudo labels, while
+  raster-token crops are trained from image-backed samples.
 
 Remaining:
 
-- replace the centroid retraining backend with MLX fine-tuning once the next
-  classifier backend exists.
+- add true end-to-end MLX fine-tuning of token/projection weights once the
+  local MLX runtime path moves beyond serialized encoder-head training.
 
 ## M9: Differentiable and Local Refinement
 
