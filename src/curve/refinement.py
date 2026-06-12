@@ -663,6 +663,12 @@ def _optimize_differentiable_geometry(
         timeout_reached = False
         stopped_reason = "max_iterations"
         optimized_kinds: set[str] = set()
+        renderer_kinds = {
+            str(anchor.get("kind"))
+            for anchor in result.get("anchors", [])
+            if isinstance(anchor, dict)
+            and anchor.get("kind") in {"circle", "rect", "rounded_rect", "quad"}
+        }
         for _ in range(max_iterations):
             if _deadline_exceeded(started_at, timeout_seconds):
                 timeout_reached = True
@@ -674,45 +680,93 @@ def _optimize_differentiable_geometry(
                     timeout_reached = True
                     stopped_reason = "timeout"
                     break
-                if not isinstance(anchor, dict) or anchor.get("kind") != "circle":
+                if not isinstance(anchor, dict):
                     continue
-                circle = anchor.get("circle")
-                if not isinstance(circle, dict):
+                kind = str(anchor.get("kind"))
+                if kind == "circle":
+                    circle = anchor.get("circle")
+                    if not isinstance(circle, dict):
+                        continue
+                    gradient = _soft_circle_radius_gradient(
+                        result,
+                        anchor,
+                        source_rgba,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    if abs(gradient) < 1e-6:
+                        continue
+                    old_radius = float(circle.get("r", 0.0))
+                    candidate_radius = max(0.5, old_radius - gradient * 18.0)
+                    if abs(candidate_radius - old_radius) < 1e-6:
+                        continue
+                    candidate = _with_circle_radius(result, anchor, candidate_radius)
+                    candidate_metrics = _manifest_soft_raster_metrics(
+                        candidate,
+                        source_rgba,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    if candidate_metrics["objective"] >= current_metrics["objective"]:
+                        continue
+                    circle["r"] = candidate_radius
+                    metrics = dict(anchor.get("metrics", {}))
+                    metrics["refinement_radius_delta"] = (
+                        metrics.get("refinement_radius_delta", 0.0)
+                        + candidate_radius
+                        - old_radius
+                    )
+                    metrics["differentiable_radius_gradient"] = gradient
+                    anchor["metrics"] = metrics
+                    current_metrics = candidate_metrics
+                    optimized_kinds.add(kind)
+                    improved = True
                     continue
-                gradient = _soft_circle_radius_gradient(
-                    result,
-                    anchor,
-                    source_rgba,
-                    raster_l1_weight=raster_l1_weight,
-                    raster_edge_weight=raster_edge_weight,
-                )
-                if abs(gradient) < 1e-6:
-                    continue
-                old_radius = float(circle.get("r", 0.0))
-                candidate_radius = max(0.5, old_radius - gradient * 18.0)
-                if abs(candidate_radius - old_radius) < 1e-6:
-                    continue
-                candidate = _with_circle_radius(result, anchor, candidate_radius)
-                candidate_metrics = _manifest_soft_raster_metrics(
-                    candidate,
-                    source_rgba,
-                    raster_l1_weight=raster_l1_weight,
-                    raster_edge_weight=raster_edge_weight,
-                )
-                if candidate_metrics["objective"] >= current_metrics["objective"]:
-                    continue
-                circle["r"] = candidate_radius
-                metrics = dict(anchor.get("metrics", {}))
-                metrics["refinement_radius_delta"] = (
-                    metrics.get("refinement_radius_delta", 0.0)
-                    + candidate_radius
-                    - old_radius
-                )
-                metrics["differentiable_radius_gradient"] = gradient
-                anchor["metrics"] = metrics
-                current_metrics = candidate_metrics
-                optimized_kinds.add("circle")
-                improved = True
+                if kind in {"rect", "rounded_rect", "quad"}:
+                    base_corners = _quad_corners(anchor)
+                    if base_corners is None:
+                        continue
+                    gradient = _soft_quad_transform_gradient(
+                        result,
+                        anchor,
+                        source_rgba,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    if max(abs(value) for value in gradient) < 1e-6:
+                        continue
+                    candidate_corners = _quad_gradient_step(base_corners, gradient)
+                    if candidate_corners == base_corners:
+                        continue
+                    candidate = _with_quad_corners(
+                        result,
+                        anchor,
+                        candidate_corners,
+                    )
+                    candidate_metrics = _manifest_soft_raster_metrics(
+                        candidate,
+                        source_rgba,
+                        raster_l1_weight=raster_l1_weight,
+                        raster_edge_weight=raster_edge_weight,
+                    )
+                    if candidate_metrics["objective"] >= current_metrics["objective"]:
+                        continue
+                    quad = anchor.get("quad")
+                    if not isinstance(quad, dict):
+                        continue
+                    quad["corners"] = _manifest_corners(candidate_corners)
+                    metrics = dict(anchor.get("metrics", {}))
+                    metrics["refinement_quad_corner_delta"] = (
+                        metrics.get("refinement_quad_corner_delta", 0.0)
+                        + _corner_delta(base_corners, candidate_corners)
+                    )
+                    metrics["differentiable_quad_dx_gradient"] = gradient[0]
+                    metrics["differentiable_quad_dy_gradient"] = gradient[1]
+                    metrics["differentiable_quad_scale_gradient"] = gradient[2]
+                    anchor["metrics"] = metrics
+                    current_metrics = candidate_metrics
+                    optimized_kinds.add(kind)
+                    improved = True
             iterations += 1
             if timeout_reached:
                 break
@@ -744,7 +798,8 @@ def _optimize_differentiable_geometry(
         "optimized_parameter_kinds": sorted(optimized_kinds),
         "timeout_reached": timeout_reached,
         "stopped_reason": stopped_reason,
-        "renderer": "soft_raster_circle",
+        "renderer": "soft_raster_primitives",
+        "renderer_primitive_kinds": sorted(renderer_kinds),
     }
 
 
@@ -846,6 +901,72 @@ def _soft_circle_radius_gradient(
     return gradient * raster_l1_weight / (pixel_count * 3 * 255)
 
 
+def _soft_quad_transform_gradient(
+    manifest: dict[str, object],
+    target_anchor: dict[str, object],
+    source: Image.Image,
+    *,
+    raster_l1_weight: float,
+    raster_edge_weight: float,
+) -> tuple[float, float, float]:
+    del raster_edge_weight
+    base_corners = _quad_corners(target_anchor)
+    if base_corners is None:
+        return (0.0, 0.0, 0.0)
+    epsilon = 0.25
+
+    def objective(corners: tuple[tuple[float, float], ...]) -> float:
+        candidate = _with_quad_corners(manifest, target_anchor, corners)
+        return _manifest_soft_raster_metrics(
+            candidate,
+            source,
+            raster_l1_weight=raster_l1_weight,
+            raster_edge_weight=0.0,
+        )["objective"]
+
+    dx_gradient = (
+        objective(_translate_quad_corners(base_corners, epsilon, 0.0))
+        - objective(_translate_quad_corners(base_corners, -epsilon, 0.0))
+    ) / (epsilon * 2.0)
+    dy_gradient = (
+        objective(_translate_quad_corners(base_corners, 0.0, epsilon))
+        - objective(_translate_quad_corners(base_corners, 0.0, -epsilon))
+    ) / (epsilon * 2.0)
+    scale_gradient = (
+        objective(_scale_quad_corners(base_corners, epsilon))
+        - objective(_scale_quad_corners(base_corners, -epsilon))
+    ) / (epsilon * 2.0)
+    return (dx_gradient, dy_gradient, scale_gradient)
+
+
+def _quad_gradient_step(
+    corners: tuple[tuple[float, float], ...],
+    gradient: tuple[float, float, float],
+) -> tuple[tuple[float, float], ...]:
+    dx_gradient, dy_gradient, scale_gradient = gradient
+    dx = _bounded_gradient_step(dx_gradient, learning_rate=180.0, max_step=1.0)
+    dy = _bounded_gradient_step(dy_gradient, learning_rate=180.0, max_step=1.0)
+    scale_delta = _bounded_gradient_step(
+        scale_gradient,
+        learning_rate=180.0,
+        max_step=1.0,
+    )
+    translated = _translate_quad_corners(corners, dx, dy)
+    return _scale_quad_corners(translated, scale_delta)
+
+
+def _bounded_gradient_step(
+    gradient: float,
+    *,
+    learning_rate: float,
+    max_step: float,
+) -> float:
+    if abs(gradient) < 1e-6:
+        return 0.0
+    magnitude = min(max_step, max(0.25, abs(gradient) * learning_rate))
+    return -magnitude if gradient > 0 else magnitude
+
+
 def _soft_raster_rgb(
     manifest: dict[str, object],
     px: float,
@@ -855,21 +976,58 @@ def _soft_raster_rgb(
     for anchor in manifest.get("anchors", []):
         if not isinstance(anchor, dict):
             continue
-        if anchor.get("kind") != "circle":
+        kind = anchor.get("kind")
+        if kind == "circle":
+            circle = anchor.get("circle")
+            if not isinstance(circle, dict):
+                continue
+            cx = float(circle.get("cx", 0.0))
+            cy = float(circle.get("cy", 0.0))
+            radius = float(circle.get("r", 0.0))
+            distance = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
+            alpha = min(1.0, max(0.0, 0.5 + (radius - distance) / 2.0))
+        elif kind in {"rect", "rounded_rect", "quad"}:
+            corners = _quad_corners(anchor)
+            if corners is None:
+                continue
+            alpha = _soft_quad_alpha(corners, px, py)
+        else:
             continue
-        circle = anchor.get("circle")
-        if not isinstance(circle, dict):
-            continue
-        cx = float(circle.get("cx", 0.0))
-        cy = float(circle.get("cy", 0.0))
-        radius = float(circle.get("r", 0.0))
-        distance = ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
-        alpha = min(1.0, max(0.0, 0.5 + (radius - distance) / 2.0))
         color = _hex_rgb(str(anchor.get("color") or "#0b2d5f"))
         red = red * (1.0 - alpha) + color[0] * alpha
         green = green * (1.0 - alpha) + color[1] * alpha
         blue = blue * (1.0 - alpha) + color[2] * alpha
     return red, green, blue
+
+
+def _soft_quad_alpha(
+    corners: tuple[tuple[float, float], ...],
+    px: float,
+    py: float,
+) -> float:
+    if len(corners) < 3:
+        return 0.0
+    orientation = _polygon_orientation(corners)
+    if orientation == 0.0:
+        return 0.0
+    orientation_sign = 1.0 if orientation > 0 else -1.0
+    signed_distance = float("inf")
+    for index, (ax, ay) in enumerate(corners):
+        bx, by = corners[(index + 1) % len(corners)]
+        edge_x = bx - ax
+        edge_y = by - ay
+        edge_length = max((edge_x**2 + edge_y**2) ** 0.5, 1e-6)
+        cross = edge_x * (py - ay) - edge_y * (px - ax)
+        signed_distance = min(signed_distance, orientation_sign * cross / edge_length)
+    return min(1.0, max(0.0, 0.5 + signed_distance / 2.0))
+
+
+def _polygon_orientation(corners: tuple[tuple[float, float], ...]) -> float:
+    area = 0.0
+    for index, (x1, y1) in enumerate(corners):
+        x2, y2 = corners[(index + 1) % len(corners)]
+        area += (x1 * y2) - (x2 * y1)
+    return area
 
 
 def _hex_rgb(color: str) -> tuple[int, int, int]:
@@ -1044,6 +1202,29 @@ def _quad_corner_variants(
             tuple((cx + ((x - cx) * scale), cy + ((y - cy) * scale)) for x, y in corners)
         )
     return tuple(variants)
+
+
+def _translate_quad_corners(
+    corners: tuple[tuple[float, float], ...],
+    dx: float,
+    dy: float,
+) -> tuple[tuple[float, float], ...]:
+    return tuple((x + dx, y + dy) for x, y in corners)
+
+
+def _scale_quad_corners(
+    corners: tuple[tuple[float, float], ...],
+    delta: float,
+) -> tuple[tuple[float, float], ...]:
+    cx = sum(point[0] for point in corners) / len(corners)
+    cy = sum(point[1] for point in corners) / len(corners)
+    half_extent = max(
+        max(abs(point[0] - cx) for point in corners),
+        max(abs(point[1] - cy) for point in corners),
+        1.0,
+    )
+    scale = max(0.1, 1.0 + (delta / half_extent))
+    return tuple((cx + ((x - cx) * scale), cy + ((y - cy) * scale)) for x, y in corners)
 
 
 def _manifest_corners(

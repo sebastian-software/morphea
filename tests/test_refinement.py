@@ -134,7 +134,11 @@ class RefinementTests(unittest.TestCase):
             self.assertEqual(result["refinement"]["backend"], "differentiable")
             self.assertEqual(
                 result["refinement"]["optimizer"]["renderer"],
-                "soft_raster_circle",
+                "soft_raster_primitives",
+            )
+            self.assertIn(
+                "circle",
+                result["refinement"]["optimizer"]["renderer_primitive_kinds"],
             )
             self.assertGreater(result["anchors"][0]["circle"]["r"], 3.0)
             self.assertLess(
@@ -143,6 +147,51 @@ class RefinementTests(unittest.TestCase):
             )
             self.assertIn(
                 "differentiable_radius_gradient",
+                result["anchors"][0]["metrics"],
+            )
+
+    def test_differentiable_refinement_adjusts_quad_geometry_from_source(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = _write_rect_manifest(root, inset=7)
+            source = _write_rect_source(root, inset=6)
+            output = root / "refined.json"
+
+            result = refine_manifest(
+                manifest=manifest,
+                output=output,
+                config=RefinementConfig(
+                    backend="differentiable",
+                    max_iterations=3,
+                    timeout_seconds=1.0,
+                    source_image=source,
+                ),
+            )
+
+            corners = result["anchors"][0]["quad"]["corners"]
+            self.assertEqual(result["anchors"][0]["kind"], "rect")
+            self.assertLess(corners[0]["x"], 7.0)
+            self.assertLess(corners[0]["y"], 7.0)
+            self.assertGreater(corners[2]["x"], 13.0)
+            self.assertGreater(corners[2]["y"], 13.0)
+            self.assertIn(
+                "rect",
+                result["refinement"]["optimizer"]["optimized_parameter_kinds"],
+            )
+            self.assertIn(
+                "rect",
+                result["refinement"]["optimizer"]["renderer_primitive_kinds"],
+            )
+            self.assertLess(
+                result["refinement"]["optimizer"]["final_objective"],
+                result["refinement"]["optimizer"]["initial_objective"],
+            )
+            self.assertGreater(
+                result["anchors"][0]["metrics"]["refinement_quad_corner_delta"],
+                0.0,
+            )
+            self.assertIn(
+                "differentiable_quad_scale_gradient",
                 result["anchors"][0]["metrics"],
             )
 
