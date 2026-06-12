@@ -724,15 +724,22 @@ available MLX package. When MLX is available, status is `trained` and
 normalization range derived from anchor crops in the source dataset.
 `raster_token_mixer` stores a first trainable attention-style block over those
 tokens, including head count, embedding names, weights, bias, normalization,
-and loss history. The fallback centroids keep the artifact usable as a
-deterministic `--classifier-model` prior when MLX is not installed or while the
-full raster-crop Transformer encoder is still being expanded.
+and loss history. `feature_raster_fusion` stores a trainable
+`mlx_feature_raster_fusion_v1` head over the concatenated geometric feature row
+and raster-token attention embedding. It records feature names, raster
+embedding names, fusion strategy, head count, weights, bias, normalization, and
+loss history. The fallback centroids keep the artifact usable as a deterministic
+`--classifier-model` prior when MLX is not installed or while the full
+raster-crop Transformer encoder is still being expanded.
 When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
 uses the serialized MLX feature-head weights for prediction; malformed or
 unavailable MLX artifacts degrade to `fallback_centroids`.
 During vectorization, valid `raster_token_mixer_v1` artifacts receive
 component-derived RGBA crop tokens so candidate-ranking priors can fuse raster
-attention logits with feature-head logits.
+attention logits with feature-head logits. If a valid
+`mlx_feature_raster_fusion_v1` block is present, runtime prediction prefers its
+learned feature/raster logits when crop tokens are available and falls back to
+the separate feature-head plus raster-token mixer otherwise.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. Its centroid
@@ -761,10 +768,10 @@ Top-level fields:
   requested split
 
 The command can evaluate centroid models, MLX fallback artifacts, and
-`mlx_feature_head_v1` artifacts. When a valid `raster_token_mixer_v1` is
-present, direct accuracy/confusion use RGBA crop tokens from the dataset;
-candidate-ranking evaluation remains feature-based until vectorize candidates
-carry runtime crop tokens.
+`mlx_feature_head_v1` artifacts. When a valid `raster_token_mixer_v1` or
+`mlx_feature_raster_fusion_v1` block is present, direct accuracy/confusion use
+RGBA crop tokens from the dataset; candidate-ranking evaluation remains
+feature-based until vectorize candidates carry runtime crop tokens.
 
 ## Training Comparison v1
 

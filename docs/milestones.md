@@ -510,6 +510,11 @@ Implemented so far:
 - available MLX training artifacts include `raster_token_mixer_v1`, a
   trainable attention-style pooling block over RGBA crop tokens with its own
   normalized weights, bias, and loss history.
+- available MLX training artifacts also include `mlx_feature_raster_fusion_v1`,
+  a trainable fusion head over geometric primitive features plus raster-token
+  attention embeddings. Runtime prediction prefers this learned fusion when
+  crop tokens are available and falls back to the older feature/mixer logits
+  when it is missing or malformed.
 - `curve eval-classifier` uses RGBA crop-token examples for direct
   accuracy/confusion when evaluating a valid MLX raster-token mixer artifact.
 - `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
@@ -521,8 +526,9 @@ Implemented so far:
 
 Remaining:
 
-- replace the current feature-head plus raster-token mixer with a full small
-  Transformer encoder with learned token/feature fusion.
+- replace deterministic raster attention pooling with a full small Transformer
+  encoder over crop tokens and feature tokens, then serialize/runtime-load that
+  encoder instead of only the current learned fusion head.
 
 ## M8: Self-Learning Loop
 
