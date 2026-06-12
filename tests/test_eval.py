@@ -26,6 +26,10 @@ class EvalTests(unittest.TestCase):
                 summary["runs"][0]["diagnostic_codes"]["component_deferred"],
                 1,
             )
+            self.assertEqual(
+                summary["runs"][0]["diagnostic_stage_counts"]["segmentation"],
+                1,
+            )
 
     def test_write_eval_summary_outputs_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -49,7 +53,8 @@ class EvalTests(unittest.TestCase):
                         "run": "run-a",
                         "anchor_count": 2,
                         "group_count": 1,
-                        "diagnostic_count": 0,
+                        "diagnostic_count": 1,
+                        "diagnostic_stage_counts": {"segmentation": 1},
                     }
                 ],
             }
@@ -58,6 +63,7 @@ class EvalTests(unittest.TestCase):
         self.assertIn("### run-a", markdown)
         self.assertIn("- Anchors: 2", markdown)
         self.assertIn("- Layers: 0", markdown)
+        self.assertIn("- Diagnostic stages: segmentation: 1", markdown)
         self.assertIn("- Editability score: n/a", markdown)
         self.assertIn("- Raster L1 error: n/a", markdown)
 

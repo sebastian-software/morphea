@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from curve.diagnostics import diagnostic_stage_counts
 from curve.images import scene_from_flat_color_image
 from curve.runs import write_vectorize_run
 
@@ -107,6 +108,7 @@ def run_sweep(
         )
         manifest = json.loads(vectorize_run.manifest_path.read_text(encoding="utf-8"))
         metrics = dict(manifest.get("metrics", {}))
+        diagnostics = list(manifest.get("diagnostics", []))
         run_results.append(
             {
                 "id": run_id,
@@ -114,7 +116,8 @@ def run_sweep(
                 "anchor_count": manifest["anchor_count"],
                 "layer_count": len(manifest["layers"]),
                 "group_count": len(manifest["groups"]),
-                "diagnostic_count": len(manifest["diagnostics"]),
+                "diagnostic_count": len(diagnostics),
+                "diagnostic_stage_counts": diagnostic_stage_counts(diagnostics),
                 "editability_score": metrics.get("editability_score"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
                 "raster_l1_error": metrics.get("raster_l1_error"),
@@ -168,8 +171,11 @@ def render_sweep_markdown(summary: dict[str, Any]) -> str:
         "",
         "## Ranked Runs",
         "",
-        "| Rank | Run | Editability | Raster L1 | Edge Error | Anchors | Diagnostics |",
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: |",
+        (
+            "| Rank | Run | Editability | Raster L1 | Edge Error | Anchors | "
+            "Diagnostics | Diagnostic Stages |"
+        ),
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for rank, run in enumerate(ranked, start=1):
         lines.append(
@@ -179,7 +185,8 @@ def render_sweep_markdown(summary: dict[str, Any]) -> str:
             f"{_fmt(run.get('raster_l1_error'))} | "
             f"{_fmt(run.get('raster_edge_error'))} | "
             f"{run.get('anchor_count', 'n/a')} | "
-            f"{run.get('diagnostic_count', 'n/a')} |"
+            f"{run.get('diagnostic_count', 'n/a')} | "
+            f"{_stage_summary(run.get('diagnostic_stage_counts', {}))} |"
         )
 
     lines.extend(["", "## Run Directories", ""])
@@ -203,6 +210,15 @@ def _fmt(value: object) -> str:
     if isinstance(value, (int, float)):
         return f"{value:.6g}"
     return "n/a"
+
+
+def _stage_summary(stage_counts: object) -> str:
+    if not isinstance(stage_counts, dict) or not stage_counts:
+        return "none"
+    return ", ".join(
+        f"{stage}: {count}"
+        for stage, count in sorted(stage_counts.items())
+    )
 
 
 def _vectorize_config(config: dict[str, Any]) -> dict[str, Any]:

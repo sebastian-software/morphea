@@ -49,6 +49,7 @@ class SweepTests(unittest.TestCase):
             self.assertIn("raster_l1_error", summary["runs"][0])
             self.assertIn("raster_edge_error", summary["runs"][0])
             self.assertIn("semantic_rank", summary["runs"][0])
+            self.assertIn("diagnostic_stage_counts", summary["runs"][0])
             self.assertEqual(len(summary["ranking"]), 2)
             self.assertEqual(summary["ranking"][0]["rank"], 1)
             self.assertIn(
@@ -73,6 +74,44 @@ class SweepTests(unittest.TestCase):
             text = markdown.read_text(encoding="utf-8")
             self.assertIn("# Curve Sweep Summary", text)
             self.assertIn("| Rank | Run | Editability |", text)
+            self.assertIn("Diagnostic Stages", text)
+
+    def test_run_sweep_summarizes_diagnostic_stages(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_input_image(root)
+            config = root / "sweep.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "input": str(image_path),
+                        "runs": [
+                            {
+                                "id": "deferred",
+                                "config": {
+                                    "min_area": 8,
+                                    "max_component_area": 4,
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output_dir = root / "runs"
+            markdown = root / "summary.md"
+
+            summary = run_sweep(config, output_dir=output_dir, markdown=markdown)
+
+            self.assertEqual(
+                summary["runs"][0]["diagnostic_stage_counts"]["segmentation"],
+                4,
+            )
+            self.assertIn(
+                "segmentation: 4",
+                markdown.read_text(encoding="utf-8"),
+            )
 
     def test_run_sweep_passes_cutout_export_to_output_svg(self):
         with tempfile.TemporaryDirectory() as temp_dir:

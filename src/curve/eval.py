@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from curve.diagnostics import diagnostic_stage_counts
+
 
 def evaluate_runs(run_root: str | Path) -> dict[str, object]:
     root = Path(run_root)
@@ -23,6 +25,7 @@ def evaluate_runs(run_root: str | Path) -> dict[str, object]:
                 "layer_count": len(layers),
                 "group_count": len(groups),
                 "diagnostic_count": len(diagnostics),
+                "diagnostic_stage_counts": diagnostic_stage_counts(diagnostics),
                 "editability_score": metrics.get("editability_score"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
                 "raster_l1_error": metrics.get("raster_l1_error"),
@@ -75,6 +78,13 @@ def render_eval_markdown(summary: dict[str, object]) -> str:
         lines.append(f"- Layers: {run.get('layer_count', 0)}")
         lines.append(f"- Groups: {run['group_count']}")
         lines.append(f"- Diagnostics: {run['diagnostic_count']}")
+        stage_counts = run.get("diagnostic_stage_counts", {})
+        if stage_counts:
+            stage_summary = ", ".join(
+                f"{stage}: {count}"
+                for stage, count in sorted(stage_counts.items())
+            )
+            lines.append(f"- Diagnostic stages: {stage_summary}")
         lines.append(f"- Editability score: {run.get('editability_score', 'n/a')}")
         lines.append(
             f"- Fragmentation penalty: {run.get('fragmentation_penalty', 'n/a')}"
