@@ -471,8 +471,10 @@ Top-level fields:
 
 Each item records the shared `id`, `changed_metric_count`, and numeric
 `metric_deltas`. Deltas use flattened metric paths, for example
-`metrics.editability_score` or `anchor_kind_counts.quad`. Boolean fields are
-not treated as numeric metrics.
+`metrics.editability_score`, `anchor_kind_counts.quad`, or
+`expectations.simple-shape-ratio.actual_value`. List items with `id` fields use
+that id as the flattened path segment. Boolean fields are not treated as
+numeric metrics.
 
 `curve compare-snapshots --markdown comparison.md` writes a scan-friendly table
 for reviewing differences between saved reports from different commits or
