@@ -535,11 +535,14 @@ Top-level fields:
 - `ranking_evaluation`: heuristic-only versus classifier-prior candidate
   ranking comparison for validation/test splits
 
-`curve train-mlx` writes `backend`, `backend_available`, `status`,
-`training_config`, `fallback_model_type`, and `fallback_centroids`. The fallback
-centroids keep the artifact usable as a deterministic `--classifier-model`
-prior when MLX is not installed or while Transformer weight training is still
-being expanded.
+`curve train-mlx` writes `backend`, `backend_available`, `status`, `runtime`,
+`reason`, `training_implementation`, `training_config`, `fallback_model_type`,
+and `fallback_centroids`. Runtime status distinguishes `not_installed` from an
+available MLX package; the current available-package path is marked
+`training_hook_pending` and stores `metadata_hook` training details until real
+Transformer optimization replaces the hook. The fallback centroids keep the
+artifact usable as a deterministic `--classifier-model` prior when MLX is not
+installed or while Transformer weight training is still being expanded.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. Its centroid
