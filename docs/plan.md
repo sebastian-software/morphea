@@ -7,6 +7,8 @@ primary target is not to clone visually dense tracing tools. It should produce
 fewer, more meaningful, directly editable SVG shapes.
 
 For the expanded milestone roadmap, see [milestones.md](milestones.md).
+Key architecture decisions live in [adr](adr/), including primitive-first
+fitting and the reviewed pseudo-label self-learning loop.
 
 The first implementation priority is simple geometry. Circles, smooth lines,
 strokes, arcs, rectangles, perspective quads, trapezoids, parallelograms, and
@@ -27,6 +29,8 @@ jittery, or uneven, the whole result feels wrong.
 6. Export plain SVG primitives and a canonical scene JSON.
 7. Write every run to a timestamped run directory with config, intermediates,
    metrics, and a visual report.
+8. Use reviewed pseudo-labels from Curve's own high-confidence outputs for
+   self-learning; external vectorizer SVGs are comparison material, not labels.
 
 ## Primitive Anchor Detection
 
