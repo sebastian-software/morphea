@@ -493,6 +493,12 @@ class SelfLearningTests(unittest.TestCase):
                 result["baseline"]["train_examples"],
             )
             self.assertIn("ranking_evaluation", result["delta"])
+            self.assertIn(
+                result["summary"]["status"],
+                {"improved", "regressed", "mixed", "unchanged"},
+            )
+            self.assertEqual(result["summary"]["train_examples_delta"], 1)
+            self.assertGreater(result["summary"]["metric_count"], 0)
 
     def test_compare_training_cli_writes_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -530,6 +536,8 @@ class SelfLearningTests(unittest.TestCase):
 
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["delta"]["train_examples"], 1)
+            self.assertEqual(result["summary"]["train_examples_delta"], 1)
+            self.assertIn("best_accuracy_delta", result["summary"])
 
     def test_compare_training_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -170,6 +170,7 @@ def compare_retraining(
         train_examples=augmented_train,
         validation_dataset=validation_source,
     )
+    delta = _training_comparison_delta(baseline, augmented)
     result = {
         "schema_version": 1,
         "base_dataset": str(base_dataset),
@@ -177,7 +178,8 @@ def compare_retraining(
         "validation_dataset": str(validation_source),
         "baseline": baseline,
         "augmented": augmented,
-        "delta": _training_comparison_delta(baseline, augmented),
+        "delta": delta,
+        "summary": _training_comparison_summary(delta),
     }
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -531,6 +533,50 @@ def _training_comparison_delta(
             for split in ("val", "test")
         },
     }
+
+
+def _training_comparison_summary(delta: dict[str, object]) -> dict[str, object]:
+    metric_deltas = _comparison_metric_deltas(delta)
+    if not metric_deltas:
+        status = "insufficient_data"
+        best_delta = None
+        worst_delta = None
+    else:
+        best_delta = max(metric_deltas)
+        worst_delta = min(metric_deltas)
+        if best_delta > 0 and worst_delta >= 0:
+            status = "improved"
+        elif best_delta <= 0 and worst_delta < 0:
+            status = "regressed"
+        elif best_delta > 0 and worst_delta < 0:
+            status = "mixed"
+        else:
+            status = "unchanged"
+    return {
+        "status": status,
+        "metric_count": len(metric_deltas),
+        "best_accuracy_delta": best_delta,
+        "worst_accuracy_delta": worst_delta,
+        "train_examples_delta": delta.get("train_examples"),
+    }
+
+
+def _comparison_metric_deltas(delta: dict[str, object]) -> list[float]:
+    values: list[float] = []
+    evaluation = delta.get("evaluation", {})
+    if isinstance(evaluation, dict):
+        for value in evaluation.values():
+            if isinstance(value, (int, float)):
+                values.append(float(value))
+    ranking = delta.get("ranking_evaluation", {})
+    if isinstance(ranking, dict):
+        for split_data in ranking.values():
+            if not isinstance(split_data, dict):
+                continue
+            for value in split_data.values():
+                if isinstance(value, (int, float)):
+                    values.append(float(value))
+    return values
 
 
 def _split_metric(
