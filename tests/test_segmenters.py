@@ -344,6 +344,31 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(proposals[1].bounds, (20, 10, 22, 11))
             self.assertEqual(proposals[1].area, 4)
 
+    def test_mlx_sam_json_adapter_honors_timeout(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam-proposals.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "proposals": [
+                            {
+                                "bounds": [1, 1, 6, 6],
+                                "confidence": 0.95,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            segmenter = MlxSamSegmenter(
+                model_path=str(model_path),
+                timeout_seconds=0.0,
+            )
+
+            proposals = segmenter.propose("input.png")
+
+            self.assertEqual(proposals, ())
+
     def test_mlx_sam_segmenter_reports_runtime_config_in_error(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):

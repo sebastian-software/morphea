@@ -6,6 +6,7 @@ import importlib.util
 import json
 from dataclasses import dataclass, replace
 from pathlib import Path
+from time import perf_counter
 from typing import Protocol
 
 from curve.anchors import choose_best_anchor, quality_metric_error
@@ -420,7 +421,13 @@ def _json_adapter_proposals(
         raise ValueError("MLX SAM JSON adapter requires a proposals list")
 
     accepted: list[SegmentProposal] = []
+    started_at = perf_counter()
     for item in proposals:
+        if (
+            segmenter.timeout_seconds is not None
+            and perf_counter() - started_at >= segmenter.timeout_seconds
+        ):
+            break
         if not isinstance(item, dict):
             continue
         confidence = float(item.get("confidence", item.get("score", 1.0)))
