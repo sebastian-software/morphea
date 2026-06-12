@@ -119,6 +119,9 @@ Implemented so far:
 - mask components cache derived centroid, boundary-pixel, and row-span
   geometry so primitive candidate generation does not rescan the same pixels
   for each simple-shape hypothesis.
+- connected-component BFS now fills bounds, centroid, and row-span hints during
+  the scan, including bounded image scans, so downstream primitive detection
+  avoids repeated component passes.
 
 Remaining:
 
