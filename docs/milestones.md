@@ -41,7 +41,7 @@ Acceptance evidence:
 
 ## M1: Real-Image Preprocessing and Runtime Control
 
-Status: in progress.
+Status: implemented for the current real-image runtime baseline.
 
 Purpose: make real generated images tractable before adding heavier ML.
 
@@ -73,6 +73,9 @@ Acceptance criteria:
 - Manifest reports major palette groups and skipped/deferred regions clearly.
 - Large background/transparent areas do not become vector candidates.
 - Tests include at least one antialiased and one transparent-background fixture.
+- `curve curated-check docs/real-images/suite.json --run` completes the
+  current curated real-image suite with no failed expectations under an
+  external timeout.
 
 Implemented so far:
 
@@ -144,8 +147,9 @@ Implemented so far:
 
 Remaining:
 
-- continue profile-guided hot-loop work from `profile-curated` reports as
-  larger curated image families expose new bottlenecks.
+- none for the current real-image runtime baseline; continue profile-guided
+  hot-loop work from `profile-curated` reports as larger curated image
+  families expose new bottlenecks.
 
 ## M2: Primitive Anchor Detection V2
 
