@@ -508,6 +508,28 @@ class PrimitiveQualityTests(unittest.TestCase):
         self.assertTrue(refinement["ok"])
         self.assertTrue(refinement["structure_audit"]["structure_preserved"])
 
+    def test_refinement_gate_reports_curve_parameter_deltas(self):
+        report = check_primitive_quality(
+            cases=("arc_up", "curve_s", "organic_blob"),
+            refine=True,
+        )
+
+        self.assertTrue(report["ok"])
+        for case in report["cases"]:
+            refinement = case["refinement"]
+            self.assertTrue(refinement["ok"])
+            self.assertTrue(refinement["structure_audit"]["structure_preserved"])
+            deltas = refinement["parameter_deltas"]
+            self.assertEqual(len(deltas), 1)
+            self.assertFalse(deltas[0]["node_count_changed"])
+            self.assertFalse(deltas[0]["cap_or_join_changed"])
+        arc_delta = next(
+            case["refinement"]["parameter_deltas"][0]
+            for case in report["cases"]
+            if case["id"] == "arc_up"
+        )
+        self.assertIn("arc_delta", arc_delta)
+
     def test_primitive_quality_harness_compares_cutout_exports(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             report = check_primitive_quality(

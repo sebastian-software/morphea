@@ -387,7 +387,7 @@ def _refinement_structure_audit(
 def _anchor_geometry_payload(anchor: dict[str, object]) -> dict[str, object]:
     return {
         key: anchor.get(key)
-        for key in ("circle", "stroke", "quad")
+        for key in ("circle", "stroke", "quad", "arc", "ellipse", "path")
         if key in anchor
     }
 
@@ -494,7 +494,7 @@ def _optimize_local_geometry(
                         improved = True
                     continue
 
-                if kind in {"stroke_polyline", "stroke_path", "arc"}:
+                if kind in {"stroke_polyline", "stroke_path"}:
                     base_centerline = _stroke_centerline(anchor)
                     if base_centerline is None:
                         continue
@@ -731,7 +731,7 @@ def _optimize_differentiable_geometry(
                     optimized_kinds.add(kind)
                     improved = True
                     continue
-                if kind in {"stroke_polyline", "stroke_path", "arc"}:
+                if kind in {"stroke_polyline", "stroke_path"}:
                     base_centerline = _stroke_centerline(anchor)
                     if base_centerline is None:
                         continue
@@ -1126,7 +1126,7 @@ def _soft_raster_rgb(
             if corners is None:
                 continue
             alpha = _soft_quad_alpha(corners, px, py)
-        elif kind in {"stroke_polyline", "stroke_path", "arc"}:
+        elif kind in {"stroke_polyline", "stroke_path"}:
             centerline = _stroke_centerline(anchor)
             if centerline is None:
                 continue

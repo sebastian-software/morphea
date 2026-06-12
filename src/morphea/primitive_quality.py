@@ -3138,7 +3138,23 @@ def _run_refinement_gate(
     refined_metrics = raster_fidelity_metrics(source=source, rendered=refined_preview)
     initial_metrics = manifest.get("metrics", {})
     structure_audit = refined_manifest.get("refinement", {}).get("structure_audit", {})
+    parameter_deltas = _refinement_parameter_deltas(manifest, refined_manifest)
     failure_details: list[dict[str, str]] = []
+    for delta in parameter_deltas:
+        if delta.get("node_count_changed"):
+            failure_details.append(
+                _failure(
+                    "refinement_drift",
+                    f"refinement changed control point count for {delta['kind']}",
+                )
+            )
+        if delta.get("cap_or_join_changed"):
+            failure_details.append(
+                _failure(
+                    "refinement_drift",
+                    f"refinement changed cap/join style for {delta['kind']}",
+                )
+            )
     if not structure_audit.get("structure_preserved", False):
         failure_details.append(_failure("refinement_drift", "refinement changed structure"))
     if not structure_audit.get("editability_preserved", False):
@@ -3157,10 +3173,89 @@ def _run_refinement_gate(
             "structure_audit": structure_audit,
             "initial_metrics": initial_metrics,
             "refined_metrics": refined_metrics,
+            "parameter_deltas": parameter_deltas,
             "ok": not failure_details,
         },
         "failure_details": failure_details,
     }
+
+
+def _refinement_parameter_deltas(
+    manifest: dict[str, Any],
+    refined_manifest: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Per-anchor endpoint, control, radius, and width deltas after refining."""
+
+    deltas: list[dict[str, Any]] = []
+    before_anchors = list(manifest.get("anchors", []))
+    after_anchors = list(refined_manifest.get("anchors", []))
+    for before, after in zip(before_anchors, after_anchors):
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            continue
+        entry: dict[str, Any] = {"kind": after.get("kind")}
+        before_stroke = before.get("stroke") or {}
+        after_stroke = after.get("stroke") or {}
+        before_line = [
+            (float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+            for p in before_stroke.get("centerline", [])
+        ]
+        after_line = [
+            (float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+            for p in after_stroke.get("centerline", [])
+        ]
+        entry["node_count_changed"] = len(before_line) != len(after_line)
+        if before_line and after_line and len(before_line) == len(after_line):
+            point_deltas = [
+                _point_distance(a, b)
+                for a, b in zip(before_line, after_line)
+            ]
+            entry["endpoint_delta"] = round(
+                max(point_deltas[0], point_deltas[-1]),
+                6,
+            )
+            entry["control_delta_max"] = round(max(point_deltas), 6)
+        before_widths = [float(w) for w in before_stroke.get("width_samples", [])]
+        after_widths = [float(w) for w in after_stroke.get("width_samples", [])]
+        if before_widths and after_widths:
+            entry["width_delta"] = round(
+                abs(mean(after_widths) - mean(before_widths)),
+                6,
+            )
+        entry["cap_or_join_changed"] = bool(
+            before_stroke
+            and after_stroke
+            and (
+                before_stroke.get("cap_style") != after_stroke.get("cap_style")
+                or before_stroke.get("join_style") != after_stroke.get("join_style")
+            )
+        )
+        for key, fields in (
+            ("circle", ("r",)),
+            ("arc", ("r", "theta_start", "theta_end")),
+            ("ellipse", ("rx", "ry")),
+        ):
+            before_geom = before.get(key)
+            after_geom = after.get(key)
+            if isinstance(before_geom, dict) and isinstance(after_geom, dict):
+                entry[f"{key}_delta"] = {
+                    field: round(
+                        abs(
+                            float(after_geom.get(field, 0.0))
+                            - float(before_geom.get(field, 0.0))
+                        ),
+                        6,
+                    )
+                    for field in fields
+                }
+        before_path = before.get("path") or {}
+        after_path = after.get("path") or {}
+        if before_path or after_path:
+            entry["node_count_changed"] = entry["node_count_changed"] or (
+                int(before_path.get("node_count", 0))
+                != int(after_path.get("node_count", 0))
+            )
+        deltas.append(entry)
+    return deltas
 
 
 def _draw_source(spec: PrimitiveSpec) -> Image.Image:
