@@ -95,6 +95,7 @@ from curve.refinement import (
     OPTIONAL_DIFFERENTIABLE_BACKENDS,
     RefinementConfig,
     available_refinement_backends,
+    refinement_backend_status,
     refine_manifest,
 )
 from curve.curated import (
@@ -142,6 +143,7 @@ __all__ = [
     "apply_review_file",
     "anchors_to_svg",
     "available_refinement_backends",
+    "refinement_backend_status",
     "choose_best_anchor",
     "connected_components",
     "create_run_dir",

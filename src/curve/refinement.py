@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 from copy import deepcopy
 from dataclasses import dataclass
@@ -15,6 +16,10 @@ from curve.rendering import raster_fidelity_metrics, render_manifest_image
 
 LOCAL_REFINEMENT_BACKEND = "local_metric"
 OPTIONAL_DIFFERENTIABLE_BACKENDS = ("differentiable", "diffvg")
+OPTIONAL_REFINEMENT_BACKEND_PACKAGES = {
+    "differentiable": ("pydiffvg", "diffvg"),
+    "diffvg": ("pydiffvg", "diffvg"),
+}
 
 
 @dataclass(frozen=True)
@@ -106,6 +111,54 @@ def available_refinement_backends() -> dict[str, object]:
     return {
         "local": [LOCAL_REFINEMENT_BACKEND],
         "optional": list(OPTIONAL_DIFFERENTIABLE_BACKENDS),
+        "details": {
+            backend: refinement_backend_status(backend)
+            for backend in (LOCAL_REFINEMENT_BACKEND, *OPTIONAL_DIFFERENTIABLE_BACKENDS)
+        },
+    }
+
+
+def is_optional_refinement_package_available(backend: str) -> bool:
+    return any(
+        importlib.util.find_spec(package) is not None
+        for package in OPTIONAL_REFINEMENT_BACKEND_PACKAGES.get(backend, ())
+    )
+
+
+def refinement_backend_status(backend: str) -> dict[str, object]:
+    if backend == LOCAL_REFINEMENT_BACKEND:
+        return {
+            "backend": backend,
+            "backend_available": True,
+            "status": "available",
+            "reason": None,
+            "package_available": True,
+            "implementation": "local_metric",
+        }
+    if backend in OPTIONAL_DIFFERENTIABLE_BACKENDS:
+        package_available = is_optional_refinement_package_available(backend)
+        return {
+            "backend": backend,
+            "backend_available": False,
+            "status": "adapter_pending" if package_available else "not_installed",
+            "reason": (
+                "differentiable renderer adapter is not wired yet"
+                if package_available
+                else "differentiable renderer package is not installed"
+            ),
+            "package_available": package_available,
+            "package_candidates": list(
+                OPTIONAL_REFINEMENT_BACKEND_PACKAGES.get(backend, ())
+            ),
+            "implementation": None,
+        }
+    return {
+        "backend": backend,
+        "backend_available": False,
+        "status": "unsupported",
+        "reason": "unrecognized refinement backend",
+        "package_available": False,
+        "implementation": None,
     }
 
 
@@ -165,8 +218,10 @@ def _anchor_geometry_payload(anchor: dict[str, object]) -> dict[str, object]:
 
 
 def _raise_differentiable_backend_unavailable(backend: str) -> None:
+    status = refinement_backend_status(backend)
     msg = (
         f"refinement backend {backend!r} is not installed/configured yet; "
+        f"status={status['status']}; "
         "install and wire a differentiable renderer before using this backend"
     )
     raise RuntimeError(msg)

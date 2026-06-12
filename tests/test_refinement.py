@@ -4,6 +4,7 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
@@ -11,6 +12,7 @@ from curve.cli import main
 from curve.refinement import (
     RefinementConfig,
     available_refinement_backends,
+    refinement_backend_status,
     refine_manifest,
 )
 
@@ -261,18 +263,53 @@ class RefinementTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             manifest = _write_manifest(Path(temp_dir))
 
-            with self.assertRaisesRegex(RuntimeError, "not installed/configured"):
-                refine_manifest(
-                    manifest=manifest,
-                    output=Path(temp_dir) / "refined.json",
-                    config=RefinementConfig(backend="differentiable"),
-                )
+            with patch(
+                "curve.refinement.is_optional_refinement_package_available",
+                return_value=False,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "status=not_installed"):
+                    refine_manifest(
+                        manifest=manifest,
+                        output=Path(temp_dir) / "refined.json",
+                        config=RefinementConfig(backend="differentiable"),
+                    )
+
+    def test_optional_differentiable_backend_stays_pending_when_package_exists(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = _write_manifest(Path(temp_dir))
+
+            with patch(
+                "curve.refinement.is_optional_refinement_package_available",
+                return_value=True,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "status=adapter_pending"):
+                    refine_manifest(
+                        manifest=manifest,
+                        output=Path(temp_dir) / "refined.json",
+                        config=RefinementConfig(backend="diffvg"),
+                    )
+
+    def test_refinement_backend_status_reports_local_and_optional_state(self):
+        local = refinement_backend_status("local_metric")
+        with patch(
+            "curve.refinement.is_optional_refinement_package_available",
+            return_value=False,
+        ):
+            optional = refinement_backend_status("diffvg")
+
+        self.assertTrue(local["backend_available"])
+        self.assertEqual(local["status"], "available")
+        self.assertFalse(optional["backend_available"])
+        self.assertEqual(optional["status"], "not_installed")
+        self.assertIn("pydiffvg", optional["package_candidates"])
 
     def test_available_refinement_backends_lists_optional_diffvg(self):
         backends = available_refinement_backends()
 
         self.assertIn("local_metric", backends["local"])
         self.assertIn("diffvg", backends["optional"])
+        self.assertIn("details", backends)
+        self.assertEqual(backends["details"]["local_metric"]["status"], "available")
 
 
 def _write_manifest(root: Path) -> Path:
