@@ -396,6 +396,7 @@ def scene_groups_to_manifest(
                 },
             }
         )
+    groups.extend(_auto_parallel_stroke_groups(anchors))
 
     color_groups: dict[str, list[int]] = {}
     for index, anchor in enumerate(anchors):
@@ -452,6 +453,60 @@ def scene_groups_to_manifest(
         )
 
     return groups
+
+
+def _auto_parallel_stroke_groups(
+    anchors: tuple[AnchorCandidate, ...],
+) -> list[dict[str, object]]:
+    buckets: dict[tuple[str, str], list[int]] = {}
+    for index, anchor in enumerate(anchors):
+        if anchor.stroke is None or anchor.stroke.parallel_group_id is not None:
+            continue
+        if anchor.kind != AnchorKind.STROKE_POLYLINE:
+            continue
+        if anchor.stroke.is_cutout or len(anchor.stroke.centerline) < 2:
+            continue
+        orientation = _stroke_orientation_bucket(anchor.stroke.centerline)
+        if orientation is None:
+            continue
+        buckets.setdefault((anchor.color or "#000000", orientation), []).append(index)
+
+    groups: list[dict[str, object]] = []
+    for (color, orientation), indexes in sorted(buckets.items()):
+        if len(indexes) < 2:
+            continue
+        centerlines = [
+            anchors[index].stroke.centerline
+            for index in indexes
+            if anchors[index].stroke is not None
+        ]
+        groups.append(
+            {
+                "kind": "parallel_stroke_group",
+                "id": f"auto-{color.removeprefix('#')}-{orientation}",
+                "color": color,
+                "orientation": orientation,
+                "anchor_indexes": indexes,
+                "metrics": {
+                    "parallel_spacing_error": parallel_spacing_error(centerlines)
+                },
+            }
+        )
+    return groups
+
+
+def _stroke_orientation_bucket(points: tuple[Point, ...]) -> str | None:
+    start = points[0]
+    end = points[-1]
+    dx = end.x - start.x
+    dy = end.y - start.y
+    if abs(dx) < 1e-6 and abs(dy) < 1e-6:
+        return None
+    if abs(dx) >= abs(dy) * 2:
+        return "horizontal"
+    if abs(dy) >= abs(dx) * 2:
+        return "vertical"
+    return "diagonal_pos" if dx * dy >= 0 else "diagonal_neg"
 
 
 def _same_color_merge_plan(

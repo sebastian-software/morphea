@@ -74,6 +74,22 @@ class PrimitiveQualityTests(unittest.TestCase):
             {"square": "rect", "circle": "circle"},
         )
 
+    def test_primitive_quality_harness_matches_expected_groups(self):
+        report = check_primitive_quality(cases=("group_parallel_strokes_horizontal",))
+
+        self.assertTrue(report["ok"])
+        case = report["cases"][0]
+        self.assertEqual(
+            case["group_matches"],
+            [
+                {
+                    "expected_kind": "parallel_stroke_group",
+                    "group_index": 0,
+                    "anchor_count": 2,
+                }
+            ],
+        )
+
     def test_primitive_specs_have_ten_variants_per_family(self):
         counts: dict[str, int] = {}
         for spec in primitive_specs():
@@ -108,6 +124,9 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "adjacent_small_gap_rects": 3,
                 "cutout_diagonal_gap": 3,
                 "cutout_horizontal_gap": 3,
+                "group_dot_row": 3,
+                "group_parallel_strokes": 3,
+                "group_quad_grid": 3,
             },
         )
 

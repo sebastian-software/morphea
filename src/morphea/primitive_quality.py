@@ -53,6 +53,7 @@ class PrimitiveSpec:
     color: str = "#003366"
     color_tolerance: float = 0.0
     expected_primitives: tuple[ExpectedPrimitive, ...] = ()
+    expected_groups: tuple[dict[str, Any], ...] = ()
     min_area: int = 4
     coordinate_tolerance: float = 1.5
     max_raster_l1_error: float = 0.02
@@ -585,6 +586,119 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ),
         )
     )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "group_parallel_strokes",
+            variant,
+            primitives,
+            ({"kind": "parallel_stroke_group", "anchor_count": len(primitives)},),
+        )
+        for case_id, variant, primitives in (
+            (
+                "group_parallel_strokes_horizontal",
+                "horizontal",
+                (
+                    _stroke_primitive("top", (8, 18, 56, 18), 3),
+                    _stroke_primitive("bottom", (8, 44, 56, 44), 3),
+                ),
+            ),
+            (
+                "group_parallel_strokes_vertical",
+                "vertical",
+                (
+                    _stroke_primitive("left", (18, 8, 18, 56), 3),
+                    _stroke_primitive("right", (46, 8, 46, 56), 3),
+                ),
+            ),
+            (
+                "group_parallel_strokes_diagonal",
+                "diagonal",
+                (
+                    _stroke_primitive("a", (10, 50, 34, 26), 3, tolerance=2.75),
+                    _stroke_primitive("b", (30, 56, 54, 32), 3, tolerance=2.75),
+                ),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "group_dot_row",
+            variant,
+            primitives,
+            ({"kind": "same_color_fragment_group", "anchor_count": len(primitives), "color": BLUE},),
+        )
+        for case_id, variant, primitives in (
+            (
+                "group_dot_row_three",
+                "three",
+                tuple(_circle_primitive(f"dot_{index}", box) for index, box in enumerate(((8, 28, 16, 36), (28, 28, 36, 36), (48, 28, 56, 36)))),
+            ),
+            (
+                "group_dot_row_four",
+                "four",
+                tuple(_circle_primitive(f"dot_{index}", box) for index, box in enumerate(((6, 28, 14, 36), (22, 28, 30, 36), (38, 28, 46, 36), (54, 28, 62, 36)))),
+            ),
+            (
+                "group_dot_column_three",
+                "column",
+                tuple(_circle_primitive(f"dot_{index}", box) for index, box in enumerate(((28, 6, 36, 14), (28, 28, 36, 36), (28, 50, 36, 58)))),
+            ),
+        )
+    )
+    specs.extend(
+        _composition_spec(
+            case_id,
+            "group_quad_grid",
+            variant,
+            primitives,
+            (
+                {
+                    "kind": "perspective_grid",
+                    "anchor_count": len(primitives),
+                    "row_count": rows,
+                    "column_count": columns,
+                },
+            ),
+        )
+        for case_id, variant, rows, columns, primitives in (
+            (
+                "group_quad_grid_row",
+                "row",
+                1,
+                3,
+                (
+                    _quad_primitive("tile_0", ((4, 20), (18, 20), (20, 38), (2, 38))),
+                    _quad_primitive("tile_1", ((24, 20), (38, 20), (40, 38), (22, 38))),
+                    _quad_primitive("tile_2", ((44, 20), (58, 20), (60, 38), (42, 38))),
+                ),
+            ),
+            (
+                "group_quad_grid_two_by_two",
+                "two_by_two",
+                2,
+                2,
+                (
+                    _quad_primitive("tile_0", ((6, 8), (24, 8), (26, 26), (4, 26))),
+                    _quad_primitive("tile_1", ((38, 8), (56, 8), (60, 26), (36, 26))),
+                    _quad_primitive("tile_2", ((4, 36), (26, 36), (28, 56), (2, 56))),
+                    _quad_primitive("tile_3", ((36, 36), (60, 36), (62, 56), (34, 56))),
+                ),
+            ),
+            (
+                "group_quad_grid_column",
+                "column",
+                3,
+                1,
+                (
+                    _quad_primitive("tile_0", ((22, 4), (42, 4), (40, 20), (24, 20))),
+                    _quad_primitive("tile_1", ((20, 22), (44, 22), (42, 38), (22, 38))),
+                    _quad_primitive("tile_2", ((18, 40), (46, 40), (44, 58), (20, 58))),
+                ),
+            ),
+        )
+    )
     return tuple(specs)
 
 
@@ -980,6 +1094,7 @@ def _composition_spec(
     family: str,
     variant: str,
     primitives: tuple[ExpectedPrimitive, ...],
+    expected_groups: tuple[dict[str, Any], ...] = (),
 ) -> PrimitiveSpec:
     first = primitives[0]
     max_l1 = 0.08 if "ring" in family else 0.025
@@ -993,6 +1108,7 @@ def _composition_spec(
         geometry=first.geometry,
         color=first.color,
         expected_primitives=primitives,
+        expected_groups=expected_groups,
         draw=lambda draw, primitives=primitives: _draw_expected_primitives(draw, primitives),
         max_anchor_count=len(primitives),
         max_raster_l1_error=max_l1,
@@ -1095,6 +1211,23 @@ def _ring_primitive(
     )
 
 
+def _quad_primitive(
+    primitive_id: str,
+    corners: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]],
+    *,
+    color: str = BLUE,
+) -> ExpectedPrimitive:
+    return ExpectedPrimitive(
+        id=primitive_id,
+        expected_kinds=("quad",),
+        geometry_type="quad",
+        geometry={"corners": corners, "draw": ("quad", corners)},
+        color=color,
+        coordinate_tolerance=1.75,
+        min_bbox_iou=0.86,
+    )
+
+
 def _cutout_stroke_primitive(
     primitive_id: str,
     line: tuple[int, int, int, int],
@@ -1155,6 +1288,8 @@ def _draw_expected_primitives(
         elif kind == "ring":
             _, box, width = draw_instruction
             draw.ellipse(box, outline=primitive.color, width=width)
+        elif kind == "quad":
+            draw.polygon(draw_instruction[1], fill=primitive.color)
 
 
 def check_primitive_quality(
@@ -1429,6 +1564,8 @@ def _evaluate_case(
 
     match_result = _match_expected_primitives(spec, anchors)
     failure_details.extend(match_result["failure_details"])
+    group_result = _match_expected_groups(spec, manifest.get("groups", []))
+    failure_details.extend(group_result["failure_details"])
     anchor = match_result["primary_anchor"]
     bbox_iou = match_result["primary_bbox_iou"]
     return _case_result(
@@ -1441,6 +1578,7 @@ def _evaluate_case(
         matches=match_result["matches"],
         unmatched_expected=match_result["unmatched_expected"],
         unexpected_actual=match_result["unexpected_actual"],
+        group_matches=group_result["matches"],
     )
 
 
@@ -1455,6 +1593,7 @@ def _case_result(
     matches: list[dict[str, Any]],
     unmatched_expected: list[dict[str, Any]],
     unexpected_actual: list[dict[str, Any]],
+    group_matches: list[dict[str, Any]],
 ) -> dict[str, Any]:
     failures = [failure["message"] for failure in failure_details]
     categories = sorted({failure["category"] for failure in failure_details})
@@ -1480,6 +1619,7 @@ def _case_result(
         "matches": matches,
         "unmatched_expected": unmatched_expected,
         "unexpected_actual": unexpected_actual,
+        "group_matches": group_matches,
         "failures": failures,
         "failure_categories": categories,
         "failure_details": failure_details,
@@ -1572,6 +1712,69 @@ def _match_expected_primitives(
         "primary_anchor": primary_anchor,
         "primary_bbox_iou": primary_bbox_iou,
     }
+
+
+def _match_expected_groups(
+    spec: PrimitiveSpec,
+    groups_value: object,
+) -> dict[str, Any]:
+    if not spec.expected_groups:
+        return {"matches": [], "failure_details": []}
+    groups = groups_value if isinstance(groups_value, list) else []
+    unused = set(range(len(groups)))
+    matches: list[dict[str, Any]] = []
+    failure_details: list[dict[str, str]] = []
+    for expected in spec.expected_groups:
+        best_index = None
+        best_failures: list[str] | None = None
+        for index in sorted(unused):
+            group = groups[index]
+            if not isinstance(group, dict):
+                continue
+            failures = _group_contract_failures(expected, group)
+            if best_failures is None or len(failures) < len(best_failures):
+                best_index = index
+                best_failures = failures
+        if best_index is None or best_failures is None:
+            failure_details.append(
+                _failure("group_drift", f"expected group {expected.get('kind')} missing")
+            )
+            continue
+        if best_failures:
+            failure_details.extend(
+                _failure("group_drift", failure)
+                for failure in best_failures
+            )
+            continue
+        unused.remove(best_index)
+        group = groups[best_index]
+        matches.append(
+            {
+                "expected_kind": expected.get("kind"),
+                "group_index": best_index,
+                "anchor_count": len(group.get("anchor_indexes", [])),
+            }
+        )
+    return {"matches": matches, "failure_details": failure_details}
+
+
+def _group_contract_failures(
+    expected: dict[str, Any],
+    group: dict[str, Any],
+) -> list[str]:
+    failures: list[str] = []
+    if group.get("kind") != expected.get("kind"):
+        failures.append(f"expected group kind {expected.get('kind')}, got {group.get('kind')}")
+        return failures
+    anchor_count = len(group.get("anchor_indexes", []))
+    if "anchor_count" in expected and anchor_count != int(expected["anchor_count"]):
+        failures.append(f"expected group anchor_count {expected['anchor_count']}, got {anchor_count}")
+    if "min_anchor_count" in expected and anchor_count < int(expected["min_anchor_count"]):
+        failures.append(f"expected group min_anchor_count {expected['min_anchor_count']}, got {anchor_count}")
+    for key in ("row_count", "column_count", "color"):
+        if key in expected and group.get(key) != expected[key]:
+            failures.append(f"expected group {key} {expected[key]}, got {group.get(key)}")
+    return failures
 
 
 def _anchor_contract_failures(

@@ -341,6 +341,8 @@ Remaining:
 
 ### PQ7: Repeated Structures and Groups
 
+Status: implemented for repeated primitive group contracts.
+
 Purpose: validate groups made from primitives, not just individual shapes.
 
 Fixture families:
@@ -366,6 +368,15 @@ Exit criteria:
 
 - Repeated structures are visible in `groups`, not only as unrelated anchors.
 - Grouping errors fail even when individual anchors look acceptable.
+
+Current evidence:
+
+- primitive-check can assert expected manifest groups.
+- parallel stroke groups, dot rows/columns as same-color fragment groups, and
+  quad rows/grids as `perspective_grid` groups each have 3 deterministic
+  variants.
+- reports include `group_matches`, and group failures use the stable
+  `group_drift` category.
 
 ### PQ8: Structure-Preserving Refinement Gates
 

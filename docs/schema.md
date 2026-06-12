@@ -241,10 +241,12 @@ Each case records:
 - `matches`: order-independent expected-to-actual primitive matches
 - `unmatched_expected`: expected primitives that could not be matched
 - `unexpected_actual`: extra actual primitives left after matching
+- `group_matches`: expected manifest group contracts that matched
 - `failures`: contract failures such as wrong kind, fallback path, loose
   coordinates, out-of-canvas bounds, or visual round-trip regression
 - `failure_categories`: stable categories such as `wrong_kind`, `wrong_count`,
-  `geometry_drift`, `visual_drift`, `fallback_path`, and `bounds_escape`
+  `geometry_drift`, `visual_drift`, `fallback_path`, `bounds_escape`, and
+  `group_drift`
 - `failure_details`: category/message pairs for machine-readable diagnostics
 - `artifacts`: present when `--output-dir` is used; includes input PNG,
   output SVG, debug SVG, manifest JSON, and rendered preview PNG
