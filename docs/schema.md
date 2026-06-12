@@ -529,6 +529,7 @@ Top-level `refinement` fields:
 - `raster_l1_weight`
 - `raster_edge_weight`
 - `structure_preserving`
+- `structure_audit`
 - `optimizer`
 
 The local metric optimizer uses a weighted objective of raster L1 and raster
@@ -540,3 +541,6 @@ not only average pixel color.
 changed during the local pass. The current local backend can adjust circle
 radii, quad-like corner parameters, and stroke/arc centerline or width samples
 while preserving the original primitive kind.
+
+`structure_audit` records source/refined anchor counts, preserved-kind count,
+changed-geometry count, `structure_preserved`, and `editability_preserved`.

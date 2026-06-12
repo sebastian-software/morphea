@@ -560,6 +560,8 @@ Implemented so far:
 - `local_metric` backend
 - structure-preserving manifest output
 - refinement metadata and per-anchor metrics
+- top-level refinement `structure_audit` records source/refined anchor counts,
+  preserved primitive kinds, geometry-change count, and editability preservation.
 - optional `--source-image` refinement input
 - first structure-preserving local optimizer for circle radius adjustment using
   rendered raster L1 error
