@@ -217,6 +217,8 @@ Supported fields match current runtime knobs:
 - `quad_max_fill_error`
 - `rect_max_fill_error`
 - `rounded_rect_max_fill_error`
+- `cutout_export`: export-only option, either `overlay_stroke` or
+  `negative_mask`
 
 CLI arguments override values loaded from the config file.
 

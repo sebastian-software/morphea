@@ -210,6 +210,8 @@ Implemented so far:
 - `curve vectorize --cutout-export negative_mask` writes editable cut-out
   strokes into an SVG mask instead of painting visible white overlay strokes;
   run directories apply the same export option to `output.svg`.
+- vectorize config files can set `cutout_export`, with an explicit CLI flag
+  taking precedence.
 - scene metrics expose reserved simple-shape count, reserved bounds area, and
   reserved area ratio so later fitting can be audited against primitive
   reservations.
