@@ -380,6 +380,8 @@ Current evidence:
 
 ### PQ8: Structure-Preserving Refinement Gates
 
+Status: implemented as an optional primitive-check refinement gate.
+
 Purpose: improve coordinates and raster fidelity without breaking editability.
 
 Fixture families:
@@ -401,6 +403,14 @@ Exit criteria:
 
 - Refinement improves or preserves visual metrics.
 - No accepted refinement turns simple primitives into generic paths.
+
+Current evidence:
+
+- `primitive-check --refine --refinement-iterations N` runs the local
+  structure-preserving refinement path for selected cases.
+- the gate fails if structure/editability are not preserved or if L1/edge
+  metrics regress beyond the allowed epsilon.
+- focused tests cover a refined filled-circle primitive case.
 
 ### PQ9: Real-Image Promotion
 

@@ -230,7 +230,15 @@ REFINEMENT_GATE_CONFIG_KEYS = {
 }
 STATUS_CONFIG_KEYS = {"output", "markdown", "mlx_sam_model_path"}
 REPORT_CONFIG_KEYS = {"manifest", "output", "config", "format"}
-PRIMITIVE_CHECK_CONFIG_KEYS = {"output", "output_dir", "markdown", "case", "filter"}
+PRIMITIVE_CHECK_CONFIG_KEYS = {
+    "output",
+    "output_dir",
+    "markdown",
+    "case",
+    "filter",
+    "refine",
+    "refinement_iterations",
+}
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
     "output": None,
@@ -787,6 +795,13 @@ def main(argv: list[str] | None = None) -> None:
         "--filter",
         help="Run cases whose id or family matches a shell-style pattern.",
     )
+    primitive_check.add_argument(
+        "--refine",
+        action="store_true",
+        default=None,
+        help="Run the local structure-preserving refinement gate for selected cases.",
+    )
+    primitive_check.add_argument("--refinement-iterations", type=int, default=None)
     primitive_check.add_argument("--config", type=Path)
 
     curated_check = subcommands.add_parser(
@@ -1319,6 +1334,10 @@ def main(argv: list[str] | None = None) -> None:
             markdown=primitive_config.get("markdown"),
             cases=primitive_config.get("case", ()),
             filter_pattern=primitive_config.get("filter"),
+            refine=bool(primitive_config.get("refine", False)),
+            refinement_iterations=int(
+                primitive_config.get("refinement_iterations", 1)
+            ),
         )
         print(
             "checked "
@@ -2077,6 +2096,10 @@ def _resolved_primitive_check_config(args: argparse.Namespace) -> dict[str, obje
         config["case"] = args.case
     if args.filter is not None:
         config["filter"] = args.filter
+    if args.refine is not None:
+        config["refine"] = args.refine
+    if args.refinement_iterations is not None:
+        config["refinement_iterations"] = args.refinement_iterations
     _require_config_paths(config, ("output",), "primitive-check")
     for key in ("output", "output_dir", "markdown"):
         if config.get(key) is not None:
@@ -2085,6 +2108,8 @@ def _resolved_primitive_check_config(args: argparse.Namespace) -> dict[str, obje
         config["case"] = [config["case"]]
     elif config.get("case") is None:
         config["case"] = []
+    if config.get("refinement_iterations") is None:
+        config["refinement_iterations"] = 1
     return config
 
 

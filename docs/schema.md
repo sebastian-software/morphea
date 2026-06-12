@@ -242,6 +242,8 @@ Each case records:
 - `unmatched_expected`: expected primitives that could not be matched
 - `unexpected_actual`: extra actual primitives left after matching
 - `group_matches`: expected manifest group contracts that matched
+- `refinement`: present when `primitive-check --refine` is used; records
+  structure audit and before/after raster metrics
 - `failures`: contract failures such as wrong kind, fallback path, loose
   coordinates, out-of-canvas bounds, or visual round-trip regression
 - `failure_categories`: stable categories such as `wrong_kind`, `wrong_count`,
@@ -267,6 +269,10 @@ Supported fields:
 - `markdown`: optional Markdown summary path
 - `case`: optional case or family id, or a list of ids
 - `filter`: optional shell-style pattern matched against case id or family
+- `refine`: optional boolean; run structure-preserving refinement on selected
+  primitive cases
+- `refinement_iterations`: optional local refinement iteration count; defaults
+  to `1`
 
 CLI arguments override values loaded from the config file.
 

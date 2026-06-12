@@ -21,7 +21,15 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertTrue(report["ok"])
             self.assertEqual(report["case_count"], len(primitive_specs()))
             self.assertEqual(report["failed_count"], 0)
-            self.assertEqual(report["selection"], {"cases": [], "filter": None})
+            self.assertEqual(
+                report["selection"],
+                {
+                    "cases": [],
+                    "filter": None,
+                    "refine": False,
+                    "refinement_iterations": 1,
+                },
+            )
             actual_kinds = {
                 case["id"]: case["actual_kind"]
                 for case in report["cases"]
@@ -50,7 +58,15 @@ class PrimitiveQualityTests(unittest.TestCase):
         self.assertTrue(report["ok"])
         self.assertEqual(report["case_count"], 1)
         self.assertEqual(report["selected_case_ids"], ["filled_square"])
-        self.assertEqual(report["selection"], {"cases": ["filled_square"], "filter": None})
+        self.assertEqual(
+            report["selection"],
+            {
+                "cases": ["filled_square"],
+                "filter": None,
+                "refine": False,
+                "refinement_iterations": 1,
+            },
+        )
 
     def test_primitive_quality_harness_filters_by_pattern(self):
         report = check_primitive_quality(filter_pattern="*_stroke_width_1")
@@ -89,6 +105,14 @@ class PrimitiveQualityTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_primitive_quality_harness_can_gate_refinement(self):
+        report = check_primitive_quality(cases=("filled_circle",), refine=True)
+
+        self.assertTrue(report["ok"])
+        refinement = report["cases"][0]["refinement"]
+        self.assertTrue(refinement["ok"])
+        self.assertTrue(refinement["structure_audit"]["structure_preserved"])
 
     def test_primitive_specs_have_ten_variants_per_family(self):
         counts: dict[str, int] = {}

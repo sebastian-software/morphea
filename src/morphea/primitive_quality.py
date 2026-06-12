@@ -14,6 +14,7 @@ from typing import Any, Callable, Iterable
 from PIL import Image, ImageDraw
 
 from morphea.images import scene_from_flat_color_image
+from morphea.refinement import RefinementConfig, refine_manifest
 from morphea.rendering import raster_fidelity_metrics, render_manifest_image
 from morphea.scene import SvgStyle
 
@@ -1297,6 +1298,8 @@ def check_primitive_quality(
     output_dir: str | Path | None = None,
     cases: Iterable[str] = (),
     filter_pattern: str | None = None,
+    refine: bool = False,
+    refinement_iterations: int = 1,
 ) -> dict[str, Any]:
     requested_cases = tuple(cases)
     output_root = Path(output_dir) if output_dir is not None else None
@@ -1311,7 +1314,13 @@ def check_primitive_quality(
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_root = Path(temp_dir)
         case_results = [
-            _run_case(spec, output_root=output_root, temp_root=temp_root)
+            _run_case(
+                spec,
+                output_root=output_root,
+                temp_root=temp_root,
+                refine=refine,
+                refinement_iterations=refinement_iterations,
+            )
             for spec in specs
         ]
 
@@ -1328,6 +1337,8 @@ def check_primitive_quality(
         "selection": {
             "cases": list(requested_cases),
             "filter": filter_pattern,
+            "refine": refine,
+            "refinement_iterations": refinement_iterations,
         },
         "cases": case_results,
     }
@@ -1340,11 +1351,15 @@ def write_primitive_quality_report(
     markdown: str | Path | None = None,
     cases: Iterable[str] = (),
     filter_pattern: str | None = None,
+    refine: bool = False,
+    refinement_iterations: int = 1,
 ) -> dict[str, Any]:
     report = check_primitive_quality(
         output_dir=output_dir,
         cases=cases,
         filter_pattern=filter_pattern,
+        refine=refine,
+        refinement_iterations=refinement_iterations,
     )
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1456,6 +1471,8 @@ def _run_case(
     *,
     output_root: Path | None,
     temp_root: Path,
+    refine: bool,
+    refinement_iterations: int,
 ) -> dict[str, Any]:
     case_root = output_root / spec.id if output_root is not None else temp_root / spec.id
     case_root.mkdir(parents=True, exist_ok=True)
@@ -1487,6 +1504,31 @@ def _run_case(
         preview.save(preview_path)
 
     case = _evaluate_case(spec, manifest, metrics)
+    if refine:
+        refinement_result = _run_refinement_gate(
+            manifest=manifest,
+            input_path=input_path,
+            case_root=case_root,
+            background=spec.background,
+            source=source,
+            iterations=refinement_iterations,
+        )
+        case["refinement"] = refinement_result["summary"]
+        if refinement_result["failure_details"]:
+            case["failure_details"].extend(refinement_result["failure_details"])
+            case["failures"].extend(
+                failure["message"] for failure in refinement_result["failure_details"]
+            )
+            case["failure_categories"] = sorted(
+                {
+                    *case["failure_categories"],
+                    *(
+                        failure["category"]
+                        for failure in refinement_result["failure_details"]
+                    ),
+                }
+            )
+            case["ok"] = False
     if output_root is not None:
         case["artifacts"] = {
             "input": str(input_path),
@@ -1496,6 +1538,55 @@ def _run_case(
             "preview": str(preview_path),
         }
     return case
+
+
+def _run_refinement_gate(
+    *,
+    manifest: dict[str, Any],
+    input_path: Path,
+    case_root: Path,
+    background: str,
+    source: Image.Image,
+    iterations: int,
+) -> dict[str, Any]:
+    manifest_path = case_root / "refinement-input.json"
+    refined_path = case_root / "refined-manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    refined_manifest = refine_manifest(
+        manifest=manifest_path,
+        output=refined_path,
+        config=RefinementConfig(
+            max_iterations=iterations,
+            source_image=input_path,
+        ),
+    )
+    refined_preview = render_manifest_image(refined_manifest, background=background)
+    refined_metrics = raster_fidelity_metrics(source=source, rendered=refined_preview)
+    initial_metrics = manifest.get("metrics", {})
+    structure_audit = refined_manifest.get("refinement", {}).get("structure_audit", {})
+    failure_details: list[dict[str, str]] = []
+    if not structure_audit.get("structure_preserved", False):
+        failure_details.append(_failure("refinement_drift", "refinement changed structure"))
+    if not structure_audit.get("editability_preserved", False):
+        failure_details.append(_failure("refinement_drift", "refinement changed editability"))
+    if float(refined_metrics.get("raster_l1_error", 1.0)) > float(
+        initial_metrics.get("raster_l1_error", 1.0)
+    ) + 0.001:
+        failure_details.append(_failure("refinement_drift", "refinement worsened raster_l1_error"))
+    if float(refined_metrics.get("raster_edge_error", 1.0)) > float(
+        initial_metrics.get("raster_edge_error", 1.0)
+    ) + 0.001:
+        failure_details.append(_failure("refinement_drift", "refinement worsened raster_edge_error"))
+    return {
+        "summary": {
+            "iterations": iterations,
+            "structure_audit": structure_audit,
+            "initial_metrics": initial_metrics,
+            "refined_metrics": refined_metrics,
+            "ok": not failure_details,
+        },
+        "failure_details": failure_details,
+    }
 
 
 def _draw_source(spec: PrimitiveSpec) -> Image.Image:
