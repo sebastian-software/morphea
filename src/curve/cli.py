@@ -112,6 +112,16 @@ RETRAIN_CONFIG_KEYS = {
     "output",
     "comparison_output",
 }
+REFINE_CONFIG_KEYS = {
+    "manifest",
+    "output",
+    "backend",
+    "max_iterations",
+    "timeout_seconds",
+    "source_image",
+    "raster_l1_weight",
+    "raster_edge_weight",
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -451,18 +461,19 @@ def main(argv: list[str] | None = None) -> None:
         "refine",
         help="Apply a structure-preserving refinement backend to a manifest.",
     )
-    refine.add_argument("manifest", type=Path)
-    refine.add_argument("-o", "--output", type=Path, required=True)
-    refine.add_argument("--backend", default="local_metric")
-    refine.add_argument("--max-iterations", type=int, default=0)
+    refine.add_argument("manifest", type=Path, nargs="?")
+    refine.add_argument("-o", "--output", type=Path)
+    refine.add_argument("--backend")
+    refine.add_argument("--max-iterations", type=int)
     refine.add_argument("--timeout-seconds", type=float)
-    refine.add_argument("--raster-l1-weight", type=float, default=1.0)
-    refine.add_argument("--raster-edge-weight", type=float, default=0.25)
+    refine.add_argument("--raster-l1-weight", type=float)
+    refine.add_argument("--raster-edge-weight", type=float)
     refine.add_argument(
         "--source-image",
         type=Path,
         help="Optional source image used for structure-preserving local metrics.",
     )
+    refine.add_argument("--config", type=Path)
 
     curated_check = subcommands.add_parser(
         "curated-check",
@@ -764,16 +775,21 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "refine":
+        refine_config = _resolved_refine_config(args)
         result = refine_manifest(
-            manifest=args.manifest,
-            output=args.output,
+            manifest=refine_config["manifest"],
+            output=refine_config["output"],
             config=RefinementConfig(
-                backend=args.backend,
-                max_iterations=args.max_iterations,
-                timeout_seconds=args.timeout_seconds,
-                source_image=args.source_image,
-                raster_l1_weight=args.raster_l1_weight,
-                raster_edge_weight=args.raster_edge_weight,
+                backend=str(refine_config["backend"]),
+                max_iterations=int(refine_config["max_iterations"]),
+                timeout_seconds=(
+                    float(refine_config["timeout_seconds"])
+                    if refine_config.get("timeout_seconds") is not None
+                    else None
+                ),
+                source_image=refine_config.get("source_image"),
+                raster_l1_weight=float(refine_config["raster_l1_weight"]),
+                raster_edge_weight=float(refine_config["raster_edge_weight"]),
             ),
         )
         print(f"refined {len(result.get('anchors', []))} anchors")
@@ -952,6 +968,40 @@ def _resolved_retrain_config(args: argparse.Namespace) -> dict[str, Path]:
     return config
 
 
+def _resolved_refine_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_refine_config(args.config)
+    if args.manifest is not None:
+        config["manifest"] = args.manifest
+    if args.output is not None:
+        config["output"] = args.output
+    for key in (
+        "backend",
+        "max_iterations",
+        "timeout_seconds",
+        "source_image",
+        "raster_l1_weight",
+        "raster_edge_weight",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    _require_config_paths(config, ("manifest", "output"), "refine")
+    return {
+        "manifest": Path(config["manifest"]),
+        "output": Path(config["output"]),
+        "backend": str(config.get("backend", "local_metric")),
+        "max_iterations": int(config.get("max_iterations", 0)),
+        "timeout_seconds": config.get("timeout_seconds"),
+        "source_image": (
+            Path(config["source_image"])
+            if config.get("source_image") is not None
+            else None
+        ),
+        "raster_l1_weight": float(config.get("raster_l1_weight", 1.0)),
+        "raster_edge_weight": float(config.get("raster_edge_weight", 0.25)),
+    }
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -1023,6 +1073,23 @@ def _normalized_splits(value: object) -> list[str]:
             raise ValueError("eval-classifier splits must contain strings")
         splits.append(split)
     return splits
+
+
+def _load_refine_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("refine config must be a JSON object")
+    unknown = sorted(set(loaded) - REFINE_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported refine config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("manifest", "output", "source_image"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
 
 
 def _segmenter_from_config(

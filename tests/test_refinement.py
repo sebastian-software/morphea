@@ -136,6 +136,37 @@ class RefinementTests(unittest.TestCase):
             self.assertTrue(result["refinement"]["optimizer"]["attempted"])
             self.assertEqual(result["refinement"]["raster_edge_weight"], 0.5)
 
+    def test_refine_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = _write_circle_manifest(root, radius=3)
+            source = _write_circle_source(root, radius=4)
+            output = root / "refined.json"
+            config = root / "refine.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "manifest": str(manifest),
+                        "output": str(output),
+                        "max_iterations": 2,
+                        "timeout_seconds": 1.0,
+                        "source_image": str(source),
+                        "raster_l1_weight": 0.75,
+                        "raster_edge_weight": 0.5,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["refine", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertTrue(result["refinement"]["optimizer"]["attempted"])
+            self.assertEqual(result["refinement"]["max_iterations"], 2)
+            self.assertEqual(result["refinement"]["raster_l1_weight"], 0.75)
+            self.assertEqual(result["refinement"]["raster_edge_weight"], 0.5)
+
     def test_local_metric_refinement_adjusts_quad_geometry_from_source(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
