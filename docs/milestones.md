@@ -507,6 +507,9 @@ Implemented so far:
   from synthetic dataset images and manifests.
 - `curve train-mlx --crop-size N` records the raster token size, token shape,
   channel order, and crop-token summary in the MLX training artifact.
+- `--classifier-model` can load `mlx_feature_head_v1` artifacts and use their
+  serialized weights as the candidate-ranking prior, while malformed or
+  unavailable MLX artifacts degrade to centroid fallback weights.
 
 Remaining:
 

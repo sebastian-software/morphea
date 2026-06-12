@@ -725,6 +725,9 @@ normalization range derived from anchor crops in the source dataset. The
 fallback centroids keep the artifact usable as a deterministic
 `--classifier-model` prior when MLX is not installed or while the full
 raster-crop Transformer encoder is still being expanded.
+When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
+uses the serialized MLX feature-head weights for prediction; malformed or
+unavailable MLX artifacts degrade to `fallback_centroids`.
 
 `curve retrain` persists the augmented model so it can be used as a
 `--classifier-model` prior in later vectorize/profile runs. Its centroid
@@ -742,6 +745,7 @@ Top-level fields:
 - `model`
 - `dataset`
 - `model_type`
+- `classifier_backend`: `centroid`, `mlx_feature_head`, or `centroid_fallback`
 - `feature_names`
 - `classes`
 - `splits`
