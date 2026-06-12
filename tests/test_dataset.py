@@ -30,6 +30,10 @@ class DatasetTests(unittest.TestCase):
             )
 
             self.assertEqual(index["splits"], {"train": 2, "val": 1, "test": 1})
+            self.assertEqual(index["anchor_kind_counts"]["quad"], 24)
+            self.assertEqual(index["split_anchor_kind_counts"]["train"]["quad"], 12)
+            self.assertEqual(index["samples"][0]["anchor_count"], 15)
+            self.assertEqual(index["samples"][0]["anchor_kind_counts"]["quad"], 6)
             self.assertTrue((Path(temp_dir) / "dataset.json").exists())
             self.assertTrue((Path(temp_dir) / "train" / "sample-0000.png").exists())
             self.assertTrue((Path(temp_dir) / "val" / "sample-0002.json").exists())
@@ -57,6 +61,7 @@ class DatasetTests(unittest.TestCase):
             self.assertEqual(index["difficulty"], "dense")
             self.assertEqual(manifest["difficulty"], "dense")
             self.assertEqual(manifest["anchor_count"], 18)
+            self.assertEqual(index["samples"][0]["anchor_kind_counts"]["stroke_polyline"], 5)
 
     def test_generate_cli_writes_dataset_index(self):
         with tempfile.TemporaryDirectory() as temp_dir:
