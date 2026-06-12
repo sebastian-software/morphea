@@ -1528,16 +1528,16 @@
     "cutout_curve_circle_large": {
       "anchor_count": 2,
       "anchor_kind_counts": {
-        "circle": 1,
-        "stroke_path": 1
+        "arc": 1,
+        "circle": 1
       },
       "bbox_iou": 1.0,
-      "edge": 0.008458,
+      "edge": 0.002537,
       "kind": "circle",
-      "l1": 0.006641,
+      "l1": 0.001953,
       "ok": true,
-      "svg_edge": 0.027181,
-      "svg_l1": 0.022633
+      "svg_edge": 0.026646,
+      "svg_l1": 0.022432
     },
     "cutout_curve_circle_offset": {
       "anchor_count": 2,

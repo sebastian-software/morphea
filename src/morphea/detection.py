@@ -1413,8 +1413,16 @@ def _fit_circular_arc(component: MaskComponent) -> dict[str, object] | None:
     if midpoint_residual > 0.42:
         return None
     # A constant-width stroke band keeps a uniform radial spread along the
-    # arc; crescents and other tapered fills swing from thick to thin.
-    if _radial_band_uniformity(pixels, center, mean_angle, theta_min, span) > 1.8:
+    # arc; crescents and other tapered fills swing from thick to thin. Below
+    # ~4 px of band the per-bin spread is dominated by pixel quantization
+    # (half a pixel is up to half the width), so the test carries no signal.
+    if band_width >= 4.0 and _radial_band_uniformity(
+        pixels,
+        center,
+        mean_angle,
+        theta_min,
+        span,
+    ) > 1.8:
         return None
 
     # Two width estimators with opposite biases: area / arc-length counts cap

@@ -357,7 +357,7 @@
 | `cutout_curve_rect_high` | `true` | `quad` | 0.001758 | 0.00296 | 0.016882 | 0.018899 | 1.0 | n/a |
 | `cutout_curve_rect_low` | `true` | `quad` | 0.002734 | 0.004229 | 0.018421 | 0.020439 | 1.0 | n/a |
 | `cutout_curve_circle` | `true` | `circle` | 0.001758 | 0.002326 | 0.020582 | 0.024769 | 1.0 | n/a |
-| `cutout_curve_circle_large` | `true` | `circle` | 0.006641 | 0.008458 | 0.022633 | 0.027181 | 1.0 | n/a |
+| `cutout_curve_circle_large` | `true` | `circle` | 0.001953 | 0.002537 | 0.022432 | 0.026646 | 1.0 | n/a |
 | `cutout_curve_circle_offset` | `true` | `circle` | 0.001953 | 0.002114 | 0.020117 | 0.024044 | 1.0 | n/a |
 | `cutout_curve_ring` | `true` | `stroke_circle` | 0.054883 | 0.062164 | 0.051044 | 0.059494 | 0.95646 | n/a |
 | `cutout_curve_ring_thick` | `true` | `stroke_circle` | 0.060742 | 0.061318 | 0.064796 | 0.068336 | 0.940919 | n/a |

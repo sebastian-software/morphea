@@ -439,7 +439,7 @@ figcaption {
       <div>
         <p class="eyebrow">Primitive quality gallery</p>
         <h1>291 deterministic round-trip cases</h1>
-        <p class="lede">Every card is a <code>primitive-check</code> artifact: source bitmap and exported SVG in the same 64&thinsp;px viewport, so geometry drift is visible at a glance. Passing cases include 57 arc, 15 cubic_path, 21 ellipse, 3 stroke_ellipse, 43 stroke_path anchors.</p>
+        <p class="lede">Every card is a <code>primitive-check</code> artifact: source bitmap and exported SVG in the same 64&thinsp;px viewport, so geometry drift is visible at a glance. Passing cases include 58 arc, 15 cubic_path, 21 ellipse, 3 stroke_ellipse, 42 stroke_path anchors.</p>
       </div>
     </header>
 
@@ -10883,7 +10883,7 @@ figcaption {
           </div>
         </details>
       </article>
-      <article class="case-card" data-family="cutout_curve_circle" data-kind="circle" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_circle_large cutout_curve_circle large circle curved_cutout_contract cutout export ">
+      <article class="case-card" data-family="cutout_curve_circle" data-kind="circle" data-contracts="arc_contract cutout export" data-ok="true" data-search="cutout_curve_circle_large cutout_curve_circle large circle arc_contract cutout export ">
         <header>
           <div>
             <p class="case-family">cutout_curve_circle</p>
@@ -10906,8 +10906,8 @@ figcaption {
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0066 / 0.0085</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0226 / 0.0272</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0020 / 0.0025</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0224 / 0.0266</td></tr>
               <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>large</td></tr>
             </table>
@@ -10917,7 +10917,7 @@ figcaption {
                 <img src="../assets/primitive-quality/cases/cutout_curve_circle_large/svg-render.png" alt="cutout_curve_circle_large rasterized SVG" loading="lazy" decoding="async">
               </div>
             </figure>
-            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+            <div class="badges"><span>arc_contract</span><span>cutout</span><span>export_comparison</span></div>
           </div>
         </details>
       </article>
