@@ -14,6 +14,7 @@ from curve.classifier import (
     classifier_prior_error,
     evaluate_classifier_model,
     evaluate_classifier_ranking,
+    evaluate_raster_classifier,
     examples_from_dataset,
     features_from_anchor,
     features_from_candidate,
@@ -456,6 +457,56 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(classifier["classifier_backend"], "mlx_feature_head")
             self.assertIn(predicted, classifier["labels"])
 
+    def test_mlx_feature_head_can_predict_with_raster_tokens(self):
+        classifier = {
+            "classifier_backend": "mlx_feature_head",
+            "labels": ("circle", "cubic_path"),
+            "weights": ((0.0,) * 11, (0.0,) * 11),
+            "bias": (0.0, 0.0),
+            "normalization": {
+                "mean": (0.0,) * 11,
+                "scale": (1.0,) * 11,
+            },
+            "crop_token_spec": {"crop_size": 2},
+            "raster_token_mixer": {
+                "labels": ("circle", "cubic_path"),
+                "weights": (
+                    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0),
+                    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -8.0),
+                ),
+                "bias": (0.0, 0.0),
+                "normalization": {
+                    "mean": (0.0,) * 7,
+                    "scale": (1.0,) * 7,
+                },
+                "attention": {
+                    "heads": 1,
+                    "embedding_names": (
+                        "head_0_red",
+                        "head_0_green",
+                        "head_0_blue",
+                        "head_0_alpha",
+                        "head_0_x",
+                        "head_0_y",
+                        "head_0_foreground",
+                    ),
+                },
+            },
+        }
+
+        predicted = predict_classifier_label(
+            classifier,
+            (0.0,) * 11,
+            crop_tokens=(
+                (0.0, 0.0, 0.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+                (1.0, 1.0, 1.0, 1.0),
+            ),
+        )
+
+        self.assertEqual(predicted, "circle")
+
     def test_empty_mlx_fallback_prior_degrades_to_no_error(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             model_path = Path(temp_dir) / "mlx-model.json"
@@ -571,10 +622,51 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(report["splits"], ["test"])
             self.assertIn("test", report["evaluation"])
             self.assertIn("test", report["ranking_evaluation"])
+            self.assertFalse(report["uses_raster_tokens"])
             self.assertIn(
                 "# Curve Classifier Evaluation",
                 markdown_path.read_text(encoding="utf-8"),
             )
+
+    def test_eval_classifier_model_uses_raster_tokens_for_mlx_mixer(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=4,
+                seed=44,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            dataset = Path(temp_dir) / "dataset.json"
+            model_path = Path(temp_dir) / "mlx-model.json"
+            report_path = Path(temp_dir) / "classifier-eval.json"
+            mlx_module = types.ModuleType("mlx")
+            mlx_core = types.ModuleType("mlx.core")
+            mlx_core.__version__ = "test-mlx"
+            mlx_module.core = mlx_core
+            with (
+                patch("curve.mlx_classifier.is_mlx_available", return_value=True),
+                patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
+            ):
+                train_mlx_transformer_classifier(
+                    dataset,
+                    output=model_path,
+                    config=MlxClassifierTrainingConfig(epochs=1, crop_size=6),
+                )
+
+            report = evaluate_classifier_model(
+                model_path,
+                dataset,
+                output=report_path,
+                splits=("val",),
+            )
+
+            self.assertTrue(report["uses_raster_tokens"])
+            self.assertEqual(report["classifier_backend"], "mlx_feature_head")
+            self.assertIn("val", report["evaluation"])
+            self.assertTrue(report_path.exists())
 
     def test_eval_classifier_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

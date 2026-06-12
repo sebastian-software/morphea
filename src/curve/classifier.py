@@ -336,19 +336,33 @@ def evaluate_classifier_model(
     dataset_path = Path(dataset_json)
     model = json.loads(model_path.read_text(encoding="utf-8"))
     classifier = load_classifier_model(model_path)
+    use_raster_eval = _classifier_uses_raster_tokens(classifier)
+    crop_size = _classifier_crop_size(classifier)
     report = {
         "schema_version": 1,
         "model": str(model_path),
         "dataset": str(dataset_path),
         "model_type": model.get("model_type"),
         "classifier_backend": classifier.get("classifier_backend"),
+        "uses_raster_tokens": use_raster_eval,
         "feature_names": model.get("feature_names", list(FEATURE_NAMES)),
         "classes": model.get("classes", _classifier_labels(classifier)),
         "splits": list(splits),
         "evaluation": {
-            split: evaluate_classifier(
-                classifier,
-                examples_from_dataset(dataset_path, splits=(split,)),
+            split: (
+                evaluate_raster_classifier(
+                    classifier,
+                    raster_examples_from_dataset(
+                        dataset_path,
+                        crop_size=crop_size,
+                        splits=(split,),
+                    ),
+                )
+                if use_raster_eval
+                else evaluate_classifier(
+                    classifier,
+                    examples_from_dataset(dataset_path, splits=(split,)),
+                )
             )
             for split in splits
         },
@@ -517,6 +531,8 @@ def load_classifier_model(model_json: str | Path) -> ClassifierModel:
             "mean": tuple(mean),
             "scale": tuple(scale),
         },
+        "raster_token_mixer": _loaded_raster_token_mixer(training),
+        "crop_token_spec": training.get("crop_token_spec", {}),
         "fallback_centroids": fallback,
     }
 
@@ -540,12 +556,14 @@ def classifier_prior_error(
 def predict_classifier_label(
     classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     features: tuple[float, ...],
+    *,
+    crop_tokens: tuple[tuple[float, float, float, float], ...] | None = None,
 ) -> str:
     if _is_centroid_mapping(classifier_model):
         return predict_label(classifier_model, features)
     backend = classifier_model.get("classifier_backend")
     if backend == "mlx_feature_head":
-        return _predict_feature_head(classifier_model, features)
+        return _predict_mlx_classifier(classifier_model, features, crop_tokens)
     centroids = classifier_model.get("centroids")
     if isinstance(centroids, dict) and centroids:
         return predict_label(_tuple_mapping(centroids), features)
@@ -567,6 +585,33 @@ def _predict_feature_head(
     classifier_model: dict[str, object],
     features: tuple[float, ...],
 ) -> str:
+    labels, logits = _feature_head_logits(classifier_model, features)
+    return labels[max(range(len(logits)), key=logits.__getitem__)]
+
+
+def _predict_mlx_classifier(
+    classifier_model: dict[str, object],
+    features: tuple[float, ...],
+    crop_tokens: tuple[tuple[float, float, float, float], ...] | None,
+) -> str:
+    labels, logits = _feature_head_logits(classifier_model, features)
+    raster_logits = (
+        _raster_mixer_logits(classifier_model, crop_tokens)
+        if crop_tokens is not None
+        else None
+    )
+    if raster_logits is not None and len(raster_logits) == len(logits):
+        logits = [
+            feature_logit + raster_logit
+            for feature_logit, raster_logit in zip(logits, raster_logits)
+        ]
+    return labels[max(range(len(logits)), key=logits.__getitem__)]
+
+
+def _feature_head_logits(
+    classifier_model: dict[str, object],
+    features: tuple[float, ...],
+) -> tuple[tuple[str, ...], list[float]]:
     labels = tuple(str(label) for label in classifier_model.get("labels", ()))
     weights = tuple(
         tuple(float(value) for value in row)
@@ -591,7 +636,7 @@ def _predict_feature_head(
         )
         for class_index in range(len(labels))
     ]
-    return labels[max(range(len(logits)), key=logits.__getitem__)]
+    return labels, logits
 
 
 def _is_centroid_mapping(value: object) -> bool:
@@ -600,6 +645,144 @@ def _is_centroid_mapping(value: object) -> bool:
         and bool(value)
         and all(isinstance(item, tuple) for item in value.values())
     )
+
+
+def _loaded_raster_token_mixer(training: dict[str, object]) -> dict[str, object] | None:
+    mixer = training.get("raster_token_mixer")
+    if not isinstance(mixer, dict):
+        return None
+    if mixer.get("weight_format") != "raster_token_mixer_v1":
+        return None
+    labels = [
+        str(label)
+        for label in mixer.get("labels", [])
+        if isinstance(label, str)
+    ]
+    weights = _matrix(mixer.get("weights", []))
+    bias = _vector(mixer.get("bias", []))
+    normalization = mixer.get("normalization", {})
+    if not isinstance(normalization, dict):
+        return None
+    mean = _vector(normalization.get("mean", []))
+    scale = _vector(normalization.get("scale", []))
+    attention = mixer.get("attention", {})
+    if not isinstance(attention, dict):
+        return None
+    heads = attention.get("heads")
+    embedding_names = [
+        str(name)
+        for name in attention.get("embedding_names", [])
+        if isinstance(name, str)
+    ]
+    if (
+        not isinstance(heads, int)
+        or heads <= 0
+        or not labels
+        or len(weights) != len(labels)
+        or len(bias) != len(labels)
+        or len(mean) != len(embedding_names)
+        or len(scale) != len(embedding_names)
+    ):
+        return None
+    return {
+        "labels": tuple(labels),
+        "weights": tuple(tuple(row) for row in weights),
+        "bias": tuple(bias),
+        "normalization": {
+            "mean": tuple(mean),
+            "scale": tuple(scale),
+        },
+        "attention": {
+            "heads": heads,
+            "embedding_names": tuple(embedding_names),
+        },
+    }
+
+
+def _raster_mixer_logits(
+    classifier_model: dict[str, object],
+    crop_tokens: tuple[tuple[float, float, float, float], ...],
+) -> list[float] | None:
+    mixer = classifier_model.get("raster_token_mixer")
+    crop_spec = classifier_model.get("crop_token_spec", {})
+    if not isinstance(mixer, dict) or not isinstance(crop_spec, dict):
+        return None
+    attention = mixer.get("attention", {})
+    normalization = mixer.get("normalization", {})
+    if not isinstance(attention, dict) or not isinstance(normalization, dict):
+        return None
+    heads = attention.get("heads")
+    crop_size = crop_spec.get("crop_size")
+    if not isinstance(heads, int) or not isinstance(crop_size, int):
+        return None
+    row = _raster_attention_embedding(crop_tokens, crop_size=crop_size, heads=heads)
+    mean = normalization.get("mean", ())
+    scale = normalization.get("scale", ())
+    weights = mixer.get("weights", ())
+    bias = mixer.get("bias", ())
+    if (
+        not isinstance(mean, tuple)
+        or not isinstance(scale, tuple)
+        or len(row) != len(mean)
+        or len(row) != len(scale)
+        or not isinstance(weights, tuple)
+        or not isinstance(bias, tuple)
+    ):
+        return None
+    normalized = tuple(
+        (row[index] - mean[index]) / scale[index]
+        for index in range(len(row))
+    )
+    return [
+        float(bias[class_index])
+        + sum(
+            weights[class_index][feature_index] * normalized[feature_index]
+            for feature_index in range(len(normalized))
+        )
+        for class_index in range(len(bias))
+    ]
+
+
+def _raster_attention_embedding(
+    crop_tokens: tuple[tuple[float, float, float, float], ...],
+    *,
+    crop_size: int,
+    heads: int,
+) -> tuple[float, ...]:
+    embedding: list[float] = []
+    for head in range(heads):
+        weighted = [0.0 for _ in range(7)]
+        total_weight = 0.0
+        for index, token in enumerate(crop_tokens):
+            red, green, blue, alpha = token
+            x = (index % crop_size) / max(1, crop_size - 1)
+            y = (index // crop_size) / max(1, crop_size - 1)
+            foreground = alpha * (
+                abs(red - 1.0) + abs(green - 1.0) + abs(blue - 1.0)
+            ) / 3
+            weight = 1e-6 + foreground * _head_spatial_bias(head, x, y)
+            total_weight += weight
+            values = (red, green, blue, alpha, x, y, foreground)
+            for value_index, value in enumerate(values):
+                weighted[value_index] += value * weight
+        if total_weight <= 0:
+            embedding.extend([0.0 for _ in range(7)])
+            continue
+        embedding.extend(value / total_weight for value in weighted)
+    return tuple(embedding)
+
+
+def _head_spatial_bias(head: int, x: float, y: float) -> float:
+    mode = head % 5
+    if mode == 1:
+        return 1.0 + x
+    if mode == 2:
+        return 2.0 - x
+    if mode == 3:
+        return 1.0 + y
+    if mode == 4:
+        return 2.0 - y
+    return 1.0
 
 
 def _tuple_mapping(value: object) -> dict[str, tuple[float, ...]]:
@@ -640,6 +823,21 @@ def _classifier_labels(classifier_model: dict[str, object]) -> list[str]:
     return []
 
 
+def _classifier_uses_raster_tokens(classifier_model: dict[str, object]) -> bool:
+    return (
+        classifier_model.get("classifier_backend") == "mlx_feature_head"
+        and isinstance(classifier_model.get("raster_token_mixer"), dict)
+        and isinstance(classifier_model.get("crop_token_spec"), dict)
+    )
+
+
+def _classifier_crop_size(classifier_model: dict[str, object]) -> int:
+    crop_spec = classifier_model.get("crop_token_spec", {})
+    if isinstance(crop_spec, dict) and isinstance(crop_spec.get("crop_size"), int):
+        return int(crop_spec["crop_size"])
+    return 16
+
+
 def evaluate_classifier(
     classifier_model: dict[str, object] | dict[str, tuple[float, ...]],
     examples: tuple[TrainingExample, ...],
@@ -648,6 +846,30 @@ def evaluate_classifier(
     correct = 0
     for example in examples:
         predicted = predict_classifier_label(classifier_model, example.features)
+        confusion.setdefault(example.label, {})
+        confusion[example.label][predicted] = confusion[example.label].get(predicted, 0) + 1
+        if predicted == example.label:
+            correct += 1
+    total = len(examples)
+    return {
+        "examples": total,
+        "accuracy": correct / total if total else None,
+        "confusion": confusion,
+    }
+
+
+def evaluate_raster_classifier(
+    classifier_model: dict[str, object],
+    examples: tuple[RasterTrainingExample, ...],
+) -> dict[str, object]:
+    confusion: dict[str, dict[str, int]] = {}
+    correct = 0
+    for example in examples:
+        predicted = predict_classifier_label(
+            classifier_model,
+            example.features,
+            crop_tokens=example.crop_tokens,
+        )
         confusion.setdefault(example.label, {})
         confusion[example.label][predicted] = confusion[example.label].get(predicted, 0) + 1
         if predicted == example.label:
