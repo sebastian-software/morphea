@@ -701,6 +701,7 @@ Implemented so far:
 - `curve compare-training --config compare.json` for repeatable retraining
   comparisons
 - `curve retrain --config retrain.json` for repeatable augmented model output
+- `curve refine --config refine.json` for repeatable bounded refinement runs
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the

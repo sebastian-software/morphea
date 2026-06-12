@@ -407,6 +407,23 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Refine Config v1
+
+Read by `curve refine --config`.
+
+Supported fields:
+
+- `manifest`
+- `output`
+- `backend`
+- `max_iterations`
+- `timeout_seconds`
+- `source_image`
+- `raster_l1_weight`
+- `raster_edge_weight`
+
+CLI arguments override values loaded from the config file.
+
 ## Synthetic Dataset v1
 
 Written by `curve generate`.
