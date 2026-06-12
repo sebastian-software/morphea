@@ -401,6 +401,9 @@ or generated proposal payloads shaped as:
 - `proposals`: list of proposal objects
 - each proposal may contain `bounds` as `[left, top, right, bottom]` or `bbox`
   as `[left, top, width, height]`
+- alternatively each proposal may contain `mask` rows, either as strings where
+  `.`, `0`, space, and `_` are empty or as nested numeric/boolean rows; `x`/`y`
+  or `left`/`top` offset the local mask into image coordinates
 - optional `confidence`/`score`
 - optional `color`
 

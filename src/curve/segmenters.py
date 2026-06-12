@@ -426,22 +426,73 @@ def _json_adapter_proposals(
         confidence = float(item.get("confidence", item.get("score", 1.0)))
         if confidence < segmenter.score_threshold:
             continue
-        bounds = _json_adapter_bounds(item)
-        if bounds is None:
+        component = _json_adapter_component(item)
+        if component is None:
             continue
         color = item.get("color")
         accepted.append(
-            _proposal_from_adapter_bounds(
+            _proposal_from_adapter_component(
                 len(accepted),
                 segmenter.source,
                 str(color) if isinstance(color, str) else None,
-                bounds,
+                component,
                 confidence=confidence,
             )
         )
         if segmenter.max_masks is not None and len(accepted) >= segmenter.max_masks:
             break
     return tuple(accepted)
+
+
+def _json_adapter_component(item: dict[str, object]) -> MaskComponent | None:
+    mask_component = _json_adapter_mask_component(item)
+    if mask_component is not None:
+        return mask_component
+    bounds = _json_adapter_bounds(item)
+    if bounds is None:
+        return None
+    left, top, right, bottom = bounds
+    pixels = {
+        (x, y)
+        for y in range(top, bottom + 1)
+        for x in range(left, right + 1)
+    }
+    return MaskComponent(frozenset(pixels), bounds_hint=bounds)
+
+
+def _json_adapter_mask_component(item: dict[str, object]) -> MaskComponent | None:
+    mask = item.get("mask")
+    origin_x = int(float(item.get("x", item.get("left", 0))))
+    origin_y = int(float(item.get("y", item.get("top", 0))))
+    rows: list[object]
+    if isinstance(mask, dict):
+        origin_x = int(float(mask.get("x", mask.get("left", origin_x))))
+        origin_y = int(float(mask.get("y", mask.get("top", origin_y))))
+        value = mask.get("rows", mask.get("data"))
+        rows = value if isinstance(value, list) else []
+    elif isinstance(mask, list):
+        rows = mask
+    else:
+        return None
+
+    pixels: set[tuple[int, int]] = set()
+    for row_index, row in enumerate(rows):
+        if isinstance(row, str):
+            for column_index, value in enumerate(row):
+                if value not in {".", "0", " ", "_"}:
+                    pixels.add((origin_x + column_index, origin_y + row_index))
+            continue
+        if isinstance(row, list):
+            for column_index, value in enumerate(row):
+                if bool(value):
+                    pixels.add((origin_x + column_index, origin_y + row_index))
+    if not pixels:
+        return None
+    left = min(x for x, _ in pixels)
+    top = min(y for _, y in pixels)
+    right = max(x for x, _ in pixels)
+    bottom = max(y for _, y in pixels)
+    return MaskComponent(frozenset(pixels), bounds_hint=(left, top, right, bottom))
 
 
 def _json_adapter_bounds(item: dict[str, object]) -> tuple[int, int, int, int] | None:
@@ -461,28 +512,21 @@ def _json_adapter_bounds(item: dict[str, object]) -> tuple[int, int, int, int] |
     return left, top, right, bottom
 
 
-def _proposal_from_adapter_bounds(
+def _proposal_from_adapter_component(
     index: int,
     source: str,
     color: str | None,
-    bounds: tuple[int, int, int, int],
+    component: MaskComponent,
     *,
     confidence: float,
 ) -> SegmentProposal:
-    left, top, right, bottom = bounds
-    pixels = {
-        (x, y)
-        for y in range(top, bottom + 1)
-        for x in range(left, right + 1)
-    }
-    component = MaskComponent(frozenset(pixels), bounds_hint=bounds)
     anchor_summary = _primitive_anchor_summary(component)
     return SegmentProposal(
         id=f"{source}-{index:04d}",
         source=source,
         confidence=confidence,
         color=color,
-        bounds=bounds,
+        bounds=component.bounds,
         area=component.area,
         status="proposed",
         downstream_status="pending",

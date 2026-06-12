@@ -302,6 +302,48 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(proposals[0].anchor_kind, "rect")
             self.assertTrue(proposals[0].anchor_reserved)
 
+    def test_mlx_sam_json_adapter_accepts_mask_payloads(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam-masks.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "proposals": [
+                            {
+                                "mask": {
+                                    "x": 6,
+                                    "y": 4,
+                                    "rows": [
+                                        ".##.",
+                                        "####",
+                                        ".##.",
+                                    ],
+                                },
+                                "confidence": 0.91,
+                            },
+                            {
+                                "mask": [
+                                    [0, 1, 0],
+                                    [1, 1, 1],
+                                ],
+                                "x": 20,
+                                "y": 10,
+                                "score": 0.82,
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            proposals = MlxSamSegmenter(model_path=str(model_path)).propose("input.png")
+
+            self.assertEqual(len(proposals), 2)
+            self.assertEqual(proposals[0].bounds, (6, 4, 9, 6))
+            self.assertEqual(proposals[0].area, 8)
+            self.assertEqual(proposals[1].bounds, (20, 10, 22, 11))
+            self.assertEqual(proposals[1].area, 4)
+
     def test_mlx_sam_segmenter_reports_runtime_config_in_error(self):
         with patch("curve.segmenters.is_mlx_runtime_available", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "model_path=models/sam.mlx"):
