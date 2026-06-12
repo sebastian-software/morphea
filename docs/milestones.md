@@ -136,6 +136,8 @@ Implemented so far:
 - temporary interior-gap scans avoid redundant seed-list allocation, and
   enclosed-gap bound checks use component bounds instead of rescanning every
   gap pixel.
+- generic and bounded component scanners update bounds and row spans with
+  direct comparisons instead of per-pixel `min()`/`max()` calls.
 
 Remaining:
 

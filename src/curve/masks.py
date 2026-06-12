@@ -162,15 +162,22 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
             pixels.append((x, y))
             sum_x += x
             sum_y += y
-            min_x = min(min_x, x)
-            max_x = max(max_x, x)
-            min_y = min(min_y, y)
-            max_y = max(max_y, y)
+            if x < min_x:
+                min_x = x
+            elif x > max_x:
+                max_x = x
+            if y < min_y:
+                min_y = y
+            elif y > max_y:
+                max_y = y
             if y not in row_spans:
                 row_spans[y] = (x, x)
             else:
                 row_min_x, row_max_x = row_spans[y]
-                row_spans[y] = (min(row_min_x, x), max(row_max_x, x))
+                if x < row_min_x:
+                    row_spans[y] = (x, row_max_x)
+                elif x > row_max_x:
+                    row_spans[y] = (row_min_x, x)
             if _is_boundary_pixel(mask.pixels, x, y):
                 boundary_pixels.append((x, y))
             _enqueue_neighbors8(

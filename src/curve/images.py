@@ -460,10 +460,14 @@ def _bounded_connected_components(
             area += 1
             sum_x += x
             sum_y += y
-            min_x = min(min_x, x)
-            max_x = max(max_x, x)
-            min_y = min(min_y, y)
-            max_y = max(max_y, y)
+            if x < min_x:
+                min_x = x
+            elif x > max_x:
+                max_x = x
+            if y < min_y:
+                min_y = y
+            elif y > max_y:
+                max_y = y
             if store_pixels:
                 pixel_indexes.append(index)
                 if _is_boundary_index(mask.pixels, x, y):
@@ -472,7 +476,10 @@ def _bounded_connected_components(
                     row_spans[y] = (x, x)
                 else:
                     row_min_x, row_max_x = row_spans[y]
-                    row_spans[y] = (min(row_min_x, x), max(row_max_x, x))
+                    if x < row_min_x:
+                        row_spans[y] = (x, row_max_x)
+                    elif x > row_max_x:
+                        row_spans[y] = (row_min_x, x)
             if max_component_area is not None and area > max_component_area:
                 store_pixels = False
                 pixel_indexes.clear()
