@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from html import escape
+from math import cos, degrees, sin, sqrt
 from statistics import mean
 from typing import Iterable
 
@@ -393,6 +394,7 @@ def anchor_to_svg_element(
             f'<ellipse cx="{_fmt(anchor.ellipse.center.x)}" '
             f'cy="{_fmt(anchor.ellipse.center.y)}" '
             f'rx="{_fmt(anchor.ellipse.rx)}" ry="{_fmt(anchor.ellipse.ry)}" '
+            f"{_ellipse_rotation_attr(anchor.ellipse)}"
             f'fill="{escape(fill)}" />'
         )
 
@@ -402,6 +404,7 @@ def anchor_to_svg_element(
             f'<ellipse cx="{_fmt(anchor.ellipse.center.x)}" '
             f'cy="{_fmt(anchor.ellipse.center.y)}" '
             f'rx="{_fmt(anchor.ellipse.rx)}" ry="{_fmt(anchor.ellipse.ry)}" '
+            f"{_ellipse_rotation_attr(anchor.ellipse)}"
             f'fill="none" stroke="{escape(stroke)}" '
             f'stroke-width="{_fmt(width)}" />'
         )
@@ -1449,6 +1452,21 @@ def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]
             half = _stroke_width(anchor) / 2
             rx += half
             ry += half
+        rotation = anchor.ellipse.rotation
+        if abs(rotation) > 1e-6:
+            # Exact AABB of a rotated ellipse.
+            half_w = sqrt(
+                (rx * cos(rotation)) ** 2 + (ry * sin(rotation)) ** 2
+            )
+            half_h = sqrt(
+                (rx * sin(rotation)) ** 2 + (ry * cos(rotation)) ** 2
+            )
+            return (
+                center.x - half_w,
+                center.y - half_h,
+                center.x + half_w,
+                center.y + half_h,
+            )
         return (center.x - rx, center.y - ry, center.x + rx, center.y + ry)
     if anchor.circle is not None:
         center = anchor.circle.center
@@ -1753,3 +1771,12 @@ def _fmt(value: float) -> str:
     if rounded == int(rounded):
         return str(int(rounded))
     return f"{rounded:.3f}".rstrip("0").rstrip(".")
+
+
+def _ellipse_rotation_attr(ellipse) -> str:
+    if abs(ellipse.rotation) < 1e-6:
+        return ""
+    return (
+        f'transform="rotate({_fmt(degrees(ellipse.rotation))} '
+        f'{_fmt(ellipse.center.x)} {_fmt(ellipse.center.y)})" '
+    )

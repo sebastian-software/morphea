@@ -95,6 +95,13 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         cy = float(ellipse["cy"])
         rx = float(ellipse["rx"])
         ry = float(ellipse["ry"])
+        rotation = float(ellipse.get("rotation", 0.0))
+        if abs(rotation) > 1e-6:
+            draw.polygon(
+                _rotated_ellipse_points(cx, cy, rx, ry, rotation),
+                fill=color,
+            )
+            return
         draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=color)
         return
     if kind == "stroke_ellipse" and "ellipse" in anchor:
@@ -105,6 +112,22 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         ry = float(ellipse["ry"])
         width = _stroke_width(anchor)
         half = width / 2
+        rotation = float(ellipse.get("rotation", 0.0))
+        if abs(rotation) > 1e-6:
+            outline_points = _rotated_ellipse_points(
+                cx,
+                cy,
+                rx + half,
+                ry + half,
+                rotation,
+            )
+            draw.line(
+                outline_points + outline_points[:1],
+                fill=color,
+                width=width,
+                joint="curve",
+            )
+            return
         # Match the SVG model: the stroke centers on the ellipse outline.
         draw.ellipse(
             (cx - rx - half, cy - ry - half, cx + rx + half, cy + ry + half),
@@ -375,6 +398,26 @@ def _luma_values(image: Image.Image) -> bytearray:
         ) // 1000
         output_index += 1
     return luma
+
+
+def _rotated_ellipse_points(
+    cx: float,
+    cy: float,
+    rx: float,
+    ry: float,
+    rotation: float,
+    *,
+    steps: int = 96,
+) -> list[tuple[float, float]]:
+    cos_t = cos(rotation)
+    sin_t = sin(rotation)
+    points = []
+    for index in range(steps):
+        phi = 2 * pi * index / steps
+        u = rx * cos(phi)
+        v = ry * sin(phi)
+        points.append((cx + u * cos_t - v * sin_t, cy + u * sin_t + v * cos_t))
+    return points
 
 
 def _stroke_width(anchor: dict[str, Any]) -> int:

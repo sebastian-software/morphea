@@ -1,5 +1,5 @@
 {
-  "case_count": 333,
+  "case_count": 336,
   "cases": {
     "adjacent_different_color_rects_horizontal": {
       "anchor_count": 2,
@@ -3646,6 +3646,45 @@
       "ok": true,
       "svg_edge": 3.2e-05,
       "svg_l1": 1.5e-05
+    },
+    "rotated_ellipse": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.894995,
+      "edge": 0.019241,
+      "kind": "ellipse",
+      "l1": 0.01875,
+      "ok": true,
+      "svg_edge": 0.012962,
+      "svg_l1": 0.011292
+    },
+    "rotated_ellipse_back": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.902258,
+      "edge": 0.018607,
+      "kind": "ellipse",
+      "l1": 0.016602,
+      "ok": true,
+      "svg_edge": 0.016973,
+      "svg_l1": 0.012889
+    },
+    "rotated_ellipse_steep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.886233,
+      "edge": 0.019241,
+      "kind": "ellipse",
+      "l1": 0.018164,
+      "ok": true,
+      "svg_edge": 0.013336,
+      "svg_l1": 0.011973
     },
     "rounded_rectangle": {
       "anchor_count": 1,

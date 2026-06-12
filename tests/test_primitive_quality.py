@@ -640,6 +640,7 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "tiny_dot": 3,
                 "tiny_ring": 3,
                 "tiny_rect": 3,
+                "rotated_ellipse": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

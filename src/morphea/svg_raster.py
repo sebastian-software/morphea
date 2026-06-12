@@ -233,6 +233,21 @@ def _render_ellipse_geometry(
     fill = _paint(element.attrib.get("fill", "#000000"))
     stroke = _paint(element.attrib.get("stroke"))
     stroke_width = _number(element, "stroke-width", default=1.0)
+    rotation = _rotate_transform(element, cx, cy)
+    if rotation is not None:
+        _render_rotated_ellipse(
+            draw,
+            scale,
+            cx,
+            cy,
+            rx,
+            ry,
+            rotation,
+            fill=fill,
+            stroke=stroke,
+            stroke_width=stroke_width,
+        )
+        return
     if fill is not None:
         draw.ellipse(_ellipse_box(cx, cy, rx, ry, scale), fill=fill)
     if stroke is not None and stroke_width > 0:
@@ -243,6 +258,78 @@ def _render_ellipse_geometry(
             _ellipse_box(cx, cy, rx + half, ry + half, scale),
             outline=stroke,
             width=max(1, round(stroke_width * scale)),
+        )
+
+
+def _rotate_transform(
+    element: ET.Element,
+    cx: float,
+    cy: float,
+) -> float | None:
+    """Angle in radians from a ``rotate(a cx cy)`` transform, if present.
+
+    Only the rotate-about-the-own-center form the exporter emits is
+    supported; anything else raises so the gate fails loudly instead of
+    silently rasterizing the wrong geometry.
+    """
+
+    raw = element.attrib.get("transform")
+    if not raw:
+        return None
+    match = re.fullmatch(
+        r"\s*rotate\(\s*(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)\s*\)\s*",
+        raw,
+    )
+    if match is None:
+        raise ValueError(f"unsupported transform for builtin raster: {raw!r}")
+    angle, pivot_x, pivot_y = (float(value) for value in match.groups())
+    if abs(pivot_x - cx) > 0.01 or abs(pivot_y - cy) > 0.01:
+        raise ValueError(
+            "builtin raster only supports rotation about the element center"
+        )
+    return radians(angle)
+
+
+def _render_rotated_ellipse(
+    draw: ImageDraw.ImageDraw,
+    scale: int,
+    cx: float,
+    cy: float,
+    rx: float,
+    ry: float,
+    rotation: float,
+    *,
+    fill: tuple[int, int, int] | None,
+    stroke: tuple[int, int, int] | None,
+    stroke_width: float,
+) -> None:
+    cos_t = cos(rotation)
+    sin_t = sin(rotation)
+
+    def ring(radius_x: float, radius_y: float) -> list[tuple[float, float]]:
+        points = []
+        for index in range(96):
+            phi = 2 * pi * index / 96
+            u = radius_x * cos(phi)
+            v = radius_y * sin(phi)
+            points.append(
+                (
+                    (cx + u * cos_t - v * sin_t) * scale,
+                    (cy + u * sin_t + v * cos_t) * scale,
+                )
+            )
+        return points
+
+    if fill is not None:
+        draw.polygon(ring(rx, ry), fill=fill)
+    if stroke is not None and stroke_width > 0:
+        half = stroke_width / 2
+        outline = ring(rx + half, ry + half)
+        draw.line(
+            outline + outline[:1],
+            fill=stroke,
+            width=max(1, round(stroke_width * scale)),
+            joint="curve",
         )
 
 

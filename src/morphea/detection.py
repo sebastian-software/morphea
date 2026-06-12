@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from math import asin, atan2, cos, hypot, pi, sin, sqrt
+from math import asin, atan2, cos, degrees, hypot, pi, radians, sin, sqrt
 from statistics import mean, pstdev
 
 from morphea.anchors import (
@@ -986,8 +986,10 @@ def _ellipse_candidate(
         return None
     aspect_error = abs(width - height) / max(width, height)
     if aspect_error < 0.1:
-        # Circle territory; let the circle candidate own near-round shapes.
-        return None
+        # Circle territory for the aligned fit, but a tilted ellipse can
+        # have a near-square box (45 degrees); the rotated fit rejects
+        # genuinely round shapes via its own in-frame aspect gate.
+        return _rotated_ellipse_candidate(component)
 
     rx = (width - 1) / 2 + 0.5
     ry = (height - 1) / 2 + 0.5
@@ -996,10 +998,10 @@ def _ellipse_candidate(
     expected_area = pi * rx * ry
     area_error = abs(component.area - expected_area) / expected_area
     if area_error > 0.12:
-        return None
+        return _rotated_ellipse_candidate(component)
     fit_residual_px = _ellipse_boundary_residual(component, center, rx, ry)
     if fit_residual_px > 0.75:
-        return None
+        return _rotated_ellipse_candidate(component)
 
     candidate = AnchorCandidate(
         kind=AnchorKind.ELLIPSE,
@@ -1015,6 +1017,90 @@ def _ellipse_candidate(
         },
     )
     return candidate
+
+
+def _rotated_ellipse_candidate(
+    component: MaskComponent,
+) -> AnchorCandidate | None:
+    """Fit a tilted filled ellipse via the principal axis of the ink.
+
+    Reached when the axis-aligned fit fails: a tilted ellipse fills its
+    bounding box poorly and misses the aligned area gate, while its
+    pixel covariance still points exactly along the true major axis.
+    """
+
+    axis = _principal_axis(component)
+    if axis is None:
+        return None
+    centroid, (axis_x, axis_y) = axis[0], axis[1]
+    theta = atan2(axis_y, axis_x)
+    # Fold onto (-pi/2, pi/2]: an ellipse is symmetric under 180 degrees.
+    if theta <= -pi / 2:
+        theta += pi
+    elif theta > pi / 2:
+        theta -= pi
+    # Near-axis-aligned shapes already had their chance in the aligned
+    # fit; refitting them rotated would only relabel the same rejection.
+    if min(abs(theta), abs(abs(theta) - pi / 2)) < radians(4.0):
+        return None
+
+    cos_t = cos(theta)
+    sin_t = sin(theta)
+    us = []
+    vs = []
+    for x, y in component.pixels:
+        dx = x - centroid.x
+        dy = y - centroid.y
+        us.append(dx * cos_t + dy * sin_t)
+        vs.append(-dx * sin_t + dy * cos_t)
+    min_u, max_u = min(us), max(us)
+    min_v, max_v = min(vs), max(vs)
+    rx = (max_u - min_u) / 2 + 0.5
+    ry = (max_v - min_v) / 2 + 0.5
+    if min(rx, ry) < 4.5:
+        return None
+    aspect_error = abs(rx - ry) / max(rx, ry)
+    if aspect_error < 0.1:
+        # Circle territory; rotation is meaningless there.
+        return None
+
+    center_u = (min_u + max_u) / 2
+    center_v = (min_v + max_v) / 2
+    center = Point(
+        centroid.x + center_u * cos_t - center_v * sin_t,
+        centroid.y + center_u * sin_t + center_v * cos_t,
+    )
+    expected_area = pi * rx * ry
+    area_error = abs(component.area - expected_area) / expected_area
+    if area_error > 0.12:
+        return None
+    fit_residual_px, residual_p95 = _ellipse_residual_profile(
+        component,
+        center,
+        rx,
+        ry,
+        rotation=theta,
+    )
+    # A tilted outline staircases diagonally, so its quantization noise sits
+    # near one pixel where the aligned fit sees 0.75; straight-flanked shapes
+    # (rotated stadiums, wedges) still measure well above this. The tail
+    # percentile separates uniform staircase noise from the local spikes of
+    # leaf-like blobs whose mean residual overlaps genuine ellipses.
+    if fit_residual_px > 1.1 or residual_p95 > 1.7:
+        return None
+
+    return AnchorCandidate(
+        kind=AnchorKind.ELLIPSE,
+        raster_error=area_error + fit_residual_px * 0.05,
+        node_count=1,
+        parameter_count=5,
+        ellipse=EllipseAnchor(center=center, rx=rx, ry=ry, rotation=theta),
+        metrics={
+            "ellipse_fit_residual_px": fit_residual_px,
+            "ellipse_area_mismatch": area_error,
+            "ellipse_rotation_deg": degrees(theta),
+        },
+    )
 
 
 def _stroke_ellipse_candidate(
@@ -1084,21 +1170,28 @@ def _ellipse_boundary_residual(
     center: Point,
     rx: float,
     ry: float,
+    *,
+    rotation: float = 0.0,
 ) -> float:
     """Mean pixel distance from boundary pixels to the ellipse along rays.
 
     Normalized residuals over-penalize small or flat ellipses where half a
     pixel of quantization is a large fraction of the minor radius, so compare
-    actual ray length against the ellipse ray length in pixels.
+    actual ray length against the ellipse ray length in pixels. ``rotation``
+    rotates the measurement frame for tilted ellipses.
     """
 
     samples = tuple(component.boundary_pixels)
     if not samples:
         return 0.0
+    cos_t = cos(rotation)
+    sin_t = sin(rotation)
     total = 0.0
     for x, y in samples:
-        dx = x - center.x
-        dy = y - center.y
+        raw_dx = x - center.x
+        raw_dy = y - center.y
+        dx = raw_dx * cos_t + raw_dy * sin_t
+        dy = -raw_dx * sin_t + raw_dy * cos_t
         actual = sqrt(dx * dx + dy * dy)
         if actual <= 0:
             continue
@@ -1106,6 +1199,42 @@ def _ellipse_boundary_residual(
         ray = rx * ry * actual / denominator if denominator > 0 else 0.0
         total += abs(actual - ray)
     return total / len(samples)
+
+
+def _ellipse_residual_profile(
+    component: MaskComponent,
+    center: Point,
+    rx: float,
+    ry: float,
+    *,
+    rotation: float,
+) -> tuple[float, float]:
+    """Mean and 95th-percentile ray residual of boundary pixels."""
+
+    samples = tuple(component.boundary_pixels)
+    if not samples:
+        return 0.0, 0.0
+    cos_t = cos(rotation)
+    sin_t = sin(rotation)
+    deltas = []
+    for x, y in samples:
+        raw_dx = x - center.x
+        raw_dy = y - center.y
+        dx = raw_dx * cos_t + raw_dy * sin_t
+        dy = -raw_dx * sin_t + raw_dy * cos_t
+        actual = sqrt(dx * dx + dy * dy)
+        if actual <= 0:
+            continue
+        denominator = sqrt((ry * dx) ** 2 + (rx * dy) ** 2)
+        ray = rx * ry * actual / denominator if denominator > 0 else 0.0
+        deltas.append(abs(actual - ray))
+    if not deltas:
+        return 0.0, 0.0
+    deltas.sort()
+    return (
+        sum(deltas) / len(deltas),
+        deltas[min(len(deltas) - 1, int(len(deltas) * 0.95))],
+    )
 
 
 def _normalized_ellipse_distance(

@@ -6,7 +6,7 @@ import json
 import tempfile
 from dataclasses import dataclass, field, replace
 from fnmatch import fnmatch
-from math import atan2, ceil, cos, hypot, pi, radians, sin
+from math import atan2, ceil, cos, degrees, hypot, pi, radians, sin
 from pathlib import Path
 from statistics import mean
 from typing import Any, Callable, Iterable
@@ -1413,6 +1413,14 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _rotated_ellipse_spec(case_id, variant, params)
+        for case_id, variant, params in (
+            ("rotated_ellipse", "base", (32, 32, 22, 12, 30.0)),
+            ("rotated_ellipse_steep", "steep", (32, 32, 24, 11, 60.0)),
+            ("rotated_ellipse_back", "back", (31, 33, 21, 13, 135.0)),
+        )
+    )
+    specs.extend(
         _composition_spec(
             case_id,
             "group_parallel_strokes",
@@ -1676,6 +1684,46 @@ def _ring_spec(
         max_raster_l1_error=0.18,
         max_raster_edge_error=0.08,
         min_bbox_iou=0.8,
+    )
+
+
+def _rotated_ellipse_spec(
+    case_id: str,
+    variant: str,
+    params: tuple[float, float, float, float, float],
+) -> PrimitiveSpec:
+    """A tilted filled ellipse; pins the principal-axis fit end to end."""
+
+    cx, cy, rx, ry, rotation_deg = params
+    theta = radians(rotation_deg)
+    polygon = [
+        (
+            cx + rx * cos(phi) * cos(theta) - ry * sin(phi) * sin(theta),
+            cy + rx * cos(phi) * sin(theta) + ry * sin(phi) * cos(theta),
+        )
+        for phi in (2 * pi * index / 180 for index in range(180))
+    ]
+    return PrimitiveSpec(
+        id=case_id,
+        family="rotated_ellipse",
+        variant=variant,
+        expected_kinds=("ellipse",),
+        geometry_type="ellipse",
+        geometry={
+            "cx": cx,
+            "cy": cy,
+            "rx": rx,
+            "ry": ry,
+            "rotation_deg": rotation_deg,
+        },
+        draw=lambda draw, polygon=polygon: draw.polygon(polygon, fill=BLUE),
+        coordinate_tolerance=2.0,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.05,
+        max_svg_raster_l1_error=0.06,
+        max_svg_raster_edge_error=0.06,
+        max_svg_vs_preview_l1_error=0.03,
+        min_bbox_iou=0.85,
     )
 
 
@@ -4204,6 +4252,20 @@ def _ellipse_geometry_failures(
                     "geometry_drift",
                     f"{key} delta {round(abs(actual - expected), 6)} exceeds "
                     f"{spec.coordinate_tolerance}",
+                )
+            )
+    if "rotation_deg" in spec.geometry:
+        expected_deg = float(spec.geometry["rotation_deg"])
+        actual_deg = degrees(float(ellipse.get("rotation", 0.0)))
+        # An ellipse is symmetric under 180 degrees.
+        delta = abs(actual_deg - expected_deg) % 180.0
+        delta = min(delta, 180.0 - delta)
+        tolerance = float(spec.geometry.get("rotation_tolerance_deg", 4.0))
+        if delta > tolerance:
+            failures.append(
+                _failure(
+                    "geometry_drift",
+                    f"rotation delta {round(delta, 2)} deg exceeds {tolerance}",
                 )
             )
     return failures
