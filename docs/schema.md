@@ -316,7 +316,8 @@ CLI arguments override values loaded from the config file.
 
 ## Pseudo-Label Harvest v1
 
-Written by `curve harvest`.
+Written by `curve harvest`. `curve harvest --markdown harvest.md` writes a
+scan-friendly quality-gate report next to the JSON artifact.
 
 Top-level fields:
 
@@ -346,6 +347,7 @@ Supported fields:
 
 - `run_root`
 - `output`
+- `markdown`: optional Markdown report path
 - `max_run_diagnostics`
 - `max_classifier_prior_error`
 - `min_editability_score`

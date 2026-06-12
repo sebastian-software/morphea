@@ -542,6 +542,8 @@ Implemented so far:
 - run-level `raster_l1_error` and `raster_edge_error` maximum filters
 - anchor-level aggregate quality filter for unstable simple-shape metrics
 - output pseudo-label index with source manifest provenance
+- `curve harvest --markdown harvest.md` writes a scan-friendly pseudo-label
+  quality-gate report with accepted labels, filters, and rejected runs
 - human-editable review queue via `curve review`
 - accepted/rejected/pending split via `curve apply-review`
 - review items support `corrected_kind` and structured issue tags for wrong
@@ -726,6 +728,8 @@ Implemented so far:
 - `curve eval --config eval.json` for repeatable run-directory summaries
 - `curve harvest --config harvest.json` for repeatable pseudo-label quality
   gates
+- `curve harvest --markdown harvest.md` for scan-friendly pseudo-label quality
+  reports
 - `curve review --config review.json` and `curve apply-review --config
   apply-review.json` for repeatable human-review queue processing
 - `curve merge-labels --config merge-labels.json` for repeatable reviewed-label
