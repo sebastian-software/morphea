@@ -525,6 +525,8 @@ Implemented so far:
 - output pseudo-label index with source manifest provenance
 - human-editable review queue via `curve review`
 - accepted/rejected/pending split via `curve apply-review`
+- review items support `corrected_kind` and structured issue tags for wrong
+  primitive type, cut-out, and stroke-behavior feedback
 - accepted reviewed pseudo-labels can be merged into a classifier-compatible
   train split via `curve merge-labels`
 - `curve compare-training` compares baseline classifier training against

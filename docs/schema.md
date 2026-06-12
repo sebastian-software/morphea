@@ -322,6 +322,20 @@ Top-level fields:
 Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
 metrics, run metrics, and `source_manifest` provenance.
 
+## Review Queue and Reviewed Labels v1
+
+Written by `curve review` and `curve apply-review`.
+
+Review queue items contain `decision`, `reason`, `corrected_kind`, `issues`,
+and the original `label`. `corrected_kind` lets a reviewer mark a wrong
+primitive type without manually editing nested anchor payloads. `issues` is a
+free-form string list for structured human notes such as `wrong_primitive_type`,
+`bad_cutout`, or `bad_stroke`.
+
+`curve apply-review` writes accepted, rejected, and pending splits. Accepted
+labels include a `review` provenance object and apply `corrected_kind` to both
+the top-level label kind and embedded anchor kind when present.
+
 ## Training Config v1
 
 Read by `curve train --config`.
