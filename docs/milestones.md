@@ -544,6 +544,9 @@ Implemented so far:
 - output pseudo-label index with source manifest provenance
 - `curve harvest --markdown harvest.md` writes a scan-friendly pseudo-label
   quality-gate report with accepted labels, filters, and rejected runs
+- `curve harvest-curated suite.json --run-root runs/curated -o pseudo.json`
+  runs bounded curated real-image cases and harvests pseudo-labels from the
+  generated per-case manifests
 - human-editable review queue via `curve review`
 - `curve review --markdown review.md` writes a scan-friendly queue summary
   while keeping accept/reject decisions in JSON
@@ -723,6 +726,7 @@ Implemented so far:
 - `curve segment`
 - `curve sweep`
 - `curve merge-labels`
+- `curve harvest-curated`
 - `curve compare-training`
 - `curve retrain`
 - `curve vectorize --config config.json` for repeatable runtime knob files
@@ -734,6 +738,8 @@ Implemented so far:
   gates
 - `curve harvest --markdown harvest.md` for scan-friendly pseudo-label quality
   reports
+- `curve harvest-curated --config harvest-curated.json` for repeatable
+  curated real-image pseudo-label collection
 - `curve review --config review.json` and `curve apply-review --config
   apply-review.json` for repeatable human-review queue processing
 - `curve review --markdown review.md` for scan-friendly review queue summaries

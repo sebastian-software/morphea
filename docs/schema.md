@@ -339,6 +339,19 @@ Top-level fields:
 Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
 metrics, run metrics, and `source_manifest` provenance.
 
+`curve harvest-curated` first runs a curated real-image suite with each case's
+bounded `recommended_config`, then harvests the generated run directories with
+the same quality gates. Its output keeps the normal harvest fields and adds:
+
+- `schema_version`: currently `1`
+- `source`: `curated_suite`
+- `suite`: source curated suite path
+- `run_root`: directory containing per-case run artifacts
+- `curated_ok`
+- `curated_case_count`
+- `curated_checked_count`
+- `curated_missing_source_count`
+
 ## Harvest Config v1
 
 Read by `curve harvest --config`.
@@ -347,6 +360,28 @@ Supported fields:
 
 - `run_root`
 - `output`
+- `markdown`: optional Markdown report path
+- `max_run_diagnostics`
+- `max_classifier_prior_error`
+- `min_editability_score`
+- `max_fragmentation_penalty`
+- `max_raster_l1_error`
+- `max_raster_edge_error`
+- `max_anchor_quality_error`
+
+CLI arguments override values loaded from the config file.
+
+## Harvest Curated Config v1
+
+Read by `curve harvest-curated --config`.
+
+Supported fields:
+
+- `suite`
+- `run_root`: directory for per-case curated run artifacts
+- `output`
+- `curated_report`: optional raw curated-check report path
+- `snapshot`: optional deterministic curated snapshot path
 - `markdown`: optional Markdown report path
 - `max_run_diagnostics`
 - `max_classifier_prior_error`
