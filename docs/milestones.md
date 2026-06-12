@@ -122,11 +122,14 @@ Implemented so far:
 - connected-component BFS now fills bounds, centroid, and row-span hints during
   the scan, including bounded image scans, so downstream primitive detection
   avoids repeated component passes.
+- connected-component BFS now also fills boundary-pixel hints, including
+  bounded image scans, so circle/ring/stroke candidate generation can reuse
+  scanner-derived boundaries instead of rescanning retained components.
 
 Remaining:
 
-- broader raster hot-loop optimization beyond measured component BFS/profile
-  reports.
+- continue profile-guided hot-loop work as larger curated image families expose
+  new bottlenecks.
 
 ## M2: Primitive Anchor Detection V2
 
