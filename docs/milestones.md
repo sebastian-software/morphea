@@ -642,7 +642,7 @@ Remaining:
 
 ## M9: Differentiable and Local Refinement
 
-Status: started.
+Status: implemented for the built-in local and soft-raster backends.
 
 Purpose: improve geometry after a good semantic initialization exists.
 
