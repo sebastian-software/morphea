@@ -83,14 +83,21 @@ def check_curated_suite(
     output_dir: str | Path | None = None,
     run: bool = False,
     snapshot: str | Path | None = None,
+    config_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate a curated suite and optionally run bounded vectorization."""
 
     suite_file = Path(suite_path)
     suite = load_curated_suite(suite_file)
     suite_output_dir = Path(output_dir) if output_dir is not None else None
+    overrides = _vectorize_config(config_overrides or {})
     cases = [
-        _check_curated_case(case, output_dir=suite_output_dir, run=run)
+        _check_curated_case(
+            case,
+            output_dir=suite_output_dir,
+            run=run,
+            config_overrides=overrides,
+        )
         for case in suite["cases"]
     ]
     report = {
@@ -101,6 +108,8 @@ def check_curated_suite(
         "ok": all(case["ok"] for case in cases),
         "cases": cases,
     }
+    if overrides:
+        report["config_overrides"] = _json_config(overrides)
     if output is not None:
         output_path = Path(output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +150,7 @@ def _check_curated_case(
     *,
     output_dir: Path | None,
     run: bool,
+    config_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     source = Path(case["source"]).expanduser()
     source_exists = source.exists()
@@ -159,7 +169,10 @@ def _check_curated_case(
     if not run:
         return result
 
-    config = _vectorize_config(case.get("recommended_config", {}))
+    config = {
+        **_vectorize_config(case.get("recommended_config", {})),
+        **_vectorize_config(config_overrides or {}),
+    }
     scene = scene_from_flat_color_image(source, **config)
     manifest = scene.to_manifest()
     expectation_results = [
@@ -170,7 +183,7 @@ def _check_curated_case(
         {
             "status": "checked",
             "ok": all(item["ok"] for item in expectation_results),
-            "config": config,
+            "config": _json_config(config),
             "anchor_count": manifest["anchor_count"],
             "anchor_kind_counts": _counts(
                 anchor.get("kind") for anchor in manifest.get("anchors", [])
@@ -192,7 +205,7 @@ def _check_curated_case(
             config={
                 "command": "curated-check",
                 "case_id": case["id"],
-                **config,
+                **_json_config(config),
             },
         )
         result["artifacts"] = {
@@ -259,6 +272,13 @@ def _check_expectation(
 
 def _vectorize_config(config: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in config.items() if key in VECTORIZE_CONFIG_KEYS}
+
+
+def _json_config(config: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: str(value) if isinstance(value, Path) else value
+        for key, value in config.items()
+    }
 
 
 def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:

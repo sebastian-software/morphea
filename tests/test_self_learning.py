@@ -4,6 +4,7 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
@@ -1156,6 +1157,97 @@ class SelfLearningTests(unittest.TestCase):
                 self.assertEqual(result["status"], "skipped_retrain")
                 self.assertFalse((output_dir / "model.json").exists())
 
+    def test_self_learning_cycle_validates_accepted_model_on_curated_suite(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            curated_suite = _write_curated_circle_suite(root)
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=98,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with patch("curve.self_learning.gate_training_comparison", accepted_gate):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    curated_suite=curated_suite,
+                )
+
+            self.assertEqual(result["status"], "retrained")
+            self.assertEqual(result["curated_validation"]["status"], "checked")
+            self.assertEqual(result["curated_validation"]["checked_count"], 1)
+            self.assertTrue((output_dir / "model.json").exists())
+            self.assertTrue((output_dir / "curated-validation.json").exists())
+            self.assertTrue(
+                (output_dir / "curated-validation-snapshot.json").exists()
+            )
+            curated_report = json.loads(
+                (output_dir / "curated-validation.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                curated_report["config_overrides"]["classifier_model"],
+                str(output_dir / "model.json"),
+            )
+
+    def test_self_learning_cycle_skips_curated_validation_without_model(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            curated_suite = _write_curated_circle_suite(root)
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=99,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            result = run_self_learning_cycle(
+                base_dataset=base_dir / "dataset.json",
+                reviewed_labels=reviewed,
+                output_dir=output_dir,
+                curated_suite=curated_suite,
+                min_train_examples_delta=10,
+            )
+
+            self.assertEqual(result["status"], "skipped_retrain")
+            self.assertEqual(
+                result["curated_validation"]["status"],
+                "skipped_gate_not_accepted",
+            )
+            self.assertFalse((output_dir / "curated-validation.json").exists())
+
     def test_render_self_learning_cycle_markdown_summarizes_artifacts(self):
         markdown = render_self_learning_cycle_markdown(
             {
@@ -1191,6 +1283,7 @@ class SelfLearningTests(unittest.TestCase):
             output_dir = root / "cycle"
             config = root / "self-learn.json"
             markdown = root / "cycle.md"
+            curated_suite = _write_curated_circle_suite(root)
             generate_synthetic_dataset(
                 output_dir=base_dir,
                 count=4,
@@ -1208,6 +1301,8 @@ class SelfLearningTests(unittest.TestCase):
                         "reviewed_labels": str(reviewed),
                         "output_dir": str(output_dir),
                         "markdown": str(markdown),
+                        "curated_suite": str(curated_suite),
+                        "min_train_examples_delta": 10,
                         "max_worst_accuracy_drop": 1.0,
                         "allow_unchanged": True,
                     }
@@ -1228,6 +1323,10 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(
                 result["artifacts"]["summary_markdown"],
                 str(markdown),
+            )
+            self.assertEqual(
+                result["curated_validation"]["status"],
+                "skipped_gate_not_accepted",
             )
 
     def test_retrain_centroid_classifier_writes_augmented_model(self):

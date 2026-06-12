@@ -147,6 +147,68 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn("editability_score", snapshot_report["cases"][0]["metrics"])
 
+    def test_check_curated_suite_applies_config_overrides(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "input.png"
+            suite_path = Path(temp_dir) / "suite.json"
+            output = Path(temp_dir) / "report.json"
+            model = Path(temp_dir) / "model.json"
+            image = Image.new("RGB", (24, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            image.save(source)
+            model.write_text(
+                json.dumps(
+                    {
+                        "model_type": "centroid_primitive_classifier",
+                        "feature_names": [],
+                        "classes": [],
+                        "centroids": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": str(source),
+                                "recommended_config": {"min_area": 8},
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(
+                suite_path,
+                output=output,
+                run=True,
+                config_overrides={"classifier_model": model},
+            )
+
+            self.assertEqual(result["config_overrides"]["classifier_model"], str(model))
+            self.assertEqual(
+                result["cases"][0]["config"]["classifier_model"],
+                str(model),
+            )
+            written = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                written["config_overrides"]["classifier_model"],
+                str(model),
+            )
+
     def test_load_curated_suite_rejects_metric_expectation_without_bounds(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             suite_path = Path(temp_dir) / "suite.json"

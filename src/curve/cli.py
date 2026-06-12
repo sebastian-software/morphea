@@ -126,6 +126,10 @@ SELF_LEARN_CONFIG_KEYS = {
     "base_dataset",
     "reviewed_labels",
     "validation_dataset",
+    "curated_suite",
+    "curated_output_dir",
+    "curated_report",
+    "curated_snapshot",
     "output_dir",
     "markdown",
     "min_train_examples_delta",
@@ -506,6 +510,10 @@ def main(argv: list[str] | None = None) -> None:
     self_learn.add_argument("base_dataset", type=Path, nargs="?")
     self_learn.add_argument("--reviewed-labels", type=Path)
     self_learn.add_argument("--validation-dataset", type=Path)
+    self_learn.add_argument("--curated-suite", type=Path)
+    self_learn.add_argument("--curated-output-dir", type=Path)
+    self_learn.add_argument("--curated-report", type=Path)
+    self_learn.add_argument("--curated-snapshot", type=Path)
     self_learn.add_argument("-o", "--output-dir", type=Path)
     self_learn.add_argument("--markdown", type=Path)
     self_learn.add_argument("--min-train-examples-delta", type=int)
@@ -896,6 +904,10 @@ def main(argv: list[str] | None = None) -> None:
             base_dataset=cycle_config["base_dataset"],
             reviewed_labels=cycle_config["reviewed_labels"],
             validation_dataset=cycle_config.get("validation_dataset"),
+            curated_suite=cycle_config.get("curated_suite"),
+            curated_output_dir=cycle_config.get("curated_output_dir"),
+            curated_report=cycle_config.get("curated_report"),
+            curated_snapshot=cycle_config.get("curated_snapshot"),
             output_dir=cycle_config["output_dir"],
             markdown=cycle_config.get("markdown"),
             min_train_examples_delta=int(cycle_config["min_train_examples_delta"]),
@@ -1199,6 +1211,14 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         config["reviewed_labels"] = args.reviewed_labels
     if args.validation_dataset is not None:
         config["validation_dataset"] = args.validation_dataset
+    if args.curated_suite is not None:
+        config["curated_suite"] = args.curated_suite
+    if args.curated_output_dir is not None:
+        config["curated_output_dir"] = args.curated_output_dir
+    if args.curated_report is not None:
+        config["curated_report"] = args.curated_report
+    if args.curated_snapshot is not None:
+        config["curated_snapshot"] = args.curated_snapshot
     if args.output_dir is not None:
         config["output_dir"] = args.output_dir
     if args.markdown is not None:
@@ -1222,6 +1242,10 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         "base_dataset",
         "reviewed_labels",
         "validation_dataset",
+        "curated_suite",
+        "curated_output_dir",
+        "curated_report",
+        "curated_snapshot",
         "output_dir",
         "markdown",
     ):
@@ -1535,6 +1559,10 @@ def _load_self_learn_config(path: Path) -> dict[str, object]:
         "base_dataset",
         "reviewed_labels",
         "validation_dataset",
+        "curated_suite",
+        "curated_output_dir",
+        "curated_report",
+        "curated_snapshot",
         "output_dir",
         "markdown",
     ):

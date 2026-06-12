@@ -522,6 +522,10 @@ def run_self_learning_cycle(
     reviewed_labels: str | Path,
     output_dir: str | Path,
     validation_dataset: str | Path | None = None,
+    curated_suite: str | Path | None = None,
+    curated_output_dir: str | Path | None = None,
+    curated_report: str | Path | None = None,
+    curated_snapshot: str | Path | None = None,
     min_train_examples_delta: int = 1,
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
@@ -538,6 +542,21 @@ def run_self_learning_cycle(
     gate_path = output / "gate.json"
     gate_markdown = output / "gate.md"
     model_path = output / "model.json"
+    curated_report_path = (
+        Path(curated_report)
+        if curated_report is not None
+        else output / "curated-validation.json"
+    )
+    curated_snapshot_path = (
+        Path(curated_snapshot)
+        if curated_snapshot is not None
+        else output / "curated-validation-snapshot.json"
+    )
+    curated_output_path = (
+        Path(curated_output_dir)
+        if curated_output_dir is not None
+        else output / "curated-validation-runs"
+    )
 
     pseudo_dataset = merge_reviewed_pseudo_label_dataset(
         reviewed_labels=reviewed_labels,
@@ -567,6 +586,43 @@ def run_self_learning_cycle(
             validation_dataset=validation_dataset,
             output=model_path,
         )
+    curated_validation: dict[str, object] | None = None
+    if curated_suite is not None:
+        if model is not None:
+            curated = check_curated_suite(
+                curated_suite,
+                output=curated_report_path,
+                output_dir=curated_output_path,
+                run=True,
+                snapshot=curated_snapshot_path,
+                config_overrides={"classifier_model": model_path},
+            )
+            curated_validation = {
+                "status": "checked",
+                "suite": str(curated_suite),
+                "ok": curated["ok"],
+                "case_count": curated["case_count"],
+                "checked_count": sum(
+                    1
+                    for case in curated.get("cases", [])
+                    if isinstance(case, dict) and case.get("status") == "checked"
+                ),
+                "missing_source_count": sum(
+                    1
+                    for case in curated.get("cases", [])
+                    if isinstance(case, dict)
+                    and case.get("status") == "missing_source"
+                ),
+            }
+        else:
+            curated_validation = {
+                "status": "skipped_gate_not_accepted",
+                "suite": str(curated_suite),
+                "ok": None,
+                "case_count": 0,
+                "checked_count": 0,
+                "missing_source_count": 0,
+            }
 
     result = {
         "schema_version": 1,
@@ -582,6 +638,21 @@ def run_self_learning_cycle(
             "gate": str(gate_path),
             "gate_markdown": str(gate_markdown),
             "model": str(model_path) if model is not None else None,
+            "curated_report": (
+                str(curated_report_path)
+                if curated_validation is not None and model is not None
+                else None
+            ),
+            "curated_snapshot": (
+                str(curated_snapshot_path)
+                if curated_validation is not None and model is not None
+                else None
+            ),
+            "curated_output_dir": (
+                str(curated_output_path)
+                if curated_validation is not None and model is not None
+                else None
+            ),
         },
         "pseudo_dataset": {
             "count": pseudo_dataset["count"],
@@ -602,6 +673,7 @@ def run_self_learning_cycle(
             if model is not None
             else None
         ),
+        "curated_validation": curated_validation,
     }
     summary_path = output / "self-learning-cycle.json"
     summary_path.write_text(
@@ -646,12 +718,25 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         f"- Comparison status: `{comparison.get('status', 'n/a')}`",
         f"- Best accuracy delta: {_fmt_metric(comparison.get('best_accuracy_delta'))}",
         f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
-        "",
-        "## Artifacts",
-        "",
-        "| Artifact | Path |",
-        "| --- | --- |",
     ]
+    curated = result.get("curated_validation")
+    if isinstance(curated, dict):
+        lines.extend(
+            [
+                f"- Curated validation: `{curated.get('status', 'n/a')}`",
+                f"- Curated OK: `{curated.get('ok', 'n/a')}`",
+                f"- Curated checked cases: {_fmt_metric(curated.get('checked_count'))}",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## Artifacts",
+            "",
+            "| Artifact | Path |",
+            "| --- | --- |",
+        ]
+    )
     for key in sorted(artifacts):
         value = artifacts.get(key)
         if value is not None:
