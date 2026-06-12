@@ -181,6 +181,34 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["filters"]["min_editability_score"], 0.8)
             self.assertEqual(result["filters"]["max_raster_edge_error"], 0.5)
 
+    def test_harvest_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
+            output = Path(temp_dir) / "pseudo.json"
+            config = Path(temp_dir) / "harvest.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "run_root": str(root),
+                        "output": str(output),
+                        "min_editability_score": 0.8,
+                        "max_fragmentation_penalty": 0.25,
+                        "max_raster_edge_error": 0.5,
+                        "max_anchor_quality_error": 0.25,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["harvest", "--config", str(config)])
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["filters"]["min_editability_score"], 0.8)
+            self.assertEqual(result["filters"]["max_fragmentation_penalty"], 0.25)
+
     def test_create_review_file_marks_labels_pending(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             pseudo = Path(temp_dir) / "pseudo.json"

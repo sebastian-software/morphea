@@ -122,6 +122,17 @@ REFINE_CONFIG_KEYS = {
     "raster_l1_weight",
     "raster_edge_weight",
 }
+HARVEST_DEFAULT_CONFIG = {
+    "run_root": None,
+    "output": None,
+    "max_run_diagnostics": 0,
+    "max_classifier_prior_error": 0.0,
+    "min_editability_score": 0.0,
+    "max_fragmentation_penalty": 1.0,
+    "max_raster_l1_error": 1.0,
+    "max_raster_edge_error": 1.0,
+    "max_anchor_quality_error": 1.0,
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -362,15 +373,16 @@ def main(argv: list[str] | None = None) -> None:
         "harvest",
         help="Collect high-confidence pseudo-labels from vectorize runs.",
     )
-    harvest.add_argument("run_root", type=Path)
-    harvest.add_argument("-o", "--output", type=Path, required=True)
-    harvest.add_argument("--max-run-diagnostics", type=int, default=0)
-    harvest.add_argument("--max-classifier-prior-error", type=float, default=0.0)
-    harvest.add_argument("--min-editability-score", type=float, default=0.0)
-    harvest.add_argument("--max-fragmentation-penalty", type=float, default=1.0)
-    harvest.add_argument("--max-raster-l1-error", type=float, default=1.0)
-    harvest.add_argument("--max-raster-edge-error", type=float, default=1.0)
-    harvest.add_argument("--max-anchor-quality-error", type=float, default=1.0)
+    harvest.add_argument("run_root", type=Path, nargs="?")
+    harvest.add_argument("-o", "--output", type=Path)
+    harvest.add_argument("--max-run-diagnostics", type=int)
+    harvest.add_argument("--max-classifier-prior-error", type=float)
+    harvest.add_argument("--min-editability-score", type=float)
+    harvest.add_argument("--max-fragmentation-penalty", type=float)
+    harvest.add_argument("--max-raster-l1-error", type=float)
+    harvest.add_argument("--max-raster-edge-error", type=float)
+    harvest.add_argument("--max-anchor-quality-error", type=float)
+    harvest.add_argument("--config", type=Path)
 
     review = subcommands.add_parser(
         "review",
@@ -668,16 +680,23 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "harvest":
+        harvest_config = _resolved_harvest_config(args)
         result = harvest_pseudo_labels(
-            run_root=args.run_root,
-            output=args.output,
-            max_run_diagnostics=args.max_run_diagnostics,
-            max_classifier_prior_error=args.max_classifier_prior_error,
-            min_editability_score=args.min_editability_score,
-            max_fragmentation_penalty=args.max_fragmentation_penalty,
-            max_raster_l1_error=args.max_raster_l1_error,
-            max_raster_edge_error=args.max_raster_edge_error,
-            max_anchor_quality_error=args.max_anchor_quality_error,
+            run_root=harvest_config["run_root"],
+            output=harvest_config["output"],
+            max_run_diagnostics=int(harvest_config["max_run_diagnostics"]),
+            max_classifier_prior_error=float(
+                harvest_config["max_classifier_prior_error"]
+            ),
+            min_editability_score=float(harvest_config["min_editability_score"]),
+            max_fragmentation_penalty=float(
+                harvest_config["max_fragmentation_penalty"]
+            ),
+            max_raster_l1_error=float(harvest_config["max_raster_l1_error"]),
+            max_raster_edge_error=float(harvest_config["max_raster_edge_error"]),
+            max_anchor_quality_error=float(
+                harvest_config["max_anchor_quality_error"]
+            ),
         )
         print(f"harvested {result['pseudo_label_count']} pseudo-labels")
         return
@@ -1002,6 +1021,32 @@ def _resolved_refine_config(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
+def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
+    config = dict(HARVEST_DEFAULT_CONFIG)
+    if args.config is not None:
+        config.update(_load_harvest_config(args.config))
+    if args.run_root is not None:
+        config["run_root"] = args.run_root
+    if args.output is not None:
+        config["output"] = args.output
+    for key in (
+        "max_run_diagnostics",
+        "max_classifier_prior_error",
+        "min_editability_score",
+        "max_fragmentation_penalty",
+        "max_raster_l1_error",
+        "max_raster_edge_error",
+        "max_anchor_quality_error",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    _require_config_paths(config, ("run_root", "output"), "harvest")
+    config["run_root"] = Path(config["run_root"])
+    config["output"] = Path(config["output"])
+    return config
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -1092,6 +1137,21 @@ def _load_refine_config(path: Path | None) -> dict[str, object]:
     return config
 
 
+def _load_harvest_config(path: Path) -> dict[str, object]:
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("harvest config must be a JSON object")
+    unknown = sorted(set(loaded) - set(HARVEST_DEFAULT_CONFIG))
+    if unknown:
+        msg = f"unsupported harvest config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("run_root", "output"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _segmenter_from_config(
     config: dict[str, object],
 ) -> FlatColorSegmenter | MlxSamSegmenter:
@@ -1161,11 +1221,11 @@ def _load_path_config(
 
 
 def _require_config_paths(
-    config: dict[str, Path],
+    config: dict[str, object],
     required: tuple[str, ...],
     name: str,
 ) -> None:
-    missing = [key for key in required if key not in config]
+    missing = [key for key in required if config.get(key) is None]
     if missing:
         msg = f"{name} requires: {', '.join(missing)}"
         raise ValueError(msg)
