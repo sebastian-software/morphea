@@ -95,6 +95,7 @@ TRAIN_MLX_CONFIG_KEYS = {
     "num_heads",
     "num_layers",
     "learning_rate",
+    "crop_size",
     "allow_unavailable",
 }
 SEGMENT_CONFIG_DEFAULTS = {
@@ -407,6 +408,7 @@ def main(argv: list[str] | None = None) -> None:
     train_mlx.add_argument("--num-heads", type=int)
     train_mlx.add_argument("--num-layers", type=int)
     train_mlx.add_argument("--learning-rate", type=float)
+    train_mlx.add_argument("--crop-size", type=int)
     train_mlx.add_argument(
         "--allow-unavailable",
         action="store_true",
@@ -1157,7 +1159,14 @@ def _resolved_train_mlx_config(
         config["dataset"] = args.dataset
     if args.output is not None:
         config["output"] = args.output
-    for key in ("epochs", "hidden_dim", "num_heads", "num_layers", "learning_rate"):
+    for key in (
+        "epochs",
+        "hidden_dim",
+        "num_heads",
+        "num_layers",
+        "learning_rate",
+        "crop_size",
+    ):
         value = getattr(args, key, None)
         if value is not None:
             config[key] = value
@@ -1175,6 +1184,7 @@ def _resolved_train_mlx_config(
             num_heads=int(config.get("num_heads", 4)),
             num_layers=int(config.get("num_layers", 1)),
             learning_rate=float(config.get("learning_rate", 0.001)),
+            crop_size=int(config.get("crop_size", 16)),
             allow_unavailable=bool(config.get("allow_unavailable", False)),
         ),
     )

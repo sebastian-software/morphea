@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from math import dist
 from pathlib import Path
 
+from PIL import Image
+
 from curve.anchors import (
     AnchorCandidate,
     AnchorKind,
@@ -37,6 +39,16 @@ FEATURE_NAMES = (
 class TrainingExample:
     label: str
     features: tuple[float, ...]
+
+
+@dataclass(frozen=True)
+class RasterTrainingExample:
+    label: str
+    features: tuple[float, ...]
+    crop_tokens: tuple[tuple[float, float, float, float], ...]
+    bounds: tuple[int, int, int, int]
+    sample_id: str
+    anchor_index: int
 
 
 def features_from_anchor(anchor: dict[str, object]) -> tuple[float, ...]:
@@ -142,6 +154,39 @@ def examples_from_dataset(
     return tuple(examples)
 
 
+def raster_examples_from_dataset(
+    dataset_json: str | Path,
+    *,
+    crop_size: int = 16,
+    splits: tuple[str, ...] = ("train",),
+) -> tuple[RasterTrainingExample, ...]:
+    if crop_size <= 0:
+        msg = "crop_size must be positive"
+        raise ValueError(msg)
+    dataset_path = Path(dataset_json)
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    root = dataset_path.parent
+    examples: list[RasterTrainingExample] = []
+    for sample in dataset.get("samples", []):
+        if sample.get("split") not in splits:
+            continue
+        image = Image.open(root / sample["image"]).convert("RGBA")
+        manifest = json.loads((root / sample["manifest"]).read_text(encoding="utf-8"))
+        for anchor_index, anchor in enumerate(manifest.get("anchors", [])):
+            bounds = _anchor_crop_bounds(anchor, image.size)
+            examples.append(
+                RasterTrainingExample(
+                    label=anchor["kind"],
+                    features=features_from_anchor(anchor),
+                    crop_tokens=_rgba_crop_tokens(image, bounds, crop_size),
+                    bounds=bounds,
+                    sample_id=str(sample.get("id", "")),
+                    anchor_index=anchor_index,
+                )
+            )
+    return tuple(examples)
+
+
 def anchors_from_dataset(
     dataset_json: str | Path,
     *,
@@ -157,6 +202,76 @@ def anchors_from_dataset(
         manifest = json.loads((root / sample["manifest"]).read_text(encoding="utf-8"))
         anchors.extend(anchor for anchor in manifest.get("anchors", []))
     return tuple(anchors)
+
+
+def _anchor_crop_bounds(
+    anchor: dict[str, object],
+    image_size: tuple[int, int],
+) -> tuple[int, int, int, int]:
+    width, height = image_size
+    xs: list[float] = []
+    ys: list[float] = []
+    margin = 2.0
+    circle = anchor.get("circle")
+    if isinstance(circle, dict):
+        cx = float(circle.get("cx", 0.0))
+        cy = float(circle.get("cy", 0.0))
+        radius = float(circle.get("r", 0.0))
+        xs.extend([cx - radius, cx + radius])
+        ys.extend([cy - radius, cy + radius])
+    stroke = anchor.get("stroke")
+    if isinstance(stroke, dict):
+        widths = [
+            float(value)
+            for value in stroke.get("width_samples", [])
+            if isinstance(value, (int, float))
+        ]
+        if widths:
+            margin = max(margin, max(widths) / 2 + 2)
+        for point in stroke.get("centerline", []):
+            if not isinstance(point, dict):
+                continue
+            xs.append(float(point.get("x", 0.0)))
+            ys.append(float(point.get("y", 0.0)))
+    quad = anchor.get("quad")
+    if isinstance(quad, dict):
+        for point in quad.get("corners", []):
+            if not isinstance(point, dict):
+                continue
+            xs.append(float(point.get("x", 0.0)))
+            ys.append(float(point.get("y", 0.0)))
+
+    if not xs or not ys:
+        return (0, 0, width, height)
+    left = max(0, int(min(xs) - margin))
+    top = max(0, int(min(ys) - margin))
+    right = min(width, int(max(xs) + margin + 1))
+    bottom = min(height, int(max(ys) + margin + 1))
+    if right <= left or bottom <= top:
+        return (0, 0, width, height)
+    return left, top, right, bottom
+
+
+def _rgba_crop_tokens(
+    image: Image.Image,
+    bounds: tuple[int, int, int, int],
+    crop_size: int,
+) -> tuple[tuple[float, float, float, float], ...]:
+    crop = image.crop(bounds).resize(
+        (crop_size, crop_size),
+        Image.Resampling.NEAREST,
+    )
+    get_flattened_data = getattr(crop, "get_flattened_data", None)
+    pixels = get_flattened_data() if get_flattened_data is not None else crop.getdata()
+    return tuple(
+        (
+            red / 255,
+            green / 255,
+            blue / 255,
+            alpha / 255,
+        )
+        for red, green, blue, alpha in pixels
+    )
 
 
 def train_centroid_classifier(

@@ -11,12 +11,14 @@ from typing import Any
 
 from curve.classifier import (
     FEATURE_NAMES,
+    RasterTrainingExample,
     TrainingExample,
     anchors_from_dataset,
     centroids_from_examples,
     evaluate_classifier,
     evaluate_classifier_ranking,
     examples_from_dataset,
+    raster_examples_from_dataset,
 )
 
 
@@ -30,6 +32,7 @@ class MlxClassifierTrainingConfig:
     num_heads: int = 4
     num_layers: int = 1
     learning_rate: float = 0.001
+    crop_size: int = 16
     allow_unavailable: bool = False
 
 
@@ -63,6 +66,9 @@ def train_mlx_transformer_classifier(
     """Train the optional MLX primitive classifier or write a fallback artifact."""
 
     training_config = config or MlxClassifierTrainingConfig()
+    if training_config.crop_size <= 0:
+        msg = "MLX crop_size must be positive"
+        raise ValueError(msg)
     train_examples = examples_from_dataset(dataset_json, splits=("train",))
     if not train_examples:
         msg = "training dataset contains no train examples"
@@ -97,6 +103,7 @@ def train_mlx_transformer_classifier(
             "num_heads": training_config.num_heads,
             "num_layers": training_config.num_layers,
             "learning_rate": training_config.learning_rate,
+            "crop_size": training_config.crop_size,
         },
         "fallback_model_type": "centroid_primitive_classifier",
         "fallback_centroids": {
@@ -126,7 +133,17 @@ def train_mlx_transformer_classifier(
     }
 
     if mlx_available:
-        model["mlx_training"] = _train_mlx_weights(train_examples, labels, training_config)
+        raster_examples = raster_examples_from_dataset(
+            dataset_json,
+            crop_size=training_config.crop_size,
+            splits=("train",),
+        )
+        model["mlx_training"] = _train_mlx_weights(
+            train_examples,
+            raster_examples,
+            labels,
+            training_config,
+        )
 
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -139,6 +156,7 @@ def train_mlx_transformer_classifier(
 
 def _train_mlx_weights(
     train_examples: tuple[TrainingExample, ...],
+    raster_examples: tuple[RasterTrainingExample, ...],
     labels: list[str],
     config: MlxClassifierTrainingConfig,
 ) -> dict[str, Any]:
@@ -153,6 +171,14 @@ def _train_mlx_weights(
     import mlx.core as mx  # type: ignore[import-not-found]
 
     head = _train_feature_head(train_examples, labels, config)
+    head["crop_token_spec"] = {
+        "source": "anchor_rgba_crop",
+        "crop_size": config.crop_size,
+        "token_shape": [config.crop_size * config.crop_size, 4],
+        "channel_order": ["r", "g", "b", "a"],
+        "value_range": [0.0, 1.0],
+    }
+    head["crop_token_summary"] = _crop_token_summary(raster_examples)
     head["backend_version"] = getattr(mx, "__version__", "unknown")
     head["backend_array_api"] = "mlx.core"
     return head
@@ -287,3 +313,32 @@ def _softmax(logits: list[float]) -> list[float]:
 
 def _argmax(values: list[float]) -> int:
     return max(range(len(values)), key=values.__getitem__)
+
+
+def _crop_token_summary(
+    raster_examples: tuple[RasterTrainingExample, ...],
+) -> dict[str, Any]:
+    if not raster_examples:
+        return {
+            "raster_example_count": 0,
+            "mean_rgba": [0.0, 0.0, 0.0, 0.0],
+            "bounds_area_mean": 0.0,
+        }
+    channel_sums = [0.0, 0.0, 0.0, 0.0]
+    token_count = 0
+    bounds_area = 0.0
+    for example in raster_examples:
+        left, top, right, bottom = example.bounds
+        bounds_area += max(0, right - left) * max(0, bottom - top)
+        for token in example.crop_tokens:
+            token_count += 1
+            for index, value in enumerate(token):
+                channel_sums[index] += value
+    return {
+        "raster_example_count": len(raster_examples),
+        "mean_rgba": [
+            value / token_count if token_count else 0.0
+            for value in channel_sums
+        ],
+        "bounds_area_mean": bounds_area / len(raster_examples),
+    }

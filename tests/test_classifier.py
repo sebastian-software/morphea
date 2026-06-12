@@ -17,6 +17,7 @@ from curve.classifier import (
     examples_from_dataset,
     features_from_anchor,
     load_centroid_model,
+    raster_examples_from_dataset,
     train_centroid_classifier,
 )
 from curve.cli import main
@@ -94,6 +95,32 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 "stroke_path",
                 "stroke_polyline",
             })
+
+    def test_raster_examples_from_dataset_reads_rgba_crop_tokens(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=3,
+                seed=2,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+
+            examples = raster_examples_from_dataset(
+                Path(temp_dir) / "dataset.json",
+                crop_size=4,
+            )
+
+            self.assertEqual(len(examples), 15)
+            self.assertEqual(len(examples[0].crop_tokens), 16)
+            self.assertEqual(len(examples[0].crop_tokens[0]), 4)
+            self.assertTrue(
+                all(0.0 <= value <= 1.0 for value in examples[0].crop_tokens[0])
+            )
+            self.assertGreater(examples[0].bounds[2], examples[0].bounds[0])
+            self.assertEqual(examples[0].sample_id, "sample-0000")
 
     def test_train_centroid_classifier_writes_model_with_evaluation(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -192,6 +219,28 @@ class PrimitiveClassifierTests(unittest.TestCase):
                         output=Path(temp_dir) / "mlx-model.json",
                     )
 
+    def test_train_mlx_rejects_invalid_crop_size(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generate_synthetic_dataset(
+                output_dir=temp_dir,
+                count=3,
+                seed=22,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+
+            with self.assertRaisesRegex(ValueError, "crop_size must be positive"):
+                train_mlx_transformer_classifier(
+                    Path(temp_dir) / "dataset.json",
+                    output=Path(temp_dir) / "mlx-model.json",
+                    config=MlxClassifierTrainingConfig(
+                        crop_size=0,
+                        allow_unavailable=True,
+                    ),
+                )
+
     def test_mlx_classifier_runtime_status_reports_package_state(self):
         with patch("curve.mlx_classifier.is_mlx_available", return_value=False):
             unavailable = mlx_classifier_runtime_status()
@@ -265,6 +314,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                         "num_heads": 2,
                         "num_layers": 1,
                         "learning_rate": 0.002,
+                        "crop_size": 6,
                         "allow_unavailable": True,
                     }
                 ),
@@ -278,6 +328,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             model = json.loads(model_path.read_text(encoding="utf-8"))
             self.assertEqual(model["model_type"], MLX_MODEL_TYPE)
             self.assertEqual(model["training_config"]["learning_rate"], 0.002)
+            self.assertEqual(model["training_config"]["crop_size"], 6)
 
     def test_train_mlx_records_available_runtime_with_trained_feature_head(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -303,7 +354,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 model = train_mlx_transformer_classifier(
                     Path(temp_dir) / "dataset.json",
                     output=model_path,
-                    config=MlxClassifierTrainingConfig(epochs=1),
+                    config=MlxClassifierTrainingConfig(epochs=1, crop_size=6),
                 )
 
             self.assertEqual(model["status"], "trained")
@@ -317,6 +368,15 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertEqual(model["mlx_training"]["backend_version"], "test-mlx")
             self.assertEqual(len(model["mlx_training"]["loss_history"]), 1)
             self.assertIn("weights", model["mlx_training"])
+            self.assertEqual(model["mlx_training"]["crop_token_spec"]["crop_size"], 6)
+            self.assertEqual(
+                model["mlx_training"]["crop_token_spec"]["token_shape"],
+                [36, 4],
+            )
+            self.assertEqual(
+                model["mlx_training"]["crop_token_summary"]["raster_example_count"],
+                model["train_examples"],
+            )
 
     def test_classifier_ranking_compares_heuristic_and_prior(self):
         with tempfile.TemporaryDirectory() as temp_dir:

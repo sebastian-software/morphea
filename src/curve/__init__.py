@@ -53,6 +53,7 @@ from curve.comparison import (
 )
 from curve.classifier import (
     FEATURE_NAMES,
+    RasterTrainingExample,
     TrainingExample,
     anchors_from_dataset,
     centroids_from_examples,
@@ -65,6 +66,7 @@ from curve.classifier import (
     features_from_candidate,
     load_centroid_model,
     predict_label,
+    raster_examples_from_dataset,
     render_classifier_evaluation_markdown,
     train_centroid_classifier,
 )
@@ -137,6 +139,7 @@ __all__ = [
     "LOCAL_REFINEMENT_BACKEND",
     "OPTIONAL_DIFFERENTIABLE_BACKENDS",
     "QuadAnchor",
+    "RasterTrainingExample",
     "RefinementConfig",
     "SCENE_MANIFEST_SCHEMA_VERSION",
     "ScoringConfig",
@@ -192,6 +195,7 @@ __all__ = [
     "merge_reviewed_pseudo_label_dataset",
     "proposals_to_manifest",
     "predict_label",
+    "raster_examples_from_dataset",
     "profile_vectorize",
     "scene_from_flat_color_image",
     "scene_groups_to_manifest",
