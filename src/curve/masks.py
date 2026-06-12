@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Iterable
 
 from curve.anchors import Point
@@ -41,6 +41,11 @@ class BinaryMask:
 @dataclass(frozen=True)
 class MaskComponent:
     pixels: frozenset[Pixel]
+    bounds_hint: tuple[int, int, int, int] | None = field(
+        default=None,
+        compare=False,
+        repr=False,
+    )
 
     @property
     def area(self) -> int:
@@ -48,9 +53,20 @@ class MaskComponent:
 
     @property
     def bounds(self) -> tuple[int, int, int, int]:
-        xs = [x for x, _ in self.pixels]
-        ys = [y for _, y in self.pixels]
-        return min(xs), min(ys), max(xs), max(ys)
+        if self.bounds_hint is not None:
+            return self.bounds_hint
+        min_x = min_y = 0
+        max_x = max_y = -1
+        for index, (x, y) in enumerate(self.pixels):
+            if index == 0:
+                min_x = max_x = x
+                min_y = max_y = y
+                continue
+            min_x = min(min_x, x)
+            max_x = max(max_x, x)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y)
+        return min_x, min_y, max_x, max_y
 
     @property
     def width(self) -> int:
@@ -79,13 +95,14 @@ class MaskComponent:
         return frozenset(boundary)
 
     def row_spans(self) -> tuple[tuple[int, int, int], ...]:
-        spans: list[tuple[int, int, int]] = []
-        _, min_y, _, max_y = self.bounds
-        for y in range(min_y, max_y + 1):
-            xs = [x for x, pixel_y in self.pixels if pixel_y == y]
-            if xs:
-                spans.append((y, min(xs), max(xs)))
-        return tuple(spans)
+        rows: dict[int, tuple[int, int]] = {}
+        for x, y in self.pixels:
+            if y not in rows:
+                rows[y] = (x, x)
+                continue
+            min_x, max_x = rows[y]
+            rows[y] = (min(min_x, x), max(max_x, x))
+        return tuple((y, *rows[y]) for y in sorted(rows))
 
 
 def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskComponent, ...]:
@@ -98,12 +115,20 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
 
         grid[seed] = 0
         pixels: list[Pixel] = []
+        start_x = seed % mask.width
+        start_y = seed // mask.width
+        min_x = max_x = start_x
+        min_y = max_y = start_y
         queue: deque[int] = deque([seed])
         while queue:
             index = queue.popleft()
             x = index % mask.width
             y = index // mask.width
             pixels.append((x, y))
+            min_x = min(min_x, x)
+            max_x = max(max_x, x)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y)
             for neighbor_y in range(max(0, y - 1), min(mask.height, y + 2)):
                 row_offset = neighbor_y * mask.width
                 for neighbor_x in range(max(0, x - 1), min(mask.width, x + 2)):
@@ -114,7 +139,12 @@ def connected_components(mask: BinaryMask, *, min_area: int = 1) -> tuple[MaskCo
                         grid[neighbor] = 0
                         queue.append(neighbor)
         if len(pixels) >= min_area:
-            components.append(MaskComponent(frozenset(pixels)))
+            components.append(
+                MaskComponent(
+                    frozenset(pixels),
+                    bounds_hint=(min_x, min_y, max_x, max_y),
+                )
+            )
 
     return tuple(sorted(components, key=lambda component: component.area, reverse=True))
 

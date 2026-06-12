@@ -412,7 +412,11 @@ def _bounded_connected_components(
             continue
         components.append(
             MaskComponent(
-                frozenset(_pixel_from_index(index, mask.width) for index in pixel_indexes)
+                frozenset(
+                    _pixel_from_index(index, mask.width)
+                    for index in pixel_indexes
+                ),
+                bounds_hint=(min_x, min_y, max_x, max_y),
             )
         )
 
