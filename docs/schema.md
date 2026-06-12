@@ -617,6 +617,39 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+## Refinement Gate v1
+
+Written by `curve refinement-gate`.
+
+Top-level fields:
+
+- `schema_version`: currently `1`
+- `refined_manifest`: source refined manifest path
+- `decision`: `accept`, `manual_review`, or `reject`
+- `accepted`: boolean shortcut for `decision == "accept"`
+- `reasons`: machine-readable gate reasons
+- `gates`: active threshold values
+- `structure_audit`: copied refinement structure audit
+- `optimizer`: copied optimizer metrics plus objective delta
+
+The gate rejects structure/editability breaks and objective regressions. Missing
+optimizer metrics, timeouts, or unchanged non-improving results go to manual
+review unless explicitly allowed.
+
+## Refinement Gate Config v1
+
+Read by `curve refinement-gate --config`.
+
+Supported fields:
+
+- `refined_manifest`
+- `output`
+- `markdown`: optional Markdown report path
+- `max_objective_regression`
+- `require_improvement`
+
+CLI arguments override values loaded from the config file.
+
 ## Synthetic Dataset v1
 
 Written by `curve generate`.

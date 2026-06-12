@@ -633,6 +633,9 @@ Implemented so far:
   states without allowing structure-changing refinement to run implicitly.
 - refinement config validates iteration, timeout, and raster-weight limits, and
   optimizer metadata records elapsed seconds, timeout state, and stopped reason
+- `curve refinement-gate refined.json -o gate.json` turns structure audit and
+  optimizer objective metrics into an accept/manual-review/reject decision so
+  tiny pixel gains cannot silently break editability
 
 Remaining:
 
@@ -740,6 +743,7 @@ Implemented so far:
 - `curve training-gate`
 - `curve self-learn`
 - `curve retrain`
+- `curve refinement-gate`
 - `curve vectorize --config config.json` for repeatable runtime knob files
 - `curve train --config train.json` for repeatable classifier training inputs
 - `curve eval-classifier --config eval-classifier.json` for repeatable
@@ -768,6 +772,8 @@ Implemented so far:
   self-learning cycles, including optional curated-suite validation
 - `curve retrain --config retrain.json` for repeatable augmented model output
 - `curve refine --config refine.json` for repeatable bounded refinement runs
+- `curve refinement-gate --config refinement-gate.json` for repeatable
+  structure-preserving refinement acceptance decisions
 - `curve segment --config segment.json` for repeatable segment proposal runs
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
