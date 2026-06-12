@@ -13,6 +13,7 @@ from curve.scene import (
     SCENE_MANIFEST_SCHEMA_VERSION,
     Scene,
     SvgStyle,
+    merge_auto_mergeable_same_color_fragments,
     scene_from_mask,
     scene_layers_to_manifest,
     scene_groups_to_manifest,
@@ -529,6 +530,59 @@ class SceneExportTests(unittest.TestCase):
         )
         self.assertEqual(group["merge_plan"]["bounds"], [0, 0, 8, 4])
         self.assertEqual(group["metrics"]["bounds_fill_ratio"], 1.0)
+
+    def test_auto_merge_compact_same_color_rect_fragments(self):
+        fragments = (
+            _rect_anchor(0, 0, 4, 4, color="#003366"),
+            _rect_anchor(4, 0, 8, 4, color="#003366"),
+            _rect_anchor(0, 6, 4, 10, color="#c99700"),
+        )
+
+        merged = merge_auto_mergeable_same_color_fragments(fragments)
+
+        self.assertEqual(len(merged), 2)
+        self.assertEqual(merged[0].kind, AnchorKind.RECT)
+        self.assertEqual(merged[0].color, "#003366")
+        self.assertEqual(merged[0].metrics["merged_fragment_count"], 2.0)
+        self.assertEqual(
+            [(point.x, point.y) for point in merged[0].quad.corners],
+            [(0, 0), (8, 0), (8, 4), (0, 4)],
+        )
+
+    def test_auto_merge_keeps_gapped_same_color_rects_separate(self):
+        fragments = (
+            _rect_anchor(0, 0, 4, 4, color="#003366"),
+            _rect_anchor(5, 0, 9, 4, color="#003366"),
+        )
+
+        merged = merge_auto_mergeable_same_color_fragments(fragments)
+
+        self.assertEqual(merged, fragments)
+
+
+def _rect_anchor(
+    min_x: float,
+    min_y: float,
+    max_x: float,
+    max_y: float,
+    *,
+    color: str,
+) -> AnchorCandidate:
+    return AnchorCandidate(
+        kind=AnchorKind.RECT,
+        raster_error=0.0,
+        node_count=4,
+        parameter_count=4,
+        color=color,
+        quad=QuadAnchor(
+            corners=(
+                Point(min_x, min_y),
+                Point(max_x, min_y),
+                Point(max_x, max_y),
+                Point(min_x, max_y),
+            ),
+        ),
+    )
 
 
 if __name__ == "__main__":

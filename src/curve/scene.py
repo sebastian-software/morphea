@@ -11,6 +11,7 @@ from curve.anchors import (
     AnchorCandidate,
     AnchorKind,
     Point,
+    QuadAnchor,
     parallel_spacing_error,
     perspective_grid_consistency_error,
     quality_metric_error,
@@ -77,7 +78,42 @@ def scene_from_mask(mask: BinaryMask, *, min_area: int = 8) -> Scene:
     return Scene(
         width=mask.width,
         height=mask.height,
-        anchors=detect_primitive_anchors(mask, min_area=min_area),
+        anchors=merge_auto_mergeable_same_color_fragments(
+            detect_primitive_anchors(mask, min_area=min_area)
+        ),
+    )
+
+
+def merge_auto_mergeable_same_color_fragments(
+    anchors: tuple[AnchorCandidate, ...],
+) -> tuple[AnchorCandidate, ...]:
+    """Conservatively merge compact same-color rect fragments."""
+
+    color_groups: dict[str, list[int]] = {}
+    for index, anchor in enumerate(anchors):
+        if anchor.color is None:
+            continue
+        color_groups.setdefault(anchor.color, []).append(index)
+
+    replacements: dict[int, AnchorCandidate] = {}
+    removed: set[int] = set()
+    for indexes in color_groups.values():
+        if len(indexes) < 2:
+            continue
+        fragments = tuple(anchors[index] for index in indexes)
+        merged = _merged_rect_fragment_candidate(fragments)
+        if merged is None:
+            continue
+        first, *rest = indexes
+        replacements[first] = merged
+        removed.update(rest)
+
+    if not replacements:
+        return anchors
+    return tuple(
+        replacements.get(index, anchor)
+        for index, anchor in enumerate(anchors)
+        if index not in removed
     )
 
 
@@ -448,6 +484,71 @@ def _same_color_merge_plan(
         "fragment_bounds_area": round(fragment_bounds_area, 6),
         "bounds_fill_ratio": round(bounds_fill_ratio, 6),
     }
+
+
+def _merged_rect_fragment_candidate(
+    fragments: tuple[AnchorCandidate, ...],
+) -> AnchorCandidate | None:
+    if not fragments:
+        return None
+    color = fragments[0].color
+    if color is None or any(fragment.color != color for fragment in fragments):
+        return None
+    if any(not _axis_aligned_rect_fragment(fragment) for fragment in fragments):
+        return None
+    merge_plan = _same_color_merge_plan(
+        fragments,
+        list(range(len(fragments))),
+    )
+    if not merge_plan["auto_merge_allowed"]:
+        return None
+    combined_bounds = tuple(float(value) for value in merge_plan["bounds"])
+    combined_area = _bounds_area(combined_bounds)
+    fragment_area = sum(_bounds_area(_anchor_bounds(fragment)) for fragment in fragments)
+    if combined_area <= 0 or abs(fragment_area - combined_area) > 1e-6:
+        return None
+    min_x, min_y, max_x, max_y = combined_bounds
+    return AnchorCandidate(
+        kind=AnchorKind.RECT,
+        raster_error=max(fragment.raster_error for fragment in fragments),
+        node_count=4,
+        parameter_count=4,
+        color=color,
+        quad=QuadAnchor(
+            corners=(
+                Point(min_x, min_y),
+                Point(max_x, min_y),
+                Point(max_x, max_y),
+                Point(min_x, max_y),
+            )
+        ),
+        metrics={
+            "merged_fragment_count": float(len(fragments)),
+            "merge_bounds_fill_ratio": float(merge_plan["bounds_fill_ratio"]),
+            "source_fragment_node_count": float(
+                sum(fragment.node_count for fragment in fragments)
+            ),
+            "source_fragment_parameter_count": float(
+                sum(fragment.parameter_count for fragment in fragments)
+            ),
+        },
+    )
+
+
+def _axis_aligned_rect_fragment(anchor: AnchorCandidate) -> bool:
+    if anchor.kind != AnchorKind.RECT or anchor.quad is None:
+        return False
+    min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+    expected = (
+        Point(min_x, min_y),
+        Point(max_x, min_y),
+        Point(max_x, max_y),
+        Point(min_x, max_y),
+    )
+    return all(
+        point.distance_to(want) <= 1e-6
+        for point, want in zip(anchor.quad.corners, expected)
+    )
 
 
 def scene_layers_to_manifest(

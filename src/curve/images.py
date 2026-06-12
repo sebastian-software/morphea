@@ -29,7 +29,7 @@ from curve.detection import (
     detect_primitive_anchors,
 )
 from curve.masks import BinaryMask, MaskComponent
-from curve.scene import Scene
+from curve.scene import Scene, merge_auto_mergeable_same_color_fragments
 
 
 Rgb = tuple[int, int, int]
@@ -343,7 +343,7 @@ def scene_from_flat_color_image(
     return Scene(
         width=mask_result.width,
         height=mask_result.height,
-        anchors=tuple(anchors),
+        anchors=merge_auto_mergeable_same_color_fragments(tuple(anchors)),
         diagnostics=tuple(diagnostics),
     )
 

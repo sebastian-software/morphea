@@ -269,6 +269,9 @@ Implemented so far:
   review action.
 - same-color merge plans include `auto_merge_allowed` and `decision_reason` so
   automatic merges stay auditable instead of becoming opaque cleanup behavior.
+- compact, same-color, axis-aligned `rect` fragments can be conservatively
+  merged into one editable `rect` when their combined bounds contain no gap;
+  gapped same-color fragments stay separate to preserve cut-out semantics.
 
 ## M4: Reports, Metrics, and Experiment Runs
 

@@ -114,6 +114,11 @@ Group fields:
 - `row_count`: present for `perspective_grid`
 - `column_count`: present for `perspective_grid`
 
+When compact same-color axis-aligned `rect` fragments are automatically merged,
+the resulting anchor remains a `rect` and records descriptive metrics such as
+`merged_fragment_count`, `merge_bounds_fill_ratio`,
+`source_fragment_node_count`, and `source_fragment_parameter_count`.
+
 `perspective_grid.metrics.vanishing_line_diagnostics` records how many
 horizontal and vertical edge pairs were inspected and how many finite
 intersections were found. This keeps perspective-grid regularity visible even
