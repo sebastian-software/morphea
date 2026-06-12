@@ -218,6 +218,43 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertEqual(caps["curve_s"], "round")
             self.assertEqual(caps["curve_square_caps"], "butt")
 
+    def test_ellipse_fixtures_export_editable_ellipse_primitives(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            report = check_primitive_quality(
+                output_dir=temp_dir,
+                cases=(
+                    "ellipse_horizontal",
+                    "stroked_ellipse",
+                    "filled_circle",
+                    "rounded_rectangle",
+                ),
+            )
+
+            self.assertTrue(report["ok"])
+            kinds = {case["id"]: case["actual_kind"] for case in report["cases"]}
+            self.assertEqual(kinds["ellipse_horizontal"], "ellipse")
+            self.assertEqual(kinds["stroked_ellipse"], "stroke_ellipse")
+            # Gate D: circles stay circles and rounded rects stay rects.
+            self.assertEqual(kinds["filled_circle"], "circle")
+            self.assertEqual(kinds["rounded_rectangle"], "rounded_rect")
+            filled_svg = (
+                Path(temp_dir) / "ellipse_horizontal" / "output.svg"
+            ).read_text(encoding="utf-8")
+            self.assertIn("<ellipse", filled_svg)
+            self.assertNotIn("<path", filled_svg)
+            stroked_svg = (
+                Path(temp_dir) / "stroked_ellipse" / "output.svg"
+            ).read_text(encoding="utf-8")
+            self.assertIn('fill="none"', stroked_svg)
+            self.assertIn("<ellipse", stroked_svg)
+            manifest = json.loads(
+                (Path(temp_dir) / "ellipse_horizontal" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            ellipse = manifest["anchors"][0]["ellipse"]
+            self.assertGreater(ellipse["rx"], ellipse["ry"])
+
     def test_arc_contract_failures_report_endpoint_bow_and_width(self):
         from morphea.primitive_quality import _arc_failures, primitive_specs
 
@@ -427,6 +464,13 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "curve_diagonal": 3,
                 "curve_square_caps": 3,
                 "curve_round_caps": 3,
+                "ellipse_horizontal": 3,
+                "ellipse_vertical": 3,
+                "ellipse_small": 3,
+                "ellipse_large": 3,
+                "ellipse_wide": 3,
+                "stroked_ellipse": 3,
+                "antialiased_ellipse": 3,
                 "antialiased_circle": 3,
                 "antialiased_ring": 3,
                 "antialiased_stroke": 3,

@@ -12,6 +12,8 @@ from typing import Iterable, Sequence
 class AnchorKind(StrEnum):
     CIRCLE = "circle"
     STROKE_CIRCLE = "stroke_circle"
+    ELLIPSE = "ellipse"
+    STROKE_ELLIPSE = "stroke_ellipse"
     STROKE_PATH = "stroke_path"
     STROKE_POLYLINE = "stroke_polyline"
     RECT = "rect"
@@ -74,6 +76,16 @@ class ArcAnchor:
 
 
 @dataclass(frozen=True)
+class EllipseAnchor:
+    """Axis-aligned ellipse; rotation stays zero until rotated fixtures land."""
+
+    center: Point
+    rx: float
+    ry: float
+    rotation: float = 0.0
+
+
+@dataclass(frozen=True)
 class StrokeAnchor:
     centerline: tuple[Point, ...]
     width_samples: tuple[float, ...]
@@ -99,6 +111,7 @@ class AnchorCandidate:
     stroke: StrokeAnchor | None = None
     quad: QuadAnchor | None = None
     arc: ArcAnchor | None = None
+    ellipse: EllipseAnchor | None = None
     metrics: dict[str, float] = field(default_factory=dict)
 
     @property
@@ -106,6 +119,8 @@ class AnchorCandidate:
         return self.kind in {
             AnchorKind.CIRCLE,
             AnchorKind.STROKE_CIRCLE,
+            AnchorKind.ELLIPSE,
+            AnchorKind.STROKE_ELLIPSE,
             AnchorKind.STROKE_PATH,
             AnchorKind.STROKE_POLYLINE,
             AnchorKind.RECT,
@@ -244,6 +259,8 @@ def simple_shape_priority_bonus(candidate: AnchorCandidate) -> float:
     if candidate.kind in {AnchorKind.CIRCLE, AnchorKind.STROKE_CIRCLE}:
         return 0.35
     if candidate.kind in {
+        AnchorKind.ELLIPSE,
+        AnchorKind.STROKE_ELLIPSE,
         AnchorKind.STROKE_PATH,
         AnchorKind.STROKE_POLYLINE,
         AnchorKind.RECT,
@@ -342,6 +359,7 @@ def enrich_anchor_metrics(candidate: AnchorCandidate) -> AnchorCandidate:
         stroke=candidate.stroke,
         quad=candidate.quad,
         arc=candidate.arc,
+        ellipse=candidate.ellipse,
         metrics=metrics,
     )
 

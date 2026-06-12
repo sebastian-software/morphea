@@ -12,6 +12,7 @@ from morphea.anchors import (
     AnchorKind,
     ArcAnchor,
     CircleAnchor,
+    EllipseAnchor,
     Point,
     QuadAnchor,
     ScoringConfig,
@@ -144,6 +145,14 @@ def primitive_candidates_for_component(
     if circle is not None:
         candidates.append(circle)
 
+    ellipse = _ellipse_candidate(component, thresholds)
+    if ellipse is not None:
+        candidates.append(ellipse)
+
+    stroke_ellipse = _stroke_ellipse_candidate(component, thresholds)
+    if stroke_ellipse is not None:
+        candidates.append(stroke_ellipse)
+
     arc = _arc_candidate(component, thresholds)
     if arc is not None:
         candidates.append(arc)
@@ -209,6 +218,7 @@ def _with_classifier_prior(
         stroke=candidate.stroke,
         quad=candidate.quad,
         arc=candidate.arc,
+        ellipse=candidate.ellipse,
         metrics=metrics,
     )
 
@@ -320,6 +330,153 @@ def _circle_candidate(
         "circle_fit_residual_error",
         fit_residual,
     )
+
+
+def _ellipse_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
+    """Fit a filled axis-aligned ellipse to a non-circular oval component."""
+
+    width = component.width
+    height = component.height
+    # Below ~9 px the row quantization of a stadium or rounded rect is
+    # indistinguishable from an ellipse, so stay out of that regime.
+    if min(width, height) < 9:
+        return None
+    aspect_error = abs(width - height) / max(width, height)
+    if aspect_error < 0.1:
+        # Circle territory; let the circle candidate own near-round shapes.
+        return None
+
+    rx = (width - 1) / 2 + 0.5
+    ry = (height - 1) / 2 + 0.5
+    min_x, min_y, _, _ = component.bounds
+    center = Point(min_x + (width - 1) / 2, min_y + (height - 1) / 2)
+    expected_area = pi * rx * ry
+    area_error = abs(component.area - expected_area) / expected_area
+    if area_error > 0.12:
+        return None
+    fit_residual_px = _ellipse_boundary_residual(component, center, rx, ry)
+    if fit_residual_px > 0.75:
+        return None
+
+    candidate = AnchorCandidate(
+        kind=AnchorKind.ELLIPSE,
+        raster_error=area_error + fit_residual_px * 0.05,
+        node_count=1,
+        parameter_count=4,
+        ellipse=EllipseAnchor(center=center, rx=rx, ry=ry),
+        metrics={
+            # raster_error already carries both terms; keep the metric names
+            # free of the _error suffix to avoid double counting.
+            "ellipse_fit_residual_px": fit_residual_px,
+            "ellipse_area_mismatch": area_error,
+        },
+    )
+    return candidate
+
+
+def _stroke_ellipse_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
+    """Fit an elliptical ring as a centerline ellipse with a stroke width."""
+
+    width = component.width
+    height = component.height
+    if min(width, height) < 8:
+        return None
+    aspect_error = abs(width - height) / max(width, height)
+    # Up to the stroke-circle aspect tolerance the ring stays a circle.
+    if aspect_error < 0.18:
+        return None
+
+    outer_rx = (width - 1) / 2 + 0.5
+    outer_ry = (height - 1) / 2 + 0.5
+    min_x, min_y, _, _ = component.bounds
+    center = Point(min_x + (width - 1) / 2, min_y + (height - 1) / 2)
+    # Normalized elliptical distance: 1.0 on the outer boundary.
+    distances = [
+        _normalized_ellipse_distance(Point(x, y), center, outer_rx, outer_ry)
+        for x, y in component.pixels
+    ]
+    inner = min(distances)
+    outer = max(distances)
+    if inner < 0.3 or outer > 1.2:
+        return None
+    mean_radius = (outer_rx + outer_ry) / 2
+    stroke_width = max((outer - inner) * mean_radius, 1.0)
+    if stroke_width > mean_radius * 0.8:
+        return None
+    mid = (inner + outer) / 2
+    band_residual = sum(abs(d - mid) for d in distances) / len(distances)
+    if band_residual * mean_radius > stroke_width * 0.5 + 0.5:
+        return None
+    ring_area = pi * (outer_rx * outer_ry - (outer_rx - stroke_width) * (outer_ry - stroke_width))
+    if ring_area <= 0:
+        return None
+    area_error = abs(component.area - ring_area) / ring_area
+    if area_error > 0.45:
+        return None
+
+    candidate = AnchorCandidate(
+        kind=AnchorKind.STROKE_ELLIPSE,
+        raster_error=area_error * 0.2 + band_residual,
+        node_count=1,
+        parameter_count=5,
+        ellipse=EllipseAnchor(
+            center=center,
+            rx=outer_rx * mid,
+            ry=outer_ry * mid,
+        ),
+        stroke=StrokeAnchor(centerline=(), width_samples=(stroke_width,)),
+        metrics={
+            "stroke_ellipse_band_residual_error": band_residual,
+            "stroke_ellipse_area_error": area_error * 0.2,
+        },
+    )
+    return candidate
+
+
+def _ellipse_boundary_residual(
+    component: MaskComponent,
+    center: Point,
+    rx: float,
+    ry: float,
+) -> float:
+    """Mean pixel distance from boundary pixels to the ellipse along rays.
+
+    Normalized residuals over-penalize small or flat ellipses where half a
+    pixel of quantization is a large fraction of the minor radius, so compare
+    actual ray length against the ellipse ray length in pixels.
+    """
+
+    samples = tuple(component.boundary_pixels)
+    if not samples:
+        return 0.0
+    total = 0.0
+    for x, y in samples:
+        dx = x - center.x
+        dy = y - center.y
+        actual = sqrt(dx * dx + dy * dy)
+        if actual <= 0:
+            continue
+        denominator = sqrt((ry * dx) ** 2 + (rx * dy) ** 2)
+        ray = rx * ry * actual / denominator if denominator > 0 else 0.0
+        total += abs(actual - ray)
+    return total / len(samples)
+
+
+def _normalized_ellipse_distance(
+    point: Point,
+    center: Point,
+    rx: float,
+    ry: float,
+) -> float:
+    nx = (point.x - center.x) / max(rx, 0.5)
+    ny = (point.y - center.y) / max(ry, 0.5)
+    return sqrt(nx * nx + ny * ny)
 
 
 def _bounds_regularized_circle(
@@ -439,6 +596,7 @@ def _with_metric(
         stroke=candidate.stroke,
         quad=candidate.quad,
         arc=candidate.arc,
+        ellipse=candidate.ellipse,
         metrics=metrics,
     )
 
@@ -484,6 +642,11 @@ def _stroke_candidate(
     # box is not a stroke; curved bands belong to arc or stroke_path.
     if len(centerline) == 2 and coverage < 0.45:
         return None
+    # Honest thick strokes fill their oriented box almost completely; a wide
+    # band at sub-0.9 coverage is usually a filled oval or capsule instead.
+    thick_underfilled = (
+        len(centerline) == 2 and stroke_width > 8.0 and coverage < 0.9
+    )
     width_samples = _stroke_width_samples_along_centerline(
         component,
         centerline,
@@ -502,6 +665,8 @@ def _stroke_candidate(
     # example a curved band absorbed into an inflated width); penalize it
     # enough that an honest arc fit wins the ranking.
     coverage_weight = 0.1 if len(centerline) > 2 or coverage >= 0.7 else 0.3
+    if thick_underfilled:
+        coverage_weight = max(coverage_weight, 0.3)
     candidate = AnchorCandidate(
         kind=AnchorKind.STROKE_POLYLINE,
         raster_error=abs(1.0 - coverage) * coverage_weight,

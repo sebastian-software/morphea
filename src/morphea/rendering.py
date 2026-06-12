@@ -89,6 +89,29 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
             fill=color,
         )
         return
+    if kind == "ellipse" and "ellipse" in anchor:
+        ellipse = anchor["ellipse"]
+        cx = float(ellipse["cx"])
+        cy = float(ellipse["cy"])
+        rx = float(ellipse["rx"])
+        ry = float(ellipse["ry"])
+        draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=color)
+        return
+    if kind == "stroke_ellipse" and "ellipse" in anchor:
+        ellipse = anchor["ellipse"]
+        cx = float(ellipse["cx"])
+        cy = float(ellipse["cy"])
+        rx = float(ellipse["rx"])
+        ry = float(ellipse["ry"])
+        width = _stroke_width(anchor)
+        half = width / 2
+        # Match the SVG model: the stroke centers on the ellipse outline.
+        draw.ellipse(
+            (cx - rx - half, cy - ry - half, cx + rx + half, cy + ry + half),
+            outline=color,
+            width=width,
+        )
+        return
     if kind == "stroke_circle" and "circle" in anchor:
         circle = anchor["circle"]
         cx = float(circle["cx"])

@@ -503,6 +503,36 @@ class PrimitiveDetectionTests(unittest.TestCase):
         self.assertLess(anchor.node_count, 8)
 
 
+class EllipseDetectionTests(unittest.TestCase):
+    def test_capsule_is_not_detected_as_ellipse(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        # Stadium shape: straight long sides with semicircular ends.
+        draw.rectangle((18, 24, 46, 40), fill="black")
+        draw.ellipse((10, 24, 26, 40), fill="black")
+        draw.ellipse((38, 24, 54, 40), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertNotEqual(anchors[0].kind, AnchorKind.ELLIPSE)
+        self.assertNotEqual(anchors[0].kind, AnchorKind.STROKE_ELLIPSE)
+
+    def test_filled_oval_is_detected_as_ellipse(self):
+        image = Image.new("RGB", (64, 64), "white")
+        ImageDraw.Draw(image).ellipse((10, 20, 54, 44), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.ELLIPSE)
+        self.assertAlmostEqual(anchors[0].ellipse.center.x, 32.0, delta=1.0)
+        self.assertAlmostEqual(anchors[0].ellipse.rx, 22.5, delta=1.0)
+        self.assertAlmostEqual(anchors[0].ellipse.ry, 12.5, delta=1.0)
+
+
 class CutoutDetectionTests(unittest.TestCase):
     def test_horizontal_gap_inside_component_becomes_cutout_stroke(self):
         mask = BinaryMask.from_rows(

@@ -11,6 +11,7 @@ from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     ArcAnchor,
+    EllipseAnchor,
     Point,
     QuadAnchor,
     parallel_spacing_error,
@@ -374,6 +375,24 @@ def anchor_to_svg_element(
             f'fill="{escape(fill)}" />'
         )
 
+    if anchor.kind == AnchorKind.ELLIPSE and anchor.ellipse is not None:
+        return (
+            f'<ellipse cx="{_fmt(anchor.ellipse.center.x)}" '
+            f'cy="{_fmt(anchor.ellipse.center.y)}" '
+            f'rx="{_fmt(anchor.ellipse.rx)}" ry="{_fmt(anchor.ellipse.ry)}" '
+            f'fill="{escape(fill)}" />'
+        )
+
+    if anchor.kind == AnchorKind.STROKE_ELLIPSE and anchor.ellipse is not None:
+        width = _stroke_width(anchor)
+        return (
+            f'<ellipse cx="{_fmt(anchor.ellipse.center.x)}" '
+            f'cy="{_fmt(anchor.ellipse.center.y)}" '
+            f'rx="{_fmt(anchor.ellipse.rx)}" ry="{_fmt(anchor.ellipse.ry)}" '
+            f'fill="none" stroke="{escape(stroke)}" '
+            f'stroke-width="{_fmt(width)}" />'
+        )
+
     if anchor.kind == AnchorKind.STROKE_CIRCLE and anchor.circle is not None:
         width = _stroke_width(anchor)
         return (
@@ -517,6 +536,14 @@ def anchor_to_manifest_with_index(
                 {"x": point.x, "y": point.y}
                 for point in anchor.quad.corners
             ]
+        }
+    if anchor.ellipse is not None:
+        data["ellipse"] = {
+            "cx": anchor.ellipse.center.x,
+            "cy": anchor.ellipse.center.y,
+            "rx": anchor.ellipse.rx,
+            "ry": anchor.ellipse.ry,
+            "rotation": anchor.ellipse.rotation,
         }
     if anchor.arc is not None:
         data["arc"] = {
@@ -834,6 +861,7 @@ def _contact_separation_policy(
 def _is_filled_primitive(anchor: AnchorCandidate) -> bool:
     return anchor.kind in {
         AnchorKind.CIRCLE,
+        AnchorKind.ELLIPSE,
         AnchorKind.RECT,
         AnchorKind.ROUNDED_RECT,
         AnchorKind.QUAD,
@@ -1298,6 +1326,7 @@ def _anchor_layer(anchor: AnchorCandidate) -> str:
         return "cutout_overlays"
     if anchor.kind in {
         AnchorKind.STROKE_CIRCLE,
+        AnchorKind.STROKE_ELLIPSE,
         AnchorKind.STROKE_POLYLINE,
         AnchorKind.STROKE_PATH,
         AnchorKind.ARC,
@@ -1305,6 +1334,7 @@ def _anchor_layer(anchor: AnchorCandidate) -> str:
         return "strokes"
     if anchor.kind in {
         AnchorKind.CIRCLE,
+        AnchorKind.ELLIPSE,
         AnchorKind.RECT,
         AnchorKind.ROUNDED_RECT,
         AnchorKind.QUAD,
@@ -1344,6 +1374,15 @@ def _cutout_mask_eligible(anchor: AnchorCandidate) -> bool:
 
 
 def _anchor_bounds(anchor: AnchorCandidate) -> tuple[float, float, float, float]:
+    if anchor.ellipse is not None:
+        center = anchor.ellipse.center
+        rx = anchor.ellipse.rx
+        ry = anchor.ellipse.ry
+        if anchor.kind == AnchorKind.STROKE_ELLIPSE:
+            half = _stroke_width(anchor) / 2
+            rx += half
+            ry += half
+        return (center.x - rx, center.y - ry, center.x + rx, center.y + ry)
     if anchor.circle is not None:
         center = anchor.circle.center
         radius = anchor.circle.radius

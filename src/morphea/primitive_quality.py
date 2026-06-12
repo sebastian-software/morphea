@@ -294,6 +294,42 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _ellipse_spec(case_id, family, variant, box)
+        for case_id, family, variant, box in (
+            ("ellipse_horizontal", "ellipse_horizontal", "base", (10, 20, 54, 44)),
+            ("ellipse_horizontal_flat", "ellipse_horizontal", "flat", (8, 22, 56, 42)),
+            ("ellipse_horizontal_tall", "ellipse_horizontal", "tall", (12, 18, 52, 46)),
+            ("ellipse_vertical", "ellipse_vertical", "base", (20, 10, 44, 54)),
+            ("ellipse_vertical_narrow", "ellipse_vertical", "narrow", (22, 8, 42, 56)),
+            ("ellipse_vertical_wide", "ellipse_vertical", "wide", (18, 12, 46, 52)),
+            ("ellipse_small", "ellipse_small", "base", (22, 26, 42, 38)),
+            ("ellipse_small_top_left", "ellipse_small", "top_left", (10, 14, 30, 26)),
+            ("ellipse_small_bottom_right", "ellipse_small", "bottom_right", (32, 36, 52, 48)),
+            ("ellipse_large", "ellipse_large", "base", (4, 12, 60, 52)),
+            ("ellipse_large_tall", "ellipse_large", "tall", (8, 4, 52, 60)),
+            ("ellipse_large_low", "ellipse_large", "low", (3, 16, 61, 54)),
+            ("ellipse_wide", "ellipse_wide", "base", (6, 26, 58, 38)),
+            ("ellipse_wide_thin", "ellipse_wide", "thin", (8, 24, 56, 36)),
+            ("ellipse_wide_thick", "ellipse_wide", "thick", (4, 26, 60, 42)),
+        )
+    )
+    specs.extend(
+        _stroked_ellipse_spec(case_id, variant, box, width)
+        for case_id, variant, box, width in (
+            ("stroked_ellipse", "base", (10, 20, 54, 44), 4),
+            ("stroked_ellipse_thin", "thin", (12, 18, 52, 46), 3),
+            ("stroked_ellipse_thick", "thick", (8, 16, 56, 48), 5),
+        )
+    )
+    specs.extend(
+        _antialiased_ellipse_spec(case_id, variant, box)
+        for case_id, variant, box in (
+            ("antialiased_ellipse", "base", (10, 20, 54, 44)),
+            ("antialiased_ellipse_narrow", "narrow", (14, 22, 50, 42)),
+            ("antialiased_ellipse_vertical", "vertical", (20, 12, 44, 52)),
+        )
+    )
+    specs.extend(
         _antialiased_circle_spec(case_id, variant, box)
         for case_id, variant, box in (
             ("antialiased_circle", "base", (18, 18, 46, 46)),
@@ -1354,6 +1390,102 @@ def _draw_circular_arc(draw: ImageDraw.ImageDraw, arc: ArcParams) -> None:
             (point[0] - half, point[1] - half, point[0] + half - 1, point[1] + half - 1),
             fill=BLUE,
         )
+
+
+def _ellipse_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=("ellipse",),
+        geometry_type="ellipse",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "rx": (x1 - x0) / 2,
+            "ry": (y1 - y0) / 2,
+        },
+        draw=lambda draw, box=box: draw.ellipse(box, fill=BLUE),
+        coordinate_tolerance=1.75,
+        max_raster_l1_error=0.025,
+        max_raster_edge_error=0.03,
+        # The detector reports pixel-extent radii (+0.5 vs the geometric
+        # box), which costs small ellipses ~0.88 IoU by itself.
+        min_bbox_iou=0.86,
+    )
+
+
+def _stroked_ellipse_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+    width: int,
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family="stroked_ellipse",
+        variant=variant,
+        expected_kinds=("stroke_ellipse",),
+        geometry_type="stroke_ellipse",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            # PIL paints the outline inward from the box, so the centerline
+            # ellipse sits half a width inside the outer radius.
+            "rx": (x1 - x0) / 2 - width / 2 + 0.5,
+            "ry": (y1 - y0) / 2 - width / 2 + 0.5,
+            "width": width + 0.5,
+        },
+        draw=lambda draw, box=box, width=width: draw.ellipse(
+            box,
+            outline=BLUE,
+            width=width,
+        ),
+        coordinate_tolerance=2.0,
+        max_raster_l1_error=0.06,
+        max_raster_edge_error=0.05,
+        min_bbox_iou=0.85,
+    )
+
+
+def _antialiased_ellipse_spec(
+    case_id: str,
+    variant: str,
+    box: tuple[int, int, int, int],
+) -> PrimitiveSpec:
+    x0, y0, x1, y1 = box
+    return PrimitiveSpec(
+        id=case_id,
+        family="antialiased_ellipse",
+        variant=variant,
+        expected_kinds=("ellipse",),
+        geometry_type="ellipse",
+        geometry={
+            "cx": (x0 + x1) / 2,
+            "cy": (y0 + y1) / 2,
+            "rx": (x1 - x0) / 2,
+            "ry": (y1 - y0) / 2,
+        },
+        draw=lambda draw: None,
+        source_factory=lambda box=box: _antialiased_source(
+            lambda draw, scale: draw.ellipse(
+                tuple(value * scale for value in box),
+                fill=BLUE,
+            )
+        ),
+        vectorize_config={"max_colors": 2},
+        coordinate_tolerance=2.0,
+        max_raster_l1_error=0.055,
+        max_raster_edge_error=0.035,
+        min_bbox_iou=0.86,
+    )
 
 
 def _antialiased_circle_spec(
@@ -2686,7 +2818,36 @@ def _geometry_failures(spec: PrimitiveSpec, anchor: dict[str, Any]) -> list[dict
         return _arc_failures(spec, anchor)
     if spec.geometry_type == "stroke_path":
         return _stroke_path_failures(spec, anchor)
+    if spec.geometry_type == "ellipse":
+        return _ellipse_geometry_failures(spec, anchor)
+    if spec.geometry_type == "stroke_ellipse":
+        return _ellipse_geometry_failures(spec, anchor) + _stroke_width_failures(
+            spec,
+            anchor,
+        )
     return [_failure("geometry_drift", f"unsupported geometry contract {spec.geometry_type}")]
+
+
+def _ellipse_geometry_failures(
+    spec: PrimitiveSpec,
+    anchor: dict[str, Any],
+) -> list[dict[str, str]]:
+    ellipse = anchor.get("ellipse")
+    if not isinstance(ellipse, dict):
+        return [_failure("geometry_drift", "missing ellipse geometry")]
+    failures = []
+    for key in ("cx", "cy", "rx", "ry"):
+        actual = float(ellipse.get(key, 0.0))
+        expected = float(spec.geometry[key])
+        if abs(actual - expected) > spec.coordinate_tolerance:
+            failures.append(
+                _failure(
+                    "geometry_drift",
+                    f"{key} delta {round(abs(actual - expected), 6)} exceeds "
+                    f"{spec.coordinate_tolerance}",
+                )
+            )
+    return failures
 
 
 def _stroke_path_failures(
@@ -3052,6 +3213,15 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
         if spec.geometry_type == "stroke_circle":
             radius += float(spec.geometry["width"]) / 2
         return cx - radius, cy - radius, cx + radius, cy + radius
+    if spec.geometry_type in {"ellipse", "stroke_ellipse"}:
+        cx = float(spec.geometry["cx"])
+        cy = float(spec.geometry["cy"])
+        rx = float(spec.geometry["rx"])
+        ry = float(spec.geometry["ry"])
+        if spec.geometry_type == "stroke_ellipse":
+            rx += float(spec.geometry["width"]) / 2
+            ry += float(spec.geometry["width"]) / 2
+        return cx - rx, cy - ry, cx + rx, cy + ry
     if spec.geometry_type == "stroke":
         points = spec.geometry["centerline"]
         width = float(spec.geometry["width"])
@@ -3079,6 +3249,17 @@ def _expected_visual_bounds(spec: PrimitiveSpec) -> tuple[float, float, float, f
 
 
 def _anchor_visual_bounds(anchor: dict[str, Any]) -> tuple[float, float, float, float]:
+    ellipse = anchor.get("ellipse")
+    if isinstance(ellipse, dict):
+        rx = float(ellipse.get("rx", 0.0))
+        ry = float(ellipse.get("ry", 0.0))
+        if anchor.get("kind") == "stroke_ellipse":
+            half = _stroke_width(anchor) / 2
+            rx += half
+            ry += half
+        cx = float(ellipse.get("cx", 0.0))
+        cy = float(ellipse.get("cy", 0.0))
+        return cx - rx, cy - ry, cx + rx, cy + ry
     circle = anchor.get("circle")
     if isinstance(circle, dict):
         radius = float(circle.get("r", 0.0))
