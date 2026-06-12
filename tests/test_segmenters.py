@@ -336,6 +336,76 @@ class SegmenterTests(unittest.TestCase):
             self.assertIn("# Curve Segment Proposals", report)
             self.assertIn("- Reserved anchors: `0`", report)
 
+    def test_segment_cli_reads_artifact_paths_from_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_two_color_image()
+            output = root / "segments.json"
+            markdown = root / "segments.md"
+            config = root / "segment-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "input": str(image_path),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                        "segmenter": "flat_color",
+                        "background": "#ffffff",
+                        "min_area": 4,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["segment", "--config", str(config)])
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["input"], str(image_path))
+            self.assertEqual(manifest["config"]["background"], "#ffffff")
+            self.assertTrue(markdown.exists())
+
+    def test_segment_cli_args_override_config_artifact_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config_input = root / "config-input.png"
+            Image.new("RGB", (8, 8), "white").save(config_input)
+            override_input = _write_two_color_image()
+            config_output = root / "config-segments.json"
+            output = root / "override-segments.json"
+            config = root / "segment-config.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "input": str(config_input),
+                        "output": str(config_output),
+                        "segmenter": "flat_color",
+                        "background": "#ffffff",
+                        "min_area": 999,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "segment",
+                        str(override_input),
+                        "-o",
+                        str(output),
+                        "--config",
+                        str(config),
+                        "--min-area",
+                        "4",
+                    ]
+                )
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["input"], str(override_input))
+            self.assertEqual(manifest["proposal_count"], 2)
+            self.assertFalse(config_output.exists())
+
     def test_segment_cli_can_gate_proposals_by_geometry(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

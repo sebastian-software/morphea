@@ -142,6 +142,7 @@ SEGMENT_CONFIG_DEFAULTS = {
     "max_anchor_quality_error": 1.0,
     "require_reserved_anchor": False,
 }
+SEGMENT_ARTIFACT_CONFIG_KEYS = {"input", "output", "markdown"}
 COMPARE_TRAINING_CONFIG_KEYS = {
     "base_dataset",
     "pseudo_dataset",
@@ -403,8 +404,8 @@ def main(argv: list[str] | None = None) -> None:
         "segment",
         help="Write segment proposals for an input image.",
     )
-    segment.add_argument("input", type=Path)
-    segment.add_argument("-o", "--output", type=Path, required=True)
+    segment.add_argument("input", type=Path, nargs="?")
+    segment.add_argument("-o", "--output", type=Path)
     segment.add_argument("--markdown", type=Path)
     segment.add_argument("--segmenter", choices=("flat_color", "mlx_sam"))
     segment.add_argument("--background")
@@ -872,9 +873,10 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "segment":
+        segment_artifacts = _resolved_segment_artifact_config(args)
         segment_config = _resolved_segment_config(args)
         segmenter = _segmenter_from_config(segment_config)
-        proposals = segmenter.propose(args.input)
+        proposals = segmenter.propose(segment_artifacts["input"])
         if bool(segment_config["geometry_gate"]):
             proposals = gate_segment_proposals(
                 proposals,
@@ -890,7 +892,7 @@ def main(argv: list[str] | None = None) -> None:
         proposal_groups = segment_proposal_groups(proposals)
         manifest = {
             "schema_version": 1,
-            "input": str(args.input),
+            "input": str(segment_artifacts["input"]),
             "config": segment_config,
             "backend": segmenter_backend_status(segmenter),
             "proposal_count": len(proposals),
@@ -898,14 +900,16 @@ def main(argv: list[str] | None = None) -> None:
             "proposal_groups": proposal_groups,
             "proposals": proposals_to_manifest(proposals),
         }
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(
+        output_path = segment_artifacts["output"]
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True),
             encoding="utf-8",
         )
-        if args.markdown is not None:
-            args.markdown.parent.mkdir(parents=True, exist_ok=True)
-            args.markdown.write_text(
+        if segment_artifacts.get("markdown") is not None:
+            markdown_path = segment_artifacts["markdown"]
+            markdown_path.parent.mkdir(parents=True, exist_ok=True)
+            markdown_path.write_text(
                 render_segment_proposal_markdown(manifest),
                 encoding="utf-8",
             )
@@ -1496,12 +1500,42 @@ def _resolved_segment_config(args: argparse.Namespace) -> dict[str, object]:
     config = dict(SEGMENT_CONFIG_DEFAULTS)
     if args.config is not None:
         loaded = _load_segment_config(args.config)
-        config.update(loaded)
+        config.update(
+            {
+                key: value
+                for key, value in loaded.items()
+                if key in SEGMENT_CONFIG_DEFAULTS
+            }
+        )
 
     for key in SEGMENT_CONFIG_DEFAULTS:
         value = getattr(args, key, None)
         if value is not None:
             config[key] = value
+    return config
+
+
+def _resolved_segment_artifact_config(args: argparse.Namespace) -> dict[str, object]:
+    config: dict[str, object] = {"input": None, "output": None, "markdown": None}
+    if args.config is not None:
+        loaded = _load_segment_config(args.config)
+        config.update(
+            {
+                key: value
+                for key, value in loaded.items()
+                if key in SEGMENT_ARTIFACT_CONFIG_KEYS
+            }
+        )
+
+    for key in SEGMENT_ARTIFACT_CONFIG_KEYS:
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+
+    _require_config_paths(config, ("input", "output"), "segment")
+    for key in SEGMENT_ARTIFACT_CONFIG_KEYS:
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
     return config
 
 
@@ -1919,11 +1953,16 @@ def _load_segment_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
         raise ValueError("segment config must be a JSON object")
-    unknown = sorted(set(loaded) - set(SEGMENT_CONFIG_DEFAULTS))
+    supported = set(SEGMENT_CONFIG_DEFAULTS) | SEGMENT_ARTIFACT_CONFIG_KEYS
+    unknown = sorted(set(loaded) - supported)
     if unknown:
         msg = f"unsupported segment config keys: {', '.join(unknown)}"
         raise ValueError(msg)
-    return loaded
+    config = dict(loaded)
+    for key in SEGMENT_ARTIFACT_CONFIG_KEYS:
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
 
 
 def _load_profile_config(path: Path | None) -> dict[str, object]:

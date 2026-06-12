@@ -423,6 +423,9 @@ Read by `curve segment --config`.
 
 Supported fields:
 
+- `input`: input image path
+- `output`: output segment proposal manifest path
+- `markdown`: optional Markdown proposal report path
 - `segmenter`: currently `flat_color` or `mlx_sam`
 - `background`: optional explicit background color as `#rrggbb` or RGB triplet
 - `min_area`

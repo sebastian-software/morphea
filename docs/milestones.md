@@ -925,7 +925,8 @@ Implemented so far:
   availability checks
 - `curve curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
-- `curve segment --config segment.json` for repeatable segment proposal runs
+- `curve segment --config segment.json` for repeatable input/output,
+  report, and segment proposal runs
 - `curve segment --markdown proposals.md` for scan-friendly segment proposal
   reports
 - `curve compare-segments before.json after.json -o comparison.json` for
