@@ -90,6 +90,15 @@ VECTORIZE_DEFAULT_CONFIG = {
     "rounded_rect_max_fill_error": 0.30,
 }
 CUTOUT_EXPORT_VALUES = {"overlay_stroke", "negative_mask"}
+VECTORIZE_ARTIFACT_CONFIG_KEYS = {
+    "input",
+    "output",
+    "manifest",
+    "debug_svg",
+    "run_dir",
+    "no_manifest",
+    "cutout_export",
+}
 GENERATE_DEFAULT_CONFIG = {
     "output_dir": None,
     "count": 1,
@@ -240,12 +249,16 @@ def main(argv: list[str] | None = None) -> None:
         "vectorize",
         help="Vectorize a flat-color raster image into editable SVG primitives.",
     )
-    vectorize.add_argument("input", type=Path, help="Input PNG/JPEG/WebP image.")
+    vectorize.add_argument(
+        "input",
+        type=Path,
+        nargs="?",
+        help="Input PNG/JPEG/WebP image.",
+    )
     vectorize.add_argument(
         "-o",
         "--output",
         type=Path,
-        required=True,
         help="Output SVG path.",
     )
     vectorize.add_argument(
@@ -292,6 +305,7 @@ def main(argv: list[str] | None = None) -> None:
     vectorize.add_argument(
         "--no-manifest",
         action="store_true",
+        default=None,
         help="Do not write a JSON recognition manifest.",
     )
     vectorize.add_argument(
@@ -749,48 +763,68 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     if args.command == "vectorize":
+        vectorize_artifacts = _resolved_vectorize_artifact_config(args)
         vectorize_config = _resolved_vectorize_config(args)
         cutout_export = _resolved_cutout_export(args)
         config = {
             "command": "vectorize",
-            "input": str(args.input),
-            "output": str(args.output),
-            "debug_svg": str(args.debug_svg) if args.debug_svg else None,
+            "input": str(vectorize_artifacts["input"]),
+            "output": str(vectorize_artifacts["output"]),
+            "manifest": (
+                str(vectorize_artifacts["manifest"])
+                if vectorize_artifacts.get("manifest")
+                else None
+            ),
+            "debug_svg": (
+                str(vectorize_artifacts["debug_svg"])
+                if vectorize_artifacts.get("debug_svg")
+                else None
+            ),
+            "run_dir": (
+                str(vectorize_artifacts["run_dir"])
+                if vectorize_artifacts.get("run_dir")
+                else None
+            ),
+            "no_manifest": vectorize_artifacts["no_manifest"],
             "config": str(args.config) if args.config else None,
             "cutout_export": cutout_export,
             **vectorize_config,
         }
         scene = scene_from_flat_color_image(
-            args.input,
+            vectorize_artifacts["input"],
             **vectorize_config,
         )
-        if args.run_dir is not None:
-            run_dir = create_run_dir(args.run_dir)
+        if vectorize_artifacts["run_dir"] is not None:
+            run_dir = create_run_dir(vectorize_artifacts["run_dir"])
             run = write_vectorize_run(
                 run_dir=run_dir,
-                input_path=args.input,
+                input_path=vectorize_artifacts["input"],
                 scene=scene,
                 config=config,
             )
             print(f"wrote run {run.run_dir} with {len(scene.anchors)} anchors")
             return
 
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(
+        output_path = vectorize_artifacts["output"]
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
             scene.to_svg(SvgStyle(cutout_strategy=cutout_export)),
             encoding="utf-8",
         )
-        if args.debug_svg is not None:
-            args.debug_svg.parent.mkdir(parents=True, exist_ok=True)
-            args.debug_svg.write_text(scene.to_debug_svg(), encoding="utf-8")
-        if not args.no_manifest:
-            manifest_path = args.manifest or args.output.with_suffix(".json")
+        if vectorize_artifacts["debug_svg"] is not None:
+            debug_svg = vectorize_artifacts["debug_svg"]
+            debug_svg.parent.mkdir(parents=True, exist_ok=True)
+            debug_svg.write_text(scene.to_debug_svg(), encoding="utf-8")
+        if not vectorize_artifacts["no_manifest"]:
+            manifest_path = (
+                vectorize_artifacts["manifest"] or output_path.with_suffix(".json")
+            )
             manifest_path.parent.mkdir(parents=True, exist_ok=True)
             manifest_path.write_text(
                 json.dumps(scene.to_manifest(), indent=2, sort_keys=True),
                 encoding="utf-8",
             )
-        print(f"wrote {args.output} with {len(scene.anchors)} anchors")
+        print(f"wrote {output_path} with {len(scene.anchors)} anchors")
         return
 
     if args.command == "profile":
@@ -1230,6 +1264,42 @@ def _resolved_vectorize_config(args: argparse.Namespace) -> dict[str, object]:
         value = getattr(args, key, None)
         if value is not None:
             config[key] = str(value) if key == "classifier_model" else value
+    return config
+
+
+def _resolved_vectorize_artifact_config(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    config: dict[str, object] = {
+        "input": None,
+        "output": None,
+        "manifest": None,
+        "debug_svg": None,
+        "run_dir": None,
+        "no_manifest": False,
+    }
+    if args.config is not None:
+        loaded = _load_vectorize_config(args.config)
+        config.update(
+            {
+                key: value
+                for key, value in loaded.items()
+                if key in VECTORIZE_ARTIFACT_CONFIG_KEYS
+            }
+        )
+
+    for key in ("input", "output", "manifest", "debug_svg", "run_dir"):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    if args.no_manifest is not None:
+        config["no_manifest"] = args.no_manifest
+
+    _require_config_paths(config, ("input", "output"), "vectorize")
+    for key in ("input", "output", "manifest", "debug_svg", "run_dir"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    config["no_manifest"] = bool(config.get("no_manifest", False))
     return config
 
 
@@ -1808,7 +1878,7 @@ def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
         raise ValueError("vectorize config must be a JSON object")
-    supported = set(VECTORIZE_DEFAULT_CONFIG) | {"cutout_export"}
+    supported = set(VECTORIZE_DEFAULT_CONFIG) | VECTORIZE_ARTIFACT_CONFIG_KEYS
     unknown = sorted(set(loaded) - supported)
     if unknown:
         msg = f"unsupported vectorize config keys: {', '.join(unknown)}"
@@ -1816,7 +1886,11 @@ def _load_vectorize_config(path: Path) -> dict[str, object]:
     cutout_export = loaded.get("cutout_export")
     if cutout_export is not None and cutout_export not in CUTOUT_EXPORT_VALUES:
         raise ValueError("cutout_export must be overlay_stroke or negative_mask")
-    return loaded
+    config = dict(loaded)
+    for key in ("input", "output", "manifest", "debug_svg", "run_dir"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
 
 
 def _load_segment_config(path: Path) -> dict[str, object]:

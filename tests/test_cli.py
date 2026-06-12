@@ -182,6 +182,39 @@ class CliTests(unittest.TestCase):
             manifest = json.loads(output_path.with_suffix(".json").read_text())
             self.assertEqual(manifest["anchor_count"], 1)
 
+    def test_vectorize_config_accepts_artifact_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_path = root / "input.png"
+            output_path = root / "configured.svg"
+            manifest_path = root / "configured-manifest.json"
+            debug_svg = root / "configured-debug.svg"
+            config_path = root / "vectorize.json"
+            image = Image.new("RGB", (16, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+            image.save(input_path)
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "input": str(input_path),
+                        "output": str(output_path),
+                        "manifest": str(manifest_path),
+                        "debug_svg": str(debug_svg),
+                        "min_area": 8,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["vectorize", "--config", str(config_path)])
+
+            self.assertTrue(output_path.exists())
+            self.assertTrue(debug_svg.exists())
+            manifest = json.loads(manifest_path.read_text())
+            self.assertEqual(manifest["anchor_count"], 1)
+
     def test_vectorize_cli_args_override_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"
@@ -209,6 +242,48 @@ class CliTests(unittest.TestCase):
 
             manifest = json.loads(output_path.with_suffix(".json").read_text())
             self.assertEqual(manifest["anchor_count"], 1)
+
+    def test_vectorize_cli_args_override_config_artifact_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config_input = root / "config-input.png"
+            override_input = root / "override-input.png"
+            config_output = root / "config-output.svg"
+            output_path = root / "override-output.svg"
+            config_path = root / "vectorize.json"
+            Image.new("RGB", (16, 16), "white").save(config_input)
+            image = Image.new("RGB", (16, 16), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((3, 3, 12, 12), fill="#dd2222")
+            image.save(override_input)
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "input": str(config_input),
+                        "output": str(config_output),
+                        "min_area": 999,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "vectorize",
+                        str(override_input),
+                        "-o",
+                        str(output_path),
+                        "--config",
+                        str(config_path),
+                        "--min-area",
+                        "8",
+                    ]
+                )
+
+            manifest = json.loads(output_path.with_suffix(".json").read_text())
+            self.assertEqual(manifest["anchor_count"], 1)
+            self.assertFalse(config_output.exists())
 
     def test_vectorize_config_accepts_explicit_background(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -882,7 +882,8 @@ Implemented so far:
 - `curve retrain`
 - `curve refinement-gate`
 - `curve status`
-- `curve vectorize --config config.json` for repeatable runtime knob files
+- `curve vectorize --config config.json` for repeatable input/output,
+  artifact, and runtime knob files
 - `curve generate --config generate.json` for repeatable synthetic corpus
   generation
 - `curve train --config train.json` for repeatable classifier training inputs

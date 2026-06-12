@@ -263,8 +263,14 @@ commits and configurations.
 
 Read by `curve vectorize --config`.
 
-Supported fields match current runtime knobs:
+Supported fields include artifact paths and current runtime knobs:
 
+- `input`: input PNG/JPEG/WebP image
+- `output`: output SVG path
+- `manifest`: optional output JSON manifest path
+- `debug_svg`: optional debug SVG path with source ids, bounds, and labels
+- `run_dir`: optional root for timestamped experiment run directories
+- `no_manifest`: skip writing the JSON manifest for direct SVG outputs
 - `background`: optional explicit background color as `#rrggbb` or RGB triplet
 - `min_area`
 - `color_tolerance`
