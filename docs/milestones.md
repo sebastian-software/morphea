@@ -226,6 +226,9 @@ Implemented so far:
 - scene manifests include `same_color_fragment_group` entries that identify
   same-color merge candidates instead of leaving fragmentation as only a scalar
   penalty.
+- same-color fragment groups include a structured `merge_plan` with combined
+  bounds, per-fragment bounds, bounds fill ratio, and a conservative merge or
+  review action.
 
 ## M4: Reports, Metrics, and Experiment Runs
 
@@ -282,6 +285,7 @@ Implemented so far:
 - `report.html`
 - report summaries for anchor types and diagnostics
 - report summaries for scene groups, including same-color fragment groups
+- report summaries include same-color merge actions when present.
 - `curve eval` JSON/Markdown summaries over run directories
 - scene-level `metrics` in manifests
 - `editability_score`

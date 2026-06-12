@@ -106,6 +106,9 @@ Group fields:
 - `anchor_indexes`
 - `metrics`
 - `color`: present for `same_color_fragment_group`
+- `merge_plan`: present for `same_color_fragment_group`; records the
+  recommended action, target kind, combined bounds, per-fragment bounds, and
+  bounds fill ratio for later merge/review steps
 - `row_count`: present for `perspective_grid`
 - `column_count`: present for `perspective_grid`
 
