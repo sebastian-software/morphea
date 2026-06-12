@@ -1,0 +1,3847 @@
+{
+  "case_count": 291,
+  "cases": {
+    "adjacent_different_color_rects_horizontal": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_different_color_rects_offset": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_different_color_rects_vertical": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_same_color_rects_merge_horizontal": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_same_color_rects_merge_vertical": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_same_color_rects_merge_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_small_gap_rects_horizontal": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_small_gap_rects_offset": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "adjacent_small_gap_rects_vertical": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "antialiased_arc": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.805054,
+      "edge": 0.014908,
+      "kind": "arc",
+      "l1": 0.012235,
+      "ok": true,
+      "svg_edge": 0.013921,
+      "svg_l1": 0.01351
+    },
+    "antialiased_arc_steep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.868194,
+      "edge": 0.016588,
+      "kind": "arc",
+      "l1": 0.013844,
+      "ok": true,
+      "svg_edge": 0.013719,
+      "svg_l1": 0.013359
+    },
+    "antialiased_arc_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.879498,
+      "edge": 0.015515,
+      "kind": "arc",
+      "l1": 0.012888,
+      "ok": true,
+      "svg_edge": 0.014993,
+      "svg_l1": 0.014558
+    },
+    "antialiased_circle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 0.929847,
+      "edge": 0.007324,
+      "kind": "circle",
+      "l1": 0.005193,
+      "ok": true,
+      "svg_edge": 0.012611,
+      "svg_l1": 0.012773
+    },
+    "antialiased_circle_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 0.958767,
+      "edge": 0.013717,
+      "kind": "circle",
+      "l1": 0.009866,
+      "ok": true,
+      "svg_edge": 0.021303,
+      "svg_l1": 0.022169
+    },
+    "antialiased_circle_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 0.911157,
+      "edge": 0.006287,
+      "kind": "circle",
+      "l1": 0.004471,
+      "ok": true,
+      "svg_edge": 0.009792,
+      "svg_l1": 0.010113
+    },
+    "antialiased_curve_quadratic": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.89317,
+      "edge": 0.024024,
+      "kind": "stroke_path",
+      "l1": 0.02142,
+      "ok": true,
+      "svg_edge": 0.018189,
+      "svg_l1": 0.017905
+    },
+    "antialiased_curve_s": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.8968,
+      "edge": 0.024752,
+      "kind": "stroke_path",
+      "l1": 0.018818,
+      "ok": true,
+      "svg_edge": 0.018547,
+      "svg_l1": 0.01687
+    },
+    "antialiased_curve_wave": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.846439,
+      "edge": 0.01936,
+      "kind": "stroke_path",
+      "l1": 0.017426,
+      "ok": true,
+      "svg_edge": 0.011989,
+      "svg_l1": 0.012204
+    },
+    "antialiased_ellipse": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.938059,
+      "edge": 0.017675,
+      "kind": "ellipse",
+      "l1": 0.014877,
+      "ok": true,
+      "svg_edge": 0.013746,
+      "svg_l1": 0.013182
+    },
+    "antialiased_ellipse_narrow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.925777,
+      "edge": 0.014518,
+      "kind": "ellipse",
+      "l1": 0.012237,
+      "ok": true,
+      "svg_edge": 0.011585,
+      "svg_l1": 0.010824
+    },
+    "antialiased_ellipse_vertical": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.935972,
+      "edge": 0.016587,
+      "kind": "ellipse",
+      "l1": 0.013703,
+      "ok": true,
+      "svg_edge": 0.012966,
+      "svg_l1": 0.012282
+    },
+    "antialiased_ring": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.946301,
+      "edge": 0.023825,
+      "kind": "stroke_circle",
+      "l1": 0.019435,
+      "ok": true,
+      "svg_edge": 0.023357,
+      "svg_l1": 0.024557
+    },
+    "antialiased_ring_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.965777,
+      "edge": 0.050373,
+      "kind": "stroke_circle",
+      "l1": 0.053777,
+      "ok": true,
+      "svg_edge": 0.034852,
+      "svg_l1": 0.035531
+    },
+    "antialiased_ring_medium": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.959586,
+      "edge": 0.041004,
+      "kind": "stroke_circle",
+      "l1": 0.043551,
+      "ok": true,
+      "svg_edge": 0.027713,
+      "svg_l1": 0.027218
+    },
+    "antialiased_stroke_diagonal": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.976859,
+      "edge": 0.030997,
+      "kind": "stroke_polyline",
+      "l1": 0.020594,
+      "ok": true,
+      "svg_edge": 0.01856,
+      "svg_l1": 0.012874
+    },
+    "antialiased_stroke_horizontal": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.763341,
+      "edge": 0.006652,
+      "kind": "stroke_polyline",
+      "l1": 0.006,
+      "ok": true,
+      "svg_edge": 0.006567,
+      "svg_l1": 0.011203
+    },
+    "antialiased_stroke_vertical": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.979167,
+      "edge": 0.006211,
+      "kind": "stroke_polyline",
+      "l1": 0.006048,
+      "ok": true,
+      "svg_edge": 0.002282,
+      "svg_l1": 0.002253
+    },
+    "arc_down": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.812863,
+      "edge": 0.014801,
+      "kind": "arc",
+      "l1": 0.011523,
+      "ok": true,
+      "svg_edge": 0.014251,
+      "svg_l1": 0.01182
+    },
+    "arc_down_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.811033,
+      "edge": 0.016704,
+      "kind": "arc",
+      "l1": 0.013086,
+      "ok": true,
+      "svg_edge": 0.015895,
+      "svg_l1": 0.013276
+    },
+    "arc_down_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.787507,
+      "edge": 0.011418,
+      "kind": "arc",
+      "l1": 0.009375,
+      "ok": true,
+      "svg_edge": 0.012132,
+      "svg_l1": 0.010215
+    },
+    "arc_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.844136,
+      "edge": 0.012898,
+      "kind": "arc",
+      "l1": 0.00957,
+      "ok": true,
+      "svg_edge": 0.013501,
+      "svg_l1": 0.010728
+    },
+    "arc_left_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.865535,
+      "edge": 0.014378,
+      "kind": "arc",
+      "l1": 0.009766,
+      "ok": true,
+      "svg_edge": 0.014416,
+      "svg_l1": 0.011642
+    },
+    "arc_left_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.847364,
+      "edge": 0.010784,
+      "kind": "arc",
+      "l1": 0.007617,
+      "ok": true,
+      "svg_edge": 0.01216,
+      "svg_l1": 0.009484
+    },
+    "arc_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.812863,
+      "edge": 0.014801,
+      "kind": "arc",
+      "l1": 0.011523,
+      "ok": true,
+      "svg_edge": 0.014401,
+      "svg_l1": 0.011945
+    },
+    "arc_right_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.812874,
+      "edge": 0.014378,
+      "kind": "arc",
+      "l1": 0.011328,
+      "ok": true,
+      "svg_edge": 0.015135,
+      "svg_l1": 0.012763
+    },
+    "arc_right_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.787507,
+      "edge": 0.011418,
+      "kind": "arc",
+      "l1": 0.009375,
+      "ok": true,
+      "svg_edge": 0.012237,
+      "svg_l1": 0.010326
+    },
+    "arc_shallow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.814639,
+      "edge": 0.008669,
+      "kind": "arc",
+      "l1": 0.007227,
+      "ok": true,
+      "svg_edge": 0.010431,
+      "svg_l1": 0.009241
+    },
+    "arc_shallow_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.874591,
+      "edge": 0.010149,
+      "kind": "arc",
+      "l1": 0.008203,
+      "ok": true,
+      "svg_edge": 0.011049,
+      "svg_l1": 0.009596
+    },
+    "arc_shallow_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.74179,
+      "edge": 0.008458,
+      "kind": "arc",
+      "l1": 0.007227,
+      "ok": true,
+      "svg_edge": 0.009544,
+      "svg_l1": 0.008353
+    },
+    "arc_small_radius": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.781582,
+      "edge": 0.007189,
+      "kind": "arc",
+      "l1": 0.005469,
+      "ok": true,
+      "svg_edge": 0.00894,
+      "svg_l1": 0.007432
+    },
+    "arc_small_radius_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.789112,
+      "edge": 0.007612,
+      "kind": "arc",
+      "l1": 0.005664,
+      "ok": true,
+      "svg_edge": 0.008407,
+      "svg_l1": 0.006663
+    },
+    "arc_small_radius_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.828327,
+      "edge": 0.008881,
+      "kind": "arc",
+      "l1": 0.006641,
+      "ok": true,
+      "svg_edge": 0.009986,
+      "svg_l1": 0.008055
+    },
+    "arc_steep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.89106,
+      "edge": 0.014801,
+      "kind": "arc",
+      "l1": 0.010937,
+      "ok": true,
+      "svg_edge": 0.015006,
+      "svg_l1": 0.012098
+    },
+    "arc_steep_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.901281,
+      "edge": 0.01607,
+      "kind": "arc",
+      "l1": 0.011523,
+      "ok": true,
+      "svg_edge": 0.015283,
+      "svg_l1": 0.01223
+    },
+    "arc_steep_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.867325,
+      "edge": 0.013744,
+      "kind": "arc",
+      "l1": 0.010742,
+      "ok": true,
+      "svg_edge": 0.014417,
+      "svg_l1": 0.01161
+    },
+    "arc_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.850367,
+      "edge": 0.013744,
+      "kind": "arc",
+      "l1": 0.010352,
+      "ok": true,
+      "svg_edge": 0.016849,
+      "svg_l1": 0.0147
+    },
+    "arc_thick_medium": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.821931,
+      "edge": 0.013532,
+      "kind": "arc",
+      "l1": 0.010937,
+      "ok": true,
+      "svg_edge": 0.013807,
+      "svg_l1": 0.011985
+    },
+    "arc_thick_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.89302,
+      "edge": 0.019453,
+      "kind": "arc",
+      "l1": 0.014453,
+      "ok": true,
+      "svg_edge": 0.018793,
+      "svg_l1": 0.015262
+    },
+    "arc_up": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.834573,
+      "edge": 0.012475,
+      "kind": "arc",
+      "l1": 0.008789,
+      "ok": true,
+      "svg_edge": 0.013892,
+      "svg_l1": 0.011243
+    },
+    "arc_up_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.879785,
+      "edge": 0.012898,
+      "kind": "arc",
+      "l1": 0.008984,
+      "ok": true,
+      "svg_edge": 0.015151,
+      "svg_l1": 0.012188
+    },
+    "arc_up_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.817409,
+      "edge": 0.010995,
+      "kind": "arc",
+      "l1": 0.008398,
+      "ok": true,
+      "svg_edge": 0.012904,
+      "svg_l1": 0.010353
+    },
+    "composition_arc_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1
+      },
+      "bbox_iou": 0.841652,
+      "edge": 0.012052,
+      "kind": "arc",
+      "l1": 0.008594,
+      "ok": true,
+      "svg_edge": 0.018644,
+      "svg_l1": 0.014842
+    },
+    "composition_arc_circle_left": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1
+      },
+      "bbox_iou": 0.828725,
+      "edge": 0.009938,
+      "kind": "arc",
+      "l1": 0.007617,
+      "ok": true,
+      "svg_edge": 0.017295,
+      "svg_l1": 0.01437
+    },
+    "composition_arc_circle_small": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1
+      },
+      "bbox_iou": 0.796157,
+      "edge": 0.009938,
+      "kind": "arc",
+      "l1": 0.007617,
+      "ok": true,
+      "svg_edge": 0.015582,
+      "svg_l1": 0.012863
+    },
+    "composition_arc_rect": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "rect": 1
+      },
+      "bbox_iou": 0.881611,
+      "edge": 0.010784,
+      "kind": "arc",
+      "l1": 0.007617,
+      "ok": true,
+      "svg_edge": 0.012167,
+      "svg_l1": 0.009715
+    },
+    "composition_arc_rect_low": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "rect": 1
+      },
+      "bbox_iou": 0.877334,
+      "edge": 0.012264,
+      "kind": "arc",
+      "l1": 0.00918,
+      "ok": true,
+      "svg_edge": 0.0115,
+      "svg_l1": 0.009576
+    },
+    "composition_arc_rect_side": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "rect": 1
+      },
+      "bbox_iou": 0.885139,
+      "edge": 0.010149,
+      "kind": "arc",
+      "l1": 0.006836,
+      "ok": true,
+      "svg_edge": 0.011124,
+      "svg_l1": 0.008995
+    },
+    "composition_circle_plus_diagonal_stroke": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.009092,
+      "kind": "circle",
+      "l1": 0.004492,
+      "ok": true,
+      "svg_edge": 0.020818,
+      "svg_l1": 0.012721
+    },
+    "composition_circle_plus_horizontal_stroke": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012769,
+      "svg_l1": 0.010677
+    },
+    "composition_circle_plus_vertical_stroke": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.01298,
+      "svg_l1": 0.010872
+    },
+    "composition_curve_crossing_rect": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.010041,
+      "kind": "rect",
+      "l1": 0.010807,
+      "ok": true,
+      "svg_edge": 0.009514,
+      "svg_l1": 0.009906
+    },
+    "composition_curve_crossing_rect_high": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.010041,
+      "kind": "rect",
+      "l1": 0.010807,
+      "ok": true,
+      "svg_edge": 0.009514,
+      "svg_l1": 0.009906
+    },
+    "composition_curve_crossing_rect_wide": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.009613,
+      "kind": "rect",
+      "l1": 0.010699,
+      "ok": true,
+      "svg_edge": 0.009081,
+      "svg_l1": 0.010579
+    },
+    "composition_curve_group": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_path": 2
+      },
+      "bbox_iou": 0.869186,
+      "edge": 0.040597,
+      "kind": "stroke_path",
+      "l1": 0.029687,
+      "ok": true,
+      "svg_edge": 0.034353,
+      "svg_l1": 0.027981
+    },
+    "composition_curve_group_mixed": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_path": 2
+      },
+      "bbox_iou": 0.867267,
+      "edge": 0.037637,
+      "kind": "stroke_path",
+      "l1": 0.027148,
+      "ok": true,
+      "svg_edge": 0.033263,
+      "svg_l1": 0.027136
+    },
+    "composition_curve_group_waves": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_path": 2
+      },
+      "bbox_iou": 0.81721,
+      "edge": 0.030025,
+      "kind": "stroke_path",
+      "l1": 0.025781,
+      "ok": true,
+      "svg_edge": 0.025685,
+      "svg_l1": 0.022822
+    },
+    "composition_curve_touching_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.013613,
+      "kind": "circle",
+      "l1": 0.01033,
+      "ok": true,
+      "svg_edge": 0.018491,
+      "svg_l1": 0.015459
+    },
+    "composition_curve_touching_circle_left": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.008839,
+      "kind": "circle",
+      "l1": 0.006793,
+      "ok": true,
+      "svg_edge": 0.014343,
+      "svg_l1": 0.011427
+    },
+    "composition_curve_touching_circle_low": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.011131,
+      "kind": "circle",
+      "l1": 0.009006,
+      "ok": true,
+      "svg_edge": 0.017426,
+      "svg_l1": 0.014919
+    },
+    "composition_different_color_circle_rect": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.007512,
+      "svg_l1": 0.006161
+    },
+    "composition_different_color_square_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.006223,
+      "svg_l1": 0.004961
+    },
+    "composition_different_color_two_rects": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "composition_dot_column_three": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "circle": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011181,
+      "svg_l1": 0.008502
+    },
+    "composition_dot_row_four": {
+      "anchor_count": 4,
+      "anchor_kind_counts": {
+        "circle": 4
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014908,
+      "svg_l1": 0.011336
+    },
+    "composition_dot_row_three": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "circle": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011181,
+      "svg_l1": 0.008502
+    },
+    "composition_ellipse_stroke": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "ellipse": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.934277,
+      "edge": 0.013955,
+      "kind": "ellipse",
+      "l1": 0.010352,
+      "ok": true,
+      "svg_edge": 0.016393,
+      "svg_l1": 0.013537
+    },
+    "composition_ellipse_stroke_vertical": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "ellipse": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.934054,
+      "edge": 0.013109,
+      "kind": "ellipse",
+      "l1": 0.010742,
+      "ok": true,
+      "svg_edge": 0.015735,
+      "svg_l1": 0.012925
+    },
+    "composition_ellipse_stroke_wide": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "ellipse": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.934412,
+      "edge": 0.015647,
+      "kind": "ellipse",
+      "l1": 0.012695,
+      "ok": true,
+      "svg_edge": 0.018386,
+      "svg_l1": 0.015351
+    },
+    "composition_multiple_horizontal_strokes": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_polyline": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011365,
+      "svg_l1": 0.010303
+    },
+    "composition_multiple_mixed_strokes": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "stroke_polyline": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.020949,
+      "svg_l1": 0.013131
+    },
+    "composition_multiple_vertical_strokes": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_polyline": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011365,
+      "svg_l1": 0.010302
+    },
+    "composition_parallel_arcs": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 2
+      },
+      "bbox_iou": 0.836065,
+      "edge": 0.022413,
+      "kind": "arc",
+      "l1": 0.015625,
+      "ok": true,
+      "svg_edge": 0.02504,
+      "svg_l1": 0.020474
+    },
+    "composition_parallel_arcs_three": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "arc": 3
+      },
+      "bbox_iou": 0.876236,
+      "edge": 0.02791,
+      "kind": "arc",
+      "l1": 0.019922,
+      "ok": true,
+      "svg_edge": 0.031927,
+      "svg_l1": 0.02685
+    },
+    "composition_parallel_arcs_tight": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 2
+      },
+      "bbox_iou": 0.879493,
+      "edge": 0.024739,
+      "kind": "arc",
+      "l1": 0.017188,
+      "ok": true,
+      "svg_edge": 0.025352,
+      "svg_l1": 0.021154
+    },
+    "composition_ring_plus_dot_a": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.976228,
+      "edge": 0.031294,
+      "kind": "stroke_circle",
+      "l1": 0.030859,
+      "ok": true,
+      "svg_edge": 0.024446,
+      "svg_l1": 0.020308
+    },
+    "composition_ring_plus_dot_b": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.976228,
+      "edge": 0.031294,
+      "kind": "stroke_circle",
+      "l1": 0.030859,
+      "ok": true,
+      "svg_edge": 0.024446,
+      "svg_l1": 0.020308
+    },
+    "composition_ring_plus_dot_c": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.976228,
+      "edge": 0.031294,
+      "kind": "stroke_circle",
+      "l1": 0.030859,
+      "ok": true,
+      "svg_edge": 0.024446,
+      "svg_l1": 0.020308
+    },
+    "composition_same_color_rect_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.007296,
+      "svg_l1": 0.005399
+    },
+    "composition_same_color_square_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.008011,
+      "svg_l1": 0.006378
+    },
+    "composition_same_color_two_squares": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "composition_square_plus_circle_a": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.008011,
+      "svg_l1": 0.006378
+    },
+    "composition_square_plus_circle_b": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.008011,
+      "svg_l1": 0.006378
+    },
+    "composition_square_plus_circle_c": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.008011,
+      "svg_l1": 0.006378
+    },
+    "curve_asymmetric": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.88065,
+      "edge": 0.020087,
+      "kind": "stroke_path",
+      "l1": 0.01582,
+      "ok": true,
+      "svg_edge": 0.019148,
+      "svg_l1": 0.017309
+    },
+    "curve_asymmetric_low": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.90341,
+      "edge": 0.016915,
+      "kind": "stroke_path",
+      "l1": 0.014063,
+      "ok": true,
+      "svg_edge": 0.017299,
+      "svg_l1": 0.015824
+    },
+    "curve_asymmetric_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.880107,
+      "edge": 0.021144,
+      "kind": "stroke_path",
+      "l1": 0.016797,
+      "ok": true,
+      "svg_edge": 0.017817,
+      "svg_l1": 0.01549
+    },
+    "curve_diagonal": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.903236,
+      "edge": 0.031082,
+      "kind": "stroke_path",
+      "l1": 0.018164,
+      "ok": true,
+      "svg_edge": 0.030118,
+      "svg_l1": 0.020571
+    },
+    "curve_diagonal_steep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.912622,
+      "edge": 0.034042,
+      "kind": "stroke_path",
+      "l1": 0.020117,
+      "ok": true,
+      "svg_edge": 0.031785,
+      "svg_l1": 0.02194
+    },
+    "curve_diagonal_up": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.894332,
+      "edge": 0.008458,
+      "kind": "stroke_path",
+      "l1": 0.008398,
+      "ok": true,
+      "svg_edge": 0.011451,
+      "svg_l1": 0.011174
+    },
+    "curve_quadratic": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.903722,
+      "edge": 0.018184,
+      "kind": "stroke_path",
+      "l1": 0.014258,
+      "ok": true,
+      "svg_edge": 0.018813,
+      "svg_l1": 0.015958
+    },
+    "curve_quadratic_narrow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.89553,
+      "edge": 0.014378,
+      "kind": "stroke_path",
+      "l1": 0.011523,
+      "ok": true,
+      "svg_edge": 0.017167,
+      "svg_l1": 0.015166
+    },
+    "curve_quadratic_offset": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.901029,
+      "edge": 0.019453,
+      "kind": "stroke_path",
+      "l1": 0.014648,
+      "ok": true,
+      "svg_edge": 0.017724,
+      "svg_l1": 0.015275
+    },
+    "curve_round_caps": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.914922,
+      "edge": 0.030025,
+      "kind": "stroke_path",
+      "l1": 0.01875,
+      "ok": true,
+      "svg_edge": 0.024546,
+      "svg_l1": 0.018112
+    },
+    "curve_round_caps_down": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.906686,
+      "edge": 0.009726,
+      "kind": "stroke_path",
+      "l1": 0.00918,
+      "ok": true,
+      "svg_edge": 0.01179,
+      "svg_l1": 0.011086
+    },
+    "curve_round_caps_long": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.913121,
+      "edge": 0.023682,
+      "kind": "stroke_path",
+      "l1": 0.014453,
+      "ok": true,
+      "svg_edge": 0.023633,
+      "svg_l1": 0.0175
+    },
+    "curve_s": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.891118,
+      "edge": 0.023259,
+      "kind": "stroke_path",
+      "l1": 0.017578,
+      "ok": true,
+      "svg_edge": 0.022186,
+      "svg_l1": 0.018812
+    },
+    "curve_s_mirrored": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.891348,
+      "edge": 0.015647,
+      "kind": "stroke_path",
+      "l1": 0.013867,
+      "ok": true,
+      "svg_edge": 0.015519,
+      "svg_l1": 0.014788
+    },
+    "curve_s_tight": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.890172,
+      "edge": 0.02347,
+      "kind": "stroke_path",
+      "l1": 0.016406,
+      "ok": true,
+      "svg_edge": 0.023542,
+      "svg_l1": 0.019132
+    },
+    "curve_square_caps": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.952772,
+      "edge": 0.022201,
+      "kind": "stroke_path",
+      "l1": 0.012891,
+      "ok": true,
+      "svg_edge": 0.024846,
+      "svg_l1": 0.018516
+    },
+    "curve_square_caps_down": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.951546,
+      "edge": 0.008881,
+      "kind": "stroke_path",
+      "l1": 0.008008,
+      "ok": true,
+      "svg_edge": 0.012441,
+      "svg_l1": 0.011828
+    },
+    "curve_square_caps_long": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.951839,
+      "edge": 0.024527,
+      "kind": "stroke_path",
+      "l1": 0.013477,
+      "ok": true,
+      "svg_edge": 0.021534,
+      "svg_l1": 0.015205
+    },
+    "curve_wave": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.820741,
+      "edge": 0.017338,
+      "kind": "stroke_path",
+      "l1": 0.014258,
+      "ok": true,
+      "svg_edge": 0.015868,
+      "svg_l1": 0.014188
+    },
+    "curve_wave_inverted": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.839172,
+      "edge": 0.013955,
+      "kind": "stroke_path",
+      "l1": 0.010352,
+      "ok": true,
+      "svg_edge": 0.013962,
+      "svg_l1": 0.011507
+    },
+    "curve_wave_offset": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.878671,
+      "edge": 0.014801,
+      "kind": "stroke_path",
+      "l1": 0.012695,
+      "ok": true,
+      "svg_edge": 0.015388,
+      "svg_l1": 0.01398
+    },
+    "cutout_curve_circle": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.002326,
+      "kind": "circle",
+      "l1": 0.001758,
+      "ok": true,
+      "svg_edge": 0.024769,
+      "svg_l1": 0.020582
+    },
+    "cutout_curve_circle_large": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_path": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.008458,
+      "kind": "circle",
+      "l1": 0.006641,
+      "ok": true,
+      "svg_edge": 0.027181,
+      "svg_l1": 0.022633
+    },
+    "cutout_curve_circle_offset": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.002114,
+      "kind": "circle",
+      "l1": 0.001953,
+      "ok": true,
+      "svg_edge": 0.024044,
+      "svg_l1": 0.020117
+    },
+    "cutout_curve_crossing": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.002749,
+      "kind": "quad",
+      "l1": 0.002148,
+      "ok": true,
+      "svg_edge": 0.020589,
+      "svg_l1": 0.018096
+    },
+    "cutout_curve_crossing_low": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.002749,
+      "kind": "quad",
+      "l1": 0.002148,
+      "ok": true,
+      "svg_edge": 0.020589,
+      "svg_l1": 0.018096
+    },
+    "cutout_curve_crossing_right": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "circle": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.002749,
+      "kind": "quad",
+      "l1": 0.002148,
+      "ok": true,
+      "svg_edge": 0.020589,
+      "svg_l1": 0.018096
+    },
+    "cutout_curve_rect": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.003595,
+      "kind": "quad",
+      "l1": 0.002344,
+      "ok": true,
+      "svg_edge": 0.02017,
+      "svg_l1": 0.017871
+    },
+    "cutout_curve_rect_high": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.00296,
+      "kind": "quad",
+      "l1": 0.001758,
+      "ok": true,
+      "svg_edge": 0.018899,
+      "svg_l1": 0.016882
+    },
+    "cutout_curve_rect_low": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.004229,
+      "kind": "quad",
+      "l1": 0.002734,
+      "ok": true,
+      "svg_edge": 0.020439,
+      "svg_l1": 0.018421
+    },
+    "cutout_curve_ring": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.95646,
+      "edge": 0.062164,
+      "kind": "stroke_circle",
+      "l1": 0.054883,
+      "ok": true,
+      "svg_edge": 0.059494,
+      "svg_l1": 0.051044
+    },
+    "cutout_curve_ring_offset": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.951836,
+      "edge": 0.058358,
+      "kind": "stroke_circle",
+      "l1": 0.057227,
+      "ok": true,
+      "svg_edge": 0.054578,
+      "svg_l1": 0.049103
+    },
+    "cutout_curve_ring_thick": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.940919,
+      "edge": 0.061318,
+      "kind": "stroke_circle",
+      "l1": 0.060742,
+      "ok": true,
+      "svg_edge": 0.068336,
+      "svg_l1": 0.064796
+    },
+    "cutout_diagonal_gap_down": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.003595,
+      "kind": "rect",
+      "l1": 0.003125,
+      "ok": true,
+      "svg_edge": 0.003418,
+      "svg_l1": 0.00231
+    },
+    "cutout_diagonal_gap_short": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.002749,
+      "kind": "rect",
+      "l1": 0.002344,
+      "ok": true,
+      "svg_edge": 0.002728,
+      "svg_l1": 0.001821
+    },
+    "cutout_diagonal_gap_up": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.004017,
+      "kind": "rect",
+      "l1": 0.003516,
+      "ok": true,
+      "svg_edge": 0.006904,
+      "svg_l1": 0.004702
+    },
+    "cutout_horizontal_gap_bottom": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.002842,
+      "svg_l1": 0.002515
+    },
+    "cutout_horizontal_gap_center": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003265,
+      "svg_l1": 0.002905
+    },
+    "cutout_horizontal_gap_top": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.002842,
+      "svg_l1": 0.002515
+    },
+    "cutout_near_background": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.003703,
+      "kind": "quad",
+      "l1": 0.002641,
+      "ok": true,
+      "svg_edge": 0.020027,
+      "svg_l1": 0.017862
+    },
+    "cutout_near_background_light": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.003165,
+      "kind": "quad",
+      "l1": 0.002223,
+      "ok": true,
+      "svg_edge": 0.018668,
+      "svg_l1": 0.016899
+    },
+    "cutout_near_background_offwhite": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "arc": 1,
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.004324,
+      "kind": "quad",
+      "l1": 0.002979,
+      "ok": true,
+      "svg_edge": 0.020331,
+      "svg_l1": 0.018437
+    },
+    "diagonal_stroke": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.969961,
+      "edge": 0.032139,
+      "kind": "stroke_polyline",
+      "l1": 0.01543,
+      "ok": true,
+      "svg_edge": 0.022545,
+      "svg_l1": 0.011036
+    },
+    "diagonal_stroke_shallow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.940362,
+      "edge": 0.029813,
+      "kind": "stroke_polyline",
+      "l1": 0.019531,
+      "ok": true,
+      "svg_edge": 0.02078,
+      "svg_l1": 0.016332
+    },
+    "diagonal_stroke_steep": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.937168,
+      "edge": 0.01459,
+      "kind": "stroke_polyline",
+      "l1": 0.013477,
+      "ok": true,
+      "svg_edge": 0.017542,
+      "svg_l1": 0.013411
+    },
+    "diagonal_stroke_width_2": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.953261,
+      "edge": 0.034677,
+      "kind": "stroke_polyline",
+      "l1": 0.016406,
+      "ok": true,
+      "svg_edge": 0.022674,
+      "svg_l1": 0.012085
+    },
+    "diagonal_stroke_width_3": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.944861,
+      "edge": 0.035099,
+      "kind": "stroke_polyline",
+      "l1": 0.025977,
+      "ok": true,
+      "svg_edge": 0.024141,
+      "svg_l1": 0.017196
+    },
+    "diagonal_stroke_width_4": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.946783,
+      "edge": 0.024527,
+      "kind": "stroke_polyline",
+      "l1": 0.015625,
+      "ok": true,
+      "svg_edge": 0.023708,
+      "svg_l1": 0.018164
+    },
+    "diagonal_stroke_width_5": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.962305,
+      "edge": 0.001269,
+      "kind": "stroke_polyline",
+      "l1": 0.000977,
+      "ok": true,
+      "svg_edge": 0.005695,
+      "svg_l1": 0.004699
+    },
+    "diagonal_stroke_width_6": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.962374,
+      "edge": 0.020721,
+      "kind": "stroke_polyline",
+      "l1": 0.018945,
+      "ok": true,
+      "svg_edge": 0.030009,
+      "svg_l1": 0.014703
+    },
+    "diagonal_stroke_width_7": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.966573,
+      "edge": 0.033408,
+      "kind": "stroke_polyline",
+      "l1": 0.017383,
+      "ok": true,
+      "svg_edge": 0.023816,
+      "svg_l1": 0.016792
+    },
+    "diagonal_stroke_width_8": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 0.966217,
+      "edge": 0.008669,
+      "kind": "stroke_polyline",
+      "l1": 0.007422,
+      "ok": true,
+      "svg_edge": 0.012574,
+      "svg_l1": 0.010534
+    },
+    "drift_curve_quadratic": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.903722,
+      "edge": 0.018198,
+      "kind": "stroke_path",
+      "l1": 0.014271,
+      "ok": true,
+      "svg_edge": 0.018804,
+      "svg_l1": 0.015957
+    },
+    "drift_curve_s": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.891118,
+      "edge": 0.023283,
+      "kind": "stroke_path",
+      "l1": 0.017593,
+      "ok": true,
+      "svg_edge": 0.022171,
+      "svg_l1": 0.018814
+    },
+    "drift_curve_wave": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.820741,
+      "edge": 0.018579,
+      "kind": "stroke_path",
+      "l1": 0.014832,
+      "ok": true,
+      "svg_edge": 0.017109,
+      "svg_l1": 0.014762
+    },
+    "ellipse_horizontal": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.938667,
+      "edge": 0.014801,
+      "kind": "ellipse",
+      "l1": 0.012305,
+      "ok": true,
+      "svg_edge": 0.013365,
+      "svg_l1": 0.010498
+    },
+    "ellipse_horizontal_flat": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.932945,
+      "edge": 0.014801,
+      "kind": "ellipse",
+      "l1": 0.012305,
+      "ok": true,
+      "svg_edge": 0.013483,
+      "svg_l1": 0.01084
+    },
+    "ellipse_horizontal_tall": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.941968,
+      "edge": 0.014801,
+      "kind": "ellipse",
+      "l1": 0.011914,
+      "ok": true,
+      "svg_edge": 0.013627,
+      "svg_l1": 0.010692
+    },
+    "ellipse_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.958494,
+      "edge": 0.020721,
+      "kind": "ellipse",
+      "l1": 0.018164,
+      "ok": true,
+      "svg_edge": 0.018983,
+      "svg_l1": 0.014815
+    },
+    "ellipse_large_low": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.957844,
+      "edge": 0.020721,
+      "kind": "ellipse",
+      "l1": 0.016602,
+      "ok": true,
+      "svg_edge": 0.018698,
+      "svg_l1": 0.014722
+    },
+    "ellipse_large_tall": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.960624,
+      "edge": 0.021567,
+      "kind": "ellipse",
+      "l1": 0.016992,
+      "ok": true,
+      "svg_edge": 0.019706,
+      "svg_l1": 0.015428
+    },
+    "ellipse_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.879121,
+      "edge": 0.007189,
+      "kind": "ellipse",
+      "l1": 0.006055,
+      "ok": true,
+      "svg_edge": 0.006437,
+      "svg_l1": 0.00515
+    },
+    "ellipse_small_bottom_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.879121,
+      "edge": 0.007189,
+      "kind": "ellipse",
+      "l1": 0.006055,
+      "ok": true,
+      "svg_edge": 0.006437,
+      "svg_l1": 0.00515
+    },
+    "ellipse_small_top_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.879121,
+      "edge": 0.007189,
+      "kind": "ellipse",
+      "l1": 0.006055,
+      "ok": true,
+      "svg_edge": 0.006437,
+      "svg_l1": 0.00515
+    },
+    "ellipse_vertical": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.938667,
+      "edge": 0.014801,
+      "kind": "ellipse",
+      "l1": 0.012305,
+      "ok": true,
+      "svg_edge": 0.013365,
+      "svg_l1": 0.010498
+    },
+    "ellipse_vertical_narrow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.932945,
+      "edge": 0.014801,
+      "kind": "ellipse",
+      "l1": 0.012305,
+      "ok": true,
+      "svg_edge": 0.013483,
+      "svg_l1": 0.01084
+    },
+    "ellipse_vertical_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.941968,
+      "edge": 0.014801,
+      "kind": "ellipse",
+      "l1": 0.011914,
+      "ok": true,
+      "svg_edge": 0.013628,
+      "svg_l1": 0.010692
+    },
+    "ellipse_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.90566,
+      "edge": 0.013955,
+      "kind": "ellipse",
+      "l1": 0.010742,
+      "ok": true,
+      "svg_edge": 0.012742,
+      "svg_l1": 0.011012
+    },
+    "ellipse_wide_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.924665,
+      "edge": 0.015647,
+      "kind": "ellipse",
+      "l1": 0.012695,
+      "ok": true,
+      "svg_edge": 0.014366,
+      "svg_l1": 0.011964
+    },
+    "ellipse_wide_thin": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "ellipse": 1
+      },
+      "bbox_iou": 0.904239,
+      "edge": 0.013109,
+      "kind": "ellipse",
+      "l1": 0.010742,
+      "ok": true,
+      "svg_edge": 0.011845,
+      "svg_l1": 0.010132
+    },
+    "filled_circle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012772,
+      "svg_l1": 0.010459
+    },
+    "filled_circle_large_bottom_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014036,
+      "svg_l1": 0.011216
+    },
+    "filled_circle_large_center": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.017949,
+      "svg_l1": 0.014514
+    },
+    "filled_circle_large_top_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.016805,
+      "svg_l1": 0.013557
+    },
+    "filled_circle_medium_center": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.010916,
+      "svg_l1": 0.008945
+    },
+    "filled_circle_near_corner": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012772,
+      "svg_l1": 0.010459
+    },
+    "filled_circle_near_origin": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012772,
+      "svg_l1": 0.010459
+    },
+    "filled_circle_small_bottom_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.010311,
+      "svg_l1": 0.008164
+    },
+    "filled_circle_small_top_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.009677,
+      "svg_l1": 0.007918
+    },
+    "filled_circle_small_top_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.010311,
+      "svg_l1": 0.008164
+    },
+    "filled_rectangle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_bottom": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_narrow_tall": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_near_square": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_tall": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_top_strip": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_rectangle_wide_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_large_center": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_medium_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_medium_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_near_bottom": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_near_top": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_offset_center": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_small_bottom_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_small_top_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "filled_square_tiny_center": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "group_dot_column_three": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "circle": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011181,
+      "svg_l1": 0.008502
+    },
+    "group_dot_row_four": {
+      "anchor_count": 4,
+      "anchor_kind_counts": {
+        "circle": 4
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014908,
+      "svg_l1": 0.011336
+    },
+    "group_dot_row_three": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "circle": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011181,
+      "svg_l1": 0.008502
+    },
+    "group_parallel_strokes_diagonal": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_polyline": 2
+      },
+      "bbox_iou": 0.956614,
+      "edge": 0.010784,
+      "kind": "stroke_polyline",
+      "l1": 0.005273,
+      "ok": true,
+      "svg_edge": 0.030483,
+      "svg_l1": 0.015033
+    },
+    "group_parallel_strokes_horizontal": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_polyline": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011365,
+      "svg_l1": 0.010303
+    },
+    "group_parallel_strokes_vertical": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "stroke_polyline": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011365,
+      "svg_l1": 0.010302
+    },
+    "group_quad_grid_column": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "quad": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.021132,
+      "svg_l1": 0.019256
+    },
+    "group_quad_grid_row": {
+      "anchor_count": 3,
+      "anchor_kind_counts": {
+        "quad": 3
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.021206,
+      "svg_l1": 0.01857
+    },
+    "group_quad_grid_two_by_two": {
+      "anchor_count": 4,
+      "anchor_kind_counts": {
+        "quad": 4
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.033002,
+      "svg_l1": 0.029205
+    },
+    "horizontal_stroke": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.004995,
+      "svg_l1": 0.004517
+    },
+    "horizontal_stroke_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003937,
+      "svg_l1": 0.00354
+    },
+    "horizontal_stroke_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003937,
+      "svg_l1": 0.00354
+    },
+    "horizontal_stroke_short": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003303,
+      "svg_l1": 0.002954
+    },
+    "horizontal_stroke_width_1": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.00538,
+      "svg_l1": 0.004859
+    },
+    "horizontal_stroke_width_2": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005524,
+      "svg_l1": 0.005005
+    },
+    "horizontal_stroke_width_3": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005259,
+      "svg_l1": 0.004761
+    },
+    "horizontal_stroke_width_5": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005998,
+      "svg_l1": 0.005444
+    },
+    "horizontal_stroke_width_6": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005311,
+      "svg_l1": 0.00481
+    },
+    "horizontal_stroke_width_8": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.00605,
+      "svg_l1": 0.005493
+    },
+    "organic_asymmetric": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.945461,
+      "edge": 0.015435,
+      "kind": "cubic_path",
+      "l1": 0.009961,
+      "ok": true,
+      "svg_edge": 0.017163,
+      "svg_l1": 0.01431
+    },
+    "organic_asymmetric_heavy": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.954129,
+      "edge": 0.01459,
+      "kind": "cubic_path",
+      "l1": 0.010156,
+      "ok": true,
+      "svg_edge": 0.015201,
+      "svg_l1": 0.012607
+    },
+    "organic_asymmetric_soft": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.960306,
+      "edge": 0.018184,
+      "kind": "cubic_path",
+      "l1": 0.011914,
+      "ok": true,
+      "svg_edge": 0.017374,
+      "svg_l1": 0.014375
+    },
+    "organic_blob": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.941934,
+      "edge": 0.017127,
+      "kind": "cubic_path",
+      "l1": 0.011133,
+      "ok": true,
+      "svg_edge": 0.017545,
+      "svg_l1": 0.014679
+    },
+    "organic_blob_lumpy": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.950509,
+      "edge": 0.013744,
+      "kind": "cubic_path",
+      "l1": 0.009375,
+      "ok": true,
+      "svg_edge": 0.014525,
+      "svg_l1": 0.011925
+    },
+    "organic_blob_soft": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.95669,
+      "edge": 0.018184,
+      "kind": "cubic_path",
+      "l1": 0.011719,
+      "ok": true,
+      "svg_edge": 0.017986,
+      "svg_l1": 0.01493
+    },
+    "organic_compound": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.947392,
+      "edge": 0.017973,
+      "kind": "cubic_path",
+      "l1": 0.011523,
+      "ok": true,
+      "svg_edge": 0.019308,
+      "svg_l1": 0.015428
+    },
+    "organic_compound_tall": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.925823,
+      "edge": 0.015435,
+      "kind": "cubic_path",
+      "l1": 0.010937,
+      "ok": true,
+      "svg_edge": 0.01622,
+      "svg_l1": 0.013933
+    },
+    "organic_compound_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.953737,
+      "edge": 0.014167,
+      "kind": "cubic_path",
+      "l1": 0.010156,
+      "ok": true,
+      "svg_edge": 0.017047,
+      "svg_l1": 0.014867
+    },
+    "organic_crescent": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.772284,
+      "edge": 0.018607,
+      "kind": "cubic_path",
+      "l1": 0.013281,
+      "ok": true,
+      "svg_edge": 0.0179,
+      "svg_l1": 0.0149
+    },
+    "organic_crescent_high": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.772284,
+      "edge": 0.018184,
+      "kind": "cubic_path",
+      "l1": 0.011523,
+      "ok": true,
+      "svg_edge": 0.018879,
+      "svg_l1": 0.014426
+    },
+    "organic_crescent_low": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.772284,
+      "edge": 0.018607,
+      "kind": "cubic_path",
+      "l1": 0.013281,
+      "ok": true,
+      "svg_edge": 0.0179,
+      "svg_l1": 0.0149
+    },
+    "organic_leaf": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.954355,
+      "edge": 0.012475,
+      "kind": "cubic_path",
+      "l1": 0.009375,
+      "ok": true,
+      "svg_edge": 0.016658,
+      "svg_l1": 0.014616
+    },
+    "organic_leaf_narrow": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.957463,
+      "edge": 0.011629,
+      "kind": "cubic_path",
+      "l1": 0.008008,
+      "ok": true,
+      "svg_edge": 0.016012,
+      "svg_l1": 0.01391
+    },
+    "organic_leaf_tilted": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "cubic_path": 1
+      },
+      "bbox_iou": 0.958699,
+      "edge": 0.013744,
+      "kind": "cubic_path",
+      "l1": 0.00957,
+      "ok": true,
+      "svg_edge": 0.018076,
+      "svg_l1": 0.015076
+    },
+    "outlined_ring": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.990867,
+      "edge": 0.021144,
+      "kind": "stroke_circle",
+      "l1": 0.016797,
+      "ok": true,
+      "svg_edge": 0.021368,
+      "svg_l1": 0.017276
+    },
+    "outlined_ring_bottom": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.990867,
+      "edge": 0.021144,
+      "kind": "stroke_circle",
+      "l1": 0.016797,
+      "ok": true,
+      "svg_edge": 0.021368,
+      "svg_l1": 0.017276
+    },
+    "outlined_ring_large": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.991841,
+      "edge": 0.037214,
+      "kind": "stroke_circle",
+      "l1": 0.031641,
+      "ok": true,
+      "svg_edge": 0.037564,
+      "svg_l1": 0.030744
+    },
+    "outlined_ring_large_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.99034,
+      "edge": 0.031294,
+      "kind": "stroke_circle",
+      "l1": 0.026562,
+      "ok": true,
+      "svg_edge": 0.03152,
+      "svg_l1": 0.025908
+    },
+    "outlined_ring_medium": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.996568,
+      "edge": 0.024527,
+      "kind": "stroke_circle",
+      "l1": 0.021484,
+      "ok": true,
+      "svg_edge": 0.025385,
+      "svg_l1": 0.021053
+    },
+    "outlined_ring_small_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.990867,
+      "edge": 0.021144,
+      "kind": "stroke_circle",
+      "l1": 0.016797,
+      "ok": true,
+      "svg_edge": 0.021368,
+      "svg_l1": 0.017276
+    },
+    "outlined_ring_small_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.990867,
+      "edge": 0.021144,
+      "kind": "stroke_circle",
+      "l1": 0.016797,
+      "ok": true,
+      "svg_edge": 0.021368,
+      "svg_l1": 0.017276
+    },
+    "outlined_ring_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.996568,
+      "edge": 0.022836,
+      "kind": "stroke_circle",
+      "l1": 0.019531,
+      "ok": true,
+      "svg_edge": 0.023348,
+      "svg_l1": 0.019005
+    },
+    "outlined_ring_thin": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.990867,
+      "edge": 0.022836,
+      "kind": "stroke_circle",
+      "l1": 0.01875,
+      "ok": true,
+      "svg_edge": 0.023405,
+      "svg_l1": 0.019324
+    },
+    "outlined_ring_top": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_circle": 1
+      },
+      "bbox_iou": 0.990867,
+      "edge": 0.021144,
+      "kind": "stroke_circle",
+      "l1": 0.016797,
+      "ok": true,
+      "svg_edge": 0.021368,
+      "svg_l1": 0.017276
+    },
+    "overlapping_rectangles_bottom_right": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "overlapping_rectangles_side": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "overlapping_rectangles_top_left": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 2
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.0,
+      "svg_l1": 0.0
+    },
+    "palette_drift_circle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 3.2e-05,
+      "kind": "circle",
+      "l1": 1.5e-05,
+      "ok": true,
+      "svg_edge": 0.012803,
+      "svg_l1": 0.010474
+    },
+    "palette_drift_rectangle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 3.6e-05,
+      "kind": "rect",
+      "l1": 1.8e-05,
+      "ok": true,
+      "svg_edge": 3.6e-05,
+      "svg_l1": 1.8e-05
+    },
+    "palette_drift_square": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rect": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 3.2e-05,
+      "kind": "rect",
+      "l1": 1.5e-05,
+      "ok": true,
+      "svg_edge": 3.2e-05,
+      "svg_l1": 1.5e-05
+    },
+    "rounded_rectangle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.931713,
+      "edge": 0.009346,
+      "kind": "rounded_rect",
+      "l1": 0.00926,
+      "ok": true,
+      "svg_edge": 0.007185,
+      "svg_l1": 0.006287
+    },
+    "rounded_rectangle_bottom": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.929426,
+      "edge": 0.010295,
+      "kind": "rounded_rect",
+      "l1": 0.010972,
+      "ok": true,
+      "svg_edge": 0.008971,
+      "svg_l1": 0.007988
+    },
+    "rounded_rectangle_left": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.9375,
+      "edge": 0.011823,
+      "kind": "rounded_rect",
+      "l1": 0.013575,
+      "ok": true,
+      "svg_edge": 0.01006,
+      "svg_l1": 0.0091
+    },
+    "rounded_rectangle_medium_radius": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.94237,
+      "edge": 0.014818,
+      "kind": "rounded_rect",
+      "l1": 0.019439,
+      "ok": true,
+      "svg_edge": 0.012272,
+      "svg_l1": 0.01096
+    },
+    "rounded_rectangle_right": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.9375,
+      "edge": 0.011823,
+      "kind": "rounded_rect",
+      "l1": 0.013575,
+      "ok": true,
+      "svg_edge": 0.01006,
+      "svg_l1": 0.0091
+    },
+    "rounded_rectangle_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.905093,
+      "edge": 0.0067,
+      "kind": "rounded_rect",
+      "l1": 0.00629,
+      "ok": true,
+      "svg_edge": 0.0053,
+      "svg_l1": 0.004631
+    },
+    "rounded_rectangle_small_radius": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.922727,
+      "edge": 0.006592,
+      "kind": "rounded_rect",
+      "l1": 0.005992,
+      "ok": true,
+      "svg_edge": 0.005886,
+      "svg_l1": 0.00516
+    },
+    "rounded_rectangle_tall": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.946528,
+      "edge": 0.013096,
+      "kind": "rounded_rect",
+      "l1": 0.014808,
+      "ok": true,
+      "svg_edge": 0.011333,
+      "svg_l1": 0.010333
+    },
+    "rounded_rectangle_top": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.929426,
+      "edge": 0.010295,
+      "kind": "rounded_rect",
+      "l1": 0.010972,
+      "ok": true,
+      "svg_edge": 0.008971,
+      "svg_l1": 0.007988
+    },
+    "rounded_rectangle_wide": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "rounded_rect": 1
+      },
+      "bbox_iou": 0.926282,
+      "edge": 0.010255,
+      "kind": "rounded_rect",
+      "l1": 0.010141,
+      "ok": true,
+      "svg_edge": 0.008094,
+      "svg_l1": 0.007168
+    },
+    "simple_quad": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012798,
+      "svg_l1": 0.010978
+    },
+    "simple_quad_trapezoid_1": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012366,
+      "svg_l1": 0.010735
+    },
+    "simple_quad_trapezoid_2": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014669,
+      "svg_l1": 0.012979
+    },
+    "simple_quad_trapezoid_3": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.015222,
+      "svg_l1": 0.013276
+    },
+    "simple_quad_trapezoid_4": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.01189,
+      "svg_l1": 0.010638
+    },
+    "simple_quad_trapezoid_5": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014714,
+      "svg_l1": 0.012589
+    },
+    "simple_quad_trapezoid_6": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.010725,
+      "svg_l1": 0.009469
+    },
+    "simple_quad_trapezoid_7": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014348,
+      "svg_l1": 0.012296
+    },
+    "simple_quad_trapezoid_8": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.014605,
+      "svg_l1": 0.012294
+    },
+    "simple_quad_trapezoid_9": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "quad": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "quad",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011676,
+      "svg_l1": 0.010299
+    },
+    "stroke_crossing_rectangle_horizontal": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.002195,
+      "svg_l1": 0.002994
+    },
+    "stroke_crossing_rectangle_low": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.00229,
+      "svg_l1": 0.003189
+    },
+    "stroke_crossing_rectangle_vertical": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "rect": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "rect",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.002195,
+      "svg_l1": 0.002994
+    },
+    "stroked_ellipse": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_ellipse": 1
+      },
+      "bbox_iou": 0.925291,
+      "edge": 0.033408,
+      "kind": "stroke_ellipse",
+      "l1": 0.030859,
+      "ok": true,
+      "svg_edge": 0.030679,
+      "svg_l1": 0.028364
+    },
+    "stroked_ellipse_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_ellipse": 1
+      },
+      "bbox_iou": 0.948849,
+      "edge": 0.039328,
+      "kind": "stroke_ellipse",
+      "l1": 0.035937,
+      "ok": true,
+      "svg_edge": 0.034044,
+      "svg_l1": 0.030681
+    },
+    "stroked_ellipse_thin": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_ellipse": 1
+      },
+      "bbox_iou": 0.971134,
+      "edge": 0.027065,
+      "kind": "stroke_ellipse",
+      "l1": 0.022266,
+      "ok": true,
+      "svg_edge": 0.02552,
+      "svg_l1": 0.020282
+    },
+    "touching_circle_stroke_bottom": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.01111,
+      "svg_l1": 0.009201
+    },
+    "touching_circle_stroke_left": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011415,
+      "svg_l1": 0.009803
+    },
+    "touching_circle_stroke_right": {
+      "anchor_count": 2,
+      "anchor_kind_counts": {
+        "circle": 1,
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.01111,
+      "svg_l1": 0.009201
+    },
+    "transparent_arc": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.834573,
+      "edge": 0.012475,
+      "kind": "arc",
+      "l1": 0.008789,
+      "ok": true,
+      "svg_edge": 0.01347,
+      "svg_l1": 0.015811
+    },
+    "transparent_arc_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.817409,
+      "edge": 0.010995,
+      "kind": "arc",
+      "l1": 0.008398,
+      "ok": true,
+      "svg_edge": 0.01161,
+      "svg_l1": 0.012801
+    },
+    "transparent_arc_thick": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "arc": 1
+      },
+      "bbox_iou": 0.850367,
+      "edge": 0.013744,
+      "kind": "arc",
+      "l1": 0.010352,
+      "ok": true,
+      "svg_edge": 0.013752,
+      "svg_l1": 0.016405
+    },
+    "transparent_circle": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.012008,
+      "svg_l1": 0.004365
+    },
+    "transparent_circle_offset": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.011263,
+      "svg_l1": 0.004112
+    },
+    "transparent_circle_small": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "circle": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "circle",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.009564,
+      "svg_l1": 0.003688
+    },
+    "transparent_curve_diagonal": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.903236,
+      "edge": 0.031082,
+      "kind": "stroke_path",
+      "l1": 0.018164,
+      "ok": true,
+      "svg_edge": 0.02103,
+      "svg_l1": 0.019488
+    },
+    "transparent_curve_s": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.891118,
+      "edge": 0.023259,
+      "kind": "stroke_path",
+      "l1": 0.017578,
+      "ok": true,
+      "svg_edge": 0.019555,
+      "svg_l1": 0.019493
+    },
+    "transparent_curve_wave": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_path": 1
+      },
+      "bbox_iou": 0.820741,
+      "edge": 0.017338,
+      "kind": "stroke_path",
+      "l1": 0.014258,
+      "ok": true,
+      "svg_edge": 0.015928,
+      "svg_l1": 0.012667
+    },
+    "vertical_stroke": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.004995,
+      "svg_l1": 0.004516
+    },
+    "vertical_stroke_bottom": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003937,
+      "svg_l1": 0.00354
+    },
+    "vertical_stroke_short": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003303,
+      "svg_l1": 0.002954
+    },
+    "vertical_stroke_top": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.003937,
+      "svg_l1": 0.00354
+    },
+    "vertical_stroke_width_1": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.00538,
+      "svg_l1": 0.004858
+    },
+    "vertical_stroke_width_2": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005524,
+      "svg_l1": 0.005005
+    },
+    "vertical_stroke_width_3": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005259,
+      "svg_l1": 0.004761
+    },
+    "vertical_stroke_width_5": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005998,
+      "svg_l1": 0.005444
+    },
+    "vertical_stroke_width_6": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.005311,
+      "svg_l1": 0.004809
+    },
+    "vertical_stroke_width_8": {
+      "anchor_count": 1,
+      "anchor_kind_counts": {
+        "stroke_polyline": 1
+      },
+      "bbox_iou": 1.0,
+      "edge": 0.0,
+      "kind": "stroke_polyline",
+      "l1": 0.0,
+      "ok": true,
+      "svg_edge": 0.00605,
+      "svg_l1": 0.005493
+    }
+  },
+  "schema_version": 1
+}

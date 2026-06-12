@@ -85,6 +85,21 @@ The fixture suite stands at 291 deterministic cases (159 baseline + 132
 freeform/curve cases), all passing both the manifest preview and the exported
 SVG raster gates.
 
+## Regression Snapshot Baseline
+
+The contract budgets are upper bounds, so quality can drift inside them
+without failing anything. `tests/data/primitive-baseline.json` therefore
+pins the exact outcome of every fixture case: detected kind, anchor and
+node composition, preview and SVG raster metrics, and bounding-box IoU.
+
+- `morphea primitive-check --baseline` (and the always-on
+  `tests/test_primitive_baseline.py` suite guard) fail on any drift beyond
+  a 0.002 noise tolerance, in both directions; improvements also require a
+  deliberate baseline refresh so the pin never decays into a stale bound.
+- After an intentional change run
+  `morphea primitive-check -o <report> --update-baseline` and commit the
+  regenerated file; the per-case movement is then reviewable in the diff.
+
 ## FQ11: Real-Image Promotion Process
 
 No real-image curve tuning ships without a synthetic contract first:

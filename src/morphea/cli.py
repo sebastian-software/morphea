@@ -22,6 +22,12 @@ from morphea.mlx_classifier import (
     train_mlx_transformer_classifier,
 )
 from morphea.profiling import profile_curated_suite, profile_vectorize
+from morphea.primitive_baseline import (
+    compare_to_baseline,
+    load_baseline,
+    render_baseline_diff_markdown,
+    write_baseline,
+)
 from morphea.primitive_gallery import write_primitive_gallery_site
 from morphea.primitive_quality import write_primitive_quality_report
 from morphea.runs import (
@@ -803,6 +809,26 @@ def main(argv: list[str] | None = None) -> None:
         help="Run the local structure-preserving refinement gate for selected cases.",
     )
     primitive_check.add_argument("--refinement-iterations", type=int, default=None)
+    primitive_check.add_argument(
+        "--baseline",
+        nargs="?",
+        type=Path,
+        const=Path("tests/data/primitive-baseline.json"),
+        default=None,
+        help=(
+            "Compare the full run against a pinned metric baseline and fail "
+            "on any drift. Without a value the checked-in default path is "
+            "used. Requires running without --case/--filter."
+        ),
+    )
+    primitive_check.add_argument(
+        "--update-baseline",
+        nargs="?",
+        type=Path,
+        const=Path("tests/data/primitive-baseline.json"),
+        default=None,
+        help="Regenerate the pinned metric baseline from this full run.",
+    )
     primitive_check.add_argument("--config", type=Path)
 
     primitive_gallery = subcommands.add_parser(
@@ -1401,6 +1427,23 @@ def main(argv: list[str] | None = None) -> None:
         )
         if not result["ok"]:
             raise SystemExit(1)
+        selection_active = bool(
+            primitive_config.get("case") or primitive_config.get("filter")
+        )
+        if args.update_baseline is not None:
+            if selection_active:
+                print("baseline updates require a full run without --case/--filter")
+                raise SystemExit(1)
+            baseline_path = write_baseline(result, path=args.update_baseline)
+            print(f"primitive baseline updated: {baseline_path}")
+        elif args.baseline is not None:
+            if selection_active:
+                print("baseline comparison requires a full run without --case/--filter")
+                raise SystemExit(1)
+            diff = compare_to_baseline(result, load_baseline(args.baseline))
+            print(render_baseline_diff_markdown(diff), end="")
+            if not diff["ok"]:
+                raise SystemExit(1)
         return
 
     if args.command == "primitive-gallery":
