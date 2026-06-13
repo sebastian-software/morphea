@@ -420,6 +420,83 @@ class CuratedSuiteTests(unittest.TestCase):
             written = json.loads(output.read_text(encoding="utf-8"))
             self.assertFalse(written["ok"])
 
+    def test_region_promotion_gates_check_anchor_kind_inside_bounds(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "input.png"
+            suite_path = Path(temp_dir) / "suite.json"
+            output = Path(temp_dir) / "report.json"
+            image = Image.new("RGB", (24, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            image.save(source)
+            promotion = _promotion_metadata("green")
+            promotion["region_gates"] = [
+                {
+                    "id": "circle-region",
+                    "gate_type": "shape_class",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "min_iou": 0.3,
+                    "min_count": 1,
+                    "severity": "red",
+                },
+                {
+                    "id": "empty-region",
+                    "gate_type": "shape_class",
+                    "bounds": [0, 0, 4, 4],
+                    "expected_kinds": ["circle"],
+                    "min_iou": 0.1,
+                    "min_count": 1,
+                    "severity": "red",
+                },
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "single-circle",
+                                "source": str(source),
+                                "promotion": promotion,
+                                "recommended_config": {
+                                    "min_area": 8,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(suite_path, output=output, run=True)
+
+            gate_by_id = {
+                gate["id"]: gate for gate in result["cases"][0]["promotion_gates"]
+            }
+            self.assertTrue(gate_by_id["circle-region"]["ok"])
+            self.assertEqual(
+                gate_by_id["circle-region"]["evidence"]["matching_count"],
+                1,
+            )
+            self.assertFalse(gate_by_id["empty-region"]["ok"])
+            self.assertIn(
+                "matching anchors in region: 0 < 1",
+                gate_by_id["empty-region"]["reason"],
+            )
+            self.assertEqual(
+                result["cases"][0]["promotion_summary"]["decision"],
+                "rejected",
+            )
+
     def test_load_curated_suite_rejects_metric_expectation_without_bounds(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             suite_path = Path(temp_dir) / "suite.json"

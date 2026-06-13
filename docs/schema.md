@@ -390,6 +390,13 @@ Promotion metadata fields:
   `grouping`, `fragmentation`, `visual_fidelity`, `provenance`, and
   `review_safety`. `expectation_ids` must reference expectations in the same
   case.
+- `region_gates`: optional array of source-region promotion gates. Each gate
+  includes `id`, `gate_type`, `bounds`, `expected_kinds` and/or
+  `forbidden_kinds`, optional `min_count`, optional `max_count`, optional
+  `min_iou`, optional `severity`, and optional `description`. `bounds` are
+  `[left, top, right, bottom]` in manifest/source coordinates. Region gates
+  select anchors whose manifest `source_mask.bounds` overlap the region by
+  at least `min_iou`, then check the selected anchor kinds.
 - `review_notes`: optional string array for dated human review notes
 
 Top-level fields:
@@ -434,7 +441,7 @@ case reports also include:
 
 - `promotion_gates`: derived hard-gate results for `source_available`,
   `semantic_expectations`, `visual_contact_sheet`, `current_quality_label`, and
-  any case-specific `promotion.hard_gates`
+  any case-specific `promotion.hard_gates` or `promotion.region_gates`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, and red/yellow gate counts
 

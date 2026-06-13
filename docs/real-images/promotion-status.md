@@ -30,7 +30,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, `table-perspective-quads` 2/8 |
+| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5, `table-perspective-quads` 2/8 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | configured topology and shape-class gates pass; current label still keeps promotion deferred |
 
@@ -66,6 +66,9 @@ Cases may also define explicit hard gates that reference concrete expectations,
 for example `circle-anchor-shape-class`, `table-grid-topology`, or
 `radio-control-topology`. These make shape-class and topology failures visible
 as named gates instead of relying only on a broad semantic expectation failure.
+Cases may also define source-region gates, such as
+`gold-circle-region-shape-class` or `radio-control-region-topology`, that check
+expected anchor kinds inside concrete image bounds.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
@@ -86,7 +89,8 @@ label is green.
 
 ## Next Gate
 
-The next implementation block should target Quality Gate v2:
+The next implementation block should deepen Quality Gate v2 region checks:
 
-- expand topology and shape-class gates beyond expectation references into
-  region-level checks.
+- derive topology summaries for holes, cut-outs, open/closed state, and
+  disconnected components inside region gates;
+- add per-family visual thresholds after hard gates, not before them.

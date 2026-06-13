@@ -58,6 +58,25 @@
             "description": "Clean line-like details should remain editable strokes."
           }
         ],
+        "region_gates": [
+          {
+            "id": "gold-circle-region-shape-class",
+            "gate_type": "shape_class",
+            "bounds": [
+              220,
+              480,
+              700,
+              690
+            ],
+            "expected_kinds": [
+              "circle"
+            ],
+            "min_count": 5,
+            "min_iou": 0.01,
+            "severity": "red",
+            "description": "The known gold dot/brooch region must contain five editable circle anchors, not just circles elsewhere in the image."
+          }
+        ],
         "review_notes": [
           "2026-06-13 curated-check failed gold-circle-anchors and table-perspective-quads.",
           "Perspective grid group exists, but only 2 of expected 8 quad anchors are recovered."
@@ -258,6 +277,28 @@
             ],
             "severity": "yellow",
             "description": "Text-like fragments should remain bounded stroke-like primitives until text handling exists."
+          }
+        ],
+        "region_gates": [
+          {
+            "id": "radio-control-region-topology",
+            "gate_type": "topology",
+            "bounds": [
+              176,
+              150,
+              200,
+              174
+            ],
+            "expected_kinds": [
+              "stroke_circle"
+            ],
+            "forbidden_kinds": [
+              "cubic_path"
+            ],
+            "min_count": 1,
+            "min_iou": 0.25,
+            "severity": "red",
+            "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds."
           }
         ],
         "review_notes": [

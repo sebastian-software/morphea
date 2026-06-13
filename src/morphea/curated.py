@@ -393,7 +393,7 @@ def _check_curated_case(
             **_visual_audit_artifact_paths(vectorize_run.run_dir),
         }
     if isinstance(result.get("promotion"), dict):
-        result["promotion_gates"] = _promotion_gate_results(result)
+        result["promotion_gates"] = _promotion_gate_results(result, manifest=manifest)
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
     if output_dir is not None:
         _write_visual_audit_artifacts(
@@ -566,7 +566,11 @@ def _counts(values: object) -> dict[str, int]:
     return dict(sorted(counts.items()))
 
 
-def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
+def _promotion_gate_results(
+    case: dict[str, Any],
+    *,
+    manifest: dict[str, Any] | None = None,
+) -> list[dict[str, object]]:
     failed_expectations = [
         str(expectation.get("id", "n/a"))
         for expectation in case.get("expectations", [])
@@ -638,6 +642,7 @@ def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
     ]
     if isinstance(promotion, dict):
         gates.extend(_configured_promotion_gates(case, promotion))
+        gates.extend(_region_promotion_gates(case, promotion, manifest=manifest))
     return gates
 
 
@@ -697,6 +702,193 @@ def _configured_promotion_gates(
             )
         )
     return gates
+
+
+def _region_promotion_gates(
+    case: dict[str, Any],
+    promotion: dict[str, Any],
+    *,
+    manifest: dict[str, Any] | None = None,
+) -> list[dict[str, object]]:
+    configured = promotion.get("region_gates", [])
+    if not isinstance(configured, list) or not configured:
+        return []
+    manifest_anchors = manifest.get("anchors", []) if isinstance(manifest, dict) else []
+    anchors = [anchor for anchor in manifest_anchors if isinstance(anchor, dict)]
+    checked = case.get("status") == "checked"
+    gates: list[dict[str, object]] = []
+    for gate in configured:
+        if not isinstance(gate, dict):
+            continue
+        bounds = _parse_float_bounds(gate.get("bounds"))
+        expected_kinds = [
+            str(item)
+            for item in gate.get("expected_kinds", [])
+            if isinstance(item, str)
+        ]
+        forbidden_kinds = [
+            str(item)
+            for item in gate.get("forbidden_kinds", [])
+            if isinstance(item, str)
+        ]
+        min_iou = float(gate.get("min_iou", 0.1))
+        min_count = int(gate.get("min_count", 1))
+        max_count = gate.get("max_count")
+        if bounds is None:
+            selected: list[dict[str, object]] = []
+        else:
+            selected = _anchors_overlapping_region(anchors, bounds, min_iou)
+        matching = [
+            anchor
+            for anchor in selected
+            if not expected_kinds or str(anchor.get("kind")) in expected_kinds
+        ]
+        forbidden = [
+            anchor
+            for anchor in selected
+            if str(anchor.get("kind")) in forbidden_kinds
+        ]
+        count_ok = len(matching) >= min_count
+        if isinstance(max_count, int):
+            count_ok = count_ok and len(matching) <= max_count
+        ok = checked and bounds is not None and count_ok and not forbidden
+        reason = _region_gate_reason(
+            checked=checked,
+            status=str(case.get("status", "unknown")),
+            bounds=bounds,
+            matching_count=len(matching),
+            min_count=min_count,
+            max_count=max_count if isinstance(max_count, int) else None,
+            forbidden_count=len(forbidden),
+        )
+        gates.append(
+            _promotion_gate(
+                str(gate.get("id", "region_gate")),
+                gate_type=str(gate.get("gate_type", "shape_class")),
+                ok=ok,
+                severity=str(gate.get("severity", "red")),
+                reason=reason,
+                evidence={
+                    "bounds": list(bounds) if bounds is not None else None,
+                    "min_iou": min_iou,
+                    "expected_kinds": expected_kinds,
+                    "forbidden_kinds": forbidden_kinds,
+                    "matching_count": len(matching),
+                    "selected_count": len(selected),
+                    "forbidden_count": len(forbidden),
+                    "selected_anchors": _region_gate_anchor_evidence(selected),
+                    "description": gate.get("description"),
+                },
+            )
+        )
+    return gates
+
+
+def _anchors_overlapping_region(
+    anchors: list[dict[str, object]],
+    region_bounds: tuple[float, float, float, float],
+    min_iou: float,
+) -> list[dict[str, object]]:
+    selected: list[dict[str, object]] = []
+    for anchor in anchors:
+        anchor_bounds = _manifest_anchor_bounds(anchor)
+        if anchor_bounds is None:
+            continue
+        if _bounds_iou(anchor_bounds, region_bounds) >= min_iou:
+            selected.append(anchor)
+    return selected
+
+
+def _region_gate_reason(
+    *,
+    checked: bool,
+    status: str,
+    bounds: tuple[float, float, float, float] | None,
+    matching_count: int,
+    min_count: int,
+    max_count: int | None,
+    forbidden_count: int,
+) -> str:
+    if not checked:
+        return f"case status is {status}"
+    if bounds is None:
+        return "region bounds are invalid"
+    if forbidden_count:
+        return f"forbidden anchors in region: {forbidden_count}"
+    if matching_count < min_count:
+        return f"matching anchors in region: {matching_count} < {min_count}"
+    if max_count is not None and matching_count > max_count:
+        return f"matching anchors in region: {matching_count} > {max_count}"
+    return f"matching anchors in region: {matching_count}"
+
+
+def _region_gate_anchor_evidence(
+    anchors: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    evidence: list[dict[str, object]] = []
+    for anchor in anchors[:12]:
+        bounds = _manifest_anchor_bounds(anchor)
+        evidence.append(
+            {
+                "id": anchor.get("id"),
+                "kind": anchor.get("kind"),
+                "bounds": list(bounds) if bounds is not None else None,
+            }
+        )
+    return evidence
+
+
+def _manifest_anchor_bounds(
+    anchor: dict[str, object],
+) -> tuple[float, float, float, float] | None:
+    source_mask = anchor.get("source_mask")
+    if isinstance(source_mask, dict):
+        bounds = _parse_float_bounds(source_mask.get("bounds"))
+        if bounds is not None:
+            return bounds
+    reserved = anchor.get("reserved")
+    if isinstance(reserved, dict):
+        return _parse_float_bounds(reserved.get("bounds"))
+    return None
+
+
+def _parse_float_bounds(value: object) -> tuple[float, float, float, float] | None:
+    if not isinstance(value, list) or len(value) != 4:
+        return None
+    if not all(isinstance(item, (int, float)) for item in value):
+        return None
+    left, top, right, bottom = (float(item) for item in value)
+    if right <= left or bottom <= top:
+        return None
+    return (left, top, right, bottom)
+
+
+def _bounds_iou(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> float:
+    intersection = _bounds_intersection_area(first, second)
+    union = _bounds_area(first) + _bounds_area(second) - intersection
+    if union <= 0:
+        return 0.0
+    return intersection / union
+
+
+def _bounds_intersection_area(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> float:
+    left = max(first[0], second[0])
+    top = max(first[1], second[1])
+    right = min(first[2], second[2])
+    bottom = min(first[3], second[3])
+    if right <= left or bottom <= top:
+        return 0.0
+    return _bounds_area((left, top, right, bottom))
+
+
+def _bounds_area(bounds: tuple[float, float, float, float]) -> float:
+    return max(bounds[2] - bounds[0], 0.0) * max(bounds[3] - bounds[1], 0.0)
 
 
 def _promotion_gate(
@@ -1209,6 +1401,9 @@ def _validate_promotion_metadata(
     hard_gates = value.get("hard_gates", [])
     if hard_gates is not None:
         _validate_promotion_hard_gates(case_id, hard_gates, expectation_ids)
+    region_gates = value.get("region_gates", [])
+    if region_gates is not None:
+        _validate_promotion_region_gates(case_id, region_gates)
 
 
 def _validate_promotion_hard_gates(
@@ -1273,3 +1468,96 @@ def _validate_promotion_hard_gates(
                 f"case {case_id} promotion hard gate {gate_id} "
                 "description must be a string"
             )
+
+
+def _validate_promotion_region_gates(case_id: str, gates: Any) -> None:
+    if not isinstance(gates, list):
+        raise ValueError(f"case {case_id} promotion region_gates must be an array")
+    seen_ids: set[str] = set()
+    for index, gate in enumerate(gates):
+        if not isinstance(gate, dict):
+            raise ValueError(
+                f"case {case_id} promotion region_gates[{index}] must be an object"
+            )
+        gate_id = gate.get("id")
+        if not isinstance(gate_id, str) or not gate_id:
+            raise ValueError(
+                f"case {case_id} promotion region_gates[{index}] id must be a string"
+            )
+        if gate_id in seen_ids:
+            raise ValueError(
+                f"case {case_id} promotion duplicate region gate id: {gate_id}"
+            )
+        seen_ids.add(gate_id)
+        gate_type = gate.get("gate_type")
+        if gate_type not in PROMOTION_GATE_TYPES:
+            allowed = ", ".join(sorted(PROMOTION_GATE_TYPES))
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} gate_type "
+                f"must be one of: {allowed}"
+            )
+        severity = gate.get("severity", "red")
+        if severity not in PROMOTION_GATE_SEVERITIES:
+            allowed = ", ".join(sorted(PROMOTION_GATE_SEVERITIES))
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} severity "
+                f"must be one of: {allowed}"
+            )
+        if _parse_float_bounds(gate.get("bounds")) is None:
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} bounds "
+                "must be [left, top, right, bottom]"
+            )
+        min_iou = gate.get("min_iou", 0.1)
+        if not isinstance(min_iou, (int, float)) or min_iou < 0 or min_iou > 1:
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} min_iou "
+                "must be between 0 and 1"
+            )
+        _validate_region_kind_list(case_id, gate_id, gate, "expected_kinds")
+        _validate_region_kind_list(case_id, gate_id, gate, "forbidden_kinds")
+        if not gate.get("expected_kinds") and not gate.get("forbidden_kinds"):
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} must set "
+                "expected_kinds or forbidden_kinds"
+            )
+        min_count = gate.get("min_count", 1)
+        if not isinstance(min_count, int) or min_count < 0:
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} min_count "
+                "must be non-negative"
+            )
+        max_count = gate.get("max_count")
+        if max_count is not None and (
+            not isinstance(max_count, int) or max_count < min_count
+        ):
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} max_count "
+                "must be >= min_count"
+            )
+        description = gate.get("description")
+        if description is not None and (
+            not isinstance(description, str) or not description
+        ):
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} "
+                "description must be a string"
+            )
+
+
+def _validate_region_kind_list(
+    case_id: str,
+    gate_id: str,
+    gate: dict[str, Any],
+    key: str,
+) -> None:
+    values = gate.get(key, [])
+    if values is None:
+        return
+    if not isinstance(values, list) or not all(
+        isinstance(item, str) and item for item in values
+    ):
+        raise ValueError(
+            f"case {case_id} promotion region gate {gate_id} {key} "
+            "must be a string array"
+        )
