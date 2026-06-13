@@ -183,6 +183,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "promotion-export.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "promotion-regions.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "promotion-review.md").exists())
+            self.assertTrue((output_dir / "simple-circle" / "editability-review.md").exists())
             self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
@@ -222,6 +223,13 @@ class CuratedSuiteTests(unittest.TestCase):
                 output_dir / "simple-circle" / "promotion-review.md"
             ).read_text(encoding="utf-8")
             self.assertIn("| `circle-region` | `promoted` |", promotion_review)
+            editability_review = (
+                output_dir / "simple-circle" / "editability-review.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("- Decision: `accepted`", editability_review)
+            self.assertIn("## Required Thresholds", editability_review)
+            self.assertIn("| `topology_consistency` |", editability_review)
+            self.assertIn("| n/a | n/a | n/a | `none` |", editability_review)
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
                     encoding="utf-8"
@@ -240,6 +248,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 manifest["anchors"][0]["promotion_regions"][0]["region_id"],
                 "circle-region",
             )
+            self.assertIn(
+                "editability_review",
+                manifest["promotion"]["artifacts"],
+            )
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
             self.assertIn("raster_l1_error", report["cases"][0]["metrics"])
@@ -252,6 +264,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("promotion_export", report["cases"][0]["artifacts"])
             self.assertIn("promotion_regions", report["cases"][0]["artifacts"])
             self.assertIn("promotion_review", report["cases"][0]["artifacts"])
+            self.assertIn("editability_review", report["cases"][0]["artifacts"])
             self.assertEqual(
                 report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",
@@ -429,6 +442,13 @@ class CuratedSuiteTests(unittest.TestCase):
                 "- Anchor states: `promoted`=1, `rejected`=1",
                 promotion_review,
             )
+            editability_review = (
+                output_dir / "two-circles" / "editability-review.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("- Decision: `rejected`", editability_review)
+            self.assertIn("`gate_blocked_components`", editability_review)
+            self.assertIn("| `topology_consistency` |", editability_review)
+            self.assertIn("`right-circle-topology`", editability_review)
             manifest = json.loads(
                 (output_dir / "two-circles" / "manifest.json").read_text(
                     encoding="utf-8"
@@ -544,6 +564,12 @@ class CuratedSuiteTests(unittest.TestCase):
                 manifest["editability_review"]["regression_delta_status"],
                 "failed",
             )
+            editability_review = (
+                output_dir / "simple-circle" / "editability-review.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("- Regression delta status: `failed`", editability_review)
+            self.assertIn("| `parameter_economy` |", editability_review)
+            self.assertIn("`failed` |", editability_review)
 
     def test_render_curated_markdown_summarizes_cases_and_expectations(self):
         markdown = render_curated_markdown(

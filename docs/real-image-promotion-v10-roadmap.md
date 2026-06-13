@@ -351,6 +351,11 @@ Review artifacts should show:
 - editable structure summary;
 - issue tags.
 
+Current implementation evidence: checked promotion runs write
+`promotion-review.md` for anchor and region state, `contact-sheet.png` for
+visual comparison, and `editability-review.md` for accepted-output decision,
+threshold status, gate-blocked components, issue tags, and regression deltas.
+
 Canonical issue tags:
 
 - `shape_class_mismatch`;
@@ -463,9 +468,11 @@ dependency:
    fallback, deferred, and rejected regions.
 6. **Introduce editability score**: score components should explain ranking
    after hard gates, not replace them.
-7. **Run MLX/SAM side by side**: compare segmentation sources only after the
+7. **Capture review decisions**: make accepted/corrected/rejected/deferred
+   decisions machine-readable before pseudo-label harvesting.
+8. **Run MLX/SAM side by side**: compare segmentation sources only after the
    promotion evaluator can tell whether a region proposal helped.
-8. **Start reviewed pseudo-label collection**: collect labels only from green
+9. **Start reviewed pseudo-label collection**: collect labels only from green
    or corrected review artifacts.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before

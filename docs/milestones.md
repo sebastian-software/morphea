@@ -399,6 +399,9 @@ Implemented so far:
 - editability review can record `regression_deltas` and
   `regressed_components`, so accepted outputs can be downgraded when component
   quality regresses against a supplied baseline snapshot.
+- checked promotion runs write `editability-review.md`, so accepted-output
+  decisions, threshold failures, gate-blocked components, issue tags, and
+  regression deltas are reviewable beside the promotion export artifacts.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

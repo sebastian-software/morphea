@@ -540,6 +540,7 @@ def _check_curated_case(
                     scene=scene,
                     manifest=manifest,
                     promotion_regions=result.get("promotion_regions"),
+                    case_result=result,
                     cutout_strategy=str(config.get("cutout_export", "overlay_stroke")),
                 )
             )
@@ -1782,6 +1783,7 @@ def _write_promotion_export_artifacts(
     scene: Any,
     manifest: dict[str, Any],
     promotion_regions: object,
+    case_result: dict[str, Any],
     cutout_strategy: str,
 ) -> dict[str, str]:
     promoted_svg_path = run_dir / "promoted.svg"
@@ -1789,6 +1791,7 @@ def _write_promotion_export_artifacts(
     promotion_export_path = run_dir / "promotion-export.json"
     promotion_regions_path = run_dir / "promotion-regions.json"
     promotion_review_path = run_dir / "promotion-review.md"
+    editability_review_path = run_dir / "editability-review.md"
     anchor_count = len(scene.anchors)
     state_indexes = _promotion_anchor_state_indexes(
         promotion_regions,
@@ -1857,12 +1860,17 @@ def _write_promotion_export_artifacts(
         _render_promotion_review_markdown(export_manifest),
         encoding="utf-8",
     )
+    editability_review_path.write_text(
+        _render_editability_review_markdown(case_result),
+        encoding="utf-8",
+    )
     return {
         "promoted_svg": str(promoted_svg_path),
         "fallback_svg": str(fallback_svg_path),
         "promotion_export": str(promotion_export_path),
         "promotion_regions": str(promotion_regions_path),
         "promotion_review": str(promotion_review_path),
+        "editability_review": str(editability_review_path),
     }
 
 
@@ -1965,6 +1973,196 @@ def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_editability_review_markdown(case_result: dict[str, Any]) -> str:
+    review = case_result.get("editability_review", {})
+    review = review if isinstance(review, dict) else {}
+    promotion = case_result.get("promotion", {})
+    promotion = promotion if isinstance(promotion, dict) else {}
+    summary = case_result.get("promotion_summary", {})
+    summary = summary if isinstance(summary, dict) else {}
+    component_scores = review.get("component_scores", {})
+    component_scores = component_scores if isinstance(component_scores, dict) else {}
+    thresholds = review.get("thresholds", {})
+    thresholds = thresholds if isinstance(thresholds, dict) else {}
+    required = thresholds.get("required", {})
+    required = required if isinstance(required, dict) else {}
+    observed = thresholds.get("observed", {})
+    observed = observed if isinstance(observed, dict) else {}
+    failed_components = review.get("failed_components", [])
+    failed_components = (
+        failed_components if isinstance(failed_components, list) else []
+    )
+    gate_blocked = review.get("gate_blocked_components", [])
+    gate_blocked = gate_blocked if isinstance(gate_blocked, list) else []
+    regression_deltas = review.get("regression_deltas", [])
+    regression_deltas = (
+        regression_deltas if isinstance(regression_deltas, list) else []
+    )
+    regressed = review.get("regressed_components", [])
+    regressed = regressed if isinstance(regressed, list) else []
+    promotion_decision = review.get(
+        "promotion_decision",
+        summary.get("decision", "n/a"),
+    )
+    lines = [
+        "# Morphēa Editability Review",
+        "",
+        f"- Case: `{case_result.get('id', 'n/a')}`",
+        f"- Decision: `{review.get('decision', 'n/a')}`",
+        f"- Accepted: `{str(review.get('accepted', False)).lower()}`",
+        f"- Promotion decision: `{promotion_decision}`",
+        f"- Regression delta status: `{review.get('regression_delta_status', 'n/a')}`",
+        f"- Reasons: {_fmt_markdown_list(review.get('reasons'))}",
+        f"- Issue tags: {_fmt_markdown_list(promotion.get('current_issues'))}",
+        "",
+        "## Required Thresholds",
+        "",
+        "| Component | Score | Threshold | Status |",
+        "| --- | ---: | ---: | --- |",
+    ]
+    for component_id, threshold in sorted(required.items()):
+        score = component_scores.get(component_id)
+        status = _editability_threshold_status(
+            component_id,
+            score,
+            threshold,
+            failed_components,
+        )
+        lines.append(
+            "| "
+            f"`{component_id}` | "
+            f"{_fmt_markdown_value(score)} | "
+            f"{_fmt_markdown_value(threshold)} | "
+            f"`{status}` |"
+        )
+    if not required:
+        lines.append("| n/a | n/a | n/a | `missing_thresholds` |")
+    lines.extend(
+        [
+            "",
+            "## Observed Thresholds",
+            "",
+            "| Component | Score | Threshold | Status |",
+            "| --- | ---: | ---: | --- |",
+        ]
+    )
+    for component_id, threshold in sorted(observed.items()):
+        score = component_scores.get(component_id)
+        status = (
+            _editability_threshold_status(
+                component_id,
+                score,
+                threshold,
+                failed_components,
+            )
+            if component_id in component_scores
+            else "not_observed"
+        )
+        lines.append(
+            "| "
+            f"`{component_id}` | "
+            f"{_fmt_markdown_value(score)} | "
+            f"{_fmt_markdown_value(threshold)} | "
+            f"`{status}` |"
+        )
+    if not observed:
+        lines.append("| n/a | n/a | n/a | `missing_thresholds` |")
+    lines.extend(
+        [
+            "",
+            "## Failed Components",
+            "",
+            "| Component | Score | Threshold | Reason |",
+            "| --- | ---: | ---: | --- |",
+        ]
+    )
+    if failed_components:
+        for item in failed_components:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{item.get('id', 'n/a')}` | "
+                f"{_fmt_markdown_value(item.get('score'))} | "
+                f"{_fmt_markdown_value(item.get('threshold'))} | "
+                f"`{item.get('reason', 'n/a')}` |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | `none` |")
+    lines.extend(
+        [
+            "",
+            "## Gate-Blocked Components",
+            "",
+            "| Component | Failed gates | Uncapped score |",
+            "| --- | --- | ---: |",
+        ]
+    )
+    if gate_blocked:
+        for item in gate_blocked:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{item.get('id', 'n/a')}` | "
+                f"{_fmt_markdown_list(item.get('failed_gates'))} | "
+                f"{_fmt_markdown_value(item.get('uncapped_score'))} |"
+            )
+    else:
+        lines.append("| n/a | `none` | n/a |")
+    lines.extend(
+        [
+            "",
+            "## Regression Deltas",
+            "",
+            "| Component | Current | Baseline | Delta | Max regression | Status |",
+            "| --- | ---: | ---: | ---: | ---: | --- |",
+        ]
+    )
+    regressed_ids = {
+        item.get("id")
+        for item in regressed
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if regression_deltas:
+        for item in regression_deltas:
+            if not isinstance(item, dict):
+                continue
+            component_id = item.get("id", "n/a")
+            status = "failed" if component_id in regressed_ids else "passed"
+            lines.append(
+                "| "
+                f"`{component_id}` | "
+                f"{_fmt_markdown_value(item.get('current'))} | "
+                f"{_fmt_markdown_value(item.get('baseline'))} | "
+                f"{_fmt_markdown_value(item.get('delta'))} | "
+                f"{_fmt_markdown_value(item.get('max_regression'))} | "
+                f"`{status}` |"
+            )
+    else:
+        lines.append(
+            "| n/a | n/a | n/a | n/a | n/a | "
+            f"`{review.get('regression_delta_status', 'n/a')}` |"
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _editability_threshold_status(
+    component_id: object,
+    score: object,
+    threshold: object,
+    failed_components: list[object],
+) -> str:
+    for item in failed_components:
+        if isinstance(item, dict) and item.get("id") == component_id:
+            return str(item.get("reason", "failed"))
+    if not isinstance(score, (int, float)):
+        return "missing_score"
+    if isinstance(threshold, (int, float)) and float(score) < float(threshold):
+        return "below_threshold"
+    return "passed"
+
+
 def _write_manifest_promotion_state(
     manifest_path: Path,
     case_result: dict[str, Any],
@@ -1997,6 +2195,7 @@ def _write_manifest_promotion_state(
                 "promotion_export",
                 "promotion_regions",
                 "promotion_review",
+                "editability_review",
             )
             if key in artifacts
         },

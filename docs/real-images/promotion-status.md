@@ -55,7 +55,8 @@ calibration suite for false-positive promotion risk.
 Current curated runs emit per-case run directories with input copy, SVG output,
 debug SVG, manifest JSON, preview PNG, SVG render PNG, red/blue diff PNG,
 contact-sheet PNG, promoted/fallback SVGs, promotion-export JSON, palette
-summary, mask summary, promotion-region review files, and report files.
+summary, mask summary, promotion-region review files, editability-review
+Markdown, and report files.
 
 Curated reports also include derived promotion gates:
 
@@ -92,7 +93,10 @@ and reason. This is the first RIP3 promotion-pipeline state artifact.
 Checked promotion cases with an output directory also write `promoted.svg`,
 `fallback.svg`, `promotion-export.json`, `promotion-regions.json`, and
 `promotion-review.md`, so trusted region anchors can be separated from
-debug/fallback output and rejected candidates remain reviewable.
+debug/fallback output and rejected candidates remain reviewable. They also
+write `editability-review.md`, which exposes accepted-output decisions,
+component threshold failures, gate-blocked components, issue tags, and
+regression deltas in a dedicated review artifact.
 The run `manifest.json` also carries a top-level `promotion` object and
 per-anchor `promotion_state` / `promotion_regions` annotations.
 `promotion-export.json` records promoted, fallback-only, rejected, and deferred
@@ -113,6 +117,14 @@ The current contact sheet includes:
 - red/blue visual diff;
 - promotion decision summary;
 - failed-gate summary.
+
+The complementary `editability-review.md` sidecar includes:
+
+- accepted-output decision and reasons;
+- required and observed component threshold status;
+- gate-blocked components with failed gate ids;
+- regression delta status and per-component deltas;
+- current issue tags.
 
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
@@ -173,9 +185,15 @@ then records `regression_delta_status`, `regression_deltas`, and
 `regressed_components`; accepted outputs are downgraded to `manual_review` when
 any comparable component regresses by more than `0.05`.
 
+Checked promotion runs with `--output-dir` now also write
+`editability-review.md` beside `promotion-review.md`. The sidecar exposes the
+same accepted-output decision as Markdown, including threshold pass/fail rows,
+gate-blocked component evidence, current issue tags, and regression deltas when
+a baseline snapshot is configured.
+
 ## Next Gate
 
-The next mainline block should turn accepted-output review into review
-artifacts: expose threshold and delta failures in contact sheets or dedicated
-Markdown so reviewers can quickly decide whether to accept, correct, reject, or
-defer a candidate.
+The next mainline block should turn review artifacts into review decisions:
+add a machine-readable accepted/corrected/rejected/deferred decision artifact
+that can be applied back to manifests, reports, and later pseudo-label
+harvesting without losing issue tags or gate evidence.

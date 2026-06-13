@@ -487,6 +487,9 @@ directory includes the standard vectorize artifacts plus:
   selected anchor indexes, gate status, state, and rejection/defer reason
 - `promotion-review.md`: scan-friendly Markdown review of anchor state counts
   and promoted, deferred, and rejected regions
+- `editability-review.md`: scan-friendly Markdown review of accepted-output
+  decision, component thresholds, gate-blocked components, issue tags, and
+  regression deltas
 - `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
@@ -513,10 +516,11 @@ case reports also include:
 
 For checked cases with `--output-dir`, the run `manifest.json` also includes a
 top-level `promotion` object with summary, gates, regions, and promotion export
-artifact paths. Anchors selected by promotion regions are annotated with
-`promotion_state` and `promotion_regions`; unselected anchors are marked
-`fallback`. The manifest also includes top-level `editability_review`, so the
-accepted-output decision is preserved with the run artifact.
+and editability-review artifact paths. Anchors selected by promotion regions
+are annotated with `promotion_state` and `promotion_regions`; unselected
+anchors are marked `fallback`. The manifest also includes top-level
+`editability_review`, so the accepted-output decision is preserved with the run
+artifact.
 
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
 --fallback-svg fallback.svg -o promotion-export.json` can regenerate the
