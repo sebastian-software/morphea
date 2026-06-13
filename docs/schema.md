@@ -389,6 +389,10 @@ Promotion metadata fields:
   `max_raster_edge_error`, optional `severity`, and optional `description`.
   Thresholds are evaluated as a derived `visual_fidelity_thresholds` promotion
   gate after the checked run has written raster metrics into the report.
+- `structure_thresholds`: optional fragmentation/layer-depth thresholds. The
+  object includes `max_fragmentation_penalty` and/or `max_layer_count`, optional
+  `severity`, and optional `description`. Thresholds are evaluated as a derived
+  `fragmentation_layer_thresholds` promotion gate.
 - `hard_gates`: optional array of explicit promotion gates. Each gate includes
   `id`, `gate_type`, `expectation_ids`, optional `severity`, and optional
   `description`. Supported `gate_type` values are `shape_class`, `topology`,
@@ -438,6 +442,8 @@ Case snapshot fields:
 - `anchor_count`
 - `anchor_kind_counts`
 - `group_kind_counts`
+- `layer_count`
+- `layer_anchor_counts`
 - `diagnostic_count`
 - `metrics`: run metrics such as editability and raster-fidelity values
 - `promotion`: optional copied promotion metadata from the source suite case
@@ -461,7 +467,8 @@ case reports also include:
 - `promotion_gates`: derived hard-gate results for `source_available`,
   `semantic_expectations`, `visual_contact_sheet`, `current_quality_label`, and
   any case-specific `promotion.hard_gates`, `promotion.region_gates`,
-  `promotion.group_gates`, or `promotion.visual_thresholds`
+  `promotion.group_gates`, `promotion.structure_thresholds`, or
+  `promotion.visual_thresholds`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, and red/yellow gate counts
 

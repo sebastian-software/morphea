@@ -35,6 +35,12 @@
           "severity": "red",
           "description": "Generated illustration table-grid cases need tighter L1 fidelity after structural gates pass."
         },
+        "structure_thresholds": {
+          "max_fragmentation_penalty": 0.6,
+          "max_layer_count": 3,
+          "severity": "red",
+          "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered."
+        },
         "hard_gates": [
           {
             "id": "circle-anchor-shape-class",
@@ -182,6 +188,12 @@
           "severity": "red",
           "description": "Generated illustration table-grid cases use the same visual threshold family as the local transparent variant."
         },
+        "structure_thresholds": {
+          "max_fragmentation_penalty": 0.6,
+          "max_layer_count": 3,
+          "severity": "red",
+          "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered."
+        },
         "hard_gates": [
           {
             "id": "circle-anchor-shape-class",
@@ -307,6 +319,12 @@
           "max_raster_edge_error": 0.04,
           "severity": "red",
           "description": "UI screenshot cases allow text antialiasing drift but should keep controls and thin strokes visually close."
+        },
+        "structure_thresholds": {
+          "max_fragmentation_penalty": 0.55,
+          "max_layer_count": 3,
+          "severity": "yellow",
+          "description": "UI screenshots may contain many text fragments, but layer depth and aggregate fragmentation should stay bounded for review."
         },
         "hard_gates": [
           {

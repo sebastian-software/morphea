@@ -30,7 +30,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, table group 2/8, visual L1 0.235448 > 0.18 |
+| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, table group 2/8, layer count 4 > 3, visual L1 0.235448 > 0.18 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | configured topology and shape-class gates pass; current label still keeps promotion deferred |
 
@@ -80,6 +80,10 @@ Cases may define `group_gates`, such as `table-grid-group-consistency` and
 `text-parallel-stroke-grouping`, to require group kind and member-count evidence
 for grids, repeated structures, and parallel strokes.
 
+Cases may define `structure_thresholds`, which produce
+`fragmentation_layer_thresholds` evidence for aggregate fragmentation and layer
+depth.
+
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
 
@@ -99,5 +103,6 @@ label is green.
 
 ## Next Gate
 
-The next implementation block should deepen Quality Gate v2 fragmentation and
-layer-depth penalties.
+The next implementation block should audit RIP2 exit criteria against generated
+reports and decide whether the remaining work should move to RIP3 promotion
+pipeline state.

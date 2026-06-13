@@ -33,6 +33,12 @@ def _promotion_metadata(label: str) -> dict[str, object]:
             "severity": "red",
             "description": "Synthetic fixture visual thresholds should pass when run artifacts exist.",
         },
+        "structure_thresholds": {
+            "max_fragmentation_penalty": 1.0,
+            "max_layer_count": 10,
+            "severity": "red",
+            "description": "Synthetic fixture structure thresholds should pass.",
+        },
         "review_notes": ["synthetic metadata fixture"],
         "hard_gates": [
             {
@@ -150,6 +156,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("actual_value", result["cases"][0]["expectations"][1])
             self.assertTrue(result["cases"][0]["expectations"][2]["ok"])
             self.assertEqual(result["cases"][0]["anchor_kind_counts"]["circle"], 1)
+            self.assertGreaterEqual(result["cases"][0]["layer_count"], 1)
             self.assertTrue((output_dir / "simple-circle" / "output.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "debug.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "manifest.json").exists())
@@ -195,6 +202,11 @@ class CuratedSuiteTests(unittest.TestCase):
                 "shape_class",
             )
             self.assertTrue(gate_by_id["circle-shape-class"]["ok"])
+            self.assertTrue(gate_by_id["fragmentation_layer_thresholds"]["ok"])
+            self.assertIn(
+                "layer_count",
+                gate_by_id["fragmentation_layer_thresholds"]["evidence"]["actual"],
+            )
             self.assertTrue(gate_by_id["visual_fidelity_thresholds"]["ok"])
             self.assertEqual(
                 gate_by_id["visual_fidelity_thresholds"]["evidence"]["family"],
@@ -221,6 +233,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "editability_score",
             )
             self.assertIn("editability_score", snapshot_report["cases"][0]["metrics"])
+            self.assertIn("layer_count", snapshot_report["cases"][0])
             self.assertEqual(
                 snapshot_report["cases"][0]["promotion"]["stress_family"],
                 "test_fixture",
@@ -806,6 +819,39 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "expected_group_kinds"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_structure_thresholds(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["structure_thresholds"] = {
+                "max_layer_count": -1,
+            }
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "max_layer_count"):
                 load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):

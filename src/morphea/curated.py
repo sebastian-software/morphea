@@ -77,6 +77,10 @@ PROMOTION_VISUAL_THRESHOLD_KEYS = {
     "max_raster_l1_error",
     "max_raster_edge_error",
 }
+PROMOTION_STRUCTURE_THRESHOLD_KEYS = {
+    "max_fragmentation_penalty",
+    "max_layer_count",
+}
 
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
@@ -379,6 +383,8 @@ def _check_curated_case(
             "group_kind_counts": _counts(
                 group.get("kind") for group in manifest.get("groups", [])
             ),
+            "layer_count": len(manifest.get("layers", [])),
+            "layer_anchor_counts": _layer_anchor_counts(manifest),
             "diagnostic_count": len(manifest["diagnostics"]),
             "metrics": dict(sorted(manifest.get("metrics", {}).items())),
             "expectations": expectation_results,
@@ -543,6 +549,8 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "anchor_count",
         "anchor_kind_counts",
         "group_kind_counts",
+        "layer_count",
+        "layer_anchor_counts",
         "diagnostic_count",
         "metrics",
         "promotion",
@@ -584,6 +592,21 @@ def _counts(values: object) -> dict[str, int]:
     for value in values:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _layer_anchor_counts(manifest: dict[str, Any]) -> dict[str, int]:
+    layers = manifest.get("layers", [])
+    if not isinstance(layers, list):
+        return {}
+    counts: dict[str, int] = {}
+    for layer in layers:
+        if not isinstance(layer, dict):
+            continue
+        name = layer.get("name")
+        count = layer.get("anchor_count")
+        if isinstance(name, str) and isinstance(count, int):
+            counts[name] = count
     return dict(sorted(counts.items()))
 
 
@@ -665,6 +688,9 @@ def _promotion_gate_results(
         gates.extend(_configured_promotion_gates(case, promotion))
         gates.extend(_region_promotion_gates(case, promotion, manifest=manifest))
         gates.extend(_group_promotion_gates(case, promotion, manifest=manifest))
+        structure_gate = _structure_threshold_promotion_gate(case, promotion)
+        if structure_gate is not None:
+            gates.append(structure_gate)
         visual_gate = _visual_threshold_promotion_gate(case, promotion)
         if visual_gate is not None:
             gates.append(visual_gate)
@@ -864,6 +890,72 @@ def _visual_threshold_promotion_gate(
             "family": thresholds.get("family", promotion.get("stress_family")),
             "actual": actuals,
             "thresholds": limits,
+            "failures": failures,
+            "description": thresholds.get("description"),
+        },
+    )
+
+
+def _structure_threshold_promotion_gate(
+    case: dict[str, Any],
+    promotion: dict[str, Any],
+) -> dict[str, object] | None:
+    thresholds = promotion.get("structure_thresholds")
+    if not isinstance(thresholds, dict):
+        return None
+    checked = case.get("status") == "checked"
+    metrics = case.get("metrics", {})
+    metrics = metrics if isinstance(metrics, dict) else {}
+    failures: list[str] = []
+    actuals: dict[str, float | int | None] = {}
+    limits: dict[str, float | int] = {}
+
+    max_fragmentation = thresholds.get("max_fragmentation_penalty")
+    if isinstance(max_fragmentation, (int, float)):
+        actual = metrics.get("fragmentation_penalty")
+        actuals["fragmentation_penalty"] = (
+            float(actual) if isinstance(actual, (int, float)) else None
+        )
+        limits["max_fragmentation_penalty"] = float(max_fragmentation)
+        if not isinstance(actual, (int, float)):
+            failures.append("fragmentation_penalty missing")
+        elif float(actual) > float(max_fragmentation):
+            failures.append(
+                "fragmentation_penalty "
+                f"{float(actual):.6g} > {float(max_fragmentation):.6g}"
+            )
+
+    max_layer_count = thresholds.get("max_layer_count")
+    if isinstance(max_layer_count, int):
+        actual_layer_count = case.get("layer_count")
+        actuals["layer_count"] = (
+            int(actual_layer_count) if isinstance(actual_layer_count, int) else None
+        )
+        limits["max_layer_count"] = max_layer_count
+        if not isinstance(actual_layer_count, int):
+            failures.append("layer_count missing")
+        elif actual_layer_count > max_layer_count:
+            failures.append(f"layer_count {actual_layer_count} > {max_layer_count}")
+
+    ok = checked and not failures and bool(limits)
+    if not checked:
+        reason = f"case status is {case.get('status', 'unknown')}"
+    elif not limits:
+        reason = "no structure thresholds configured"
+    elif failures:
+        reason = "structure thresholds failed: " + ", ".join(failures)
+    else:
+        reason = "structure thresholds passed"
+    return _promotion_gate(
+        "fragmentation_layer_thresholds",
+        gate_type="fragmentation",
+        ok=ok,
+        severity=str(thresholds.get("severity", "red")),
+        reason=reason,
+        evidence={
+            "actual": actuals,
+            "thresholds": limits,
+            "layer_anchor_counts": case.get("layer_anchor_counts", {}),
             "failures": failures,
             "description": thresholds.get("description"),
         },
@@ -1708,6 +1800,9 @@ def _validate_promotion_metadata(
     visual_thresholds = value.get("visual_thresholds")
     if visual_thresholds is not None:
         _validate_promotion_visual_thresholds(case_id, visual_thresholds)
+    structure_thresholds = value.get("structure_thresholds")
+    if structure_thresholds is not None:
+        _validate_promotion_structure_thresholds(case_id, structure_thresholds)
 
 
 def _validate_promotion_hard_gates(
@@ -2032,4 +2127,49 @@ def _validate_group_gate_order(
         raise ValueError(
             f"case {case_id} promotion group gate {gate_id} "
             f"{maximum_key} must be >= {minimum_key}"
+        )
+
+
+def _validate_promotion_structure_thresholds(case_id: str, value: Any) -> None:
+    if not isinstance(value, dict):
+        raise ValueError(
+            f"case {case_id} promotion structure_thresholds must be an object"
+        )
+    configured = False
+    fragmentation = value.get("max_fragmentation_penalty")
+    if fragmentation is not None:
+        configured = True
+        if not isinstance(fragmentation, (int, float)) or fragmentation < 0:
+            raise ValueError(
+                f"case {case_id} promotion structure_thresholds "
+                "max_fragmentation_penalty must be a non-negative number"
+            )
+    layer_count = value.get("max_layer_count")
+    if layer_count is not None:
+        configured = True
+        if not isinstance(layer_count, int) or layer_count < 0:
+            raise ValueError(
+                f"case {case_id} promotion structure_thresholds "
+                "max_layer_count must be a non-negative integer"
+            )
+    if not configured:
+        allowed = ", ".join(sorted(PROMOTION_STRUCTURE_THRESHOLD_KEYS))
+        raise ValueError(
+            f"case {case_id} promotion structure_thresholds must set "
+            f"at least one of: {allowed}"
+        )
+    severity = value.get("severity", "red")
+    if severity not in PROMOTION_GATE_SEVERITIES:
+        allowed = ", ".join(sorted(PROMOTION_GATE_SEVERITIES))
+        raise ValueError(
+            f"case {case_id} promotion structure_thresholds severity "
+            f"must be one of: {allowed}"
+        )
+    description = value.get("description")
+    if description is not None and (
+        not isinstance(description, str) or not description
+    ):
+        raise ValueError(
+            f"case {case_id} promotion structure_thresholds description "
+            "must be a string"
         )
