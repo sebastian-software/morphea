@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw
 
 from morphea.cli import main
 from morphea.lucide_quality import (
+    _check_expectations,
     check_lucide_suite,
     load_lucide_suite,
     lucide_source_renderer_status,
@@ -239,6 +240,89 @@ class LucideQualityTests(unittest.TestCase):
             )
             self.assertEqual(case["expectations"][1]["required_count"], 2)
             self.assertEqual(case["expectations"][1]["missing_count"], 1)
+
+    def test_bounded_kind_expectations_match_distinct_regions(self):
+        manifest = {
+            "anchors": [
+                {
+                    "kind": "stroke_path",
+                    "source_mask": {"bounds": [0, 0, 64, 64]},
+                },
+                {
+                    "kind": "stroke_path",
+                    "source_mask": {"bounds": [20, 20, 40, 40]},
+                },
+            ]
+        }
+
+        results = _check_expectations(
+            [
+                {
+                    "id": "outer-path",
+                    "kind": "stroke_path",
+                    "bounds": [0, 0, 64, 64],
+                    "min_iou": 0.5,
+                },
+                {
+                    "id": "inner-path",
+                    "kind": "stroke_path",
+                    "bounds": [20, 20, 40, 40],
+                    "min_iou": 0.5,
+                },
+                {
+                    "id": "missing-path",
+                    "kind": "stroke_path",
+                    "bounds": [50, 50, 60, 60],
+                    "min_iou": 0.5,
+                },
+            ],
+            manifest,
+        )
+
+        self.assertTrue(results[0]["ok"])
+        self.assertEqual(results[0]["actual_count"], 1)
+        self.assertTrue(results[1]["ok"])
+        self.assertEqual(results[1]["actual_count"], 1)
+        self.assertFalse(results[2]["ok"])
+        self.assertEqual(results[2]["actual_count"], 0)
+        self.assertEqual(results[2]["failure_reason"], "insufficient_anchors")
+        self.assertEqual(results[2]["missing_count"], 1)
+
+    def test_bounds_require_kind_expectation(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "minus.svg"
+            suite = root / "suite.json"
+            source.write_text("<svg></svg>", encoding="utf-8")
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "render": {"size": 64},
+                        "cases": [
+                            {
+                                "id": "minus",
+                                "family": "simple_stroke_glyphs",
+                                "source": "minus.svg",
+                                "expectations": [
+                                    {
+                                        "id": "bad-bounds",
+                                        "metric": "generic_path_count",
+                                        "max_value": 0,
+                                        "bounds": [0, 0, 64, 64],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(ValueError) as error:
+                load_lucide_suite(suite)
+
+            self.assertIn("bounds are only supported", str(error.exception))
 
     def test_render_lucide_markdown_summarizes_failures(self):
         markdown = render_lucide_markdown(

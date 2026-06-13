@@ -382,6 +382,12 @@ Repeated `kind` or `group_kind` expectations are cumulative. For example, two
 separate `kind: circle`, `min_count: 1` expectations require two distinct circle
 anchors; the second result records `cumulative_min_count: 2`.
 
+Lucide suite `kind` expectations may also include `bounds` as
+`[left, top, right, bottom]` plus optional `min_iou` to restrict matching to a
+source region. This keeps compound icons from satisfying unrelated expectations
+with the same global anchor kind; failed expectation rows report
+`failure_reason` plus shortfall/excess fields such as `missing_count`.
+
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates
 the metadata and copies it into JSON reports, Markdown reports, and deterministic

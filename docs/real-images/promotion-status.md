@@ -52,9 +52,11 @@ calibration suite for false-positive promotion risk.
 
 Lucide case reports now include `failed_expectation_count`,
 `failed_expectation_ids`, and per-expectation `failure_reason` fields with
-shortfall/excess details. For `badge-check`, the failing `check-stroke`
-expectation is diagnosed as `insufficient_distinct_anchors`: one
-`stroke_path` anchor is available where the cumulative contract requires two.
+shortfall/excess details. `badge-check` now uses bounded expectations to
+separate the outer badge outline from the inner check mark. The inner
+`check-stroke` region passes, while the outer `editable-badge-outline`
+expectation is diagnosed as `insufficient_anchors`: no `stroke_path` anchor
+matches the full badge-outline region.
 
 ## Visual Artifact Posture
 

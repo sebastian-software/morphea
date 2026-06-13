@@ -504,10 +504,18 @@ def _check_expectation(
     kind = expectation.get("kind")
     group_kind = expectation.get("group_kind")
     if kind is not None:
+        bounds = _parse_float_bounds(expectation.get("bounds"))
+        min_iou = float(expectation.get("min_iou", 0.0))
         actual = sum(
-            1 for anchor in manifest.get("anchors", []) if anchor.get("kind") == kind
+            1
+            for anchor in manifest.get("anchors", [])
+            if anchor.get("kind") == kind
+            and _anchor_matches_bounds(anchor, bounds, min_iou)
         )
         label = {"kind": kind}
+        if bounds is not None:
+            label["bounds"] = list(bounds)
+            label["min_iou"] = min_iou
     else:
         actual = sum(
             1
@@ -578,11 +586,89 @@ def _annotate_shape_expectation_failure(result: dict[str, Any]) -> None:
         result["excess_count"] = actual - int(result["max_count"])
 
 
-def _shape_expectation_selector(expectation: dict[str, Any]) -> tuple[str, str]:
+def _shape_expectation_selector(
+    expectation: dict[str, Any],
+) -> tuple[str, str, str, str]:
     kind = expectation.get("kind")
+    bounds = _selector_bounds_key(expectation.get("bounds"))
+    min_iou = expectation.get("min_iou", 0.0)
     if kind is not None:
-        return ("kind", str(kind))
-    return ("group_kind", str(expectation.get("group_kind")))
+        return ("kind", str(kind), bounds, str(min_iou))
+    return ("group_kind", str(expectation.get("group_kind")), bounds, str(min_iou))
+
+
+def _selector_bounds_key(value: object) -> str:
+    bounds = _parse_float_bounds(value)
+    if bounds is None:
+        return ""
+    return ",".join(_fmt_value(item) for item in bounds)
+
+
+def _anchor_matches_bounds(
+    anchor: object,
+    bounds: tuple[float, float, float, float] | None,
+    min_iou: float,
+) -> bool:
+    if bounds is None:
+        return True
+    if not isinstance(anchor, dict):
+        return False
+    anchor_bounds = _manifest_anchor_bounds(anchor)
+    if anchor_bounds is None:
+        return False
+    return _bounds_iou(anchor_bounds, bounds) >= min_iou
+
+
+def _manifest_anchor_bounds(
+    anchor: dict[str, Any],
+) -> tuple[float, float, float, float] | None:
+    source_mask = anchor.get("source_mask")
+    if isinstance(source_mask, dict):
+        bounds = _parse_float_bounds(source_mask.get("bounds"))
+        if bounds is not None:
+            return bounds
+    reserved = anchor.get("reserved")
+    if isinstance(reserved, dict):
+        return _parse_float_bounds(reserved.get("bounds"))
+    return None
+
+
+def _parse_float_bounds(value: object) -> tuple[float, float, float, float] | None:
+    if not isinstance(value, list | tuple) or len(value) != 4:
+        return None
+    try:
+        left, top, right, bottom = (float(item) for item in value)
+    except (TypeError, ValueError):
+        return None
+    if right <= left or bottom <= top:
+        return None
+    return left, top, right, bottom
+
+
+def _bounds_iou(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> float:
+    intersection = _bounds_intersection_area(first, second)
+    union = _bounds_area(first) + _bounds_area(second) - intersection
+    if union <= 0:
+        return 0.0
+    return intersection / union
+
+
+def _bounds_intersection_area(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> float:
+    left = max(first[0], second[0])
+    top = max(first[1], second[1])
+    right = min(first[2], second[2])
+    bottom = min(first[3], second[3])
+    return _bounds_area((left, top, right, bottom))
+
+
+def _bounds_area(bounds: tuple[float, float, float, float]) -> float:
+    return max(bounds[2] - bounds[0], 0.0) * max(bounds[3] - bounds[1], 0.0)
 
 
 def _validate_expectation(case_id: str, index: int, expectation: Any) -> None:
@@ -598,6 +684,11 @@ def _validate_expectation(case_id: str, index: int, expectation: Any) -> None:
         raise ValueError(
             f"case {case_id} expectation {expectation_id} must set kind, "
             "group_kind, or metric"
+        )
+    if "bounds" in expectation and not has_kind:
+        raise ValueError(
+            f"case {case_id} expectation {expectation_id} bounds are only "
+            "supported for kind expectations"
         )
     if has_metric:
         has_min = "min_value" in expectation
@@ -616,6 +707,19 @@ def _validate_expectation(case_id: str, index: int, expectation: Any) -> None:
                     "must be numeric"
                 )
         return
+    if "bounds" in expectation:
+        if _parse_float_bounds(expectation.get("bounds")) is None:
+            raise ValueError(
+                f"case {case_id} expectation {expectation_id} bounds must be "
+                "[left, top, right, bottom] with positive area"
+            )
+    if "min_iou" in expectation and not isinstance(
+        expectation.get("min_iou"),
+        (int, float),
+    ):
+        raise ValueError(
+            f"case {case_id} expectation {expectation_id} min_iou must be numeric"
+        )
     min_count = expectation.get("min_count", 1)
     if not isinstance(min_count, int) or min_count < 0:
         raise ValueError(

@@ -157,8 +157,20 @@
       "family": "circle_compound_strokes",
       "source": "icons/badge-check.svg",
       "expectations": [
-        {"id": "editable-badge-outline", "kind": "stroke_path", "min_count": 1},
-        {"id": "check-stroke", "kind": "stroke_path", "min_count": 1},
+        {
+          "id": "editable-badge-outline",
+          "kind": "stroke_path",
+          "min_count": 1,
+          "bounds": [0, 0, 64, 64],
+          "min_iou": 0.5
+        },
+        {
+          "id": "check-stroke",
+          "kind": "stroke_path",
+          "min_count": 1,
+          "bounds": [18, 20, 46, 44],
+          "min_iou": 0.35
+        },
         {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
         {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.16}
       ]
