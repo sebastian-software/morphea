@@ -1,0 +1,271 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.1,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:cubic_path:0.1",
+        "editable": false,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "cubic_path",
+      "layer": "generic_paths",
+      "metrics": {
+        "path_fit_max_error_px": 0.3636,
+        "path_hole_count": 2.0,
+        "path_node_count": 10.0,
+        "path_smoothness": 0.6211594224611531,
+        "semantic_anchor_score": 1.0499999999999998,
+        "simple_shape_priority_bonus": 0.0
+      },
+      "node_count": 10,
+      "parameter_count": 20,
+      "path": {
+        "closed": true,
+        "controls": [
+          [
+            {
+              "x": 46.49177174121696,
+              "y": 51.85575978114813
+            },
+            {
+              "x": 42.284795701750504,
+              "y": 53.57152042982494
+            }
+          ],
+          [
+            {
+              "x": 35.36781859066517,
+              "y": 54.26321814093349
+            },
+            {
+              "x": 32.56363111352017,
+              "y": 53.31272622270403
+            }
+          ],
+          [
+            {
+              "x": 26.619580859114677,
+              "y": 52.123916171822934
+            },
+            {
+              "x": 23.11068053109202,
+              "y": 51.355340265546005
+            }
+          ],
+          [
+            {
+              "x": 8.441975599332725,
+              "y": 44.02098779966636
+            },
+            {
+              "x": 0.03327691902545382,
+              "y": 29.952461544249356
+            }
+          ],
+          [
+            {
+              "x": 18.960337540101424,
+              "y": 2.9138035141408167
+            },
+            {
+              "x": 42.61917208632276,
+              "y": 9.465746762580833
+            }
+          ],
+          [
+            {
+              "x": 60.534429293522265,
+              "y": 29.37158810391364
+            },
+            {
+              "x": 59.2544623550275,
+              "y": 42.921876351480755
+            }
+          ]
+        ],
+        "fallback_reason": "organic_boundary_fit",
+        "holes": [
+          {
+            "controls": [
+              [
+                {
+                  "x": 30.88262804072914,
+                  "y": 22.0
+                },
+                {
+                  "x": 31.84986622287287,
+                  "y": 31.745040133138133
+                }
+              ],
+              [
+                {
+                  "x": 17.70850838986005,
+                  "y": 35.98744748304199
+                },
+                {
+                  "x": 15.219550146587096,
+                  "y": 22.0
+                }
+              ]
+            ],
+            "points": [
+              {
+                "x": 24.0,
+                "y": 22.0
+              },
+              {
+                "x": 25.0,
+                "y": 33.8
+              }
+            ]
+          },
+          {
+            "controls": [
+              [
+                {
+                  "x": 46.922525843097986,
+                  "y": 30.0
+                },
+                {
+                  "x": 47.286721800383795,
+                  "y": 38.21398345988486
+                }
+              ],
+              [
+                {
+                  "x": 35.52904022894812,
+                  "y": 41.74128793131557
+                },
+                {
+                  "x": 33.793739208341506,
+                  "y": 30.0
+                }
+              ]
+            ],
+            "points": [
+              {
+                "x": 41.0,
+                "y": 30.0
+              },
+              {
+                "x": 42.0,
+                "y": 39.8
+              }
+            ]
+          }
+        ],
+        "node_count": 6,
+        "points": [
+          {
+            "x": 50.0,
+            "y": 49.4
+          },
+          {
+            "x": 38.0,
+            "y": 54.0
+          },
+          {
+            "x": 30.0,
+            "y": 52.8
+          },
+          {
+            "x": 20.0,
+            "y": 49.8
+          },
+          {
+            "x": 8.4,
+            "y": 18.0
+          },
+          {
+            "x": 53.0,
+            "y": 21.0
+          }
+        ]
+      },
+      "provenance": {
+        "fitting": "fallback_path",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.7,
+      "reserved": {
+        "bounds": [
+          5.057441518870028,
+          9.20727004238914,
+          57.887961960143684,
+          54.04147462413662
+        ],
+        "reason": "generic_fallback"
+      },
+      "source_mask": {
+        "bounds": [
+          5.057441518870028,
+          9.20727004238914,
+          57.887961960143684,
+          54.04147462413662
+        ],
+        "bounds_area": 2368.614362,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "generic_paths"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0,
+    "anchor_quality_error_mean": 0,
+    "anchor_quality_metric_summary": {},
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 1.05,
+      "semantic_anchor_score_mean": 1.05,
+      "semantic_anchor_score_min": 1.05,
+      "simple_shape_priority_bonus_mean": 0.0,
+      "simple_shape_priority_bonus_total": 0.0
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 0.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 1,
+    "group_count": 0,
+    "negative_mask_candidate_count": 0,
+    "node_count": 10,
+    "parameter_count": 20,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.029391,
+    "raster_l1_error": 0.019727,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 0.0,
+    "reserved_simple_shape_area_ratio": 0.0,
+    "reserved_simple_shape_count": 0,
+    "shape_count": 1,
+    "simple_shape_count": 0,
+    "simple_shape_ratio": 0.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.032513,
+    "svg_raster_l1_error": 0.027118,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.022014,
+    "svg_vs_preview_l1_error": 0.016114
+  },
+  "schema_version": 1,
+  "width": 64
+}

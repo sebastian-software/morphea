@@ -1,0 +1,125 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.915995,
+      "ellipse": {
+        "cx": 31.652139789040344,
+        "cy": 31.58974016411212,
+        "rotation": 0.5329253198713024,
+        "rx": 22.961828083814016,
+        "ry": 12.846266156683381
+      },
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:ellipse:0.915995",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "ellipse",
+      "layer": "filled_primitives",
+      "metrics": {
+        "ellipse_area_mismatch": 0.04066892727774714,
+        "ellipse_fit_residual_px": 0.866725820732135,
+        "ellipse_rotation_deg": 30.534371624285015,
+        "semantic_anchor_score": -0.1009947816856461,
+        "simple_shape_priority_bonus": 0.25
+      },
+      "node_count": 1,
+      "parameter_count": 5,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.0840052183143539,
+      "reserved": {
+        "bounds": [
+          10.825484631565821,
+          15.511104087920248,
+          52.47879494651487,
+          47.668376240303985
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          10.825484631565821,
+          15.511104087920248,
+          52.47879494651487,
+          47.668376240303985
+        ],
+        "bounds_area": 1339.456836,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 1,
+        "reserved_bounds_area": 1339.456836
+      }
+    }
+  ],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "filled_primitives"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0,
+    "anchor_quality_error_mean": 0,
+    "anchor_quality_metric_summary": {},
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": -0.100995,
+      "semantic_anchor_score_mean": -0.100995,
+      "semantic_anchor_score_min": -0.100995,
+      "simple_shape_priority_bonus_mean": 0.25,
+      "simple_shape_priority_bonus_total": 0.25
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 1.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 0,
+    "group_count": 1,
+    "negative_mask_candidate_count": 0,
+    "node_count": 1,
+    "parameter_count": 5,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.019241,
+    "raster_l1_error": 0.01875,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 1339.456836,
+    "reserved_simple_shape_area_ratio": 0.327016,
+    "reserved_simple_shape_count": 1,
+    "shape_count": 1,
+    "simple_shape_count": 1,
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.012962,
+    "svg_raster_l1_error": 0.011292,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.0125,
+    "svg_vs_preview_l1_error": 0.010346
+  },
+  "schema_version": 1,
+  "width": 64
+}

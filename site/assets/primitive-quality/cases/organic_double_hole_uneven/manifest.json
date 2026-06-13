@@ -1,0 +1,243 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.03,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:cubic_path:0.03",
+        "editable": false,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "cubic_path",
+      "layer": "generic_paths",
+      "metrics": {
+        "path_fit_max_error_px": 0.413,
+        "path_hole_count": 2.0,
+        "path_node_count": 8.0,
+        "path_smoothness": 0.21726514895359927,
+        "semantic_anchor_score": 1.05,
+        "simple_shape_priority_bonus": 0.0
+      },
+      "node_count": 8,
+      "parameter_count": 16,
+      "path": {
+        "closed": true,
+        "controls": [
+          [
+            {
+              "x": 35.01412428322125,
+              "y": 58.19011300174512
+            },
+            {
+              "x": 10.261843408636754,
+              "y": 53.30921704318379
+            }
+          ],
+          [
+            {
+              "x": 5.647768245361866,
+              "y": 30.238841226809324
+            },
+            {
+              "x": 6.763993295594772,
+              "y": 25.051438149150325
+            }
+          ],
+          [
+            {
+              "x": 18.687276341350284,
+              "y": 8.018176655213882
+            },
+            {
+              "x": 40.276961712526926,
+              "y": 9.66841041113502
+            }
+          ],
+          [
+            {
+              "x": 59.614868747999026,
+              "y": 26.85766110933249
+            },
+            {
+              "x": 58.24540179551379,
+              "y": 41.92821874314035
+            }
+          ]
+        ],
+        "fallback_reason": "organic_boundary_fit",
+        "holes": [
+          {
+            "controls": [
+              [
+                {
+                  "x": 33.420115241641206,
+                  "y": 21.87396542750763
+                },
+                {
+                  "x": 37.604053641486374,
+                  "y": 35.01878390755411
+                }
+              ],
+              [
+                {
+                  "x": 20.579884758358787,
+                  "y": 40.126034572492344
+                },
+                {
+                  "x": 16.39594635851362,
+                  "y": 26.98121609244592
+                }
+              ]
+            ],
+            "points": [
+              {
+                "x": 25.0,
+                "y": 24.4
+              },
+              {
+                "x": 29.0,
+                "y": 37.6
+              }
+            ]
+          },
+          {
+            "controls": [
+              [
+                {
+                  "x": 45.6219713647432,
+                  "y": 31.37289525227929
+                },
+                {
+                  "x": 47.639792102396804,
+                  "y": 38.56893508835627
+                }
+              ],
+              [
+                {
+                  "x": 38.37802863525681,
+                  "y": 40.62710474772071
+                },
+                {
+                  "x": 36.36020789760319,
+                  "y": 33.43106491164373
+                }
+              ]
+            ],
+            "points": [
+              {
+                "x": 41.0,
+                "y": 32.4
+              },
+              {
+                "x": 43.0,
+                "y": 39.6
+              }
+            ]
+          }
+        ],
+        "node_count": 4,
+        "points": [
+          {
+            "x": 49.0,
+            "y": 48.4
+          },
+          {
+            "x": 6.6,
+            "y": 35.0
+          },
+          {
+            "x": 9.6,
+            "y": 21.0
+          },
+          {
+            "x": 51.0,
+            "y": 19.2
+          }
+        ]
+      },
+      "provenance": {
+        "fitting": "fallback_path",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.77,
+      "reserved": {
+        "bounds": [
+          6.268213785705052,
+          11.657470149880838,
+          56.72092851413426,
+          53.345802158520165
+        ],
+        "reason": "generic_fallback"
+      },
+      "source_mask": {
+        "bounds": [
+          6.268213785705052,
+          11.657470149880838,
+          56.72092851413426,
+          53.345802158520165
+        ],
+        "bounds_area": 2103.289522,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "generic_paths"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0,
+    "anchor_quality_error_mean": 0,
+    "anchor_quality_metric_summary": {},
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 1.05,
+      "semantic_anchor_score_mean": 1.05,
+      "semantic_anchor_score_min": 1.05,
+      "simple_shape_priority_bonus_mean": 0.0,
+      "simple_shape_priority_bonus_total": 0.0
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 0.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 1,
+    "group_count": 0,
+    "negative_mask_candidate_count": 0,
+    "node_count": 8,
+    "parameter_count": 16,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.029602,
+    "raster_l1_error": 0.019727,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 0.0,
+    "reserved_simple_shape_area_ratio": 0.0,
+    "reserved_simple_shape_count": 0,
+    "shape_count": 1,
+    "simple_shape_count": 0,
+    "simple_shape_ratio": 0.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.03248,
+    "svg_raster_l1_error": 0.027397,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.023674,
+    "svg_vs_preview_l1_error": 0.01803
+  },
+  "schema_version": 1,
+  "width": 64
+}

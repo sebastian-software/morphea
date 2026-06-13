@@ -14,16 +14,35 @@ forms. It mirrors the code, not ambitions, and is updated per milestone. See
 - `stroke_path` is fitted from a functional per-column centerline bounded to
   7 control points with cap classification by end taper and near-constant
   width enforcement; honest straight strokes stay two-point
-  `stroke_polyline` anchors.
+  `stroke_polyline` anchors. Components whose outline has more than the
+  four cap corners of a butt-ended band (star tips, chevron bends) are
+  rejected rather than blurred into bulges.
 - `ellipse` and `stroke_ellipse` are fitted from bounds plus a pixel-unit
   boundary-ray residual; near-round shapes stay circles, sub-9 px minors and
-  stadium shapes stay rounded rects.
+  stadium shapes stay rounded rects. When the aligned fit fails, a
+  principal-axis fit recovers rotated filled ellipses (mean residual up to
+  1.1 px for diagonal staircase noise, 95th-percentile residual up to
+  1.7 px to keep leaf-like blobs organic).
+- `stroke_circle` rejects rings severed by a channel: the angular coverage
+  gap is measured as arc length (2.5 px) so pixel discretization on small
+  rings does not misfire while genuine bays do.
+- Filled candidates (circle, ellipse, rect, rounded_rect, quad) are
+  disqualified on components with bulky enclosed holes; rect and quad also
+  reject compact concave fill defects (notches, star valleys) measured via
+  region perimeter, while rectangular blocks flush with a box edge stay
+  allowed as the occlusion pattern the fragment promotion resolves.
 - Cut-outs run entirely on enclosed gap components with their own functional
   centerline, so straight, diagonal, and curved gaps share one path; bowed
-  gaps become smooth `stroke_path` overlays.
-- The `cubic_path` fallback carries a Moore-traced outline bounded to 16
-  nodes with `fallback_reason` and ranks behind every semantic candidate via
-  a flat penalty.
+  gaps become smooth `stroke_path` overlays, and gaps that bend to both
+  sides of their chord (S and wave slits) keep a seven-point centerline.
+- The `cubic_path` fallback carries a Moore-traced outline with an adaptive
+  node budget (one node per ~12 px of contour, 16 to 64) plus even-odd hole
+  subpaths for bulky enclosed gaps, and ranks behind every semantic
+  candidate via a flat penalty plus a saved-node surcharge. Corners are
+  detected on the raw trace with a two-scale chord test, pinned through
+  smoothing, and become segment boundaries with free tangents; a two-corner
+  contour (a crescent) gains chord-apex splits instead of collapsing into a
+  two-node path.
 
 ## Scene Model and SVG Export
 
@@ -31,10 +50,14 @@ forms. It mirrors the code, not ambitions, and is updated per milestone. See
   large-arc) and export as a single SVG `A` path with round caps.
 - `stroke_path` anchors with three or more control points export Catmull-Rom
   derived cubic `C` segments; organic `cubic_path` outlines export closed
-  Catmull-Rom `C` loops ending in `Z`.
-- Ellipses export as `<ellipse>` elements, filled or stroked.
-- The manifest serializes arc parameters, ellipse radii, organic path points
-  with node counts and `fallback_reason`, and stroke caps/joins.
+  least-squares cubic Bezier loops (Schneider fit) with even-odd hole
+  subpaths and `fill-rule="evenodd"` when holes are present.
+- Ellipses export as `<ellipse>` elements, filled or stroked; rotated
+  ellipses add `transform="rotate(deg cx cy)"`, and anchor bounds use the
+  exact rotated-ellipse AABB.
+- The manifest serializes arc parameters, ellipse radii and rotation,
+  organic path points and per-segment Bezier controls with node counts,
+  hole subpaths, `fallback_reason`, and stroke caps/joins.
 
 ## Renderer and Quality Gates
 
@@ -81,9 +104,29 @@ All roadmap milestones through FQ12 are implemented and green:
   curved cut-outs, and organic fallbacks; every card shows bitmap, exported
   SVG, and the rasterized SVG; the homepage teaser stays small.
 
-The fixture suite stands at 291 deterministic cases (159 baseline + 132
-freeform/curve cases), all passing both the manifest preview and the exported
-SVG raster gates.
+The fixture suite stands at 356 deterministic cases, all passing both the
+manifest preview and the exported SVG raster gates. The overnight expansion
+from 291 added, in roadmap order (each family driven by a real-logo finding
+and each paired with the detector fix its first run exposed):
+
+- Even-odd hole families (`organic_donut`, `organic_frame`,
+  `organic_double_hole`) plus the bulky-hole disqualification of filled
+  candidates.
+- Concave bay families (`concave_c`, `concave_u`, `concave_embrace`) plus
+  the stroke-circle closure gate.
+- Corner families (`corner_star`, `corner_arrow`, `corner_notch`) plus
+  corner-aware Bezier fitting, the stroke-path corner gate, and the
+  compact-defect gate for rect/quad; corner pinning also cut the crescent
+  family's edge error by roughly a third.
+- Inflected slit families (`cutout_curve_s`, `cutout_curve_wave`) plus
+  multi-point cut-out centerlines and the perimeter-based defect thickness.
+- Size-floor families (`tiny_dot`, `tiny_ring`, `tiny_rect`) on a 24 px
+  canvas plus the arc-length closure threshold that keeps sub-12 px rings
+  out of the organic fallback.
+- `rotated_ellipse` plus the principal-axis fit and the full export chain.
+- Palette families (`dominant_palette`, `palette_seam`) pinning the
+  dominant-color quantizer and its blend-seam suppression, plus variant
+  sweeps that grow `arc_up` and `curve_s` to 10 variants each.
 
 ## Regression Snapshot Baseline
 
@@ -141,6 +184,8 @@ Known real-image gaps that still need this treatment:
 - Curved letterforms in logos combine arcs, smooth curves, and organic
   fills inside a single connected component; the current pipeline handles
   them only when color separates the parts.
-- Rotated (non-axis-aligned) ellipses are still detected as organic
-  fallbacks; the roadmap defers them until the axis-aligned families have
-  soaked.
+- Rotated stroke ellipses (tilted rings) still fall back to organic
+  outlines; only filled rotated ellipses are fitted so far.
+- Square caps on oblique stroke ends cannot be classified by the
+  column-based cap test; the square-cap contract holds only for
+  horizontal-ended curves.

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <mask id="morphea-cutout-mask" maskUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="64" height="64" fill="white" />
+      <path d="M 9 35 C 15.667 34.583 41.333 32.333 49 32.5 C 56.667 32.667 54 35.417 55 36" fill="none" stroke="black" stroke-width="2.195" stroke-linecap="round" stroke-linejoin="round" />
+    </mask>
+  </defs>
+  <g mask="url(#morphea-cutout-mask)">
+    <polygon points="6,16 58,16 58,52 6,52" fill="#003366" />
+  </g>
+</svg>

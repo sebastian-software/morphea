@@ -1,0 +1,215 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.135,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:cubic_path:0.135",
+        "editable": false,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "cubic_path",
+      "layer": "generic_paths",
+      "metrics": {
+        "path_fit_max_error_px": 0.4103,
+        "path_hole_count": 0.0,
+        "path_node_count": 7.0,
+        "path_smoothness": 0.9877495060672491,
+        "semantic_anchor_score": 0.91,
+        "simple_shape_priority_bonus": 0.0
+      },
+      "node_count": 7,
+      "parameter_count": 14,
+      "path": {
+        "closed": true,
+        "controls": [
+          [
+            {
+              "x": 46.402934136763534,
+              "y": 23.217946104265522
+            },
+            {
+              "x": 43.19478232979341,
+              "y": 25.51304417551644
+            }
+          ],
+          [
+            {
+              "x": 41.70310058625446,
+              "y": 38.031005862544504
+            },
+            {
+              "x": 47.17797028474048,
+              "y": 43.31779702847404
+            }
+          ],
+          [
+            {
+              "x": 49.89100080305807,
+              "y": 48.69599908221936
+            },
+            {
+              "x": 45.212418892646575,
+              "y": 51.35751622147069
+            }
+          ],
+          [
+            {
+              "x": 33.10474412908493,
+              "y": 53.77905117418301
+            },
+            {
+              "x": 25.93207278710762,
+              "y": 55.17962183613229
+            }
+          ],
+          [
+            {
+              "x": 5.405504880168438,
+              "y": 49.02165146405052
+            },
+            {
+              "x": 6.651039939890601,
+              "y": 34.37240015027351
+            }
+          ],
+          [
+            {
+              "x": 15.822959916343795,
+              "y": 11.4426002091405
+            },
+            {
+              "x": 24.443231395847086,
+              "y": 1.0216156979235427
+            }
+          ],
+          [
+            {
+              "x": 43.359169810592455,
+              "y": 10.479584905296226
+            },
+            {
+              "x": 46.93583334303443,
+              "y": 15.935833343034435
+            }
+          ]
+        ],
+        "fallback_reason": "organic_boundary_fit",
+        "node_count": 7,
+        "points": [
+          {
+            "x": 51,
+            "y": 20
+          },
+          {
+            "x": 41,
+            "y": 31
+          },
+          {
+            "x": 54,
+            "y": 44
+          },
+          {
+            "x": 39.0,
+            "y": 52.6
+          },
+          {
+            "x": 20.0,
+            "y": 53.4
+          },
+          {
+            "x": 11.2,
+            "y": 23.0
+          },
+          {
+            "x": 38.0,
+            "y": 7.8
+          }
+        ]
+      },
+      "provenance": {
+        "fitting": "fallback_path",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.665,
+      "reserved": {
+        "bounds": [
+          8.141206260363438,
+          5.690109776971877,
+          54.0,
+          54.24554700291427
+        ],
+        "reason": "generic_fallback"
+      },
+      "source_mask": {
+        "bounds": [
+          8.141206260363438,
+          5.690109776971877,
+          54.0,
+          54.24554700291427
+        ],
+        "bounds_area": 2226.693781,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "generic_paths"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0,
+    "anchor_quality_error_mean": 0,
+    "anchor_quality_metric_summary": {},
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 0.91,
+      "semantic_anchor_score_mean": 0.91,
+      "semantic_anchor_score_min": 0.91,
+      "simple_shape_priority_bonus_mean": 0.0,
+      "simple_shape_priority_bonus_total": 0.0
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 0.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 1,
+    "group_count": 0,
+    "negative_mask_candidate_count": 0,
+    "node_count": 7,
+    "parameter_count": 14,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.020087,
+    "raster_l1_error": 0.013477,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 0.0,
+    "reserved_simple_shape_area_ratio": 0.0,
+    "reserved_simple_shape_count": 0,
+    "shape_count": 1,
+    "simple_shape_count": 0,
+    "simple_shape_ratio": 0.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.019917,
+    "svg_raster_l1_error": 0.016333,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.019486,
+    "svg_vs_preview_l1_error": 0.014366
+  },
+  "schema_version": 1,
+  "width": 64
+}

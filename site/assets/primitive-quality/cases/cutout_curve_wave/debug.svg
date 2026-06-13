@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="quad">
+    <polygon points="6,14 58,14 58,50 6,50" fill="#003366" />
+    <rect x="6" y="14" width="52" height="36" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="6" y="12" font-size="4" fill="#ff00ff">anchor-0000:quad:0.926234</text>
+  </g>
+  <g id="anchor-0001" data-kind="stroke_path">
+    <path d="M 9 31 C 15.5 30.417 40.333 27.333 48 27.5 C 55.667 27.667 53.833 31.25 55 32" fill="none" stroke="#ffffff" stroke-width="2.219" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="7.891" y="26.391" width="48.219" height="6.719" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="7.891" y="24.391" font-size="4" fill="#ff00ff">anchor-0001:stroke_path:0.952739</text>
+  </g>
+</svg>

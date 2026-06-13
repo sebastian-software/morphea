@@ -1,0 +1,160 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "circle": {
+        "cx": 11.5,
+        "cy": 11.5,
+        "r": 2.964603448245798
+      },
+      "color": "#003366",
+      "confidence": 0.513965,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:stroke_circle:0.513965",
+        "editable": true,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "stroke_circle",
+      "layer": "strokes",
+      "metrics": {
+        "circle_fit_residual_error": 0.1744127129331294,
+        "circle_roundness_error": 0.20941739226441697,
+        "cutout_anchor_error": 0.0,
+        "line_smoothness_error": 0.0,
+        "semantic_anchor_score": 0.5364823628658382,
+        "simple_shape_priority_bonus": 0.35,
+        "stroke_width_variance": 0.0
+      },
+      "node_count": 1,
+      "parameter_count": 4,
+      "provenance": {
+        "fitting": "primitive_fit",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.44765225766829175,
+      "reserved": {
+        "bounds": [
+          7.192113447068046,
+          7.192113447068046,
+          15.807886552931954,
+          15.807886552931954
+        ],
+        "reason": "simple_shape_anchor"
+      },
+      "source_mask": {
+        "bounds": [
+          7.192113447068046,
+          7.192113447068046,
+          15.807886552931954,
+          15.807886552931954
+        ],
+        "bounds_area": 74.231546,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      },
+      "stroke": {
+        "cap_style": "round",
+        "centerline": [],
+        "is_cutout": false,
+        "join_style": "round",
+        "width_samples": [
+          2.686566209372312
+        ]
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [
+    {
+      "anchor_indexes": [
+        0
+      ],
+      "kind": "primitive_anchor_reservation",
+      "metrics": {
+        "reserved_anchor_count": 1,
+        "reserved_bounds_area": 74.231546
+      }
+    }
+  ],
+  "height": 24,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "strokes"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0.38383,
+    "anchor_quality_error_mean": 0.38383,
+    "anchor_quality_metric_summary": {
+      "circle_fit_residual_error": {
+        "count": 1,
+        "max": 0.174413,
+        "mean": 0.174413
+      },
+      "circle_roundness_error": {
+        "count": 1,
+        "max": 0.209417,
+        "mean": 0.209417
+      },
+      "cutout_anchor_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "line_smoothness_error": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "stroke_width_variance": {
+        "count": 1,
+        "max": 0.0,
+        "mean": 0.0
+      }
+    },
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 0.536482,
+      "semantic_anchor_score_mean": 0.536482,
+      "semantic_anchor_score_min": 0.536482,
+      "simple_shape_priority_bonus_mean": 0.35,
+      "simple_shape_priority_bonus_total": 0.35
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 1.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 0,
+    "group_count": 1,
+    "negative_mask_candidate_count": 0,
+    "node_count": 1,
+    "parameter_count": 4,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.038074,
+    "raster_l1_error": 0.025,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 74.231546,
+    "reserved_simple_shape_area_ratio": 0.128874,
+    "reserved_simple_shape_count": 1,
+    "shape_count": 1,
+    "simple_shape_count": 1,
+    "simple_shape_ratio": 1.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.036073,
+    "svg_raster_l1_error": 0.02603,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.021498,
+    "svg_vs_preview_l1_error": 0.014615
+  },
+  "schema_version": 1,
+  "width": 24
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <g id="anchor-0000" data-kind="circle">
+    <circle cx="23" cy="31" r="13" fill="#003366" />
+    <rect x="10" y="18" width="26" height="26" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="10" y="16" font-size="4" fill="#ff00ff">anchor-0000:circle:0.976284</text>
+  </g>
+  <g id="anchor-0001" data-kind="rect">
+    <rect x="42" y="14" width="17" height="37" rx="0" ry="0" fill="#dd2222" shape-rendering="crispEdges" />
+    <rect x="42" y="14" width="16" height="36" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="42" y="12" font-size="4" fill="#ff00ff">anchor-0001:rect:0.961538</text>
+  </g>
+</svg>

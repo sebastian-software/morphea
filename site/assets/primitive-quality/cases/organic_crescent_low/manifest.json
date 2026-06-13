@@ -3,10 +3,10 @@
   "anchors": [
     {
       "color": "#003366",
-      "confidence": 0.24,
+      "confidence": 0.03,
       "export_policy": {
         "cutout_strategy": null,
-        "debug_label": "anchor-0000:cubic_path:0.24",
+        "debug_label": "anchor-0000:cubic_path:0.03",
         "editable": false,
         "mask_eligible": false
       },
@@ -14,161 +14,77 @@
       "kind": "cubic_path",
       "layer": "generic_paths",
       "metrics": {
-        "path_fit_max_error_px": 0.3215,
+        "path_fit_max_error_px": 0.3592,
         "path_hole_count": 0.0,
-        "path_node_count": 10.0,
-        "path_smoothness": 1.0742021016888983,
+        "path_node_count": 4.0,
+        "path_smoothness": 2.2609407630570524,
         "semantic_anchor_score": 0.91,
         "simple_shape_priority_bonus": 0.0
       },
-      "node_count": 10,
-      "parameter_count": 20,
+      "node_count": 4,
+      "parameter_count": 8,
       "path": {
         "closed": true,
         "controls": [
           [
             {
-              "x": 15.848102614538888,
-              "y": 17.2
+              "x": 10.841041555730015,
+              "y": 24.798512063242832
             },
             {
-              "x": 14.662372441161246,
-              "y": 19.792091862795846
+              "x": 12.498485739448965,
+              "y": 34.873107174311215
             }
           ],
           [
             {
-              "x": 14.011716942124837,
-              "y": 21.960943526250546
+              "x": 26.978203785452585,
+              "y": 50.978203785452585
             },
             {
-              "x": 13.20676148909434,
-              "y": 23.932385109056582
+              "x": 36.828146616435646,
+              "y": 53.08592669178218
             }
           ],
           [
             {
-              "x": 12.334258643849225,
-              "y": 32.65741356150778
+              "x": 36.83363256085337,
+              "y": 58.16636743914663
             },
             {
-              "x": 15.373162339723933,
-              "y": 39.37316233972393
+              "x": 24.690609766513262,
+              "y": 58.62154878986192
             }
           ],
           [
             {
-              "x": 24.622538758420557,
-              "y": 48.62253875842055
+              "x": 4.667821730313561,
+              "y": 37.334777162891946
             },
             {
-              "x": 30.5021034978307,
-              "y": 51.0
-            }
-          ],
-          [
-            {
-              "x": 39.44016704014398,
-              "y": 51.0
-            },
-            {
-              "x": 41.7061575768256,
-              "y": 50.088152726952316
-            }
-          ],
-          [
-            {
-              "x": 44.20790813720416,
-              "y": 49.337627558838754
-            },
-            {
-              "x": 46.8,
-              "y": 48.15189738546111
-            }
-          ],
-          [
-            {
-              "x": 46.8,
-              "y": 49.04852813742386
-            },
-            {
-              "x": 45.630705997473164,
-              "y": 49.432364602274156
-            }
-          ],
-          [
-            {
-              "x": 31.613720356038076,
-              "y": 62.04765167956572
-            },
-            {
-              "x": 9.834616640486333,
-              "y": 54.346166404863396
-            }
-          ],
-          [
-            {
-              "x": 7.388644546686475,
-              "y": 29.88644546686473
-            },
-            {
-              "x": 9.960757368587675,
-              "y": 23.488047368235915
-            }
-          ],
-          [
-            {
-              "x": 14.567635397725848,
-              "y": 18.369294002526836
-            },
-            {
-              "x": 14.951471862576144,
-              "y": 17.2
+              "x": 6.832546718503002,
+              "y": 26.167453281496996
             }
           ]
         ],
         "fallback_reason": "organic_boundary_fit",
-        "node_count": 10,
+        "node_count": 4,
         "points": [
           {
-            "x": 15.8,
-            "y": 17.2
+            "x": 17,
+            "y": 16
           },
           {
-            "x": 14.6,
-            "y": 20.0
+            "x": 19.0,
+            "y": 43.0
           },
           {
-            "x": 13.0,
-            "y": 26.0
-          },
-          {
-            "x": 20.0,
-            "y": 44.0
-          },
-          {
-            "x": 37.0,
-            "y": 51.0
-          },
-          {
-            "x": 44.0,
-            "y": 49.4
-          },
-          {
-            "x": 46.8,
-            "y": 48.2
-          },
-          {
-            "x": 45.0,
-            "y": 50.0
-          },
-          {
-            "x": 8.0,
-            "y": 36.0
+            "x": 47,
+            "y": 48
           },
           {
             "x": 14.0,
-            "y": 19.0
+            "y": 49.0
           }
         ]
       },
@@ -176,24 +92,24 @@
         "fitting": "fallback_path",
         "source": "primitive_anchor_detection"
       },
-      "raster_error": 0.56,
+      "raster_error": 0.77,
       "reserved": {
         "bounds": [
-          7.912490140978346,
-          17.2,
-          46.8,
-          55.80180809570256
+          8.069986110529248,
+          16.0,
+          47.0,
+          55.92046858587821
         ],
         "reason": "generic_fallback"
       },
       "source_mask": {
         "bounds": [
-          7.912490140978346,
-          17.2,
-          46.8,
-          55.80180809570256
+          8.069986110529248,
+          16.0,
+          47.0,
+          55.92046858587821
         ],
-        "bounds_area": 1501.128193,
+        "bounds_area": 1554.104397,
         "id": "mask-0000",
         "source": "reserved_bounds"
       }
@@ -233,11 +149,11 @@
     "generic_path_count": 1,
     "group_count": 0,
     "negative_mask_candidate_count": 0,
-    "node_count": 10,
-    "parameter_count": 20,
+    "node_count": 4,
+    "parameter_count": 8,
     "raster_alpha_error": 0.0,
-    "raster_edge_error": 0.018607,
-    "raster_l1_error": 0.013281,
+    "raster_edge_error": 0.016493,
+    "raster_l1_error": 0.011523,
     "raster_size_match": true,
     "reserved_simple_shape_area": 0.0,
     "reserved_simple_shape_area_ratio": 0.0,
@@ -246,11 +162,11 @@
     "simple_shape_count": 0,
     "simple_shape_ratio": 0.0,
     "svg_alpha_error": 0.0,
-    "svg_raster_edge_error": 0.0179,
-    "svg_raster_l1_error": 0.0149,
+    "svg_raster_edge_error": 0.017668,
+    "svg_raster_l1_error": 0.014623,
     "svg_render_size_match": true,
-    "svg_vs_preview_edge_error": 0.014096,
-    "svg_vs_preview_l1_error": 0.011054
+    "svg_vs_preview_edge_error": 0.01336,
+    "svg_vs_preview_l1_error": 0.010529
   },
   "schema_version": 1,
   "width": 64

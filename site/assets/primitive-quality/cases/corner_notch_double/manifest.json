@@ -1,0 +1,257 @@
+{
+  "anchor_count": 1,
+  "anchors": [
+    {
+      "color": "#003366",
+      "confidence": 0.24,
+      "export_policy": {
+        "cutout_strategy": null,
+        "debug_label": "anchor-0000:cubic_path:0.24",
+        "editable": false,
+        "mask_eligible": false
+      },
+      "id": "anchor-0000",
+      "kind": "cubic_path",
+      "layer": "generic_paths",
+      "metrics": {
+        "path_fit_max_error_px": 0.2504,
+        "path_hole_count": 0.0,
+        "path_node_count": 10.0,
+        "path_smoothness": 1.7079214445207782,
+        "semantic_anchor_score": 0.91,
+        "simple_shape_priority_bonus": 0.0
+      },
+      "node_count": 10,
+      "parameter_count": 20,
+      "path": {
+        "closed": true,
+        "controls": [
+          [
+            {
+              "x": 23.905635651313112,
+              "y": 16.0
+            },
+            {
+              "x": 40.094364348686895,
+              "y": 16.0
+            }
+          ],
+          [
+            {
+              "x": 56.0,
+              "y": 26.574452438307972
+            },
+            {
+              "x": 56.0,
+              "y": 37.42554756169203
+            }
+          ],
+          [
+            {
+              "x": 52.72863259312501,
+              "y": 48.0
+            },
+            {
+              "x": 49.271367406874994,
+              "y": 48.0
+            }
+          ],
+          [
+            {
+              "x": 44.681749320494724,
+              "y": 43.60583106831576
+            },
+            {
+              "x": 43.02642377765217,
+              "y": 39.05284755530434
+            }
+          ],
+          [
+            {
+              "x": 38.97357622234783,
+              "y": 39.05284755530433
+            },
+            {
+              "x": 37.318250679505276,
+              "y": 43.60583106831576
+            }
+          ],
+          [
+            {
+              "x": 33.334448199284246,
+              "y": 48.0
+            },
+            {
+              "x": 30.30325598840025,
+              "y": 48.535503992266825
+            }
+          ],
+          [
+            {
+              "x": 26.069297974255512,
+              "y": 43.138595948511025
+            },
+            {
+              "x": 24.902764464568133,
+              "y": 38.805528929136266
+            }
+          ],
+          [
+            {
+              "x": 20.97357622234783,
+              "y": 39.05284755530434
+            },
+            {
+              "x": 19.318250679505276,
+              "y": 43.60583106831576
+            }
+          ],
+          [
+            {
+              "x": 14.728632593125013,
+              "y": 48.0
+            },
+            {
+              "x": 11.271367406874987,
+              "y": 48.0
+            }
+          ],
+          [
+            {
+              "x": 8.0,
+              "y": 37.425547561692014
+            },
+            {
+              "x": 8.0,
+              "y": 26.574452438307976
+            }
+          ]
+        ],
+        "fallback_reason": "organic_boundary_fit",
+        "node_count": 10,
+        "points": [
+          {
+            "x": 8,
+            "y": 16
+          },
+          {
+            "x": 56,
+            "y": 16
+          },
+          {
+            "x": 56,
+            "y": 48
+          },
+          {
+            "x": 46,
+            "y": 48
+          },
+          {
+            "x": 41,
+            "y": 35
+          },
+          {
+            "x": 36,
+            "y": 48
+          },
+          {
+            "x": 28,
+            "y": 47
+          },
+          {
+            "x": 23,
+            "y": 35
+          },
+          {
+            "x": 18,
+            "y": 48
+          },
+          {
+            "x": 8,
+            "y": 48
+          }
+        ]
+      },
+      "provenance": {
+        "fitting": "fallback_path",
+        "source": "primitive_anchor_detection"
+      },
+      "raster_error": 0.56,
+      "reserved": {
+        "bounds": [
+          7.999999999999998,
+          15.999999999999996,
+          56.00000000000001,
+          48.09035856246532
+        ],
+        "reason": "generic_fallback"
+      },
+      "source_mask": {
+        "bounds": [
+          7.999999999999998,
+          15.999999999999996,
+          56.00000000000001,
+          48.09035856246532
+        ],
+        "bounds_area": 1540.337211,
+        "id": "mask-0000",
+        "source": "reserved_bounds"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "groups": [],
+  "height": 64,
+  "layers": [
+    {
+      "anchor_count": 1,
+      "anchor_indexes": [
+        0
+      ],
+      "name": "generic_paths"
+    }
+  ],
+  "metrics": {
+    "anchor_quality_error_max": 0,
+    "anchor_quality_error_mean": 0,
+    "anchor_quality_metric_summary": {},
+    "anchor_scoring_summary": {
+      "semantic_anchor_score_max": 0.91,
+      "semantic_anchor_score_mean": 0.91,
+      "semantic_anchor_score_min": 0.91,
+      "simple_shape_priority_bonus_mean": 0.0,
+      "simple_shape_priority_bonus_total": 0.0
+    },
+    "color_fragment_counts": {
+      "#003366": 1
+    },
+    "cutout_anchor_count": 0,
+    "cutout_overlay_count": 0,
+    "diagnostic_penalty": 0.0,
+    "editability_score": 0.0,
+    "fragmentation_penalty": 0.0,
+    "generic_path_count": 1,
+    "group_count": 0,
+    "negative_mask_candidate_count": 0,
+    "node_count": 10,
+    "parameter_count": 20,
+    "raster_alpha_error": 0.0,
+    "raster_edge_error": 0.009303,
+    "raster_l1_error": 0.007422,
+    "raster_size_match": true,
+    "reserved_simple_shape_area": 0.0,
+    "reserved_simple_shape_area_ratio": 0.0,
+    "reserved_simple_shape_count": 0,
+    "shape_count": 1,
+    "simple_shape_count": 0,
+    "simple_shape_ratio": 0.0,
+    "svg_alpha_error": 0.0,
+    "svg_raster_edge_error": 0.018466,
+    "svg_raster_l1_error": 0.016545,
+    "svg_render_size_match": true,
+    "svg_vs_preview_edge_error": 0.017008,
+    "svg_vs_preview_l1_error": 0.014889
+  },
+  "schema_version": 1,
+  "width": 64
+}

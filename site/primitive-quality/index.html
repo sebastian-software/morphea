@@ -438,16 +438,16 @@ figcaption {
       <a class="home-link" href="../">Morphēa</a>
       <div>
         <p class="eyebrow">Primitive quality gallery</p>
-        <h1>291 deterministic round-trip cases</h1>
-        <p class="lede">Every card is a <code>primitive-check</code> artifact: source bitmap and exported SVG in the same 64&thinsp;px viewport, so geometry drift is visible at a glance. Passing cases include 58 arc, 15 cubic_path, 21 ellipse, 3 stroke_ellipse, 42 stroke_path anchors.</p>
+        <h1>356 deterministic round-trip cases</h1>
+        <p class="lede">Every card is a <code>primitive-check</code> artifact: source bitmap and exported SVG in the same 64&thinsp;px viewport, so geometry drift is visible at a glance. Passing cases include 65 arc, 42 cubic_path, 24 ellipse, 3 stroke_ellipse, 55 stroke_path anchors.</p>
       </div>
     </header>
 
     <aside class="gallery-controls" aria-label="Primitive gallery filters">
       <div class="stat-strip">
-        <span><strong>291</strong> passed</span>
+        <span><strong>356</strong> passed</span>
         <span><strong>0</strong> failed</span>
-        <span><strong>76</strong> families</span>
+        <span><strong>93</strong> families</span>
         <span><strong>0.000-0.061</strong> L1</span>
         <span><strong>0.000-0.062</strong> edge</span>
         <button type="button" id="details-toggle" aria-pressed="false">Show QA details</button>
@@ -486,7 +486,7 @@ figcaption {
             <option value="arc_small_radius">arc_small_radius (3)</option>
             <option value="arc_steep">arc_steep (3)</option>
             <option value="arc_thick">arc_thick (3)</option>
-            <option value="arc_up">arc_up (3)</option>
+            <option value="arc_up">arc_up (10)</option>
             <option value="composition_arc_circle">composition_arc_circle (3)</option>
             <option value="composition_arc_rect">composition_arc_rect (3)</option>
             <option value="composition_circle_plus_stroke">composition_circle_plus_stroke (3)</option>
@@ -501,21 +501,30 @@ figcaption {
             <option value="composition_ring_plus_dot">composition_ring_plus_dot (3)</option>
             <option value="composition_same_color_separated">composition_same_color_separated (3)</option>
             <option value="composition_square_plus_circle">composition_square_plus_circle (3)</option>
+            <option value="concave_c">concave_c (3)</option>
+            <option value="concave_embrace">concave_embrace (3)</option>
+            <option value="concave_u">concave_u (3)</option>
+            <option value="corner_arrow">corner_arrow (3)</option>
+            <option value="corner_notch">corner_notch (3)</option>
+            <option value="corner_star">corner_star (3)</option>
             <option value="curve_asymmetric">curve_asymmetric (3)</option>
             <option value="curve_diagonal">curve_diagonal (3)</option>
             <option value="curve_quadratic">curve_quadratic (3)</option>
             <option value="curve_round_caps">curve_round_caps (3)</option>
-            <option value="curve_s">curve_s (3)</option>
+            <option value="curve_s">curve_s (10)</option>
             <option value="curve_square_caps">curve_square_caps (3)</option>
             <option value="curve_wave">curve_wave (3)</option>
             <option value="cutout_curve_circle">cutout_curve_circle (3)</option>
             <option value="cutout_curve_crossing">cutout_curve_crossing (3)</option>
             <option value="cutout_curve_rect">cutout_curve_rect (3)</option>
             <option value="cutout_curve_ring">cutout_curve_ring (3)</option>
+            <option value="cutout_curve_s">cutout_curve_s (3)</option>
+            <option value="cutout_curve_wave">cutout_curve_wave (3)</option>
             <option value="cutout_diagonal_gap">cutout_diagonal_gap (3)</option>
             <option value="cutout_horizontal_gap">cutout_horizontal_gap (3)</option>
             <option value="cutout_near_background">cutout_near_background (3)</option>
             <option value="diagonal_stroke">diagonal_stroke (10)</option>
+            <option value="dominant_palette">dominant_palette (3)</option>
             <option value="drift_curve">drift_curve (3)</option>
             <option value="ellipse_horizontal">ellipse_horizontal (3)</option>
             <option value="ellipse_large">ellipse_large (3)</option>
@@ -533,14 +542,22 @@ figcaption {
             <option value="organic_blob">organic_blob (3)</option>
             <option value="organic_compound">organic_compound (3)</option>
             <option value="organic_crescent">organic_crescent (3)</option>
+            <option value="organic_donut">organic_donut (3)</option>
+            <option value="organic_double_hole">organic_double_hole (3)</option>
+            <option value="organic_frame">organic_frame (3)</option>
             <option value="organic_leaf">organic_leaf (3)</option>
             <option value="outlined_ring">outlined_ring (10)</option>
             <option value="overlapping_rectangles_ordered">overlapping_rectangles_ordered (3)</option>
             <option value="palette_drift_primitive">palette_drift_primitive (3)</option>
+            <option value="palette_seam">palette_seam (3)</option>
+            <option value="rotated_ellipse">rotated_ellipse (3)</option>
             <option value="rounded_rectangle">rounded_rectangle (10)</option>
             <option value="simple_quad">simple_quad (10)</option>
             <option value="stroke_crossing_rectangle">stroke_crossing_rectangle (3)</option>
             <option value="stroked_ellipse">stroked_ellipse (3)</option>
+            <option value="tiny_dot">tiny_dot (3)</option>
+            <option value="tiny_rect">tiny_rect (3)</option>
+            <option value="tiny_ring">tiny_ring (3)</option>
             <option value="touching_circle_stroke">touching_circle_stroke (3)</option>
             <option value="transparent_arc">transparent_arc (3)</option>
             <option value="transparent_circle">transparent_circle (3)</option>
@@ -581,7 +598,7 @@ figcaption {
           </select>
         </label>
       </div>
-      <p id="visible-count" class="visible-count">291 cases visible</p>
+      <p id="visible-count" class="visible-count">356 cases visible</p>
     </aside>
 
     <main class="case-grid" aria-label="Primitive cases">
@@ -4119,6 +4136,272 @@ figcaption {
           </div>
         </details>
       </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_thin arc_up thin arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up thin</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_thin/input.png" width="64" height="64" alt="arc_up_thin bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_thin/output.svg" width="64" height="64" alt="arc_up_thin exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0119 / 0.0137</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0109 / 0.0131</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8436</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>thin</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_thin/svg-render.png" alt="arc_up_thin rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_heavy arc_up heavy arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up heavy</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_heavy/input.png" width="64" height="64" alt="arc_up_heavy bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_heavy/output.svg" width="64" height="64" alt="arc_up_heavy exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0117 / 0.0152</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0129 / 0.0147</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8753</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>heavy</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_heavy/svg-render.png" alt="arc_up_heavy rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_wide_span arc_up wide_span arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up wide span</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_wide_span/input.png" width="64" height="64" alt="arc_up_wide_span bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_wide_span/output.svg" width="64" height="64" alt="arc_up_wide_span exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0105 / 0.0144</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0130 / 0.0158</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8509</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>wide_span</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_wide_span/svg-render.png" alt="arc_up_wide_span rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_narrow_span arc_up narrow_span arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up narrow span</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_narrow_span/input.png" width="64" height="64" alt="arc_up_narrow_span bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_narrow_span/output.svg" width="64" height="64" alt="arc_up_narrow_span exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0088 / 0.0112</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0096 / 0.0113</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8351</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>narrow_span</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_narrow_span/svg-render.png" alt="arc_up_narrow_span rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_offset_left arc_up offset_left arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up offset left</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_offset_left/input.png" width="64" height="64" alt="arc_up_offset_left bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_offset_left/output.svg" width="64" height="64" alt="arc_up_offset_left exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0086 / 0.0123</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0103 / 0.0130</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8415</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>offset_left</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_offset_left/svg-render.png" alt="arc_up_offset_left rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_offset_right arc_up offset_right arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up offset right</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_offset_right/input.png" width="64" height="64" alt="arc_up_offset_right bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_offset_right/output.svg" width="64" height="64" alt="arc_up_offset_right exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0090 / 0.0129</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0103 / 0.0129</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8697</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>offset_right</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_offset_right/svg-render.png" alt="arc_up_offset_right rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="arc_up" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_up_high arc_up high arc arc_contract ">
+        <header>
+          <div>
+            <p class="case-family">arc_up</p>
+            <h2>arc up high</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_high/input.png" width="64" height="64" alt="arc_up_high bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/arc_up_high/output.svg" width="64" height="64" alt="arc_up_high exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>arc</code><span>1 anchor · 3 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0086 / 0.0114</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0097 / 0.0119</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.7964</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>high</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/arc_up_high/svg-render.png" alt="arc_up_high rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>arc_contract</span></div>
+          </div>
+        </details>
+      </article>
       <article class="case-card" data-family="arc_down" data-kind="arc" data-contracts="arc_contract" data-ok="true" data-search="arc_down arc_down base arc arc_contract ">
         <header>
           <div>
@@ -5139,6 +5422,272 @@ figcaption {
               <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
               <div class="demo-frame">
                 <img src="../assets/primitive-quality/cases/curve_s_tight/svg-render.png" alt="curve_s_tight rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_wide curve_s wide stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s wide</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_wide/input.png" width="64" height="64" alt="curve_s_wide bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_wide/output.svg" width="64" height="64" alt="curve_s_wide exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0168 / 0.0222</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0188 / 0.0230</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8862</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>wide</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_wide/svg-render.png" alt="curve_s_wide rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_thin curve_s thin stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s thin</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_thin/input.png" width="64" height="64" alt="curve_s_thin bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_thin/output.svg" width="64" height="64" alt="curve_s_thin exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0105 / 0.0175</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0135 / 0.0187</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9273</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>thin</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_thin/svg-render.png" alt="curve_s_thin rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_heavy curve_s heavy stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s heavy</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_heavy/input.png" width="64" height="64" alt="curve_s_heavy bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_heavy/output.svg" width="64" height="64" alt="curve_s_heavy exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0205 / 0.0254</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0204 / 0.0234</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8519</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>heavy</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_heavy/svg-render.png" alt="curve_s_heavy rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_steep curve_s steep stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s steep</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_steep/input.png" width="64" height="64" alt="curve_s_steep bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_steep/output.svg" width="64" height="64" alt="curve_s_steep exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0229 / 0.0290</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0206 / 0.0242</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9030</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>steep</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_steep/svg-render.png" alt="curve_s_steep rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_low curve_s low stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s low</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_low/input.png" width="64" height="64" alt="curve_s_low bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_low/output.svg" width="64" height="64" alt="curve_s_low exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0145 / 0.0205</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0166 / 0.0205</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9177</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>low</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_low/svg-render.png" alt="curve_s_low rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_compact curve_s compact stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s compact</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_compact/input.png" width="64" height="64" alt="curve_s_compact bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_compact/output.svg" width="64" height="64" alt="curve_s_compact exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0137 / 0.0188</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0138 / 0.0171</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8602</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>compact</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_compact/svg-render.png" alt="curve_s_compact rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>smooth_curve_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="curve_s" data-kind="stroke_path" data-contracts="smooth_curve_contract" data-ok="true" data-search="curve_s_offset curve_s offset stroke_path smooth_curve_contract ">
+        <header>
+          <div>
+            <p class="case-family">curve_s</p>
+            <h2>curve s offset</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_offset/input.png" width="64" height="64" alt="curve_s_offset bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/curve_s_offset/output.svg" width="64" height="64" alt="curve_s_offset exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0174 / 0.0243</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0183 / 0.0226</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8857</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>offset</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/curve_s_offset/svg-render.png" alt="curve_s_offset rasterized SVG" loading="lazy" decoding="async">
               </div>
             </figure>
             <div class="badges"><span>smooth_curve_contract</span></div>
@@ -9381,14 +9930,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_blob/output.svg" width="64" height="64" alt="organic_blob exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 8 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0111 / 0.0171</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0147 / 0.0175</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9419</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0117 / 0.0175</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0153 / 0.0179</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9321</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9419,14 +9968,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_blob_soft/output.svg" width="64" height="64" alt="organic_blob_soft exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 11 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
               <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0117 / 0.0182</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0149 / 0.0180</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9567</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0157 / 0.0191</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9569</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>soft</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9457,14 +10006,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_blob_lumpy/output.svg" width="64" height="64" alt="organic_blob_lumpy exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 12 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 13 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0094 / 0.0137</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0119 / 0.0145</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9505</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0088 / 0.0127</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0130 / 0.0157</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9551</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>lumpy</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9609,14 +10158,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_asymmetric/output.svg" width="64" height="64" alt="organic_asymmetric exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 8 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0100 / 0.0154</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0143 / 0.0172</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9455</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0117 / 0.0169</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0149 / 0.0174</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9412</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9647,14 +10196,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_asymmetric_heavy/output.svg" width="64" height="64" alt="organic_asymmetric_heavy exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 8 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0102 / 0.0146</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0126 / 0.0152</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9541</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0113 / 0.0156</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0130 / 0.0149</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9599</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>heavy</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9685,14 +10234,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_asymmetric_soft/output.svg" width="64" height="64" alt="organic_asymmetric_soft exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0119 / 0.0182</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0144 / 0.0174</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9603</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0100 / 0.0156</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0141 / 0.0173</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9595</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>soft</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9723,14 +10272,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_crescent/output.svg" width="64" height="64" alt="organic_crescent exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 4 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0133 / 0.0186</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0149 / 0.0179</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.7723</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0115 / 0.0165</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0146 / 0.0177</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8027</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9761,14 +10310,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_crescent_low/output.svg" width="64" height="64" alt="organic_crescent_low exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 4 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0133 / 0.0186</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0149 / 0.0179</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.7723</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0115 / 0.0165</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0146 / 0.0177</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8027</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>low</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9799,14 +10348,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_crescent_high/output.svg" width="64" height="64" alt="organic_crescent_high exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 4 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0115 / 0.0182</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0144 / 0.0189</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.7723</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0072 / 0.0129</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0123 / 0.0167</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.7817</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>high</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9837,14 +10386,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_compound/output.svg" width="64" height="64" alt="organic_compound exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 11 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0115 / 0.0180</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0154 / 0.0193</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9474</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0117 / 0.0173</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0145 / 0.0176</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9459</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9875,14 +10424,14 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_compound_tall/output.svg" width="64" height="64" alt="organic_compound_tall exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0109 / 0.0154</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0139 / 0.0162</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9258</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0102 / 0.0144</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0142 / 0.0164</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9241</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>tall</td></tr>
             </table>
             <figure class="raster-proof">
@@ -9913,20 +10462,1046 @@ figcaption {
                 <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_compound_wide/output.svg" width="64" height="64" alt="organic_compound_wide exported SVG" loading="lazy" decoding="async"></span>
               </figure>
         </div>
-        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 8 nodes</span></p>
         <details class="case-details">
           <summary>QA details</summary>
           <div class="details-body">
             <table class="metric-table">
-              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0102 / 0.0142</td></tr>
-              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0149 / 0.0170</td></tr>
-              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9537</td></tr>
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0107 / 0.0148</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0158 / 0.0178</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9526</td></tr>
               <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>wide</td></tr>
             </table>
             <figure class="raster-proof">
               <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
               <div class="demo-frame">
                 <img src="../assets/primitive-quality/cases/organic_compound_wide/svg-render.png" alt="organic_compound_wide rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_donut" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_donut organic_donut base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_donut</p>
+            <h2>organic donut</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_donut/input.png" width="64" height="64" alt="organic_donut bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_donut/output.svg" width="64" height="64" alt="organic_donut exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 11 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0176 / 0.0260</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0227 / 0.0272</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9454</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_donut/svg-render.png" alt="organic_donut rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_donut" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_donut_offset organic_donut offset cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_donut</p>
+            <h2>organic donut offset</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_donut_offset/input.png" width="64" height="64" alt="organic_donut_offset bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_donut_offset/output.svg" width="64" height="64" alt="organic_donut_offset exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 14 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0162 / 0.0271</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0213 / 0.0270</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9576</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>offset</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_donut_offset/svg-render.png" alt="organic_donut_offset rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_donut" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_donut_small_hole organic_donut small_hole cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_donut</p>
+            <h2>organic donut small hole</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_donut_small_hole/input.png" width="64" height="64" alt="organic_donut_small_hole bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_donut_small_hole/output.svg" width="64" height="64" alt="organic_donut_small_hole exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 6 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0184 / 0.0260</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0211 / 0.0252</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9596</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>small_hole</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_donut_small_hole/svg-render.png" alt="organic_donut_small_hole rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_frame" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_frame organic_frame base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_frame</p>
+            <h2>organic frame</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_frame/input.png" width="64" height="64" alt="organic_frame bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_frame/output.svg" width="64" height="64" alt="organic_frame exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 17 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0201 / 0.0321</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0265 / 0.0336</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9630</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_frame/svg-render.png" alt="organic_frame rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_frame" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_frame_wavy organic_frame wavy cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_frame</p>
+            <h2>organic frame wavy</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_frame_wavy/input.png" width="64" height="64" alt="organic_frame_wavy bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_frame_wavy/output.svg" width="64" height="64" alt="organic_frame_wavy exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 12 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0240 / 0.0355</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0290 / 0.0359</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9500</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>wavy</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_frame_wavy/svg-render.png" alt="organic_frame_wavy rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_frame" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_frame_thin organic_frame thin cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_frame</p>
+            <h2>organic frame thin</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_frame_thin/input.png" width="64" height="64" alt="organic_frame_thin bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_frame_thin/output.svg" width="64" height="64" alt="organic_frame_thin exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 14 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0211 / 0.0294</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0266 / 0.0318</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9734</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>thin</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_frame_thin/svg-render.png" alt="organic_frame_thin rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_double_hole" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_double_hole organic_double_hole base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_double_hole</p>
+            <h2>organic double hole</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_double_hole/input.png" width="64" height="64" alt="organic_double_hole bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_double_hole/output.svg" width="64" height="64" alt="organic_double_hole exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0197 / 0.0294</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0271 / 0.0325</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9640</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_double_hole/svg-render.png" alt="organic_double_hole rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_double_hole" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_double_hole_vertical organic_double_hole vertical cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_double_hole</p>
+            <h2>organic double hole vertical</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_double_hole_vertical/input.png" width="64" height="64" alt="organic_double_hole_vertical bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_double_hole_vertical/output.svg" width="64" height="64" alt="organic_double_hole_vertical exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 11 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0211 / 0.0311</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0281 / 0.0339</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9609</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>vertical</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_double_hole_vertical/svg-render.png" alt="organic_double_hole_vertical rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="organic_double_hole" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="organic_double_hole_uneven organic_double_hole uneven cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">organic_double_hole</p>
+            <h2>organic double hole uneven</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_double_hole_uneven/input.png" width="64" height="64" alt="organic_double_hole_uneven bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/organic_double_hole_uneven/output.svg" width="64" height="64" alt="organic_double_hole_uneven exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 8 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0197 / 0.0296</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0274 / 0.0325</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9572</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>uneven</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/organic_double_hole_uneven/svg-render.png" alt="organic_double_hole_uneven rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_c" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_c concave_c base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_c</p>
+            <h2>concave c</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_c/input.png" width="64" height="64" alt="concave_c bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_c/output.svg" width="64" height="64" alt="concave_c exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0135 / 0.0201</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0163 / 0.0199</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9129</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_c/svg-render.png" alt="concave_c rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_c" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_c_deep concave_c deep cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_c</p>
+            <h2>concave c deep</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_c_deep/input.png" width="64" height="64" alt="concave_c_deep bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_c_deep/output.svg" width="64" height="64" alt="concave_c_deep exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0162 / 0.0233</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0206 / 0.0245</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9288</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>deep</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_c_deep/svg-render.png" alt="concave_c_deep rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_c" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_c_wide concave_c wide cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_c</p>
+            <h2>concave c wide</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_c_wide/input.png" width="64" height="64" alt="concave_c_wide bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_c_wide/output.svg" width="64" height="64" alt="concave_c_wide exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0115 / 0.0180</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0152 / 0.0200</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.7840</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>wide</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_c_wide/svg-render.png" alt="concave_c_wide rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_u" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_u concave_u base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_u</p>
+            <h2>concave u</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_u/input.png" width="64" height="64" alt="concave_u bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_u/output.svg" width="64" height="64" alt="concave_u exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0213 / 0.0294</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0233 / 0.0274</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9559</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_u/svg-render.png" alt="concave_u rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_u" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_u_narrow concave_u narrow cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_u</p>
+            <h2>concave u narrow</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_u_narrow/input.png" width="64" height="64" alt="concave_u_narrow bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_u_narrow/output.svg" width="64" height="64" alt="concave_u_narrow exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0203 / 0.0277</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0249 / 0.0287</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9617</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>narrow</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_u_narrow/svg-render.png" alt="concave_u_narrow rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_u" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_u_tilted concave_u tilted cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_u</p>
+            <h2>concave u tilted</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_u_tilted/input.png" width="64" height="64" alt="concave_u_tilted bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_u_tilted/output.svg" width="64" height="64" alt="concave_u_tilted exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0187 / 0.0271</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0198 / 0.0253</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9405</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>tilted</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_u_tilted/svg-render.png" alt="concave_u_tilted rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_embrace" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_embrace concave_embrace base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_embrace</p>
+            <h2>concave embrace</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_embrace/input.png" width="64" height="64" alt="concave_embrace bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_embrace/output.svg" width="64" height="64" alt="concave_embrace exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0193 / 0.0292</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0257 / 0.0314</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9614</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_embrace/svg-render.png" alt="concave_embrace rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_embrace" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_embrace_tight concave_embrace tight cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_embrace</p>
+            <h2>concave embrace tight</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_embrace_tight/input.png" width="64" height="64" alt="concave_embrace_tight bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_embrace_tight/output.svg" width="64" height="64" alt="concave_embrace_tight exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0219 / 0.0319</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0266 / 0.0318</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9518</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>tight</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_embrace_tight/svg-render.png" alt="concave_embrace_tight rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="concave_embrace" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="concave_embrace_thick concave_embrace thick cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">concave_embrace</p>
+            <h2>concave embrace thick</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_embrace_thick/input.png" width="64" height="64" alt="concave_embrace_thick bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/concave_embrace_thick/output.svg" width="64" height="64" alt="concave_embrace_thick exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 12 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0187 / 0.0277</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0258 / 0.0304</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9586</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>thick</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/concave_embrace_thick/svg-render.png" alt="concave_embrace_thick rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_star" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_star corner_star base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_star</p>
+            <h2>corner star</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_star/input.png" width="64" height="64" alt="corner_star bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_star/output.svg" width="64" height="64" alt="corner_star exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0109 / 0.0182</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0174 / 0.0224</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9792</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_star/svg-render.png" alt="corner_star rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_star" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_star_six corner_star six cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_star</p>
+            <h2>corner star six</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_star_six/input.png" width="64" height="64" alt="corner_star_six bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_star_six/output.svg" width="64" height="64" alt="corner_star_six exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 12 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0156 / 0.0235</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0187 / 0.0233</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9577</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>six</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_star_six/svg-render.png" alt="corner_star_six rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_star" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_star_sharp corner_star sharp cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_star</p>
+            <h2>corner star sharp</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_star_sharp/input.png" width="64" height="64" alt="corner_star_sharp bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_star_sharp/output.svg" width="64" height="64" alt="corner_star_sharp exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 9 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0154 / 0.0220</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0199 / 0.0229</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9815</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>sharp</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_star_sharp/svg-render.png" alt="corner_star_sharp rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_arrow" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_arrow corner_arrow base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_arrow</p>
+            <h2>corner arrow</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_arrow/input.png" width="64" height="64" alt="corner_arrow bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_arrow/output.svg" width="64" height="64" alt="corner_arrow exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0107 / 0.0148</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0134 / 0.0166</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_arrow/svg-render.png" alt="corner_arrow rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_arrow" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_arrow_up corner_arrow up cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_arrow</p>
+            <h2>corner arrow up</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_arrow_up/input.png" width="64" height="64" alt="corner_arrow_up bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_arrow_up/output.svg" width="64" height="64" alt="corner_arrow_up exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0125 / 0.0169</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0167 / 0.0197</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>up</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_arrow_up/svg-render.png" alt="corner_arrow_up rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_arrow" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_arrow_chevron corner_arrow chevron cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_arrow</p>
+            <h2>corner arrow chevron</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_arrow_chevron/input.png" width="64" height="64" alt="corner_arrow_chevron bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_arrow_chevron/output.svg" width="64" height="64" alt="corner_arrow_chevron exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 6 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0100 / 0.0199</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0143 / 0.0212</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>chevron</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_arrow_chevron/svg-render.png" alt="corner_arrow_chevron rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_notch" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_notch corner_notch base cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_notch</p>
+            <h2>corner notch</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_notch/input.png" width="64" height="64" alt="corner_notch bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_notch/output.svg" width="64" height="64" alt="corner_notch exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0074 / 0.0089</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0145 / 0.0160</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_notch/svg-render.png" alt="corner_notch rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_notch" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_notch_deep corner_notch deep cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_notch</p>
+            <h2>corner notch deep</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_notch_deep/input.png" width="64" height="64" alt="corner_notch_deep bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_notch_deep/output.svg" width="64" height="64" alt="corner_notch_deep exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0092 / 0.0112</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0187 / 0.0198</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>deep</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_notch_deep/svg-render.png" alt="corner_notch_deep rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>organic_fallback</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="corner_notch" data-kind="cubic_path" data-contracts="organic_fallback" data-ok="true" data-search="corner_notch_double corner_notch double cubic_path organic_fallback ">
+        <header>
+          <div>
+            <p class="case-family">corner_notch</p>
+            <h2>corner notch double</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_notch_double/input.png" width="64" height="64" alt="corner_notch_double bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/corner_notch_double/output.svg" width="64" height="64" alt="corner_notch_double exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>cubic_path</code><span>1 anchor · 10 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0074 / 0.0093</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0165 / 0.0185</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9972</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>double</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/corner_notch_double/svg-render.png" alt="corner_notch_double rasterized SVG" loading="lazy" decoding="async">
               </div>
             </figure>
             <div class="badges"><span>organic_fallback</span></div>
@@ -11298,6 +12873,918 @@ figcaption {
               </div>
             </figure>
             <div class="badges"><span>arc_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="cutout_curve_s" data-kind="quad" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_s cutout_curve_s base quad curved_cutout_contract cutout export ">
+        <header>
+          <div>
+            <p class="case-family">cutout_curve_s</p>
+            <h2>cutout curve s</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_s/input.png" width="64" height="64" alt="cutout_curve_s bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_s/output.svg" width="64" height="64" alt="cutout_curve_s exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>quad</code><span>2 anchors · 11 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0039 / 0.0047</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0202 / 0.0224</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/cutout_curve_s/svg-render.png" alt="cutout_curve_s rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="cutout_curve_s" data-kind="quad" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_s_steep cutout_curve_s steep quad curved_cutout_contract cutout export ">
+        <header>
+          <div>
+            <p class="case-family">cutout_curve_s</p>
+            <h2>cutout curve s steep</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_s_steep/input.png" width="64" height="64" alt="cutout_curve_s_steep bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_s_steep/output.svg" width="64" height="64" alt="cutout_curve_s_steep exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>quad</code><span>2 anchors · 11 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0041 / 0.0051</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0218 / 0.0239</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>steep</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/cutout_curve_s_steep/svg-render.png" alt="cutout_curve_s_steep rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="cutout_curve_s" data-kind="quad" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_s_flat cutout_curve_s flat quad curved_cutout_contract cutout export ">
+        <header>
+          <div>
+            <p class="case-family">cutout_curve_s</p>
+            <h2>cutout curve s flat</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_s_flat/input.png" width="64" height="64" alt="cutout_curve_s_flat bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_s_flat/output.svg" width="64" height="64" alt="cutout_curve_s_flat exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>quad</code><span>2 anchors · 11 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0029 / 0.0030</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0201 / 0.0217</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>flat</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/cutout_curve_s_flat/svg-render.png" alt="cutout_curve_s_flat rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="cutout_curve_wave" data-kind="quad" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_wave cutout_curve_wave base quad curved_cutout_contract cutout export ">
+        <header>
+          <div>
+            <p class="case-family">cutout_curve_wave</p>
+            <h2>cutout curve wave</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_wave/input.png" width="64" height="64" alt="cutout_curve_wave bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_wave/output.svg" width="64" height="64" alt="cutout_curve_wave exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>quad</code><span>2 anchors · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0205 / 0.0182</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0360 / 0.0316</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/cutout_curve_wave/svg-render.png" alt="cutout_curve_wave rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="cutout_curve_wave" data-kind="quad" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_wave_low cutout_curve_wave low quad curved_cutout_contract cutout export ">
+        <header>
+          <div>
+            <p class="case-family">cutout_curve_wave</p>
+            <h2>cutout curve wave low</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_wave_low/input.png" width="64" height="64" alt="cutout_curve_wave_low bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_wave_low/output.svg" width="64" height="64" alt="cutout_curve_wave_low exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>quad</code><span>2 anchors · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0170 / 0.0137</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0319 / 0.0303</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>low</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/cutout_curve_wave_low/svg-render.png" alt="cutout_curve_wave_low rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="cutout_curve_wave" data-kind="circle" data-contracts="curved_cutout_contract cutout export" data-ok="true" data-search="cutout_curve_wave_circle cutout_curve_wave circle circle curved_cutout_contract cutout export ">
+        <header>
+          <div>
+            <p class="case-family">cutout_curve_wave</p>
+            <h2>cutout curve wave circle</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_wave_circle/input.png" width="64" height="64" alt="cutout_curve_wave_circle bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/cutout_curve_wave_circle/output.svg" width="64" height="64" alt="cutout_curve_wave_circle exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>2 anchors · 4 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0152 / 0.0129</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0349 / 0.0334</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>circle</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/cutout_curve_wave_circle/svg-render.png" alt="cutout_curve_wave_circle rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>curved_cutout_contract</span><span>cutout</span><span>export_comparison</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_dot" data-kind="circle" data-contracts="" data-ok="true" data-search="tiny_dot tiny_dot base circle  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_dot</p>
+            <h2>tiny dot</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_dot/input.png" width="64" height="64" alt="tiny_dot bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_dot/output.svg" width="64" height="64" alt="tiny_dot exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0083 / 0.0127</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_dot/svg-render.png" alt="tiny_dot rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_dot" data-kind="circle" data-contracts="" data-ok="true" data-search="tiny_dot_five tiny_dot five circle  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_dot</p>
+            <h2>tiny dot five</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_dot_five/input.png" width="64" height="64" alt="tiny_dot_five bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_dot_five/output.svg" width="64" height="64" alt="tiny_dot_five exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0097 / 0.0159</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0108 / 0.0153</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8571</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>five</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_dot_five/svg-render.png" alt="tiny_dot_five rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_dot" data-kind="circle" data-contracts="" data-ok="true" data-search="tiny_dot_six tiny_dot six circle  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_dot</p>
+            <h2>tiny dot six</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_dot_six/input.png" width="64" height="64" alt="tiny_dot_six bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_dot_six/output.svg" width="64" height="64" alt="tiny_dot_six exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0113 / 0.0190</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>six</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_dot_six/svg-render.png" alt="tiny_dot_six rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_ring" data-kind="stroke_circle" data-contracts="" data-ok="true" data-search="tiny_ring tiny_ring base stroke_circle  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_ring</p>
+            <h2>tiny ring</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_ring/input.png" width="64" height="64" alt="tiny_ring bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_ring/output.svg" width="64" height="64" alt="tiny_ring exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0250 / 0.0381</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0260 / 0.0361</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9733</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_ring/svg-render.png" alt="tiny_ring rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_ring" data-kind="stroke_circle" data-contracts="" data-ok="true" data-search="tiny_ring_ten tiny_ring ten stroke_circle  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_ring</p>
+            <h2>tiny ring ten</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_ring_ten/input.png" width="64" height="64" alt="tiny_ring_ten bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_ring_ten/output.svg" width="64" height="64" alt="tiny_ring_ten exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0417 / 0.0508</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0380 / 0.0474</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9975</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>ten</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_ring_ten/svg-render.png" alt="tiny_ring_ten rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_ring" data-kind="stroke_circle" data-contracts="" data-ok="true" data-search="tiny_ring_twelve tiny_ring twelve stroke_circle  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_ring</p>
+            <h2>tiny ring twelve</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_ring_twelve/input.png" width="64" height="64" alt="tiny_ring_twelve bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_ring_twelve/output.svg" width="64" height="64" alt="tiny_ring_twelve exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>stroke_circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0528 / 0.0571</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0449 / 0.0611</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9843</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>twelve</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_ring_twelve/svg-render.png" alt="tiny_ring_twelve rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_rect" data-kind="rect" data-contracts="" data-ok="true" data-search="tiny_rect tiny_rect base rect  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_rect</p>
+            <h2>tiny rect</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_rect/input.png" width="64" height="64" alt="tiny_rect bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_rect/output.svg" width="64" height="64" alt="tiny_rect exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>rect</code><span>1 anchor · 4 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_rect/svg-render.png" alt="tiny_rect rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_rect" data-kind="rect" data-contracts="" data-ok="true" data-search="tiny_rect_wide tiny_rect wide rect  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_rect</p>
+            <h2>tiny rect wide</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_rect_wide/input.png" width="64" height="64" alt="tiny_rect_wide bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_rect_wide/output.svg" width="64" height="64" alt="tiny_rect_wide exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>rect</code><span>1 anchor · 4 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>wide</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_rect_wide/svg-render.png" alt="tiny_rect_wide rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="tiny_rect" data-kind="rect" data-contracts="" data-ok="true" data-search="tiny_rect_five tiny_rect five rect  ">
+        <header>
+          <div>
+            <p class="case-family">tiny_rect</p>
+            <h2>tiny rect five</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_rect_five/input.png" width="64" height="64" alt="tiny_rect_five bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/tiny_rect_five/output.svg" width="64" height="64" alt="tiny_rect_five exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>rect</code><span>1 anchor · 4 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>five</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/tiny_rect_five/svg-render.png" alt="tiny_rect_five rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="rotated_ellipse" data-kind="ellipse" data-contracts="ellipse_contract" data-ok="true" data-search="rotated_ellipse rotated_ellipse base ellipse ellipse_contract ">
+        <header>
+          <div>
+            <p class="case-family">rotated_ellipse</p>
+            <h2>rotated ellipse</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/rotated_ellipse/input.png" width="64" height="64" alt="rotated_ellipse bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/rotated_ellipse/output.svg" width="64" height="64" alt="rotated_ellipse exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>ellipse</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0187 / 0.0192</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0113 / 0.0130</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8950</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>base</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/rotated_ellipse/svg-render.png" alt="rotated_ellipse rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>ellipse_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="rotated_ellipse" data-kind="ellipse" data-contracts="ellipse_contract" data-ok="true" data-search="rotated_ellipse_steep rotated_ellipse steep ellipse ellipse_contract ">
+        <header>
+          <div>
+            <p class="case-family">rotated_ellipse</p>
+            <h2>rotated ellipse steep</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/rotated_ellipse_steep/input.png" width="64" height="64" alt="rotated_ellipse_steep bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/rotated_ellipse_steep/output.svg" width="64" height="64" alt="rotated_ellipse_steep exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>ellipse</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0182 / 0.0192</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0120 / 0.0133</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8862</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>steep</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/rotated_ellipse_steep/svg-render.png" alt="rotated_ellipse_steep rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>ellipse_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="rotated_ellipse" data-kind="ellipse" data-contracts="ellipse_contract" data-ok="true" data-search="rotated_ellipse_back rotated_ellipse back ellipse ellipse_contract ">
+        <header>
+          <div>
+            <p class="case-family">rotated_ellipse</p>
+            <h2>rotated ellipse back</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/rotated_ellipse_back/input.png" width="64" height="64" alt="rotated_ellipse_back bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/rotated_ellipse_back/output.svg" width="64" height="64" alt="rotated_ellipse_back exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>ellipse</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0166 / 0.0186</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0129 / 0.0170</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.9023</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>back</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/rotated_ellipse_back/svg-render.png" alt="rotated_ellipse_back rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>ellipse_contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="dominant_palette" data-kind="circle" data-contracts="" data-ok="true" data-search="dominant_palette_pair dominant_palette pair circle  ">
+        <header>
+          <div>
+            <p class="case-family">dominant_palette</p>
+            <h2>dominant palette pair</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/dominant_palette_pair/input.png" width="64" height="64" alt="dominant_palette_pair bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/dominant_palette_pair/output.svg" width="64" height="64" alt="dominant_palette_pair exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>2 anchors · 5 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0096 / 0.0121</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>pair</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/dominant_palette_pair/svg-render.png" alt="dominant_palette_pair rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="dominant_palette" data-kind="circle" data-contracts="" data-ok="true" data-search="dominant_palette_trio dominant_palette trio circle  ">
+        <header>
+          <div>
+            <p class="case-family">dominant_palette</p>
+            <h2>dominant palette trio</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/dominant_palette_trio/input.png" width="64" height="64" alt="dominant_palette_trio bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/dominant_palette_trio/output.svg" width="64" height="64" alt="dominant_palette_trio exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>3 anchors · 7 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0126 / 0.0149</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>trio</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/dominant_palette_trio/svg-render.png" alt="dominant_palette_trio rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="dominant_palette" data-kind="circle" data-contracts="" data-ok="true" data-search="dominant_palette_close_blues dominant_palette close_blues circle  ">
+        <header>
+          <div>
+            <p class="case-family">dominant_palette</p>
+            <h2>dominant palette close blues</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/dominant_palette_close_blues/input.png" width="64" height="64" alt="dominant_palette_close_blues bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/dominant_palette_close_blues/output.svg" width="64" height="64" alt="dominant_palette_close_blues exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>2 anchors · 5 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0000 / 0.0000</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0096 / 0.0121</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>close_blues</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/dominant_palette_close_blues/svg-render.png" alt="dominant_palette_close_blues rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="palette_seam" data-kind="rect" data-contracts="" data-ok="true" data-search="palette_seam_between palette_seam between rect  ">
+        <header>
+          <div>
+            <p class="case-family">palette_seam</p>
+            <h2>palette seam between</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/palette_seam_between/input.png" width="64" height="64" alt="palette_seam_between bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/palette_seam_between/output.svg" width="64" height="64" alt="palette_seam_between exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>rect</code><span>2 anchors · 8 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0044 / 0.0018</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0044 / 0.0018</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>0.8800</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>between</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/palette_seam_between/svg-render.png" alt="palette_seam_between rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="palette_seam" data-kind="circle" data-contracts="" data-ok="true" data-search="palette_seam_halo palette_seam halo circle  ">
+        <header>
+          <div>
+            <p class="case-family">palette_seam</p>
+            <h2>palette seam halo</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/palette_seam_halo/input.png" width="64" height="64" alt="palette_seam_halo bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/palette_seam_halo/output.svg" width="64" height="64" alt="palette_seam_halo exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>1 anchor · 1 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0213 / 0.0105</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0305 / 0.0177</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>halo</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/palette_seam_halo/svg-render.png" alt="palette_seam_halo rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
+          </div>
+        </details>
+      </article>
+      <article class="case-card" data-family="palette_seam" data-kind="circle" data-contracts="" data-ok="true" data-search="palette_seam_pair_halo palette_seam pair_halo circle  ">
+        <header>
+          <div>
+            <p class="case-family">palette_seam</p>
+            <h2>palette seam pair halo</h2>
+          </div>
+          <span class="status pass">PASS</span>
+        </header>
+        <div class="media-pair">
+          <figure>
+                <figcaption>Bitmap</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/palette_seam_pair_halo/input.png" width="64" height="64" alt="palette_seam_pair_halo bitmap" loading="lazy" decoding="async"></span>
+              </figure>
+          <figure>
+                <figcaption>SVG</figcaption>
+                <span class="demo-frame"><img src="../assets/primitive-quality/cases/palette_seam_pair_halo/output.svg" width="64" height="64" alt="palette_seam_pair_halo exported SVG" loading="lazy" decoding="async"></span>
+              </figure>
+        </div>
+        <p class="case-facts"><code>circle</code><span>2 anchors · 2 nodes</span></p>
+        <details class="case-details">
+          <summary>QA details</summary>
+          <div class="details-body">
+            <table class="metric-table">
+              <tr><th scope="row" title="Mean per-pixel color difference, manifest preview vs source">Preview L1 / edge</th><td>0.0183 / 0.0132</td></tr>
+              <tr><th scope="row" title="Same comparison against the rasterized exported SVG">SVG L1 / edge</th><td>0.0311 / 0.0228</td></tr>
+              <tr><th scope="row" title="Bounding-box overlap, detected vs expected geometry">BBox IoU</th><td>1.0000</td></tr>
+              <tr><th scope="row" title="Fixture variant within the family">Variant</th><td>pair_halo</td></tr>
+            </table>
+            <figure class="raster-proof">
+              <figcaption title="The exact bitmap the SVG metrics are computed from">Rasterized SVG</figcaption>
+              <div class="demo-frame">
+                <img src="../assets/primitive-quality/cases/palette_seam_pair_halo/svg-render.png" alt="palette_seam_pair_halo rasterized SVG" loading="lazy" decoding="async">
+              </div>
+            </figure>
+            <div class="badges"><span>semantic contract</span></div>
           </div>
         </details>
       </article>

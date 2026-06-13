@@ -1,7 +1,7 @@
 # Morphea Primitive Quality Check
 
-- Cases: 291
-- Passed: 291
+- Cases: 356
+- Passed: 356
 - Failed: 0
 - OK: `true`
 
@@ -23,7 +23,7 @@
 | `arc_small_radius` | 3 | 3 | 0 |
 | `arc_steep` | 3 | 3 | 0 |
 | `arc_thick` | 3 | 3 | 0 |
-| `arc_up` | 3 | 3 | 0 |
+| `arc_up` | 10 | 10 | 0 |
 | `composition_arc_circle` | 3 | 3 | 0 |
 | `composition_arc_rect` | 3 | 3 | 0 |
 | `composition_circle_plus_stroke` | 3 | 3 | 0 |
@@ -38,21 +38,30 @@
 | `composition_ring_plus_dot` | 3 | 3 | 0 |
 | `composition_same_color_separated` | 3 | 3 | 0 |
 | `composition_square_plus_circle` | 3 | 3 | 0 |
+| `concave_c` | 3 | 3 | 0 |
+| `concave_embrace` | 3 | 3 | 0 |
+| `concave_u` | 3 | 3 | 0 |
+| `corner_arrow` | 3 | 3 | 0 |
+| `corner_notch` | 3 | 3 | 0 |
+| `corner_star` | 3 | 3 | 0 |
 | `curve_asymmetric` | 3 | 3 | 0 |
 | `curve_diagonal` | 3 | 3 | 0 |
 | `curve_quadratic` | 3 | 3 | 0 |
 | `curve_round_caps` | 3 | 3 | 0 |
-| `curve_s` | 3 | 3 | 0 |
+| `curve_s` | 10 | 10 | 0 |
 | `curve_square_caps` | 3 | 3 | 0 |
 | `curve_wave` | 3 | 3 | 0 |
 | `cutout_curve_circle` | 3 | 3 | 0 |
 | `cutout_curve_crossing` | 3 | 3 | 0 |
 | `cutout_curve_rect` | 3 | 3 | 0 |
 | `cutout_curve_ring` | 3 | 3 | 0 |
+| `cutout_curve_s` | 3 | 3 | 0 |
+| `cutout_curve_wave` | 3 | 3 | 0 |
 | `cutout_diagonal_gap` | 3 | 3 | 0 |
 | `cutout_horizontal_gap` | 3 | 3 | 0 |
 | `cutout_near_background` | 3 | 3 | 0 |
 | `diagonal_stroke` | 10 | 10 | 0 |
+| `dominant_palette` | 3 | 3 | 0 |
 | `drift_curve` | 3 | 3 | 0 |
 | `ellipse_horizontal` | 3 | 3 | 0 |
 | `ellipse_large` | 3 | 3 | 0 |
@@ -70,14 +79,22 @@
 | `organic_blob` | 3 | 3 | 0 |
 | `organic_compound` | 3 | 3 | 0 |
 | `organic_crescent` | 3 | 3 | 0 |
+| `organic_donut` | 3 | 3 | 0 |
+| `organic_double_hole` | 3 | 3 | 0 |
+| `organic_frame` | 3 | 3 | 0 |
 | `organic_leaf` | 3 | 3 | 0 |
 | `outlined_ring` | 10 | 10 | 0 |
 | `overlapping_rectangles_ordered` | 3 | 3 | 0 |
 | `palette_drift_primitive` | 3 | 3 | 0 |
+| `palette_seam` | 3 | 3 | 0 |
+| `rotated_ellipse` | 3 | 3 | 0 |
 | `rounded_rectangle` | 10 | 10 | 0 |
 | `simple_quad` | 10 | 10 | 0 |
 | `stroke_crossing_rectangle` | 3 | 3 | 0 |
 | `stroked_ellipse` | 3 | 3 | 0 |
+| `tiny_dot` | 3 | 3 | 0 |
+| `tiny_rect` | 3 | 3 | 0 |
+| `tiny_ring` | 3 | 3 | 0 |
 | `touching_circle_stroke` | 3 | 3 | 0 |
 | `transparent_arc` | 3 | 3 | 0 |
 | `transparent_circle` | 3 | 3 | 0 |
@@ -179,6 +196,13 @@
 | `arc_up` | `true` | `arc` | 0.008789 | 0.012475 | 0.011243 | 0.013892 | 0.834573 | n/a |
 | `arc_up_small` | `true` | `arc` | 0.008398 | 0.010995 | 0.010353 | 0.012904 | 0.817409 | n/a |
 | `arc_up_large` | `true` | `arc` | 0.008984 | 0.012898 | 0.012188 | 0.015151 | 0.879785 | n/a |
+| `arc_up_thin` | `true` | `arc` | 0.011914 | 0.013744 | 0.01091 | 0.013145 | 0.843576 | n/a |
+| `arc_up_heavy` | `true` | `arc` | 0.011719 | 0.015224 | 0.012863 | 0.014704 | 0.875345 | n/a |
+| `arc_up_wide_span` | `true` | `arc` | 0.010547 | 0.014378 | 0.012997 | 0.015807 | 0.850869 | n/a |
+| `arc_up_narrow_span` | `true` | `arc` | 0.008789 | 0.011206 | 0.009641 | 0.011317 | 0.835083 | n/a |
+| `arc_up_offset_left` | `true` | `arc` | 0.008594 | 0.012264 | 0.01031 | 0.01298 | 0.841451 | n/a |
+| `arc_up_offset_right` | `true` | `arc` | 0.008984 | 0.012898 | 0.010267 | 0.012887 | 0.869658 | n/a |
+| `arc_up_high` | `true` | `arc` | 0.008594 | 0.011418 | 0.009718 | 0.011857 | 0.796371 | n/a |
 | `arc_down` | `true` | `arc` | 0.011523 | 0.014801 | 0.01182 | 0.014251 | 0.812863 | n/a |
 | `arc_down_small` | `true` | `arc` | 0.009375 | 0.011418 | 0.010215 | 0.012132 | 0.787507 | n/a |
 | `arc_down_large` | `true` | `arc` | 0.013086 | 0.016704 | 0.013276 | 0.015895 | 0.811033 | n/a |
@@ -206,6 +230,13 @@
 | `curve_s` | `true` | `stroke_path` | 0.017578 | 0.023259 | 0.018812 | 0.022186 | 0.891118 | n/a |
 | `curve_s_mirrored` | `true` | `stroke_path` | 0.013867 | 0.015647 | 0.014788 | 0.015519 | 0.891348 | n/a |
 | `curve_s_tight` | `true` | `stroke_path` | 0.016406 | 0.02347 | 0.019132 | 0.023542 | 0.890172 | n/a |
+| `curve_s_wide` | `true` | `stroke_path` | 0.016797 | 0.022201 | 0.018784 | 0.023011 | 0.886167 | n/a |
+| `curve_s_thin` | `true` | `stroke_path` | 0.010547 | 0.01755 | 0.013492 | 0.018703 | 0.927282 | n/a |
+| `curve_s_heavy` | `true` | `stroke_path` | 0.020508 | 0.025373 | 0.020393 | 0.02336 | 0.851857 | n/a |
+| `curve_s_steep` | `true` | `stroke_path` | 0.022852 | 0.028968 | 0.020596 | 0.024173 | 0.903044 | n/a |
+| `curve_s_low` | `true` | `stroke_path` | 0.014453 | 0.02051 | 0.016604 | 0.020491 | 0.917723 | n/a |
+| `curve_s_compact` | `true` | `stroke_path` | 0.013672 | 0.018818 | 0.013772 | 0.017067 | 0.860175 | n/a |
+| `curve_s_offset` | `true` | `stroke_path` | 0.017383 | 0.024316 | 0.018261 | 0.022566 | 0.885728 | n/a |
 | `curve_wave` | `true` | `stroke_path` | 0.014258 | 0.017338 | 0.014188 | 0.015868 | 0.820741 | n/a |
 | `curve_wave_inverted` | `true` | `stroke_path` | 0.010352 | 0.013955 | 0.011507 | 0.013962 | 0.839172 | n/a |
 | `curve_wave_offset` | `true` | `stroke_path` | 0.012695 | 0.014801 | 0.01398 | 0.015388 | 0.878671 | n/a |
@@ -317,21 +348,48 @@
 | `cutout_diagonal_gap_down` | `true` | `rect` | 0.003125 | 0.003595 | 0.00231 | 0.003418 | 1.0 | n/a |
 | `cutout_diagonal_gap_up` | `true` | `rect` | 0.003516 | 0.004017 | 0.004702 | 0.006904 | 1.0 | n/a |
 | `cutout_diagonal_gap_short` | `true` | `rect` | 0.002344 | 0.002749 | 0.001821 | 0.002728 | 1.0 | n/a |
-| `organic_blob` | `true` | `cubic_path` | 0.011133 | 0.017127 | 0.014679 | 0.017545 | 0.941934 | n/a |
-| `organic_blob_soft` | `true` | `cubic_path` | 0.011719 | 0.018184 | 0.01493 | 0.017986 | 0.95669 | n/a |
-| `organic_blob_lumpy` | `true` | `cubic_path` | 0.009375 | 0.013744 | 0.011925 | 0.014525 | 0.950509 | n/a |
+| `organic_blob` | `true` | `cubic_path` | 0.011719 | 0.01755 | 0.015254 | 0.01794 | 0.932148 | n/a |
+| `organic_blob_soft` | `true` | `cubic_path` | 0.011719 | 0.018184 | 0.015735 | 0.019094 | 0.95691 | n/a |
+| `organic_blob_lumpy` | `true` | `cubic_path` | 0.008789 | 0.012687 | 0.012952 | 0.015656 | 0.955133 | n/a |
 | `organic_leaf` | `true` | `cubic_path` | 0.009375 | 0.012475 | 0.014616 | 0.016658 | 0.954355 | n/a |
 | `organic_leaf_narrow` | `true` | `cubic_path` | 0.008008 | 0.011629 | 0.01391 | 0.016012 | 0.957463 | n/a |
 | `organic_leaf_tilted` | `true` | `cubic_path` | 0.00957 | 0.013744 | 0.015076 | 0.018076 | 0.958699 | n/a |
-| `organic_asymmetric` | `true` | `cubic_path` | 0.009961 | 0.015435 | 0.01431 | 0.017163 | 0.945461 | n/a |
-| `organic_asymmetric_heavy` | `true` | `cubic_path` | 0.010156 | 0.01459 | 0.012607 | 0.015201 | 0.954129 | n/a |
-| `organic_asymmetric_soft` | `true` | `cubic_path` | 0.011914 | 0.018184 | 0.014375 | 0.017374 | 0.960306 | n/a |
-| `organic_crescent` | `true` | `cubic_path` | 0.013281 | 0.018607 | 0.0149 | 0.0179 | 0.772284 | n/a |
-| `organic_crescent_low` | `true` | `cubic_path` | 0.013281 | 0.018607 | 0.0149 | 0.0179 | 0.772284 | n/a |
-| `organic_crescent_high` | `true` | `cubic_path` | 0.011523 | 0.018184 | 0.014426 | 0.018879 | 0.772284 | n/a |
-| `organic_compound` | `true` | `cubic_path` | 0.011523 | 0.017973 | 0.015428 | 0.019308 | 0.947392 | n/a |
-| `organic_compound_tall` | `true` | `cubic_path` | 0.010937 | 0.015435 | 0.013933 | 0.01622 | 0.925823 | n/a |
-| `organic_compound_wide` | `true` | `cubic_path` | 0.010156 | 0.014167 | 0.014867 | 0.017047 | 0.953737 | n/a |
+| `organic_asymmetric` | `true` | `cubic_path` | 0.011719 | 0.016915 | 0.014902 | 0.017404 | 0.941248 | n/a |
+| `organic_asymmetric_heavy` | `true` | `cubic_path` | 0.011328 | 0.015647 | 0.012986 | 0.014915 | 0.959911 | n/a |
+| `organic_asymmetric_soft` | `true` | `cubic_path` | 0.009961 | 0.015647 | 0.014108 | 0.017255 | 0.959464 | n/a |
+| `organic_crescent` | `true` | `cubic_path` | 0.011523 | 0.016493 | 0.014623 | 0.017668 | 0.80274 | n/a |
+| `organic_crescent_low` | `true` | `cubic_path` | 0.011523 | 0.016493 | 0.014623 | 0.017668 | 0.80274 | n/a |
+| `organic_crescent_high` | `true` | `cubic_path` | 0.007227 | 0.012898 | 0.012306 | 0.016741 | 0.781693 | n/a |
+| `organic_compound` | `true` | `cubic_path` | 0.011719 | 0.017338 | 0.014474 | 0.01762 | 0.94594 | n/a |
+| `organic_compound_tall` | `true` | `cubic_path` | 0.010156 | 0.014378 | 0.014219 | 0.016434 | 0.924103 | n/a |
+| `organic_compound_wide` | `true` | `cubic_path` | 0.010742 | 0.014801 | 0.01575 | 0.017838 | 0.952595 | n/a |
+| `organic_donut` | `true` | `cubic_path` | 0.017578 | 0.026007 | 0.022661 | 0.027224 | 0.945358 | n/a |
+| `organic_donut_offset` | `true` | `cubic_path` | 0.016211 | 0.027065 | 0.021276 | 0.026973 | 0.95755 | n/a |
+| `organic_donut_small_hole` | `true` | `cubic_path` | 0.018359 | 0.026007 | 0.021056 | 0.025214 | 0.959647 | n/a |
+| `organic_frame` | `true` | `cubic_path` | 0.020117 | 0.032139 | 0.026473 | 0.033629 | 0.962995 | n/a |
+| `organic_frame_wavy` | `true` | `cubic_path` | 0.024023 | 0.035522 | 0.028996 | 0.035865 | 0.950013 | n/a |
+| `organic_frame_thin` | `true` | `cubic_path` | 0.021094 | 0.029391 | 0.026559 | 0.03175 | 0.973368 | n/a |
+| `organic_double_hole` | `true` | `cubic_path` | 0.019727 | 0.029391 | 0.027118 | 0.032513 | 0.964027 | n/a |
+| `organic_double_hole_vertical` | `true` | `cubic_path` | 0.021094 | 0.031082 | 0.02813 | 0.033852 | 0.960914 | n/a |
+| `organic_double_hole_uneven` | `true` | `cubic_path` | 0.019727 | 0.029602 | 0.027397 | 0.03248 | 0.957204 | n/a |
+| `concave_c` | `true` | `cubic_path` | 0.013477 | 0.020087 | 0.016333 | 0.019917 | 0.912879 | n/a |
+| `concave_c_deep` | `true` | `cubic_path` | 0.016211 | 0.023259 | 0.020566 | 0.024485 | 0.928786 | n/a |
+| `concave_c_wide` | `true` | `cubic_path` | 0.011523 | 0.017973 | 0.015173 | 0.019951 | 0.78403 | n/a |
+| `concave_u` | `true` | `cubic_path` | 0.021289 | 0.029391 | 0.023261 | 0.027439 | 0.955897 | n/a |
+| `concave_u_narrow` | `true` | `cubic_path` | 0.020313 | 0.027699 | 0.024942 | 0.028714 | 0.961664 | n/a |
+| `concave_u_tilted` | `true` | `cubic_path` | 0.01875 | 0.027065 | 0.019823 | 0.02529 | 0.940461 | n/a |
+| `concave_embrace` | `true` | `cubic_path` | 0.019336 | 0.029179 | 0.025707 | 0.031376 | 0.961431 | n/a |
+| `concave_embrace_tight` | `true` | `cubic_path` | 0.021875 | 0.031928 | 0.026603 | 0.031824 | 0.951758 | n/a |
+| `concave_embrace_thick` | `true` | `cubic_path` | 0.01875 | 0.027699 | 0.025774 | 0.030448 | 0.958633 | n/a |
+| `corner_star` | `true` | `cubic_path` | 0.010937 | 0.018184 | 0.017385 | 0.022359 | 0.979177 | n/a |
+| `corner_star_six` | `true` | `cubic_path` | 0.015625 | 0.02347 | 0.018651 | 0.023311 | 0.957702 | n/a |
+| `corner_star_sharp` | `true` | `cubic_path` | 0.01543 | 0.02199 | 0.019891 | 0.022878 | 0.981481 | n/a |
+| `corner_arrow` | `true` | `cubic_path` | 0.010742 | 0.014801 | 0.013352 | 0.016588 | 1.0 | n/a |
+| `corner_arrow_up` | `true` | `cubic_path` | 0.0125 | 0.016915 | 0.01674 | 0.019745 | 1.0 | n/a |
+| `corner_arrow_chevron` | `true` | `cubic_path` | 0.009961 | 0.019876 | 0.014267 | 0.021226 | 1.0 | n/a |
+| `corner_notch` | `true` | `cubic_path` | 0.007422 | 0.008881 | 0.01453 | 0.01599 | 1.0 | n/a |
+| `corner_notch_deep` | `true` | `cubic_path` | 0.00918 | 0.011206 | 0.018659 | 0.019814 | 1.0 | n/a |
+| `corner_notch_double` | `true` | `cubic_path` | 0.007422 | 0.009303 | 0.016545 | 0.018466 | 0.997184 | n/a |
 | `composition_arc_circle` | `true` | `arc` | 0.008594 | 0.012052 | 0.014842 | 0.018644 | 0.841652 | n/a |
 | `composition_arc_circle_left` | `true` | `arc` | 0.007617 | 0.009938 | 0.01437 | 0.017295 | 0.828725 | n/a |
 | `composition_arc_circle_small` | `true` | `arc` | 0.007617 | 0.009938 | 0.012863 | 0.015582 | 0.796157 | n/a |
@@ -368,6 +426,30 @@
 | `cutout_near_background` | `true` | `quad` | 0.002641 | 0.003703 | 0.017862 | 0.020027 | 1.0 | n/a |
 | `cutout_near_background_light` | `true` | `quad` | 0.002223 | 0.003165 | 0.016899 | 0.018668 | 1.0 | n/a |
 | `cutout_near_background_offwhite` | `true` | `quad` | 0.002979 | 0.004324 | 0.018437 | 0.020331 | 1.0 | n/a |
+| `cutout_curve_s` | `true` | `quad` | 0.003906 | 0.004652 | 0.020219 | 0.022414 | 1.0 | n/a |
+| `cutout_curve_s_steep` | `true` | `quad` | 0.004102 | 0.005075 | 0.021802 | 0.023858 | 1.0 | n/a |
+| `cutout_curve_s_flat` | `true` | `quad` | 0.00293 | 0.00296 | 0.020056 | 0.021738 | 1.0 | n/a |
+| `cutout_curve_wave` | `true` | `quad` | 0.020508 | 0.018184 | 0.035952 | 0.031603 | 1.0 | n/a |
+| `cutout_curve_wave_low` | `true` | `quad` | 0.016992 | 0.013744 | 0.031911 | 0.030268 | 1.0 | n/a |
+| `cutout_curve_wave_circle` | `true` | `circle` | 0.015234 | 0.012898 | 0.034924 | 0.033443 | 1.0 | n/a |
+| `tiny_dot` | `true` | `circle` | 0.0 | 0.0 | 0.008338 | 0.012691 | 1.0 | n/a |
+| `tiny_dot_five` | `true` | `circle` | 0.009722 | 0.015864 | 0.010771 | 0.015271 | 0.857143 | n/a |
+| `tiny_dot_six` | `true` | `circle` | 0.0 | 0.0 | 0.011284 | 0.019037 | 1.0 | n/a |
+| `tiny_ring` | `true` | `stroke_circle` | 0.025 | 0.038074 | 0.02603 | 0.036073 | 0.973306 | n/a |
+| `tiny_ring_ten` | `true` | `stroke_circle` | 0.041667 | 0.050765 | 0.038008 | 0.047385 | 0.997494 | n/a |
+| `tiny_ring_twelve` | `true` | `stroke_circle` | 0.052778 | 0.057111 | 0.044944 | 0.061085 | 0.984342 | n/a |
+| `tiny_rect` | `true` | `rect` | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | n/a |
+| `tiny_rect_wide` | `true` | `rect` | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | n/a |
+| `tiny_rect_five` | `true` | `rect` | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | n/a |
+| `rotated_ellipse` | `true` | `ellipse` | 0.01875 | 0.019241 | 0.011292 | 0.012962 | 0.894995 | n/a |
+| `rotated_ellipse_steep` | `true` | `ellipse` | 0.018164 | 0.019241 | 0.011973 | 0.013336 | 0.886233 | n/a |
+| `rotated_ellipse_back` | `true` | `ellipse` | 0.016602 | 0.018607 | 0.012889 | 0.016973 | 0.902258 | n/a |
+| `dominant_palette_pair` | `true` | `circle` | 0.0 | 0.0 | 0.009598 | 0.012074 | 1.0 | n/a |
+| `dominant_palette_trio` | `true` | `circle` | 0.0 | 0.0 | 0.012574 | 0.014904 | 1.0 | n/a |
+| `dominant_palette_close_blues` | `true` | `circle` | 0.0 | 0.0 | 0.009598 | 0.012074 | 1.0 | n/a |
+| `palette_seam_between` | `true` | `rect` | 0.004356 | 0.001826 | 0.004356 | 0.001826 | 0.88 | n/a |
+| `palette_seam_halo` | `true` | `circle` | 0.021324 | 0.010529 | 0.030511 | 0.017704 | 1.0 | n/a |
+| `palette_seam_pair_halo` | `true` | `circle` | 0.018321 | 0.01324 | 0.03108 | 0.0228 | 1.0 | n/a |
 | `group_parallel_strokes_horizontal` | `true` | `stroke_polyline` | 0.0 | 0.0 | 0.010303 | 0.011365 | 1.0 | n/a |
 | `group_parallel_strokes_vertical` | `true` | `stroke_polyline` | 0.0 | 0.0 | 0.010302 | 0.011365 | 1.0 | n/a |
 | `group_parallel_strokes_diagonal` | `true` | `stroke_polyline` | 0.005273 | 0.010784 | 0.015033 | 0.030483 | 0.956614 | n/a |

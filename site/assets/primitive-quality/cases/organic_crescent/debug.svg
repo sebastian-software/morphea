@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <g id="anchor-0000" data-kind="cubic_path">
-    <path d="M 17.8 15.2 C 17.848 15.2 16.662 17.792 16.6 18 C 16.012 19.961 15.207 21.932 15 24 C 14.334 30.657 17.373 37.373 22 42 C 26.623 46.623 32.502 49 39 49 C 41.44 49 43.706 48.088 46 47.4 C 46.208 47.338 48.8 46.152 48.8 46.2 C 48.8 47.049 47.631 47.432 47 48 C 33.614 60.048 11.835 52.346 10 34 C 9.389 27.886 11.961 21.488 16 17 C 16.568 16.369 16.951 15.2 17.8 15.2 Z" fill="#003366" />
-    <rect x="9.912" y="15.2" width="38.888" height="38.602" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
-    <text x="9.912" y="13.2" font-size="4" fill="#ff00ff">anchor-0000:cubic_path:0.24</text>
+    <path d="M 19 14 C 12.841 22.799 14.498 32.873 21 41 C 28.978 48.978 38.828 51.086 49 46 C 38.834 56.166 26.691 56.622 16 47 C 6.668 35.335 8.833 24.167 19 14 Z" fill="#003366" />
+    <rect x="10.07" y="14" width="38.93" height="39.92" fill="none" stroke="#ff00ff" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="10.07" y="12" font-size="4" fill="#ff00ff">anchor-0000:cubic_path:0.03</text>
   </g>
 </svg>
