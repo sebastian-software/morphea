@@ -231,6 +231,14 @@ class LucideQualityTests(unittest.TestCase):
             self.assertFalse(case["expectations"][1]["ok"])
             self.assertEqual(case["expectations"][1]["actual_count"], 1)
             self.assertEqual(case["expectations"][1]["cumulative_min_count"], 2)
+            self.assertEqual(case["failed_expectation_count"], 1)
+            self.assertEqual(case["failed_expectation_ids"], ["second-stroke"])
+            self.assertEqual(
+                case["expectations"][1]["failure_reason"],
+                "insufficient_distinct_anchors",
+            )
+            self.assertEqual(case["expectations"][1]["required_count"], 2)
+            self.assertEqual(case["expectations"][1]["missing_count"], 1)
 
     def test_render_lucide_markdown_summarizes_failures(self):
         markdown = render_lucide_markdown(
@@ -270,6 +278,8 @@ class LucideQualityTests(unittest.TestCase):
                                 "actual_value": 1,
                                 "max_value": 0,
                                 "ok": False,
+                                "failure_reason": "metric_above_max",
+                                "excess_value": 1,
                             }
                         ],
                     }
@@ -280,6 +290,10 @@ class LucideQualityTests(unittest.TestCase):
         self.assertIn("# Morphea Lucide Check", markdown)
         self.assertIn("| `plus` | `simple_stroke_glyphs` | `false` |", markdown)
         self.assertIn("`no-fallback-path`", markdown)
+        self.assertIn(
+            "| `no-fallback-path` | `metric:generic_path_count` | 1 | <= 0 | `false` | `metric_above_max`, excess_value=1 |",
+            markdown,
+        )
 
 
 def _write_minus_png(source, output, *, renderer, render_config):

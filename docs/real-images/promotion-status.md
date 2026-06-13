@@ -50,6 +50,12 @@ calibration suite for false-positive promotion risk.
 | red | 1 | `badge-check` still fails because the scalloped badge outline is not represented as a distinct editable path. |
 | yellow | 5 | `move`, `image`, `alarm-clock`, `arrow-left-right`, and `share-2` pass current contracts but remain visibly loose enough to require review before promotion-style claims. |
 
+Lucide case reports now include `failed_expectation_count`,
+`failed_expectation_ids`, and per-expectation `failure_reason` fields with
+shortfall/excess details. For `badge-check`, the failing `check-stroke`
+expectation is diagnosed as `insufficient_distinct_anchors`: one
+`stroke_path` anchor is available where the cumulative contract requires two.
+
 ## Visual Artifact Posture
 
 Current curated runs emit per-case run directories with input copy, SVG output,
@@ -290,7 +296,7 @@ baseline comparison path is covered outside helper-only unit tests.
 ## Next Gate
 
 The next mainline block should reduce reviewed baseline debt without hiding it:
-first make the Lucide `badge-check` failure more diagnosable at case level,
-then resolve or explicitly defer the two generated-illustration table-grid
-real-image families. A future accepted cycle should move at least one known
-debt row into `resolved_regressions` without introducing new regressions.
+resolve or explicitly defer the Lucide `badge-check` case and the two
+generated-illustration table-grid real-image families. A future accepted cycle
+should move at least one known debt row into `resolved_regressions` without
+introducing new regressions.

@@ -235,8 +235,8 @@ def render_lucide_markdown(report: dict[str, Any]) -> str:
         lines.extend(
             [
                 "",
-                "| Expectation | Type | Actual | Required | OK |",
-                "| --- | --- | ---: | ---: | ---: |",
+                "| Expectation | Type | Actual | Required | OK | Failure |",
+                "| --- | --- | ---: | ---: | ---: | --- |",
             ]
         )
         for expectation in expectations:
@@ -334,6 +334,11 @@ def _check_lucide_case(
         }
     )
     expectation_results = _check_expectations(case.get("expectations", []), manifest)
+    failed_expectation_ids = [
+        str(item.get("id", "n/a"))
+        for item in expectation_results
+        if not item.get("ok", False)
+    ]
     result.update(
         {
             "status": "checked",
@@ -348,6 +353,8 @@ def _check_lucide_case(
                 group.get("kind") for group in manifest.get("groups", [])
             ),
             "diagnostic_count": len(manifest["diagnostics"]),
+            "failed_expectation_count": len(failed_expectation_ids),
+            "failed_expectation_ids": failed_expectation_ids,
             "metrics": dict(sorted(metrics.items())),
             "expectations": expectation_results,
         }
@@ -464,6 +471,7 @@ def _check_expectations(
             result["ok"] = bool(result["ok"]) and int(
                 result.get("actual_count", 0)
             ) >= cumulative_minimum
+        _annotate_expectation_failure(result)
         results.append(result)
     return results
 
@@ -521,6 +529,53 @@ def _check_expectation(
         result["max_count"] = int(maximum)
         result["ok"] = ok and actual <= int(maximum)
     return result
+
+
+def _annotate_expectation_failure(result: dict[str, Any]) -> None:
+    if result.get("ok", False):
+        return
+    if "metric" in result:
+        _annotate_metric_expectation_failure(result)
+        return
+    _annotate_shape_expectation_failure(result)
+
+
+def _annotate_metric_expectation_failure(result: dict[str, Any]) -> None:
+    actual = result.get("actual_value")
+    if not isinstance(actual, (int, float, bool)):
+        result["failure_reason"] = "missing_metric"
+        return
+    actual_value = float(actual)
+    if "min_value" in result and actual_value < float(result["min_value"]):
+        result["failure_reason"] = "metric_below_min"
+        result["shortfall_value"] = float(result["min_value"]) - actual_value
+        return
+    if "max_value" in result and actual_value > float(result["max_value"]):
+        result["failure_reason"] = "metric_above_max"
+        result["excess_value"] = actual_value - float(result["max_value"])
+
+
+def _annotate_shape_expectation_failure(result: dict[str, Any]) -> None:
+    actual = int(result.get("actual_count", 0))
+    required = int(
+        result.get(
+            "cumulative_min_count",
+            result.get("min_count", 0),
+        )
+    )
+    if actual < required:
+        result["required_count"] = required
+        result["missing_count"] = required - actual
+        if "group_kind" in result:
+            result["failure_reason"] = "insufficient_groups"
+        elif required > int(result.get("min_count", required)):
+            result["failure_reason"] = "insufficient_distinct_anchors"
+        else:
+            result["failure_reason"] = "insufficient_anchors"
+        return
+    if "max_count" in result and actual > int(result["max_count"]):
+        result["failure_reason"] = "too_many_matches"
+        result["excess_count"] = actual - int(result["max_count"])
 
 
 def _shape_expectation_selector(expectation: dict[str, Any]) -> tuple[str, str]:
@@ -662,7 +717,8 @@ def _expectation_markdown_row(expectation: dict[str, Any]) -> str:
             f"`metric:{expectation.get('metric', 'n/a')}` | "
             f"{_fmt_value(expectation.get('actual_value'))} | "
             f"{', '.join(required_parts) if required_parts else 'n/a'} | "
-            f"`{str(expectation.get('ok', False)).lower()}` |"
+            f"`{str(expectation.get('ok', False)).lower()}` | "
+            f"{_expectation_failure_detail(expectation)} |"
         )
     expectation_type = expectation.get("kind")
     label = "kind"
@@ -682,5 +738,22 @@ def _expectation_markdown_row(expectation: dict[str, Any]) -> str:
         f"`{label}:{expectation_type}` | "
         f"{_fmt_value(expectation.get('actual_count'))} | "
         f"{required} | "
-        f"`{str(expectation.get('ok', False)).lower()}` |"
+        f"`{str(expectation.get('ok', False)).lower()}` | "
+        f"{_expectation_failure_detail(expectation)} |"
     )
+
+
+def _expectation_failure_detail(expectation: dict[str, Any]) -> str:
+    reason = expectation.get("failure_reason")
+    if not isinstance(reason, str) or not reason:
+        return "n/a"
+    details = [f"`{reason}`"]
+    for key in (
+        "missing_count",
+        "excess_count",
+        "shortfall_value",
+        "excess_value",
+    ):
+        if key in expectation:
+            details.append(f"{key}={_fmt_value(expectation.get(key))}")
+    return ", ".join(details)
