@@ -9,6 +9,30 @@
         "Real generated illustration with transparent background, anti-aliased palette drift, strong primitive anchors, cut-out-looking white strokes, and a perspective table grid.",
         "This case should remain bounded: always run with max_size, max_colors, max_component_area, and timeout_seconds until M1/M2 performance work is stronger."
       ],
+      "promotion": {
+        "stress_family": "generated_illustration_table_grid",
+        "source_provenance": "local generated image from the user's Desktop; source image is not checked in",
+        "licensing_status": "local_research_only",
+        "expected_promotion_families": [
+          "circle_anchors",
+          "perspective_table_grid",
+          "smooth_strokes",
+          "cutout_like_overlay_strokes",
+          "large_organic_fallback"
+        ],
+        "current_quality_label": "red",
+        "current_status": "checked_failed_expectations",
+        "current_issues": [
+          "missing_semantic_detector",
+          "shape_class_mismatch",
+          "weak_visual_fidelity"
+        ],
+        "visual_audit_status": "run_artifacts_only",
+        "review_notes": [
+          "2026-06-13 curated-check failed gold-circle-anchors and table-perspective-quads.",
+          "Perspective grid group exists, but only 2 of expected 8 quad anchors are recovered."
+        ]
+      },
       "recommended_config": {
         "min_area": 12,
         "color_tolerance": 18,
@@ -63,6 +87,28 @@
         "Original generated illustration before the transparent-background real-image tweak. This keeps the suite honest against anti-aliased RGB drift on an opaque white background.",
         "Use bounded preprocessing so this case remains a fast semantic-regression check for circles, strokes, and the perspective table grid."
       ],
+      "promotion": {
+        "stress_family": "generated_illustration_opaque_table_grid",
+        "source_provenance": "local generated image from the user's Downloads folder; source image is not checked in",
+        "licensing_status": "local_research_only",
+        "expected_promotion_families": [
+          "circle_anchors",
+          "perspective_table_grid",
+          "smooth_strokes",
+          "large_organic_fallback"
+        ],
+        "current_quality_label": "red",
+        "current_status": "missing_source",
+        "current_issues": [
+          "runtime_deferral",
+          "missing_local_source"
+        ],
+        "visual_audit_status": "unavailable_missing_source",
+        "review_notes": [
+          "2026-06-13 curated-check reported missing_source for the configured local path.",
+          "Keep this case visible until the source path is restored or a check-in-safe fixture is created."
+        ]
+      },
       "recommended_config": {
         "min_area": 12,
         "color_tolerance": 18,
@@ -117,6 +163,29 @@
         "Real UI screenshot with black text, anti-aliased glyphs, and a small unselected radio button.",
         "This case is a different family from the Greek-figures/table images: it stresses text fragmentation, tiny UI strokes, and simple circular controls in a mostly white interface."
       ],
+      "promotion": {
+        "stress_family": "ui_screenshot_text_and_controls",
+        "source_provenance": "local UI screenshot from the user's Desktop; source image is not checked in",
+        "licensing_status": "local_research_only",
+        "expected_promotion_families": [
+          "ui_control_stroke_circle",
+          "text_like_fragments",
+          "thin_ui_strokes",
+          "mostly_white_background"
+        ],
+        "current_quality_label": "yellow",
+        "current_status": "checked_expectations_pass_but_not_promotable",
+        "current_issues": [
+          "fragmentation",
+          "missing_promotion_state",
+          "missing_visual_contact_sheet"
+        ],
+        "visual_audit_status": "run_artifacts_only",
+        "review_notes": [
+          "2026-06-13 curated-check passed current semantic expectations.",
+          "Still yellow under v10+ rules because promotion state and contact-sheet review are not implemented."
+        ]
+      },
       "recommended_config": {
         "min_area": 8,
         "color_tolerance": 10,

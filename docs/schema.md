@@ -360,6 +360,28 @@ Curated suite expectations support three mutually exclusive check types:
 `metrics` values such as `editability_score`, `simple_shape_ratio`, and
 `fragmentation_penalty`.
 
+Curated suite cases may include optional `promotion` metadata for the
+real-image promotion roadmap. When present, `morphea curated-check` validates
+the metadata and copies it into JSON reports, Markdown reports, and deterministic
+snapshots.
+
+Promotion metadata fields:
+
+- `stress_family`: short family id such as `ui_screenshot_text_and_controls`
+- `source_provenance`: human-readable source/provenance note
+- `licensing_status`: source licensing or local-use status
+- `expected_promotion_families`: non-empty string array of intended semantic
+  promotion families
+- `current_quality_label`: one of `green`, `yellow`, or `red`
+- `current_status`: current pipeline status such as
+  `checked_failed_expectations`, `checked_expectations_pass_but_not_promotable`,
+  or `missing_source`
+- `current_issues`: string array of issue tags, for example
+  `fragmentation`, `missing_promotion_state`, or `missing_local_source`
+- `visual_audit_status`: current visual artifact posture, for example
+  `run_artifacts_only` or `unavailable_missing_source`
+- `review_notes`: optional string array for dated human review notes
+
 Top-level fields:
 
 - `schema_version`: currently `1`
@@ -382,6 +404,7 @@ Case snapshot fields:
 - `group_kind_counts`
 - `diagnostic_count`
 - `metrics`: run metrics such as editability and raster-fidelity values
+- `promotion`: optional copied promotion metadata from the source suite case
 
 Snapshots avoid timestamps and run-directory paths so they can be diffed across
 commits and configurations.
