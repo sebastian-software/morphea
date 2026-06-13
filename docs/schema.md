@@ -416,6 +416,18 @@ directory includes the standard vectorize artifacts plus:
 - `diff.png`: red/blue source-vs-SVG visual difference image
 - `contact-sheet.png`: source, manifest preview, SVG render, and diff panels
 
+When a suite case includes `promotion` metadata, checked and missing-source
+case reports also include:
+
+- `promotion_gates`: derived hard-gate results for `source_available`,
+  `semantic_expectations`, `visual_contact_sheet`, and `current_quality_label`
+- `promotion_summary`: compact decision summary with `decision`, failed gate
+  count, and red/yellow gate counts
+
+`promotion_summary.decision` is `promoted` only when all derived gates pass,
+`rejected` when any failed gate has red severity, and `deferred` when only
+yellow gates fail.
+
 ## Vectorize Config v1
 
 Read by `morphea vectorize --config`.

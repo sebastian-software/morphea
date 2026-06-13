@@ -167,9 +167,31 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
         f"- Cases: {_fmt_markdown_value(report.get('case_count'))}",
         f"- OK: `{str(report.get('ok', False)).lower()}`",
         "",
-        "| Case | Status | Quality | OK | Anchors | Diagnostics | Failed expectations |",
-        "| --- | --- | --- | ---: | ---: | ---: | --- |",
+        "## Promotion Gates",
+        "",
+        "| Case | Decision | Quality | Failed gates |",
+        "| --- | --- | --- | --- |",
     ]
+    for case in _promotion_sorted_cases(cases):
+        if not isinstance(case, dict):
+            continue
+        summary = case.get("promotion_summary", {})
+        if not isinstance(summary, dict):
+            summary = {}
+        lines.append(
+            "| "
+            f"`{case.get('id', 'n/a')}` | "
+            f"`{summary.get('decision', 'n/a')}` | "
+            f"{_fmt_promotion_quality(case.get('promotion'))} | "
+            f"{_fmt_failed_gates(case.get('promotion_gates'))} |"
+        )
+    lines.extend(
+        [
+            "",
+            "| Case | Status | Quality | OK | Anchors | Diagnostics | Failed expectations |",
+            "| --- | --- | --- | ---: | ---: | ---: | --- |",
+        ]
+    )
     for case in cases:
         if not isinstance(case, dict):
             continue
@@ -200,6 +222,12 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 f"quality={_fmt_promotion_quality(promotion)}, "
                 f"stress=`{promotion.get('stress_family', 'n/a')}`, "
                 f"issues={_fmt_markdown_list(promotion.get('current_issues'))}"
+            )
+        if isinstance(case.get("promotion_summary"), dict):
+            lines.append(
+                "- Promotion gates: "
+                f"decision=`{case['promotion_summary'].get('decision', 'n/a')}`, "
+                f"failed={_fmt_failed_gates(case.get('promotion_gates'))}"
             )
         if "anchor_kind_counts" in case:
             lines.append(
@@ -290,8 +318,18 @@ def _check_curated_case(
     if not source_exists:
         result["status"] = "missing_source"
         result["ok"] = not run
+        if isinstance(result.get("promotion"), dict):
+            result["promotion_gates"] = _promotion_gate_results(result)
+            result["promotion_summary"] = _promotion_summary(
+                result["promotion_gates"]
+            )
         return result
     if not run:
+        if isinstance(result.get("promotion"), dict):
+            result["promotion_gates"] = _promotion_gate_results(result)
+            result["promotion_summary"] = _promotion_summary(
+                result["promotion_gates"]
+            )
         return result
 
     config = {
@@ -342,6 +380,9 @@ def _check_curated_case(
             "input": str(vectorize_run.input_path),
             **_write_visual_audit_artifacts(vectorize_run.run_dir, vectorize_run),
         }
+    if isinstance(result.get("promotion"), dict):
+        result["promotion_gates"] = _promotion_gate_results(result)
+        result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
     return result
 
 
@@ -429,6 +470,8 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "diagnostic_count",
         "metrics",
         "promotion",
+        "promotion_gates",
+        "promotion_summary",
     ):
         if key in case:
             snapshot[key] = case[key]
@@ -462,6 +505,111 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
+    failed_expectations = [
+        str(expectation.get("id", "n/a"))
+        for expectation in case.get("expectations", [])
+        if isinstance(expectation, dict) and not expectation.get("ok", False)
+    ]
+    artifacts = case.get("artifacts", {})
+    has_contact_sheet = (
+        isinstance(artifacts, dict)
+        and isinstance(artifacts.get("contact_sheet"), str)
+        and bool(artifacts["contact_sheet"])
+    )
+    promotion = case.get("promotion", {})
+    label = (
+        promotion.get("current_quality_label")
+        if isinstance(promotion, dict)
+        else None
+    )
+    source_exists = bool(case.get("source_exists", False))
+    checked = case.get("status") == "checked"
+    if failed_expectations:
+        semantic_reason = "failed expectations: " + ", ".join(failed_expectations)
+    elif checked:
+        semantic_reason = "semantic expectations passed"
+    else:
+        semantic_reason = f"case status is {case.get('status', 'unknown')}"
+    return [
+        _promotion_gate(
+            "source_available",
+            ok=source_exists,
+            severity="red",
+            reason=(
+                "source image is available"
+                if source_exists
+                else "source image is missing"
+            ),
+            evidence=str(case.get("source", "")),
+        ),
+        _promotion_gate(
+            "semantic_expectations",
+            ok=not failed_expectations and checked,
+            severity="red",
+            reason=semantic_reason,
+            evidence=failed_expectations,
+        ),
+        _promotion_gate(
+            "visual_contact_sheet",
+            ok=case.get("status") != "checked" or has_contact_sheet,
+            severity="yellow",
+            reason=(
+                "contact sheet available"
+                if has_contact_sheet
+                else "checked case has no contact sheet artifact"
+            ),
+            evidence=(
+                artifacts.get("contact_sheet") if isinstance(artifacts, dict) else None
+            ),
+        ),
+        _promotion_gate(
+            "current_quality_label",
+            ok=label == "green",
+            severity="red" if label == "red" else "yellow",
+            reason=f"current quality label is {label or 'missing'}",
+            evidence=label,
+        ),
+    ]
+
+
+def _promotion_gate(
+    gate_id: str,
+    *,
+    ok: bool,
+    severity: str,
+    reason: str,
+    evidence: object,
+) -> dict[str, object]:
+    return {
+        "id": gate_id,
+        "ok": bool(ok),
+        "severity": severity,
+        "reason": reason,
+        "evidence": evidence,
+    }
+
+
+def _promotion_summary(gates: list[dict[str, object]]) -> dict[str, object]:
+    failed = [gate for gate in gates if not gate.get("ok", False)]
+    has_red = any(gate.get("severity") == "red" for gate in failed)
+    has_yellow = any(gate.get("severity") == "yellow" for gate in failed)
+    if has_red:
+        decision = "rejected"
+    elif has_yellow:
+        decision = "deferred"
+    else:
+        decision = "promoted"
+    return {
+        "decision": decision,
+        "failed_gate_count": len(failed),
+        "red_gate_count": sum(1 for gate in failed if gate.get("severity") == "red"),
+        "yellow_gate_count": sum(
+            1 for gate in failed if gate.get("severity") == "yellow"
+        ),
+    }
 
 
 def _write_visual_audit_artifacts(
@@ -595,6 +743,24 @@ def _fmt_markdown_counts(value: object) -> str:
     )
 
 
+def _promotion_sorted_cases(cases: object) -> list[dict[str, Any]]:
+    if not isinstance(cases, list):
+        return []
+    sortable = [case for case in cases if isinstance(case, dict)]
+    return sorted(sortable, key=_promotion_case_sort_key)
+
+
+def _promotion_case_sort_key(case: dict[str, Any]) -> tuple[int, str]:
+    summary = case.get("promotion_summary", {})
+    if not isinstance(summary, dict):
+        return (3, str(case.get("id", "")))
+    if int(summary.get("red_gate_count", 0)) > 0:
+        return (0, str(case.get("id", "")))
+    if int(summary.get("yellow_gate_count", 0)) > 0:
+        return (1, str(case.get("id", "")))
+    return (2, str(case.get("id", "")))
+
+
 def _fmt_promotion_quality(value: object) -> str:
     if not isinstance(value, dict):
         return "n/a"
@@ -608,6 +774,19 @@ def _fmt_markdown_list(value: object) -> str:
     if not isinstance(value, list) or not value:
         return "n/a"
     return ", ".join(f"`{item}`" for item in value)
+
+
+def _fmt_failed_gates(value: object) -> str:
+    if not isinstance(value, list):
+        return "n/a"
+    failed = [
+        str(gate.get("id", "n/a"))
+        for gate in value
+        if isinstance(gate, dict) and not gate.get("ok", False)
+    ]
+    if not failed:
+        return "n/a"
+    return ", ".join(f"`{item}`" for item in failed)
 
 
 def _fmt_markdown_value(value: object) -> str:

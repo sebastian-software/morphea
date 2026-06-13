@@ -155,6 +155,17 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("artifacts", report["cases"][0])
             self.assertIn("contact_sheet", report["cases"][0]["artifacts"])
             self.assertEqual(
+                report["cases"][0]["promotion_summary"]["decision"],
+                "promoted",
+            )
+            self.assertFalse(
+                [
+                    gate
+                    for gate in report["cases"][0]["promotion_gates"]
+                    if not gate["ok"]
+                ]
+            )
+            self.assertEqual(
                 report["cases"][0]["promotion"]["current_quality_label"],
                 "green",
             )
@@ -179,6 +190,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 snapshot_report["cases"][0]["promotion"]["stress_family"],
                 "test_fixture",
             )
+            self.assertEqual(
+                snapshot_report["cases"][0]["promotion_summary"]["decision"],
+                "promoted",
+            )
 
     def test_render_curated_markdown_summarizes_cases_and_expectations(self):
         markdown = render_curated_markdown(
@@ -193,6 +208,21 @@ class CuratedSuiteTests(unittest.TestCase):
                         "status": "checked",
                         "ok": False,
                         "promotion": _promotion_metadata("red"),
+                        "promotion_gates": [
+                            {
+                                "id": "current_quality_label",
+                                "ok": False,
+                                "severity": "red",
+                                "reason": "current quality label is red",
+                                "evidence": "red",
+                            }
+                        ],
+                        "promotion_summary": {
+                            "decision": "rejected",
+                            "failed_gate_count": 1,
+                            "red_gate_count": 1,
+                            "yellow_gate_count": 0,
+                        },
                         "anchor_count": 1,
                         "diagnostic_count": 0,
                         "anchor_kind_counts": {"circle": 1},
@@ -226,11 +256,19 @@ class CuratedSuiteTests(unittest.TestCase):
 
         self.assertIn("# Morphēa Curated Check", markdown)
         self.assertIn(
+            "| `simple-circle` | `rejected` | `red` | `current_quality_label` |",
+            markdown,
+        )
+        self.assertIn(
             "| `simple-circle` | `checked` | `red` | `false` | 1 | 0 | `editable-enough` |",
             markdown,
         )
         self.assertIn(
             "- Promotion: quality=`red`, stress=`test_fixture`, issues=`fragmentation`",
+            markdown,
+        )
+        self.assertIn(
+            "- Promotion gates: decision=`rejected`, failed=`current_quality_label`",
             markdown,
         )
         self.assertIn("## simple-circle", markdown)

@@ -55,6 +55,16 @@ Current curated runs emit per-case run directories with input copy, SVG output,
 debug SVG, manifest JSON, preview PNG, SVG render PNG, red/blue diff PNG,
 contact-sheet PNG, palette summary, mask summary, and report files.
 
+Curated reports also include derived promotion gates:
+
+- `source_available`;
+- `semantic_expectations`;
+- `visual_contact_sheet`;
+- `current_quality_label`.
+
+Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
+failures produce `deferred`; all gates passing produces `promoted`.
+
 The current contact sheet includes:
 
 - source/reference image;
