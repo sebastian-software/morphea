@@ -231,8 +231,14 @@ provenance in accepted pseudo-label training manifests and records
 `review_issues` plus `applied_review_decision` in dataset samples. Rejected and
 deferred review items remain outside the trainable dataset.
 
+`morphea self-learn` now separates retraining from model acceptance. A model can
+be written after the training comparison gate accepts, but the cycle's
+`accepted` flag is true only when that gate accepts and any configured curated
+validation suite also passes. Cycle summaries include reviewed-label issue
+counts and applied-review decision counts from the pseudo-label dataset.
+
 ## Next Gate
 
-The next mainline block should run the reviewed-label training gate from
-accepted/corrected applied promotion reviews and prove model acceptance still
-depends on curated validation quality, not merely on additional reviewed data.
+The next mainline block should add family-level regression evidence to reviewed
+self-learning acceptance, so a model cannot pass by improving aggregate
+validation while degrading a real-image or primitive family.

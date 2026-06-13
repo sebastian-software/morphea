@@ -1144,6 +1144,14 @@ class SelfLearningTests(unittest.TestCase):
                 dataset["samples"][0]["review_issues"],
                 ["fragmentation"],
             )
+            self.assertEqual(
+                dataset["reviewed_label_summary"]["applied_review_decision_counts"],
+                {"accepted": 1},
+            )
+            self.assertEqual(
+                dataset["reviewed_label_summary"]["issue_counts"],
+                {"fragmentation": 1},
+            )
             pseudo_manifest = json.loads(
                 (output_dir / "train" / "pseudo-00000.json").read_text(
                     encoding="utf-8"
@@ -1648,6 +1656,8 @@ class SelfLearningTests(unittest.TestCase):
                 )
 
             self.assertEqual(result["status"], "retrained")
+            self.assertTrue(result["accepted"])
+            self.assertEqual(result["acceptance_gate"]["reasons"], [])
             self.assertEqual(result["curated_validation"]["status"], "checked")
             self.assertEqual(result["curated_validation"]["checked_count"], 1)
             self.assertTrue((output_dir / "model.json").exists())
@@ -1664,6 +1674,88 @@ class SelfLearningTests(unittest.TestCase):
                 curated_report["config_overrides"]["classifier_model"],
                 str(output_dir / "model.json"),
             )
+
+    def test_self_learning_cycle_requires_curated_validation_for_acceptance(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            curated_suite = _write_curated_circle_suite(root)
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=101,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            def failing_curated(*args, **kwargs):
+                output = kwargs.get("output")
+                if output is not None:
+                    Path(output).write_text(
+                        json.dumps(
+                            {
+                                "ok": False,
+                                "case_count": 1,
+                                "cases": [
+                                    {
+                                        "id": "circle-case",
+                                        "status": "checked",
+                                        "ok": False,
+                                    }
+                                ],
+                            }
+                        ),
+                        encoding="utf-8",
+                    )
+                return {
+                    "ok": False,
+                    "case_count": 1,
+                    "cases": [
+                        {
+                            "id": "circle-case",
+                            "status": "checked",
+                            "ok": False,
+                        }
+                    ],
+                }
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.self_learning.check_curated_suite", failing_curated),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    curated_suite=curated_suite,
+                )
+
+            self.assertEqual(result["status"], "retrained")
+            self.assertFalse(result["accepted"])
+            self.assertIn(
+                "curated_validation_failed",
+                result["acceptance_gate"]["reasons"],
+            )
+            self.assertTrue((output_dir / "model.json").exists())
 
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1692,6 +1784,11 @@ class SelfLearningTests(unittest.TestCase):
             )
 
             self.assertEqual(result["status"], "skipped_retrain")
+            self.assertFalse(result["accepted"])
+            self.assertIn(
+                "training_gate_not_accepted",
+                result["acceptance_gate"]["reasons"],
+            )
             self.assertEqual(
                 result["curated_validation"]["status"],
                 "skipped_gate_not_accepted",
@@ -1702,7 +1799,13 @@ class SelfLearningTests(unittest.TestCase):
         markdown = render_self_learning_cycle_markdown(
             {
                 "status": "skipped_retrain",
-                "pseudo_dataset": {"count": 2},
+                "accepted": False,
+                "pseudo_dataset": {
+                    "count": 2,
+                    "reviewed_label_summary": {
+                        "applied_review_decision_counts": {"accepted": 1},
+                    },
+                },
                 "comparison_summary": {
                     "status": "mixed",
                     "best_accuracy_delta": 0.1,
@@ -1713,6 +1816,10 @@ class SelfLearningTests(unittest.TestCase):
                     "accepted": False,
                     "reasons": ["comparison_status_mixed"],
                 },
+                "acceptance_gate": {
+                    "accepted": False,
+                    "reasons": ["training_gate_not_accepted"],
+                },
                 "artifacts": {
                     "comparison": "comparison.json",
                     "gate": "gate.json",
@@ -1722,6 +1829,9 @@ class SelfLearningTests(unittest.TestCase):
 
         self.assertIn("# Morphēa Self-Learning Cycle", markdown)
         self.assertIn("- Status: `skipped_retrain`", markdown)
+        self.assertIn("- Accepted: `False`", markdown)
+        self.assertIn("`training_gate_not_accepted`", markdown)
+        self.assertIn("- Applied review decisions: `accepted: 1`", markdown)
         self.assertIn("| `gate` | `gate.json` |", markdown)
         self.assertIn("`comparison_status_mixed`", markdown)
 

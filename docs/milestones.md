@@ -424,6 +424,10 @@ Implemented so far:
 - `morphea merge-labels` preserves `review` and `review_decision_applied`
   provenance in accepted pseudo-label manifests and dataset samples while
   keeping rejected/deferred review items out of trainable datasets.
+- `morphea self-learn` separates retraining from acceptance: model acceptance
+  now requires an accepted training comparison gate and, when configured,
+  passing curated validation, with reviewed-label issue counts and
+  applied-review decision counts in the cycle summary.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

@@ -371,6 +371,9 @@ reviews into the existing review/apply-review loop while preserving issue tags.
 `morphea merge-labels` preserves review and applied-review provenance in
 accepted pseudo-label manifests and dataset samples while excluding
 rejected/deferred review items from trainable datasets.
+`morphea self-learn` separates retraining from acceptance: acceptance requires
+the training comparison gate plus passing curated validation when configured,
+and cycle summaries expose reviewed-label issue and applied-decision counts.
 
 Canonical issue tags:
 
@@ -505,6 +508,8 @@ dependency:
 14. **Run reviewed pseudo-label training gates**: train only from green or
    corrected review artifacts, then accept models only when curated validation
    quality improves without family regressions.
+15. **Add family regression evidence**: acceptance must show which real-image,
+   Lucide, and primitive families improved, held steady, or regressed.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

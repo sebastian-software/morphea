@@ -565,6 +565,13 @@ samples also carry `review_issues` and `applied_review_decision`, so
 accepted/corrected applied promotion reviews remain auditable after conversion
 to trainable data while rejected/deferred review items are excluded.
 
+`morphea self-learn` now separates retraining from acceptance: the cycle can
+write a model after the training comparison gate passes, but `accepted` is only
+true when the training gate accepts and, when a curated suite is configured,
+the classifier-backed curated validation also passes. The cycle summary also
+records reviewed-label issue counts and applied-review decision counts from the
+pseudo-label dataset.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

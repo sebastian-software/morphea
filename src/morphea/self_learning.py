@@ -821,9 +821,15 @@ def run_self_learning_cycle(
                 "missing_source_count": 0,
             }
 
+    acceptance_gate = _self_learning_acceptance_gate(
+        gate=gate,
+        curated_validation=curated_validation,
+        curated_required=curated_suite is not None,
+    )
     result = {
         "schema_version": 1,
         "status": "retrained" if model is not None else "skipped_retrain",
+        "accepted": acceptance_gate["accepted"],
         "base_dataset": str(base_dataset),
         "reviewed_labels": str(reviewed_labels),
         "validation_dataset": str(validation_dataset or base_dataset),
@@ -854,6 +860,10 @@ def run_self_learning_cycle(
         "pseudo_dataset": {
             "count": pseudo_dataset["count"],
             "splits": pseudo_dataset["splits"],
+            "reviewed_label_summary": pseudo_dataset.get(
+                "reviewed_label_summary",
+                {},
+            ),
         },
         "comparison_summary": comparison["summary"],
         "gate": {
@@ -861,6 +871,7 @@ def run_self_learning_cycle(
             "accepted": gate["accepted"],
             "reasons": gate["reasons"],
         },
+        "acceptance_gate": acceptance_gate,
         "model": (
             {
                 "model_type": model["model_type"],
@@ -892,6 +903,27 @@ def run_self_learning_cycle(
     return result
 
 
+def _self_learning_acceptance_gate(
+    *,
+    gate: dict[str, object],
+    curated_validation: dict[str, object] | None,
+    curated_required: bool,
+) -> dict[str, object]:
+    reasons: list[str] = []
+    if gate.get("accepted") is not True:
+        reasons.append("training_gate_not_accepted")
+    if curated_required:
+        if not isinstance(curated_validation, dict):
+            reasons.append("missing_curated_validation")
+        elif curated_validation.get("ok") is not True:
+            reasons.append("curated_validation_failed")
+    return {
+        "accepted": not reasons,
+        "reasons": reasons,
+        "curated_required": curated_required,
+    }
+
+
 def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
     artifacts = result.get("artifacts", {})
     if not isinstance(artifacts, dict):
@@ -899,19 +931,28 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
     gate = result.get("gate", {})
     if not isinstance(gate, dict):
         gate = {}
+    acceptance_gate = result.get("acceptance_gate", {})
+    if not isinstance(acceptance_gate, dict):
+        acceptance_gate = {}
     comparison = result.get("comparison_summary", {})
     if not isinstance(comparison, dict):
         comparison = {}
     pseudo_dataset = result.get("pseudo_dataset", {})
     if not isinstance(pseudo_dataset, dict):
         pseudo_dataset = {}
+    reviewed_summary = pseudo_dataset.get("reviewed_label_summary", {})
+    if not isinstance(reviewed_summary, dict):
+        reviewed_summary = {}
     lines = [
         "# Morphēa Self-Learning Cycle",
         "",
         f"- Status: `{result.get('status', 'n/a')}`",
+        f"- Accepted: `{result.get('accepted', False)}`",
         f"- Gate decision: `{gate.get('decision', 'n/a')}`",
         f"- Gate accepted: `{gate.get('accepted', False)}`",
+        f"- Acceptance reasons: {_format_reason_list(acceptance_gate.get('reasons'))}",
         f"- Pseudo-label examples: {_fmt_metric(pseudo_dataset.get('count'))}",
+        f"- Applied review decisions: {_format_issue_counts(_counts_from_object(reviewed_summary.get('applied_review_decision_counts')))}",
         f"- Comparison status: `{comparison.get('status', 'n/a')}`",
         f"- Best accuracy delta: {_fmt_metric(comparison.get('best_accuracy_delta'))}",
         f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
@@ -950,6 +991,12 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _format_reason_list(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "`none`"
+    return ", ".join(f"`{reason}`" for reason in value)
 
 
 def retrain_centroid_classifier(
@@ -1215,6 +1262,7 @@ def merge_reviewed_pseudo_label_dataset(
         "difficulty": "pseudo_label",
         "splits": {"train": len(samples), "val": 0, "test": 0},
         "samples": samples,
+        "reviewed_label_summary": _reviewed_label_dataset_summary(samples),
         "source_reviewed_labels": str(reviewed_labels),
     }
     output.mkdir(parents=True, exist_ok=True)
@@ -1223,6 +1271,24 @@ def merge_reviewed_pseudo_label_dataset(
         encoding="utf-8",
     )
     return dataset
+
+
+def _reviewed_label_dataset_summary(samples: list[dict[str, object]]) -> dict[str, object]:
+    issue_counts: dict[str, int] = {}
+    decision_counts: dict[str, int] = {}
+    for sample in samples:
+        decision = sample.get("applied_review_decision")
+        if isinstance(decision, str) and decision:
+            decision_counts[decision] = decision_counts.get(decision, 0) + 1
+        _add_issue_counts(
+            issue_counts,
+            _issues_from_value(sample.get("review_issues")),
+        )
+    return {
+        "sample_count": len(samples),
+        "applied_review_decision_counts": dict(sorted(decision_counts.items())),
+        "issue_counts": dict(sorted(issue_counts.items())),
+    }
 
 
 def _anchor_from_label(label: dict[str, object]) -> dict[str, object]:
@@ -1611,6 +1677,16 @@ def _format_issue_counts(issue_counts: dict[str, int]) -> str:
     return "`" + ", ".join(
         f"{issue}: {count}" for issue, count in sorted(issue_counts.items())
     ) + "`"
+
+
+def _counts_from_object(value: object) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    return {
+        str(key): int(count)
+        for key, count in value.items()
+        if isinstance(count, (int, float))
+    }
 
 
 def _reviewed_label(item: dict[str, object]) -> dict[str, object]:
