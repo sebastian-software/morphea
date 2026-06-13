@@ -2217,6 +2217,18 @@ class SelfLearningTests(unittest.TestCase):
                 "accepted family validation",
             )
             self.assertIn("suite_family_validation", snapshot)
+            volatile_snapshot_fields = {
+                "base_dataset",
+                "reviewed_labels",
+                "source_cycle",
+                "validation_dataset",
+            }
+            self.assertTrue(
+                volatile_snapshot_fields.isdisjoint(snapshot),
+            )
+            self.assertTrue(
+                baseline_output.read_text(encoding="utf-8").endswith("\n"),
+            )
             changelog_entries = [
                 json.loads(line)
                 for line in changelog.read_text(encoding="utf-8").splitlines()
@@ -2231,6 +2243,9 @@ class SelfLearningTests(unittest.TestCase):
                 str(baseline_output),
             )
             self.assertEqual(changelog_entries[0]["review"]["reviewer"], "qa")
+            self.assertTrue(
+                volatile_snapshot_fields.isdisjoint(changelog_entries[0]),
+            )
 
     def test_self_learning_cycle_requires_review_evidence_for_baseline_snapshot(self):
         with tempfile.TemporaryDirectory() as temp_dir:

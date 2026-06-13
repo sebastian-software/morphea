@@ -1070,6 +1070,10 @@ or Lucide family regressions also block acceptance. When
 reason, and changelog evidence are supplied; rejected cycles report
 `skipped_not_accepted`, and missing review evidence reports
 `skipped_missing_review_evidence` without overwriting the requested output.
+Persisted suite-family baseline snapshots and changelog entries are portable
+review artifacts and intentionally omit run-local paths such as `base_dataset`,
+`reviewed_labels`, `validation_dataset`, and `source_cycle`; those paths remain
+in the cycle report itself.
 When `suite_family_baseline_comparison.ok` is true, configured curated or
 Lucide suite failures are treated as known baseline debt: they remain in
 `acceptance_gate.reasons` but are omitted from

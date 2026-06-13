@@ -886,12 +886,6 @@ def run_self_learning_cycle(
             "reviewer": suite_family_baseline_reviewer,
             "reason": suite_family_baseline_reason,
         },
-        metadata={
-            "base_dataset": str(base_dataset),
-            "reviewed_labels": str(reviewed_labels),
-            "validation_dataset": str(validation_dataset or base_dataset),
-            "source_cycle": str(summary_path),
-        },
     )
     result = {
         "schema_version": 1,
@@ -1098,7 +1092,6 @@ def _write_suite_family_baseline_snapshot(
     suite_family_validation: dict[str, object],
     changelog: Path | None,
     review: dict[str, object],
-    metadata: dict[str, object],
 ) -> dict[str, object]:
     if output is None:
         return {"status": "not_configured", "output": None}
@@ -1139,11 +1132,10 @@ def _write_suite_family_baseline_snapshot(
         "source": "self_learning_cycle",
         "accepted": True,
         "review": normalized_review,
-        **metadata,
         "suite_family_validation": suite_family_validation,
     }
     output.write_text(
-        json.dumps(snapshot, indent=2, sort_keys=True),
+        json.dumps(snapshot, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     changelog_entry = {
@@ -1151,7 +1143,6 @@ def _write_suite_family_baseline_snapshot(
         "action": "suite_family_baseline_updated",
         "baseline_snapshot": str(output),
         "review": normalized_review,
-        **metadata,
         "family_count": _suite_family_validation_family_count(
             suite_family_validation,
         ),
