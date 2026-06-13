@@ -85,6 +85,10 @@ Cases may define `structure_thresholds`, which produce
 `fragmentation_layer_thresholds` evidence for aggregate fragmentation and layer
 depth.
 
+Curated reports now derive `promotion_regions` from source-region gates. Each
+region records `promoted`, `deferred`, or `rejected` state with bounds, gate id,
+and reason. This is the first RIP3 promotion-pipeline state artifact.
+
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
 
@@ -113,5 +117,5 @@ label is green.
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
 
-The next implementation block should move to RIP3 promotion pipeline state:
-region-level promoted/fallback/deferred/rejected state in manifests and reports.
+The next implementation block should extend RIP3 from report-level region state
+into promoted/fallback SVG export filtering.

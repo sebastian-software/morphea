@@ -261,6 +261,11 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 f"decision=`{case['promotion_summary'].get('decision', 'n/a')}`, "
                 f"failed={_fmt_failed_gates(case.get('promotion_gates'))}"
             )
+        if isinstance(case.get("promotion_regions"), list):
+            lines.append(
+                "- Promotion regions: "
+                f"{_fmt_promotion_regions(case.get('promotion_regions'))}"
+            )
         if "anchor_kind_counts" in case:
             lines.append(
                 f"- Anchor kinds: {_fmt_markdown_counts(case.get('anchor_kind_counts'))}"
@@ -355,6 +360,7 @@ def _check_curated_case(
             result["promotion_summary"] = _promotion_summary(
                 result["promotion_gates"]
             )
+            result["promotion_regions"] = _promotion_region_results(result)
         return result
     if not run:
         if isinstance(result.get("promotion"), dict):
@@ -362,6 +368,7 @@ def _check_curated_case(
             result["promotion_summary"] = _promotion_summary(
                 result["promotion_gates"]
             )
+            result["promotion_regions"] = _promotion_region_results(result)
         return result
 
     config = {
@@ -422,6 +429,7 @@ def _check_curated_case(
     if isinstance(result.get("promotion"), dict):
         result["promotion_gates"] = _promotion_gate_results(result, manifest=manifest)
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
+        result["promotion_regions"] = _promotion_region_results(result)
     if output_dir is not None:
         _write_visual_audit_artifacts(
             vectorize_run.run_dir,
@@ -556,6 +564,7 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "promotion",
         "promotion_gates",
         "promotion_summary",
+        "promotion_regions",
     ):
         if key in case:
             snapshot[key] = case[key]
@@ -1320,6 +1329,65 @@ def _promotion_summary(gates: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
+def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
+    promotion = case.get("promotion")
+    if not isinstance(promotion, dict):
+        return []
+    configured = promotion.get("region_gates", [])
+    if not isinstance(configured, list) or not configured:
+        return []
+    gates_by_id = {
+        str(gate.get("id")): gate
+        for gate in case.get("promotion_gates", [])
+        if isinstance(gate, dict) and isinstance(gate.get("id"), str)
+    }
+    regions: list[dict[str, object]] = []
+    for region in configured:
+        if not isinstance(region, dict):
+            continue
+        region_id = str(region.get("id", "region"))
+        gate = gates_by_id.get(region_id)
+        state = _promotion_region_state(
+            status=str(case.get("status", "unknown")),
+            quality=str(promotion.get("current_quality_label", "")),
+            gate=gate,
+        )
+        regions.append(
+            {
+                "id": region_id,
+                "state": state,
+                "gate_id": region_id,
+                "gate_type": region.get("gate_type", "shape_class"),
+                "bounds": region.get("bounds"),
+                "expected_kinds": region.get("expected_kinds", []),
+                "forbidden_kinds": region.get("forbidden_kinds", []),
+                "reason": (
+                    str(gate.get("reason", "missing gate result"))
+                    if isinstance(gate, dict)
+                    else "missing gate result"
+                ),
+            }
+        )
+    return regions
+
+
+def _promotion_region_state(
+    *,
+    status: str,
+    quality: str,
+    gate: dict[str, object] | None,
+) -> str:
+    if status != "checked":
+        return "deferred"
+    if not isinstance(gate, dict):
+        return "deferred"
+    if not gate.get("ok", False):
+        return "rejected" if gate.get("severity") == "red" else "deferred"
+    if quality == "green":
+        return "promoted"
+    return "deferred"
+
+
 def _write_visual_audit_artifacts(
     run_dir: Path,
     run: VectorizeRun,
@@ -1689,6 +1757,22 @@ def _fmt_failed_gates(value: object) -> str:
     if not failed:
         return "n/a"
     return ", ".join(f"`{item}`" for item in failed)
+
+
+def _fmt_promotion_regions(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    counts = _counts(
+        region.get("state")
+        for region in value
+        if isinstance(region, dict)
+    )
+    if not counts:
+        return "n/a"
+    return ", ".join(
+        f"`{state}`={_fmt_markdown_value(counts[state])}"
+        for state in sorted(counts)
+    )
 
 
 def _fmt_markdown_value(value: object) -> str:

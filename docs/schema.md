@@ -471,6 +471,9 @@ case reports also include:
   `promotion.visual_thresholds`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, and red/yellow gate counts
+- `promotion_regions`: region-level promotion state derived from
+  `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
+  or `rejected`), bounds, gate id, and reason
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only

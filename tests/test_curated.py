@@ -519,20 +519,27 @@ class CuratedSuiteTests(unittest.TestCase):
             gate_by_id = {
                 gate["id"]: gate for gate in result["cases"][0]["promotion_gates"]
             }
+            region_by_id = {
+                region["id"]: region
+                for region in result["cases"][0]["promotion_regions"]
+            }
             self.assertTrue(gate_by_id["circle-region"]["ok"])
             self.assertEqual(
                 gate_by_id["circle-region"]["evidence"]["matching_count"],
                 1,
             )
+            self.assertEqual(region_by_id["circle-region"]["state"], "promoted")
             topology = gate_by_id["circle-region"]["evidence"]["topology_summary"]
             self.assertEqual(topology["closed_anchor_count"], 1)
             self.assertEqual(topology["open_anchor_count"], 0)
             self.assertFalse(gate_by_id["empty-region"]["ok"])
+            self.assertEqual(region_by_id["empty-region"]["state"], "rejected")
             self.assertIn(
                 "matching anchors in region: 0 < 1",
                 gate_by_id["empty-region"]["reason"],
             )
             self.assertFalse(gate_by_id["circle-topology"]["ok"])
+            self.assertEqual(region_by_id["circle-topology"]["state"], "rejected")
             self.assertIn(
                 "closed_anchor_count 1 > 0",
                 gate_by_id["circle-topology"]["reason"],
