@@ -256,6 +256,11 @@ class CuratedSuiteTests(unittest.TestCase):
                 report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",
             )
+            self.assertEqual(
+                report["cases"][0]["editability_review"]["decision"],
+                "accepted",
+            )
+            self.assertTrue(report["cases"][0]["editability_review"]["accepted"])
             self.assertFalse(
                 [
                     gate
@@ -310,6 +315,10 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 snapshot_report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",
+            )
+            self.assertEqual(
+                snapshot_report["cases"][0]["editability_review"]["decision"],
+                "accepted",
             )
 
     def test_promotion_export_artifacts_partition_rejected_anchors(self):
@@ -429,6 +438,11 @@ class CuratedSuiteTests(unittest.TestCase):
                 sorted(anchor["promotion_state"] for anchor in manifest["anchors"]),
                 ["promoted", "rejected"],
             )
+            self.assertEqual(
+                manifest["editability_review"]["decision"],
+                "rejected",
+            )
+            self.assertFalse(manifest["editability_review"]["accepted"])
             manifest_components = manifest["metrics"]["editability_v10_components"]
             self.assertEqual(
                 manifest_components["topology_consistency"]["score"],
@@ -482,6 +496,27 @@ class CuratedSuiteTests(unittest.TestCase):
                             "red_gate_count": 2,
                             "yellow_gate_count": 0,
                         },
+                        "editability_review": {
+                            "decision": "rejected",
+                            "accepted": False,
+                            "reasons": [
+                                "promotion_decision_rejected",
+                                "gate_blocked_components",
+                            ],
+                            "failed_components": [
+                                {
+                                    "id": "shape_identity_confidence",
+                                    "score": 0.0,
+                                    "threshold": 0.65,
+                                }
+                            ],
+                            "gate_blocked_components": [
+                                {
+                                    "id": "shape_identity_confidence",
+                                    "failed_gates": ["circle-shape-class"],
+                                }
+                            ],
+                        },
                         "anchor_count": 1,
                         "diagnostic_count": 0,
                         "anchor_kind_counts": {"circle": 1},
@@ -533,6 +568,12 @@ class CuratedSuiteTests(unittest.TestCase):
             markdown,
         )
         self.assertIn(
+            "| `simple-circle` | `rejected` | `false` | "
+            "`shape_identity_confidence` 0 < 0.65 | "
+            "`shape_identity_confidence` via `circle-shape-class` |",
+            markdown,
+        )
+        self.assertIn(
             "| `simple-circle` | `checked` | `red` | `false` | 1 | 0 | `editable-enough` |",
             markdown,
         )
@@ -542,6 +583,11 @@ class CuratedSuiteTests(unittest.TestCase):
         )
         self.assertIn(
             "- Promotion gates: decision=`rejected`, failed=`current_quality_label`, `circle-shape-class`",
+            markdown,
+        )
+        self.assertIn(
+            "- Editability review: decision=`rejected`, accepted=`false`, "
+            "reasons=`promotion_decision_rejected`, `gate_blocked_components`",
             markdown,
         )
         self.assertIn("## simple-circle", markdown)
@@ -793,6 +839,14 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 result["cases"][0]["promotion_summary"]["decision"],
                 "rejected",
+            )
+            self.assertEqual(
+                result["cases"][0]["editability_review"]["decision"],
+                "rejected",
+            )
+            self.assertIn(
+                "gate_blocked_components",
+                result["cases"][0]["editability_review"]["reasons"],
             )
 
     def test_group_promotion_gates_check_group_membership(self):

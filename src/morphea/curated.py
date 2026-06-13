@@ -82,6 +82,21 @@ PROMOTION_STRUCTURE_THRESHOLD_KEYS = {
     "max_fragmentation_penalty",
     "max_layer_count",
 }
+EDITABILITY_REVIEW_THRESHOLDS = {
+    "shape_identity_confidence": 0.65,
+    "parameter_economy": 0.25,
+    "node_economy": 0.5,
+    "topology_consistency": 0.75,
+    "grouping_quality": 0.5,
+    "fragmentation": 0.25,
+    "raster_fidelity": 0.75,
+    "provenance_confidence": 0.65,
+}
+EDITABILITY_REVIEW_OBSERVED_THRESHOLDS = {
+    "stroke_width_stability": 0.5,
+    "line_curve_smoothness": 0.5,
+    "classifier_prior_agreement": 0.75,
+}
 
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
@@ -221,6 +236,28 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
+            "## Editability Review",
+            "",
+            "| Case | Decision | Accepted | Failed components | Gate-blocked components |",
+            "| --- | --- | ---: | --- | --- |",
+        ]
+    )
+    for case in _promotion_sorted_cases(cases):
+        if not isinstance(case, dict):
+            continue
+        review = case.get("editability_review", {})
+        review = review if isinstance(review, dict) else {}
+        lines.append(
+            "| "
+            f"`{case.get('id', 'n/a')}` | "
+            f"`{review.get('decision', 'n/a')}` | "
+            f"`{str(review.get('accepted', False)).lower()}` | "
+            f"{_fmt_failed_components(review.get('failed_components'))} | "
+            f"{_fmt_gate_blocked_components(review.get('gate_blocked_components'))} |"
+        )
+    lines.extend(
+        [
+            "",
             "| Case | Status | Quality | OK | Anchors | Diagnostics | Failed expectations |",
             "| --- | --- | --- | ---: | ---: | ---: | --- |",
         ]
@@ -266,6 +303,14 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             lines.append(
                 "- Promotion regions: "
                 f"{_fmt_promotion_regions(case.get('promotion_regions'))}"
+            )
+        if isinstance(case.get("editability_review"), dict):
+            review = case["editability_review"]
+            lines.append(
+                "- Editability review: "
+                f"decision=`{review.get('decision', 'n/a')}`, "
+                f"accepted=`{str(review.get('accepted', False)).lower()}`, "
+                f"reasons={_fmt_markdown_list(review.get('reasons'))}"
             )
         if "anchor_kind_counts" in case:
             lines.append(
@@ -372,6 +417,7 @@ def _check_curated_case(
                 result["promotion_gates"]
             )
             result["promotion_regions"] = _promotion_region_results(result)
+            result["editability_review"] = _editability_review(result)
         return result
     if not run:
         if isinstance(result.get("promotion"), dict):
@@ -380,6 +426,7 @@ def _check_curated_case(
                 result["promotion_gates"]
             )
             result["promotion_regions"] = _promotion_region_results(result)
+            result["editability_review"] = _editability_review(result)
         return result
 
     config = {
@@ -447,6 +494,7 @@ def _check_curated_case(
             manifest["metrics"] = result["metrics"]
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
         result["promotion_regions"] = _promotion_region_results(result)
+        result["editability_review"] = _editability_review(result)
         if output_dir is not None and isinstance(result.get("artifacts"), dict):
             result["artifacts"].update(
                 _write_promotion_export_artifacts(
@@ -593,6 +641,7 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "promotion_gates",
         "promotion_summary",
         "promotion_regions",
+        "editability_review",
     ):
         if key in case:
             snapshot[key] = case[key]
@@ -1397,6 +1446,110 @@ def _apply_promotion_gate_editability_components(
         component["failed_gates"] = sorted(failed_gates)
 
 
+def _editability_review(case: dict[str, Any]) -> dict[str, object]:
+    summary = case.get("promotion_summary", {})
+    summary = summary if isinstance(summary, dict) else {}
+    promotion_decision = str(summary.get("decision", "n/a"))
+    metrics = case.get("metrics", {})
+    metrics = metrics if isinstance(metrics, dict) else {}
+    components = metrics.get("editability_v10_components")
+    components = components if isinstance(components, dict) else {}
+
+    failed_components: list[dict[str, object]] = []
+    gate_blocked: list[dict[str, object]] = []
+    component_scores: dict[str, object] = {}
+    reasons: list[str] = []
+    if promotion_decision != "promoted":
+        reasons.append(f"promotion_decision_{promotion_decision}")
+    if not components:
+        reasons.append("missing_editability_v10_components")
+
+    for component_id, threshold in EDITABILITY_REVIEW_THRESHOLDS.items():
+        component = components.get(component_id)
+        score = _component_score(component)
+        component_scores[component_id] = score
+        if isinstance(component, dict) and component.get("gate_blocked", False):
+            gate_blocked.append(
+                {
+                    "id": component_id,
+                    "failed_gates": list(component.get("failed_gates", [])),
+                    "uncapped_score": component.get("uncapped_score"),
+                }
+            )
+        if not isinstance(score, (int, float)):
+            failed_components.append(
+                {
+                    "id": component_id,
+                    "score": None,
+                    "threshold": threshold,
+                    "reason": "missing_score",
+                }
+            )
+        elif float(score) < threshold:
+            failed_components.append(
+                {
+                    "id": component_id,
+                    "score": round(float(score), 6),
+                    "threshold": threshold,
+                    "reason": "below_threshold",
+                }
+            )
+
+    for component_id, threshold in EDITABILITY_REVIEW_OBSERVED_THRESHOLDS.items():
+        component = components.get(component_id)
+        if not isinstance(component, dict) or component.get("observed") is not True:
+            continue
+        score = _component_score(component)
+        component_scores[component_id] = score
+        if isinstance(score, (int, float)) and float(score) < threshold:
+            failed_components.append(
+                {
+                    "id": component_id,
+                    "score": round(float(score), 6),
+                    "threshold": threshold,
+                    "reason": "observed_below_threshold",
+                }
+            )
+
+    if gate_blocked:
+        reasons.append("gate_blocked_components")
+    if failed_components:
+        reasons.append("component_threshold_failures")
+
+    if promotion_decision == "promoted" and not failed_components and not gate_blocked:
+        decision = "accepted"
+    elif promotion_decision == "deferred":
+        decision = "manual_review"
+    else:
+        decision = "rejected"
+    if promotion_decision == "promoted" and (failed_components or gate_blocked):
+        decision = "manual_review"
+
+    return {
+        "decision": decision,
+        "accepted": decision == "accepted",
+        "promotion_decision": promotion_decision,
+        "thresholds": {
+            "required": dict(sorted(EDITABILITY_REVIEW_THRESHOLDS.items())),
+            "observed": dict(sorted(EDITABILITY_REVIEW_OBSERVED_THRESHOLDS.items())),
+        },
+        "component_scores": dict(sorted(component_scores.items())),
+        "failed_components": failed_components,
+        "gate_blocked_components": gate_blocked,
+        "regression_delta_status": "not_configured",
+        "reasons": sorted(set(reasons)),
+    }
+
+
+def _component_score(component: object) -> object:
+    if not isinstance(component, dict):
+        return None
+    score = component.get("score")
+    if isinstance(score, (int, float)):
+        return round(float(score), 6)
+    return None
+
+
 def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
     promotion = case.get("promotion")
     if not isinstance(promotion, dict):
@@ -1687,6 +1840,9 @@ def _write_manifest_promotion_state(
     metrics = case_result.get("metrics")
     if isinstance(metrics, dict):
         manifest["metrics"] = metrics
+    review = case_result.get("editability_review")
+    if isinstance(review, dict):
+        manifest["editability_review"] = review
     regions = case_result.get("promotion_regions", [])
     regions = regions if isinstance(regions, list) else []
     gates = case_result.get("promotion_gates", [])
@@ -2189,6 +2345,37 @@ def _fmt_editability_v10_components(value: object) -> str:
             continue
         score = component.get("score")
         parts.append(f"`{key}`={_fmt_markdown_value(score)}")
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_failed_components(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    parts = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        component = item.get("id", "n/a")
+        score = _fmt_markdown_value(item.get("score"))
+        threshold = _fmt_markdown_value(item.get("threshold"))
+        parts.append(f"`{component}` {score} < {threshold}")
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_gate_blocked_components(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    parts = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        gates = item.get("failed_gates", [])
+        gate_text = (
+            ", ".join(f"`{gate}`" for gate in gates)
+            if isinstance(gates, list) and gates
+            else "n/a"
+        )
+        parts.append(f"`{item.get('id', 'n/a')}` via {gate_text}")
     return ", ".join(parts) if parts else "n/a"
 
 

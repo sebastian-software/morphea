@@ -369,6 +369,9 @@ Implemented so far:
 - `editability_v10_components`, with review-level scores for shape identity,
   parameter/node economy, stroke stability, smoothness, topology, grouping,
   fragmentation, raster fidelity, provenance, and classifier-prior agreement
+- `editability_review`, with accepted/manual-review/rejected decisions derived
+  from promotion state, v10 component thresholds, gate-blocked components, and
+  explicit regression-delta status
 - `fragmentation_penalty`
 - run-directory raster fidelity metrics: `raster_l1_error`,
   `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
@@ -389,6 +392,8 @@ Implemented so far:
 - curated promotion gates cap matching v10 components with `gate_blocked`,
   `failed_gates`, and `uncapped_score`, so red topology, shape-class, grouping,
   visual-fidelity, provenance, or fragmentation gates cannot be averaged away.
+- curated reports derive `editability_review`, so accepted-output status is
+  tied to component thresholds instead of raster fidelity alone.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

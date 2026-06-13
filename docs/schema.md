@@ -24,6 +24,9 @@ Top-level fields:
   `parallel_stroke_group`
 - `diagnostics`: non-fatal preprocessing/runtime diagnostics
 - `metrics`: scene-level editability and quality metrics
+- `editability_review`: present in curated promotion manifests; accepted-output
+  review decision derived from promotion state and v10 editability component
+  thresholds
 
 Anchor fields:
 
@@ -501,12 +504,17 @@ case reports also include:
   `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
   or `rejected`), bounds, gate id, selected anchor ids/indexes, gate status, and
   reason
+- `editability_review`: accepted-output review decision with `decision`
+  (`accepted`, `manual_review`, or `rejected`), `accepted`, component
+  `thresholds`, `component_scores`, `failed_components`,
+  `gate_blocked_components`, `regression_delta_status`, and `reasons`
 
 For checked cases with `--output-dir`, the run `manifest.json` also includes a
 top-level `promotion` object with summary, gates, regions, and promotion export
 artifact paths. Anchors selected by promotion regions are annotated with
 `promotion_state` and `promotion_regions`; unselected anchors are marked
-`fallback`.
+`fallback`. The manifest also includes top-level `editability_review`, so the
+accepted-output decision is preserved with the run artifact.
 
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
 --fallback-svg fallback.svg -o promotion-export.json` can regenerate the

@@ -158,8 +158,18 @@ sets `topology_consistency=0` because `radio-control-region-topology` is red.
 The current Terminaro run sets shape identity, topology, grouping, and raster
 fidelity components to `0` because the corresponding red gates fail.
 
+Curated promotion reports now also include `editability_review`, which turns
+promotion state plus v10 component thresholds into an accepted-output decision:
+`accepted`, `manual_review`, or `rejected`. Accepted requires a promoted
+promotion decision, no gate-blocked components, and passing required component
+thresholds for shape identity, parameter/node economy, topology, grouping,
+fragmentation, raster fidelity, and provenance. Optional observed stroke,
+smoothness, and classifier-prior components can also block acceptance when
+their observed score is below threshold. `regression_delta_status` is currently
+`not_configured`.
+
 ## Next Gate
 
-The next mainline block should define accepted-output review criteria from
-these components: component thresholds, regression deltas, and evidence that
-accepted outputs are more editable rather than only lower-error renders.
+The next mainline block should add regression-delta comparison for
+`editability_review`, so accepted outputs prove improvement or non-regression
+against a prior snapshot instead of only meeting absolute component thresholds.
