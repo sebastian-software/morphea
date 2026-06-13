@@ -275,6 +275,7 @@ CURATED_CHECK_CONFIG_KEYS = {
     "output_dir",
     "run",
     "snapshot",
+    "baseline_snapshot",
     "markdown",
 }
 LUCIDE_CHECK_CONFIG_KEYS = {
@@ -914,6 +915,11 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         help="Write a deterministic regression snapshot JSON.",
     )
+    curated_check.add_argument(
+        "--baseline-snapshot",
+        type=Path,
+        help="Compare editability review components against a previous snapshot.",
+    )
     curated_check.add_argument("--markdown", type=Path)
     curated_check.add_argument("--config", type=Path)
 
@@ -1519,6 +1525,7 @@ def main(argv: list[str] | None = None) -> None:
             output_dir=curated_config.get("output_dir"),
             run=bool(curated_config.get("run", False)),
             snapshot=curated_config.get("snapshot"),
+            baseline_snapshot=curated_config.get("baseline_snapshot"),
             markdown=curated_config.get("markdown"),
         )
         print(f"checked {result['case_count']} curated cases")
@@ -2410,10 +2417,19 @@ def _resolved_curated_check_config(args: argparse.Namespace) -> dict[str, object
         config["run"] = True
     if args.snapshot is not None:
         config["snapshot"] = args.snapshot
+    if args.baseline_snapshot is not None:
+        config["baseline_snapshot"] = args.baseline_snapshot
     if args.markdown is not None:
         config["markdown"] = args.markdown
     _require_config_paths(config, ("suite", "output"), "curated-check")
-    for key in ("suite", "output", "output_dir", "snapshot", "markdown"):
+    for key in (
+        "suite",
+        "output",
+        "output_dir",
+        "snapshot",
+        "baseline_snapshot",
+        "markdown",
+    ):
         if config.get(key) is not None:
             config[key] = Path(str(config[key]))
     config["run"] = bool(config.get("run", False))
@@ -2567,7 +2583,14 @@ def _load_curated_check_config(path: Path | None) -> dict[str, object]:
         msg = f"unsupported curated-check config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     config = dict(loaded)
-    for key in ("suite", "output", "output_dir", "snapshot", "markdown"):
+    for key in (
+        "suite",
+        "output",
+        "output_dir",
+        "snapshot",
+        "baseline_snapshot",
+        "markdown",
+    ):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     if "run" in config and not isinstance(config["run"], bool):

@@ -372,6 +372,8 @@ Implemented so far:
 - `editability_review`, with accepted/manual-review/rejected decisions derived
   from promotion state, v10 component thresholds, gate-blocked components, and
   explicit regression-delta status
+- `curated-check --baseline-snapshot`, which compares editability-review
+  component scores against a previous curated snapshot
 - `fragmentation_penalty`
 - run-directory raster fidelity metrics: `raster_l1_error`,
   `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
@@ -394,6 +396,9 @@ Implemented so far:
   visual-fidelity, provenance, or fragmentation gates cannot be averaged away.
 - curated reports derive `editability_review`, so accepted-output status is
   tied to component thresholds instead of raster fidelity alone.
+- editability review can record `regression_deltas` and
+  `regressed_components`, so accepted outputs can be downgraded when component
+  quality regresses against a supplied baseline snapshot.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

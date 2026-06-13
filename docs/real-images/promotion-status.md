@@ -165,11 +165,17 @@ promotion decision, no gate-blocked components, and passing required component
 thresholds for shape identity, parameter/node economy, topology, grouping,
 fragmentation, raster fidelity, and provenance. Optional observed stroke,
 smoothness, and classifier-prior components can also block acceptance when
-their observed score is below threshold. `regression_delta_status` is currently
-`not_configured`.
+their observed score is below threshold.
+
+`morphea curated-check --baseline-snapshot previous.json` compares current
+review component scores against a prior curated snapshot. `editability_review`
+then records `regression_delta_status`, `regression_deltas`, and
+`regressed_components`; accepted outputs are downgraded to `manual_review` when
+any comparable component regresses by more than `0.05`.
 
 ## Next Gate
 
-The next mainline block should add regression-delta comparison for
-`editability_review`, so accepted outputs prove improvement or non-regression
-against a prior snapshot instead of only meeting absolute component thresholds.
+The next mainline block should turn accepted-output review into review
+artifacts: expose threshold and delta failures in contact sheets or dedicated
+Markdown so reviewers can quickly decide whether to accept, correct, reject, or
+defer a candidate.

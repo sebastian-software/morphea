@@ -368,8 +368,9 @@ expectations, key anchor/group counts, key metrics, and per-case artifact
 directories when `--output-dir` is used.
 
 `morphea curated-check --config curated-check.json` accepts `suite`, `output`,
-`output_dir`, `run`, `snapshot`, and `markdown`. CLI arguments override matching
-config values, and `run` must be a boolean when provided in JSON.
+`output_dir`, `run`, `snapshot`, `baseline_snapshot`, and `markdown`. CLI
+arguments override matching config values, and `run` must be a boolean when
+provided in JSON.
 
 Curated suite expectations support three mutually exclusive check types:
 `kind` with `min_count` and optional `max_count`, `group_kind` with `min_count`
@@ -507,7 +508,8 @@ case reports also include:
 - `editability_review`: accepted-output review decision with `decision`
   (`accepted`, `manual_review`, or `rejected`), `accepted`, component
   `thresholds`, `component_scores`, `failed_components`,
-  `gate_blocked_components`, `regression_delta_status`, and `reasons`
+  `gate_blocked_components`, `regression_delta_status`, `regression_deltas`,
+  `regressed_components`, and `reasons`
 
 For checked cases with `--output-dir`, the run `manifest.json` also includes a
 top-level `promotion` object with summary, gates, regions, and promotion export

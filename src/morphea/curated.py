@@ -97,6 +97,7 @@ EDITABILITY_REVIEW_OBSERVED_THRESHOLDS = {
     "line_curve_smoothness": 0.5,
     "classifier_prior_agreement": 0.75,
 }
+EDITABILITY_REVIEW_MAX_COMPONENT_REGRESSION = 0.05
 
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
@@ -149,6 +150,7 @@ def check_curated_suite(
     output_dir: str | Path | None = None,
     run: bool = False,
     snapshot: str | Path | None = None,
+    baseline_snapshot: str | Path | None = None,
     markdown: str | Path | None = None,
     config_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -158,12 +160,15 @@ def check_curated_suite(
     suite = load_curated_suite(suite_file)
     suite_output_dir = Path(output_dir) if output_dir is not None else None
     overrides = _vectorize_config(config_overrides or {})
+    baseline_cases = _baseline_snapshot_cases(baseline_snapshot)
     cases = [
         _check_curated_case(
             case,
             output_dir=suite_output_dir,
             run=run,
             config_overrides=overrides,
+            baseline_case=baseline_cases.get(str(case.get("id"))),
+            baseline_configured=baseline_snapshot is not None,
         )
         for case in suite["cases"]
     ]
@@ -177,6 +182,8 @@ def check_curated_suite(
     }
     if overrides:
         report["config_overrides"] = _json_config(overrides)
+    if baseline_snapshot is not None:
+        report["baseline_snapshot"] = str(Path(baseline_snapshot))
     if output is not None:
         output_path = Path(output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -238,8 +245,8 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             "",
             "## Editability Review",
             "",
-            "| Case | Decision | Accepted | Failed components | Gate-blocked components |",
-            "| --- | --- | ---: | --- | --- |",
+            "| Case | Decision | Accepted | Regression | Failed components | Gate-blocked components |",
+            "| --- | --- | ---: | --- | --- | --- |",
         ]
     )
     for case in _promotion_sorted_cases(cases):
@@ -252,6 +259,7 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             f"`{case.get('id', 'n/a')}` | "
             f"`{review.get('decision', 'n/a')}` | "
             f"`{str(review.get('accepted', False)).lower()}` | "
+            f"`{review.get('regression_delta_status', 'n/a')}` | "
             f"{_fmt_failed_components(review.get('failed_components'))} | "
             f"{_fmt_gate_blocked_components(review.get('gate_blocked_components'))} |"
         )
@@ -389,12 +397,30 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _baseline_snapshot_cases(path: str | Path | None) -> dict[str, dict[str, Any]]:
+    if path is None:
+        return {}
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("baseline snapshot must be a JSON object")
+    cases = data.get("cases", [])
+    if not isinstance(cases, list):
+        raise ValueError("baseline snapshot cases must be an array")
+    return {
+        str(case.get("id")): case
+        for case in cases
+        if isinstance(case, dict) and isinstance(case.get("id"), str)
+    }
+
+
 def _check_curated_case(
     case: dict[str, Any],
     *,
     output_dir: Path | None,
     run: bool,
     config_overrides: dict[str, Any] | None = None,
+    baseline_case: dict[str, Any] | None = None,
+    baseline_configured: bool = False,
 ) -> dict[str, Any]:
     source = Path(case["source"]).expanduser()
     source_exists = source.exists()
@@ -417,7 +443,11 @@ def _check_curated_case(
                 result["promotion_gates"]
             )
             result["promotion_regions"] = _promotion_region_results(result)
-            result["editability_review"] = _editability_review(result)
+            result["editability_review"] = _editability_review(
+                result,
+                baseline_case=baseline_case,
+                baseline_configured=baseline_configured,
+            )
         return result
     if not run:
         if isinstance(result.get("promotion"), dict):
@@ -426,7 +456,11 @@ def _check_curated_case(
                 result["promotion_gates"]
             )
             result["promotion_regions"] = _promotion_region_results(result)
-            result["editability_review"] = _editability_review(result)
+            result["editability_review"] = _editability_review(
+                result,
+                baseline_case=baseline_case,
+                baseline_configured=baseline_configured,
+            )
         return result
 
     config = {
@@ -494,7 +528,11 @@ def _check_curated_case(
             manifest["metrics"] = result["metrics"]
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
         result["promotion_regions"] = _promotion_region_results(result)
-        result["editability_review"] = _editability_review(result)
+        result["editability_review"] = _editability_review(
+            result,
+            baseline_case=baseline_case,
+            baseline_configured=baseline_configured,
+        )
         if output_dir is not None and isinstance(result.get("artifacts"), dict):
             result["artifacts"].update(
                 _write_promotion_export_artifacts(
@@ -1446,7 +1484,12 @@ def _apply_promotion_gate_editability_components(
         component["failed_gates"] = sorted(failed_gates)
 
 
-def _editability_review(case: dict[str, Any]) -> dict[str, object]:
+def _editability_review(
+    case: dict[str, Any],
+    *,
+    baseline_case: dict[str, Any] | None = None,
+    baseline_configured: bool = False,
+) -> dict[str, object]:
     summary = case.get("promotion_summary", {})
     summary = summary if isinstance(summary, dict) else {}
     promotion_decision = str(summary.get("decision", "n/a"))
@@ -1516,13 +1559,33 @@ def _editability_review(case: dict[str, Any]) -> dict[str, object]:
     if failed_components:
         reasons.append("component_threshold_failures")
 
-    if promotion_decision == "promoted" and not failed_components and not gate_blocked:
+    regression = _editability_regression_deltas(
+        component_scores,
+        baseline_case=baseline_case,
+        baseline_configured=baseline_configured,
+    )
+    if regression["status"] not in {"not_configured", "passed"}:
+        reasons.append(f"regression_delta_{regression['status']}")
+
+    if (
+        promotion_decision == "promoted"
+        and not failed_components
+        and not gate_blocked
+        and regression["status"] in {"not_configured", "passed"}
+    ):
         decision = "accepted"
     elif promotion_decision == "deferred":
         decision = "manual_review"
     else:
         decision = "rejected"
-    if promotion_decision == "promoted" and (failed_components or gate_blocked):
+    if (
+        promotion_decision == "promoted"
+        and (
+            failed_components
+            or gate_blocked
+            or regression["status"] not in {"not_configured", "passed"}
+        )
+    ):
         decision = "manual_review"
 
     return {
@@ -1536,9 +1599,81 @@ def _editability_review(case: dict[str, Any]) -> dict[str, object]:
         "component_scores": dict(sorted(component_scores.items())),
         "failed_components": failed_components,
         "gate_blocked_components": gate_blocked,
-        "regression_delta_status": "not_configured",
+        "regression_delta_status": regression["status"],
+        "regression_deltas": regression["deltas"],
+        "regressed_components": regression["regressed_components"],
         "reasons": sorted(set(reasons)),
     }
+
+
+def _editability_regression_deltas(
+    component_scores: dict[str, object],
+    *,
+    baseline_case: dict[str, Any] | None,
+    baseline_configured: bool,
+) -> dict[str, object]:
+    if not baseline_configured:
+        return {"status": "not_configured", "deltas": [], "regressed_components": []}
+    if baseline_case is None:
+        return {
+            "status": "missing_baseline_case",
+            "deltas": [],
+            "regressed_components": [],
+        }
+    baseline_scores = _baseline_component_scores(baseline_case)
+    if not baseline_scores:
+        return {
+            "status": "missing_baseline_scores",
+            "deltas": [],
+            "regressed_components": [],
+        }
+    deltas: list[dict[str, object]] = []
+    regressed: list[dict[str, object]] = []
+    for component_id, current_score in sorted(component_scores.items()):
+        baseline_score = baseline_scores.get(component_id)
+        if not isinstance(current_score, (int, float)) or not isinstance(
+            baseline_score,
+            (int, float),
+        ):
+            continue
+        delta = round(float(current_score) - float(baseline_score), 6)
+        item = {
+            "id": component_id,
+            "current": round(float(current_score), 6),
+            "baseline": round(float(baseline_score), 6),
+            "delta": delta,
+            "max_regression": EDITABILITY_REVIEW_MAX_COMPONENT_REGRESSION,
+        }
+        deltas.append(item)
+        if delta < -EDITABILITY_REVIEW_MAX_COMPONENT_REGRESSION:
+            regressed.append(item)
+    if not deltas:
+        return {
+            "status": "missing_comparable_scores",
+            "deltas": [],
+            "regressed_components": [],
+        }
+    return {
+        "status": "failed" if regressed else "passed",
+        "deltas": deltas,
+        "regressed_components": regressed,
+    }
+
+
+def _baseline_component_scores(case: dict[str, Any]) -> dict[str, object]:
+    review = case.get("editability_review", {})
+    if isinstance(review, dict) and isinstance(review.get("component_scores"), dict):
+        return dict(review["component_scores"])
+    metrics = case.get("metrics", {})
+    if not isinstance(metrics, dict):
+        return {}
+    components = metrics.get("editability_v10_components", {})
+    if not isinstance(components, dict):
+        return {}
+    scores: dict[str, object] = {}
+    for component_id, component in components.items():
+        scores[str(component_id)] = _component_score(component)
+    return scores
 
 
 def _component_score(component: object) -> object:

@@ -456,6 +456,95 @@ class CuratedSuiteTests(unittest.TestCase):
                 ["right-circle-topology"],
             )
 
+    def test_editability_review_flags_component_regression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "input.png"
+            suite_path = root / "suite.json"
+            baseline = root / "baseline.json"
+            output_dir = root / "artifacts"
+            image = Image.new("RGB", (24, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            image.save(source)
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": str(source),
+                                "promotion": _promotion_metadata("green"),
+                                "recommended_config": {
+                                    "min_area": 8,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            baseline.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "editability_review": {
+                                    "component_scores": {
+                                        "shape_identity_confidence": 1.0,
+                                        "parameter_economy": 1.0,
+                                        "node_economy": 1.0,
+                                        "topology_consistency": 1.0,
+                                        "grouping_quality": 1.0,
+                                        "fragmentation": 1.0,
+                                        "raster_fidelity": 1.0,
+                                        "provenance_confidence": 1.0,
+                                    }
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(
+                suite_path,
+                output_dir=output_dir,
+                run=True,
+                baseline_snapshot=baseline,
+            )
+
+            review = result["cases"][0]["editability_review"]
+            self.assertEqual(review["decision"], "manual_review")
+            self.assertFalse(review["accepted"])
+            self.assertEqual(review["regression_delta_status"], "failed")
+            regressed = {
+                item["id"]: item for item in review["regressed_components"]
+            }
+            self.assertIn("parameter_economy", regressed)
+            self.assertLess(regressed["parameter_economy"]["delta"], -0.05)
+            manifest = json.loads(
+                (output_dir / "simple-circle" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                manifest["editability_review"]["regression_delta_status"],
+                "failed",
+            )
+
     def test_render_curated_markdown_summarizes_cases_and_expectations(self):
         markdown = render_curated_markdown(
             {
@@ -499,6 +588,7 @@ class CuratedSuiteTests(unittest.TestCase):
                         "editability_review": {
                             "decision": "rejected",
                             "accepted": False,
+                            "regression_delta_status": "not_configured",
                             "reasons": [
                                 "promotion_decision_rejected",
                                 "gate_blocked_components",
@@ -569,6 +659,7 @@ class CuratedSuiteTests(unittest.TestCase):
         )
         self.assertIn(
             "| `simple-circle` | `rejected` | `false` | "
+            "`not_configured` | "
             "`shape_identity_confidence` 0 < 0.65 | "
             "`shape_identity_confidence` via `circle-shape-class` |",
             markdown,
@@ -1279,6 +1370,7 @@ class CuratedSuiteTests(unittest.TestCase):
             suite_path = root / "suite.json"
             output = root / "report.json"
             snapshot = root / "snapshot.json"
+            baseline = root / "baseline.json"
             markdown = root / "report.md"
             config = root / "curated-check.json"
             suite_path.write_text(
@@ -1302,12 +1394,17 @@ class CuratedSuiteTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            baseline.write_text(
+                json.dumps({"schema_version": 1, "cases": []}),
+                encoding="utf-8",
+            )
             config.write_text(
                 json.dumps(
                     {
                         "suite": str(suite_path),
                         "output": str(output),
                         "snapshot": str(snapshot),
+                        "baseline_snapshot": str(baseline),
                         "markdown": str(markdown),
                     }
                 ),
@@ -1317,6 +1414,10 @@ class CuratedSuiteTests(unittest.TestCase):
             with redirect_stdout(StringIO()):
                 main(["curated-check", "--config", str(config)])
 
+            self.assertEqual(
+                json.loads(output.read_text(encoding="utf-8"))["baseline_snapshot"],
+                str(baseline),
+            )
             self.assertEqual(
                 json.loads(output.read_text(encoding="utf-8"))["case_count"],
                 1,
