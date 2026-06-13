@@ -1,26 +1,245 @@
 {
   "accepted": true,
   "review": {
-    "reason": "Initial smoke baseline for suite-family self-learning validation.",
+    "reason": "Reviewed current suite-family baseline debt for accepted-cycle refresh.",
     "reviewer": "morphea"
   },
   "schema_version": 1,
-  "source": "checked_in_suite_family_smoke",
+  "source": "self_learning_cycle",
   "suite_family_validation": {
     "lucide": {
-      "families": [],
-      "ok": null,
-      "status": "not_configured"
+      "families": [
+        {
+          "case_count": 8,
+          "checked_count": 8,
+          "failed_count": 1,
+          "family": "circle_compound_strokes",
+          "missing_source_count": 0,
+          "outcome": "failed",
+          "passed_count": 7
+        },
+        {
+          "case_count": 8,
+          "checked_count": 8,
+          "failed_count": 0,
+          "family": "simple_stroke_glyphs",
+          "missing_source_count": 0,
+          "outcome": "passed",
+          "passed_count": 8
+        },
+        {
+          "case_count": 8,
+          "checked_count": 8,
+          "failed_count": 0,
+          "family": "stroked_rect_ui_glyphs",
+          "missing_source_count": 0,
+          "outcome": "passed",
+          "passed_count": 8
+        }
+      ],
+      "ok": false,
+      "status": "checked",
+      "suite": "assets/lucide/suite.json"
     },
     "primitive": {
-      "families": [],
-      "ok": null,
-      "status": "insufficient"
+      "families": [
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "arc",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 0.90625,
+          "augmented_examples": 32,
+          "baseline_accuracy": 0.90625,
+          "baseline_examples": 32,
+          "family": "circle",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 0.8541666666666666,
+          "augmented_examples": 96,
+          "baseline_accuracy": 0.8541666666666666,
+          "baseline_examples": 96,
+          "family": "quad",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "rect",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "rounded_rect",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "stroke_circle",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "stroke_path",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 0.625,
+          "augmented_examples": 32,
+          "baseline_accuracy": 0.625,
+          "baseline_examples": 32,
+          "family": "stroke_polyline",
+          "outcome": "held",
+          "split": "test"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "arc",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 0.9375,
+          "augmented_examples": 32,
+          "baseline_accuracy": 0.9375,
+          "baseline_examples": 32,
+          "family": "circle",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 0.7708333333333334,
+          "augmented_examples": 96,
+          "baseline_accuracy": 0.7708333333333334,
+          "baseline_examples": 96,
+          "family": "quad",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "rect",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "rounded_rect",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "stroke_circle",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 1.0,
+          "augmented_examples": 16,
+          "baseline_accuracy": 1.0,
+          "baseline_examples": 16,
+          "family": "stroke_path",
+          "outcome": "held",
+          "split": "val"
+        },
+        {
+          "accuracy_delta": 0.0,
+          "augmented_accuracy": 0.625,
+          "augmented_examples": 32,
+          "baseline_accuracy": 0.625,
+          "baseline_examples": 32,
+          "family": "stroke_polyline",
+          "outcome": "held",
+          "split": "val"
+        }
+      ],
+      "ok": true,
+      "status": "held"
     },
     "real_image": {
-      "families": [],
-      "ok": null,
-      "status": "not_configured"
+      "families": [
+        {
+          "case_count": 1,
+          "checked_count": 0,
+          "failed_count": 1,
+          "family": "generated_illustration_opaque_table_grid",
+          "missing_source_count": 1,
+          "outcome": "failed_missing",
+          "passed_count": 0
+        },
+        {
+          "case_count": 1,
+          "checked_count": 1,
+          "failed_count": 1,
+          "family": "generated_illustration_table_grid",
+          "missing_source_count": 0,
+          "outcome": "failed",
+          "passed_count": 0
+        },
+        {
+          "case_count": 1,
+          "checked_count": 1,
+          "failed_count": 0,
+          "family": "ui_screenshot_text_and_controls",
+          "missing_source_count": 0,
+          "outcome": "passed",
+          "passed_count": 1
+        }
+      ],
+      "ok": false,
+      "status": "checked",
+      "suite": "docs/real-images/suite.json"
     }
   }
 }
