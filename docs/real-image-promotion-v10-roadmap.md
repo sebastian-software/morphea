@@ -476,6 +476,10 @@ steps 1-5 are credible. More data amplifies bad gates.
 The next concrete implementation packet should combine current-state cleanup
 with corpus design.
 
+Current human-readable status lives in
+`docs/real-images/promotion-status.md`. Machine-readable per-case labels live
+in `docs/real-images/suite.json`.
+
 Required deliverables:
 
 - update milestone and plan docs to point to this roadmap;
