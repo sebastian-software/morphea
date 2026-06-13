@@ -206,6 +206,9 @@ SELF_LEARN_CONFIG_KEYS = {
     "lucide_report",
     "suite_family_baseline",
     "suite_family_baseline_output",
+    "suite_family_baseline_reviewer",
+    "suite_family_baseline_reason",
+    "suite_family_baseline_changelog",
     "output_dir",
     "markdown",
     "min_train_examples_delta",
@@ -701,6 +704,9 @@ def main(argv: list[str] | None = None) -> None:
     self_learn.add_argument("--lucide-report", type=Path)
     self_learn.add_argument("--suite-family-baseline", type=Path)
     self_learn.add_argument("--suite-family-baseline-output", type=Path)
+    self_learn.add_argument("--suite-family-baseline-reviewer")
+    self_learn.add_argument("--suite-family-baseline-reason")
+    self_learn.add_argument("--suite-family-baseline-changelog", type=Path)
     self_learn.add_argument("-o", "--output-dir", type=Path)
     self_learn.add_argument("--markdown", type=Path)
     self_learn.add_argument("--min-train-examples-delta", type=int)
@@ -1389,6 +1395,15 @@ def main(argv: list[str] | None = None) -> None:
             suite_family_baseline_output=cycle_config.get(
                 "suite_family_baseline_output"
             ),
+            suite_family_baseline_reviewer=str(
+                cycle_config.get("suite_family_baseline_reviewer", "")
+            ),
+            suite_family_baseline_reason=str(
+                cycle_config.get("suite_family_baseline_reason", "")
+            ),
+            suite_family_baseline_changelog=cycle_config.get(
+                "suite_family_baseline_changelog"
+            ),
             output_dir=cycle_config["output_dir"],
             markdown=cycle_config.get("markdown"),
             min_train_examples_delta=int(cycle_config["min_train_examples_delta"]),
@@ -2037,6 +2052,12 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         config["suite_family_baseline"] = args.suite_family_baseline
     if args.suite_family_baseline_output is not None:
         config["suite_family_baseline_output"] = args.suite_family_baseline_output
+    if args.suite_family_baseline_reviewer is not None:
+        config["suite_family_baseline_reviewer"] = args.suite_family_baseline_reviewer
+    if args.suite_family_baseline_reason is not None:
+        config["suite_family_baseline_reason"] = args.suite_family_baseline_reason
+    if args.suite_family_baseline_changelog is not None:
+        config["suite_family_baseline_changelog"] = args.suite_family_baseline_changelog
     if args.output_dir is not None:
         config["output_dir"] = args.output_dir
     if args.markdown is not None:
@@ -2069,6 +2090,7 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         "lucide_report",
         "suite_family_baseline",
         "suite_family_baseline_output",
+        "suite_family_baseline_changelog",
         "output_dir",
         "markdown",
     ):
@@ -2869,6 +2891,7 @@ def _load_self_learn_config(path: Path) -> dict[str, object]:
         "lucide_report",
         "suite_family_baseline",
         "suite_family_baseline_output",
+        "suite_family_baseline_changelog",
         "output_dir",
         "markdown",
     ):

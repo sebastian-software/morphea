@@ -389,6 +389,8 @@ regressions.
 `morphea self-learn --suite-family-baseline-output` writes accepted
 `suite_family_validation` snapshots as reusable baseline artifacts and skips
 writes for rejected cycles.
+Baseline snapshot writes now require reviewer, reason, and changelog evidence;
+successful writes embed the review record and append a JSONL changelog entry.
 
 Canonical issue tags:
 
@@ -536,6 +538,9 @@ dependency:
    next self-learning cycle.
 19. **Review baseline updates**: require metadata and changelog evidence before
    replacing a fixed suite-family baseline.
+20. **Constrain baseline replacement paths**: require an explicit expected
+   baseline target before overwriting an existing checked-in suite-family
+   baseline.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

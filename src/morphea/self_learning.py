@@ -729,6 +729,9 @@ def run_self_learning_cycle(
     lucide_report: str | Path | None = None,
     suite_family_baseline: str | Path | None = None,
     suite_family_baseline_output: str | Path | None = None,
+    suite_family_baseline_reviewer: str = "",
+    suite_family_baseline_reason: str = "",
+    suite_family_baseline_changelog: str | Path | None = None,
     min_train_examples_delta: int = 1,
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
@@ -773,6 +776,11 @@ def run_self_learning_cycle(
     suite_family_baseline_output_path = (
         Path(suite_family_baseline_output)
         if suite_family_baseline_output is not None
+        else None
+    )
+    suite_family_baseline_changelog_path = (
+        Path(suite_family_baseline_changelog)
+        if suite_family_baseline_changelog is not None
         else None
     )
 
@@ -870,6 +878,11 @@ def run_self_learning_cycle(
         output=suite_family_baseline_output_path,
         accepted=bool(acceptance_gate["accepted"]),
         suite_family_validation=suite_family_validation,
+        changelog=suite_family_baseline_changelog_path,
+        review={
+            "reviewer": suite_family_baseline_reviewer,
+            "reason": suite_family_baseline_reason,
+        },
         metadata={
             "base_dataset": str(base_dataset),
             "reviewed_labels": str(reviewed_labels),
@@ -1079,17 +1092,38 @@ def _write_suite_family_baseline_snapshot(
     output: Path | None,
     accepted: bool,
     suite_family_validation: dict[str, object],
+    changelog: Path | None,
+    review: dict[str, object],
     metadata: dict[str, object],
 ) -> dict[str, object]:
     if output is None:
         return {"status": "not_configured", "output": None}
     if not accepted:
-        return {"status": "skipped_not_accepted", "output": str(output)}
+        return {
+            "status": "skipped_not_accepted",
+            "output": str(output),
+            "changelog": str(changelog) if changelog is not None else None,
+            "review": _suite_family_baseline_review(review),
+        }
+    normalized_review = _suite_family_baseline_review(review)
+    missing_review_fields = _missing_suite_family_baseline_review_fields(
+        normalized_review,
+        changelog,
+    )
+    if missing_review_fields:
+        return {
+            "status": "skipped_missing_review_evidence",
+            "output": str(output),
+            "changelog": str(changelog) if changelog is not None else None,
+            "missing_review_fields": missing_review_fields,
+            "review": normalized_review,
+        }
     output.parent.mkdir(parents=True, exist_ok=True)
     snapshot = {
         "schema_version": 1,
         "source": "self_learning_cycle",
         "accepted": True,
+        "review": normalized_review,
         **metadata,
         "suite_family_validation": suite_family_validation,
     }
@@ -1097,7 +1131,58 @@ def _write_suite_family_baseline_snapshot(
         json.dumps(snapshot, indent=2, sort_keys=True),
         encoding="utf-8",
     )
-    return {"status": "written", "output": str(output)}
+    changelog_entry = {
+        "schema_version": 1,
+        "action": "suite_family_baseline_updated",
+        "baseline_snapshot": str(output),
+        "review": normalized_review,
+        **metadata,
+        "family_count": _suite_family_validation_family_count(
+            suite_family_validation,
+        ),
+    }
+    assert changelog is not None
+    changelog.parent.mkdir(parents=True, exist_ok=True)
+    with changelog.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(changelog_entry, sort_keys=True) + "\n")
+    return {
+        "status": "written",
+        "output": str(output),
+        "changelog": str(changelog),
+        "review": normalized_review,
+    }
+
+
+def _suite_family_baseline_review(review: dict[str, object]) -> dict[str, object]:
+    return {
+        "reviewer": str(review.get("reviewer", "")).strip(),
+        "reason": str(review.get("reason", "")).strip(),
+    }
+
+
+def _missing_suite_family_baseline_review_fields(
+    review: dict[str, object],
+    changelog: Path | None,
+) -> list[str]:
+    missing = []
+    for key in ("reviewer", "reason"):
+        value = review.get(key)
+        if not isinstance(value, str) or not value:
+            missing.append(key)
+    if changelog is None:
+        missing.append("changelog")
+    return missing
+
+
+def _suite_family_validation_family_count(validation: dict[str, object]) -> int:
+    count = 0
+    for suite in validation.values():
+        if not isinstance(suite, dict):
+            continue
+        families = suite.get("families", [])
+        if isinstance(families, list):
+            count += sum(1 for item in families if isinstance(item, dict))
+    return count
 
 
 def _suite_family_outcomes_by_key(
@@ -1484,6 +1569,10 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 "",
                 f"- Status: `{baseline_snapshot.get('status', 'n/a')}`",
                 f"- Output: `{baseline_snapshot.get('output', 'n/a')}`",
+                f"- Changelog: `{baseline_snapshot.get('changelog', 'n/a')}`",
+                f"- Reviewer: `{_baseline_snapshot_review_value(baseline_snapshot, 'reviewer')}`",
+                f"- Reason: `{_baseline_snapshot_review_value(baseline_snapshot, 'reason')}`",
+                f"- Missing evidence: {_format_reason_list(baseline_snapshot.get('missing_review_fields'))}",
             ]
         )
     lines.extend(
@@ -1511,6 +1600,14 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _baseline_snapshot_review_value(snapshot: dict[str, object], key: str) -> str:
+    review = snapshot.get("review", {})
+    if not isinstance(review, dict):
+        return "n/a"
+    value = review.get(key)
+    return str(value) if value else "n/a"
 
 
 def _suite_family_baseline_rows(

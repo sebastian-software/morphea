@@ -1066,8 +1066,10 @@ with the same model override; failed Lucide validation blocks acceptance. When
 `suite_family_baseline` is configured, newly introduced primitive, real-image,
 or Lucide family regressions also block acceptance. When
 `suite_family_baseline_output` is configured, accepted cycles write the current
-`suite_family_validation` as the next baseline artifact; rejected cycles report
-`skipped_not_accepted` and do not overwrite the requested output.
+`suite_family_validation` as the next baseline artifact only when reviewer,
+reason, and changelog evidence are supplied; rejected cycles report
+`skipped_not_accepted`, and missing review evidence reports
+`skipped_missing_review_evidence` without overwriting the requested output.
 
 ## Self-Learning Config v1
 
@@ -1087,6 +1089,9 @@ Supported fields:
 - `lucide_report`
 - `suite_family_baseline`
 - `suite_family_baseline_output`
+- `suite_family_baseline_reviewer`
+- `suite_family_baseline_reason`
+- `suite_family_baseline_changelog`
 - `output_dir`
 - `markdown`: optional cycle Markdown summary path
 - `min_train_examples_delta`

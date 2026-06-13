@@ -2063,6 +2063,7 @@ class SelfLearningTests(unittest.TestCase):
             reviewed = root / "reviewed.json"
             output_dir = root / "cycle"
             baseline_output = root / "accepted-suite-family-baseline.json"
+            changelog = root / "suite-family-baseline-changelog.jsonl"
             generate_synthetic_dataset(
                 output_dir=base_dir,
                 count=4,
@@ -2094,6 +2095,9 @@ class SelfLearningTests(unittest.TestCase):
                     reviewed_labels=reviewed,
                     output_dir=output_dir,
                     suite_family_baseline_output=baseline_output,
+                    suite_family_baseline_reviewer="qa",
+                    suite_family_baseline_reason="accepted family validation",
+                    suite_family_baseline_changelog=changelog,
                 )
 
             self.assertTrue(result["accepted"])
@@ -2108,7 +2112,75 @@ class SelfLearningTests(unittest.TestCase):
             snapshot = json.loads(baseline_output.read_text(encoding="utf-8"))
             self.assertEqual(snapshot["source"], "self_learning_cycle")
             self.assertTrue(snapshot["accepted"])
+            self.assertEqual(snapshot["review"]["reviewer"], "qa")
+            self.assertEqual(
+                snapshot["review"]["reason"],
+                "accepted family validation",
+            )
             self.assertIn("suite_family_validation", snapshot)
+            changelog_entries = [
+                json.loads(line)
+                for line in changelog.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual(len(changelog_entries), 1)
+            self.assertEqual(
+                changelog_entries[0]["action"],
+                "suite_family_baseline_updated",
+            )
+            self.assertEqual(
+                changelog_entries[0]["baseline_snapshot"],
+                str(baseline_output),
+            )
+            self.assertEqual(changelog_entries[0]["review"]["reviewer"], "qa")
+
+    def test_self_learning_cycle_requires_review_evidence_for_baseline_snapshot(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline_output = root / "accepted-suite-family-baseline.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=106,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with patch("morphea.self_learning.gate_training_comparison", accepted_gate):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline_output=baseline_output,
+                )
+
+            self.assertTrue(result["accepted"])
+            snapshot = result["suite_family_baseline_snapshot"]
+            self.assertEqual(snapshot["status"], "skipped_missing_review_evidence")
+            self.assertEqual(
+                snapshot["missing_review_fields"],
+                ["reviewer", "reason", "changelog"],
+            )
+            self.assertFalse(baseline_output.exists())
 
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2277,6 +2349,7 @@ class SelfLearningTests(unittest.TestCase):
             markdown = root / "cycle.md"
             suite_family_baseline = root / "suite-family-baseline.json"
             suite_family_baseline_output = root / "next-suite-family-baseline.json"
+            suite_family_baseline_changelog = root / "suite-family-changelog.jsonl"
             curated_suite = _write_curated_circle_suite(root)
             generate_synthetic_dataset(
                 output_dir=base_dir,
@@ -2314,6 +2387,11 @@ class SelfLearningTests(unittest.TestCase):
                         "suite_family_baseline": str(suite_family_baseline),
                         "suite_family_baseline_output": str(
                             suite_family_baseline_output
+                        ),
+                        "suite_family_baseline_reviewer": "qa",
+                        "suite_family_baseline_reason": "config smoke review",
+                        "suite_family_baseline_changelog": str(
+                            suite_family_baseline_changelog
                         ),
                         "min_train_examples_delta": 10,
                         "max_worst_accuracy_drop": 1.0,
@@ -2354,6 +2432,7 @@ class SelfLearningTests(unittest.TestCase):
                 "skipped_not_accepted",
             )
             self.assertFalse(suite_family_baseline_output.exists())
+            self.assertFalse(suite_family_baseline_changelog.exists())
 
     def test_retrain_centroid_classifier_writes_augmented_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:

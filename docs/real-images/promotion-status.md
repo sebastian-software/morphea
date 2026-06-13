@@ -255,11 +255,14 @@ is reported separately from new regressions.
 
 `morphea self-learn --suite-family-baseline-output next-baseline.json` writes
 the accepted cycle's current `suite_family_validation` as a reusable baseline
-artifact. Rejected cycles report `skipped_not_accepted` and do not write the
-requested output.
+artifact only when `--suite-family-baseline-reviewer`,
+`--suite-family-baseline-reason`, and `--suite-family-baseline-changelog` are
+provided. Successful updates include a review record in the snapshot and append
+a JSONL changelog entry; rejected cycles and missing review evidence do not
+write the requested baseline output.
 
 ## Next Gate
 
-The next mainline block should add review metadata and changelog evidence for
-baseline updates, so replacing a fixed suite-family baseline is an explicit
-review decision rather than a silent artifact refresh.
+The next mainline block should add a stricter replacement policy for checked-in
+baseline files, so existing fixed baselines require an explicit expected source
+path and cannot be overwritten through an accidental ad hoc output path.
