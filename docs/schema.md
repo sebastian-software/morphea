@@ -410,6 +410,12 @@ Region gate topology limits are optional non-negative integer fields:
 `max_disconnected_components`. Region-gate evidence includes
 `topology_summary` with selected-anchor, closed/open, hole, cutout, disconnected
 component, and kind-count summaries.
+- `group_gates`: optional array of manifest-group promotion gates. Each gate
+  includes `id`, `gate_type` (`grouping` or `fragmentation`),
+  `expected_group_kinds`, optional `min_count`, optional `max_count`, optional
+  `min_member_count`, optional `max_member_count`, optional `severity`, and
+  optional `description`. Group-gate evidence includes selected group ids,
+  kinds, member counts, and group metrics.
 - `review_notes`: optional string array for dated human review notes
 
 Top-level fields:
@@ -454,8 +460,8 @@ case reports also include:
 
 - `promotion_gates`: derived hard-gate results for `source_available`,
   `semantic_expectations`, `visual_contact_sheet`, `current_quality_label`, and
-  any case-specific `promotion.hard_gates`, `promotion.region_gates`, or
-  `promotion.visual_thresholds`
+  any case-specific `promotion.hard_gates`, `promotion.region_gates`,
+  `promotion.group_gates`, or `promotion.visual_thresholds`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, and red/yellow gate counts
 

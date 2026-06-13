@@ -86,6 +86,19 @@
             "description": "The known gold dot/brooch region must contain five editable circle anchors, not just circles elsewhere in the image."
           }
         ],
+        "group_gates": [
+          {
+            "id": "table-grid-group-consistency",
+            "gate_type": "grouping",
+            "expected_group_kinds": [
+              "perspective_grid"
+            ],
+            "min_count": 1,
+            "min_member_count": 8,
+            "severity": "red",
+            "description": "A table grid promotion requires one perspective-grid group covering at least eight editable quad cells."
+          }
+        ],
         "review_notes": [
           "2026-06-13 curated-check failed gold-circle-anchors and table-perspective-quads.",
           "Perspective grid group exists, but only 2 of expected 8 quad anchors are recovered."
@@ -197,6 +210,19 @@
             ],
             "severity": "yellow",
             "description": "Clean line-like details should remain editable strokes."
+          }
+        ],
+        "group_gates": [
+          {
+            "id": "table-grid-group-consistency",
+            "gate_type": "grouping",
+            "expected_group_kinds": [
+              "perspective_grid"
+            ],
+            "min_count": 1,
+            "min_member_count": 8,
+            "severity": "red",
+            "description": "A table grid promotion requires one perspective-grid group covering at least eight editable quad cells."
           }
         ],
         "review_notes": [
@@ -327,6 +353,19 @@
             "max_disconnected_components": 2,
             "severity": "red",
             "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds."
+          }
+        ],
+        "group_gates": [
+          {
+            "id": "text-parallel-stroke-grouping",
+            "gate_type": "grouping",
+            "expected_group_kinds": [
+              "parallel_stroke_group"
+            ],
+            "min_count": 1,
+            "min_member_count": 10,
+            "severity": "yellow",
+            "description": "Text and thin UI strokes should expose at least one sizeable parallel-stroke group for review."
           }
         ],
         "review_notes": [

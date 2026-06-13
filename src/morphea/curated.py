@@ -664,6 +664,7 @@ def _promotion_gate_results(
     if isinstance(promotion, dict):
         gates.extend(_configured_promotion_gates(case, promotion))
         gates.extend(_region_promotion_gates(case, promotion, manifest=manifest))
+        gates.extend(_group_promotion_gates(case, promotion, manifest=manifest))
         visual_gate = _visual_threshold_promotion_gate(case, promotion)
         if visual_gate is not None:
             gates.append(visual_gate)
@@ -867,6 +868,121 @@ def _visual_threshold_promotion_gate(
             "description": thresholds.get("description"),
         },
     )
+
+
+def _group_promotion_gates(
+    case: dict[str, Any],
+    promotion: dict[str, Any],
+    *,
+    manifest: dict[str, Any] | None = None,
+) -> list[dict[str, object]]:
+    configured = promotion.get("group_gates", [])
+    if not isinstance(configured, list) or not configured:
+        return []
+    manifest_groups = manifest.get("groups", []) if isinstance(manifest, dict) else []
+    groups = [group for group in manifest_groups if isinstance(group, dict)]
+    checked = case.get("status") == "checked"
+    gates: list[dict[str, object]] = []
+    for gate in configured:
+        if not isinstance(gate, dict):
+            continue
+        expected_kinds = [
+            str(item)
+            for item in gate.get("expected_group_kinds", [])
+            if isinstance(item, str)
+        ]
+        selected = [
+            group
+            for group in groups
+            if not expected_kinds or str(group.get("kind")) in expected_kinds
+        ]
+        min_count = int(gate.get("min_count", 1))
+        max_count = gate.get("max_count")
+        min_member_count = int(gate.get("min_member_count", 0))
+        max_member_count = gate.get("max_member_count")
+        member_counts = [_group_member_count(group) for group in selected]
+        best_member_count = max(member_counts, default=0)
+        worst_member_count = max(member_counts, default=0)
+        failures = _group_gate_failures(
+            selected_count=len(selected),
+            min_count=min_count,
+            max_count=max_count if isinstance(max_count, int) else None,
+            best_member_count=best_member_count,
+            worst_member_count=worst_member_count,
+            min_member_count=min_member_count,
+            max_member_count=(
+                max_member_count if isinstance(max_member_count, int) else None
+            ),
+        )
+        ok = checked and not failures
+        if not checked:
+            reason = f"case status is {case.get('status', 'unknown')}"
+        elif failures:
+            reason = "group constraints failed: " + ", ".join(failures)
+        else:
+            reason = "group constraints passed"
+        gates.append(
+            _promotion_gate(
+                str(gate.get("id", "group_gate")),
+                gate_type=str(gate.get("gate_type", "grouping")),
+                ok=ok,
+                severity=str(gate.get("severity", "red")),
+                reason=reason,
+                evidence={
+                    "expected_group_kinds": expected_kinds,
+                    "selected_count": len(selected),
+                    "best_member_count": best_member_count,
+                    "worst_member_count": worst_member_count,
+                    "selected_groups": _group_gate_evidence(selected),
+                    "description": gate.get("description"),
+                },
+            )
+        )
+    return gates
+
+
+def _group_gate_failures(
+    *,
+    selected_count: int,
+    min_count: int,
+    max_count: int | None,
+    best_member_count: int,
+    worst_member_count: int,
+    min_member_count: int,
+    max_member_count: int | None,
+) -> list[str]:
+    failures: list[str] = []
+    if selected_count < min_count:
+        failures.append(f"group_count {selected_count} < {min_count}")
+    if max_count is not None and selected_count > max_count:
+        failures.append(f"group_count {selected_count} > {max_count}")
+    if best_member_count < min_member_count:
+        failures.append(f"best_member_count {best_member_count} < {min_member_count}")
+    if max_member_count is not None and worst_member_count > max_member_count:
+        failures.append(
+            f"worst_member_count {worst_member_count} > {max_member_count}"
+        )
+    return failures
+
+
+def _group_gate_evidence(groups: list[dict[str, object]]) -> list[dict[str, object]]:
+    evidence: list[dict[str, object]] = []
+    for group in groups[:12]:
+        metrics = group.get("metrics", {})
+        evidence.append(
+            {
+                "id": group.get("id"),
+                "kind": group.get("kind"),
+                "member_count": _group_member_count(group),
+                "metrics": metrics if isinstance(metrics, dict) else {},
+            }
+        )
+    return evidence
+
+
+def _group_member_count(group: dict[str, object]) -> int:
+    indexes = group.get("anchor_indexes", [])
+    return len(indexes) if isinstance(indexes, list) else 0
 
 
 def _anchors_overlapping_region(
@@ -1586,6 +1702,9 @@ def _validate_promotion_metadata(
     region_gates = value.get("region_gates", [])
     if region_gates is not None:
         _validate_promotion_region_gates(case_id, region_gates)
+    group_gates = value.get("group_gates", [])
+    if group_gates is not None:
+        _validate_promotion_group_gates(case_id, group_gates)
     visual_thresholds = value.get("visual_thresholds")
     if visual_thresholds is not None:
         _validate_promotion_visual_thresholds(case_id, visual_thresholds)
@@ -1818,4 +1937,99 @@ def _validate_promotion_visual_thresholds(case_id: str, value: Any) -> None:
     ):
         raise ValueError(
             f"case {case_id} promotion visual_thresholds description must be a string"
+        )
+
+
+def _validate_promotion_group_gates(case_id: str, gates: Any) -> None:
+    if not isinstance(gates, list):
+        raise ValueError(f"case {case_id} promotion group_gates must be an array")
+    seen_ids: set[str] = set()
+    for index, gate in enumerate(gates):
+        if not isinstance(gate, dict):
+            raise ValueError(
+                f"case {case_id} promotion group_gates[{index}] must be an object"
+            )
+        gate_id = gate.get("id")
+        if not isinstance(gate_id, str) or not gate_id:
+            raise ValueError(
+                f"case {case_id} promotion group_gates[{index}] id must be a string"
+            )
+        if gate_id in seen_ids:
+            raise ValueError(
+                f"case {case_id} promotion duplicate group gate id: {gate_id}"
+            )
+        seen_ids.add(gate_id)
+        gate_type = gate.get("gate_type")
+        if gate_type not in {"grouping", "fragmentation"}:
+            raise ValueError(
+                f"case {case_id} promotion group gate {gate_id} gate_type "
+                "must be grouping or fragmentation"
+            )
+        expected = gate.get("expected_group_kinds")
+        if not isinstance(expected, list) or not expected or not all(
+            isinstance(item, str) and item for item in expected
+        ):
+            raise ValueError(
+                f"case {case_id} promotion group gate {gate_id} "
+                "expected_group_kinds must be a non-empty string array"
+            )
+        _validate_group_gate_count(case_id, gate_id, gate, "min_count", 1)
+        _validate_group_gate_count(case_id, gate_id, gate, "max_count", None)
+        _validate_group_gate_count(case_id, gate_id, gate, "min_member_count", 0)
+        _validate_group_gate_count(case_id, gate_id, gate, "max_member_count", None)
+        _validate_group_gate_order(case_id, gate_id, gate, "min_count", "max_count")
+        _validate_group_gate_order(
+            case_id,
+            gate_id,
+            gate,
+            "min_member_count",
+            "max_member_count",
+        )
+        severity = gate.get("severity", "red")
+        if severity not in PROMOTION_GATE_SEVERITIES:
+            allowed = ", ".join(sorted(PROMOTION_GATE_SEVERITIES))
+            raise ValueError(
+                f"case {case_id} promotion group gate {gate_id} severity "
+                f"must be one of: {allowed}"
+            )
+        description = gate.get("description")
+        if description is not None and (
+            not isinstance(description, str) or not description
+        ):
+            raise ValueError(
+                f"case {case_id} promotion group gate {gate_id} "
+                "description must be a string"
+            )
+
+
+def _validate_group_gate_count(
+    case_id: str,
+    gate_id: str,
+    gate: dict[str, Any],
+    key: str,
+    default: int | None,
+) -> None:
+    value = gate.get(key, default)
+    if value is None:
+        return
+    if not isinstance(value, int) or value < 0:
+        raise ValueError(
+            f"case {case_id} promotion group gate {gate_id} {key} "
+            "must be a non-negative integer"
+        )
+
+
+def _validate_group_gate_order(
+    case_id: str,
+    gate_id: str,
+    gate: dict[str, Any],
+    minimum_key: str,
+    maximum_key: str,
+) -> None:
+    minimum = gate.get(minimum_key)
+    maximum = gate.get(maximum_key)
+    if isinstance(minimum, int) and isinstance(maximum, int) and maximum < minimum:
+        raise ValueError(
+            f"case {case_id} promotion group gate {gate_id} "
+            f"{maximum_key} must be >= {minimum_key}"
         )
