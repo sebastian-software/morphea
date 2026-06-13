@@ -428,6 +428,9 @@ Implemented so far:
   now requires an accepted training comparison gate and, when configured,
   passing curated validation, with reviewed-label issue counts and
   applied-review decision counts in the cycle summary.
+- training comparisons expose per-label validation accuracy deltas, and those
+  label-level deltas feed the best/worst gate summary so primitive-family
+  regressions can block acceptance.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

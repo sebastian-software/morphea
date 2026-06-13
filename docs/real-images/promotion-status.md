@@ -237,8 +237,13 @@ be written after the training comparison gate accepts, but the cycle's
 validation suite also passes. Cycle summaries include reviewed-label issue
 counts and applied-review decision counts from the pseudo-label dataset.
 
+Training comparison reports now include per-label validation accuracy and
+`delta.label_accuracy`; those label-level deltas feed the best/worst training
+gate summary, so a primitive-family regression can block model acceptance even
+when an aggregate split metric improves.
+
 ## Next Gate
 
-The next mainline block should add family-level regression evidence to reviewed
-self-learning acceptance, so a model cannot pass by improving aggregate
-validation while degrading a real-image or primitive family.
+The next mainline block should broaden family-level regression evidence from
+label families to suite families: real-image, Lucide, and primitive validation
+views should report which families improved, held steady, or regressed.

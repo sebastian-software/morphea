@@ -1553,6 +1553,7 @@ def evaluate_classifier(
         "examples": total,
         "accuracy": correct / total if total else None,
         "confusion": confusion,
+        "label_accuracy": _label_accuracy_from_confusion(confusion),
     }
 
 
@@ -1577,7 +1578,23 @@ def evaluate_raster_classifier(
         "examples": total,
         "accuracy": correct / total if total else None,
         "confusion": confusion,
+        "label_accuracy": _label_accuracy_from_confusion(confusion),
     }
+
+
+def _label_accuracy_from_confusion(
+    confusion: dict[str, dict[str, int]],
+) -> dict[str, dict[str, object]]:
+    result: dict[str, dict[str, object]] = {}
+    for label, predicted_counts in sorted(confusion.items()):
+        total = sum(predicted_counts.values())
+        correct = int(predicted_counts.get(label, 0))
+        result[label] = {
+            "examples": total,
+            "correct": correct,
+            "accuracy": correct / total if total else None,
+        }
+    return result
 
 
 def evaluate_raster_classifier_ranking(

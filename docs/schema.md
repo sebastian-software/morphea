@@ -572,6 +572,11 @@ the classifier-backed curated validation also passes. The cycle summary also
 records reviewed-label issue counts and applied-review decision counts from the
 pseudo-label dataset.
 
+Training comparison reports include per-label `label_accuracy` for validation
+splits and `delta.label_accuracy` rows. These label-level deltas are included
+in the best/worst accuracy summary, so a regression in one primitive family can
+block the training gate even if aggregate accuracy improves.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

@@ -1254,7 +1254,12 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertIn("feature_importance", result["baseline"])
             self.assertIn("feature_importance", result["augmented"])
+            self.assertIn(
+                "label_accuracy",
+                result["baseline"]["evaluation"]["val"],
+            )
             self.assertIn("ranking_evaluation", result["delta"])
+            self.assertIn("label_accuracy", result["delta"])
             self.assertIn("feature_importance", result["delta"])
             self.assertTrue(
                 any(
@@ -1285,6 +1290,15 @@ class SelfLearningTests(unittest.TestCase):
                 "augmented": {"evaluation": {"val": {"accuracy": 0.6}}},
                 "delta": {
                     "evaluation": {"val": 0.1},
+                    "label_accuracy": {
+                        "val": {
+                            "circle": {
+                                "baseline_accuracy": 0.5,
+                                "augmented_accuracy": 1.0,
+                                "accuracy_delta": 0.5,
+                            }
+                        }
+                    },
                     "feature_importance": [
                         {
                             "feature": "group_count",
@@ -1300,6 +1314,8 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("# Morphēa Training Comparison", markdown)
         self.assertIn("- Status: `improved`", markdown)
         self.assertIn("| `val` | 0.5 | 0.6 | 0.1 |", markdown)
+        self.assertIn("## Label Accuracy Delta", markdown)
+        self.assertIn("| `val` | `circle` | 0.5 | 1 | 0.5 |", markdown)
         self.assertIn("## Feature Importance Delta", markdown)
         self.assertIn("| `group_count` | 0 | 1 | 1 |", markdown)
 

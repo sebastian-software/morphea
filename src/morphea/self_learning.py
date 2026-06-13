@@ -1794,6 +1794,32 @@ def render_training_comparison_markdown(report: dict[str, object]) -> str:
             f"{_fmt_metric(_split_metric_for_markdown(augmented, 'ranking_evaluation', split, 'classifier_accuracy'))} | "
             f"{_fmt_metric(_delta_for_markdown(delta, 'ranking_evaluation', split, 'classifier_accuracy'))} |"
         )
+    label_delta = delta.get("label_accuracy", {})
+    if isinstance(label_delta, dict) and label_delta:
+        lines.extend(
+            [
+                "",
+                "## Label Accuracy Delta",
+                "",
+                "| Split | Label | Baseline | Augmented | Delta |",
+                "| --- | --- | ---: | ---: | ---: |",
+            ]
+        )
+        for split in ("val", "test"):
+            split_data = label_delta.get(split, {})
+            if not isinstance(split_data, dict):
+                continue
+            for label, item in sorted(split_data.items()):
+                if not isinstance(item, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{split}` | "
+                    f"`{label}` | "
+                    f"{_fmt_metric(item.get('baseline_accuracy'))} | "
+                    f"{_fmt_metric(item.get('augmented_accuracy'))} | "
+                    f"{_fmt_metric(item.get('accuracy_delta'))} |"
+                )
     importance_delta = delta.get("feature_importance", {})
     if isinstance(importance_delta, list) and importance_delta:
         lines.extend(
@@ -1909,6 +1935,13 @@ def _training_comparison_delta(
             }
             for split in ("val", "test")
         },
+        "label_accuracy": {
+            split: _label_accuracy_delta(
+                _split_object_metric(baseline, "evaluation", split, "label_accuracy"),
+                _split_object_metric(augmented, "evaluation", split, "label_accuracy"),
+            )
+            for split in ("val", "test")
+        },
         "feature_importance": _feature_importance_delta(baseline, augmented),
     }
 
@@ -1952,6 +1985,17 @@ def _comparison_metric_deltas(delta: dict[str, object]) -> list[float]:
             if not isinstance(split_data, dict):
                 continue
             for value in split_data.values():
+                if isinstance(value, (int, float)):
+                    values.append(float(value))
+    labels = delta.get("label_accuracy", {})
+    if isinstance(labels, dict):
+        for split_data in labels.values():
+            if not isinstance(split_data, dict):
+                continue
+            for label_data in split_data.values():
+                if not isinstance(label_data, dict):
+                    continue
+                value = label_data.get("accuracy_delta")
                 if isinstance(value, (int, float)):
                     values.append(float(value))
     return values
@@ -2019,6 +2063,21 @@ def _split_metric(
     return float(value) if isinstance(value, (int, float)) else None
 
 
+def _split_object_metric(
+    report: dict[str, object],
+    section: str,
+    split: str,
+    metric: str,
+) -> object:
+    section_data = report.get(section, {})
+    if not isinstance(section_data, dict):
+        return None
+    split_data = section_data.get(split, {})
+    if not isinstance(split_data, dict):
+        return None
+    return split_data.get(metric)
+
+
 def _accuracy_delta(
     baseline: float | None,
     augmented: float | None,
@@ -2026,3 +2085,39 @@ def _accuracy_delta(
     if baseline is None or augmented is None:
         return None
     return augmented - baseline
+
+
+def _label_accuracy_delta(
+    baseline: object,
+    augmented: object,
+) -> dict[str, dict[str, object]]:
+    if not isinstance(baseline, dict):
+        baseline = {}
+    if not isinstance(augmented, dict):
+        augmented = {}
+    labels = sorted(set(baseline) | set(augmented))
+    result: dict[str, dict[str, object]] = {}
+    for label in labels:
+        baseline_data = baseline.get(label, {})
+        augmented_data = augmented.get(label, {})
+        if not isinstance(baseline_data, dict):
+            baseline_data = {}
+        if not isinstance(augmented_data, dict):
+            augmented_data = {}
+        baseline_accuracy = baseline_data.get("accuracy")
+        augmented_accuracy = augmented_data.get("accuracy")
+        result[str(label)] = {
+            "baseline_accuracy": baseline_accuracy,
+            "augmented_accuracy": augmented_accuracy,
+            "accuracy_delta": _accuracy_delta(
+                float(baseline_accuracy)
+                if isinstance(baseline_accuracy, (int, float))
+                else None,
+                float(augmented_accuracy)
+                if isinstance(augmented_accuracy, (int, float))
+                else None,
+            ),
+            "baseline_examples": baseline_data.get("examples"),
+            "augmented_examples": augmented_data.get("examples"),
+        }
+    return result

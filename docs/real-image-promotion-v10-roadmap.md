@@ -374,6 +374,9 @@ rejected/deferred review items from trainable datasets.
 `morphea self-learn` separates retraining from acceptance: acceptance requires
 the training comparison gate plus passing curated validation when configured,
 and cycle summaries expose reviewed-label issue and applied-decision counts.
+Training comparisons now include per-label validation accuracy deltas, and
+those deltas feed best/worst gate summaries so primitive-family regressions can
+block acceptance.
 
 Canonical issue tags:
 
@@ -510,6 +513,9 @@ dependency:
    quality improves without family regressions.
 15. **Add family regression evidence**: acceptance must show which real-image,
    Lucide, and primitive families improved, held steady, or regressed.
+16. **Promote suite-family validation**: compare real-image, Lucide, and
+   primitive validation views side by side before accepting self-learning
+   models.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.
