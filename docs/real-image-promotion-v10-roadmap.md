@@ -165,6 +165,54 @@ Green requires passing all hard gates. Yellow may have acceptable raster
 metrics. Red may have acceptable raster metrics. The label is assigned by the
 promotion contract, not by a single metric.
 
+## Gate Registry
+
+Hard gates block promotion. Score components can rank candidates after these
+gates pass, but they cannot override a hard failure.
+
+| Gate | Blocks When | Required Evidence |
+| --- | --- | --- |
+| Shape class | Candidate primitive family does not match the intended source structure. | detector family, expected family, visual overlay |
+| Topology | Holes, cut-outs, open/closed state, joins, or disconnected parts are wrong. | source mask, candidate topology summary, diff |
+| Distinct anchors | One detected anchor satisfies multiple semantic parts that should be independent. | contract expectation ids, anchor ids |
+| Fragmentation | One editable object becomes many ungrouped or noisy pieces. | shape count, group ids, source region |
+| Grouping | Repeated or related objects lose their relationship or form a misleading group. | group metrics, member ids, overlay |
+| Visual fidelity | Candidate is visibly misplaced, distorted, or incomplete beyond family tolerance. | rendered SVG, reference crop, diff metrics |
+| Provenance | Candidate lacks source region, detector path, or decision rationale. | manifest fields, run artifact paths |
+| Review safety | Candidate would become training data without accepted review. | review record, label provenance |
+
+Any hard-gate failure makes the candidate red unless the region is explicitly
+marked `deferred` before semantic promotion is attempted.
+
+## Report Contract
+
+Promotion reports must lead with decision quality rather than raw metric
+tables.
+
+Required report order:
+
+1. red failures by severity;
+2. false-positive promotion risks;
+3. yellow cases requiring review;
+4. green promoted regions;
+5. fallback and deferred regions;
+6. aggregate metrics;
+7. artifact index.
+
+Every report should include:
+
+- case-level red/yellow/green status;
+- region-level promotion decisions;
+- failed hard gates;
+- issue tags;
+- score component breakdowns;
+- reference/render/diff contact sheet links;
+- snapshot comparison when a baseline exists;
+- missing-source or capability warnings.
+
+Reports that show only aggregate pass/fail counts are incomplete for v10+
+promotion work.
+
 ## Milestone Ladder
 
 ### RIP0: Roadmap Cleanup and Audit Baseline
