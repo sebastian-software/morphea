@@ -521,7 +521,8 @@ def _check_curated_case(
         if isinstance(result.get("promotion"), dict):
             result["promotion_gates"] = _promotion_gate_results(result)
             result["promotion_summary"] = _promotion_summary(
-                result["promotion_gates"]
+                result["promotion_gates"],
+                case_status=result.get("status"),
             )
             result["promotion_regions"] = _promotion_region_results(result)
             result["editability_review"] = _editability_review(
@@ -535,7 +536,8 @@ def _check_curated_case(
         if isinstance(result.get("promotion"), dict):
             result["promotion_gates"] = _promotion_gate_results(result)
             result["promotion_summary"] = _promotion_summary(
-                result["promotion_gates"]
+                result["promotion_gates"],
+                case_status=result.get("status"),
             )
             result["promotion_regions"] = _promotion_region_results(result)
             result["editability_review"] = _editability_review(
@@ -609,7 +611,10 @@ def _check_curated_case(
         )
         if isinstance(manifest, dict) and isinstance(result.get("metrics"), dict):
             manifest["metrics"] = result["metrics"]
-        result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
+        result["promotion_summary"] = _promotion_summary(
+            result["promotion_gates"],
+            case_status=result.get("status"),
+        )
         result["promotion_regions"] = _promotion_region_results(result)
         result["editability_review"] = _editability_review(
             result,
@@ -1510,17 +1515,25 @@ def _promotion_gate(
     }
 
 
-def _promotion_summary(gates: list[dict[str, object]]) -> dict[str, object]:
+def _promotion_summary(
+    gates: list[dict[str, object]],
+    *,
+    case_status: object = None,
+) -> dict[str, object]:
     failed = [gate for gate in gates if not gate.get("ok", False)]
     has_red = any(gate.get("severity") == "red" for gate in failed)
     has_yellow = any(gate.get("severity") == "yellow" for gate in failed)
-    if has_red:
+    deferred_reason = None
+    if case_status == "missing_source":
+        decision = "deferred"
+        deferred_reason = "missing_source"
+    elif has_red:
         decision = "rejected"
     elif has_yellow:
         decision = "deferred"
     else:
         decision = "promoted"
-    return {
+    result = {
         "decision": decision,
         "failed_gate_count": len(failed),
         "red_gate_count": sum(1 for gate in failed if gate.get("severity") == "red"),
@@ -1528,6 +1541,9 @@ def _promotion_summary(gates: list[dict[str, object]]) -> dict[str, object]:
             1 for gate in failed if gate.get("severity") == "yellow"
         ),
     }
+    if deferred_reason is not None:
+        result["deferred_reason"] = deferred_reason
+    return result
 
 
 def _apply_promotion_gate_editability_components(

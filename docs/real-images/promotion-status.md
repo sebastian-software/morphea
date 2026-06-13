@@ -31,7 +31,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, table group 2/8, layer count 4 > 3, visual L1 0.235448 > 0.18 |
-| `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
+| `chatgpt-image-2026-06-11` | missing local file | missing_source, promotion deferred | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit; `deferred_reason=missing_source` |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
 
 Current curated semantic result: 3 cases, 1 checked expectation pass, 1 checked
@@ -146,6 +146,9 @@ decision and the gate/component evidence a reviewer needs to edit it.
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
 label is green.
+Missing-source promotion cases remain red suite evidence and continue to count
+as known baseline debt, but their promotion decision is now `deferred` with
+`deferred_reason: missing_source` rather than a rejected semantic candidate.
 
 ## RIP2 Exit Audit
 
@@ -298,7 +301,9 @@ baseline comparison path is covered outside helper-only unit tests.
 ## Next Gate
 
 The next mainline block should reduce reviewed baseline debt without hiding it:
-resolve or explicitly defer the Lucide `badge-check` case and the two
-generated-illustration table-grid real-image families. A future accepted cycle
-should move at least one known debt row into `resolved_regressions` without
-introducing new regressions.
+resolve the Lucide `badge-check` outline mismatch and the checked
+`generated_illustration_table_grid` failure. The opaque generated-illustration
+case is now explicitly deferred as missing source, but it remains baseline debt
+until the local source is restored or replaced by reviewed evidence. A future
+accepted cycle should move at least one known debt row into
+`resolved_regressions` without introducing new regressions.

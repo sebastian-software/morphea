@@ -1464,6 +1464,54 @@ class CuratedSuiteTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_missing_source_promotion_case_is_deferred(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "missing.png"
+            suite = root / "suite.json"
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "missing-promotion-image",
+                                "source": str(source),
+                                "promotion": {
+                                    **_promotion_metadata("red"),
+                                    "current_status": "missing_source",
+                                    "current_issues": ["missing_local_source"],
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(suite, run=True)
+
+            case = result["cases"][0]
+            self.assertFalse(case["ok"])
+            self.assertEqual(case["status"], "missing_source")
+            self.assertEqual(case["promotion_summary"]["decision"], "deferred")
+            self.assertEqual(
+                case["promotion_summary"]["deferred_reason"],
+                "missing_source",
+            )
+            self.assertGreater(case["promotion_summary"]["red_gate_count"], 0)
+            self.assertEqual(
+                case["review_decision"]["suggested_decision"],
+                "deferred",
+            )
+
     def test_curated_check_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

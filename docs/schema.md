@@ -513,7 +513,7 @@ case reports also include:
   `promotion.group_gates`, `promotion.structure_thresholds`, or
   `promotion.visual_thresholds`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
-  count, and red/yellow gate counts
+  count, red/yellow gate counts, and optional `deferred_reason`
 - `promotion_regions`: region-level promotion state derived from
   `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
   or `rejected`), bounds, gate id, selected anchor ids/indexes, gate status, and
@@ -597,7 +597,9 @@ and formerly bad families that are now passing are reported in
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
-yellow gates fail.
+yellow gates fail. Missing-source promotion cases are also `deferred` with
+`deferred_reason: missing_source`; their red gates remain visible so they still
+count as unavailable suite evidence.
 
 ## Vectorize Config v1
 
