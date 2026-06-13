@@ -423,6 +423,8 @@ def anchor_to_svg_element(
             return _unsupported_anchor(anchor)
         if anchor.kind == AnchorKind.ARC and anchor.arc is not None:
             path = _arc_path(anchor.arc)
+        elif anchor.stroke.closed:
+            path = _closed_polyline_path(anchor.stroke.centerline)
         elif (
             anchor.kind == AnchorKind.STROKE_PATH
             and len(anchor.stroke.centerline) >= 3
@@ -558,6 +560,7 @@ def anchor_to_manifest_with_index(
             "is_cutout": anchor.stroke.is_cutout,
             "cap_style": anchor.stroke.cap_style,
             "join_style": anchor.stroke.join_style,
+            "closed": anchor.stroke.closed,
         }
     if anchor.quad is not None:
         data["quad"] = {
@@ -1611,6 +1614,12 @@ def _polyline_path(points: tuple[Point, ...]) -> str:
     commands = [f"M {_fmt(first.x)} {_fmt(first.y)}"]
     commands.extend(f"L {_fmt(point.x)} {_fmt(point.y)}" for point in rest)
     return " ".join(commands)
+
+
+def _closed_polyline_path(points: tuple[Point, ...]) -> str:
+    if not points:
+        return ""
+    return _polyline_path(points) + " Z"
 
 
 def _arc_path(arc: ArcAnchor) -> str:

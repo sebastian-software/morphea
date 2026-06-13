@@ -93,6 +93,7 @@ class StrokeAnchor:
     parallel_group_id: str | None = None
     cap_style: str = "round"
     join_style: str = "round"
+    closed: bool = False
 
 
 @dataclass(frozen=True)

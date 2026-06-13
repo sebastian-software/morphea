@@ -165,11 +165,15 @@ def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:
         if len(points) < 2:
             return
         width = _stroke_width(anchor)
-        if kind == "stroke_path" and len(points) >= 3:
+        closed = bool(anchor["stroke"].get("closed", False))
+        if kind == "stroke_path" and len(points) >= 3 and not closed:
             points = _sampled_catmull_rom_points(points)
+        if closed:
+            points = [*points, points[0]]
         draw.line(points, fill=color, width=width, joint="curve")
         if (
             kind == "stroke_path"
+            and not closed
             and str(anchor["stroke"].get("cap_style", "round")) == "round"
         ):
             _draw_round_caps(draw, (points[0], points[-1]), width, color)

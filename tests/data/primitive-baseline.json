@@ -2062,13 +2062,13 @@
         "arc": 1,
         "stroke_circle": 1
       },
-      "bbox_iou": 0.95646,
-      "edge": 0.062164,
+      "bbox_iou": 0.947858,
+      "edge": 0.040174,
       "kind": "stroke_circle",
-      "l1": 0.054883,
+      "l1": 0.032617,
       "ok": true,
-      "svg_edge": 0.059494,
-      "svg_l1": 0.051044
+      "svg_edge": 0.045582,
+      "svg_l1": 0.037176
     },
     "cutout_curve_ring_offset": {
       "anchor_count": 2,
@@ -2076,13 +2076,13 @@
         "arc": 1,
         "stroke_circle": 1
       },
-      "bbox_iou": 0.951836,
-      "edge": 0.058358,
+      "bbox_iou": 0.945751,
+      "edge": 0.03806,
       "kind": "stroke_circle",
-      "l1": 0.057227,
+      "l1": 0.029492,
       "ok": true,
-      "svg_edge": 0.054578,
-      "svg_l1": 0.049103
+      "svg_edge": 0.043839,
+      "svg_l1": 0.036427
     },
     "cutout_curve_ring_thick": {
       "anchor_count": 2,
@@ -2090,13 +2090,13 @@
         "arc": 1,
         "stroke_circle": 1
       },
-      "bbox_iou": 0.940919,
-      "edge": 0.061318,
+      "bbox_iou": 0.946802,
+      "edge": 0.042711,
       "kind": "stroke_circle",
-      "l1": 0.060742,
+      "l1": 0.033398,
       "ok": true,
-      "svg_edge": 0.068336,
-      "svg_l1": 0.064796
+      "svg_edge": 0.048119,
+      "svg_l1": 0.039922
     },
     "cutout_curve_s": {
       "anchor_count": 2,

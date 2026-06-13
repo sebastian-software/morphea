@@ -85,6 +85,32 @@ class SceneExportTests(unittest.TestCase):
         self.assertEqual(manifest["anchors"][0]["stroke"]["cap_style"], "square")
         self.assertEqual(manifest["anchors"][0]["stroke"]["join_style"], "miter")
 
+    def test_closed_stroke_path_exports_closed_svg_path(self):
+        anchor = AnchorCandidate(
+            kind=AnchorKind.STROKE_PATH,
+            raster_error=0.0,
+            node_count=4,
+            parameter_count=9,
+            stroke=StrokeAnchor(
+                centerline=(
+                    Point(2, 2),
+                    Point(5, 10),
+                    Point(7, 6),
+                    Point(10, 5),
+                ),
+                width_samples=(2.0,),
+                closed=True,
+            ),
+        )
+        scene = Scene(width=12, height=12, anchors=(anchor,))
+
+        svg = scene.to_svg()
+        manifest = scene.to_manifest()
+
+        self.assertIn(" Z", svg)
+        self.assertIn('fill="none"', svg)
+        self.assertTrue(manifest["anchors"][0]["stroke"]["closed"])
+
     def test_butt_stroke_manifest_bounds_do_not_extend_along_centerline(self):
         anchor = AnchorCandidate(
             kind=AnchorKind.STROKE_POLYLINE,

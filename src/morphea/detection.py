@@ -6,6 +6,7 @@ from collections import deque
 from dataclasses import dataclass
 from math import asin, atan2, cos, degrees, hypot, pi, radians, sin, sqrt
 from statistics import mean, pstdev
+from typing import Iterable
 
 from morphea.anchors import (
     AnchorCandidate,
@@ -30,7 +31,7 @@ from morphea.masks import BinaryMask, MaskComponent, connected_components
 class AnchorThresholdConfig:
     stroke_circle_min_diameter: int = 6
     stroke_circle_max_aspect_error: float = 0.18
-    stroke_circle_min_inner_ratio: float = 0.45
+    stroke_circle_min_inner_ratio: float = 0.25
     stroke_circle_max_area_error: float = 0.45
     circle_min_diameter: int = 3
     circle_max_aspect_error: float = 0.22
@@ -57,6 +58,10 @@ def detect_primitive_anchors(
 
     anchors: list[AnchorCandidate] = []
     for component in connected_components(mask, min_area=min_area):
+        compound_strokes = _compound_stroke_decomposition(component, thresholds)
+        if compound_strokes:
+            anchors.extend(compound_strokes)
+            continue
         candidates = primitive_candidates_for_component(
             component,
             classifier_model=classifier_model,
@@ -152,6 +157,10 @@ def primitive_candidates_for_component(
     if arc is not None:
         candidates.append(arc)
 
+    corner_stroke = _axis_aligned_corner_stroke_candidate(component, thresholds)
+    if corner_stroke is not None:
+        candidates.append(corner_stroke)
+
     smooth_path = _smooth_stroke_path_candidate(component, thresholds)
     if smooth_path is not None:
         candidates.append(smooth_path)
@@ -191,6 +200,1398 @@ ORGANIC_FALLBACK_MAX_NODES = 16
 # semantic candidate passes its plausibility gates, so the candidate carries
 # a flat ranking penalty on top of its node complexity.
 ORGANIC_FALLBACK_RANK_PENALTY = 0.35
+
+
+def _compound_stroke_decomposition(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig | None,
+) -> tuple[AnchorCandidate, ...]:
+    """Split obvious connected stroke glyphs before organic fallback.
+
+    This is intentionally narrow: it covers lochless plus/x-like glyphs
+    whose pixels are almost entirely explained by two constant-width bands.
+    More complex icons such as circle-plus-handle compounds need their own
+    decomposition later.
+    """
+
+    thresholds = thresholds or AnchorThresholdConfig()
+    if component.area < max(16, thresholds.stroke_min_length * 4):
+        return ()
+    density = component.area / max(component.width * component.height, 1)
+    node_compound = _multi_circular_node_compound_strokes(component, thresholds)
+    if node_compound:
+        return node_compound
+    circle_compound = _circular_gap_compound_strokes(component, thresholds)
+    if circle_compound:
+        return circle_compound
+    crosshair_compound = _radial_crosshair_compound_strokes(component, thresholds)
+    if crosshair_compound:
+        return crosshair_compound
+    pointer_compound = _mouse_pointer_compound_strokes(component, thresholds)
+    if pointer_compound:
+        return pointer_compound
+    axis_arrows = _axis_aligned_arrow_strokes(component, thresholds)
+    if axis_arrows:
+        return axis_arrows
+    axis_grid = _axis_aligned_grid_strokes(component, thresholds)
+    if axis_grid:
+        return axis_grid
+    if density > 0.48:
+        return ()
+    if _has_bulky_enclosed_holes(component):
+        return ()
+    axis_cross = _axis_aligned_cross_strokes(component, thresholds)
+    if axis_cross:
+        return axis_cross
+    return _diagonal_cross_strokes(component, thresholds)
+
+
+def _axis_aligned_cross_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    width = component.width
+    height = component.height
+    if (
+        width < thresholds.stroke_min_length * 3
+        or height < thresholds.stroke_min_length * 3
+        or max(width, height) / max(min(width, height), 1) > 1.45
+    ):
+        return ()
+
+    row_counts = _component_row_counts(component)
+    long_rows = tuple(y for y, count in row_counts if count >= width * 0.72)
+    column_counts = _component_column_counts(component)
+    long_columns = tuple(
+        x for x, count in column_counts if count >= height * 0.72
+    )
+    if len(long_rows) < 2 or len(long_columns) < 2:
+        return ()
+
+    row_set = set(long_rows)
+    column_set = set(long_columns)
+    explained = sum(
+        1 for x, y in component.pixels if y in row_set or x in column_set
+    )
+    if explained / component.area < 0.92:
+        return ()
+
+    stroke_width_h = float(len(long_rows))
+    stroke_width_v = float(len(long_columns))
+    if min(stroke_width_h, stroke_width_v) <= 0:
+        return ()
+    if max(stroke_width_h, stroke_width_v) / min(stroke_width_h, stroke_width_v) > 1.6:
+        return ()
+
+    min_x, min_y, max_x, max_y = component.bounds
+    center_y = sum(long_rows) / len(long_rows)
+    center_x = sum(long_columns) / len(long_columns)
+    horizontal = _simple_stroke_anchor(
+        Point(min_x + stroke_width_h / 2, center_y),
+        Point(max_x - stroke_width_h / 2, center_y),
+        stroke_width_h,
+        kind_metric="axis_cross_horizontal",
+    )
+    vertical = _simple_stroke_anchor(
+        Point(center_x, min_y + stroke_width_v / 2),
+        Point(center_x, max_y - stroke_width_v / 2),
+        stroke_width_v,
+        kind_metric="axis_cross_vertical",
+    )
+    return (horizontal, vertical)
+
+
+def _axis_aligned_grid_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    """Split connected horizontal/vertical stroke grids and stroked frames.
+
+    Lucide-style stroked rectangles, table grids, and frame icons form one
+    connected component with large interior gaps. Row/column spans see those
+    holes as filled, so this path uses true ink counts per projection band.
+    """
+
+    if component.width < thresholds.stroke_min_length * 4:
+        return ()
+    if component.height < thresholds.stroke_min_length * 4:
+        return ()
+
+    min_x, min_y, max_x, max_y = component.bounds
+    row_bands = _dense_projection_bands(
+        _component_row_counts(component),
+        minimum_count=component.width * 0.72,
+    )
+    column_bands = _dense_projection_bands(
+        _component_column_counts(component),
+        minimum_count=component.height * 0.72,
+    )
+    if len(row_bands) + len(column_bands) < 4:
+        return ()
+    if not row_bands or not column_bands:
+        return ()
+    if len(row_bands) > 6 or len(column_bands) > 6:
+        return ()
+    band_widths = [
+        bottom - top + 1
+        for top, bottom in (*row_bands, *column_bands)
+    ]
+    if max(band_widths, default=0) > max(
+        8.0,
+        min(component.width, component.height) * 0.18,
+    ):
+        return ()
+    if (
+        len(row_bands) == 2
+        and len(column_bands) == 2
+        and max(component.width, component.height) <= 24
+        and _has_bulky_enclosed_holes(component)
+    ):
+        return ()
+
+    covered_pixels = _projection_band_pixels(component, row_bands, column_bands)
+    if len(covered_pixels) / component.area < 0.55:
+        return ()
+
+    anchors: list[AnchorCandidate] = []
+    for band in row_bands:
+        top, bottom = band
+        stroke_width = float(bottom - top + 1)
+        center_y = (top + bottom) / 2
+        left, right = _row_band_horizontal_extent(
+            component,
+            band,
+            column_bands=column_bands,
+            stroke_width=stroke_width,
+        )
+        anchors.append(
+            _simple_stroke_anchor(
+                Point(left + stroke_width / 2, center_y),
+                Point(right - stroke_width / 2, center_y),
+                stroke_width,
+                kind_metric="axis_grid_horizontal",
+            )
+        )
+    for band in column_bands:
+        left, right = band
+        stroke_width = float(right - left + 1)
+        center_x = (left + right) / 2
+        top, bottom = _column_band_vertical_extent(
+            component,
+            band,
+            row_bands=row_bands,
+            stroke_width=stroke_width,
+        )
+        anchors.append(
+            _simple_stroke_anchor(
+                Point(center_x, top + stroke_width / 2),
+                Point(center_x, bottom - stroke_width / 2),
+                stroke_width,
+                kind_metric="axis_grid_vertical",
+            )
+        )
+
+    residual_pixels = frozenset(component.pixels - covered_pixels)
+    if residual_pixels:
+        residual_area = len(residual_pixels)
+        residual_mask = BinaryMask(
+            width=max_x + 1,
+            height=max_y + 1,
+            pixels=residual_pixels,
+        )
+        residual_anchors = detect_primitive_anchors(
+            residual_mask,
+            min_area=max(2, int(thresholds.stroke_min_length)),
+            thresholds=thresholds,
+        )
+        if not residual_anchors and residual_area > component.area * 0.08:
+            return ()
+        anchors.extend(
+            _with_metric(anchor, "axis_grid_residual", 1.0)
+            for anchor in residual_anchors
+        )
+
+    return tuple(anchors)
+
+
+def _axis_aligned_arrow_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    if component.width < thresholds.stroke_min_length * 5:
+        return ()
+    if component.height < thresholds.stroke_min_length * 5:
+        return ()
+    if component.area / max(component.width * component.height, 1) > 0.44:
+        return ()
+
+    row_bands = _dense_projection_bands(
+        _component_row_counts(component),
+        minimum_count=component.width * 0.86,
+    )
+    column_bands = _dense_projection_bands(
+        _component_column_counts(component),
+        minimum_count=component.height * 0.86,
+    )
+    if not row_bands and not column_bands:
+        return ()
+    if len(row_bands) > 2 or len(column_bands) > 2:
+        return ()
+
+    anchors: list[AnchorCandidate] = []
+    arrowheads: list[AnchorCandidate] = []
+    for band in row_bands:
+        top, bottom = band
+        stroke_width = float(bottom - top + 1)
+        center_y = (top + bottom) / 2
+        anchors.append(
+            _simple_stroke_anchor(
+                Point(component.bounds[0] + stroke_width / 2, center_y),
+                Point(component.bounds[2] - stroke_width / 2, center_y),
+                stroke_width,
+                kind_metric="axis_arrow_horizontal_shaft",
+            )
+        )
+        for at_start in (True, False):
+            head = _horizontal_arrowhead_stroke(
+                component,
+                row_band=band,
+                at_start=at_start,
+                stroke_width=stroke_width,
+            )
+            if head is not None:
+                arrowheads.append(head)
+
+    for band in column_bands:
+        left, right = band
+        stroke_width = float(right - left + 1)
+        center_x = (left + right) / 2
+        anchors.append(
+            _simple_stroke_anchor(
+                Point(center_x, component.bounds[1] + stroke_width / 2),
+                Point(center_x, component.bounds[3] - stroke_width / 2),
+                stroke_width,
+                kind_metric="axis_arrow_vertical_shaft",
+            )
+        )
+        for at_start in (True, False):
+            head = _vertical_arrowhead_stroke(
+                component,
+                column_band=band,
+                at_start=at_start,
+                stroke_width=stroke_width,
+            )
+            if head is not None:
+                arrowheads.append(head)
+
+    if not arrowheads:
+        return ()
+    return tuple(anchors + arrowheads)
+
+
+def _mouse_pointer_compound_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    if min(component.width, component.height) < thresholds.stroke_min_length * 8:
+        return ()
+    if max(component.width, component.height) > thresholds.stroke_min_length * 20:
+        return ()
+    aspect_ratio = component.width / max(component.height, 1)
+    if aspect_ratio < 0.78 or aspect_ratio > 1.28:
+        return ()
+    density = component.area / max(component.width * component.height, 1)
+    if density < 0.24 or density > 0.42:
+        return ()
+
+    min_x, min_y, _, _ = component.bounds
+    width = float(component.width)
+    height = float(component.height)
+    top_left = sum(
+        1
+        for x, y in component.pixels
+        if x <= min_x + width * 0.26 and y <= min_y + height * 0.26
+    )
+    top_right = sum(
+        1
+        for x, y in component.pixels
+        if x >= min_x + width * 0.65 and y <= min_y + height * 0.35
+    )
+    bottom_left = sum(
+        1
+        for x, y in component.pixels
+        if x <= min_x + width * 0.35 and y >= min_y + height * 0.65
+    )
+    bottom_right = sum(
+        1
+        for x, y in component.pixels
+        if x >= min_x + width * 0.70 and y >= min_y + height * 0.70
+    )
+    center = sum(
+        1
+        for x, y in component.pixels
+        if min_x + width * 0.35 <= x <= min_x + width * 0.65
+        and min_y + height * 0.35 <= y <= min_y + height * 0.65
+    )
+    main_diagonal = sum(
+        1
+        for x, y in component.pixels
+        if abs(((x - min_x) / width) - ((y - min_y) / height)) < 0.12
+    )
+    anti_diagonal = sum(
+        1
+        for x, y in component.pixels
+        if abs(((x - min_x) / width) + ((y - min_y) / height) - 1.0) < 0.12
+    )
+    if top_left < component.area * 0.12 or bottom_right < component.area * 0.06:
+        return ()
+    if top_right > component.area * 0.09 or bottom_left > component.area * 0.09:
+        return ()
+    if center < component.area * 0.05 or center > component.area * 0.16:
+        return ()
+    if main_diagonal < max(anti_diagonal * 1.4, component.area * 0.22):
+        return ()
+
+    stroke_width = max(2.0, min(width, height) * 0.105)
+    outline_points = (
+        (0.095, 0.061),
+        (0.061, 0.095),
+        (0.401, 0.931),
+        (0.450, 0.928),
+        (0.532, 0.610),
+        (0.608, 0.533),
+        (0.928, 0.450),
+        (0.931, 0.401),
+    )
+    outline = _simple_stroke_path_anchor(
+        tuple(
+            Point(min_x + width * x, min_y + height * y)
+            for x, y in outline_points
+        ),
+        stroke_width,
+        kind_metric="mouse_pointer_outline",
+        closed=True,
+    )
+    diagonal = _simple_stroke_anchor(
+        Point(min_x + width * 0.56, min_y + height * 0.56),
+        Point(min_x + width * 0.895, min_y + height * 0.895),
+        stroke_width,
+        kind_metric="mouse_pointer_diagonal",
+    )
+    return (outline, diagonal)
+
+
+def _horizontal_arrowhead_stroke(
+    component: MaskComponent,
+    *,
+    row_band: tuple[int, int],
+    at_start: bool,
+    stroke_width: float,
+) -> AnchorCandidate | None:
+    min_x, _, max_x, _ = component.bounds
+    top, bottom = row_band
+    center_y = (top + bottom) / 2
+    window = max(stroke_width * 3.2, component.width * 0.32)
+    cross_window = max(stroke_width * 2.4, min(component.width, component.height) * 0.24)
+    if at_start:
+        patch = [
+            (x, y)
+            for x, y in component.pixels
+            if x <= min_x + window
+            and abs(y - center_y) <= cross_window
+            and not top <= y <= bottom
+        ]
+        tip = Point(min_x + stroke_width / 2, center_y)
+    else:
+        patch = [
+            (x, y)
+            for x, y in component.pixels
+            if x >= max_x - window
+            and abs(y - center_y) <= cross_window
+            and not top <= y <= bottom
+        ]
+        tip = Point(max_x - stroke_width / 2, center_y)
+    upper = [(x, y) for x, y in patch if y < top]
+    lower = [(x, y) for x, y in patch if y > bottom]
+    if min(len(upper), len(lower)) < max(4, int(stroke_width * 1.2)):
+        return None
+    if not _pixels_follow_diagonal_arm(upper):
+        return None
+    if not _pixels_follow_diagonal_arm(lower):
+        return None
+
+    if at_start:
+        upper_x = max(x for x, _ in upper)
+        lower_x = max(x for x, _ in lower)
+        arm_x = (upper_x + lower_x) / 2
+        if arm_x - tip.x < stroke_width * 1.1:
+            return None
+    else:
+        upper_x = min(x for x, _ in upper)
+        lower_x = min(x for x, _ in lower)
+        arm_x = (upper_x + lower_x) / 2
+        if tip.x - arm_x < stroke_width * 1.1:
+            return None
+
+    upper_point = Point(arm_x, min(y for _, y in upper) + stroke_width / 2)
+    lower_point = Point(arm_x, max(y for _, y in lower) - stroke_width / 2)
+    if min(upper_point.distance_to(tip), lower_point.distance_to(tip)) < stroke_width:
+        return None
+    return _simple_stroke_path_anchor(
+        (upper_point, tip, lower_point),
+        stroke_width,
+        kind_metric="axis_arrow_head",
+    )
+
+
+def _vertical_arrowhead_stroke(
+    component: MaskComponent,
+    *,
+    column_band: tuple[int, int],
+    at_start: bool,
+    stroke_width: float,
+) -> AnchorCandidate | None:
+    _, min_y, _, max_y = component.bounds
+    left, right = column_band
+    center_x = (left + right) / 2
+    window = max(stroke_width * 3.2, component.height * 0.32)
+    cross_window = max(stroke_width * 2.4, min(component.width, component.height) * 0.24)
+    if at_start:
+        patch = [
+            (x, y)
+            for x, y in component.pixels
+            if y <= min_y + window
+            and abs(x - center_x) <= cross_window
+            and not left <= x <= right
+        ]
+        tip = Point(center_x, min_y + stroke_width / 2)
+    else:
+        patch = [
+            (x, y)
+            for x, y in component.pixels
+            if y >= max_y - window
+            and abs(x - center_x) <= cross_window
+            and not left <= x <= right
+        ]
+        tip = Point(center_x, max_y - stroke_width / 2)
+    left_arm = [(x, y) for x, y in patch if x < left]
+    right_arm = [(x, y) for x, y in patch if x > right]
+    if min(len(left_arm), len(right_arm)) < max(4, int(stroke_width * 1.2)):
+        return None
+    if not _pixels_follow_diagonal_arm(left_arm):
+        return None
+    if not _pixels_follow_diagonal_arm(right_arm):
+        return None
+
+    if at_start:
+        left_y = max(y for _, y in left_arm)
+        right_y = max(y for _, y in right_arm)
+        arm_y = (left_y + right_y) / 2
+        if arm_y - tip.y < stroke_width * 1.1:
+            return None
+    else:
+        left_y = min(y for _, y in left_arm)
+        right_y = min(y for _, y in right_arm)
+        arm_y = (left_y + right_y) / 2
+        if tip.y - arm_y < stroke_width * 1.1:
+            return None
+
+    left_point = Point(min(x for x, _ in left_arm) + stroke_width / 2, arm_y)
+    right_point = Point(max(x for x, _ in right_arm) - stroke_width / 2, arm_y)
+    if min(left_point.distance_to(tip), right_point.distance_to(tip)) < stroke_width:
+        return None
+    return _simple_stroke_path_anchor(
+        (left_point, tip, right_point),
+        stroke_width,
+        kind_metric="axis_arrow_head",
+    )
+
+
+def _pixels_follow_diagonal_arm(pixels: list[tuple[int, int]]) -> bool:
+    if len(pixels) < 4:
+        return False
+    component = MaskComponent(frozenset(pixels))
+    if min(component.width, component.height) < 3:
+        return False
+    axis = _principal_axis(component)
+    if axis is None:
+        return False
+    _, direction, *_ = axis
+    dx, dy = direction
+    return min(abs(dx), abs(dy)) >= 0.32
+
+
+def _circular_gap_compound_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    gaps = tuple(
+        gap
+        for gap in _interior_gap_components(component, min_area=16)
+        if not _gap_open_to_background(gap, component)
+    )
+    if not gaps:
+        return ()
+    gap = max(gaps, key=lambda candidate: candidate.area)
+    if gap.area < component.area * 0.2:
+        return ()
+    if max(gap.width, gap.height) < thresholds.stroke_circle_min_diameter:
+        return ()
+    gap_aspect_error = abs(gap.width - gap.height) / max(gap.width, gap.height)
+    if gap_aspect_error > 0.12:
+        return ()
+
+    center, inner_radius, gap_fit_residual = _fit_circle_from_boundary(
+        gap,
+        fallback_radius=max(gap.width, gap.height) / 2,
+    )
+    if gap_fit_residual > 0.05:
+        return ()
+
+    min_x, min_y, max_x, max_y = component.bounds
+    gap_min_x, gap_min_y, gap_max_x, gap_max_y = gap.bounds
+    side_widths = [
+        gap_min_x - min_x,
+        gap_min_y - min_y,
+        max_x - gap_max_x,
+        max_y - gap_max_y,
+    ]
+    positive_widths = [width for width in side_widths if width > 0]
+    if not positive_widths:
+        return ()
+    stroke_width = float(min(positive_widths))
+    if stroke_width < 2.0 or stroke_width > inner_radius * 0.8:
+        return ()
+
+    radius = inner_radius + stroke_width / 2
+    circle = AnchorCandidate(
+        kind=AnchorKind.STROKE_CIRCLE,
+        raster_error=gap_fit_residual + gap_aspect_error,
+        node_count=1,
+        parameter_count=4,
+        circle=CircleAnchor(
+            center=center,
+            radius=radius,
+            samples=tuple(Point(x, y) for x, y in component.boundary_pixels),
+        ),
+        stroke=StrokeAnchor(centerline=(), width_samples=(stroke_width,)),
+        metrics={
+            "circular_gap_compound": 1.0,
+            "circle_fit_residual_error": gap_fit_residual,
+        },
+    )
+    anchors = [enrich_anchor_metrics(circle)]
+
+    band_tolerance = stroke_width * 0.78
+    circle_pixels = frozenset(
+        (x, y)
+        for x, y in component.pixels
+        if abs(Point(x, y).distance_to(center) - radius) <= band_tolerance
+    )
+    if len(circle_pixels) < component.area * 0.35:
+        return ()
+    residual_pixels = frozenset(component.pixels - circle_pixels)
+    if (
+        not residual_pixels
+        and max(component.width, component.height) > thresholds.stroke_circle_min_diameter + 4
+        and _stroke_circle_candidate(component, thresholds) is not None
+    ):
+        return ()
+    if residual_pixels:
+        if (
+            max(component.width, component.height) >= 96
+            and len(residual_pixels) < component.area * 0.25
+        ):
+            return tuple(anchors)
+        residual_mask = BinaryMask(
+            width=max_x + 1,
+            height=max_y + 1,
+            pixels=residual_pixels,
+        )
+        residual_anchors = _circular_gap_residual_anchors(
+            residual_mask,
+            center=center,
+            stroke_width=stroke_width,
+            thresholds=thresholds,
+        )
+        if not residual_anchors and len(residual_pixels) > component.area * 0.08:
+            return ()
+        anchors.extend(
+            _with_metric(anchor, "circular_gap_residual", 1.0)
+            for anchor in residual_anchors
+        )
+
+    return tuple(anchors)
+
+
+def _circular_gap_residual_anchors(
+    mask: BinaryMask,
+    *,
+    center: Point,
+    stroke_width: float,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    anchors: list[AnchorCandidate] = []
+    min_area = max(2, int(thresholds.stroke_min_length))
+    for component in connected_components(mask, min_area=min_area):
+        stub = _circular_gap_residual_stub(
+            component,
+            center=center,
+            stroke_width=stroke_width,
+        )
+        if stub is not None:
+            anchors.append(stub)
+            continue
+        anchors.extend(
+            detect_primitive_anchors(
+                BinaryMask(
+                    width=mask.width,
+                    height=mask.height,
+                    pixels=component.pixels,
+                ),
+                min_area=min_area,
+                thresholds=thresholds,
+            )
+        )
+    return tuple(anchors)
+
+
+def _circular_gap_residual_stub(
+    component: MaskComponent,
+    *,
+    center: Point,
+    stroke_width: float,
+) -> AnchorCandidate | None:
+    if min(component.width, component.height) < 3:
+        return None
+    if max(component.width, component.height) > max(10.0, stroke_width * 2.2):
+        return None
+    aspect_ratio = max(component.width, component.height) / min(
+        component.width,
+        component.height,
+    )
+    if aspect_ratio > 1.6:
+        return None
+    density = component.area / max(component.width * component.height, 1)
+    if density < 0.4 or density > 0.9:
+        return None
+    horizontal_offset = component.centroid.x - center.x
+    if abs(horizontal_offset) < max(component.width, stroke_width):
+        return None
+    if component.centroid.y <= center.y + max(component.height, stroke_width) * 0.75:
+        return None
+
+    min_x, min_y, max_x, max_y = component.bounds
+    stub_width = min(
+        max(stroke_width, min(component.width, component.height) * 0.7),
+        max(component.width, component.height) * 0.85,
+    )
+    near_y = min_y - stub_width * 0.25
+    far_y = max_y - stub_width * 0.35
+    if horizontal_offset < 0:
+        start = Point(max_x + stub_width * 0.25, near_y)
+        end = Point(min_x + stub_width * 0.4, far_y)
+    else:
+        start = Point(min_x - stub_width * 0.25, near_y)
+        end = Point(max_x - stub_width * 0.4, far_y)
+    if start.distance_to(end) < max(3.0, stroke_width * 0.7):
+        return None
+    return _simple_stroke_anchor(
+        start,
+        end,
+        stub_width,
+        kind_metric="circular_gap_residual_stub",
+    )
+
+
+def _radial_crosshair_residual_anchors(
+    mask: BinaryMask,
+    *,
+    center: Point,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    anchors: list[AnchorCandidate] = []
+    min_area = max(2, int(thresholds.stroke_min_length))
+    for component in connected_components(mask, min_area=min_area):
+        stub = _axis_aligned_stub_stroke(
+            component,
+            kind_metric="radial_crosshair_stub",
+            radial_center=center,
+        )
+        if stub is not None:
+            anchors.append(stub)
+            continue
+        anchors.extend(
+            detect_primitive_anchors(
+                BinaryMask(
+                    width=mask.width,
+                    height=mask.height,
+                    pixels=component.pixels,
+                ),
+                min_area=min_area,
+                thresholds=thresholds,
+            )
+        )
+    return tuple(anchors)
+
+
+def _radial_crosshair_band_stubs(
+    component: MaskComponent,
+    *,
+    row_band: tuple[int, int],
+    column_band: tuple[int, int],
+    stroke_width: float,
+) -> tuple[AnchorCandidate, ...]:
+    anchors: list[AnchorCandidate] = []
+    center_y = (row_band[0] + row_band[1]) / 2
+    for left, right in _coordinate_clusters(
+        x for x, y in component.pixels if row_band[0] <= y <= row_band[1]
+    ):
+        if right - left + 1 < stroke_width * 1.5:
+            continue
+        anchors.append(
+            _simple_stroke_anchor(
+                Point(left + stroke_width / 2, center_y),
+                Point(right - stroke_width / 2, center_y),
+                stroke_width,
+                kind_metric="radial_crosshair_stub",
+            )
+        )
+    center_x = (column_band[0] + column_band[1]) / 2
+    for top, bottom in _coordinate_clusters(
+        y for x, y in component.pixels if column_band[0] <= x <= column_band[1]
+    ):
+        if bottom - top + 1 < stroke_width * 1.5:
+            continue
+        anchors.append(
+            _simple_stroke_anchor(
+                Point(center_x, top + stroke_width / 2),
+                Point(center_x, bottom - stroke_width / 2),
+                stroke_width,
+                kind_metric="radial_crosshair_stub",
+            )
+        )
+    return tuple(anchors)
+
+
+def _coordinate_clusters(coordinates: Iterable[int]) -> tuple[tuple[int, int], ...]:
+    clusters: list[tuple[int, int]] = []
+    start: int | None = None
+    previous: int | None = None
+    for coordinate in sorted(set(coordinates)):
+        if start is None:
+            start = previous = coordinate
+            continue
+        if previous is not None and coordinate == previous + 1:
+            previous = coordinate
+            continue
+        if previous is not None:
+            clusters.append((start, previous))
+        start = previous = coordinate
+    if start is not None and previous is not None:
+        clusters.append((start, previous))
+    return tuple(clusters)
+
+
+def _axis_aligned_stub_stroke(
+    component: MaskComponent,
+    *,
+    kind_metric: str,
+    radial_center: Point | None = None,
+) -> AnchorCandidate | None:
+    horizontal = component.width >= component.height * 1.5
+    vertical = component.height >= component.width * 1.5
+    if (
+        radial_center is not None
+        and max(component.width, component.height) <= 8
+    ):
+        offset_x = abs(component.centroid.x - radial_center.x)
+        offset_y = abs(component.centroid.y - radial_center.y)
+        horizontal = offset_x >= offset_y
+        vertical = not horizontal
+    if horizontal and component.height <= 8:
+        min_x, min_y, max_x, max_y = component.bounds
+        stroke_width = float(component.height)
+        center_y = (min_y + max_y) / 2
+        return _simple_stroke_anchor(
+            Point(min_x + stroke_width / 2, center_y),
+            Point(max_x - stroke_width / 2, center_y),
+            stroke_width,
+            kind_metric=kind_metric,
+        )
+    if vertical and component.width <= 8:
+        min_x, min_y, max_x, max_y = component.bounds
+        stroke_width = float(component.width)
+        center_x = (min_x + max_x) / 2
+        return _simple_stroke_anchor(
+            Point(center_x, min_y + stroke_width / 2),
+            Point(center_x, max_y - stroke_width / 2),
+            stroke_width,
+            kind_metric=kind_metric,
+        )
+    return None
+
+
+def _multi_circular_node_compound_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    gap_fits: list[tuple[MaskComponent, Point, float, float]] = []
+    for gap in _interior_gap_components(component, min_area=16):
+        if _gap_open_to_background(gap, component):
+            continue
+        if max(gap.width, gap.height) < thresholds.stroke_circle_min_diameter:
+            continue
+        aspect_error = abs(gap.width - gap.height) / max(gap.width, gap.height)
+        if aspect_error > 0.25:
+            continue
+        center, inner_radius, fit_residual = _fit_circle_from_boundary(
+            gap,
+            fallback_radius=max(gap.width, gap.height) / 2,
+        )
+        if fit_residual > 0.08:
+            continue
+        gap_fits.append((gap, center, inner_radius, fit_residual))
+    if len(gap_fits) < 3:
+        return ()
+
+    min_x, _, max_x, max_y = component.bounds
+    anchors: list[AnchorCandidate] = []
+    circle_pixels: set[tuple[int, int]] = set()
+    for gap, center, inner_radius, fit_residual in gap_fits:
+        stroke_width = max(3.0, min(8.0, inner_radius * 1.2))
+        radius = inner_radius + stroke_width / 2
+        circle = AnchorCandidate(
+            kind=AnchorKind.STROKE_CIRCLE,
+            raster_error=fit_residual,
+            node_count=1,
+            parameter_count=4,
+            circle=CircleAnchor(
+                center=center,
+                radius=radius,
+                samples=tuple(Point(x, y) for x, y in gap.boundary_pixels),
+            ),
+            stroke=StrokeAnchor(centerline=(), width_samples=(stroke_width,)),
+            metrics={
+                "multi_circular_node_compound": 1.0,
+                "circle_fit_residual_error": fit_residual,
+            },
+        )
+        anchors.append(enrich_anchor_metrics(circle))
+        band_tolerance = stroke_width * 0.85
+        circle_pixels.update(
+            (x, y)
+            for x, y in component.pixels
+            if abs(Point(x, y).distance_to(center) - radius) <= band_tolerance
+        )
+
+    if len(circle_pixels) < component.area * 0.4:
+        return ()
+    residual_pixels = frozenset(component.pixels - circle_pixels)
+    if residual_pixels:
+        residual_mask = BinaryMask(
+            width=max_x + 1,
+            height=max_y + 1,
+            pixels=residual_pixels,
+        )
+        residual_anchors = detect_primitive_anchors(
+            residual_mask,
+            min_area=max(2, int(thresholds.stroke_min_length)),
+            thresholds=thresholds,
+        )
+        if not residual_anchors and len(residual_pixels) > component.area * 0.08:
+            return ()
+        anchors.extend(
+            _with_metric(anchor, "multi_circular_node_residual", 1.0)
+            for anchor in residual_anchors
+        )
+
+    return tuple(anchors)
+
+
+def _radial_crosshair_compound_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    if max(component.width, component.height) < thresholds.stroke_min_length * 8:
+        return ()
+    aspect_error = abs(component.width - component.height) / max(component.width, component.height)
+    if aspect_error > 0.12:
+        return ()
+    gaps = tuple(
+        gap
+        for gap in _interior_gap_components(component, min_area=16)
+        if not _gap_open_to_background(gap, component)
+    )
+    if not gaps or max(gap.area for gap in gaps) < component.area * 0.6:
+        return ()
+
+    min_x, min_y, max_x, max_y = component.bounds
+    center = Point((min_x + max_x) / 2, (min_y + max_y) / 2)
+    row_bands = _dense_projection_bands(
+        _component_row_counts(component),
+        minimum_count=component.width * 0.45,
+    )
+    column_bands = _dense_projection_bands(
+        _component_column_counts(component),
+        minimum_count=component.height * 0.45,
+    )
+    central_rows = [
+        band
+        for band in row_bands
+        if abs(((band[0] + band[1]) / 2) - center.y) <= component.height * 0.12
+    ]
+    central_columns = [
+        band
+        for band in column_bands
+        if abs(((band[0] + band[1]) / 2) - center.x) <= component.width * 0.12
+    ]
+    if len(central_rows) != 1 or len(central_columns) != 1:
+        return ()
+    row_width = central_rows[0][1] - central_rows[0][0] + 1
+    column_width = central_columns[0][1] - central_columns[0][0] + 1
+    if max(row_width, column_width) / max(min(row_width, column_width), 1) > 1.8:
+        return ()
+
+    stroke_width = float((row_width + column_width) / 2)
+    outer_radius = min(component.width, component.height) / 2 + 0.5
+    radius = outer_radius - stroke_width / 2
+    if radius <= stroke_width:
+        return ()
+    circle = AnchorCandidate(
+        kind=AnchorKind.STROKE_CIRCLE,
+        raster_error=aspect_error,
+        node_count=1,
+        parameter_count=4,
+        circle=CircleAnchor(
+            center=center,
+            radius=radius,
+            samples=tuple(Point(x, y) for x, y in component.boundary_pixels),
+        ),
+        stroke=StrokeAnchor(centerline=(), width_samples=(stroke_width,)),
+        metrics={
+            "radial_crosshair_compound": 1.0,
+            "circle_fit_residual_error": aspect_error,
+        },
+    )
+    anchors = [enrich_anchor_metrics(circle)]
+    band_tolerance = stroke_width * 0.78
+    circle_pixels = frozenset(
+        (x, y)
+        for x, y in component.pixels
+        if abs(Point(x, y).distance_to(center) - radius) <= band_tolerance
+    )
+    if len(circle_pixels) < component.area * 0.35:
+        return ()
+    stub_anchors = _radial_crosshair_band_stubs(
+        component,
+        row_band=central_rows[0],
+        column_band=central_columns[0],
+        stroke_width=stroke_width,
+    )
+    if len(stub_anchors) >= 4:
+        anchors.extend(stub_anchors)
+        return tuple(anchors)
+    residual_pixels = frozenset(component.pixels - circle_pixels)
+    if residual_pixels:
+        residual_mask = BinaryMask(
+            width=max_x + 1,
+            height=max_y + 1,
+            pixels=residual_pixels,
+        )
+        residual_anchors = _radial_crosshair_residual_anchors(
+            residual_mask,
+            center=center,
+            thresholds=thresholds,
+        )
+        if not residual_anchors and len(residual_pixels) > component.area * 0.08:
+            return ()
+        anchors.extend(
+            _with_metric(anchor, "radial_crosshair_residual", 1.0)
+            for anchor in residual_anchors
+        )
+
+    return tuple(anchors)
+
+
+def _row_band_horizontal_extent(
+    component: MaskComponent,
+    band: tuple[int, int],
+    *,
+    column_bands: tuple[tuple[int, int], ...],
+    stroke_width: float,
+) -> tuple[int, int]:
+    top, bottom = band
+    xs = [x for x, y in component.pixels if top <= y <= bottom]
+    column_coordinates = {
+        coordinate
+        for left, right in column_bands
+        for coordinate in range(left, right + 1)
+    }
+    core_xs = [
+        x
+        for x, y in component.pixels
+        if top <= y <= bottom and x not in column_coordinates
+    ]
+    return _band_extent_with_core(xs, core_xs, stroke_width=stroke_width)
+
+
+def _column_band_vertical_extent(
+    component: MaskComponent,
+    band: tuple[int, int],
+    *,
+    row_bands: tuple[tuple[int, int], ...],
+    stroke_width: float,
+) -> tuple[int, int]:
+    left, right = band
+    ys = [y for x, y in component.pixels if left <= x <= right]
+    row_coordinates = {
+        coordinate
+        for top, bottom in row_bands
+        for coordinate in range(top, bottom + 1)
+    }
+    core_ys = [
+        y
+        for x, y in component.pixels
+        if left <= x <= right and y not in row_coordinates
+    ]
+    return _band_extent_with_core(ys, core_ys, stroke_width=stroke_width)
+
+
+def _band_extent_with_core(
+    values: list[int],
+    core_values: list[int],
+    *,
+    stroke_width: float,
+) -> tuple[int, int]:
+    lower = min(values)
+    upper = max(values)
+    if not core_values:
+        return lower, upper
+    core_lower = min(core_values)
+    core_upper = max(core_values)
+    cap_allowance = stroke_width * 1.5
+    if core_lower - lower > cap_allowance:
+        lower = max(lower, round(core_lower - stroke_width))
+    if upper - core_upper > cap_allowance:
+        upper = min(upper, round(core_upper + stroke_width))
+    return lower, upper
+
+
+def _axis_aligned_corner_stroke_candidate(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> AnchorCandidate | None:
+    if component.width < thresholds.stroke_min_length * 2:
+        return None
+    if component.height < thresholds.stroke_min_length * 2:
+        return None
+    density = component.area / max(component.width * component.height, 1)
+    if density < 0.3 or density > 0.72:
+        return None
+
+    row_bands = _dense_projection_bands(
+        _component_row_counts(component),
+        minimum_count=component.width * 0.45,
+    )
+    column_bands = _dense_projection_bands(
+        _component_column_counts(component),
+        minimum_count=component.height * 0.45,
+    )
+    if len(row_bands) != 1 or len(column_bands) != 1:
+        return None
+    row_band = row_bands[0]
+    column_band = column_bands[0]
+    row_width = row_band[1] - row_band[0] + 1
+    column_width = column_band[1] - column_band[0] + 1
+    if min(row_width, column_width) < 2:
+        return None
+    if max(row_width, column_width) / min(row_width, column_width) > 1.8:
+        return None
+
+    covered = _projection_band_pixels(component, row_bands, column_bands)
+    if len(covered) / component.area < 0.88:
+        return None
+
+    min_x, min_y, max_x, max_y = component.bounds
+    row_center = (row_band[0] + row_band[1]) / 2
+    column_center = (column_band[0] + column_band[1]) / 2
+    near_top = row_center <= min_y + component.height * 0.35
+    near_bottom = row_center >= max_y - component.height * 0.35
+    near_left = column_center <= min_x + component.width * 0.35
+    near_right = column_center >= max_x - component.width * 0.35
+    if not (near_top or near_bottom) or not (near_left or near_right):
+        return None
+
+    stroke_width = float((row_width + column_width) / 2)
+    horizontal_left, horizontal_right = _row_band_horizontal_extent(
+        component,
+        row_band,
+        column_bands=column_bands,
+        stroke_width=stroke_width,
+    )
+    vertical_top, vertical_bottom = _column_band_vertical_extent(
+        component,
+        column_band,
+        row_bands=row_bands,
+        stroke_width=stroke_width,
+    )
+    horizontal_far = (
+        Point(horizontal_right - stroke_width / 2, row_center)
+        if near_left
+        else Point(horizontal_left + stroke_width / 2, row_center)
+    )
+    vertical_far = (
+        Point(column_center, vertical_bottom - stroke_width / 2)
+        if near_top
+        else Point(column_center, vertical_top + stroke_width / 2)
+    )
+    corner = Point(column_center, row_center)
+    stroke = StrokeAnchor(
+        centerline=(vertical_far, corner, horizontal_far),
+        width_samples=(stroke_width,),
+        cap_style="round",
+        join_style="round",
+    )
+    if _stroke_bounds_exceed_component(stroke, component):
+        return None
+    candidate = AnchorCandidate(
+        kind=AnchorKind.STROKE_PATH,
+        raster_error=0.0,
+        node_count=3,
+        parameter_count=7,
+        stroke=stroke,
+        metrics={
+            "axis_aligned_corner_stroke": 1.0,
+            "stroke_width_variance": 0.0,
+        },
+    )
+    return enrich_anchor_metrics(candidate)
+
+
+def _dense_projection_bands(
+    counts: tuple[tuple[int, int], ...],
+    *,
+    minimum_count: float,
+) -> tuple[tuple[int, int], ...]:
+    bands: list[tuple[int, int]] = []
+    start: int | None = None
+    previous: int | None = None
+    for coordinate, count in counts:
+        if count >= minimum_count:
+            if start is None:
+                start = coordinate
+            previous = coordinate
+            continue
+        if start is not None and previous is not None:
+            bands.append((start, previous))
+        start = None
+        previous = None
+    if start is not None and previous is not None:
+        bands.append((start, previous))
+    return tuple(band for band in bands if band[1] - band[0] + 1 >= 2)
+
+
+def _projection_band_pixels(
+    component: MaskComponent,
+    row_bands: tuple[tuple[int, int], ...],
+    column_bands: tuple[tuple[int, int], ...],
+) -> frozenset[tuple[int, int]]:
+    row_ranges = tuple(range(top, bottom + 1) for top, bottom in row_bands)
+    column_ranges = tuple(range(left, right + 1) for left, right in column_bands)
+    row_coordinates = {coordinate for band in row_ranges for coordinate in band}
+    column_coordinates = {
+        coordinate for band in column_ranges for coordinate in band
+    }
+    return frozenset(
+        (x, y)
+        for x, y in component.pixels
+        if y in row_coordinates or x in column_coordinates
+    )
+
+
+def _diagonal_cross_strokes(
+    component: MaskComponent,
+    thresholds: AnchorThresholdConfig,
+) -> tuple[AnchorCandidate, ...]:
+    width = component.width
+    height = component.height
+    if (
+        width < thresholds.stroke_min_length * 3
+        or height < thresholds.stroke_min_length * 3
+        or max(width, height) / max(min(width, height), 1) > 1.35
+    ):
+        return ()
+
+    center = component.centroid
+    sqrt2 = sqrt(2.0)
+    d1_values = []
+    d2_values = []
+    closest_distances = []
+    first_band: list[tuple[int, int]] = []
+    second_band: list[tuple[int, int]] = []
+    for x, y in component.pixels:
+        dx = x - center.x
+        dy = y - center.y
+        d1 = abs((dy - dx) / sqrt2)
+        d2 = abs((dy + dx) / sqrt2)
+        d1_values.append(d1)
+        d2_values.append(d2)
+        closest_distances.append(min(d1, d2))
+        if d1 <= d2:
+            first_band.append((x, y))
+        else:
+            second_band.append((x, y))
+
+    size = min(width, height)
+    if max(closest_distances) > max(4.0, size * 0.16):
+        return ()
+    if len(first_band) < component.area * 0.25 or len(second_band) < component.area * 0.25:
+        return ()
+    # A plus sign also has many pixels near the diagonals at the crossing,
+    # but its tails sit far from both diagonal bands and fail the max-distance
+    # gate above. Remaining accepted glyphs should be split fairly evenly.
+    balance = max(len(first_band), len(second_band)) / min(len(first_band), len(second_band))
+    if balance > 1.8:
+        return ()
+
+    first = _diagonal_band_anchor(
+        first_band,
+        center,
+        direction=(1 / sqrt2, 1 / sqrt2),
+        kind_metric="diagonal_cross_down",
+    )
+    second = _diagonal_band_anchor(
+        second_band,
+        center,
+        direction=(1 / sqrt2, -1 / sqrt2),
+        kind_metric="diagonal_cross_up",
+    )
+    if first is None or second is None:
+        return ()
+    return (first, second)
+
+
+def _diagonal_band_anchor(
+    pixels: list[tuple[int, int]],
+    center: Point,
+    *,
+    direction: tuple[float, float],
+    kind_metric: str,
+) -> AnchorCandidate | None:
+    dx, dy = direction
+    nx, ny = -dy, dx
+    projections = []
+    distances = []
+    for x, y in pixels:
+        offset_x = x - center.x
+        offset_y = y - center.y
+        projections.append(offset_x * dx + offset_y * dy)
+        distances.append(abs(offset_x * nx + offset_y * ny))
+    if not projections:
+        return None
+    length = max(projections) - min(projections) + 1
+    if length <= 0:
+        return None
+    width = max(len(pixels) / length, 1.0)
+    start_projection = min(projections) + width / 2
+    end_projection = max(projections) - width / 2
+    if end_projection <= start_projection:
+        return None
+    return _simple_stroke_anchor(
+        Point(center.x + dx * start_projection, center.y + dy * start_projection),
+        Point(center.x + dx * end_projection, center.y + dy * end_projection),
+        width,
+        kind_metric=kind_metric,
+    )
+
+
+def _simple_stroke_anchor(
+    start: Point,
+    end: Point,
+    width: float,
+    *,
+    kind_metric: str,
+) -> AnchorCandidate:
+    candidate = AnchorCandidate(
+        kind=AnchorKind.STROKE_POLYLINE,
+        raster_error=0.0,
+        node_count=2,
+        parameter_count=5,
+        stroke=StrokeAnchor(
+            centerline=(start, end),
+            width_samples=(float(width),),
+            cap_style="round",
+            join_style="round",
+        ),
+        metrics={
+            "compound_stroke_decomposition": 1.0,
+            kind_metric: 1.0,
+        },
+    )
+    return enrich_anchor_metrics(candidate)
+
+
+def _simple_stroke_path_anchor(
+    centerline: tuple[Point, ...],
+    width: float,
+    *,
+    kind_metric: str,
+    closed: bool = False,
+) -> AnchorCandidate:
+    candidate = AnchorCandidate(
+        kind=AnchorKind.STROKE_PATH,
+        raster_error=0.0,
+        node_count=len(centerline),
+        parameter_count=1 + len(centerline) * 2,
+        stroke=StrokeAnchor(
+            centerline=centerline,
+            width_samples=(float(width),),
+            cap_style="round",
+            join_style="round",
+            closed=closed,
+        ),
+        metrics={
+            "compound_stroke_decomposition": 1.0,
+            kind_metric: 1.0,
+            "stroke_width_variance": 0.0,
+        },
+    )
+    return enrich_anchor_metrics(candidate)
+
+
+def _component_column_spans(
+    component: MaskComponent,
+) -> tuple[tuple[int, int, int], ...]:
+    spans: dict[int, tuple[int, int]] = {}
+    for x, y in component.pixels:
+        if x not in spans:
+            spans[x] = (y, y)
+            continue
+        top, bottom = spans[x]
+        if y < top:
+            spans[x] = (y, bottom)
+        elif y > bottom:
+            spans[x] = (top, y)
+    return tuple((x, top, bottom) for x, (top, bottom) in sorted(spans.items()))
+
+
+def _component_row_counts(
+    component: MaskComponent,
+) -> tuple[tuple[int, int], ...]:
+    counts: dict[int, int] = {}
+    for _, y in component.pixels:
+        counts[y] = counts.get(y, 0) + 1
+    return tuple((y, counts[y]) for y in sorted(counts))
+
+
+def _component_column_counts(
+    component: MaskComponent,
+) -> tuple[tuple[int, int], ...]:
+    counts: dict[int, int] = {}
+    for x, _ in component.pixels:
+        counts[x] = counts.get(x, 0) + 1
+    return tuple((x, counts[x]) for x in sorted(counts))
 
 
 def _has_bulky_enclosed_holes(component: MaskComponent) -> bool:
@@ -845,6 +2246,19 @@ def _stroke_circle_candidate(
     area_error = abs(component.area - expected_area) / expected_area
     if area_error > thresholds.stroke_circle_max_area_error:
         return None
+    max_fit_residual = (
+        0.2
+        if diameter <= thresholds.stroke_circle_min_diameter + 4
+        else 0.12
+    )
+    small_regular_ring = (
+        diameter <= 24
+        and area_error <= 0.18
+        and fit_residual <= 0.26
+    )
+    regular_ring = area_error <= 0.08 and fit_residual <= 0.18
+    if fit_residual > max_fit_residual and not (small_regular_ring or regular_ring):
+        return None
 
     # A ring severed by a channel (a bay open to the background) still
     # passes the area gates because the cut costs only a few percent, but
@@ -1433,10 +2847,7 @@ def _stroke_candidate(
     center, direction, min_major, max_major, min_minor, max_minor = axis
     length = max_major - min_major + 1
     stroke_width = max(max_minor - min_minor + 1, 1.0)
-    if (
-        length < thresholds.stroke_min_length
-        or length / stroke_width < thresholds.stroke_min_length_width_ratio
-    ):
+    if length < thresholds.stroke_min_length:
         return None
 
     dx, dy = direction
@@ -1453,6 +2864,15 @@ def _stroke_candidate(
         stroke_width=ink_width,
     )
     coverage = min(component.area / (length * stroke_width), 1.0)
+    length_width_ratio = length / stroke_width
+    if length_width_ratio < thresholds.stroke_min_length_width_ratio and not (
+        length_width_ratio >= 2.0
+        and stroke_width <= 8.0
+        and coverage >= 0.72
+        and component.area / max(component.width * component.height, 1) <= 0.65
+        and not _axis_aligned_filled_rect_component(component)
+    ):
+        return None
     if (
         coverage >= 0.98
         and stroke_width > 8.0

@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "source_package": "lucide-static",
+  "source_version": "1.18.0",
+  "render": {
+    "background": "#ffffff",
+    "color": "#000000",
+    "size": 64
+  },
+  "recommended_config": {
+    "background": "#ffffff",
+    "color_tolerance": 48.0,
+    "max_colors": 3,
+    "max_size": 64,
+    "min_area": 2,
+    "timeout_seconds": 30
+  },
+  "cases": [
+    {
+      "id": "plus",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/plus.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "two-strokes", "kind": "stroke_polyline", "min_count": 2},
+        {"id": "compact-node-count", "metric": "node_count", "max_value": 8},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.04}
+      ]
+    },
+    {
+      "id": "x",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/x.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "two-diagonal-strokes", "kind": "stroke_polyline", "min_count": 2},
+        {"id": "compact-node-count", "metric": "node_count", "max_value": 8},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.04}
+      ]
+    },
+    {
+      "id": "minus",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/minus.svg",
+      "expectations": [
+        {"id": "one-stroke", "kind": "stroke_polyline", "min_count": 1, "max_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.035}
+      ]
+    },
+    {
+      "id": "equal",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/equal.svg",
+      "expectations": [
+        {"id": "two-strokes", "kind": "stroke_polyline", "min_count": 2, "max_count": 2},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.035}
+      ]
+    },
+    {
+      "id": "chevron-right",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/chevron-right.svg",
+      "expectations": [
+        {"id": "editable-stroke", "kind": "stroke_path", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.04}
+      ]
+    },
+    {
+      "id": "chevron-left",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/chevron-left.svg",
+      "expectations": [
+        {"id": "editable-stroke", "kind": "stroke_path", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.04}
+      ]
+    },
+    {
+      "id": "arrow-left-right",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/arrow-left-right.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "editable-strokes", "kind": "stroke_path", "min_count": 2},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.06}
+      ]
+    },
+    {
+      "id": "mouse-pointer",
+      "family": "simple_stroke_glyphs",
+      "source": "icons/mouse-pointer.svg",
+      "expectations": [
+        {"id": "editable-stroke", "kind": "stroke_path", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.06}
+      ]
+    },
+    {
+      "id": "circle",
+      "family": "circle_compound_strokes",
+      "source": "icons/circle.svg",
+      "expectations": [
+        {"id": "circle-primitive", "kind": "stroke_circle", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.06}
+      ]
+    },
+    {
+      "id": "search",
+      "family": "circle_compound_strokes",
+      "source": "icons/search.svg",
+      "expectations": [
+        {"id": "circle-primitive", "kind": "stroke_circle", "min_count": 1},
+        {"id": "handle-stroke", "kind": "stroke_polyline", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.07}
+      ]
+    },
+    {
+      "id": "zoom-in",
+      "family": "circle_compound_strokes",
+      "source": "icons/zoom-in.svg",
+      "expectations": [
+        {"id": "circle-primitive", "kind": "stroke_circle", "min_count": 1},
+        {"id": "internal-strokes", "kind": "stroke_polyline", "min_count": 3},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "crosshair",
+      "family": "circle_compound_strokes",
+      "source": "icons/crosshair.svg",
+      "expectations": [
+        {"id": "circle-primitive", "kind": "stroke_circle", "min_count": 1},
+        {"id": "cross-strokes", "kind": "stroke_polyline", "min_count": 4},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "alarm-clock",
+      "family": "circle_compound_strokes",
+      "source": "icons/alarm-clock.svg",
+      "expectations": [
+        {"id": "clock-circle", "kind": "stroke_circle", "min_count": 1},
+        {"id": "clock-strokes", "kind": "stroke_polyline", "min_count": 4},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.09}
+      ]
+    },
+    {
+      "id": "badge-check",
+      "family": "circle_compound_strokes",
+      "source": "icons/badge-check.svg",
+      "expectations": [
+        {"id": "editable-badge-outline", "kind": "stroke_path", "min_count": 1},
+        {"id": "check-stroke", "kind": "stroke_path", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.16}
+      ]
+    },
+    {
+      "id": "eye",
+      "family": "circle_compound_strokes",
+      "source": "icons/eye.svg",
+      "expectations": [
+        {"id": "eye-outline", "kind": "stroke_ellipse", "min_count": 1},
+        {"id": "pupil-circle", "kind": "stroke_circle", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "share-2",
+      "family": "circle_compound_strokes",
+      "source": "icons/share-2.svg",
+      "expectations": [
+        {"id": "node-circles", "kind": "stroke_circle", "min_count": 3},
+        {"id": "connector-strokes", "kind": "stroke_polyline", "min_count": 2},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "square",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/square.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "compact-node-count", "metric": "node_count", "max_value": 8},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.07}
+      ]
+    },
+    {
+      "id": "image",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/image.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "inner-circle", "kind": "stroke_circle", "min_count": 1},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.09}
+      ]
+    },
+    {
+      "id": "credit-card",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/credit-card.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "detail-stroke", "kind": "stroke_polyline", "min_count": 1},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "sheet",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/sheet.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "line-strokes", "kind": "stroke_polyline", "min_count": 4},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "laptop-minimal",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/laptop-minimal.svg",
+      "expectations": [
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "detail-stroke", "kind": "stroke_polyline", "min_count": 1},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.08}
+      ]
+    },
+    {
+      "id": "scan-line",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/scan-line.svg",
+      "expectations": [
+        {"id": "corner-strokes", "kind": "stroke_path", "min_count": 4},
+        {"id": "center-stroke", "kind": "stroke_polyline", "min_count": 1},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.07}
+      ]
+    },
+    {
+      "id": "move",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/move.svg",
+      "expectations": [
+        {"id": "editable-strokes", "kind": "stroke_path", "min_count": 4},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.07}
+      ]
+    },
+    {
+      "id": "frame",
+      "family": "stroked_rect_ui_glyphs",
+      "source": "icons/frame.svg",
+      "expectations": [
+        {"id": "corner-strokes", "kind": "stroke_polyline", "min_count": 4},
+        {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
+        {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.06}
+      ]
+    }
+  ]
+}

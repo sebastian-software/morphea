@@ -17,6 +17,7 @@ from morphea.curated import check_curated_suite
 from morphea.dataset import generate_synthetic_dataset
 from morphea.eval import write_eval_summary
 from morphea.images import scene_from_flat_color_image
+from morphea.lucide_quality import check_lucide_suite
 from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
@@ -85,7 +86,7 @@ VECTORIZE_DEFAULT_CONFIG = {
     "simple_shape_bonus_weight": 1.0,
     "stroke_circle_min_diameter": 6,
     "stroke_circle_max_aspect_error": 0.18,
-    "stroke_circle_min_inner_ratio": 0.45,
+    "stroke_circle_min_inner_ratio": 0.25,
     "stroke_circle_max_area_error": 0.45,
     "circle_min_diameter": 3,
     "circle_max_aspect_error": 0.22,
@@ -275,6 +276,12 @@ CURATED_CHECK_CONFIG_KEYS = {
     "snapshot",
     "markdown",
 }
+LUCIDE_CHECK_CONFIG_KEYS = {
+    "suite",
+    "output",
+    "output_dir",
+    "markdown",
+} | set(VECTORIZE_DEFAULT_CONFIG)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -909,6 +916,20 @@ def main(argv: list[str] | None = None) -> None:
     curated_check.add_argument("--markdown", type=Path)
     curated_check.add_argument("--config", type=Path)
 
+    lucide_check = subcommands.add_parser(
+        "lucide-check",
+        help="Validate the curated Lucide icon benchmark suite.",
+    )
+    lucide_check.add_argument("suite", type=Path, nargs="?")
+    lucide_check.add_argument("-o", "--output", type=Path)
+    lucide_check.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory for per-case Lucide artifacts.",
+    )
+    lucide_check.add_argument("--markdown", type=Path)
+    lucide_check.add_argument("--config", type=Path)
+
     sweep = subcommands.add_parser(
         "sweep",
         help="Run a config-driven vectorize sweep.",
@@ -1477,6 +1498,29 @@ def main(argv: list[str] | None = None) -> None:
             markdown=curated_config.get("markdown"),
         )
         print(f"checked {result['case_count']} curated cases")
+        return
+
+    if args.command == "lucide-check":
+        lucide_config = _resolved_lucide_check_config(args)
+        overrides = {
+            key: value
+            for key, value in lucide_config.items()
+            if key in VECTORIZE_DEFAULT_CONFIG
+        }
+        result = check_lucide_suite(
+            lucide_config["suite"],
+            output=lucide_config["output"],
+            output_dir=lucide_config.get("output_dir"),
+            markdown=lucide_config.get("markdown"),
+            config_overrides=overrides,
+        )
+        print(
+            "checked "
+            f"{result['case_count']} Lucide cases "
+            f"({result['failed_count']} failed)"
+        )
+        if not result["ok"]:
+            raise SystemExit(1)
         return
 
     if args.command == "sweep":
@@ -2352,6 +2396,23 @@ def _resolved_curated_check_config(args: argparse.Namespace) -> dict[str, object
     return config
 
 
+def _resolved_lucide_check_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_lucide_check_config(args.config)
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.output is not None:
+        config["output"] = args.output
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("suite", "output"), "lucide-check")
+    for key in ("suite", "output", "output_dir", "markdown", "classifier_model"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -2487,6 +2548,23 @@ def _load_curated_check_config(path: Path | None) -> dict[str, object]:
             config[key] = Path(str(config[key]))
     if "run" in config and not isinstance(config["run"], bool):
         raise ValueError("curated-check run must be a boolean")
+    return config
+
+
+def _load_lucide_check_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("lucide-check config must be a JSON object")
+    unknown = sorted(set(loaded) - LUCIDE_CHECK_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported lucide-check config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("suite", "output", "output_dir", "markdown", "classifier_model"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
     return config
 
 

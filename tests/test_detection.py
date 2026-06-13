@@ -138,6 +138,280 @@ class PrimitiveDetectionTests(unittest.TestCase):
 
         self.assertNotEqual(anchors[0].kind, AnchorKind.CIRCLE)
 
+    def test_connected_axis_cross_decomposes_to_two_strokes(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((14, 32, 50, 32), fill="black", width=6)
+        draw.line((32, 14, 32, 50), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 2)
+        self.assertEqual([anchor.kind for anchor in anchors], [
+            AnchorKind.STROKE_POLYLINE,
+            AnchorKind.STROKE_POLYLINE,
+        ])
+        self.assertTrue(
+            all("compound_stroke_decomposition" in anchor.metrics for anchor in anchors)
+        )
+
+    def test_connected_diagonal_cross_decomposes_to_two_strokes(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((16, 16, 48, 48), fill="black", width=5)
+        draw.line((16, 48, 48, 16), fill="black", width=5)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 2)
+        self.assertEqual([anchor.kind for anchor in anchors], [
+            AnchorKind.STROKE_POLYLINE,
+            AnchorKind.STROKE_POLYLINE,
+        ])
+        self.assertTrue(
+            all("compound_stroke_decomposition" in anchor.metrics for anchor in anchors)
+        )
+
+    def test_axis_aligned_arrow_decomposes_to_shaft_and_head(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((10, 32, 54, 32), fill="black", width=5)
+        draw.line((10, 32, 22, 20), fill="black", width=5)
+        draw.line((10, 32, 22, 44), fill="black", width=5)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertEqual(kinds.count(AnchorKind.STROKE_POLYLINE), 1)
+        self.assertEqual(kinds.count(AnchorKind.STROKE_PATH), 1)
+        self.assertTrue(any("axis_arrow_head" in anchor.metrics for anchor in anchors))
+        self.assertNotIn(AnchorKind.CUBIC_PATH, kinds)
+
+    def test_four_way_move_decomposes_to_axes_and_arrowheads(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((6, 32, 58, 32), fill="black", width=6)
+        draw.line((32, 6, 32, 58), fill="black", width=6)
+        draw.line((6, 32, 15, 23), fill="black", width=6)
+        draw.line((6, 32, 15, 41), fill="black", width=6)
+        draw.line((58, 32, 49, 23), fill="black", width=6)
+        draw.line((58, 32, 49, 41), fill="black", width=6)
+        draw.line((32, 6, 23, 15), fill="black", width=6)
+        draw.line((32, 6, 41, 15), fill="black", width=6)
+        draw.line((32, 58, 23, 49), fill="black", width=6)
+        draw.line((32, 58, 41, 49), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertEqual(kinds.count(AnchorKind.STROKE_POLYLINE), 2)
+        self.assertEqual(kinds.count(AnchorKind.STROKE_PATH), 4)
+        self.assertTrue(
+            all("compound_stroke_decomposition" in anchor.metrics for anchor in anchors)
+        )
+        self.assertNotIn(AnchorKind.CUBIC_PATH, kinds)
+
+    def test_stroked_rounded_rect_decomposes_to_axis_grid_strokes(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((5, 5, 58, 58), radius=6, outline="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 4)
+        self.assertEqual(
+            [anchor.kind for anchor in anchors],
+            [
+                AnchorKind.STROKE_POLYLINE,
+                AnchorKind.STROKE_POLYLINE,
+                AnchorKind.STROKE_POLYLINE,
+                AnchorKind.STROKE_POLYLINE,
+            ],
+        )
+        self.assertLessEqual(sum(anchor.node_count for anchor in anchors), 8)
+        self.assertTrue(
+            all("compound_stroke_decomposition" in anchor.metrics for anchor in anchors)
+        )
+
+    def test_axis_aligned_frame_grid_decomposes_to_four_strokes(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((2, 16, 61, 16), fill="black", width=6)
+        draw.line((2, 48, 61, 48), fill="black", width=6)
+        draw.line((16, 2, 16, 61), fill="black", width=6)
+        draw.line((48, 2, 48, 61), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 4)
+        self.assertTrue(all(anchor.kind == AnchorKind.STROKE_POLYLINE for anchor in anchors))
+        self.assertEqual(sum(anchor.node_count for anchor in anchors), 8)
+        self.assertTrue(
+            any("axis_grid_horizontal" in anchor.metrics for anchor in anchors)
+        )
+        self.assertTrue(any("axis_grid_vertical" in anchor.metrics for anchor in anchors))
+
+    def test_axis_grid_uses_local_band_extents(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((5, 5, 58, 58), radius=6, outline="black", width=6)
+        draw.line((24, 21, 24, 58), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        verticals = [
+            anchor
+            for anchor in anchors
+            if "axis_grid_vertical" in anchor.metrics
+            and anchor.stroke is not None
+        ]
+        internal = min(
+            verticals,
+            key=lambda anchor: abs(anchor.stroke.centerline[0].x - 24),
+        )
+        self.assertGreater(internal.stroke.centerline[0].y, 15)
+
+    def test_axis_aligned_corner_stroke_is_detected_as_stroke_path(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((8, 8, 8, 22), fill="black", width=6)
+        draw.line((8, 8, 22, 8), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_PATH)
+        self.assertEqual(len(anchors[0].stroke.centerline), 3)
+        self.assertIn("axis_aligned_corner_stroke", anchors[0].metrics)
+
+    def test_ring_with_attached_handle_decomposes_to_circle_and_stroke(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((5, 5, 51, 51), outline="black", width=6)
+        draw.line((45, 45, 58, 58), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertIn(AnchorKind.STROKE_CIRCLE, kinds)
+        self.assertIn(AnchorKind.STROKE_POLYLINE, kinds)
+        self.assertTrue(
+            any("circular_gap_compound" in anchor.metrics for anchor in anchors)
+        )
+
+    def test_ring_with_lower_diagonal_stubs_keeps_editable_strokes(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((10, 15, 54, 59), outline="black", width=5)
+        draw.line((17, 50, 11, 56), fill="black", width=5)
+        draw.line((47, 50, 53, 56), fill="black", width=5)
+        draw.line((32, 29, 32, 40), fill="black", width=5)
+        draw.line((32, 40, 42, 40), fill="black", width=5)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertIn(AnchorKind.STROKE_CIRCLE, kinds)
+        self.assertIn(AnchorKind.STROKE_PATH, kinds)
+        self.assertNotIn(AnchorKind.CIRCLE, kinds)
+        self.assertNotIn(AnchorKind.CUBIC_PATH, kinds)
+        self.assertGreaterEqual(kinds.count(AnchorKind.STROKE_POLYLINE), 2)
+        self.assertTrue(
+            any("circular_gap_residual_stub" in anchor.metrics for anchor in anchors)
+        )
+
+    def test_small_thick_ring_prefers_stroke_circle_over_axis_grid(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((16, 16, 31, 31), outline="black", width=5)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_CIRCLE)
+
+    def test_connected_ring_nodes_decompose_to_circles_and_connectors(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((8, 24, 24, 40), outline="black", width=5)
+        draw.ellipse((40, 6, 56, 22), outline="black", width=5)
+        draw.ellipse((40, 42, 56, 58), outline="black", width=5)
+        draw.line((21, 29, 43, 17), fill="black", width=5)
+        draw.line((21, 35, 43, 47), fill="black", width=5)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertGreaterEqual(kinds.count(AnchorKind.STROKE_CIRCLE), 3)
+        self.assertGreaterEqual(kinds.count(AnchorKind.STROKE_POLYLINE), 2)
+
+    def test_crosshair_decomposes_to_circle_and_radial_strokes(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((2, 2, 61, 61), outline="black", width=6)
+        draw.line((2, 32, 16, 32), fill="black", width=6)
+        draw.line((48, 32, 61, 32), fill="black", width=6)
+        draw.line((32, 2, 32, 16), fill="black", width=6)
+        draw.line((32, 48, 32, 61), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertIn(AnchorKind.STROKE_CIRCLE, kinds)
+        self.assertGreaterEqual(kinds.count(AnchorKind.STROKE_POLYLINE), 4)
+
+    def test_short_diagonal_capsule_is_detected_as_stroke(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((45, 45, 58, 58), fill="black", width=6)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.STROKE_POLYLINE)
+        self.assertLessEqual(anchors[0].stroke.width_samples[0], 8.0)
+
+    def test_mouse_pointer_decomposes_to_closed_outline_and_diagonal_stroke(self):
+        image = Image.new("RGB", (64, 64), "white")
+        draw = ImageDraw.Draw(image)
+        outline = [
+            (9.8, 8.1),
+            (8.1, 9.8),
+            (25.4, 52.5),
+            (28.0, 52.3),
+            (32.1, 36.1),
+            (36.0, 32.2),
+            (52.3, 28.0),
+            (52.5, 25.4),
+            (9.8, 8.1),
+        ]
+        draw.line(outline, fill="black", width=5, joint="curve")
+        draw.line((33.6, 33.6, 50.7, 50.7), fill="black", width=5)
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+        kinds = [anchor.kind for anchor in anchors]
+
+        self.assertEqual(kinds.count(AnchorKind.STROKE_PATH), 1)
+        self.assertEqual(kinds.count(AnchorKind.STROKE_POLYLINE), 1)
+        outline_anchor = next(anchor for anchor in anchors if anchor.kind == AnchorKind.STROKE_PATH)
+        self.assertTrue(outline_anchor.stroke.closed)
+        self.assertIn("mouse_pointer_outline", outline_anchor.metrics)
+
     def test_circle_fit_uses_boundary_samples_over_centroid_fallback(self):
         component = MaskComponent(
             pixels=frozenset({(3, 0), (0, 3), (-3, 0), (0, -3), (0, 0)}),

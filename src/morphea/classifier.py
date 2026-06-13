@@ -1853,6 +1853,7 @@ def _stroke_from_anchor(anchor: dict[str, object]) -> StrokeAnchor | None:
         ),
         cap_style=str(stroke.get("cap_style", "round")),
         join_style=str(stroke.get("join_style", "round")),
+        closed=bool(stroke.get("closed", False)),
     )
 
 

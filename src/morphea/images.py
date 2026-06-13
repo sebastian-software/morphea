@@ -364,7 +364,7 @@ def scene_from_flat_color_image(
     simple_shape_bonus_weight: float = 1.0,
     stroke_circle_min_diameter: int = 6,
     stroke_circle_max_aspect_error: float = 0.18,
-    stroke_circle_min_inner_ratio: float = 0.45,
+    stroke_circle_min_inner_ratio: float = 0.25,
     stroke_circle_max_area_error: float = 0.45,
     circle_min_diameter: int = 3,
     circle_max_aspect_error: float = 0.22,
@@ -883,6 +883,7 @@ def _scale_stroke(stroke: StrokeAnchor | None, factor: float) -> StrokeAnchor | 
         parallel_group_id=stroke.parallel_group_id,
         cap_style=stroke.cap_style,
         join_style=stroke.join_style,
+        closed=stroke.closed,
     )
 
 
