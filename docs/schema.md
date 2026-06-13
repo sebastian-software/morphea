@@ -584,8 +584,10 @@ and optional Lucide families into `suite_family_validation`, so acceptance can
 be reviewed side by side instead of by aggregate suite status alone.
 When `suite_family_baseline` is configured, the cycle compares the normalized
 family view against a fixed baseline and reports `suite_family_baseline_comparison`.
-New bad outcomes block acceptance while already-known baseline debt stays
-visible without being classified as newly introduced.
+New bad outcomes block acceptance, already-known baseline debt is reported in
+`known_debt` / `known_debt_count` without being classified as newly introduced,
+and formerly bad families that are now passing are reported in
+`resolved_regressions` / `resolved_regression_count`.
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
@@ -1052,7 +1054,8 @@ Top-level fields:
 - `suite_family_validation`: normalized primitive, real-image, and Lucide
   family evidence used to inspect regressions before model acceptance
 - `suite_family_baseline_comparison`: optional comparison against a fixed
-  `suite_family_validation` baseline with new and resolved regression counts
+  `suite_family_validation` baseline with new regression, known-debt, and
+  resolved regression counts
 - `suite_family_baseline_snapshot`: optional snapshot-write status when
   `suite_family_baseline_output` is configured
 
@@ -1082,7 +1085,7 @@ If the requested baseline output already exists, the cycle writes it only when
 `suite_family_baseline` points to that same path; otherwise it reports
 `skipped_existing_output_requires_matching_baseline` and leaves the existing
 file untouched.
-The checked-in smoke baseline lives at
+The checked-in reviewed accepted-cycle baseline lives at
 `docs/real-images/baselines/current-suite-family-baseline.json`.
 
 ## Self-Learning Config v1

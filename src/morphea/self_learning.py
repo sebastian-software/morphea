@@ -1040,6 +1040,7 @@ def _compare_suite_family_validation_to_baseline(
     current_rows = _suite_family_outcomes_by_key(current)
     new_regressions = []
     resolved_regressions = []
+    known_debt = []
     for key, row in sorted(current_rows.items()):
         baseline_row = baseline_rows.get(key, {})
         current_outcome = row.get("outcome")
@@ -1048,6 +1049,12 @@ def _compare_suite_family_validation_to_baseline(
             baseline_outcome
         ):
             new_regressions.append(
+                _baseline_comparison_row(row, baseline_outcome)
+            )
+        elif _is_bad_family_outcome(current_outcome) and _is_bad_family_outcome(
+            baseline_outcome
+        ):
+            known_debt.append(
                 _baseline_comparison_row(row, baseline_outcome)
             )
     for key, row in sorted(baseline_rows.items()):
@@ -1070,8 +1077,10 @@ def _compare_suite_family_validation_to_baseline(
         "ok": not new_regressions,
         "new_regression_count": len(new_regressions),
         "resolved_regression_count": len(resolved_regressions),
+        "known_debt_count": len(known_debt),
         "new_regressions": new_regressions,
         "resolved_regressions": resolved_regressions,
+        "known_debt": known_debt,
     }
 
 
@@ -1592,17 +1601,18 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 f"- Baseline: `{baseline_comparison.get('baseline', 'n/a')}`",
                 f"- OK: `{baseline_comparison.get('ok', 'n/a')}`",
                 f"- New regressions: {_fmt_metric(baseline_comparison.get('new_regression_count'))}",
+                f"- Known debt: {_fmt_metric(baseline_comparison.get('known_debt_count'))}",
                 f"- Resolved regressions: {_fmt_metric(baseline_comparison.get('resolved_regression_count'))}",
                 "",
-                "| Suite | Split | Family | Baseline | Current | Evidence |",
-                "| --- | --- | --- | --- | --- | --- |",
+                "| Status | Suite | Split | Family | Baseline | Current | Evidence |",
+                "| --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         rows = _suite_family_baseline_rows(baseline_comparison)
         if rows:
             lines.extend(rows)
         else:
-            lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
+            lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
     baseline_snapshot = result.get("suite_family_baseline_snapshot")
     if (
         isinstance(baseline_snapshot, dict)
@@ -1660,7 +1670,11 @@ def _suite_family_baseline_rows(
     comparison: dict[str, object],
 ) -> list[str]:
     rows = []
-    for section in ("new_regressions", "resolved_regressions"):
+    for section, status in (
+        ("new_regressions", "new_regression"),
+        ("known_debt", "known_debt"),
+        ("resolved_regressions", "resolved_regression"),
+    ):
         items = comparison.get(section, [])
         if not isinstance(items, list):
             continue
@@ -1669,6 +1683,7 @@ def _suite_family_baseline_rows(
                 continue
             rows.append(
                 "| "
+                f"`{status}` | "
                 f"`{item.get('suite', 'n/a')}` | "
                 f"`{item.get('split') or 'n/a'}` | "
                 f"`{item.get('family', 'n/a')}` | "

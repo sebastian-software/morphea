@@ -2032,6 +2032,23 @@ class SelfLearningTests(unittest.TestCase):
                 result["suite_family_baseline_comparison"]["ok"],
                 True,
             )
+            comparison = result["suite_family_baseline_comparison"]
+            self.assertEqual(comparison["new_regression_count"], 0)
+            self.assertEqual(comparison["known_debt_count"], 1)
+            self.assertEqual(comparison["resolved_regression_count"], 0)
+            self.assertEqual(comparison["known_debt"][0]["suite"], "lucide")
+            self.assertEqual(
+                comparison["known_debt"][0]["family"],
+                "outline_circle",
+            )
+            self.assertEqual(
+                comparison["known_debt"][0]["baseline_outcome"],
+                "failed",
+            )
+            self.assertEqual(
+                comparison["known_debt"][0]["current_outcome"],
+                "failed",
+            )
             self.assertIn(
                 "lucide_validation_known_baseline_debt",
                 result["acceptance_gate"]["reasons"],
@@ -2147,6 +2164,7 @@ class SelfLearningTests(unittest.TestCase):
             comparison = result["suite_family_baseline_comparison"]
             self.assertEqual(comparison["new_regression_count"], 1)
             self.assertEqual(comparison["resolved_regression_count"], 1)
+            self.assertEqual(comparison["known_debt_count"], 0)
             self.assertEqual(
                 comparison["new_regressions"][0]["current_outcome"],
                 "regressed",
@@ -2465,6 +2483,7 @@ class SelfLearningTests(unittest.TestCase):
                     "baseline": "baseline.json",
                     "ok": False,
                     "new_regression_count": 1,
+                    "known_debt_count": 1,
                     "resolved_regression_count": 0,
                     "new_regressions": [
                         {
@@ -2474,6 +2493,18 @@ class SelfLearningTests(unittest.TestCase):
                             "baseline_outcome": "held",
                             "current_outcome": "regressed",
                             "accuracy_delta": -0.25,
+                        }
+                    ],
+                    "known_debt": [
+                        {
+                            "suite": "lucide",
+                            "split": "",
+                            "family": "circle_compound_strokes",
+                            "baseline_outcome": "failed",
+                            "current_outcome": "failed",
+                            "case_count": 8,
+                            "failed_count": 1,
+                            "missing_source_count": 0,
                         }
                     ],
                     "resolved_regressions": [],
@@ -2506,8 +2537,13 @@ class SelfLearningTests(unittest.TestCase):
         )
         self.assertIn("## Suite Family Baseline", markdown)
         self.assertIn("- New regressions: 1", markdown)
+        self.assertIn("- Known debt: 1", markdown)
         self.assertIn(
-            "| `primitive` | `val` | `circle` | `held` | `regressed` | delta=-0.25 |",
+            "| `new_regression` | `primitive` | `val` | `circle` | `held` | `regressed` | delta=-0.25 |",
+            markdown,
+        )
+        self.assertIn(
+            "| `known_debt` | `lucide` | `n/a` | `circle_compound_strokes` | `failed` | `failed` | cases=8, failed=1, missing=0 |",
             markdown,
         )
         self.assertIn("## Suite Family Baseline Snapshot", markdown)
