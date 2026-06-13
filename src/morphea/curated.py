@@ -39,6 +39,19 @@ VECTORIZE_CONFIG_KEYS = {
     "rounded_rect_max_fill_error",
 }
 
+PROMOTION_QUALITY_LABELS = {"green", "yellow", "red"}
+PROMOTION_REQUIRED_STRINGS = {
+    "stress_family",
+    "source_provenance",
+    "licensing_status",
+    "current_status",
+    "visual_audit_status",
+}
+PROMOTION_STRING_LISTS = {
+    "expected_promotion_families",
+    "current_issues",
+}
+
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
     """Load and lightly validate a curated real-image suite file."""
@@ -73,6 +86,8 @@ def load_curated_suite(path: str | Path) -> dict[str, Any]:
             raise ValueError(f"case {case_id} expectations must be an array")
         for expectation_index, expectation in enumerate(expectations):
             _validate_expectation(case_id, expectation_index, expectation)
+        if "promotion" in case:
+            _validate_promotion_metadata(case_id, case["promotion"])
     return suite
 
 
@@ -149,8 +164,8 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
         f"- Cases: {_fmt_markdown_value(report.get('case_count'))}",
         f"- OK: `{str(report.get('ok', False)).lower()}`",
         "",
-        "| Case | Status | OK | Anchors | Diagnostics | Failed expectations |",
-        "| --- | --- | ---: | ---: | ---: | --- |",
+        "| Case | Status | Quality | OK | Anchors | Diagnostics | Failed expectations |",
+        "| --- | --- | --- | ---: | ---: | ---: | --- |",
     ]
     for case in cases:
         if not isinstance(case, dict):
@@ -164,6 +179,7 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             "| "
             f"`{case.get('id', 'n/a')}` | "
             f"`{case.get('status', 'n/a')}` | "
+            f"{_fmt_promotion_quality(case.get('promotion'))} | "
             f"`{str(case.get('ok', False)).lower()}` | "
             f"{_fmt_markdown_value(case.get('anchor_count'))} | "
             f"{_fmt_markdown_value(case.get('diagnostic_count'))} | "
@@ -174,6 +190,14 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
         if not isinstance(case, dict):
             continue
         lines.extend(["", f"## {case.get('id', 'n/a')}", ""])
+        if isinstance(case.get("promotion"), dict):
+            promotion = case["promotion"]
+            lines.append(
+                "- Promotion: "
+                f"quality={_fmt_promotion_quality(promotion)}, "
+                f"stress=`{promotion.get('stress_family', 'n/a')}`, "
+                f"issues={_fmt_markdown_list(promotion.get('current_issues'))}"
+            )
         if "anchor_kind_counts" in case:
             lines.append(
                 f"- Anchor kinds: {_fmt_markdown_counts(case.get('anchor_kind_counts'))}"
@@ -258,6 +282,8 @@ def _check_curated_case(
         "ok": source_exists or not run,
         "expectations": [],
     }
+    if isinstance(case.get("promotion"), dict):
+        result["promotion"] = dict(sorted(case["promotion"].items()))
     if not source_exists:
         result["status"] = "missing_source"
         result["ok"] = not run
@@ -398,6 +424,7 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "group_kind_counts",
         "diagnostic_count",
         "metrics",
+        "promotion",
     ):
         if key in case:
             snapshot[key] = case[key]
@@ -472,6 +499,21 @@ def _fmt_markdown_counts(value: object) -> str:
     )
 
 
+def _fmt_promotion_quality(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    label = value.get("current_quality_label")
+    if not isinstance(label, str):
+        return "n/a"
+    return f"`{label}`"
+
+
+def _fmt_markdown_list(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    return ", ".join(f"`{item}`" for item in value)
+
+
 def _fmt_markdown_value(value: object) -> str:
     if isinstance(value, bool) or value is None:
         return "n/a"
@@ -521,4 +563,39 @@ def _validate_expectation(
     if not isinstance(min_count, int) or min_count < 1:
         raise ValueError(
             f"case {case_id} expectation {expectation_id} min_count must be positive"
+        )
+
+
+def _validate_promotion_metadata(case_id: str, value: Any) -> None:
+    if not isinstance(value, dict):
+        raise ValueError(f"case {case_id} promotion must be an object")
+    label = value.get("current_quality_label")
+    if label not in PROMOTION_QUALITY_LABELS:
+        allowed = ", ".join(sorted(PROMOTION_QUALITY_LABELS))
+        raise ValueError(
+            f"case {case_id} promotion current_quality_label must be one of: "
+            f"{allowed}"
+        )
+    for key in sorted(PROMOTION_REQUIRED_STRINGS):
+        if not isinstance(value.get(key), str) or not value[key]:
+            raise ValueError(f"case {case_id} promotion {key} must be a string")
+    for key in sorted(PROMOTION_STRING_LISTS):
+        items = value.get(key)
+        if not isinstance(items, list) or not all(
+            isinstance(item, str) and item for item in items
+        ):
+            raise ValueError(
+                f"case {case_id} promotion {key} must be a string array"
+            )
+    if not value["expected_promotion_families"]:
+        raise ValueError(
+            f"case {case_id} promotion expected_promotion_families must not be empty"
+        )
+    notes = value.get("review_notes", [])
+    if notes is not None and (
+        not isinstance(notes, list)
+        or not all(isinstance(item, str) and item for item in notes)
+    ):
+        raise ValueError(
+            f"case {case_id} promotion review_notes must be a string array"
         )

@@ -16,6 +16,20 @@ from morphea.curated import (
 )
 
 
+def _promotion_metadata(label: str) -> dict[str, object]:
+    return {
+        "stress_family": "test_fixture",
+        "source_provenance": "generated test fixture",
+        "licensing_status": "test_fixture",
+        "expected_promotion_families": ["circle"],
+        "current_quality_label": label,
+        "current_status": "checked",
+        "current_issues": ["fragmentation"] if label != "green" else [],
+        "visual_audit_status": "run_artifacts_only",
+        "review_notes": ["synthetic metadata fixture"],
+    }
+
+
 class CuratedSuiteTests(unittest.TestCase):
     def test_load_curated_suite_validates_required_fields(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -28,6 +42,7 @@ class CuratedSuiteTests(unittest.TestCase):
                             {
                                 "id": "simple-circle",
                                 "source": "/tmp/simple-circle.png",
+                                "promotion": _promotion_metadata("green"),
                                 "recommended_config": {"min_area": 4},
                                 "expectations": [
                                     {
@@ -51,6 +66,10 @@ class CuratedSuiteTests(unittest.TestCase):
             suite = load_curated_suite(suite_path)
 
             self.assertEqual(suite["cases"][0]["id"], "simple-circle")
+            self.assertEqual(
+                suite["cases"][0]["promotion"]["current_quality_label"],
+                "green",
+            )
 
     def test_check_curated_suite_can_run_expected_anchor_checks(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -71,6 +90,7 @@ class CuratedSuiteTests(unittest.TestCase):
                             {
                                 "id": "simple-circle",
                                 "source": str(source),
+                                "promotion": _promotion_metadata("green"),
                                 "recommended_config": {
                                     "min_area": 8,
                                     "timeout_seconds": 5,
@@ -130,6 +150,10 @@ class CuratedSuiteTests(unittest.TestCase):
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
             self.assertIn("artifacts", report["cases"][0])
+            self.assertEqual(
+                report["cases"][0]["promotion"]["current_quality_label"],
+                "green",
+            )
             snapshot_report = json.loads(snapshot.read_text(encoding="utf-8"))
             self.assertEqual(snapshot_report["schema_version"], 1)
             self.assertEqual(snapshot_report["cases"][0]["id"], "simple-circle")
@@ -147,6 +171,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 "editability_score",
             )
             self.assertIn("editability_score", snapshot_report["cases"][0]["metrics"])
+            self.assertEqual(
+                snapshot_report["cases"][0]["promotion"]["stress_family"],
+                "test_fixture",
+            )
 
     def test_render_curated_markdown_summarizes_cases_and_expectations(self):
         markdown = render_curated_markdown(
@@ -160,6 +188,7 @@ class CuratedSuiteTests(unittest.TestCase):
                         "id": "simple-circle",
                         "status": "checked",
                         "ok": False,
+                        "promotion": _promotion_metadata("red"),
                         "anchor_count": 1,
                         "diagnostic_count": 0,
                         "anchor_kind_counts": {"circle": 1},
@@ -192,7 +221,14 @@ class CuratedSuiteTests(unittest.TestCase):
         )
 
         self.assertIn("# Morphēa Curated Check", markdown)
-        self.assertIn("| `simple-circle` | `checked` | `false` | 1 | 0 | `editable-enough` |", markdown)
+        self.assertIn(
+            "| `simple-circle` | `checked` | `red` | `false` | 1 | 0 | `editable-enough` |",
+            markdown,
+        )
+        self.assertIn(
+            "- Promotion: quality=`red`, stress=`test_fixture`, issues=`fragmentation`",
+            markdown,
+        )
         self.assertIn("## simple-circle", markdown)
         self.assertIn("`circle`=1", markdown)
         self.assertIn("| `editable-enough` | `metric:editability_score` | 0.75 | >= 0.9 | `false` |", markdown)
@@ -284,6 +320,35 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "min_value or max_value"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_promotion_label(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": _promotion_metadata("blue"),
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "current_quality_label"):
                 load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):
