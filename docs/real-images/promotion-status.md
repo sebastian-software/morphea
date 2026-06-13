@@ -216,9 +216,13 @@ into the run manifest and its `promotion` object.
 can become candidates; missing, invalid, `rejected`, or `deferred` applied
 decisions remain visible in `rejected_runs`.
 
+`morphea harvest-curated --require-applied-review` preserves existing applied
+review decisions from the run root across the fresh curated rerun, restores
+them into the regenerated per-case manifests and curated JSON report, and then
+harvests only accepted/corrected applied decisions.
+
 ## Next Gate
 
-The next mainline block should wire applied promotion review decisions into the
-curated harvesting workflow end to end: preserve edited decisions across a
-fresh `harvest-curated` run or provide a reviewed run-root mode so curated
-self-learning cannot accidentally regenerate unreviewed labels.
+The next mainline block should start reviewed pseudo-label collection from
+accepted/corrected applied promotion reviews while preserving rejected and
+deferred decisions as review evidence.

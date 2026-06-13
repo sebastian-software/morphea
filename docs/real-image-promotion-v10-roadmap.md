@@ -363,6 +363,9 @@ rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests.
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
+`morphea harvest-curated --require-applied-review` preserves existing applied
+decisions across fresh curated reruns and restores them into regenerated
+manifests and curated JSON reports before harvesting.
 
 Canonical issue tags:
 
@@ -486,10 +489,13 @@ dependency:
 10. **Preserve applied decisions in curated harvests**: make rerunnable
    curated self-learning consume reviewed run roots or reapply edited decision
    records before harvesting.
-11. **Run MLX/SAM side by side**: compare segmentation sources only after the
+11. **Collect reviewed pseudo-labels**: export only accepted/corrected applied
+   promotion reviews into the reviewed-label self-learning path while retaining
+   rejected/deferred evidence.
+12. **Run MLX/SAM side by side**: compare segmentation sources only after the
    promotion evaluator can tell whether a region proposal helped.
-12. **Start reviewed pseudo-label collection**: collect labels only from green
-   or corrected review artifacts.
+13. **Run reviewed pseudo-label training loops**: train only from green or
+   corrected review artifacts after collection evidence is machine-readable.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

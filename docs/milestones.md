@@ -413,6 +413,10 @@ Implemented so far:
   applied promotion review decisions, so only `accepted` and `corrected`
   applied decisions become candidates while missing, invalid, rejected, and
   deferred decisions remain visible in `rejected_runs`.
+- `morphea harvest-curated --require-applied-review` preserves existing applied
+  review decisions across fresh curated reruns, restores them into regenerated
+  manifests and curated JSON reports, and harvests only accepted/corrected
+  applied decisions.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

@@ -194,15 +194,27 @@ def harvest_curated_pseudo_labels(
     max_anchor_quality_error: float = 1.0,
     require_applied_review: bool = False,
 ) -> dict[str, object]:
+    run_root_path = Path(run_root)
+    existing_applied_reviews = _existing_applied_reviews(run_root_path)
     curated = check_curated_suite(
         suite,
         output=curated_report,
-        output_dir=run_root,
+        output_dir=run_root_path,
         run=True,
         snapshot=snapshot,
     )
+    restored_applied_reviews = _restore_curated_applied_reviews(
+        run_root_path,
+        curated,
+        existing_applied_reviews,
+    )
+    if curated_report is not None and restored_applied_reviews:
+        Path(curated_report).write_text(
+            json.dumps(curated, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
     result = harvest_pseudo_labels(
-        run_root=run_root,
+        run_root=run_root_path,
         output=output,
         max_run_diagnostics=max_run_diagnostics,
         max_classifier_prior_error=max_classifier_prior_error,
@@ -218,7 +230,7 @@ def harvest_curated_pseudo_labels(
             "schema_version": 1,
             "source": "curated_suite",
             "suite": str(suite),
-            "run_root": str(run_root),
+            "run_root": str(run_root_path),
             "curated_ok": bool(curated.get("ok", False)),
             "curated_case_count": int(curated.get("case_count", 0)),
             "curated_checked_count": sum(
@@ -231,6 +243,8 @@ def harvest_curated_pseudo_labels(
                 for case in curated.get("cases", [])
                 if isinstance(case, dict) and case.get("status") == "missing_source"
             ),
+            "applied_review_restored_count": len(restored_applied_reviews),
+            "applied_review_restored_cases": restored_applied_reviews,
         }
     )
     output_path = Path(output)
@@ -244,6 +258,61 @@ def harvest_curated_pseudo_labels(
         markdown_path.parent.mkdir(parents=True, exist_ok=True)
         markdown_path.write_text(render_harvest_markdown(result), encoding="utf-8")
     return result
+
+
+def _existing_applied_reviews(run_root: Path) -> dict[str, dict[str, object]]:
+    reviews: dict[str, dict[str, object]] = {}
+    for manifest_path in sorted(run_root.glob("*/manifest.json")):
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict):
+            continue
+        applied = _applied_review_decision(manifest)
+        if applied:
+            reviews[manifest_path.parent.name] = applied
+    return reviews
+
+
+def _restore_curated_applied_reviews(
+    run_root: Path,
+    curated: dict[str, object],
+    applied_reviews: dict[str, dict[str, object]],
+) -> list[str]:
+    if not applied_reviews:
+        return []
+    restored: list[str] = []
+    cases = curated.get("cases", [])
+    if not isinstance(cases, list):
+        cases = []
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        case_id = case.get("id")
+        if not isinstance(case_id, str) or case_id not in applied_reviews:
+            continue
+        applied = applied_reviews[case_id]
+        case["review_decision_applied"] = applied
+        manifest_path = run_root / case_id / "manifest.json"
+        if manifest_path.exists():
+            _write_manifest_applied_review(manifest_path, applied)
+        restored.append(case_id)
+    return restored
+
+
+def _write_manifest_applied_review(
+    manifest_path: Path,
+    applied_review: dict[str, object],
+) -> None:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        return
+    manifest["review_decision_applied"] = applied_review
+    promotion = manifest.get("promotion")
+    if isinstance(promotion, dict):
+        promotion["review_decision_applied"] = applied_review
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
 
 def _applied_review_decision(manifest: dict[str, object]) -> dict[str, object]:
@@ -307,6 +376,7 @@ def render_harvest_markdown(report: dict[str, object]) -> str:
                 f"- Curated cases: {_fmt_metric(report.get('curated_case_count'))}",
                 f"- Checked cases: {_fmt_metric(report.get('curated_checked_count'))}",
                 f"- Missing sources: {_fmt_metric(report.get('curated_missing_source_count'))}",
+                f"- Restored applied reviews: {_fmt_metric(report.get('applied_review_restored_count'))}",
             ]
         )
     lines.extend(

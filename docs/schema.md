@@ -548,6 +548,11 @@ manifest and its top-level `promotion` object.
 can become pseudo-label candidates. Missing, invalid, `rejected`, and
 `deferred` applied decisions remain visible in `rejected_runs`.
 
+`morphea harvest-curated --require-applied-review` preserves existing
+`review_decision_applied` records from the run root across the fresh curated
+rerun, writes restored decisions back into the new per-case manifest and
+curated JSON report, then harvests only accepted/corrected applied decisions.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

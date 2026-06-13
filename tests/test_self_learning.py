@@ -157,6 +157,62 @@ class SelfLearningTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_harvest_curated_preserves_applied_reviews_across_rerun(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_circle_suite(root)
+            run_root = root / "runs"
+            output = root / "pseudo.json"
+            curated_report = root / "curated.json"
+            markdown = root / "pseudo.md"
+            applied_review = {
+                "decision": "accepted",
+                "case_id": "circle-case",
+                "issue_tags": [],
+            }
+            _write_manifest(
+                run_root,
+                "circle-case",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review=applied_review,
+            )
+
+            result = harvest_curated_pseudo_labels(
+                suite=suite,
+                run_root=run_root,
+                output=output,
+                curated_report=curated_report,
+                markdown=markdown,
+                require_applied_review=True,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["applied_review_restored_count"], 1)
+            self.assertEqual(result["applied_review_restored_cases"], ["circle-case"])
+            self.assertEqual(
+                result["pseudo_labels"][0]["review_decision_applied"]["decision"],
+                "accepted",
+            )
+            manifest = json.loads(
+                (run_root / "circle-case" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                manifest["review_decision_applied"]["decision"],
+                "accepted",
+            )
+            curated = json.loads(curated_report.read_text(encoding="utf-8"))
+            self.assertEqual(
+                curated["cases"][0]["review_decision_applied"]["decision"],
+                "accepted",
+            )
+            self.assertIn(
+                "- Restored applied reviews: 1",
+                markdown.read_text(encoding="utf-8"),
+            )
+
     def test_harvest_rejects_runs_with_warning_diagnostics(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
