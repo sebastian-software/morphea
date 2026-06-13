@@ -6,7 +6,9 @@ Morphēa is a local research prototype for raster-to-SVG vectorization. Its
 primary target is not to clone visually dense tracing tools. It should produce
 fewer, more meaningful, directly editable SVG shapes.
 
-For the expanded milestone roadmap, see [milestones.md](milestones.md).
+For the expanded milestone roadmap, see [milestones.md](milestones.md). For
+the uncompromising real-image promotion target, see
+[real-image-promotion-v10-roadmap.md](real-image-promotion-v10-roadmap.md).
 Key architecture decisions live in [adr](adr/), including primitive-first
 fitting and the reviewed pseudo-label self-learning loop.
 For the curved/freeform follow-up quality track, see

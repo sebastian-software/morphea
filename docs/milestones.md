@@ -16,6 +16,8 @@ then add training and self-learning loops.
 
 The active step-by-step quality track for primary forms and primitive
 compositions lives in [primitive-quality-roadmap.md](primitive-quality-roadmap.md).
+The forward-looking high-bar track for real images lives in
+[real-image-promotion-v10-roadmap.md](real-image-promotion-v10-roadmap.md).
 
 ## M0: Primitive Anchor Prototype
 
