@@ -388,6 +388,9 @@ introduced bad family outcomes, separating known suite debt from fresh
 regressions.
 When baseline comparison is clean, known curated/Lucide validation failures
 remain visible but are not blocking acceptance reasons.
+Known baseline debt is also listed as `known_debt` / `known_debt_count` in
+cycle reports, so accepted runs show carried red families separately from new
+or resolved regressions.
 `morphea self-learn --suite-family-baseline-output` writes accepted
 `suite_family_validation` snapshots as reusable baseline artifacts and skips
 writes for rejected cycles.
@@ -397,8 +400,10 @@ Existing baseline output files are protected unless the configured
 `suite_family_baseline` path matches the output path, so checked-in baselines
 cannot be overwritten by an accidental ad hoc output path.
 `docs/real-images/baselines/current-suite-family-baseline.json` is checked in
-as the first smoke baseline and is exercised through the real
-`morphea self-learn --suite-family-baseline` CLI path.
+as a reviewed accepted-cycle baseline and is exercised through the real
+`morphea self-learn --suite-family-baseline` CLI path. Its current known debt
+covers Lucide `circle_compound_strokes` plus two real-image generated
+illustration table families.
 
 Canonical issue tags:
 

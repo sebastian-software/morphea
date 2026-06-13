@@ -437,7 +437,8 @@ Implemented so far:
   acceptance on failure.
 - `morphea self-learn --suite-family-baseline baseline.json` compares current
   suite-family validation with a fixed baseline and blocks acceptance only for
-  newly introduced bad family outcomes.
+  newly introduced bad family outcomes while reporting carried
+  `known_debt`.
 - baseline-gedeckte curated/Lucide suite failures bleiben in
   `acceptance_gate.reasons` sichtbar, werden aber nicht mehr als
   `blocking_reasons` behandelt.
@@ -450,7 +451,7 @@ Implemented so far:
 - existing suite-family baseline output files are protected unless
   `--suite-family-baseline` points to the same path, preventing accidental
   overwrites of checked-in baseline artifacts.
-- checked-in suite-family smoke baseline at
+- checked-in reviewed suite-family baseline at
   `docs/real-images/baselines/current-suite-family-baseline.json`, exercised
   through the real `morphea self-learn --suite-family-baseline` CLI path.
 - metrics surfaced in reports, eval summaries, and sweep summaries
@@ -825,8 +826,9 @@ Implemented so far:
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle
-- known baseline debt is separated from blocking acceptance reasons so reviewed
-  suite debt can be carried without hiding new regressions
+- known baseline debt is reported as `known_debt` and separated from blocking
+  acceptance reasons so reviewed suite debt can be carried without hiding new
+  regressions
 - `morphea self-learn --suite-family-baseline-output next-baseline.json`
   persists accepted `suite_family_validation` snapshots for the next baseline
   comparison
@@ -836,7 +838,8 @@ Implemented so far:
 - existing `--suite-family-baseline-output` paths require a matching
   `--suite-family-baseline` path before they can be overwritten
 - `docs/real-images/baselines/current-suite-family-baseline.json` provides a
-  checked-in smoke fixture for baseline-gated self-learning CLI runs
+  checked-in reviewed accepted-cycle baseline for baseline-gated self-learning
+  CLI runs
 - `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics

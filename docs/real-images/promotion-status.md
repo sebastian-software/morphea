@@ -255,6 +255,8 @@ is reported separately from new regressions.
 When the baseline comparison is clean, configured curated or Lucide validation
 failures remain visible as known baseline debt but no longer block acceptance;
 new family regressions still block.
+Cycle reports now include `known_debt` / `known_debt_count`, making carried
+red families visible beside `new_regressions` and `resolved_regressions`.
 
 `morphea self-learn --suite-family-baseline-output next-baseline.json` writes
 the accepted cycle's current `suite_family_validation` as a reusable baseline
@@ -271,11 +273,24 @@ points to that same path. Otherwise it reports
 untouched.
 
 `docs/real-images/baselines/current-suite-family-baseline.json` is now a
-checked-in smoke baseline for `morphea self-learn --suite-family-baseline`.
+checked-in reviewed accepted-cycle baseline for
+`morphea self-learn --suite-family-baseline`. It records 22 suite-family rows:
+16 held primitive split/family rows, three Lucide family rows, and three
+real-image family rows. The current known debt is:
+
+- Lucide `circle_compound_strokes`: 7/8 passing, 1 failing
+  (`badge-check`);
+- real-image `generated_illustration_table_grid`: checked, failing;
+- real-image `generated_illustration_opaque_table_grid`: missing source,
+  failing-missing.
+
 `tests.test_self_learning` runs the real CLI against this fixture so the
 baseline comparison path is covered outside helper-only unit tests.
 
 ## Next Gate
 
-The next mainline block should promote the smoke baseline from empty family
-views to a reviewed real suite-family baseline produced by an accepted cycle.
+The next mainline block should reduce reviewed baseline debt without hiding it:
+first make the Lucide `badge-check` failure more diagnosable at case level,
+then resolve or explicitly defer the two generated-illustration table-grid
+real-image families. A future accepted cycle should move at least one known
+debt row into `resolved_regressions` without introducing new regressions.

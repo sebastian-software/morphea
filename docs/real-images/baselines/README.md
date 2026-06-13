@@ -40,10 +40,16 @@ intentional and the semantic expectations still pass.
 
 ## Suite-Family Self-Learning Baseline
 
-`current-suite-family-baseline.json` is the checked-in smoke baseline for
-`morphea self-learn --suite-family-baseline`. It intentionally starts with
-empty primitive, real-image, and Lucide family views so the CLI path can be
-validated before a production baseline is promoted.
+`current-suite-family-baseline.json` is the checked-in reviewed baseline for
+`morphea self-learn --suite-family-baseline`. It is produced by an accepted
+self-learning cycle and records primitive, real-image, and Lucide family
+outcomes side by side. Current known debt is intentionally carried in the
+baseline rather than hidden:
+
+- Lucide `circle_compound_strokes` has one failing case (`badge-check`).
+- Real-image `generated_illustration_table_grid` is checked and failing.
+- Real-image `generated_illustration_opaque_table_grid` is failing because the
+  local source image is missing.
 
 Smoke the baseline-gated self-learning path after generating a temporary base
 dataset and reviewed-label file:
@@ -58,3 +64,23 @@ PYTHONPATH=src python3 -m morphea.cli self-learn /tmp/morphea-base/dataset.json 
 
 That command intentionally exercises the baseline comparison path even when
 the training gate skips retraining.
+
+Refresh the checked-in suite-family baseline only from an accepted cycle and
+only with review evidence:
+
+```sh
+PYTHONPATH=src python3 -m morphea.cli self-learn /private/tmp/morphea-base/dataset.json \
+  --reviewed-labels /private/tmp/morphea-reviewed-labels.json \
+  --curated-suite docs/real-images/suite.json \
+  --lucide-suite assets/lucide/suite.json \
+  --suite-family-baseline docs/real-images/baselines/current-suite-family-baseline.json \
+  --suite-family-baseline-output docs/real-images/baselines/current-suite-family-baseline.json \
+  --suite-family-baseline-reviewer morphea \
+  --suite-family-baseline-reason "Reviewed suite-family baseline refresh." \
+  --suite-family-baseline-changelog docs/real-images/baselines/suite-family-baseline-changelog.jsonl \
+  -o /private/tmp/morphea-self-learning-baseline-refresh
+```
+
+Accepted refreshes append to `suite-family-baseline-changelog.jsonl`. The
+persisted baseline snapshot and changelog stay portable: run-local paths remain
+in the cycle report, not in checked-in baseline artifacts.
