@@ -23,7 +23,10 @@ from morphea.mlx_classifier import (
     train_mlx_transformer_classifier,
 )
 from morphea.profiling import profile_curated_suite, profile_vectorize
-from morphea.promotion_export import write_promotion_svg_exports
+from morphea.promotion_export import (
+    apply_promotion_review_decision,
+    write_promotion_svg_exports,
+)
 from morphea.primitive_baseline import (
     compare_to_baseline,
     load_baseline,
@@ -946,6 +949,15 @@ def main(argv: list[str] | None = None) -> None:
     promotion_export.add_argument("--fallback-svg", type=Path)
     promotion_export.add_argument("-o", "--output", type=Path)
 
+    promotion_apply_review = subcommands.add_parser(
+        "promotion-apply-review",
+        help="Apply an edited promotion review decision record.",
+    )
+    promotion_apply_review.add_argument("review_decision", type=Path)
+    promotion_apply_review.add_argument("-o", "--output", type=Path)
+    promotion_apply_review.add_argument("--markdown", type=Path)
+    promotion_apply_review.add_argument("--manifest", type=Path)
+
     sweep = subcommands.add_parser(
         "sweep",
         help="Run a config-driven vectorize sweep.",
@@ -1180,6 +1192,19 @@ def main(argv: list[str] | None = None) -> None:
         print(
             f"trained {model['model_type']} with {model['train_examples']} examples "
             f"(status={model['status']})"
+        )
+        return
+
+    if args.command == "promotion-apply-review":
+        result = apply_promotion_review_decision(
+            review_decision=args.review_decision,
+            output=args.output,
+            markdown=args.markdown,
+            manifest=args.manifest,
+        )
+        print(
+            "applied promotion review "
+            f"(case={result.get('case_id')}, decision={result['decision']})"
         )
         return
 

@@ -537,6 +537,12 @@ promoted/fallback SVG partition from any promotion-annotated manifest. The JSON
 output includes the same promoted, fallback-only, rejected, and deferred anchor
 state partition as curated run sidecars.
 
+`morphea promotion-apply-review review-decision.json -o applied-review.json
+--markdown applied-review.md --manifest manifest.json` consumes an edited
+terminal review decision, rejects still-pending decisions, writes an applied
+review summary, and can persist `review_decision_applied` back into the run
+manifest and its top-level `promotion` object.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

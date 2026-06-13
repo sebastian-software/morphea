@@ -10,6 +10,9 @@ from statistics import mean
 from typing import Any
 
 
+PROMOTION_REVIEW_DECISIONS = {"accepted", "corrected", "rejected", "deferred"}
+
+
 def write_promotion_svg_exports(
     *,
     manifest: str | Path,
@@ -72,6 +75,98 @@ def write_promotion_svg_exports(
     return result
 
 
+def apply_promotion_review_decision(
+    *,
+    review_decision: str | Path,
+    output: str | Path | None = None,
+    markdown: str | Path | None = None,
+    manifest: str | Path | None = None,
+) -> dict[str, object]:
+    review_path = Path(review_decision)
+    data = json.loads(review_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("promotion review decision must be a JSON object")
+    decision = data.get("decision")
+    if decision == "pending":
+        raise ValueError("promotion review decision is still pending")
+    if decision not in PROMOTION_REVIEW_DECISIONS:
+        allowed = ", ".join(sorted(PROMOTION_REVIEW_DECISIONS))
+        raise ValueError(f"promotion review decision must be one of: {allowed}")
+    suggested = data.get("suggested_decision")
+    result = {
+        "schema_version": 1,
+        "source_review_decision": str(review_path),
+        "case_id": data.get("case_id"),
+        "decision": decision,
+        "accepted_for_promotion": decision in {"accepted", "corrected"},
+        "suggested_decision": suggested,
+        "matches_suggestion": decision == suggested,
+        "reviewer": data.get("reviewer", ""),
+        "reason": data.get("reason", ""),
+        "correction_notes": data.get("correction_notes", ""),
+        "corrected_artifacts": _string_list(data.get("corrected_artifacts")),
+        "issue_tags": _string_list(data.get("issue_tags")),
+        "source_decisions": _object_dict(data.get("source_decisions")),
+        "failed_gates": _object_list(data.get("failed_gates")),
+        "failed_components": _object_list(data.get("failed_components")),
+        "gate_blocked_components": _object_list(
+            data.get("gate_blocked_components"),
+        ),
+        "regressed_components": _object_list(data.get("regressed_components")),
+    }
+    if manifest is not None:
+        manifest_path = Path(manifest)
+        manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(manifest_data, dict):
+            raise ValueError("promotion review manifest must be a JSON object")
+        result["manifest"] = str(manifest_path)
+        manifest_data["review_decision_applied"] = result
+        promotion = manifest_data.get("promotion")
+        if isinstance(promotion, dict):
+            promotion["review_decision_applied"] = result
+        manifest_path.write_text(
+            json.dumps(manifest_data, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+    if output is not None:
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            json.dumps(result, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_promotion_review_decision_markdown(result),
+            encoding="utf-8",
+        )
+    return result
+
+
+def render_promotion_review_decision_markdown(result: dict[str, object]) -> str:
+    lines = [
+        "# Morphēa Promotion Review Decision",
+        "",
+        f"- Source: `{result.get('source_review_decision', 'n/a')}`",
+        f"- Case: `{result.get('case_id', 'n/a')}`",
+        f"- Decision: `{result.get('decision', 'n/a')}`",
+        f"- Suggested: `{result.get('suggested_decision', 'n/a')}`",
+        f"- Matches suggestion: `{str(result.get('matches_suggestion', False)).lower()}`",
+        f"- Accepted for promotion: `{str(result.get('accepted_for_promotion', False)).lower()}`",
+        f"- Issue tags: {_format_review_values(result.get('issue_tags'))}",
+        "",
+        "## Evidence",
+        "",
+        f"- Failed gates: {_format_review_records(result.get('failed_gates'))}",
+        f"- Failed components: {_format_review_records(result.get('failed_components'))}",
+        f"- Gate-blocked components: {_format_review_records(result.get('gate_blocked_components'))}",
+        f"- Regressed components: {_format_review_records(result.get('regressed_components'))}",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def manifest_to_svg(
     manifest: dict[str, Any],
     anchor_indexes: list[int],
@@ -91,6 +186,40 @@ def manifest_to_svg(
             lines.append(f"  {_manifest_anchor_to_svg(anchors[index])}")
     lines.append("</svg>")
     return "\n".join(lines)
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str) and item]
+
+
+def _object_list(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
+
+
+def _object_dict(value: object) -> dict[str, object]:
+    return value if isinstance(value, dict) else {}
+
+
+def _format_review_values(value: object) -> str:
+    items = _string_list(value)
+    if not items:
+        return "`none`"
+    return ", ".join(f"`{item}`" for item in items)
+
+
+def _format_review_records(value: object) -> str:
+    items = _object_list(value)
+    if not items:
+        return "`none`"
+    ids = []
+    for item in items:
+        if isinstance(item, dict):
+            ids.append(str(item.get("id", "n/a")))
+    if not ids:
+        return f"`{len(items)}`"
+    return ", ".join(f"`{item}`" for item in ids)
 
 
 def _promotion_anchor_state_indexes(manifest: dict[str, Any]) -> dict[str, list[int]]:

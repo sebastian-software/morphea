@@ -125,6 +125,97 @@ class CliTests(unittest.TestCase):
                 {"fallback": 1, "promoted": 1, "rejected": 1},
             )
 
+    def test_promotion_apply_review_cli_applies_terminal_decision(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_decision = root / "review-decision.json"
+            output = root / "applied-review.json"
+            markdown = root / "applied-review.md"
+            manifest = root / "manifest.json"
+            review_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "corrected",
+                        "suggested_decision": "deferred",
+                        "reviewer": "qa",
+                        "reason": "corrected topology",
+                        "correction_notes": "merged duplicate control",
+                        "corrected_artifacts": ["corrected.svg"],
+                        "issue_tags": ["topology_mismatch"],
+                        "source_decisions": {
+                            "editability_decision": "manual_review",
+                        },
+                        "failed_gates": [
+                            {
+                                "id": "radio-control-region-topology",
+                                "gate_type": "topology",
+                                "severity": "red",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "promotion": {}}),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-apply-review",
+                        str(review_decision),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--manifest",
+                        str(manifest),
+                    ]
+                )
+
+            self.assertIn("decision=corrected", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["decision"], "corrected")
+            self.assertTrue(result["accepted_for_promotion"])
+            self.assertFalse(result["matches_suggestion"])
+            self.assertEqual(result["issue_tags"], ["topology_mismatch"])
+            self.assertEqual(
+                result["failed_gates"][0]["id"],
+                "radio-control-region-topology",
+            )
+            manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["decision"],
+                "corrected",
+            )
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["manifest"],
+                str(manifest),
+            )
+            self.assertEqual(
+                manifest_data["promotion"]["review_decision_applied"]["decision"],
+                "corrected",
+            )
+            self.assertIn(
+                "- Accepted for promotion: `true`",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_promotion_apply_review_cli_rejects_pending_decision(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review_decision = Path(temp_dir) / "review-decision.json"
+            review_decision.write_text(
+                json.dumps({"case_id": "case", "decision": "pending"}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(ValueError):
+                main(["promotion-apply-review", str(review_decision)])
+
     def test_status_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "status.json"

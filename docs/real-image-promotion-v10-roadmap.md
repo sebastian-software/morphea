@@ -358,6 +358,9 @@ threshold status, gate-blocked components, issue tags, and regression deltas.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review.
+`morphea promotion-apply-review` consumes edited terminal decision records,
+rejects pending records, writes applied JSON/Markdown summaries, and can
+persist `review_decision_applied` into run manifests.
 
 Canonical issue tags:
 
@@ -475,9 +478,12 @@ dependency:
    decisions machine-readable before pseudo-label harvesting.
 8. **Apply review decisions**: consume edited decision records and write an
    applied summary back to manifests and reports.
-9. **Run MLX/SAM side by side**: compare segmentation sources only after the
+9. **Gate harvesting on applied decisions**: accepted/corrected applied
+   decisions can become training candidates; rejected/deferred decisions stay
+   as review evidence.
+10. **Run MLX/SAM side by side**: compare segmentation sources only after the
    promotion evaluator can tell whether a region proposal helped.
-10. **Start reviewed pseudo-label collection**: collect labels only from green
+11. **Start reviewed pseudo-label collection**: collect labels only from green
    or corrected review artifacts.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before

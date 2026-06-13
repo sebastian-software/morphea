@@ -406,6 +406,9 @@ Implemented so far:
   pending machine-readable decision record with suggested
   accepted/corrected/rejected/deferred outcome, issue tags, failed gates,
   component failures, and regression evidence.
+- `morphea promotion-apply-review` validates edited promotion review decisions,
+  rejects pending records, writes applied JSON/Markdown summaries, and can
+  persist `review_decision_applied` into a run manifest.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

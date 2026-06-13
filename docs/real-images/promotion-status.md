@@ -206,9 +206,14 @@ machine-readable decision artifact: it is pending by default, carries the
 suggested accepted/corrected/rejected/deferred outcome, and preserves issue
 tags plus failed gate/component evidence for later application.
 
+`morphea promotion-apply-review` consumes an edited terminal
+`review-decision.json`, rejects still-pending decisions, writes an applied
+review summary JSON/Markdown, and can persist `review_decision_applied` back
+into the run manifest and its `promotion` object.
+
 ## Next Gate
 
-The next mainline block should apply edited review decisions back into the
-promotion run: consume `review-decision.json`, validate the terminal decision,
-and write an applied summary that manifests, reports, and later pseudo-label
-harvesting can trust without losing issue tags or gate evidence.
+The next mainline block should connect applied promotion review decisions to
+pseudo-label harvesting: only `accepted` and `corrected` applied decisions
+should become training candidates, and rejected/deferred decisions should stay
+visible as review evidence.
