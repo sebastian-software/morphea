@@ -1164,6 +1164,10 @@ def merge_reviewed_pseudo_label_dataset(
 
     for index, label in enumerate(reviewed.get("accepted", [])):
         anchor = _anchor_from_label(label)
+        review = label.get("review")
+        review = review if isinstance(review, dict) else {}
+        applied_review = label.get("review_decision_applied")
+        applied_review = applied_review if isinstance(applied_review, dict) else {}
         manifest = {
             "schema_version": 1,
             "width": label.get("width"),
@@ -1177,6 +1181,10 @@ def merge_reviewed_pseudo_label_dataset(
             "source_manifest": label.get("source_manifest"),
             "source_anchor_index": label.get("anchor_index"),
         }
+        if review:
+            manifest["review"] = review
+        if applied_review:
+            manifest["review_decision_applied"] = applied_review
         manifest_name = f"pseudo-{index:05d}.json"
         manifest_path = train_dir / manifest_name
         manifest_path.write_text(
@@ -1193,6 +1201,9 @@ def merge_reviewed_pseudo_label_dataset(
                 "manifest": str(manifest_path.relative_to(output)),
                 "source_manifest": label.get("source_manifest"),
                 "source_anchor_index": label.get("anchor_index"),
+                "review_decision": review.get("decision"),
+                "review_issues": _issues_from_value(review.get("issues")),
+                "applied_review_decision": applied_review.get("decision"),
             }
         )
 
@@ -1614,6 +1625,8 @@ def _reviewed_label(item: dict[str, object]) -> dict[str, object]:
             changed_anchor["kind"] = corrected_kind
             label["anchor"] = changed_anchor
     label["review"] = {
+        "decision": "accept",
+        "reason": item.get("reason", ""),
         "corrected_kind": corrected_kind,
         "issues": issues,
     }

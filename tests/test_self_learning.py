@@ -1089,6 +1089,75 @@ class SelfLearningTests(unittest.TestCase):
                 [0, 1],
             )
 
+    def test_merge_reviewed_labels_preserves_applied_review_provenance(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            pseudo = root / "pseudo.json"
+            review = root / "review.json"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "dataset"
+            pseudo.write_text(
+                json.dumps(
+                    {
+                        "pseudo_labels": [
+                            {
+                                "kind": "circle",
+                                "anchor": {"kind": "circle"},
+                                "review_decision_applied": {
+                                    "case_id": "circle-case",
+                                    "decision": "accepted",
+                                    "issue_tags": ["fragmentation"],
+                                },
+                            },
+                            {
+                                "kind": "quad",
+                                "anchor": {"kind": "quad"},
+                                "review_decision_applied": {
+                                    "case_id": "quad-case",
+                                    "decision": "deferred",
+                                    "issue_tags": ["weak_visual_fidelity"],
+                                },
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            create_review_file(
+                pseudo_labels=pseudo,
+                output=review,
+                accept_applied_reviews=True,
+            )
+            apply_review_file(review=review, output=reviewed)
+            dataset = merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=output_dir,
+            )
+
+            self.assertEqual(dataset["count"], 1)
+            self.assertEqual(
+                dataset["samples"][0]["applied_review_decision"],
+                "accepted",
+            )
+            self.assertEqual(
+                dataset["samples"][0]["review_issues"],
+                ["fragmentation"],
+            )
+            pseudo_manifest = json.loads(
+                (output_dir / "train" / "pseudo-00000.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                pseudo_manifest["review_decision_applied"]["case_id"],
+                "circle-case",
+            )
+            self.assertEqual(
+                pseudo_manifest["review"]["issues"],
+                ["fragmentation"],
+            )
+
     def test_merge_labels_cli_writes_dataset(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

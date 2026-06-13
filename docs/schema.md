@@ -559,6 +559,12 @@ curated JSON report, then harvests only accepted/corrected applied decisions.
 `rejected` and `deferred` applied decisions become `reject` items, and issue
 tags are preserved for reviewed-label reports and training datasets.
 
+`morphea merge-labels` writes accepted reviewed pseudo-label manifests with
+`review` and `review_decision_applied` provenance when available. Dataset
+samples also carry `review_issues` and `applied_review_decision`, so
+accepted/corrected applied promotion reviews remain auditable after conversion
+to trainable data while rejected/deferred review items are excluded.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

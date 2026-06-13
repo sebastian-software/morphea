@@ -421,6 +421,9 @@ Implemented so far:
   reviews into the existing review/apply-review flow, accepting
   accepted/corrected decisions, rejecting rejected/deferred decisions, and
   preserving issue tags for reviewed-label artifacts.
+- `morphea merge-labels` preserves `review` and `review_decision_applied`
+  provenance in accepted pseudo-label manifests and dataset samples while
+  keeping rejected/deferred review items out of trainable datasets.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

@@ -226,8 +226,13 @@ into the existing review/apply-review loop: accepted/corrected applied
 promotion reviews become accepted review items, rejected/deferred decisions
 become rejected items, and issue tags survive into reviewed-label artifacts.
 
+`morphea merge-labels` now preserves `review` and `review_decision_applied`
+provenance in accepted pseudo-label training manifests and records
+`review_issues` plus `applied_review_decision` in dataset samples. Rejected and
+deferred review items remain outside the trainable dataset.
+
 ## Next Gate
 
-The next mainline block should run the reviewed-label merge/training gate from
-accepted/corrected applied promotion reviews and prove rejected/deferred review
-evidence cannot enter the training dataset.
+The next mainline block should run the reviewed-label training gate from
+accepted/corrected applied promotion reviews and prove model acceptance still
+depends on curated validation quality, not merely on additional reviewed data.
