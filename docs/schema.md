@@ -490,6 +490,10 @@ directory includes the standard vectorize artifacts plus:
 - `editability-review.md`: scan-friendly Markdown review of accepted-output
   decision, component thresholds, gate-blocked components, issue tags, and
   regression deltas
+- `review-decision.json`: machine-editable review decision record with
+  `decision: pending`, allowed terminal decisions (`accepted`, `corrected`,
+  `rejected`, `deferred`), suggested decision, issue tags, failed gates,
+  failed/gate-blocked components, and regression evidence
 - `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
@@ -513,14 +517,19 @@ case reports also include:
   `thresholds`, `component_scores`, `failed_components`,
   `gate_blocked_components`, `regression_delta_status`, `regression_deltas`,
   `regressed_components`, and `reasons`
+- `review_decision`: machine-editable reviewer decision record with a pending
+  `decision`, suggested accepted/corrected/rejected/deferred outcome, issue
+  tags, failed gates, component failures, gate-blocked components, and
+  regression evidence
 
 For checked cases with `--output-dir`, the run `manifest.json` also includes a
 top-level `promotion` object with summary, gates, regions, and promotion export
-and editability-review artifact paths. Anchors selected by promotion regions
-are annotated with `promotion_state` and `promotion_regions`; unselected
-anchors are marked `fallback`. The manifest also includes top-level
-`editability_review`, so the accepted-output decision is preserved with the run
-artifact.
+editability-review, and review-decision artifact paths. Anchors selected by
+promotion regions are annotated with `promotion_state` and
+`promotion_regions`; unselected anchors are marked `fallback`. The manifest
+also includes top-level `editability_review` and `review_decision`, so the
+accepted-output decision and the editable human-review decision record are
+preserved with the run artifact.
 
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
 --fallback-svg fallback.svg -o promotion-export.json` can regenerate the

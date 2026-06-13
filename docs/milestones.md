@@ -402,6 +402,10 @@ Implemented so far:
 - checked promotion runs write `editability-review.md`, so accepted-output
   decisions, threshold failures, gate-blocked components, issue tags, and
   regression deltas are reviewable beside the promotion export artifacts.
+- checked promotion runs write `review-decision.json`, so reviewers get a
+  pending machine-readable decision record with suggested
+  accepted/corrected/rejected/deferred outcome, issue tags, failed gates,
+  component failures, and regression evidence.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

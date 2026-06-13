@@ -65,6 +65,7 @@ PROMOTION_GATE_TYPES = {
     "review_safety",
 }
 PROMOTION_GATE_SEVERITIES = {"red", "yellow"}
+PROMOTION_REVIEW_DECISIONS = ("accepted", "corrected", "rejected", "deferred")
 PROMOTION_REGION_TOPOLOGY_LIMITS = {
     "min_closed_anchors",
     "max_closed_anchors",
@@ -320,6 +321,14 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 f"accepted=`{str(review.get('accepted', False)).lower()}`, "
                 f"reasons={_fmt_markdown_list(review.get('reasons'))}"
             )
+        if isinstance(case.get("review_decision"), dict):
+            decision = case["review_decision"]
+            lines.append(
+                "- Review decision: "
+                f"state=`{decision.get('decision', 'n/a')}`, "
+                f"suggested=`{decision.get('suggested_decision', 'n/a')}`, "
+                f"issues={_fmt_markdown_list(decision.get('issue_tags'))}"
+            )
         if "anchor_kind_counts" in case:
             lines.append(
                 f"- Anchor kinds: {_fmt_markdown_counts(case.get('anchor_kind_counts'))}"
@@ -448,6 +457,7 @@ def _check_curated_case(
                 baseline_case=baseline_case,
                 baseline_configured=baseline_configured,
             )
+            result["review_decision"] = _promotion_review_decision_record(result)
         return result
     if not run:
         if isinstance(result.get("promotion"), dict):
@@ -461,6 +471,7 @@ def _check_curated_case(
                 baseline_case=baseline_case,
                 baseline_configured=baseline_configured,
             )
+            result["review_decision"] = _promotion_review_decision_record(result)
         return result
 
     config = {
@@ -533,6 +544,7 @@ def _check_curated_case(
             baseline_case=baseline_case,
             baseline_configured=baseline_configured,
         )
+        result["review_decision"] = _promotion_review_decision_record(result)
         if output_dir is not None and isinstance(result.get("artifacts"), dict):
             result["artifacts"].update(
                 _write_promotion_export_artifacts(
@@ -681,6 +693,7 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "promotion_summary",
         "promotion_regions",
         "editability_review",
+        "review_decision",
     ):
         if key in case:
             snapshot[key] = case[key]
@@ -1792,6 +1805,7 @@ def _write_promotion_export_artifacts(
     promotion_regions_path = run_dir / "promotion-regions.json"
     promotion_review_path = run_dir / "promotion-review.md"
     editability_review_path = run_dir / "editability-review.md"
+    review_decision_path = run_dir / "review-decision.json"
     anchor_count = len(scene.anchors)
     state_indexes = _promotion_anchor_state_indexes(
         promotion_regions,
@@ -1864,6 +1878,13 @@ def _write_promotion_export_artifacts(
         _render_editability_review_markdown(case_result),
         encoding="utf-8",
     )
+    review_decision = case_result.get("review_decision")
+    if not isinstance(review_decision, dict):
+        review_decision = _promotion_review_decision_record(case_result)
+    review_decision_path.write_text(
+        json.dumps(review_decision, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     return {
         "promoted_svg": str(promoted_svg_path),
         "fallback_svg": str(fallback_svg_path),
@@ -1871,6 +1892,7 @@ def _write_promotion_export_artifacts(
         "promotion_regions": str(promotion_regions_path),
         "promotion_review": str(promotion_review_path),
         "editability_review": str(editability_review_path),
+        "review_decision": str(review_decision_path),
     }
 
 
@@ -2163,6 +2185,96 @@ def _editability_threshold_status(
     return "passed"
 
 
+def _promotion_review_decision_record(case_result: dict[str, Any]) -> dict[str, object]:
+    review = case_result.get("editability_review", {})
+    review = review if isinstance(review, dict) else {}
+    promotion = case_result.get("promotion", {})
+    promotion = promotion if isinstance(promotion, dict) else {}
+    summary = case_result.get("promotion_summary", {})
+    summary = summary if isinstance(summary, dict) else {}
+    return {
+        "schema_version": 1,
+        "case_id": case_result.get("id"),
+        "decision": "pending",
+        "allowed_decisions": list(PROMOTION_REVIEW_DECISIONS),
+        "suggested_decision": _suggested_promotion_review_decision(
+            review,
+            summary,
+        ),
+        "reviewer": "",
+        "reason": "",
+        "correction_notes": "",
+        "corrected_artifacts": [],
+        "issue_tags": _promotion_issue_tags(promotion),
+        "source_decisions": {
+            "promotion_decision": summary.get("decision", "n/a"),
+            "editability_decision": review.get("decision", "n/a"),
+            "editability_accepted": bool(review.get("accepted", False)),
+            "regression_delta_status": review.get(
+                "regression_delta_status",
+                "n/a",
+            ),
+        },
+        "failed_gates": _review_decision_failed_gates(
+            case_result.get("promotion_gates"),
+        ),
+        "failed_components": _review_decision_list(
+            review.get("failed_components"),
+        ),
+        "gate_blocked_components": _review_decision_list(
+            review.get("gate_blocked_components"),
+        ),
+        "regressed_components": _review_decision_list(
+            review.get("regressed_components"),
+        ),
+    }
+
+
+def _suggested_promotion_review_decision(
+    review: dict[str, object],
+    summary: dict[str, object],
+) -> str:
+    decision = review.get("decision")
+    if decision == "accepted":
+        return "accepted"
+    if decision == "manual_review":
+        return "deferred"
+    if decision == "rejected":
+        return "rejected"
+    if summary.get("decision") == "deferred":
+        return "deferred"
+    return "rejected"
+
+
+def _promotion_issue_tags(promotion: dict[str, object]) -> list[str]:
+    issues = promotion.get("current_issues", [])
+    if not isinstance(issues, list):
+        return []
+    return sorted({str(issue) for issue in issues if isinstance(issue, str) and issue})
+
+
+def _review_decision_failed_gates(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    failed: list[dict[str, object]] = []
+    for gate in value:
+        if not isinstance(gate, dict) or gate.get("ok", False):
+            continue
+        failed.append(
+            {
+                "id": gate.get("id", "n/a"),
+                "gate_type": gate.get("gate_type", "n/a"),
+                "severity": gate.get("severity", "red"),
+                "reason": gate.get("reason", "n/a"),
+            }
+        )
+    return failed
+
+
+def _review_decision_list(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
+
+
 def _write_manifest_promotion_state(
     manifest_path: Path,
     case_result: dict[str, Any],
@@ -2176,6 +2288,9 @@ def _write_manifest_promotion_state(
     review = case_result.get("editability_review")
     if isinstance(review, dict):
         manifest["editability_review"] = review
+    decision = case_result.get("review_decision")
+    if isinstance(decision, dict):
+        manifest["review_decision"] = decision
     regions = case_result.get("promotion_regions", [])
     regions = regions if isinstance(regions, list) else []
     gates = case_result.get("promotion_gates", [])
@@ -2196,6 +2311,7 @@ def _write_manifest_promotion_state(
                 "promotion_regions",
                 "promotion_review",
                 "editability_review",
+                "review_decision",
             )
             if key in artifacts
         },

@@ -56,7 +56,7 @@ Current curated runs emit per-case run directories with input copy, SVG output,
 debug SVG, manifest JSON, preview PNG, SVG render PNG, red/blue diff PNG,
 contact-sheet PNG, promoted/fallback SVGs, promotion-export JSON, palette
 summary, mask summary, promotion-region review files, editability-review
-Markdown, and report files.
+Markdown, review-decision JSON, and report files.
 
 Curated reports also include derived promotion gates:
 
@@ -96,9 +96,13 @@ Checked promotion cases with an output directory also write `promoted.svg`,
 debug/fallback output and rejected candidates remain reviewable. They also
 write `editability-review.md`, which exposes accepted-output decisions,
 component threshold failures, gate-blocked components, issue tags, and
-regression deltas in a dedicated review artifact.
+regression deltas in a dedicated review artifact. They also write
+`review-decision.json`, a machine-editable pending decision record with
+allowed accepted/corrected/rejected/deferred outcomes, suggested decision,
+issue tags, failed gates, component failures, and regression evidence.
 The run `manifest.json` also carries a top-level `promotion` object and
-per-anchor `promotion_state` / `promotion_regions` annotations.
+per-anchor `promotion_state` / `promotion_regions` annotations, plus a
+top-level `review_decision` record.
 `promotion-export.json` records promoted, fallback-only, rejected, and deferred
 anchor-index partitions plus anchor-state counts, so failed semantic candidates
 remain explicit even when `fallback.svg` contains all non-promoted anchors.
@@ -125,6 +129,11 @@ The complementary `editability-review.md` sidecar includes:
 - gate-blocked components with failed gate ids;
 - regression delta status and per-component deltas;
 - current issue tags.
+
+The complementary `review-decision.json` sidecar starts with
+`decision: pending` and carries the allowed terminal decisions
+`accepted`, `corrected`, `rejected`, and `deferred`, plus the suggested
+decision and the gate/component evidence a reviewer needs to edit it.
 
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
@@ -191,9 +200,15 @@ same accepted-output decision as Markdown, including threshold pass/fail rows,
 gate-blocked component evidence, current issue tags, and regression deltas when
 a baseline snapshot is configured.
 
+Checked promotion runs also write `review-decision.json` and include the same
+record in reports, snapshots, and run manifests. This is the first RIP6
+machine-readable decision artifact: it is pending by default, carries the
+suggested accepted/corrected/rejected/deferred outcome, and preserves issue
+tags plus failed gate/component evidence for later application.
+
 ## Next Gate
 
-The next mainline block should turn review artifacts into review decisions:
-add a machine-readable accepted/corrected/rejected/deferred decision artifact
-that can be applied back to manifests, reports, and later pseudo-label
-harvesting without losing issue tags or gate evidence.
+The next mainline block should apply edited review decisions back into the
+promotion run: consume `review-decision.json`, validate the terminal decision,
+and write an applied summary that manifests, reports, and later pseudo-label
+harvesting can trust without losing issue tags or gate evidence.

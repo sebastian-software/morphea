@@ -355,6 +355,9 @@ Current implementation evidence: checked promotion runs write
 `promotion-review.md` for anchor and region state, `contact-sheet.png` for
 visual comparison, and `editability-review.md` for accepted-output decision,
 threshold status, gate-blocked components, issue tags, and regression deltas.
+They also write `review-decision.json`, a pending machine-readable decision
+record with suggested accepted/corrected/rejected/deferred outcome and the
+gate/component evidence needed for review.
 
 Canonical issue tags:
 
@@ -470,9 +473,11 @@ dependency:
    after hard gates, not replace them.
 7. **Capture review decisions**: make accepted/corrected/rejected/deferred
    decisions machine-readable before pseudo-label harvesting.
-8. **Run MLX/SAM side by side**: compare segmentation sources only after the
+8. **Apply review decisions**: consume edited decision records and write an
+   applied summary back to manifests and reports.
+9. **Run MLX/SAM side by side**: compare segmentation sources only after the
    promotion evaluator can tell whether a region proposal helped.
-9. **Start reviewed pseudo-label collection**: collect labels only from green
+10. **Start reviewed pseudo-label collection**: collect labels only from green
    or corrected review artifacts.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
