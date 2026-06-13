@@ -27,9 +27,10 @@ def write_promotion_svg_exports(
     fallback_path = Path(fallback_svg) if fallback_svg is not None else (
         manifest_path.with_name("fallback.svg")
     )
-    promoted_indexes = _promoted_anchor_indexes(data)
     anchors = data.get("anchors", [])
     anchors = anchors if isinstance(anchors, list) else []
+    state_indexes = _promotion_anchor_state_indexes(data)
+    promoted_indexes = state_indexes["promoted"]
     fallback_indexes = [
         index for index in range(len(anchors)) if index not in promoted_indexes
     ]
@@ -49,6 +50,14 @@ def write_promotion_svg_exports(
         "anchor_count": len(anchors),
         "promoted_anchor_indexes": promoted_indexes,
         "fallback_anchor_indexes": fallback_indexes,
+        "fallback_only_anchor_indexes": state_indexes["fallback"],
+        "rejected_anchor_indexes": state_indexes["rejected"],
+        "deferred_anchor_indexes": state_indexes["deferred"],
+        "anchor_state_counts": {
+            state: len(indexes)
+            for state, indexes in state_indexes.items()
+            if indexes
+        },
         "region_state_counts": _promotion_region_state_counts(data),
         "promoted_svg": str(promoted_path),
         "fallback_svg": str(fallback_path),
@@ -84,31 +93,52 @@ def manifest_to_svg(
     return "\n".join(lines)
 
 
-def _promoted_anchor_indexes(manifest: dict[str, Any]) -> list[int]:
+def _promotion_anchor_state_indexes(manifest: dict[str, Any]) -> dict[str, list[int]]:
     anchors = manifest.get("anchors", [])
     anchors = anchors if isinstance(anchors, list) else []
-    promoted = [
-        index
-        for index, anchor in enumerate(anchors)
-        if isinstance(anchor, dict) and anchor.get("promotion_state") == "promoted"
-    ]
-    if promoted:
-        return promoted
+    states_by_index: dict[int, set[str]] = {index: set() for index in range(len(anchors))}
+    for index, anchor in enumerate(anchors):
+        if not isinstance(anchor, dict):
+            continue
+        state = anchor.get("promotion_state")
+        if state in {"promoted", "rejected", "deferred", "fallback"}:
+            states_by_index[index].add(str(state))
     promotion = manifest.get("promotion", {})
-    if not isinstance(promotion, dict):
-        return []
-    regions = promotion.get("regions", [])
-    if not isinstance(regions, list):
-        return []
-    indexes: set[int] = set()
-    for region in regions:
-        if not isinstance(region, dict) or region.get("state") != "promoted":
-            continue
-        selected = region.get("selected_anchor_indexes", [])
-        if not isinstance(selected, list):
-            continue
-        indexes.update(index for index in selected if isinstance(index, int))
-    return sorted(indexes)
+    if isinstance(promotion, dict):
+        regions = promotion.get("regions", [])
+        if isinstance(regions, list):
+            for region in regions:
+                if not isinstance(region, dict):
+                    continue
+                state = region.get("state")
+                if state not in {"promoted", "rejected", "deferred"}:
+                    continue
+                selected = region.get("selected_anchor_indexes", [])
+                if not isinstance(selected, list):
+                    continue
+                for index in selected:
+                    if isinstance(index, int) and 0 <= index < len(anchors):
+                        states_by_index[index].add(str(state))
+
+    state_indexes = {
+        "promoted": [],
+        "fallback": [],
+        "rejected": [],
+        "deferred": [],
+    }
+    for index in range(len(anchors)):
+        state_indexes[_anchor_promotion_state(states_by_index[index])].append(index)
+    return state_indexes
+
+
+def _anchor_promotion_state(states: set[str]) -> str:
+    if "promoted" in states:
+        return "promoted"
+    if "rejected" in states:
+        return "rejected"
+    if "deferred" in states:
+        return "deferred"
+    return "fallback"
 
 
 def _promotion_region_state_counts(manifest: dict[str, Any]) -> dict[str, int]:

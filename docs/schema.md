@@ -463,13 +463,16 @@ directory includes the standard vectorize artifacts plus:
 - `anchor-overlay.png`: source image with manifest anchor bounds overlaid
 - `promoted.svg`: semantic SVG containing only anchors selected by promoted
   promotion regions
-- `fallback.svg`: SVG containing anchors not selected for promoted export
-- `promotion-export.json`: anchor-index partition, region-state counts, region
-  state records, and promoted/fallback SVG paths
+- `fallback.svg`: SVG containing anchors not selected for promoted export,
+  including rejected or deferred anchors that must remain outside trusted
+  semantic output
+- `promotion-export.json`: promoted/fallback anchor-index partition,
+  fallback-only/rejected/deferred anchor-index partitions, anchor-state counts,
+  region-state counts, region state records, and promoted/fallback SVG paths
 - `promotion-regions.json`: region-state review data with selected anchor ids,
   selected anchor indexes, gate status, state, and rejection/defer reason
-- `promotion-review.md`: scan-friendly Markdown review of promoted, deferred,
-  and rejected regions
+- `promotion-review.md`: scan-friendly Markdown review of anchor state counts
+  and promoted, deferred, and rejected regions
 - `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
@@ -497,7 +500,9 @@ artifact paths. Anchors selected by promotion regions are annotated with
 
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
 --fallback-svg fallback.svg -o promotion-export.json` can regenerate the
-promoted/fallback SVG partition from any promotion-annotated manifest.
+promoted/fallback SVG partition from any promotion-annotated manifest. The JSON
+output includes the same promoted, fallback-only, rejected, and deferred anchor
+state partition as curated run sidecars.
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only

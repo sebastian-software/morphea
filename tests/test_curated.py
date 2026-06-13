@@ -202,6 +202,13 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertEqual(promotion_export["region_state_counts"]["promoted"], 1)
             self.assertEqual(promotion_export["promoted_anchor_indexes"], [0])
+            self.assertEqual(promotion_export["fallback_anchor_indexes"], [])
+            self.assertEqual(promotion_export["fallback_only_anchor_indexes"], [])
+            self.assertEqual(promotion_export["rejected_anchor_indexes"], [])
+            self.assertEqual(
+                promotion_export["anchor_state_counts"],
+                {"promoted": 1},
+            )
             promotion_regions = json.loads(
                 (output_dir / "simple-circle" / "promotion-regions.json").read_text(
                     encoding="utf-8"
@@ -303,6 +310,124 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 snapshot_report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",
+            )
+
+    def test_promotion_export_artifacts_partition_rejected_anchors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "input.png"
+            suite_path = Path(temp_dir) / "suite.json"
+            output_dir = Path(temp_dir) / "artifacts"
+            image = Image.new("RGB", (40, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            draw.ellipse((23, 5, 35, 17), fill="#003366")
+            image.save(source)
+            promotion = _promotion_metadata("green")
+            promotion["region_gates"] = [
+                {
+                    "id": "left-circle-region",
+                    "gate_type": "shape_class",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "min_iou": 0.3,
+                    "min_count": 1,
+                    "severity": "red",
+                },
+                {
+                    "id": "right-circle-topology",
+                    "gate_type": "topology",
+                    "bounds": [22, 4, 36, 18],
+                    "expected_kinds": ["circle"],
+                    "min_iou": 0.3,
+                    "min_count": 1,
+                    "max_closed_anchors": 0,
+                    "severity": "red",
+                },
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "two-circles",
+                                "source": str(source),
+                                "promotion": promotion,
+                                "recommended_config": {
+                                    "min_area": 8,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 2,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(
+                suite_path,
+                output_dir=output_dir,
+                run=True,
+            )
+
+            case = result["cases"][0]
+            region_by_id = {
+                region["id"]: region
+                for region in case["promotion_regions"]
+            }
+            self.assertEqual(
+                region_by_id["left-circle-region"]["state"],
+                "promoted",
+            )
+            self.assertEqual(
+                region_by_id["right-circle-topology"]["state"],
+                "rejected",
+            )
+            promotion_export = json.loads(
+                (output_dir / "two-circles" / "promotion-export.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(len(promotion_export["promoted_anchor_indexes"]), 1)
+            self.assertEqual(len(promotion_export["rejected_anchor_indexes"]), 1)
+            self.assertEqual(promotion_export["fallback_only_anchor_indexes"], [])
+            self.assertEqual(
+                sorted(
+                    promotion_export["promoted_anchor_indexes"]
+                    + promotion_export["rejected_anchor_indexes"]
+                ),
+                [0, 1],
+            )
+            self.assertEqual(
+                promotion_export["anchor_state_counts"],
+                {"promoted": 1, "rejected": 1},
+            )
+            self.assertEqual(
+                promotion_export["fallback_anchor_indexes"],
+                promotion_export["rejected_anchor_indexes"],
+            )
+            promotion_review = (
+                output_dir / "two-circles" / "promotion-review.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn(
+                "- Anchor states: `promoted`=1, `rejected`=1",
+                promotion_review,
+            )
+            manifest = json.loads(
+                (output_dir / "two-circles" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                sorted(anchor["promotion_state"] for anchor in manifest["anchors"]),
+                ["promoted", "rejected"],
             )
 
     def test_render_curated_markdown_summarizes_cases_and_expectations(self):

@@ -10,10 +10,10 @@ Curated real images:
 
 ```sh
 PYTHONPATH=src python3 -m morphea.cli curated-check docs/real-images/suite.json \
-  -o /tmp/morphea-real-image-promotion-curated-report-metadata.json \
-  --output-dir /tmp/morphea-real-image-promotion-curated-runs-metadata \
-  --snapshot /tmp/morphea-real-image-promotion-curated-snapshot-metadata.json \
-  --markdown /tmp/morphea-real-image-promotion-curated-report-metadata.md \
+  -o /tmp/morphea-rip3-exit-report.json \
+  --output-dir /tmp/morphea-rip3-exit-runs \
+  --snapshot /tmp/morphea-rip3-exit-snapshot.json \
+  --markdown /tmp/morphea-rip3-exit-report.md \
   --run
 ```
 
@@ -32,12 +32,12 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 | --- | --- | --- | --- | --- | --- |
 | `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, table group 2/8, layer count 4 > 3, visual L1 0.235448 > 0.18 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
-| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor`, `missing_promotion_state` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
+| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
 
 Current curated semantic result: 3 cases, 1 checked expectation pass, 1 checked
 expectation failure, 1 missing source. No real-image case is green under the
-v10+ definition because green requires explicit promotion state and all
-promotion gates passing.
+v10+ definition because green requires all promotion gates passing and an
+available reviewed source.
 
 ## Lucide Calibration
 
@@ -95,6 +95,9 @@ Checked promotion cases with an output directory also write `promoted.svg`,
 debug/fallback output and rejected candidates remain reviewable.
 The run `manifest.json` also carries a top-level `promotion` object and
 per-anchor `promotion_state` / `promotion_regions` annotations.
+`promotion-export.json` records promoted, fallback-only, rejected, and deferred
+anchor-index partitions plus anchor-state counts, so failed semantic candidates
+remain explicit even when `fallback.svg` contains all non-promoted anchors.
 The `morphea promotion-export` command can regenerate promoted/fallback SVGs
 from any promotion-annotated manifest, outside curated sidecar generation.
 
@@ -115,8 +118,6 @@ Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
 label is green.
 
-## Next Gate
-
 ## RIP2 Exit Audit
 
 | Criterion | Status | Evidence |
@@ -126,6 +127,18 @@ label is green.
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
 
-The next implementation block should audit RIP3 exit criteria against generated
-reports and decide whether the remaining work should move to RIP4 editability
-scoring.
+## RIP3 Exit Audit
+
+| Criterion | Status | Evidence |
+| --- | --- | --- |
+| Manifests expose region-level promotion state. | met | Checked run manifests include `promotion.regions`; `terminaro-tweaked` records `gold-circle-region-shape-class` as `rejected`, and `ui-radio-acceptance-screenshot` records `radio-control-region-topology` as `rejected`. |
+| Fallback and rejected regions are visible in reports. | met | `/tmp/morphea-rip3-exit-report.md` lists `Promotion regions: rejected=1` for both checked real-image cases and shows the failed gate ids before aggregate metrics. |
+| Promoted SVG output can be filtered from debug/fallback output. | met | Checked run directories write `promoted.svg`, `fallback.svg`, and `promotion-export.json`; `morphea promotion-export` can regenerate the same partition from a promotion-annotated manifest. |
+| No failed semantic candidate disappears silently. | met | `promotion-export.json` records `rejected_anchor_indexes` and `anchor_state_counts`; current checked real-image manifests count 5 rejected anchors for `terminaro-tweaked` and 2 rejected anchors for `ui-radio-acceptance-screenshot`. |
+
+## Next Gate
+
+RIP3 is now implementation-complete for the current corpus evidence. The next
+mainline block should start RIP4: componentized editability scoring that ranks
+candidates after hard gates, without allowing a high score to hide red topology
+or shape-class failures.

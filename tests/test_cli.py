@@ -52,7 +52,7 @@ class CliTests(unittest.TestCase):
                 json.dumps(
                     {
                         "schema_version": 1,
-                        "width": 24,
+                        "width": 32,
                         "height": 24,
                         "anchors": [
                             {
@@ -69,6 +69,13 @@ class CliTests(unittest.TestCase):
                                 "promotion_state": "fallback",
                                 "circle": {"cx": 16, "cy": 16, "r": 3},
                             },
+                            {
+                                "id": "anchor-0002",
+                                "kind": "circle",
+                                "color": "#229944",
+                                "promotion_state": "rejected",
+                                "circle": {"cx": 24, "cy": 8, "r": 3},
+                            },
                         ],
                         "promotion": {
                             "regions": [
@@ -76,6 +83,11 @@ class CliTests(unittest.TestCase):
                                     "id": "circle-region",
                                     "state": "promoted",
                                     "selected_anchor_indexes": [0],
+                                },
+                                {
+                                    "id": "failed-region",
+                                    "state": "rejected",
+                                    "selected_anchor_indexes": [2],
                                 }
                             ]
                         },
@@ -102,9 +114,16 @@ class CliTests(unittest.TestCase):
             self.assertIn("#dd2222", promoted_svg.read_text(encoding="utf-8"))
             self.assertNotIn("#003366", promoted_svg.read_text(encoding="utf-8"))
             self.assertIn("#003366", fallback_svg.read_text(encoding="utf-8"))
+            self.assertIn("#229944", fallback_svg.read_text(encoding="utf-8"))
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["promoted_anchor_indexes"], [0])
-            self.assertEqual(result["fallback_anchor_indexes"], [1])
+            self.assertEqual(result["fallback_anchor_indexes"], [1, 2])
+            self.assertEqual(result["fallback_only_anchor_indexes"], [1])
+            self.assertEqual(result["rejected_anchor_indexes"], [2])
+            self.assertEqual(
+                result["anchor_state_counts"],
+                {"fallback": 1, "promoted": 1, "rejected": 1},
+            )
 
     def test_status_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:

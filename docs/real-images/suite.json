@@ -311,8 +311,7 @@
         "current_issues": [
           "fragmentation",
           "topology_mismatch",
-          "duplicate_radio_control_anchor",
-          "missing_promotion_state"
+          "duplicate_radio_control_anchor"
         ],
         "visual_audit_status": "contact_sheet_available",
         "visual_thresholds": {

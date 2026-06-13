@@ -438,7 +438,6 @@ def _check_curated_case(
                     scene=scene,
                     manifest=manifest,
                     promotion_regions=result.get("promotion_regions"),
-                    promotion_gates=result.get("promotion_gates"),
                     cutout_strategy=str(config.get("cutout_export", "overlay_stroke")),
                 )
             )
@@ -1439,7 +1438,6 @@ def _write_promotion_export_artifacts(
     scene: Any,
     manifest: dict[str, Any],
     promotion_regions: object,
-    promotion_gates: object,
     cutout_strategy: str,
 ) -> dict[str, str]:
     promoted_svg_path = run_dir / "promoted.svg"
@@ -1447,8 +1445,12 @@ def _write_promotion_export_artifacts(
     promotion_export_path = run_dir / "promotion-export.json"
     promotion_regions_path = run_dir / "promotion-regions.json"
     promotion_review_path = run_dir / "promotion-review.md"
-    promoted_indexes = _promoted_anchor_indexes(promotion_regions, promotion_gates)
     anchor_count = len(scene.anchors)
+    state_indexes = _promotion_anchor_state_indexes(
+        promotion_regions,
+        anchor_count=anchor_count,
+    )
+    promoted_indexes = set(state_indexes["promoted"])
     fallback_indexes = [
         index for index in range(anchor_count) if index not in promoted_indexes
     ]
@@ -1474,8 +1476,16 @@ def _write_promotion_export_artifacts(
     export_manifest = {
         "schema_version": 1,
         "anchor_count": anchor_count,
-        "promoted_anchor_indexes": sorted(promoted_indexes),
+        "promoted_anchor_indexes": state_indexes["promoted"],
         "fallback_anchor_indexes": fallback_indexes,
+        "fallback_only_anchor_indexes": state_indexes["fallback"],
+        "rejected_anchor_indexes": state_indexes["rejected"],
+        "deferred_anchor_indexes": state_indexes["deferred"],
+        "anchor_state_counts": {
+            state: len(indexes)
+            for state, indexes in state_indexes.items()
+            if indexes
+        },
         "region_state_counts": _promotion_region_state_counts(promotion_regions),
         "regions": promotion_regions if isinstance(promotion_regions, list) else [],
         "promoted_svg": str(promoted_svg_path),
@@ -1512,37 +1522,49 @@ def _write_promotion_export_artifacts(
     }
 
 
-def _promoted_anchor_indexes(
+def _promotion_anchor_state_indexes(
     promotion_regions: object,
-    promotion_gates: object,
-) -> set[int]:
-    if not isinstance(promotion_regions, list) or not isinstance(
-        promotion_gates,
-        list,
-    ):
-        return set()
-    promoted_region_ids = {
-        str(region.get("gate_id"))
-        for region in promotion_regions
-        if isinstance(region, dict) and region.get("state") == "promoted"
+    *,
+    anchor_count: int,
+) -> dict[str, list[int]]:
+    states_by_index: dict[int, set[str]] = {
+        index: set() for index in range(anchor_count)
     }
-    promoted_indexes: set[int] = set()
-    for gate in promotion_gates:
-        if not isinstance(gate, dict) or gate.get("id") not in promoted_region_ids:
-            continue
-        evidence = gate.get("evidence", {})
-        if not isinstance(evidence, dict):
-            continue
-        selected = evidence.get("selected_anchors", [])
-        if not isinstance(selected, list):
-            continue
-        for anchor in selected:
-            if not isinstance(anchor, dict):
+    if isinstance(promotion_regions, list):
+        for region in promotion_regions:
+            if not isinstance(region, dict):
                 continue
-            index = _anchor_index_from_id(anchor.get("id"))
-            if index is not None:
-                promoted_indexes.add(index)
-    return promoted_indexes
+            state = region.get("state")
+            if state not in {"promoted", "rejected", "deferred"}:
+                continue
+            indexes = region.get("selected_anchor_indexes", [])
+            if not isinstance(indexes, list):
+                continue
+            for index in indexes:
+                if isinstance(index, int) and 0 <= index < anchor_count:
+                    states_by_index[index].add(str(state))
+
+    state_indexes = {
+        "promoted": [],
+        "fallback": [],
+        "rejected": [],
+        "deferred": [],
+    }
+    for index in range(anchor_count):
+        state_indexes[_promotion_state_from_region_states(states_by_index[index])].append(
+            index
+        )
+    return state_indexes
+
+
+def _promotion_state_from_region_states(states: set[str]) -> str:
+    if "promoted" in states:
+        return "promoted"
+    if "rejected" in states:
+        return "rejected"
+    if "deferred" in states:
+        return "deferred"
+    return "fallback"
 
 
 def _anchor_index_from_id(value: object) -> int | None:
@@ -1577,6 +1599,7 @@ def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str
         f"- Anchors: {_fmt_markdown_value(export_manifest.get('anchor_count'))}",
         f"- Promoted anchors: {_fmt_markdown_value(promoted_count)}",
         f"- Fallback anchors: {_fmt_markdown_value(fallback_count)}",
+        f"- Anchor states: {_fmt_markdown_counts(export_manifest.get('anchor_state_counts'))}",
         f"- Region states: {_fmt_markdown_counts(export_manifest.get('region_state_counts'))}",
         "",
         "| Region | State | Gate | Selected anchors | Reason |",
