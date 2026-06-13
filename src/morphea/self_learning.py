@@ -727,6 +727,7 @@ def run_self_learning_cycle(
     lucide_suite: str | Path | None = None,
     lucide_output_dir: str | Path | None = None,
     lucide_report: str | Path | None = None,
+    suite_family_baseline: str | Path | None = None,
     min_train_examples_delta: int = 1,
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
@@ -846,12 +847,17 @@ def run_self_learning_cycle(
         curated_validation=curated_validation,
         lucide_validation=lucide_validation,
     )
+    suite_family_baseline_comparison = _compare_suite_family_validation_to_baseline(
+        suite_family_validation,
+        suite_family_baseline,
+    )
     acceptance_gate = _self_learning_acceptance_gate(
         gate=gate,
         curated_validation=curated_validation,
         curated_required=curated_suite is not None,
         lucide_validation=lucide_validation,
         lucide_required=lucide_suite is not None,
+        suite_family_baseline_comparison=suite_family_baseline_comparison,
     )
     result = {
         "schema_version": 1,
@@ -921,6 +927,7 @@ def run_self_learning_cycle(
         "curated_validation": curated_validation,
         "lucide_validation": lucide_validation,
         "suite_family_validation": suite_family_validation,
+        "suite_family_baseline_comparison": suite_family_baseline_comparison,
     }
     summary_path = output / "self-learning-cycle.json"
     summary_path.write_text(
@@ -985,6 +992,120 @@ def _suite_family_validation_summary(
         "real_image": _suite_validation_view(curated_validation),
         "lucide": _suite_validation_view(lucide_validation),
     }
+
+
+def _compare_suite_family_validation_to_baseline(
+    current: dict[str, object],
+    baseline_path: str | Path | None,
+) -> dict[str, object] | None:
+    if baseline_path is None:
+        return None
+    baseline_file = Path(baseline_path)
+    baseline_data = json.loads(baseline_file.read_text(encoding="utf-8"))
+    baseline = _suite_family_validation_from_baseline(baseline_data)
+    baseline_rows = _suite_family_outcomes_by_key(baseline)
+    current_rows = _suite_family_outcomes_by_key(current)
+    new_regressions = []
+    resolved_regressions = []
+    for key, row in sorted(current_rows.items()):
+        baseline_row = baseline_rows.get(key, {})
+        current_outcome = row.get("outcome")
+        baseline_outcome = baseline_row.get("outcome")
+        if _is_bad_family_outcome(current_outcome) and not _is_bad_family_outcome(
+            baseline_outcome
+        ):
+            new_regressions.append(
+                _baseline_comparison_row(row, baseline_outcome)
+            )
+    for key, row in sorted(baseline_rows.items()):
+        if not _is_bad_family_outcome(row.get("outcome")):
+            continue
+        current_row = current_rows.get(key, {})
+        if not _is_bad_family_outcome(current_row.get("outcome")):
+            resolved_row = current_row or {
+                "suite": row.get("suite"),
+                "split": row.get("split"),
+                "family": row.get("family"),
+                "outcome": None,
+            }
+            resolved_regressions.append(
+                _baseline_comparison_row(resolved_row, row.get("outcome"))
+            )
+    return {
+        "status": "checked",
+        "baseline": str(baseline_file),
+        "ok": not new_regressions,
+        "new_regression_count": len(new_regressions),
+        "resolved_regression_count": len(resolved_regressions),
+        "new_regressions": new_regressions,
+        "resolved_regressions": resolved_regressions,
+    }
+
+
+def _suite_family_validation_from_baseline(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    nested = value.get("suite_family_validation")
+    if isinstance(nested, dict):
+        return nested
+    return value
+
+
+def _suite_family_outcomes_by_key(
+    validation: dict[str, object],
+) -> dict[tuple[str, str, str], dict[str, object]]:
+    rows: dict[tuple[str, str, str], dict[str, object]] = {}
+    for suite_name, suite in validation.items():
+        if not isinstance(suite_name, str) or not isinstance(suite, dict):
+            continue
+        families = suite.get("families", [])
+        if not isinstance(families, list):
+            continue
+        for family in families:
+            if not isinstance(family, dict):
+                continue
+            family_name = family.get("family")
+            if not isinstance(family_name, str) or not family_name:
+                continue
+            split = family.get("split") if suite_name == "primitive" else None
+            key = (
+                suite_name,
+                str(split) if isinstance(split, str) and split else "",
+                family_name,
+            )
+            row = dict(family)
+            row["suite"] = suite_name
+            row["split"] = key[1]
+            rows[key] = row
+    return rows
+
+
+def _baseline_comparison_row(
+    row: dict[str, object],
+    baseline_outcome: object,
+) -> dict[str, object]:
+    result = {
+        "suite": row.get("suite"),
+        "split": row.get("split"),
+        "family": row.get("family"),
+        "baseline_outcome": baseline_outcome,
+        "current_outcome": row.get("outcome"),
+    }
+    for key in (
+        "accuracy_delta",
+        "case_count",
+        "checked_count",
+        "passed_count",
+        "failed_count",
+        "missing_source_count",
+    ):
+        if key in row:
+            result[key] = row.get(key)
+    return result
+
+
+def _is_bad_family_outcome(value: object) -> bool:
+    return value in {"regressed", "failed", "failed_missing", "missing"}
 
 
 def _primitive_family_validation(report: dict[str, object]) -> dict[str, object]:
@@ -1182,6 +1303,7 @@ def _self_learning_acceptance_gate(
     curated_required: bool,
     lucide_validation: dict[str, object] | None,
     lucide_required: bool,
+    suite_family_baseline_comparison: dict[str, object] | None,
 ) -> dict[str, object]:
     reasons: list[str] = []
     if gate.get("accepted") is not True:
@@ -1196,11 +1318,20 @@ def _self_learning_acceptance_gate(
             reasons.append("missing_lucide_validation")
         elif lucide_validation.get("ok") is not True:
             reasons.append("lucide_validation_failed")
+    if (
+        isinstance(suite_family_baseline_comparison, dict)
+        and suite_family_baseline_comparison.get("ok") is not True
+    ):
+        reasons.append("suite_family_baseline_regressed")
     return {
         "accepted": not reasons,
         "reasons": reasons,
         "curated_required": curated_required,
         "lucide_required": lucide_required,
+        "suite_family_baseline_checked": isinstance(
+            suite_family_baseline_comparison,
+            dict,
+        ),
     }
 
 
@@ -1271,6 +1402,27 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
             lines.extend(rows)
         else:
             lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
+    baseline_comparison = result.get("suite_family_baseline_comparison")
+    if isinstance(baseline_comparison, dict):
+        lines.extend(
+            [
+                "",
+                "## Suite Family Baseline",
+                "",
+                f"- Baseline: `{baseline_comparison.get('baseline', 'n/a')}`",
+                f"- OK: `{baseline_comparison.get('ok', 'n/a')}`",
+                f"- New regressions: {_fmt_metric(baseline_comparison.get('new_regression_count'))}",
+                f"- Resolved regressions: {_fmt_metric(baseline_comparison.get('resolved_regression_count'))}",
+                "",
+                "| Suite | Split | Family | Baseline | Current | Evidence |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        rows = _suite_family_baseline_rows(baseline_comparison)
+        if rows:
+            lines.extend(rows)
+        else:
+            lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
     lines.extend(
         [
             "",
@@ -1296,6 +1448,39 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _suite_family_baseline_rows(
+    comparison: dict[str, object],
+) -> list[str]:
+    rows = []
+    for section in ("new_regressions", "resolved_regressions"):
+        items = comparison.get(section, [])
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            rows.append(
+                "| "
+                f"`{item.get('suite', 'n/a')}` | "
+                f"`{item.get('split') or 'n/a'}` | "
+                f"`{item.get('family', 'n/a')}` | "
+                f"`{item.get('baseline_outcome', 'n/a')}` | "
+                f"`{item.get('current_outcome', 'n/a')}` | "
+                f"{_suite_family_baseline_evidence(item)} |"
+            )
+    return rows
+
+
+def _suite_family_baseline_evidence(item: dict[str, object]) -> str:
+    if "accuracy_delta" in item:
+        return f"delta={_fmt_metric(item.get('accuracy_delta'))}"
+    return (
+        f"cases={_fmt_metric(item.get('case_count'))}, "
+        f"failed={_fmt_metric(item.get('failed_count'))}, "
+        f"missing={_fmt_metric(item.get('missing_source_count'))}"
+    )
 
 
 def _suite_family_validation_rows(

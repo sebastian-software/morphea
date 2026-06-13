@@ -1939,6 +1939,123 @@ class SelfLearningTests(unittest.TestCase):
                 "failed",
             )
 
+    def test_self_learning_cycle_blocks_new_suite_family_baseline_regression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline = root / "suite-family-baseline.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=104,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            baseline.write_text(
+                json.dumps(
+                    {
+                        "suite_family_validation": {
+                            "primitive": {
+                                "status": "held",
+                                "ok": True,
+                                "families": [
+                                    {
+                                        "split": "val",
+                                        "family": "circle",
+                                        "outcome": "held",
+                                    }
+                                ],
+                            },
+                            "real_image": {
+                                "status": "checked",
+                                "families": [
+                                    {
+                                        "family": "known_debt",
+                                        "outcome": "failed",
+                                    }
+                                ],
+                            },
+                            "lucide": {"status": "not_configured", "families": []},
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            def regressed_comparison(**kwargs):
+                report = {
+                    "schema_version": 1,
+                    "summary": {
+                        "status": "mixed",
+                        "train_examples_delta": 1,
+                        "best_accuracy_delta": 0.1,
+                        "worst_accuracy_delta": -1.0,
+                    },
+                    "delta": {
+                        "label_accuracy": {
+                            "val": {
+                                "circle": {
+                                    "baseline_accuracy": 1.0,
+                                    "augmented_accuracy": 0.0,
+                                    "accuracy_delta": -1.0,
+                                }
+                            }
+                        }
+                    },
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# comparison\n", encoding="utf-8")
+                return report
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch("morphea.self_learning.compare_retraining", regressed_comparison),
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline=baseline,
+                )
+
+            self.assertFalse(result["accepted"])
+            self.assertIn(
+                "suite_family_baseline_regressed",
+                result["acceptance_gate"]["reasons"],
+            )
+            comparison = result["suite_family_baseline_comparison"]
+            self.assertEqual(comparison["new_regression_count"], 1)
+            self.assertEqual(comparison["resolved_regression_count"], 1)
+            self.assertEqual(
+                comparison["new_regressions"][0]["current_outcome"],
+                "regressed",
+            )
+            self.assertIsNone(
+                comparison["resolved_regressions"][0]["current_outcome"],
+            )
+
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -2042,6 +2159,24 @@ class SelfLearningTests(unittest.TestCase):
                         "families": [],
                     },
                 },
+                "suite_family_baseline_comparison": {
+                    "status": "checked",
+                    "baseline": "baseline.json",
+                    "ok": False,
+                    "new_regression_count": 1,
+                    "resolved_regression_count": 0,
+                    "new_regressions": [
+                        {
+                            "suite": "primitive",
+                            "split": "val",
+                            "family": "circle",
+                            "baseline_outcome": "held",
+                            "current_outcome": "regressed",
+                            "accuracy_delta": -0.25,
+                        }
+                    ],
+                    "resolved_regressions": [],
+                },
             }
         )
 
@@ -2063,6 +2198,12 @@ class SelfLearningTests(unittest.TestCase):
             "| `lucide` | `not_configured` | `None` | n/a | n/a | n/a |",
             markdown,
         )
+        self.assertIn("## Suite Family Baseline", markdown)
+        self.assertIn("- New regressions: 1", markdown)
+        self.assertIn(
+            "| `primitive` | `val` | `circle` | `held` | `regressed` | delta=-0.25 |",
+            markdown,
+        )
         self.assertIn("| `gate` | `gate.json` |", markdown)
         self.assertIn("`comparison_status_mixed`", markdown)
 
@@ -2074,6 +2215,7 @@ class SelfLearningTests(unittest.TestCase):
             output_dir = root / "cycle"
             config = root / "self-learn.json"
             markdown = root / "cycle.md"
+            suite_family_baseline = root / "suite-family-baseline.json"
             curated_suite = _write_curated_circle_suite(root)
             generate_synthetic_dataset(
                 output_dir=base_dir,
@@ -2085,6 +2227,18 @@ class SelfLearningTests(unittest.TestCase):
                 test_count=1,
             )
             _write_reviewed_circle(reviewed)
+            suite_family_baseline.write_text(
+                json.dumps(
+                    {
+                        "suite_family_validation": {
+                            "primitive": {"families": []},
+                            "real_image": {"families": []},
+                            "lucide": {"families": []},
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
             config.write_text(
                 json.dumps(
                     {
@@ -2096,6 +2250,7 @@ class SelfLearningTests(unittest.TestCase):
                         "lucide_suite": str(root / "lucide-suite.json"),
                         "lucide_output_dir": str(root / "lucide-runs"),
                         "lucide_report": str(root / "lucide-report.json"),
+                        "suite_family_baseline": str(suite_family_baseline),
                         "min_train_examples_delta": 10,
                         "max_worst_accuracy_drop": 1.0,
                         "allow_unchanged": True,
@@ -2125,6 +2280,10 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(
                 result["lucide_validation"]["status"],
                 "skipped_gate_not_accepted",
+            )
+            self.assertEqual(
+                result["suite_family_baseline_comparison"]["status"],
+                "checked",
             )
 
     def test_retrain_centroid_classifier_writes_augmented_model(self):

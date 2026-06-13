@@ -248,8 +248,13 @@ family summaries are rendered side by side. `--lucide-suite` is accepted by
 `morphea self-learn`; when configured, failed Lucide validation blocks model
 acceptance just like failed curated validation.
 
+`morphea self-learn --suite-family-baseline baseline.json` compares the current
+normalized family view against a fixed baseline. Newly introduced primitive,
+real-image, or Lucide bad outcomes block acceptance, while known baseline debt
+is reported separately from new regressions.
+
 ## Next Gate
 
-The next mainline block should compare suite-family validation against fixed
-baselines, so a real-image, Lucide, or primitive family regression can be
-flagged as newly introduced instead of merely reported in the current run.
+The next mainline block should persist accepted `suite_family_validation`
+snapshots as reviewed baseline artifacts, so future self-learning cycles can
+refresh baselines deliberately instead of hand-copying JSON.

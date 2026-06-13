@@ -435,6 +435,9 @@ Implemented so far:
   across primitive label deltas, curated real-image family summaries, and
   optional Lucide family summaries; configured Lucide validation blocks
   acceptance on failure.
+- `morphea self-learn --suite-family-baseline baseline.json` compares current
+  suite-family validation with a fixed baseline and blocks acceptance only for
+  newly introduced bad family outcomes.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
@@ -804,6 +807,9 @@ Implemented so far:
   retrained model against the curated Lucide benchmark with the same
   `classifier_model` override and reports the result beside primitive and
   real-image families
+- `morphea self-learn --suite-family-baseline baseline.json` distinguishes
+  newly introduced family regressions from known baseline debt before accepting
+  the cycle
 - `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics

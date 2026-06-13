@@ -582,6 +582,10 @@ with case, checked, passed, failed, and missing-source counts. Self-learning
 cycle reports normalize primitive label deltas, curated real-image families,
 and optional Lucide families into `suite_family_validation`, so acceptance can
 be reviewed side by side instead of by aggregate suite status alone.
+When `suite_family_baseline` is configured, the cycle compares the normalized
+family view against a fixed baseline and reports `suite_family_baseline_comparison`.
+New bad outcomes block acceptance while already-known baseline debt stays
+visible without being classified as newly introduced.
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
@@ -1047,6 +1051,8 @@ Top-level fields:
   `lucide_suite` is configured
 - `suite_family_validation`: normalized primitive, real-image, and Lucide
   family evidence used to inspect regressions before model acceptance
+- `suite_family_baseline_comparison`: optional comparison against a fixed
+  `suite_family_validation` baseline with new and resolved regression counts
 
 `morphea self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label
@@ -1054,7 +1060,9 @@ augmentation. When `curated_suite` is configured and retraining is accepted,
 the cycle runs `morphea curated-check` with the accepted model as
 `classifier_model` and writes curated validation artifacts. When `lucide_suite`
 is configured and retraining is accepted, the cycle runs `morphea lucide-check`
-with the same model override; failed Lucide validation blocks acceptance.
+with the same model override; failed Lucide validation blocks acceptance. When
+`suite_family_baseline` is configured, newly introduced primitive, real-image,
+or Lucide family regressions also block acceptance.
 
 ## Self-Learning Config v1
 
@@ -1072,6 +1080,7 @@ Supported fields:
 - `lucide_suite`
 - `lucide_output_dir`
 - `lucide_report`
+- `suite_family_baseline`
 - `output_dir`
 - `markdown`: optional cycle Markdown summary path
 - `min_train_examples_delta`

@@ -382,6 +382,10 @@ across primitive label families, curated real-image family summaries, and
 optional Lucide family summaries. `morphea self-learn --lucide-suite` validates
 accepted models with the same `classifier_model` override and blocks acceptance
 on Lucide failures.
+`morphea self-learn --suite-family-baseline` compares the current normalized
+family view against a fixed baseline and blocks acceptance only for newly
+introduced bad family outcomes, separating known suite debt from fresh
+regressions.
 
 Canonical issue tags:
 
@@ -524,6 +528,9 @@ dependency:
 17. **Baseline suite-family validation**: compare those family views against
    fixed real-image, Lucide, and primitive baselines so newly introduced
    regressions are separated from known suite debt.
+18. **Persist accepted suite-family baselines**: write accepted
+   `suite_family_validation` snapshots as reviewed baseline artifacts for the
+   next self-learning cycle.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.
