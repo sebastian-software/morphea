@@ -370,6 +370,56 @@ class CuratedSuiteTests(unittest.TestCase):
                 str(model),
             )
 
+    def test_duplicate_kind_expectations_require_distinct_curated_anchors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "input.png"
+            suite_path = Path(temp_dir) / "suite.json"
+            output = Path(temp_dir) / "report.json"
+            image = Image.new("RGB", (24, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            image.save(source)
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "single-circle",
+                                "source": str(source),
+                                "recommended_config": {
+                                    "min_area": 8,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "first-circle",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    },
+                                    {
+                                        "id": "second-circle",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(suite_path, output=output, run=True)
+
+            expectations = result["cases"][0]["expectations"]
+            self.assertTrue(expectations[0]["ok"])
+            self.assertFalse(expectations[1]["ok"])
+            self.assertEqual(expectations[1]["actual_count"], 1)
+            self.assertEqual(expectations[1]["cumulative_min_count"], 2)
+            written = json.loads(output.read_text(encoding="utf-8"))
+            self.assertFalse(written["ok"])
+
     def test_load_curated_suite_rejects_metric_expectation_without_bounds(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             suite_path = Path(temp_dir) / "suite.json"

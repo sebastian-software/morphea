@@ -353,10 +353,7 @@ def _check_curated_case(
     }
     scene = scene_from_flat_color_image(source, **config)
     manifest = scene.to_manifest()
-    expectation_results = [
-        _check_expectation(expectation, manifest)
-        for expectation in case.get("expectations", [])
-    ]
+    expectation_results = _check_expectations(case.get("expectations", []), manifest)
     result.update(
         {
             "status": "checked",
@@ -410,6 +407,27 @@ def _check_curated_case(
     return result
 
 
+def _check_expectations(
+    expectations: list[dict[str, Any]],
+    manifest: dict[str, Any],
+) -> list[dict[str, Any]]:
+    cumulative_min_counts: dict[tuple[str, str], int] = {}
+    results: list[dict[str, Any]] = []
+    for expectation in expectations:
+        result = _check_expectation(expectation, manifest)
+        if "metric" not in expectation:
+            selector = _shape_expectation_selector(expectation)
+            minimum = int(expectation.get("min_count", 1))
+            cumulative_minimum = cumulative_min_counts.get(selector, 0) + minimum
+            cumulative_min_counts[selector] = cumulative_minimum
+            result["cumulative_min_count"] = cumulative_minimum
+            result["ok"] = bool(result["ok"]) and int(
+                result.get("actual_count", 0)
+            ) >= cumulative_minimum
+        results.append(result)
+    return results
+
+
 def _check_expectation(
     expectation: dict[str, Any],
     manifest: dict[str, Any],
@@ -452,13 +470,26 @@ def _check_expectation(
             if group.get("kind") == kind
         )
         label = {"group_kind": kind}
-    return {
+    maximum = expectation.get("max_count")
+    ok = actual >= minimum
+    result = {
         "id": expectation["id"],
         **label,
         "min_count": minimum,
         "actual_count": actual,
-        "ok": actual >= minimum,
+        "ok": ok,
     }
+    if maximum is not None:
+        result["max_count"] = int(maximum)
+        result["ok"] = ok and actual <= int(maximum)
+    return result
+
+
+def _shape_expectation_selector(expectation: dict[str, Any]) -> tuple[str, str]:
+    kind = expectation.get("kind")
+    if kind is not None:
+        return ("kind", str(kind))
+    return ("group_kind", str(expectation.get("group_kind")))
 
 
 def _vectorize_config(config: dict[str, Any]) -> dict[str, Any]:
@@ -515,12 +546,16 @@ def _expectation_snapshot(expectation: dict[str, Any]) -> dict[str, Any]:
                 snapshot[key] = expectation[key]
         return snapshot
 
-    return {
+    snapshot = {
         "id": expectation.get("id"),
         "ok": expectation.get("ok", False),
         "actual_count": expectation.get("actual_count", 0),
         "min_count": expectation.get("min_count", 1),
     }
+    for key in ("cumulative_min_count", "max_count"):
+        if key in expectation:
+            snapshot[key] = expectation[key]
+    return snapshot
 
 
 def _counts(values: object) -> dict[str, int]:
@@ -1004,12 +1039,17 @@ def _expectation_markdown_row(expectation: dict[str, Any]) -> str:
     if expectation_type is None:
         expectation_type = expectation.get("group_kind")
         label = "group"
+    required_parts = [
+        f">= {_fmt_markdown_value(expectation.get('cumulative_min_count', expectation.get('min_count')))}"
+    ]
+    if "max_count" in expectation:
+        required_parts.append(f"<= {_fmt_markdown_value(expectation.get('max_count'))}")
     return (
         "| "
         f"`{expectation.get('id', 'n/a')}` | "
         f"`{label}:{expectation_type}` | "
         f"{_fmt_markdown_value(expectation.get('actual_count'))} | "
-        f">= {_fmt_markdown_value(expectation.get('min_count'))} | "
+        f"{', '.join(required_parts)} | "
         f"`{str(expectation.get('ok', False)).lower()}` |"
     )
 
@@ -1118,6 +1158,14 @@ def _validate_expectation(
     if not isinstance(min_count, int) or min_count < 1:
         raise ValueError(
             f"case {case_id} expectation {expectation_id} min_count must be positive"
+        )
+    max_count = expectation.get("max_count")
+    if max_count is not None and (
+        not isinstance(max_count, int) or max_count < min_count
+    ):
+        raise ValueError(
+            f"case {case_id} expectation {expectation_id} max_count "
+            "must be >= min_count"
         )
 
 

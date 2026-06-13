@@ -355,10 +355,14 @@ directories when `--output-dir` is used.
 config values, and `run` must be a boolean when provided in JSON.
 
 Curated suite expectations support three mutually exclusive check types:
-`kind` with `min_count`, `group_kind` with `min_count`, or `metric` with
-`min_value` and/or `max_value`. Metric expectations read top-level manifest
-`metrics` values such as `editability_score`, `simple_shape_ratio`, and
-`fragmentation_penalty`.
+`kind` with `min_count` and optional `max_count`, `group_kind` with `min_count`
+and optional `max_count`, or `metric` with `min_value` and/or `max_value`.
+Metric expectations read top-level manifest `metrics` values such as
+`editability_score`, `simple_shape_ratio`, and `fragmentation_penalty`.
+
+Repeated `kind` or `group_kind` expectations are cumulative. For example, two
+separate `kind: circle`, `min_count: 1` expectations require two distinct circle
+anchors; the second result records `cumulative_min_count: 2`.
 
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates

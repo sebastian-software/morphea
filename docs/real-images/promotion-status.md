@@ -88,7 +88,5 @@ label is green.
 
 The next implementation block should target Quality Gate v2:
 
-- distinct-anchor expectations across curated and Lucide checks;
 - expand topology and shape-class gates beyond expectation references into
-  region-level checks;
-- report ordering by red failures before aggregate metrics.
+  region-level checks.
