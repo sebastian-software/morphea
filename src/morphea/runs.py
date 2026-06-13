@@ -13,7 +13,7 @@ from PIL import Image
 
 from morphea.diagnostics import diagnostic_stage_counts
 from morphea.rendering import raster_fidelity_metrics, render_manifest_image
-from morphea.scene import Scene, SvgStyle
+from morphea.scene import Scene, SvgStyle, refresh_raster_editability_component
 
 
 @dataclass(frozen=True)
@@ -74,9 +74,12 @@ def write_vectorize_run(
     preview = render_manifest_image(manifest)
     if input_path.exists():
         with Image.open(input_path) as source:
-            manifest.setdefault("metrics", {}).update(
+            metrics = manifest.setdefault("metrics", {})
+            metrics.update(
                 raster_fidelity_metrics(source=source, rendered=preview)
             )
+            if isinstance(metrics, dict):
+                refresh_raster_editability_component(metrics)
 
     cutout_export = str(config.get("cutout_export", "overlay_stroke"))
     svg_path.write_text(
@@ -180,6 +183,9 @@ def render_markdown_report(
     editability_components = _editability_component_summary(
         metrics.get("editability_components")
     )
+    editability_v10_components = _editability_v10_component_summary(
+        metrics.get("editability_v10_components")
+    )
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
         "# Morphēa Vectorize Report",
@@ -193,6 +199,7 @@ def render_markdown_report(
         f"- Diagnostics: {len(diagnostics)}",
         f"- Editability score: {metrics.get('editability_score', 'n/a')}",
         f"- Editability components: {editability_components}",
+        f"- Editability v10 components: {editability_v10_components}",
         f"- Fragmentation penalty: {metrics.get('fragmentation_penalty', 'n/a')}",
         f"- Anchor quality error mean: {metrics.get('anchor_quality_error_mean', 'n/a')}",
         f"- Anchor quality error max: {metrics.get('anchor_quality_error_max', 'n/a')}",
@@ -267,6 +274,9 @@ def render_html_report(
     editability_components = _editability_component_summary(
         metrics.get("editability_components")
     )
+    editability_v10_components = _editability_v10_component_summary(
+        metrics.get("editability_v10_components")
+    )
     anchor_counts = _counts(anchor.get("kind") for anchor in anchors)
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
@@ -295,6 +305,7 @@ def render_html_report(
         f"    <li>Diagnostics: {len(diagnostics)}</li>",
         f"    <li>Editability score: {escape(str(metrics.get('editability_score', 'n/a')))}</li>",
         f"    <li>Editability components: {escape(editability_components)}</li>",
+        f"    <li>Editability v10 components: {escape(editability_v10_components)}</li>",
         f"    <li>Fragmentation penalty: {escape(str(metrics.get('fragmentation_penalty', 'n/a')))}</li>",
         f"    <li>Anchor quality error mean: {escape(str(metrics.get('anchor_quality_error_mean', 'n/a')))}</li>",
         f"    <li>Anchor quality error max: {escape(str(metrics.get('anchor_quality_error_max', 'n/a')))}</li>",
@@ -419,6 +430,34 @@ def _editability_component_summary(value: object) -> str:
         for key in keys
         if key in value
     ]
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _editability_v10_component_summary(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    parts = []
+    for key in (
+        "shape_identity_confidence",
+        "parameter_economy",
+        "node_economy",
+        "stroke_width_stability",
+        "line_curve_smoothness",
+        "topology_consistency",
+        "grouping_quality",
+        "fragmentation",
+        "raster_fidelity",
+        "provenance_confidence",
+        "classifier_prior_agreement",
+    ):
+        component = value.get(key)
+        if not isinstance(component, dict):
+            continue
+        score = component.get("score")
+        if score is None:
+            parts.append(f"{key}=n/a")
+        else:
+            parts.append(f"{key}={score}")
     return ", ".join(parts) if parts else "n/a"
 
 

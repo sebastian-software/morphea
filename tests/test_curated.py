@@ -429,6 +429,18 @@ class CuratedSuiteTests(unittest.TestCase):
                 sorted(anchor["promotion_state"] for anchor in manifest["anchors"]),
                 ["promoted", "rejected"],
             )
+            manifest_components = manifest["metrics"]["editability_v10_components"]
+            self.assertEqual(
+                manifest_components["topology_consistency"]["score"],
+                0.0,
+            )
+            self.assertTrue(
+                manifest_components["topology_consistency"]["gate_blocked"],
+            )
+            self.assertEqual(
+                manifest_components["topology_consistency"]["failed_gates"],
+                ["right-circle-topology"],
+            )
 
     def test_render_curated_markdown_summarizes_cases_and_expectations(self):
         markdown = render_curated_markdown(
@@ -486,6 +498,12 @@ class CuratedSuiteTests(unittest.TestCase):
                                 "unclipped_score": 0.75,
                                 "clipped_score": 0.75,
                             },
+                            "editability_v10_components": {
+                                "shape_identity_confidence": {"score": 1.0},
+                                "parameter_economy": {"score": 0.8},
+                                "node_economy": {"score": 0.9},
+                                "raster_fidelity": {"score": 0.7},
+                            },
                         },
                         "artifacts": {"run_dir": "runs/simple-circle"},
                         "expectations": [
@@ -533,6 +551,11 @@ class CuratedSuiteTests(unittest.TestCase):
             "`fragmentation_penalty`=0, `diagnostic_penalty`=0.05, "
             "`generic_path_penalty`=0.2, `unclipped_score`=0.75, "
             "`clipped_score`=0.75",
+            markdown,
+        )
+        self.assertIn(
+            "- Editability v10 components: `shape_identity_confidence`=1, "
+            "`parameter_economy`=0.8, `node_economy`=0.9",
             markdown,
         )
         self.assertIn("| `editable-enough` | `metric:editability_score` | 0.75 | >= 0.9 | `false` |", markdown)
@@ -749,6 +772,23 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn(
                 "closed_anchor_count 1 > 0",
                 gate_by_id["circle-topology"]["reason"],
+            )
+            components = result["cases"][0]["metrics"]["editability_v10_components"]
+            self.assertEqual(
+                components["shape_identity_confidence"]["score"],
+                0.0,
+            )
+            self.assertEqual(
+                components["shape_identity_confidence"]["failed_gates"],
+                ["empty-region"],
+            )
+            self.assertEqual(
+                components["topology_consistency"]["score"],
+                0.0,
+            )
+            self.assertEqual(
+                components["topology_consistency"]["failed_gates"],
+                ["circle-topology"],
             )
             self.assertEqual(
                 result["cases"][0]["promotion_summary"]["decision"],

@@ -366,6 +366,9 @@ Implemented so far:
 - `editability_score`
 - `editability_components`, with formula-level score components exposed for
   reports, snapshots, and sweep summaries
+- `editability_v10_components`, with review-level scores for shape identity,
+  parameter/node economy, stroke stability, smoothness, topology, grouping,
+  fragmentation, raster fidelity, provenance, and classifier-prior agreement
 - `fragmentation_penalty`
 - run-directory raster fidelity metrics: `raster_l1_error`,
   `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
@@ -381,6 +384,11 @@ Implemented so far:
   runs expose total/mean simple-shape priority and semantic score envelopes.
 - scene metrics expose `editability_components`, so score changes can be
   inspected as component deltas instead of opaque aggregate movement.
+- scene metrics expose `editability_v10_components`, so RIP4 can grow toward
+  the v10 contract without turning any single score into a promotion bypass.
+- curated promotion gates cap matching v10 components with `gate_blocked`,
+  `failed_gates`, and `uncapped_score`, so red topology, shape-class, grouping,
+  visual-fidelity, provenance, or fragmentation gates cannot be averaged away.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

@@ -50,6 +50,11 @@ class SweepTests(unittest.TestCase):
                 "generic_path_penalty",
                 summary["runs"][0]["editability_components"],
             )
+            self.assertIn("editability_v10_components", summary["runs"][0])
+            self.assertIn(
+                "raster_fidelity",
+                summary["runs"][0]["editability_v10_components"],
+            )
             self.assertIn("fragmentation_penalty", summary["runs"][0])
             self.assertIn("anchor_quality_error_mean", summary["runs"][0])
             self.assertIn("anchor_quality_error_max", summary["runs"][0])

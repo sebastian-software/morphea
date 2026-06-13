@@ -1193,6 +1193,17 @@ def scene_metrics_to_manifest(
             "unclipped_score": round(editability_unclipped_score, 6),
             "clipped_score": round(editability_score, 6),
         },
+        "editability_v10_components": _editability_v10_components(
+            anchor_count=anchor_count,
+            node_count=node_count,
+            parameter_count=parameter_count,
+            simple_shape_count=simple_shape_count,
+            generic_path_count=generic_path_count,
+            fragmentation_penalty=fragmentation_penalty,
+            diagnostic_penalty=diagnostic_penalty,
+            quality_summary=_anchor_quality_metric_summary(anchors),
+            group_count=len(groups or []),
+        ),
         "editability_score": round(editability_score, 6),
         "color_fragment_counts": _color_fragment_counts(anchors),
     }
@@ -1234,6 +1245,146 @@ def _is_anchor_quality_metric(key: str) -> bool:
         key.endswith("_error")
         or key in {"stroke_width_variance", "classifier_prior_error"}
     )
+
+
+def refresh_raster_editability_component(metrics: dict[str, object]) -> None:
+    """Update v10 editability components after run-level raster metrics exist."""
+
+    components = metrics.get("editability_v10_components")
+    if not isinstance(components, dict):
+        components = {}
+    components["raster_fidelity"] = _raster_fidelity_component(metrics)
+    metrics["editability_v10_components"] = components
+
+
+def _editability_v10_components(
+    *,
+    anchor_count: int,
+    node_count: int,
+    parameter_count: int,
+    simple_shape_count: int,
+    generic_path_count: int,
+    fragmentation_penalty: float,
+    diagnostic_penalty: float,
+    quality_summary: dict[str, dict[str, float | int]],
+    group_count: int,
+) -> dict[str, dict[str, object]]:
+    average_nodes = node_count / anchor_count if anchor_count else 0.0
+    average_parameters = parameter_count / anchor_count if anchor_count else 0.0
+    simple_shape_ratio = simple_shape_count / anchor_count if anchor_count else 1.0
+    generic_path_ratio = generic_path_count / anchor_count if anchor_count else 0.0
+    return {
+        "shape_identity_confidence": {
+            "score": round(simple_shape_ratio, 6),
+            "simple_shape_count": simple_shape_count,
+            "generic_path_count": generic_path_count,
+            "generic_path_ratio": round(generic_path_ratio, 6),
+        },
+        "parameter_economy": {
+            "score": _economy_score(average_parameters, budget=16.0),
+            "average_parameter_count": round(average_parameters, 6),
+            "parameter_count": parameter_count,
+        },
+        "node_economy": {
+            "score": _economy_score(average_nodes, budget=24.0),
+            "average_node_count": round(average_nodes, 6),
+            "node_count": node_count,
+        },
+        "stroke_width_stability": _metric_component(
+            quality_summary,
+            "stroke_width_variance",
+        ),
+        "line_curve_smoothness": _metric_component(
+            quality_summary,
+            "line_smoothness_error",
+        ),
+        "topology_consistency": {
+            "score": _error_score(diagnostic_penalty, scale=0.5),
+            "diagnostic_penalty": round(diagnostic_penalty, 6),
+        },
+        "grouping_quality": {
+            "score": _grouping_score(anchor_count, group_count),
+            "group_count": group_count,
+        },
+        "fragmentation": {
+            "score": _error_score(fragmentation_penalty, scale=0.5),
+            "fragmentation_penalty": round(fragmentation_penalty, 6),
+        },
+        "raster_fidelity": {
+            "score": None,
+            "observed": False,
+            "reason": "run-level raster metrics unavailable",
+        },
+        "provenance_confidence": {
+            "score": round(1.0 - generic_path_ratio, 6),
+            "fallback_path_ratio": round(generic_path_ratio, 6),
+        },
+        "classifier_prior_agreement": _metric_component(
+            quality_summary,
+            "classifier_prior_error",
+        ),
+    }
+
+
+def _metric_component(
+    summary: dict[str, dict[str, float | int]],
+    metric: str,
+) -> dict[str, object]:
+    values = summary.get(metric)
+    if not isinstance(values, dict):
+        return {
+            "score": 1.0,
+            "observed": False,
+            "metric": metric,
+            "reason": "metric unavailable",
+        }
+    max_error = float(values.get("max", 0.0))
+    return {
+        "score": _error_score(max_error),
+        "observed": True,
+        "metric": metric,
+        "max": round(max_error, 6),
+        "mean": round(float(values.get("mean", 0.0)), 6),
+        "count": int(values.get("count", 0)),
+    }
+
+
+def _raster_fidelity_component(metrics: dict[str, object]) -> dict[str, object]:
+    l1 = metrics.get("raster_l1_error")
+    edge = metrics.get("raster_edge_error")
+    if not isinstance(l1, (int, float)) or not isinstance(edge, (int, float)):
+        return {
+            "score": None,
+            "observed": False,
+            "reason": "raster_l1_error or raster_edge_error missing",
+        }
+    error = min(float(l1) + float(edge), 1.0)
+    return {
+        "score": _error_score(error),
+        "observed": True,
+        "raster_l1_error": round(float(l1), 6),
+        "raster_edge_error": round(float(edge), 6),
+    }
+
+
+def _economy_score(value: float, *, budget: float) -> float:
+    if budget <= 0.0:
+        return 0.0
+    return _error_score(value / budget)
+
+
+def _grouping_score(anchor_count: int, group_count: int) -> float:
+    if anchor_count <= 1:
+        return 1.0
+    if group_count > 0:
+        return 1.0
+    return 0.5
+
+
+def _error_score(value: float, *, scale: float = 1.0) -> float:
+    if scale <= 0.0:
+        return 0.0
+    return round(max(0.0, min(1.0, 1.0 - float(value) / scale)), 6)
 
 
 def _quad_grid_summary(

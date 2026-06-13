@@ -817,6 +817,14 @@ class SceneExportTests(unittest.TestCase):
                 "clipped_score": 1.0,
             },
         )
+        v10 = metrics["editability_v10_components"]
+        self.assertEqual(v10["shape_identity_confidence"]["score"], 1.0)
+        self.assertEqual(v10["parameter_economy"]["parameter_count"], 8)
+        self.assertEqual(v10["node_economy"]["node_count"], 3)
+        self.assertEqual(v10["stroke_width_stability"]["score"], 0.6)
+        self.assertEqual(v10["line_curve_smoothness"]["score"], 0.8)
+        self.assertFalse(v10["raster_fidelity"]["observed"])
+        self.assertEqual(v10["classifier_prior_agreement"]["score"], 1.0)
 
     def test_auto_merge_compact_same_color_rect_fragments(self):
         fragments = (

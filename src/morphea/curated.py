@@ -296,6 +296,11 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 )
                 if components != "n/a":
                     lines.append(f"- Editability components: {components}")
+                v10_components = _fmt_editability_v10_components(
+                    metrics.get("editability_v10_components")
+                )
+                if v10_components != "n/a":
+                    lines.append(f"- Editability v10 components: {v10_components}")
         artifacts = case.get("artifacts", {})
         if isinstance(artifacts, dict) and artifacts:
             lines.append(
@@ -434,6 +439,12 @@ def _check_curated_case(
                 result["metrics"] = dict(sorted(metrics.items()))
     if isinstance(result.get("promotion"), dict):
         result["promotion_gates"] = _promotion_gate_results(result, manifest=manifest)
+        _apply_promotion_gate_editability_components(
+            result.get("metrics"),
+            result["promotion_gates"],
+        )
+        if isinstance(manifest, dict) and isinstance(result.get("metrics"), dict):
+            manifest["metrics"] = result["metrics"]
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
         result["promotion_regions"] = _promotion_region_results(result)
         if output_dir is not None and isinstance(result.get("artifacts"), dict):
@@ -1346,6 +1357,46 @@ def _promotion_summary(gates: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
+def _apply_promotion_gate_editability_components(
+    metrics: object,
+    promotion_gates: object,
+) -> None:
+    if not isinstance(metrics, dict) or not isinstance(promotion_gates, list):
+        return
+    components = metrics.get("editability_v10_components")
+    if not isinstance(components, dict):
+        return
+    gate_mapping = {
+        "shape_class": "shape_identity_confidence",
+        "topology": "topology_consistency",
+        "grouping": "grouping_quality",
+        "fragmentation": "fragmentation",
+        "visual_fidelity": "raster_fidelity",
+        "provenance": "provenance_confidence",
+    }
+    failed_by_component: dict[str, list[str]] = {}
+    for gate in promotion_gates:
+        if not isinstance(gate, dict) or gate.get("ok", False):
+            continue
+        if gate.get("severity") != "red":
+            continue
+        component = gate_mapping.get(str(gate.get("gate_type", "")))
+        if component is None:
+            continue
+        failed_by_component.setdefault(component, []).append(str(gate.get("id")))
+    for component_id, failed_gates in failed_by_component.items():
+        component = components.get(component_id)
+        if not isinstance(component, dict):
+            component = {}
+            components[component_id] = component
+        score = component.get("score")
+        if isinstance(score, (int, float)):
+            component["uncapped_score"] = round(float(score), 6)
+        component["score"] = 0.0
+        component["gate_blocked"] = True
+        component["failed_gates"] = sorted(failed_gates)
+
+
 def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
     promotion = case.get("promotion")
     if not isinstance(promotion, dict):
@@ -1633,6 +1684,9 @@ def _write_manifest_promotion_state(
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict):
         return
+    metrics = case_result.get("metrics")
+    if isinstance(metrics, dict):
+        manifest["metrics"] = metrics
     regions = case_result.get("promotion_regions", [])
     regions = regions if isinstance(regions, list) else []
     gates = case_result.get("promotion_gates", [])
@@ -2109,6 +2163,32 @@ def _fmt_editability_components(value: object) -> str:
         for key in keys
         if key in value
     ]
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_editability_v10_components(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    keys = (
+        "shape_identity_confidence",
+        "parameter_economy",
+        "node_economy",
+        "stroke_width_stability",
+        "line_curve_smoothness",
+        "topology_consistency",
+        "grouping_quality",
+        "fragmentation",
+        "raster_fidelity",
+        "provenance_confidence",
+        "classifier_prior_agreement",
+    )
+    parts = []
+    for key in keys:
+        component = value.get(key)
+        if not isinstance(component, dict):
+            continue
+        score = component.get("score")
+        parts.append(f"`{key}`={_fmt_markdown_value(score)}")
     return ", ".join(parts) if parts else "n/a"
 
 

@@ -144,10 +144,22 @@ current components explain the existing aggregate score without changing gate
 decisions: `simple_shape_ratio`, `fragmentation_penalty`, `diagnostic_penalty`,
 `generic_path_penalty`, `unclipped_score`, and `clipped_score`.
 
+The second RIP4 slice adds `editability_v10_components`, a review-level block
+with independent scores for shape identity, parameter economy, node economy,
+stroke width stability, line/curve smoothness, topology consistency, grouping,
+fragmentation, raster fidelity, provenance, and classifier-prior agreement.
+Run-level raster metrics refresh the raster-fidelity component after preview
+rendering; missing classifier-prior or stroke/smoothness metrics remain explicit
+as unobserved component evidence rather than hidden zeros.
+
+Promotion gates now cap matching v10 components instead of being averaged away.
+For example, the current UI screenshot keeps `raster_fidelity=0.944073` but
+sets `topology_consistency=0` because `radio-control-region-topology` is red.
+The current Terminaro run sets shape identity, topology, grouping, and raster
+fidelity components to `0` because the corresponding red gates fail.
+
 ## Next Gate
 
-The next mainline block should expand RIP4 from formula transparency to v10
-component scoring: shape identity confidence, parameter/node economy, stroke
-stability, smoothness, topology, grouping, raster fidelity, provenance, and
-classifier-prior disagreement. These components must remain subordinate to red
-topology and shape-class gates.
+The next mainline block should define accepted-output review criteria from
+these components: component thresholds, regression deltas, and evidence that
+accepted outputs are more editable rather than only lower-error renders.

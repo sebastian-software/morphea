@@ -49,6 +49,11 @@ class RunWriterTests(unittest.TestCase):
             self.assertEqual(manifest["anchor_count"], 1)
             self.assertIn("raster_l1_error", manifest["metrics"])
             self.assertIn("raster_edge_error", manifest["metrics"])
+            raster_component = manifest["metrics"]["editability_v10_components"][
+                "raster_fidelity"
+            ]
+            self.assertTrue(raster_component["observed"])
+            self.assertIn("score", raster_component)
             anchors = json.loads(run.anchors_path.read_text(encoding="utf-8"))
             palette = json.loads(run.palette_path.read_text(encoding="utf-8"))
             masks = json.loads(run.mask_summary_path.read_text(encoding="utf-8"))
@@ -133,6 +138,12 @@ class RunWriterTests(unittest.TestCase):
                         "unclipped_score": 0.75,
                         "clipped_score": 0.75,
                     },
+                    "editability_v10_components": {
+                        "shape_identity_confidence": {"score": 0.9},
+                        "parameter_economy": {"score": 0.8},
+                        "node_economy": {"score": 0.85},
+                        "raster_fidelity": {"score": 0.7},
+                    },
                     "raster_l1_error": 0.2,
                 },
             },
@@ -152,6 +163,11 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("- Editability score: 0.8", report)
         self.assertIn(
             "- Editability components: simple_shape_ratio=0.9",
+            report,
+        )
+        self.assertIn(
+            "- Editability v10 components: "
+            "shape_identity_confidence=0.9, parameter_economy=0.8",
             report,
         )
         self.assertIn("- Anchor quality error mean: 0.05", report)
@@ -198,6 +214,12 @@ class RunWriterTests(unittest.TestCase):
                         "unclipped_score": 0.75,
                         "clipped_score": 0.75,
                     },
+                    "editability_v10_components": {
+                        "shape_identity_confidence": {"score": 0.9},
+                        "parameter_economy": {"score": 0.8},
+                        "node_economy": {"score": 0.85},
+                        "raster_fidelity": {"score": 0.7},
+                    },
                     "raster_l1_error": 0.2,
                 },
             },
@@ -216,6 +238,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("Anchor quality error max", report)
         self.assertIn("Editability components", report)
         self.assertIn("simple_shape_ratio=0.9", report)
+        self.assertIn("Editability v10 components", report)
+        self.assertIn("shape_identity_confidence=0.9", report)
         self.assertIn("Simple-shape priority bonus total", report)
         self.assertIn("Semantic anchor score mean", report)
         self.assertIn("<h2>Pipeline Stages</h2>", report)
