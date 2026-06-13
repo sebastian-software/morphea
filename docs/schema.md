@@ -420,7 +420,8 @@ directory includes the standard vectorize artifacts plus:
 
 - `svg-render.png`: deterministic rasterization of the exported SVG
 - `diff.png`: red/blue source-vs-SVG visual difference image
-- `contact-sheet.png`: source, manifest preview, SVG render, and diff panels
+- `contact-sheet.png`: source, manifest preview, SVG render, diff, promotion
+  decision, and failed-gate panels for cases with promotion metadata
 
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:

@@ -153,6 +153,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "diff.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
+            with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
+                self.assertEqual(sheet.size, (1404, 268))
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
                     encoding="utf-8"

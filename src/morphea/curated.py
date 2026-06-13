@@ -393,11 +393,19 @@ def _check_curated_case(
             "report": str(vectorize_run.report_path),
             "debug_svg": str(vectorize_run.debug_svg_path),
             "input": str(vectorize_run.input_path),
-            **_write_visual_audit_artifacts(vectorize_run.run_dir, vectorize_run),
+            **_visual_audit_artifact_paths(vectorize_run.run_dir),
         }
     if isinstance(result.get("promotion"), dict):
         result["promotion_gates"] = _promotion_gate_results(result)
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
+    if output_dir is not None:
+        _write_visual_audit_artifacts(
+            vectorize_run.run_dir,
+            vectorize_run,
+            promotion=result.get("promotion"),
+            promotion_gates=result.get("promotion_gates"),
+            promotion_summary=result.get("promotion_summary"),
+        )
     return result
 
 
@@ -697,6 +705,10 @@ def _promotion_summary(gates: list[dict[str, object]]) -> dict[str, object]:
 def _write_visual_audit_artifacts(
     run_dir: Path,
     run: VectorizeRun,
+    *,
+    promotion: object = None,
+    promotion_gates: object = None,
+    promotion_summary: object = None,
 ) -> dict[str, str]:
     svg_render_path = run_dir / "svg-render.png"
     diff_path = run_dir / "diff.png"
@@ -711,19 +723,37 @@ def _write_visual_audit_artifacts(
         preview = preview_image.convert("RGBA")
     diff = _visual_diff_image(source, svg_render)
     diff.save(diff_path)
+    panels = [
+        ("source", source),
+        ("preview", preview),
+        ("svg render", svg_render),
+        ("diff", diff),
+    ]
+    if isinstance(promotion_summary, dict) or isinstance(promotion_gates, list):
+        panels.extend(
+            [
+                (
+                    "promotion",
+                    _promotion_summary_panel(promotion, promotion_summary),
+                ),
+                (
+                    "failed gates",
+                    _failed_gates_panel(promotion_gates),
+                ),
+            ]
+        )
     contact_sheet = _contact_sheet_image(
-        [
-            ("source", source),
-            ("preview", preview),
-            ("svg render", svg_render),
-            ("diff", diff),
-        ]
+        panels
     )
     contact_sheet.save(contact_sheet_path)
+    return _visual_audit_artifact_paths(run_dir)
+
+
+def _visual_audit_artifact_paths(run_dir: Path) -> dict[str, str]:
     return {
-        "svg_render": str(svg_render_path),
-        "diff": str(diff_path),
-        "contact_sheet": str(contact_sheet_path),
+        "svg_render": str(run_dir / "svg-render.png"),
+        "diff": str(run_dir / "diff.png"),
+        "contact_sheet": str(run_dir / "contact-sheet.png"),
     }
 
 
@@ -784,6 +814,94 @@ def _contact_sheet_image(panels: list[tuple[str, Image.Image]]) -> Image.Image:
             outline=(180, 180, 180),
         )
     return sheet
+
+
+def _promotion_summary_panel(
+    promotion: object,
+    summary: object,
+) -> Image.Image:
+    panel = Image.new("RGB", (220, 220), "white")
+    draw = ImageDraw.Draw(panel)
+    summary = summary if isinstance(summary, dict) else {}
+    promotion = promotion if isinstance(promotion, dict) else {}
+    decision = str(summary.get("decision", "n/a"))
+    quality = str(promotion.get("current_quality_label", "n/a"))
+    red = _fmt_panel_value(summary.get("red_gate_count"))
+    yellow = _fmt_panel_value(summary.get("yellow_gate_count"))
+    failed = _fmt_panel_value(summary.get("failed_gate_count"))
+    color = _promotion_panel_color(decision, quality)
+    draw.rectangle((0, 0, 219, 219), fill=(250, 250, 250), outline=color, width=4)
+    draw.text((12, 12), "decision", fill=(50, 50, 50))
+    draw.text((12, 34), decision, fill=color)
+    draw.text((12, 68), f"quality: {quality}", fill=(45, 45, 45))
+    draw.text((12, 92), f"failed: {failed}", fill=(45, 45, 45))
+    draw.text((12, 116), f"red: {red}", fill=(45, 45, 45))
+    draw.text((12, 140), f"yellow: {yellow}", fill=(45, 45, 45))
+    return panel
+
+
+def _failed_gates_panel(gates: object) -> Image.Image:
+    panel = Image.new("RGB", (220, 220), "white")
+    draw = ImageDraw.Draw(panel)
+    draw.rectangle((0, 0, 219, 219), fill=(250, 250, 250), outline=(180, 180, 180))
+    if not isinstance(gates, list):
+        draw.text((12, 12), "no gate data", fill=(50, 50, 50))
+        return panel
+    failed = [gate for gate in gates if isinstance(gate, dict) and not gate.get("ok")]
+    if not failed:
+        draw.text((12, 12), "all gates passed", fill=(35, 115, 70))
+        return panel
+    y = 12
+    for gate in failed[:6]:
+        severity = str(gate.get("severity", "red"))
+        gate_id = str(gate.get("id", "n/a"))
+        gate_type = str(gate.get("gate_type", "n/a"))
+        color = (170, 45, 45) if severity == "red" else (155, 110, 20)
+        for line in _wrap_panel_text(f"{severity}: {gate_id}", 26):
+            draw.text((12, y), line, fill=color)
+            y += 16
+        draw.text((12, y), gate_type, fill=(80, 80, 80))
+        y += 20
+        if y > 188:
+            break
+    remaining = len(failed) - 6
+    if remaining > 0:
+        draw.text((12, 196), f"+{remaining} more", fill=(70, 70, 70))
+    return panel
+
+
+def _promotion_panel_color(decision: str, quality: str) -> tuple[int, int, int]:
+    if decision == "promoted" and quality == "green":
+        return (35, 130, 75)
+    if decision == "rejected" or quality == "red":
+        return (175, 45, 45)
+    return (170, 120, 30)
+
+
+def _fmt_panel_value(value: object) -> str:
+    if isinstance(value, int):
+        return str(value)
+    return "n/a"
+
+
+def _wrap_panel_text(text: str, width: int) -> list[str]:
+    words = text.split()
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        candidate = word if not current else f"{current} {word}"
+        if len(candidate) <= width:
+            current = candidate
+            continue
+        if current:
+            lines.append(current)
+        while len(word) > width:
+            lines.append(word[:width])
+            word = word[width:]
+        current = word
+    if current:
+        lines.append(current)
+    return lines or [""]
 
 
 def _expectation_markdown_row(expectation: dict[str, Any]) -> str:

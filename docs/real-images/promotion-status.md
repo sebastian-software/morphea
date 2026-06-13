@@ -32,7 +32,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 | --- | --- | --- | --- | --- | --- |
 | `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, `table-perspective-quads` 2/8 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
-| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | current semantic expectations pass, but v10 promotion gates do not exist yet |
+| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | configured topology and shape-class gates pass; current label still keeps promotion deferred |
 
 Current curated result: 3 cases, 1 checked pass, 1 checked failure, 1 missing
 source. No real-image case is green under the v10+ definition because green
@@ -75,16 +75,17 @@ The current contact sheet includes:
 - source/reference image;
 - manifest preview;
 - exported SVG render;
-- red/blue visual diff.
+- red/blue visual diff;
+- promotion decision summary;
+- failed-gate summary.
 
 Still missing for the full RIP2 review artifact:
 
 - anchor overlay panel;
-- failed-gate summary panel;
-- promotion decision summary panel.
 
-Until promotion decisions and hard-gate summaries exist, checked real-image
-cases can be red or yellow but not green.
+Checked real-image cases can become green only when the hard gates pass, the
+source is available, review artifacts exist, and the case's current quality
+label is green.
 
 ## Next Gate
 
@@ -94,4 +95,4 @@ The next implementation block should target Quality Gate v2:
 - expand topology and shape-class gates beyond expectation references into
   region-level checks;
 - report ordering by red failures before aggregate metrics;
-- contact-sheet generation as a first-class artifact.
+- add anchor overlays to contact-sheet review artifacts.
