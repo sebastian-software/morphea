@@ -221,8 +221,13 @@ review decisions from the run root across the fresh curated rerun, restores
 them into the regenerated per-case manifests and curated JSON report, and then
 harvests only accepted/corrected applied decisions.
 
+`morphea review --accept-applied-reviews` bridges those harvested candidates
+into the existing review/apply-review loop: accepted/corrected applied
+promotion reviews become accepted review items, rejected/deferred decisions
+become rejected items, and issue tags survive into reviewed-label artifacts.
+
 ## Next Gate
 
-The next mainline block should start reviewed pseudo-label collection from
-accepted/corrected applied promotion reviews while preserving rejected and
-deferred decisions as review evidence.
+The next mainline block should run the reviewed-label merge/training gate from
+accepted/corrected applied promotion reviews and prove rejected/deferred review
+evidence cannot enter the training dataset.

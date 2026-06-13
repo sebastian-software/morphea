@@ -269,7 +269,12 @@ HARVEST_CURATED_DEFAULT_CONFIG = {
         if key not in {"run_root", "output"}
     },
 }
-REVIEW_CONFIG_KEYS = {"pseudo_labels", "output", "markdown"}
+REVIEW_CONFIG_KEYS = {
+    "pseudo_labels",
+    "output",
+    "markdown",
+    "accept_applied_reviews",
+}
 APPLY_REVIEW_CONFIG_KEYS = {"review", "output", "markdown"}
 MERGE_LABELS_CONFIG_KEYS = {"reviewed_labels", "output_dir"}
 CURATED_CHECK_CONFIG_KEYS = {
@@ -626,6 +631,12 @@ def main(argv: list[str] | None = None) -> None:
     review.add_argument("pseudo_labels", type=Path, nargs="?")
     review.add_argument("-o", "--output", type=Path)
     review.add_argument("--markdown", type=Path)
+    review.add_argument(
+        "--accept-applied-reviews",
+        action="store_true",
+        default=None,
+        help="Pre-accept accepted/corrected applied review decisions.",
+    )
     review.add_argument("--config", type=Path)
 
     apply_review = subcommands.add_parser(
@@ -1295,6 +1306,9 @@ def main(argv: list[str] | None = None) -> None:
             pseudo_labels=review_config["pseudo_labels"],
             output=review_config["output"],
             markdown=review_config.get("markdown"),
+            accept_applied_reviews=bool(
+                review_config.get("accept_applied_reviews", False)
+            ),
         )
         print(f"created review queue with {review_result['review_count']} items")
         return
@@ -2420,6 +2434,8 @@ def _resolved_review_config(args: argparse.Namespace) -> dict[str, Path]:
         config["output"] = args.output
     if args.markdown is not None:
         config["markdown"] = args.markdown
+    if args.accept_applied_reviews is not None:
+        config["accept_applied_reviews"] = args.accept_applied_reviews
     _require_config_paths(config, ("pseudo_labels", "output"), "review")
     return config
 
@@ -2880,7 +2896,7 @@ def _load_path_config(
     path: Path | None,
     allowed_keys: set[str],
     name: str,
-) -> dict[str, Path]:
+) -> dict[str, object]:
     if path is None:
         return {}
     loaded = json.loads(path.read_text(encoding="utf-8"))
@@ -2891,7 +2907,7 @@ def _load_path_config(
         msg = f"unsupported {name} config keys: {', '.join(unknown)}"
         raise ValueError(msg)
     return {
-        key: Path(str(value))
+        key: value if isinstance(value, bool) else Path(str(value))
         for key, value in loaded.items()
         if value is not None
     }

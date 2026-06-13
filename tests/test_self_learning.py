@@ -579,6 +579,65 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(review["items"][0]["issues"], [])
             self.assertTrue(output.exists())
 
+    def test_create_review_file_can_accept_applied_reviews(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pseudo = Path(temp_dir) / "pseudo.json"
+            pseudo.write_text(
+                json.dumps(
+                    {
+                        "pseudo_labels": [
+                            {
+                                "kind": "circle",
+                                "review_decision_applied": {
+                                    "case_id": "circle-case",
+                                    "decision": "corrected",
+                                    "issue_tags": ["topology_mismatch"],
+                                },
+                            },
+                            {
+                                "kind": "quad",
+                                "review_decision_applied": {
+                                    "case_id": "quad-case",
+                                    "decision": "rejected",
+                                    "issue_tags": ["weak_visual_fidelity"],
+                                },
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            review_path = Path(temp_dir) / "review.json"
+            reviewed_path = Path(temp_dir) / "reviewed.json"
+
+            review = create_review_file(
+                pseudo_labels=pseudo,
+                output=review_path,
+                accept_applied_reviews=True,
+            )
+            reviewed = apply_review_file(
+                review=review_path,
+                output=reviewed_path,
+            )
+
+            self.assertEqual(review["auto_accepted_applied_review_count"], 1)
+            self.assertEqual(review["auto_rejected_applied_review_count"], 1)
+            self.assertEqual(review["items"][0]["decision"], "accept")
+            self.assertEqual(review["items"][1]["decision"], "reject")
+            self.assertEqual(
+                review["issue_counts"],
+                {
+                    "topology_mismatch": 1,
+                    "weak_visual_fidelity": 1,
+                },
+            )
+            self.assertEqual(reviewed["accepted_count"], 1)
+            self.assertEqual(reviewed["rejected_count"], 1)
+            self.assertEqual(
+                reviewed["accepted"][0]["review"]["issues"],
+                ["topology_mismatch"],
+            )
+
     def test_render_review_markdown_summarizes_pending_items(self):
         markdown = render_review_markdown(
             {
@@ -631,6 +690,56 @@ class SelfLearningTests(unittest.TestCase):
             self.assertTrue(output.exists())
             self.assertIn(
                 "# Morphēa Review Queue",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_review_cli_can_accept_applied_reviews(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pseudo = Path(temp_dir) / "pseudo.json"
+            pseudo.write_text(
+                json.dumps(
+                    {
+                        "pseudo_labels": [
+                            {
+                                "kind": "circle",
+                                "review_decision_applied": {
+                                    "decision": "accepted",
+                                    "issue_tags": ["fragmentation"],
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            review = Path(temp_dir) / "review.json"
+            markdown = Path(temp_dir) / "review.md"
+            reviewed = Path(temp_dir) / "reviewed.json"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "review",
+                        str(pseudo),
+                        "-o",
+                        str(review),
+                        "--markdown",
+                        str(markdown),
+                        "--accept-applied-reviews",
+                    ]
+                )
+                main(["apply-review", str(review), "-o", str(reviewed)])
+
+            review_data = json.loads(review.read_text(encoding="utf-8"))
+            self.assertEqual(review_data["items"][0]["decision"], "accept")
+            self.assertEqual(
+                review_data["items"][0]["issues"],
+                ["fragmentation"],
+            )
+            reviewed_data = json.loads(reviewed.read_text(encoding="utf-8"))
+            self.assertEqual(reviewed_data["accepted_count"], 1)
+            self.assertIn(
+                "- Auto-accepted applied reviews: 1",
                 markdown.read_text(encoding="utf-8"),
             )
 

@@ -553,6 +553,12 @@ can become pseudo-label candidates. Missing, invalid, `rejected`, and
 rerun, writes restored decisions back into the new per-case manifest and
 curated JSON report, then harvests only accepted/corrected applied decisions.
 
+`morphea review --accept-applied-reviews` converts harvested
+`review_decision_applied` evidence into the existing review/apply-review path:
+`accepted` and `corrected` applied decisions become `accept` review items,
+`rejected` and `deferred` applied decisions become `reject` items, and issue
+tags are preserved for reviewed-label reports and training datasets.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

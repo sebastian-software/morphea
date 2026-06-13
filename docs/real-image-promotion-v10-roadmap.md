@@ -366,6 +366,8 @@ harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied
 decisions across fresh curated reruns and restores them into regenerated
 manifests and curated JSON reports before harvesting.
+`morphea review --accept-applied-reviews` maps harvested applied promotion
+reviews into the existing review/apply-review loop while preserving issue tags.
 
 Canonical issue tags:
 
@@ -492,9 +494,12 @@ dependency:
 11. **Collect reviewed pseudo-labels**: export only accepted/corrected applied
    promotion reviews into the reviewed-label self-learning path while retaining
    rejected/deferred evidence.
-12. **Run MLX/SAM side by side**: compare segmentation sources only after the
+12. **Prove reviewed-label merge gates**: merge only accepted/corrected applied
+   promotion reviews into trainable datasets and keep rejected/deferred
+   evidence out.
+13. **Run MLX/SAM side by side**: compare segmentation sources only after the
    promotion evaluator can tell whether a region proposal helped.
-13. **Run reviewed pseudo-label training loops**: train only from green or
+14. **Run reviewed pseudo-label training loops**: train only from green or
    corrected review artifacts after collection evidence is machine-readable.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before

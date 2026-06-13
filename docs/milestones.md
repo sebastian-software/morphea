@@ -417,6 +417,10 @@ Implemented so far:
   review decisions across fresh curated reruns, restores them into regenerated
   manifests and curated JSON reports, and harvests only accepted/corrected
   applied decisions.
+- `morphea review --accept-applied-reviews` maps harvested applied promotion
+  reviews into the existing review/apply-review flow, accepting
+  accepted/corrected decisions, rejecting rejected/deferred decisions, and
+  preserving issue tags for reviewed-label artifacts.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

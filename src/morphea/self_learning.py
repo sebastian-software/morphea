@@ -1264,23 +1264,33 @@ def create_review_file(
     pseudo_labels: str | Path,
     output: str | Path,
     markdown: str | Path | None = None,
+    accept_applied_reviews: bool = False,
 ) -> dict[str, object]:
     source = json.loads(Path(pseudo_labels).read_text(encoding="utf-8"))
     review_items = []
     for index, label in enumerate(source.get("pseudo_labels", [])):
         review_items.append(
-            {
-                "id": f"review-{index:05d}",
-                "decision": "pending",
-                "reason": "",
-                "corrected_kind": "",
-                "issues": [],
-                "label": label,
-            }
+            _review_item_from_label(
+                index,
+                label,
+                accept_applied_reviews=accept_applied_reviews,
+            )
         )
     review = {
         "source": str(pseudo_labels),
         "review_count": len(review_items),
+        "auto_accepted_applied_review_count": sum(
+            1
+            for item in review_items
+            if item.get("decision") == "accept"
+            and item.get("applied_review_decision")
+        ),
+        "auto_rejected_applied_review_count": sum(
+            1
+            for item in review_items
+            if item.get("decision") == "reject"
+            and item.get("applied_review_decision")
+        ),
         "issue_counts": _issue_counts_from_review_items(review_items),
         "items": review_items,
     }
@@ -1294,6 +1304,43 @@ def create_review_file(
     return review
 
 
+def _review_item_from_label(
+    index: int,
+    label: object,
+    *,
+    accept_applied_reviews: bool,
+) -> dict[str, object]:
+    item = {
+        "id": f"review-{index:05d}",
+        "decision": "pending",
+        "reason": "",
+        "corrected_kind": "",
+        "issues": [],
+        "label": label,
+    }
+    if not accept_applied_reviews or not isinstance(label, dict):
+        return item
+    applied = label.get("review_decision_applied")
+    if not isinstance(applied, dict) or not applied:
+        return item
+    decision = applied.get("decision")
+    if decision in {"accepted", "corrected"}:
+        item["decision"] = "accept"
+        item["reason"] = f"applied_review_{decision}"
+    elif decision in {"rejected", "deferred"}:
+        item["decision"] = "reject"
+        item["reason"] = f"applied_review_{decision}"
+    else:
+        item["reason"] = "invalid_applied_review_decision"
+    item["issues"] = _issues_from_value(applied.get("issue_tags"))
+    item["applied_review_decision"] = {
+        "case_id": applied.get("case_id"),
+        "decision": decision,
+        "source_review_decision": applied.get("source_review_decision"),
+    }
+    return item
+
+
 def render_review_markdown(review: dict[str, object]) -> str:
     items = review.get("items", [])
     if not isinstance(items, list):
@@ -1303,6 +1350,8 @@ def render_review_markdown(review: dict[str, object]) -> str:
         "",
         f"- Source: `{review.get('source', 'n/a')}`",
         f"- Items: {_fmt_metric(review.get('review_count'))}",
+        f"- Auto-accepted applied reviews: {_fmt_metric(review.get('auto_accepted_applied_review_count'))}",
+        f"- Auto-rejected applied reviews: {_fmt_metric(review.get('auto_rejected_applied_review_count'))}",
         f"- Issue counts: {_format_issue_counts(_review_issue_counts(review, items))}",
         "",
         "| ID | Decision | Kind | Groups | Quality error | Issues |",
