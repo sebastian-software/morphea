@@ -136,9 +136,18 @@ label is green.
 | Promoted SVG output can be filtered from debug/fallback output. | met | Checked run directories write `promoted.svg`, `fallback.svg`, and `promotion-export.json`; `morphea promotion-export` can regenerate the same partition from a promotion-annotated manifest. |
 | No failed semantic candidate disappears silently. | met | `promotion-export.json` records `rejected_anchor_indexes` and `anchor_state_counts`; current checked real-image manifests count 5 rejected anchors for `terminaro-tweaked` and 2 rejected anchors for `ui-radio-acceptance-screenshot`. |
 
+## RIP4 Progress
+
+The first RIP4 slice exposes formula-level `editability_components` in
+manifests, run reports, curated reports, snapshots, and sweep summaries. The
+current components explain the existing aggregate score without changing gate
+decisions: `simple_shape_ratio`, `fragmentation_penalty`, `diagnostic_penalty`,
+`generic_path_penalty`, `unclipped_score`, and `clipped_score`.
+
 ## Next Gate
 
-RIP3 is now implementation-complete for the current corpus evidence. The next
-mainline block should start RIP4: componentized editability scoring that ranks
-candidates after hard gates, without allowing a high score to hide red topology
-or shape-class failures.
+The next mainline block should expand RIP4 from formula transparency to v10
+component scoring: shape identity confidence, parameter/node economy, stroke
+stability, smoothness, topology, grouping, raster fidelity, provenance, and
+classifier-prior disagreement. These components must remain subordinate to red
+topology and shape-class gates.

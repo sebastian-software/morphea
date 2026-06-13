@@ -45,6 +45,11 @@ class SweepTests(unittest.TestCase):
             self.assertEqual(summary["run_count"], 2)
             self.assertIn("layer_count", summary["runs"][0])
             self.assertIn("editability_score", summary["runs"][0])
+            self.assertIn("editability_components", summary["runs"][0])
+            self.assertIn(
+                "generic_path_penalty",
+                summary["runs"][0]["editability_components"],
+            )
             self.assertIn("fragmentation_penalty", summary["runs"][0])
             self.assertIn("anchor_quality_error_mean", summary["runs"][0])
             self.assertIn("anchor_quality_error_max", summary["runs"][0])

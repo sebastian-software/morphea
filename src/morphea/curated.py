@@ -291,6 +291,11 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 ]
                 if metric_parts:
                     lines.append(f"- Key metrics: {', '.join(metric_parts)}")
+                components = _fmt_editability_components(
+                    metrics.get("editability_components")
+                )
+                if components != "n/a":
+                    lines.append(f"- Editability components: {components}")
         artifacts = case.get("artifacts", {})
         if isinstance(artifacts, dict) and artifacts:
             lines.append(
@@ -2086,6 +2091,25 @@ def _fmt_promotion_regions(value: object) -> str:
         f"`{state}`={_fmt_markdown_value(counts[state])}"
         for state in sorted(counts)
     )
+
+
+def _fmt_editability_components(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    keys = (
+        "simple_shape_ratio",
+        "fragmentation_penalty",
+        "diagnostic_penalty",
+        "generic_path_penalty",
+        "unclipped_score",
+        "clipped_score",
+    )
+    parts = [
+        f"`{key}`={_fmt_markdown_value(value[key])}"
+        for key in keys
+        if key in value
+    ]
+    return ", ".join(parts) if parts else "n/a"
 
 
 def _fmt_markdown_value(value: object) -> str:

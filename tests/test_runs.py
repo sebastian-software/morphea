@@ -125,6 +125,14 @@ class RunWriterTests(unittest.TestCase):
                         "simple_shape_priority_bonus_total": 0.7,
                         "semantic_anchor_score_mean": -0.1,
                     },
+                    "editability_components": {
+                        "simple_shape_ratio": 0.9,
+                        "fragmentation_penalty": 0.1,
+                        "diagnostic_penalty": 0.05,
+                        "generic_path_penalty": 0.0,
+                        "unclipped_score": 0.75,
+                        "clipped_score": 0.75,
+                    },
                     "raster_l1_error": 0.2,
                 },
             },
@@ -142,6 +150,10 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("`segmentation`: 1", report)
         self.assertIn("`warning` `component_deferred`", report)
         self.assertIn("- Editability score: 0.8", report)
+        self.assertIn(
+            "- Editability components: simple_shape_ratio=0.9",
+            report,
+        )
         self.assertIn("- Anchor quality error mean: 0.05", report)
         self.assertIn("- Anchor quality error max: 0.2", report)
         self.assertIn("- Simple-shape priority bonus total: 0.7", report)
@@ -178,6 +190,14 @@ class RunWriterTests(unittest.TestCase):
                         "simple_shape_priority_bonus_total": 0.7,
                         "semantic_anchor_score_mean": -0.1,
                     },
+                    "editability_components": {
+                        "simple_shape_ratio": 0.9,
+                        "fragmentation_penalty": 0.1,
+                        "diagnostic_penalty": 0.05,
+                        "generic_path_penalty": 0.0,
+                        "unclipped_score": 0.75,
+                        "clipped_score": 0.75,
+                    },
                     "raster_l1_error": 0.2,
                 },
             },
@@ -194,6 +214,8 @@ class RunWriterTests(unittest.TestCase):
         self.assertIn("reason compact_same_color_bounds", report)
         self.assertIn("Anchor quality error mean", report)
         self.assertIn("Anchor quality error max", report)
+        self.assertIn("Editability components", report)
+        self.assertIn("simple_shape_ratio=0.9", report)
         self.assertIn("Simple-shape priority bonus total", report)
         self.assertIn("Semantic anchor score mean", report)
         self.assertIn("<h2>Pipeline Stages</h2>", report)

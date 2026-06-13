@@ -806,6 +806,17 @@ class SceneExportTests(unittest.TestCase):
             metrics["anchor_scoring_summary"]["semantic_anchor_score_min"],
             -0.205,
         )
+        self.assertEqual(
+            metrics["editability_components"],
+            {
+                "simple_shape_ratio": 1.0,
+                "fragmentation_penalty": 0.0,
+                "diagnostic_penalty": 0.0,
+                "generic_path_penalty": 0.0,
+                "unclipped_score": 1.0,
+                "clipped_score": 1.0,
+            },
+        )
 
     def test_auto_merge_compact_same_color_rect_fragments(self):
         fragments = (

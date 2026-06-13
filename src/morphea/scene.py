@@ -1115,14 +1115,18 @@ def scene_metrics_to_manifest(
         * 0.05,
         0.5,
     )
+    generic_path_penalty = min(generic_path_count * 0.04, 0.4)
+    editability_unclipped_score = (
+        simple_shape_ratio
+        - fragmentation_penalty
+        - diagnostic_penalty
+        - generic_path_penalty
+    )
     editability_score = max(
         0.0,
         min(
             1.0,
-            simple_shape_ratio
-            - fragmentation_penalty
-            - diagnostic_penalty
-            - min(generic_path_count * 0.04, 0.4),
+            editability_unclipped_score,
         ),
     )
     return {
@@ -1181,6 +1185,14 @@ def scene_metrics_to_manifest(
             ),
         },
         "diagnostic_penalty": round(diagnostic_penalty, 6),
+        "editability_components": {
+            "simple_shape_ratio": round(simple_shape_ratio, 6),
+            "fragmentation_penalty": round(fragmentation_penalty, 6),
+            "diagnostic_penalty": round(diagnostic_penalty, 6),
+            "generic_path_penalty": round(generic_path_penalty, 6),
+            "unclipped_score": round(editability_unclipped_score, 6),
+            "clipped_score": round(editability_score, 6),
+        },
         "editability_score": round(editability_score, 6),
         "color_fragment_counts": _color_fragment_counts(anchors),
     }

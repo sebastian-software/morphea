@@ -177,6 +177,9 @@ def render_markdown_report(
     scoring = metrics.get("anchor_scoring_summary", {})
     if not isinstance(scoring, dict):
         scoring = {}
+    editability_components = _editability_component_summary(
+        metrics.get("editability_components")
+    )
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
         "# Morphēa Vectorize Report",
@@ -189,6 +192,7 @@ def render_markdown_report(
         f"- Groups: {len(groups)}",
         f"- Diagnostics: {len(diagnostics)}",
         f"- Editability score: {metrics.get('editability_score', 'n/a')}",
+        f"- Editability components: {editability_components}",
         f"- Fragmentation penalty: {metrics.get('fragmentation_penalty', 'n/a')}",
         f"- Anchor quality error mean: {metrics.get('anchor_quality_error_mean', 'n/a')}",
         f"- Anchor quality error max: {metrics.get('anchor_quality_error_max', 'n/a')}",
@@ -260,6 +264,9 @@ def render_html_report(
     scoring = metrics.get("anchor_scoring_summary", {})
     if not isinstance(scoring, dict):
         scoring = {}
+    editability_components = _editability_component_summary(
+        metrics.get("editability_components")
+    )
     anchor_counts = _counts(anchor.get("kind") for anchor in anchors)
     stage_counts = diagnostic_stage_counts(diagnostics)
     lines = [
@@ -287,6 +294,7 @@ def render_html_report(
         f"    <li>Groups: {len(groups)}</li>",
         f"    <li>Diagnostics: {len(diagnostics)}</li>",
         f"    <li>Editability score: {escape(str(metrics.get('editability_score', 'n/a')))}</li>",
+        f"    <li>Editability components: {escape(editability_components)}</li>",
         f"    <li>Fragmentation penalty: {escape(str(metrics.get('fragmentation_penalty', 'n/a')))}</li>",
         f"    <li>Anchor quality error mean: {escape(str(metrics.get('anchor_quality_error_mean', 'n/a')))}</li>",
         f"    <li>Anchor quality error max: {escape(str(metrics.get('anchor_quality_error_max', 'n/a')))}</li>",
@@ -393,6 +401,25 @@ def _group_report_details(group: dict[str, object]) -> str:
         if merge_plan.get("decision_reason") is not None:
             details = f"{details}, reason {merge_plan.get('decision_reason')}"
     return details
+
+
+def _editability_component_summary(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    keys = (
+        "simple_shape_ratio",
+        "fragmentation_penalty",
+        "diagnostic_penalty",
+        "generic_path_penalty",
+        "unclipped_score",
+        "clipped_score",
+    )
+    parts = [
+        f"{key}={value[key]}"
+        for key in keys
+        if key in value
+    ]
+    return ", ".join(parts) if parts else "n/a"
 
 
 def _anchors_artifact(manifest: dict[str, object]) -> dict[str, object]:

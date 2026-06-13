@@ -478,6 +478,14 @@ class CuratedSuiteTests(unittest.TestCase):
                             "editability_score": 0.75,
                             "simple_shape_ratio": 1.0,
                             "fragmentation_penalty": 0.0,
+                            "editability_components": {
+                                "simple_shape_ratio": 1.0,
+                                "fragmentation_penalty": 0.0,
+                                "diagnostic_penalty": 0.05,
+                                "generic_path_penalty": 0.2,
+                                "unclipped_score": 0.75,
+                                "clipped_score": 0.75,
+                            },
                         },
                         "artifacts": {"run_dir": "runs/simple-circle"},
                         "expectations": [
@@ -520,6 +528,13 @@ class CuratedSuiteTests(unittest.TestCase):
         )
         self.assertIn("## simple-circle", markdown)
         self.assertIn("`circle`=1", markdown)
+        self.assertIn(
+            "- Editability components: `simple_shape_ratio`=1, "
+            "`fragmentation_penalty`=0, `diagnostic_penalty`=0.05, "
+            "`generic_path_penalty`=0.2, `unclipped_score`=0.75, "
+            "`clipped_score`=0.75",
+            markdown,
+        )
         self.assertIn("| `editable-enough` | `metric:editability_score` | 0.75 | >= 0.9 | `false` |", markdown)
 
     def test_check_curated_suite_applies_config_overrides(self):

@@ -364,6 +364,8 @@ Implemented so far:
 - `morphea eval` JSON/Markdown summaries over run directories
 - scene-level `metrics` in manifests
 - `editability_score`
+- `editability_components`, with formula-level score components exposed for
+  reports, snapshots, and sweep summaries
 - `fragmentation_penalty`
 - run-directory raster fidelity metrics: `raster_l1_error`,
   `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
@@ -377,6 +379,8 @@ Implemented so far:
   reviews, and pseudo-label harvesting.
 - scene metrics aggregate anchor scoring into `anchor_scoring_summary`, so
   runs expose total/mean simple-shape priority and semantic score envelopes.
+- scene metrics expose `editability_components`, so score changes can be
+  inspected as component deltas instead of opaque aggregate movement.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.

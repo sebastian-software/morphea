@@ -120,6 +120,7 @@ def run_sweep(
                 "diagnostic_count": len(diagnostics),
                 "diagnostic_stage_counts": diagnostic_stage_counts(diagnostics),
                 "editability_score": metrics.get("editability_score"),
+                "editability_components": metrics.get("editability_components"),
                 "fragmentation_penalty": metrics.get("fragmentation_penalty"),
                 "anchor_quality_error_mean": metrics.get("anchor_quality_error_mean"),
                 "anchor_quality_error_max": metrics.get("anchor_quality_error_max"),

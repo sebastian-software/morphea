@@ -82,6 +82,10 @@ Scene metrics:
 - `group_count`
 - `simple_shape_ratio`
 - `fragmentation_penalty`
+- `editability_components`: formula-level component breakdown for
+  `editability_score`, currently including `simple_shape_ratio`,
+  `fragmentation_penalty`, `diagnostic_penalty`, `generic_path_penalty`,
+  `unclipped_score`, and `clipped_score`
 - `anchor_quality_error_mean`
 - `anchor_quality_error_max`
 - `anchor_quality_metric_summary`: per-metric aggregate counts, means, and
@@ -160,8 +164,8 @@ Top-level fields:
   raster L1 error
 - `runs`: per-run summaries with anchor/group/diagnostic counts
 
-Each run summary also carries `editability_score`, `fragmentation_penalty`,
-`raster_l1_error`, `raster_edge_error`, `semantic_rank`, and
+Each run summary also carries `editability_score`, `editability_components`,
+`fragmentation_penalty`, `raster_l1_error`, `raster_edge_error`, `semantic_rank`, and
 `diagnostic_stage_counts` when the manifest contains those metrics and
 diagnostics.
 
