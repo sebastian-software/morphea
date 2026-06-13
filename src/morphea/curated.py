@@ -64,6 +64,15 @@ PROMOTION_GATE_TYPES = {
     "review_safety",
 }
 PROMOTION_GATE_SEVERITIES = {"red", "yellow"}
+PROMOTION_REGION_TOPOLOGY_LIMITS = {
+    "min_closed_anchors",
+    "max_closed_anchors",
+    "min_open_anchors",
+    "max_open_anchors",
+    "max_hole_count",
+    "max_cutout_count",
+    "max_disconnected_components",
+}
 
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
@@ -748,10 +757,18 @@ def _region_promotion_gates(
             for anchor in selected
             if str(anchor.get("kind")) in forbidden_kinds
         ]
+        topology_summary = _region_topology_summary(selected)
+        topology_failures = _region_topology_failures(gate, topology_summary)
         count_ok = len(matching) >= min_count
         if isinstance(max_count, int):
             count_ok = count_ok and len(matching) <= max_count
-        ok = checked and bounds is not None and count_ok and not forbidden
+        ok = (
+            checked
+            and bounds is not None
+            and count_ok
+            and not forbidden
+            and not topology_failures
+        )
         reason = _region_gate_reason(
             checked=checked,
             status=str(case.get("status", "unknown")),
@@ -760,6 +777,7 @@ def _region_promotion_gates(
             min_count=min_count,
             max_count=max_count if isinstance(max_count, int) else None,
             forbidden_count=len(forbidden),
+            topology_failures=topology_failures,
         )
         gates.append(
             _promotion_gate(
@@ -776,6 +794,8 @@ def _region_promotion_gates(
                     "matching_count": len(matching),
                     "selected_count": len(selected),
                     "forbidden_count": len(forbidden),
+                    "topology_summary": topology_summary,
+                    "topology_failures": topology_failures,
                     "selected_anchors": _region_gate_anchor_evidence(selected),
                     "description": gate.get("description"),
                 },
@@ -808,6 +828,7 @@ def _region_gate_reason(
     min_count: int,
     max_count: int | None,
     forbidden_count: int,
+    topology_failures: list[str],
 ) -> str:
     if not checked:
         return f"case status is {status}"
@@ -819,6 +840,8 @@ def _region_gate_reason(
         return f"matching anchors in region: {matching_count} < {min_count}"
     if max_count is not None and matching_count > max_count:
         return f"matching anchors in region: {matching_count} > {max_count}"
+    if topology_failures:
+        return "topology constraints failed: " + ", ".join(topology_failures)
     return f"matching anchors in region: {matching_count}"
 
 
@@ -833,9 +856,103 @@ def _region_gate_anchor_evidence(
                 "id": anchor.get("id"),
                 "kind": anchor.get("kind"),
                 "bounds": list(bounds) if bounds is not None else None,
+                "closed": _anchor_closed(anchor),
+                "hole_count": _anchor_hole_count(anchor),
+                "cutout": _anchor_has_cutout(anchor),
             }
         )
     return evidence
+
+
+def _region_topology_summary(
+    anchors: list[dict[str, object]],
+) -> dict[str, object]:
+    kind_counts = _counts(anchor.get("kind") for anchor in anchors)
+    closed_count = sum(1 for anchor in anchors if _anchor_closed(anchor))
+    open_count = len(anchors) - closed_count
+    hole_count = sum(_anchor_hole_count(anchor) for anchor in anchors)
+    cutout_count = sum(1 for anchor in anchors if _anchor_has_cutout(anchor))
+    return {
+        "selected_anchor_count": len(anchors),
+        "disconnected_component_count": len(anchors),
+        "kind_counts": kind_counts,
+        "closed_anchor_count": closed_count,
+        "open_anchor_count": open_count,
+        "hole_count": hole_count,
+        "cutout_count": cutout_count,
+    }
+
+
+def _region_topology_failures(
+    gate: dict[str, Any],
+    summary: dict[str, object],
+) -> list[str]:
+    failures: list[str] = []
+    checks = [
+        ("min_closed_anchors", "closed_anchor_count", ">="),
+        ("max_closed_anchors", "closed_anchor_count", "<="),
+        ("min_open_anchors", "open_anchor_count", ">="),
+        ("max_open_anchors", "open_anchor_count", "<="),
+        ("max_hole_count", "hole_count", "<="),
+        ("max_cutout_count", "cutout_count", "<="),
+        (
+            "max_disconnected_components",
+            "disconnected_component_count",
+            "<=",
+        ),
+    ]
+    for gate_key, summary_key, operator in checks:
+        if gate_key not in gate:
+            continue
+        expected = gate.get(gate_key)
+        actual = summary.get(summary_key)
+        if not isinstance(expected, int) or not isinstance(actual, int):
+            continue
+        if operator == ">=" and actual < expected:
+            failures.append(f"{summary_key} {actual} < {expected}")
+        if operator == "<=" and actual > expected:
+            failures.append(f"{summary_key} {actual} > {expected}")
+    return failures
+
+
+def _anchor_closed(anchor: dict[str, object]) -> bool:
+    if str(anchor.get("kind")) in {
+        "circle",
+        "ellipse",
+        "rect",
+        "rounded_rect",
+        "quad",
+        "stroke_circle",
+    }:
+        return True
+    path = anchor.get("path")
+    if isinstance(path, dict) and isinstance(path.get("closed"), bool):
+        return bool(path["closed"])
+    stroke = anchor.get("stroke")
+    if isinstance(stroke, dict) and isinstance(stroke.get("closed"), bool):
+        return bool(stroke["closed"])
+    return False
+
+
+def _anchor_hole_count(anchor: dict[str, object]) -> int:
+    metrics = anchor.get("metrics")
+    if not isinstance(metrics, dict):
+        return 0
+    value = metrics.get("path_hole_count", 0)
+    if isinstance(value, (int, float)):
+        return max(0, int(value))
+    return 0
+
+
+def _anchor_has_cutout(anchor: dict[str, object]) -> bool:
+    stroke = anchor.get("stroke")
+    if isinstance(stroke, dict) and bool(stroke.get("is_cutout", False)):
+        return True
+    export_policy = anchor.get("export_policy")
+    if isinstance(export_policy, dict):
+        strategy = export_policy.get("cutout_strategy")
+        return isinstance(strategy, str) and bool(strategy)
+    return False
 
 
 def _manifest_anchor_bounds(
@@ -1535,6 +1652,7 @@ def _validate_promotion_region_gates(case_id: str, gates: Any) -> None:
                 f"case {case_id} promotion region gate {gate_id} max_count "
                 "must be >= min_count"
             )
+        _validate_region_topology_limits(case_id, gate_id, gate)
         description = gate.get("description")
         if description is not None and (
             not isinstance(description, str) or not description
@@ -1561,3 +1679,34 @@ def _validate_region_kind_list(
             f"case {case_id} promotion region gate {gate_id} {key} "
             "must be a string array"
         )
+
+
+def _validate_region_topology_limits(
+    case_id: str,
+    gate_id: str,
+    gate: dict[str, Any],
+) -> None:
+    for key in sorted(PROMOTION_REGION_TOPOLOGY_LIMITS):
+        value = gate.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, int) or value < 0:
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} {key} "
+                "must be a non-negative integer"
+            )
+    for minimum_key, maximum_key in (
+        ("min_closed_anchors", "max_closed_anchors"),
+        ("min_open_anchors", "max_open_anchors"),
+    ):
+        minimum = gate.get(minimum_key)
+        maximum = gate.get(maximum_key)
+        if (
+            isinstance(minimum, int)
+            and isinstance(maximum, int)
+            and maximum < minimum
+        ):
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} "
+                f"{maximum_key} must be >= {minimum_key}"
+            )

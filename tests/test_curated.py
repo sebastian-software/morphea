@@ -449,6 +449,16 @@ class CuratedSuiteTests(unittest.TestCase):
                     "min_count": 1,
                     "severity": "red",
                 },
+                {
+                    "id": "circle-topology",
+                    "gate_type": "topology",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "min_iou": 0.3,
+                    "min_count": 1,
+                    "max_closed_anchors": 0,
+                    "severity": "red",
+                },
             ]
             suite_path.write_text(
                 json.dumps(
@@ -487,10 +497,18 @@ class CuratedSuiteTests(unittest.TestCase):
                 gate_by_id["circle-region"]["evidence"]["matching_count"],
                 1,
             )
+            topology = gate_by_id["circle-region"]["evidence"]["topology_summary"]
+            self.assertEqual(topology["closed_anchor_count"], 1)
+            self.assertEqual(topology["open_anchor_count"], 0)
             self.assertFalse(gate_by_id["empty-region"]["ok"])
             self.assertIn(
                 "matching anchors in region: 0 < 1",
                 gate_by_id["empty-region"]["reason"],
+            )
+            self.assertFalse(gate_by_id["circle-topology"]["ok"])
+            self.assertIn(
+                "closed_anchor_count 1 > 0",
+                gate_by_id["circle-topology"]["reason"],
             )
             self.assertEqual(
                 result["cases"][0]["promotion_summary"]["decision"],
@@ -589,6 +607,45 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "unknown expectation id"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_region_topology_limit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["region_gates"] = [
+                {
+                    "id": "bad-topology-limit",
+                    "gate_type": "topology",
+                    "bounds": [0, 0, 10, 10],
+                    "expected_kinds": ["circle"],
+                    "max_closed_anchors": -1,
+                }
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "max_closed_anchors"):
                 load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):

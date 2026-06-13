@@ -30,7 +30,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5, `table-perspective-quads` 2/8 |
+| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, `table-perspective-quads` 2/8 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | configured topology and shape-class gates pass; current label still keeps promotion deferred |
 
@@ -68,7 +68,9 @@ for example `circle-anchor-shape-class`, `table-grid-topology`, or
 as named gates instead of relying only on a broad semantic expectation failure.
 Cases may also define source-region gates, such as
 `gold-circle-region-shape-class` or `radio-control-region-topology`, that check
-expected anchor kinds inside concrete image bounds.
+expected anchor kinds inside concrete image bounds. Region gates now also emit
+`topology_summary` evidence for closed/open anchors, holes, cutouts, and
+disconnected component counts.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
@@ -91,6 +93,4 @@ label is green.
 
 The next implementation block should deepen Quality Gate v2 region checks:
 
-- derive topology summaries for holes, cut-outs, open/closed state, and
-  disconnected components inside region gates;
 - add per-family visual thresholds after hard gates, not before them.

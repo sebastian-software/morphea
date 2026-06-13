@@ -73,6 +73,8 @@
             ],
             "min_count": 5,
             "min_iou": 0.01,
+            "max_hole_count": 0,
+            "max_cutout_count": 0,
             "severity": "red",
             "description": "The known gold dot/brooch region must contain five editable circle anchors, not just circles elsewhere in the image."
           }
@@ -297,6 +299,11 @@
             ],
             "min_count": 1,
             "min_iou": 0.25,
+            "min_closed_anchors": 1,
+            "max_open_anchors": 0,
+            "max_hole_count": 0,
+            "max_cutout_count": 0,
+            "max_disconnected_components": 2,
             "severity": "red",
             "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds."
           }

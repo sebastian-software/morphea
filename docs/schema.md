@@ -393,10 +393,18 @@ Promotion metadata fields:
 - `region_gates`: optional array of source-region promotion gates. Each gate
   includes `id`, `gate_type`, `bounds`, `expected_kinds` and/or
   `forbidden_kinds`, optional `min_count`, optional `max_count`, optional
-  `min_iou`, optional `severity`, and optional `description`. `bounds` are
-  `[left, top, right, bottom]` in manifest/source coordinates. Region gates
-  select anchors whose manifest `source_mask.bounds` overlap the region by
-  at least `min_iou`, then check the selected anchor kinds.
+  `min_iou`, optional topology limits, optional `severity`, and optional
+  `description`. `bounds` are `[left, top, right, bottom]` in manifest/source
+  coordinates. Region gates select anchors whose manifest `source_mask.bounds`
+  overlap the region by at least `min_iou`, then check the selected anchor
+  kinds.
+
+Region gate topology limits are optional non-negative integer fields:
+`min_closed_anchors`, `max_closed_anchors`, `min_open_anchors`,
+`max_open_anchors`, `max_hole_count`, `max_cutout_count`, and
+`max_disconnected_components`. Region-gate evidence includes
+`topology_summary` with selected-anchor, closed/open, hole, cutout, disconnected
+component, and kind-count summaries.
 - `review_notes`: optional string array for dated human review notes
 
 Top-level fields:
