@@ -28,6 +28,36 @@
           "weak_visual_fidelity"
         ],
         "visual_audit_status": "contact_sheet_available",
+        "hard_gates": [
+          {
+            "id": "circle-anchor-shape-class",
+            "gate_type": "shape_class",
+            "expectation_ids": [
+              "gold-circle-anchors"
+            ],
+            "severity": "red",
+            "description": "The gold dots and brooches must remain circle anchors rather than drifting into generic paths or ellipses."
+          },
+          {
+            "id": "table-grid-topology",
+            "gate_type": "topology",
+            "expectation_ids": [
+              "table-perspective-quads",
+              "table-grid-group"
+            ],
+            "severity": "red",
+            "description": "The table must preserve enough editable quad cells and a perspective-grid relationship."
+          },
+          {
+            "id": "smooth-stroke-shape-class",
+            "gate_type": "shape_class",
+            "expectation_ids": [
+              "smooth-stroke-anchors"
+            ],
+            "severity": "yellow",
+            "description": "Clean line-like details should remain editable strokes."
+          }
+        ],
         "review_notes": [
           "2026-06-13 curated-check failed gold-circle-anchors and table-perspective-quads.",
           "Perspective grid group exists, but only 2 of expected 8 quad anchors are recovered."
@@ -104,6 +134,36 @@
           "missing_local_source"
         ],
         "visual_audit_status": "unavailable_missing_source",
+        "hard_gates": [
+          {
+            "id": "circle-anchor-shape-class",
+            "gate_type": "shape_class",
+            "expectation_ids": [
+              "gold-circle-anchors"
+            ],
+            "severity": "red",
+            "description": "The gold dots and brooches must remain circle anchors."
+          },
+          {
+            "id": "table-grid-topology",
+            "gate_type": "topology",
+            "expectation_ids": [
+              "table-perspective-quads",
+              "table-grid-group"
+            ],
+            "severity": "red",
+            "description": "The table must preserve editable quads and perspective-grid grouping."
+          },
+          {
+            "id": "smooth-stroke-shape-class",
+            "gate_type": "shape_class",
+            "expectation_ids": [
+              "smooth-stroke-anchors"
+            ],
+            "severity": "yellow",
+            "description": "Clean line-like details should remain editable strokes."
+          }
+        ],
         "review_notes": [
           "2026-06-13 curated-check reported missing_source for the configured local path.",
           "Keep this case visible until the source path is restored or a check-in-safe fixture is created."
@@ -180,6 +240,26 @@
           "missing_promotion_state"
         ],
         "visual_audit_status": "contact_sheet_available",
+        "hard_gates": [
+          {
+            "id": "radio-control-topology",
+            "gate_type": "topology",
+            "expectation_ids": [
+              "radio-circle-anchor"
+            ],
+            "severity": "red",
+            "description": "The unselected radio control must remain an editable stroked circle."
+          },
+          {
+            "id": "text-fragment-shape-class",
+            "gate_type": "shape_class",
+            "expectation_ids": [
+              "text-stroke-fragments"
+            ],
+            "severity": "yellow",
+            "description": "Text-like fragments should remain bounded stroke-like primitives until text handling exists."
+          }
+        ],
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
           "Still yellow under v10+ rules because promotion state is not implemented."

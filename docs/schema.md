@@ -380,6 +380,12 @@ Promotion metadata fields:
   `fragmentation`, `missing_promotion_state`, or `missing_local_source`
 - `visual_audit_status`: current visual artifact posture, for example
   `contact_sheet_available` or `unavailable_missing_source`
+- `hard_gates`: optional array of explicit promotion gates. Each gate includes
+  `id`, `gate_type`, `expectation_ids`, optional `severity`, and optional
+  `description`. Supported `gate_type` values are `shape_class`, `topology`,
+  `grouping`, `fragmentation`, `visual_fidelity`, `provenance`, and
+  `review_safety`. `expectation_ids` must reference expectations in the same
+  case.
 - `review_notes`: optional string array for dated human review notes
 
 Top-level fields:
@@ -420,7 +426,8 @@ When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 
 - `promotion_gates`: derived hard-gate results for `source_available`,
-  `semantic_expectations`, `visual_contact_sheet`, and `current_quality_label`
+  `semantic_expectations`, `visual_contact_sheet`, `current_quality_label`, and
+  any case-specific `promotion.hard_gates`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, and red/yellow gate counts
 

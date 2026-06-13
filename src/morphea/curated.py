@@ -54,6 +54,16 @@ PROMOTION_STRING_LISTS = {
     "expected_promotion_families",
     "current_issues",
 }
+PROMOTION_GATE_TYPES = {
+    "shape_class",
+    "topology",
+    "grouping",
+    "fragmentation",
+    "visual_fidelity",
+    "provenance",
+    "review_safety",
+}
+PROMOTION_GATE_SEVERITIES = {"red", "yellow"}
 
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
@@ -89,8 +99,13 @@ def load_curated_suite(path: str | Path) -> dict[str, Any]:
             raise ValueError(f"case {case_id} expectations must be an array")
         for expectation_index, expectation in enumerate(expectations):
             _validate_expectation(case_id, expectation_index, expectation)
+        expectation_ids = {
+            expectation["id"]
+            for expectation in expectations
+            if isinstance(expectation, dict) and isinstance(expectation.get("id"), str)
+        }
         if "promotion" in case:
-            _validate_promotion_metadata(case_id, case["promotion"])
+            _validate_promotion_metadata(case_id, case["promotion"], expectation_ids)
     return suite
 
 
@@ -533,9 +548,10 @@ def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
         semantic_reason = "semantic expectations passed"
     else:
         semantic_reason = f"case status is {case.get('status', 'unknown')}"
-    return [
+    gates = [
         _promotion_gate(
             "source_available",
+            gate_type="provenance",
             ok=source_exists,
             severity="red",
             reason=(
@@ -547,6 +563,7 @@ def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
         ),
         _promotion_gate(
             "semantic_expectations",
+            gate_type="shape_class",
             ok=not failed_expectations and checked,
             severity="red",
             reason=semantic_reason,
@@ -554,6 +571,7 @@ def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
         ),
         _promotion_gate(
             "visual_contact_sheet",
+            gate_type="visual_fidelity",
             ok=case.get("status") != "checked" or has_contact_sheet,
             severity="yellow",
             reason=(
@@ -567,17 +585,80 @@ def _promotion_gate_results(case: dict[str, Any]) -> list[dict[str, object]]:
         ),
         _promotion_gate(
             "current_quality_label",
+            gate_type="review_safety",
             ok=label == "green",
             severity="red" if label == "red" else "yellow",
             reason=f"current quality label is {label or 'missing'}",
             evidence=label,
         ),
     ]
+    if isinstance(promotion, dict):
+        gates.extend(_configured_promotion_gates(case, promotion))
+    return gates
+
+
+def _configured_promotion_gates(
+    case: dict[str, Any],
+    promotion: dict[str, Any],
+) -> list[dict[str, object]]:
+    configured = promotion.get("hard_gates", [])
+    if not isinstance(configured, list) or not configured:
+        return []
+    expectations = {
+        str(expectation.get("id")): expectation
+        for expectation in case.get("expectations", [])
+        if isinstance(expectation, dict) and isinstance(expectation.get("id"), str)
+    }
+    gates: list[dict[str, object]] = []
+    checked = case.get("status") == "checked"
+    for gate in configured:
+        if not isinstance(gate, dict):
+            continue
+        expectation_ids = [
+            str(item)
+            for item in gate.get("expectation_ids", [])
+            if isinstance(item, str)
+        ]
+        missing = [
+            expectation_id
+            for expectation_id in expectation_ids
+            if expectation_id not in expectations
+        ]
+        failed = [
+            expectation_id
+            for expectation_id in expectation_ids
+            if expectation_id in expectations
+            and not bool(expectations[expectation_id].get("ok", False))
+        ]
+        ok = checked and not missing and not failed
+        if not checked:
+            reason = f"case status is {case.get('status', 'unknown')}"
+        elif missing:
+            reason = "missing expectation results: " + ", ".join(missing)
+        elif failed:
+            reason = "failed expectations: " + ", ".join(failed)
+        else:
+            reason = "referenced expectations passed"
+        gates.append(
+            _promotion_gate(
+                str(gate.get("id", "configured_gate")),
+                gate_type=str(gate.get("gate_type", "configured")),
+                ok=ok,
+                severity=str(gate.get("severity", "red")),
+                reason=reason,
+                evidence={
+                    "expectation_ids": expectation_ids,
+                    "description": gate.get("description"),
+                },
+            )
+        )
+    return gates
 
 
 def _promotion_gate(
     gate_id: str,
     *,
+    gate_type: str,
     ok: bool,
     severity: str,
     reason: str,
@@ -585,6 +666,7 @@ def _promotion_gate(
 ) -> dict[str, object]:
     return {
         "id": gate_id,
+        "gate_type": gate_type,
         "ok": bool(ok),
         "severity": severity,
         "reason": reason,
@@ -841,7 +923,11 @@ def _validate_expectation(
         )
 
 
-def _validate_promotion_metadata(case_id: str, value: Any) -> None:
+def _validate_promotion_metadata(
+    case_id: str,
+    value: Any,
+    expectation_ids: set[str],
+) -> None:
     if not isinstance(value, dict):
         raise ValueError(f"case {case_id} promotion must be an object")
     label = value.get("current_quality_label")
@@ -874,3 +960,70 @@ def _validate_promotion_metadata(case_id: str, value: Any) -> None:
         raise ValueError(
             f"case {case_id} promotion review_notes must be a string array"
         )
+    hard_gates = value.get("hard_gates", [])
+    if hard_gates is not None:
+        _validate_promotion_hard_gates(case_id, hard_gates, expectation_ids)
+
+
+def _validate_promotion_hard_gates(
+    case_id: str,
+    gates: Any,
+    expectation_ids: set[str],
+) -> None:
+    if not isinstance(gates, list):
+        raise ValueError(f"case {case_id} promotion hard_gates must be an array")
+    seen_ids: set[str] = set()
+    for index, gate in enumerate(gates):
+        if not isinstance(gate, dict):
+            raise ValueError(
+                f"case {case_id} promotion hard_gates[{index}] must be an object"
+            )
+        gate_id = gate.get("id")
+        if not isinstance(gate_id, str) or not gate_id:
+            raise ValueError(
+                f"case {case_id} promotion hard_gates[{index}] id must be a string"
+            )
+        if gate_id in seen_ids:
+            raise ValueError(
+                f"case {case_id} promotion duplicate hard gate id: {gate_id}"
+            )
+        seen_ids.add(gate_id)
+        gate_type = gate.get("gate_type")
+        if gate_type not in PROMOTION_GATE_TYPES:
+            allowed = ", ".join(sorted(PROMOTION_GATE_TYPES))
+            raise ValueError(
+                f"case {case_id} promotion hard gate {gate_id} gate_type "
+                f"must be one of: {allowed}"
+            )
+        severity = gate.get("severity", "red")
+        if severity not in PROMOTION_GATE_SEVERITIES:
+            allowed = ", ".join(sorted(PROMOTION_GATE_SEVERITIES))
+            raise ValueError(
+                f"case {case_id} promotion hard gate {gate_id} severity "
+                f"must be one of: {allowed}"
+            )
+        references = gate.get("expectation_ids")
+        if not isinstance(references, list) or not references:
+            raise ValueError(
+                f"case {case_id} promotion hard gate {gate_id} "
+                "expectation_ids must be a non-empty string array"
+            )
+        for reference in references:
+            if not isinstance(reference, str) or not reference:
+                raise ValueError(
+                    f"case {case_id} promotion hard gate {gate_id} "
+                    "expectation_ids must be a non-empty string array"
+                )
+            if reference not in expectation_ids:
+                raise ValueError(
+                    f"case {case_id} promotion hard gate {gate_id} references "
+                    f"unknown expectation id: {reference}"
+                )
+        description = gate.get("description")
+        if description is not None and (
+            not isinstance(description, str) or not description
+        ):
+            raise ValueError(
+                f"case {case_id} promotion hard gate {gate_id} "
+                "description must be a string"
+            )

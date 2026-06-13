@@ -27,6 +27,15 @@ def _promotion_metadata(label: str) -> dict[str, object]:
         "current_issues": ["fragmentation"] if label != "green" else [],
         "visual_audit_status": "run_artifacts_only",
         "review_notes": ["synthetic metadata fixture"],
+        "hard_gates": [
+            {
+                "id": "circle-shape-class",
+                "gate_type": "shape_class",
+                "expectation_ids": ["circle-anchor"],
+                "severity": "red",
+                "description": "Circle fixture must remain a circle anchor.",
+            }
+        ],
     }
 
 
@@ -165,6 +174,14 @@ class CuratedSuiteTests(unittest.TestCase):
                     if not gate["ok"]
                 ]
             )
+            gate_by_id = {
+                gate["id"]: gate for gate in report["cases"][0]["promotion_gates"]
+            }
+            self.assertEqual(
+                gate_by_id["circle-shape-class"]["gate_type"],
+                "shape_class",
+            )
+            self.assertTrue(gate_by_id["circle-shape-class"]["ok"])
             self.assertEqual(
                 report["cases"][0]["promotion"]["current_quality_label"],
                 "green",
@@ -211,16 +228,28 @@ class CuratedSuiteTests(unittest.TestCase):
                         "promotion_gates": [
                             {
                                 "id": "current_quality_label",
+                                "gate_type": "review_safety",
                                 "ok": False,
                                 "severity": "red",
                                 "reason": "current quality label is red",
                                 "evidence": "red",
+                            },
+                            {
+                                "id": "circle-shape-class",
+                                "gate_type": "shape_class",
+                                "ok": False,
+                                "severity": "red",
+                                "reason": "failed expectations: circle-anchor",
+                                "evidence": {
+                                    "expectation_ids": ["circle-anchor"],
+                                    "description": "Circle fixture must stay a circle.",
+                                },
                             }
                         ],
                         "promotion_summary": {
                             "decision": "rejected",
-                            "failed_gate_count": 1,
-                            "red_gate_count": 1,
+                            "failed_gate_count": 2,
+                            "red_gate_count": 2,
                             "yellow_gate_count": 0,
                         },
                         "anchor_count": 1,
@@ -256,7 +285,7 @@ class CuratedSuiteTests(unittest.TestCase):
 
         self.assertIn("# Morphēa Curated Check", markdown)
         self.assertIn(
-            "| `simple-circle` | `rejected` | `red` | `current_quality_label` |",
+            "| `simple-circle` | `rejected` | `red` | `current_quality_label`, `circle-shape-class` |",
             markdown,
         )
         self.assertIn(
@@ -268,7 +297,7 @@ class CuratedSuiteTests(unittest.TestCase):
             markdown,
         )
         self.assertIn(
-            "- Promotion gates: decision=`rejected`, failed=`current_quality_label`",
+            "- Promotion gates: decision=`rejected`, failed=`current_quality_label`, `circle-shape-class`",
             markdown,
         )
         self.assertIn("## simple-circle", markdown)
@@ -391,6 +420,44 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "current_quality_label"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_unknown_hard_gate_expectation(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["hard_gates"] = [
+                {
+                    "id": "missing-reference",
+                    "gate_type": "shape_class",
+                    "expectation_ids": ["not-an-expectation"],
+                    "severity": "red",
+                }
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "unknown expectation id"):
                 load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):

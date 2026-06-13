@@ -62,6 +62,11 @@ Curated reports also include derived promotion gates:
 - `visual_contact_sheet`;
 - `current_quality_label`.
 
+Cases may also define explicit hard gates that reference concrete expectations,
+for example `circle-anchor-shape-class`, `table-grid-topology`, or
+`radio-control-topology`. These make shape-class and topology failures visible
+as named gates instead of relying only on a broad semantic expectation failure.
+
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
 
@@ -86,6 +91,7 @@ cases can be red or yellow but not green.
 The next implementation block should target Quality Gate v2:
 
 - distinct-anchor expectations across curated and Lucide checks;
-- topology and shape-class mismatch gates;
+- expand topology and shape-class gates beyond expectation references into
+  region-level checks;
 - report ordering by red failures before aggregate metrics;
 - contact-sheet generation as a first-class artifact.
