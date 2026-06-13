@@ -398,6 +398,79 @@ The target system:
 
 The v10+ bar is not "vectorize more images." It is "earn trust on real images."
 
+## Recommended Execution Order
+
+Work should proceed in this order unless a later audit proves a different
+dependency:
+
+1. **Lock the audit language**: keep Lucide, primitive, and real-image reports
+   honest about red/yellow/green status before changing detectors.
+2. **Curate the corpus**: add enough real-image cases to expose different
+   failure families, but keep every case reviewed and explainable.
+3. **Generate visual review artifacts**: make contact sheets and overlays cheap
+   enough that every suite run can be inspected.
+4. **Implement hard gates**: distinct anchors, topology mismatch, shape-class
+   mismatch, fragmentation, and grouping consistency must block promotion.
+5. **Add promotion state**: manifests and exports must distinguish promoted,
+   fallback, deferred, and rejected regions.
+6. **Introduce editability score**: score components should explain ranking
+   after hard gates, not replace them.
+7. **Run MLX/SAM side by side**: compare segmentation sources only after the
+   promotion evaluator can tell whether a region proposal helped.
+8. **Start reviewed pseudo-label collection**: collect labels only from green
+   or corrected review artifacts.
+
+Do not broaden icon suites, train models, or chase benchmark aggregates before
+steps 1-5 are credible. More data amplifies bad gates.
+
+## First Implementation Packet: RIP0 + RIP1
+
+The next concrete implementation packet should combine current-state cleanup
+with corpus design.
+
+Required deliverables:
+
+- update milestone and plan docs to point to this roadmap;
+- record the Lucide status as 23/24 with `badge-check` red and named yellow
+  cases;
+- add a real-image status ledger that labels each curated case green, yellow,
+  or red under the current pipeline;
+- define a minimal corpus schema extension for source provenance, licensing
+  status, stress family, expected promotion families, and current quality
+  label;
+- generate or specify contact-sheet artifacts for every curated real-image
+  case;
+- keep missing local source images visible as unavailable cases rather than
+  silently dropping them;
+- avoid detector tuning until the corpus and labels make failure modes visible.
+
+Exit criteria:
+
+- a reviewer can open one report and see which real-image families are green,
+  yellow, and red;
+- every current real-image case has an explicit intended stress family;
+- every current red/yellow case has issue tags;
+- the next implementation plan can target Quality Gate v2 without guessing the
+  corpus contract.
+
+## Promotion Severity
+
+Failures should be sorted by user-visible severity:
+
+1. **False-positive promotion**: wrong semantic SVG is marked green.
+2. **Topology loss**: holes, cut-outs, joins, or closed/open state are wrong.
+3. **Shape-class mismatch**: the output substitutes the wrong primitive family.
+4. **Grouping failure**: repeated parts lose their relationship or become a
+   misleading group.
+5. **Fragmentation**: editable objects explode into many small pieces.
+6. **Visual drift**: structure is plausible but visibly misplaced or distorted.
+7. **Runtime deferral**: the region is skipped because the current pipeline
+   cannot process it safely.
+
+False-positive promotion is always more severe than honest fallback. A red
+fallback can be improved later; a green lie pollutes review, training, and user
+trust.
+
 ## Implementation Principles
 
 - Build gates before broadening the corpus.
