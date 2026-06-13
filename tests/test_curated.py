@@ -140,6 +140,9 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "report.md").exists())
             self.assertTrue((output_dir / "simple-circle" / "report.html").exists())
             self.assertTrue((output_dir / "simple-circle" / "preview.png").exists())
+            self.assertTrue((output_dir / "simple-circle" / "svg-render.png").exists())
+            self.assertTrue((output_dir / "simple-circle" / "diff.png").exists())
+            self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
@@ -150,6 +153,7 @@ class CuratedSuiteTests(unittest.TestCase):
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
             self.assertIn("artifacts", report["cases"][0])
+            self.assertIn("contact_sheet", report["cases"][0]["artifacts"])
             self.assertEqual(
                 report["cases"][0]["promotion"]["current_quality_label"],
                 "green",

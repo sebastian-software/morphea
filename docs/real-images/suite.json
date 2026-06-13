@@ -27,7 +27,7 @@
           "shape_class_mismatch",
           "weak_visual_fidelity"
         ],
-        "visual_audit_status": "run_artifacts_only",
+        "visual_audit_status": "contact_sheet_available",
         "review_notes": [
           "2026-06-13 curated-check failed gold-circle-anchors and table-perspective-quads.",
           "Perspective grid group exists, but only 2 of expected 8 quad anchors are recovered."
@@ -177,13 +177,12 @@
         "current_status": "checked_expectations_pass_but_not_promotable",
         "current_issues": [
           "fragmentation",
-          "missing_promotion_state",
-          "missing_visual_contact_sheet"
+          "missing_promotion_state"
         ],
-        "visual_audit_status": "run_artifacts_only",
+        "visual_audit_status": "contact_sheet_available",
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
-          "Still yellow under v10+ rules because promotion state and contact-sheet review are not implemented."
+          "Still yellow under v10+ rules because promotion state is not implemented."
         ]
       },
       "recommended_config": {

@@ -379,7 +379,7 @@ Promotion metadata fields:
 - `current_issues`: string array of issue tags, for example
   `fragmentation`, `missing_promotion_state`, or `missing_local_source`
 - `visual_audit_status`: current visual artifact posture, for example
-  `run_artifacts_only` or `unavailable_missing_source`
+  `contact_sheet_available` or `unavailable_missing_source`
 - `review_notes`: optional string array for dated human review notes
 
 Top-level fields:
@@ -408,6 +408,13 @@ Case snapshot fields:
 
 Snapshots avoid timestamps and run-directory paths so they can be diffed across
 commits and configurations.
+
+When `curated-check --output-dir` is used for checked cases, each per-case run
+directory includes the standard vectorize artifacts plus:
+
+- `svg-render.png`: deterministic rasterization of the exported SVG
+- `diff.png`: red/blue source-vs-SVG visual difference image
+- `contact-sheet.png`: source, manifest preview, SVG render, and diff panels
 
 ## Vectorize Config v1
 

@@ -6,8 +6,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from PIL import Image, ImageDraw
+
 from morphea.images import scene_from_flat_color_image
-from morphea.runs import write_vectorize_run
+from morphea.runs import VectorizeRun, write_vectorize_run
+from morphea.svg_raster import rasterized_svg_image
 
 
 VECTORIZE_CONFIG_KEYS = {
@@ -337,6 +340,7 @@ def _check_curated_case(
             "report": str(vectorize_run.report_path),
             "debug_svg": str(vectorize_run.debug_svg_path),
             "input": str(vectorize_run.input_path),
+            **_write_visual_audit_artifacts(vectorize_run.run_dir, vectorize_run),
         }
     return result
 
@@ -458,6 +462,98 @@ def _counts(values: object) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _write_visual_audit_artifacts(
+    run_dir: Path,
+    run: VectorizeRun,
+) -> dict[str, str]:
+    svg_render_path = run_dir / "svg-render.png"
+    diff_path = run_dir / "diff.png"
+    contact_sheet_path = run_dir / "contact-sheet.png"
+
+    svg_text = run.svg_path.read_text(encoding="utf-8")
+    svg_render = rasterized_svg_image(svg_text, background="#ffffff").convert("RGBA")
+    svg_render.save(svg_render_path)
+    with Image.open(run.input_path) as source_image:
+        source = source_image.convert("RGBA")
+    with Image.open(run.preview_path) as preview_image:
+        preview = preview_image.convert("RGBA")
+    diff = _visual_diff_image(source, svg_render)
+    diff.save(diff_path)
+    contact_sheet = _contact_sheet_image(
+        [
+            ("source", source),
+            ("preview", preview),
+            ("svg render", svg_render),
+            ("diff", diff),
+        ]
+    )
+    contact_sheet.save(contact_sheet_path)
+    return {
+        "svg_render": str(svg_render_path),
+        "diff": str(diff_path),
+        "contact_sheet": str(contact_sheet_path),
+    }
+
+
+def _visual_diff_image(source: Image.Image, rendered: Image.Image) -> Image.Image:
+    source_rgba = source.convert("RGBA")
+    rendered_rgba = rendered.convert("RGBA")
+    if rendered_rgba.size != source_rgba.size:
+        rendered_rgba = rendered_rgba.resize(
+            source_rgba.size,
+            Image.Resampling.NEAREST,
+        )
+    source_luma = source_rgba.convert("L")
+    rendered_luma = rendered_rgba.convert("L")
+    diff = Image.new("RGB", source_rgba.size, "white")
+    source_pixels = source_luma.load()
+    rendered_pixels = rendered_luma.load()
+    diff_pixels = diff.load()
+    for y in range(source_rgba.height):
+        for x in range(source_rgba.width):
+            source_black = 255 - source_pixels[x, y]
+            rendered_black = 255 - rendered_pixels[x, y]
+            delta = source_black - rendered_black
+            if abs(delta) < 8:
+                value = 240
+                diff_pixels[x, y] = (value, value, value)
+            elif delta > 0:
+                strength = min(255, int(abs(delta) * 1.6))
+                diff_pixels[x, y] = (255, 255 - strength, 255 - strength)
+            else:
+                strength = min(255, int(abs(delta) * 1.6))
+                diff_pixels[x, y] = (255 - strength, 255 - strength, 255)
+    return diff
+
+
+def _contact_sheet_image(panels: list[tuple[str, Image.Image]]) -> Image.Image:
+    panel_size = 220
+    label_height = 24
+    gutter = 12
+    width = gutter + len(panels) * (panel_size + gutter)
+    height = label_height + panel_size + gutter * 2
+    sheet = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(sheet)
+    for index, (label, image) in enumerate(panels):
+        x = gutter + index * (panel_size + gutter)
+        draw.text((x, gutter), label, fill=(40, 40, 40))
+        panel = image.convert("RGB")
+        panel.thumbnail((panel_size, panel_size), Image.Resampling.LANCZOS)
+        panel_canvas = Image.new("RGB", (panel_size, panel_size), "white")
+        offset = (
+            (panel_size - panel.width) // 2,
+            (panel_size - panel.height) // 2,
+        )
+        panel_canvas.paste(panel, offset)
+        y = gutter + label_height
+        sheet.paste(panel_canvas, (x, y))
+        draw.rectangle(
+            (x, y, x + panel_size - 1, y + panel_size - 1),
+            outline=(180, 180, 180),
+        )
+    return sheet
 
 
 def _expectation_markdown_row(expectation: dict[str, Any]) -> str:

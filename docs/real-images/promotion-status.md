@@ -32,7 +32,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 | --- | --- | --- | --- | --- | --- |
 | `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, `table-perspective-quads` 2/8 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
-| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state`, `missing_visual_contact_sheet` | current semantic expectations pass, but v10 promotion gates do not exist yet |
+| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | current semantic expectations pass, but v10 promotion gates do not exist yet |
 
 Current curated result: 3 cases, 1 checked pass, 1 checked failure, 1 missing
 source. No real-image case is green under the v10+ definition because green
@@ -52,20 +52,24 @@ calibration suite for false-positive promotion risk.
 ## Visual Artifact Posture
 
 Current curated runs emit per-case run directories with input copy, SVG output,
-debug SVG, manifest JSON, preview PNG, palette summary, mask summary, and
-report files. They do not yet emit the v10+ contact-sheet set.
+debug SVG, manifest JSON, preview PNG, SVG render PNG, red/blue diff PNG,
+contact-sheet PNG, palette summary, mask summary, and report files.
 
-Required contact-sheet set for RIP2:
+The current contact sheet includes:
 
-- reference crop;
-- rendered SVG output;
-- red/blue visual diff;
-- anchor overlay;
-- failed-gate summary;
-- promotion decision summary.
+- source/reference image;
+- manifest preview;
+- exported SVG render;
+- red/blue visual diff.
 
-Until that contact-sheet set exists, checked real-image cases can be red or
-yellow but not green.
+Still missing for the full RIP2 review artifact:
+
+- anchor overlay panel;
+- failed-gate summary panel;
+- promotion decision summary panel.
+
+Until promotion decisions and hard-gate summaries exist, checked real-image
+cases can be red or yellow but not green.
 
 ## Next Gate
 
@@ -75,4 +79,3 @@ The next implementation block should target Quality Gate v2:
 - topology and shape-class mismatch gates;
 - report ordering by red failures before aggregate metrics;
 - contact-sheet generation as a first-class artifact.
-
