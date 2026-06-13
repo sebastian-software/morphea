@@ -495,6 +495,10 @@ artifact paths. Anchors selected by promotion regions are annotated with
 `promotion_state` and `promotion_regions`; unselected anchors are marked
 `fallback`.
 
+`morphea promotion-export manifest.json --promoted-svg promoted.svg
+--fallback-svg fallback.svg -o promotion-export.json` can regenerate the
+promoted/fallback SVG partition from any promotion-annotated manifest.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

@@ -23,6 +23,7 @@ from morphea.mlx_classifier import (
     train_mlx_transformer_classifier,
 )
 from morphea.profiling import profile_curated_suite, profile_vectorize
+from morphea.promotion_export import write_promotion_svg_exports
 from morphea.primitive_baseline import (
     compare_to_baseline,
     load_baseline,
@@ -930,6 +931,15 @@ def main(argv: list[str] | None = None) -> None:
     lucide_check.add_argument("--markdown", type=Path)
     lucide_check.add_argument("--config", type=Path)
 
+    promotion_export = subcommands.add_parser(
+        "promotion-export",
+        help="Export promoted and fallback SVGs from a promotion-annotated manifest.",
+    )
+    promotion_export.add_argument("manifest", type=Path)
+    promotion_export.add_argument("--promoted-svg", type=Path)
+    promotion_export.add_argument("--fallback-svg", type=Path)
+    promotion_export.add_argument("-o", "--output", type=Path)
+
     sweep = subcommands.add_parser(
         "sweep",
         help="Run a config-driven vectorize sweep.",
@@ -1016,6 +1026,20 @@ def main(argv: list[str] | None = None) -> None:
             "profiled "
             f"{report['repeat_count']} runs; "
             f"mean={report['summary']['mean_elapsed_seconds']:.6f}s"
+        )
+        return
+
+    if args.command == "promotion-export":
+        result = write_promotion_svg_exports(
+            manifest=args.manifest,
+            promoted_svg=args.promoted_svg,
+            fallback_svg=args.fallback_svg,
+            output=args.output,
+        )
+        print(
+            "exported promotion SVGs "
+            f"(promoted={len(result['promoted_anchor_indexes'])}, "
+            f"fallback={len(result['fallback_anchor_indexes'])})"
         )
         return
 

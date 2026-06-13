@@ -95,6 +95,8 @@ Checked promotion cases with an output directory also write `promoted.svg`,
 debug/fallback output and rejected candidates remain reviewable.
 The run `manifest.json` also carries a top-level `promotion` object and
 per-anchor `promotion_state` / `promotion_regions` annotations.
+The `morphea promotion-export` command can regenerate promoted/fallback SVGs
+from any promotion-annotated manifest, outside curated sidecar generation.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
@@ -124,5 +126,6 @@ label is green.
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
 
-The next implementation block should make promoted/fallback filtering available
-outside curated sidecar generation, for example through a CLI/export option.
+The next implementation block should audit RIP3 exit criteria against generated
+reports and decide whether the remaining work should move to RIP4 editability
+scoring.

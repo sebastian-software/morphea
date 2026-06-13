@@ -41,6 +41,71 @@ class CliTests(unittest.TestCase):
                 ["stroke_polyline", "circle"],
             )
 
+    def test_promotion_export_cli_filters_manifest_anchors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = root / "manifest.json"
+            promoted_svg = root / "promoted.svg"
+            fallback_svg = root / "fallback.svg"
+            output = root / "promotion-export.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "width": 24,
+                        "height": 24,
+                        "anchors": [
+                            {
+                                "id": "anchor-0000",
+                                "kind": "circle",
+                                "color": "#dd2222",
+                                "promotion_state": "promoted",
+                                "circle": {"cx": 8, "cy": 8, "r": 4},
+                            },
+                            {
+                                "id": "anchor-0001",
+                                "kind": "circle",
+                                "color": "#003366",
+                                "promotion_state": "fallback",
+                                "circle": {"cx": 16, "cy": 16, "r": 3},
+                            },
+                        ],
+                        "promotion": {
+                            "regions": [
+                                {
+                                    "id": "circle-region",
+                                    "state": "promoted",
+                                    "selected_anchor_indexes": [0],
+                                }
+                            ]
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-export",
+                        str(manifest),
+                        "--promoted-svg",
+                        str(promoted_svg),
+                        "--fallback-svg",
+                        str(fallback_svg),
+                        "-o",
+                        str(output),
+                    ]
+                )
+
+            self.assertIn("promoted=1", stdout.getvalue())
+            self.assertIn("#dd2222", promoted_svg.read_text(encoding="utf-8"))
+            self.assertNotIn("#003366", promoted_svg.read_text(encoding="utf-8"))
+            self.assertIn("#003366", fallback_svg.read_text(encoding="utf-8"))
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["promoted_anchor_indexes"], [0])
+            self.assertEqual(result["fallback_anchor_indexes"], [1])
+
     def test_status_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "status.json"
