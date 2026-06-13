@@ -74,14 +74,11 @@ The current contact sheet includes:
 
 - source/reference image;
 - manifest preview;
+- anchor overlay;
 - exported SVG render;
 - red/blue visual diff;
 - promotion decision summary;
 - failed-gate summary.
-
-Still missing for the full RIP2 review artifact:
-
-- anchor overlay panel;
 
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
@@ -94,5 +91,4 @@ The next implementation block should target Quality Gate v2:
 - distinct-anchor expectations across curated and Lucide checks;
 - expand topology and shape-class gates beyond expectation references into
   region-level checks;
-- report ordering by red failures before aggregate metrics;
-- add anchor overlays to contact-sheet review artifacts.
+- report ordering by red failures before aggregate metrics.

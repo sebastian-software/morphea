@@ -402,6 +402,7 @@ def _check_curated_case(
         _write_visual_audit_artifacts(
             vectorize_run.run_dir,
             vectorize_run,
+            manifest=manifest,
             promotion=result.get("promotion"),
             promotion_gates=result.get("promotion_gates"),
             promotion_summary=result.get("promotion_summary"),
@@ -706,12 +707,14 @@ def _write_visual_audit_artifacts(
     run_dir: Path,
     run: VectorizeRun,
     *,
+    manifest: object = None,
     promotion: object = None,
     promotion_gates: object = None,
     promotion_summary: object = None,
 ) -> dict[str, str]:
     svg_render_path = run_dir / "svg-render.png"
     diff_path = run_dir / "diff.png"
+    anchor_overlay_path = run_dir / "anchor-overlay.png"
     contact_sheet_path = run_dir / "contact-sheet.png"
 
     svg_text = run.svg_path.read_text(encoding="utf-8")
@@ -723,9 +726,12 @@ def _write_visual_audit_artifacts(
         preview = preview_image.convert("RGBA")
     diff = _visual_diff_image(source, svg_render)
     diff.save(diff_path)
+    anchor_overlay = _anchor_overlay_image(source, manifest)
+    anchor_overlay.save(anchor_overlay_path)
     panels = [
         ("source", source),
         ("preview", preview),
+        ("anchors", anchor_overlay),
         ("svg render", svg_render),
         ("diff", diff),
     ]
@@ -753,6 +759,7 @@ def _visual_audit_artifact_paths(run_dir: Path) -> dict[str, str]:
     return {
         "svg_render": str(run_dir / "svg-render.png"),
         "diff": str(run_dir / "diff.png"),
+        "anchor_overlay": str(run_dir / "anchor-overlay.png"),
         "contact_sheet": str(run_dir / "contact-sheet.png"),
     }
 
@@ -786,6 +793,79 @@ def _visual_diff_image(source: Image.Image, rendered: Image.Image) -> Image.Imag
                 strength = min(255, int(abs(delta) * 1.6))
                 diff_pixels[x, y] = (255 - strength, 255 - strength, 255)
     return diff
+
+
+def _anchor_overlay_image(source: Image.Image, manifest: object) -> Image.Image:
+    base = source.convert("RGB")
+    softened = Image.blend(base, Image.new("RGB", base.size, "white"), 0.35)
+    overlay = softened.convert("RGBA")
+    draw = ImageDraw.Draw(overlay, "RGBA")
+    if not isinstance(manifest, dict):
+        return overlay.convert("RGB")
+    anchors = manifest.get("anchors", [])
+    if not isinstance(anchors, list):
+        return overlay.convert("RGB")
+    line_width = max(1, round(max(overlay.size) / 360))
+    for index, anchor in enumerate(anchors[:240]):
+        if not isinstance(anchor, dict):
+            continue
+        bounds = _anchor_overlay_bounds(anchor)
+        if bounds is None:
+            continue
+        color = _anchor_overlay_color(str(anchor.get("kind", "")))
+        draw.rectangle(bounds, outline=color, width=line_width)
+        if index < 30:
+            label = _anchor_overlay_label(anchor, index)
+            text_x = max(0, min(bounds[0], overlay.width - 40))
+            text_y = max(0, bounds[1] - 10)
+            draw.text((text_x, text_y), label, fill=color)
+    if len(anchors) > 240:
+        draw.text((8, 8), f"showing 240/{len(anchors)} anchors", fill=(45, 45, 45, 220))
+    return overlay.convert("RGB")
+
+
+def _anchor_overlay_bounds(anchor: dict[str, object]) -> tuple[int, int, int, int] | None:
+    source_mask = anchor.get("source_mask")
+    if isinstance(source_mask, dict):
+        bounds = source_mask.get("bounds")
+        parsed = _parse_overlay_bounds(bounds)
+        if parsed is not None:
+            return parsed
+    reserved = anchor.get("reserved")
+    if isinstance(reserved, dict):
+        return _parse_overlay_bounds(reserved.get("bounds"))
+    return None
+
+
+def _parse_overlay_bounds(value: object) -> tuple[int, int, int, int] | None:
+    if not isinstance(value, list) or len(value) != 4:
+        return None
+    if not all(isinstance(item, (int, float)) for item in value):
+        return None
+    left, top, right, bottom = value
+    return (
+        int(round(left)),
+        int(round(top)),
+        int(round(right)),
+        int(round(bottom)),
+    )
+
+
+def _anchor_overlay_color(kind: str) -> tuple[int, int, int, int]:
+    if kind in {"circle", "stroke_circle"}:
+        return (35, 130, 75, 255)
+    if kind in {"rect", "rounded_rect", "quad"}:
+        return (225, 120, 20, 255)
+    if kind in {"stroke", "stroke_polyline", "stroke_path", "stroke_arc"}:
+        return (30, 100, 200, 255)
+    return (175, 45, 45, 255)
+
+
+def _anchor_overlay_label(anchor: dict[str, object], index: int) -> str:
+    anchor_id = str(anchor.get("id", f"anchor-{index:04d}"))
+    suffix = anchor_id.rsplit("-", 1)[-1]
+    kind = str(anchor.get("kind", "anchor"))
+    return f"{suffix}:{kind}"
 
 
 def _contact_sheet_image(panels: list[tuple[str, Image.Image]]) -> Image.Image:

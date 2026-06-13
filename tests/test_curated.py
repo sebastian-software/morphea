@@ -151,10 +151,11 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "preview.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "svg-render.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "diff.png").exists())
+            self.assertTrue((output_dir / "simple-circle" / "anchor-overlay.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
-                self.assertEqual(sheet.size, (1404, 268))
+                self.assertEqual(sheet.size, (1636, 268))
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
                     encoding="utf-8"
@@ -164,6 +165,7 @@ class CuratedSuiteTests(unittest.TestCase):
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
             self.assertIn("artifacts", report["cases"][0])
+            self.assertIn("anchor_overlay", report["cases"][0]["artifacts"])
             self.assertIn("contact_sheet", report["cases"][0]["artifacts"])
             self.assertEqual(
                 report["cases"][0]["promotion_summary"]["decision"],
