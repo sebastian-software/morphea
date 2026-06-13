@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw
 
 from morphea.images import scene_from_flat_color_image
 from morphea.runs import VectorizeRun, write_vectorize_run
+from morphea.scene import SvgStyle, anchors_to_svg
 from morphea.svg_raster import rasterized_svg_image
 
 
@@ -430,6 +431,17 @@ def _check_curated_case(
         result["promotion_gates"] = _promotion_gate_results(result, manifest=manifest)
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
         result["promotion_regions"] = _promotion_region_results(result)
+        if output_dir is not None and isinstance(result.get("artifacts"), dict):
+            result["artifacts"].update(
+                _write_promotion_export_artifacts(
+                    vectorize_run.run_dir,
+                    scene=scene,
+                    manifest=manifest,
+                    promotion_regions=result.get("promotion_regions"),
+                    promotion_gates=result.get("promotion_gates"),
+                    cutout_strategy=str(config.get("cutout_export", "overlay_stroke")),
+                )
+            )
     if output_dir is not None:
         _write_visual_audit_artifacts(
             vectorize_run.run_dir,
@@ -1386,6 +1398,116 @@ def _promotion_region_state(
     if quality == "green":
         return "promoted"
     return "deferred"
+
+
+def _write_promotion_export_artifacts(
+    run_dir: Path,
+    *,
+    scene: Any,
+    manifest: dict[str, Any],
+    promotion_regions: object,
+    promotion_gates: object,
+    cutout_strategy: str,
+) -> dict[str, str]:
+    promoted_svg_path = run_dir / "promoted.svg"
+    fallback_svg_path = run_dir / "fallback.svg"
+    promotion_export_path = run_dir / "promotion-export.json"
+    promoted_indexes = _promoted_anchor_indexes(promotion_regions, promotion_gates)
+    anchor_count = len(scene.anchors)
+    fallback_indexes = [
+        index for index in range(anchor_count) if index not in promoted_indexes
+    ]
+    style = SvgStyle(cutout_strategy=cutout_strategy)
+    promoted_svg_path.write_text(
+        anchors_to_svg(
+            (scene.anchors[index] for index in sorted(promoted_indexes)),
+            scene.width,
+            scene.height,
+            style=style,
+        ),
+        encoding="utf-8",
+    )
+    fallback_svg_path.write_text(
+        anchors_to_svg(
+            (scene.anchors[index] for index in fallback_indexes),
+            scene.width,
+            scene.height,
+            style=style,
+        ),
+        encoding="utf-8",
+    )
+    export_manifest = {
+        "schema_version": 1,
+        "anchor_count": anchor_count,
+        "promoted_anchor_indexes": sorted(promoted_indexes),
+        "fallback_anchor_indexes": fallback_indexes,
+        "region_state_counts": _promotion_region_state_counts(promotion_regions),
+        "regions": promotion_regions if isinstance(promotion_regions, list) else [],
+        "promoted_svg": str(promoted_svg_path),
+        "fallback_svg": str(fallback_svg_path),
+        "source_manifest_anchor_count": len(manifest.get("anchors", [])),
+    }
+    promotion_export_path.write_text(
+        json.dumps(export_manifest, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return {
+        "promoted_svg": str(promoted_svg_path),
+        "fallback_svg": str(fallback_svg_path),
+        "promotion_export": str(promotion_export_path),
+    }
+
+
+def _promoted_anchor_indexes(
+    promotion_regions: object,
+    promotion_gates: object,
+) -> set[int]:
+    if not isinstance(promotion_regions, list) or not isinstance(
+        promotion_gates,
+        list,
+    ):
+        return set()
+    promoted_region_ids = {
+        str(region.get("gate_id"))
+        for region in promotion_regions
+        if isinstance(region, dict) and region.get("state") == "promoted"
+    }
+    promoted_indexes: set[int] = set()
+    for gate in promotion_gates:
+        if not isinstance(gate, dict) or gate.get("id") not in promoted_region_ids:
+            continue
+        evidence = gate.get("evidence", {})
+        if not isinstance(evidence, dict):
+            continue
+        selected = evidence.get("selected_anchors", [])
+        if not isinstance(selected, list):
+            continue
+        for anchor in selected:
+            if not isinstance(anchor, dict):
+                continue
+            index = _anchor_index_from_id(anchor.get("id"))
+            if index is not None:
+                promoted_indexes.add(index)
+    return promoted_indexes
+
+
+def _anchor_index_from_id(value: object) -> int | None:
+    if not isinstance(value, str) or not value.startswith("anchor-"):
+        return None
+    suffix = value.rsplit("-", 1)[-1]
+    if not suffix.isdigit():
+        return None
+    return int(suffix)
+
+
+def _promotion_region_state_counts(value: object) -> dict[str, int]:
+    if not isinstance(value, list):
+        return {}
+    return _counts(
+        region.get("state")
+        for region in value
+        if isinstance(region, dict)
+    )
 
 
 def _write_visual_audit_artifacts(

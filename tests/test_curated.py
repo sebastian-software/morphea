@@ -49,6 +49,18 @@ def _promotion_metadata(label: str) -> dict[str, object]:
                 "description": "Circle fixture must remain a circle anchor.",
             }
         ],
+        "region_gates": [
+            {
+                "id": "circle-region",
+                "gate_type": "shape_class",
+                "bounds": [4, 4, 18, 18],
+                "expected_kinds": ["circle"],
+                "min_iou": 0.3,
+                "min_count": 1,
+                "severity": "red",
+                "description": "Circle fixture region should promote one circle anchor.",
+            }
+        ],
     }
 
 
@@ -166,10 +178,28 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "svg-render.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "diff.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "anchor-overlay.png").exists())
+            self.assertTrue((output_dir / "simple-circle" / "promoted.svg").exists())
+            self.assertTrue((output_dir / "simple-circle" / "fallback.svg").exists())
+            self.assertTrue((output_dir / "simple-circle" / "promotion-export.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
                 self.assertEqual(sheet.size, (1636, 268))
+            promoted_svg = (output_dir / "simple-circle" / "promoted.svg").read_text(
+                encoding="utf-8"
+            )
+            fallback_svg = (output_dir / "simple-circle" / "fallback.svg").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("<circle", promoted_svg)
+            self.assertNotIn("<circle", fallback_svg)
+            promotion_export = json.loads(
+                (output_dir / "simple-circle" / "promotion-export.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(promotion_export["region_state_counts"]["promoted"], 1)
+            self.assertEqual(promotion_export["promoted_anchor_indexes"], [0])
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
                     encoding="utf-8"
@@ -183,6 +213,9 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("artifacts", report["cases"][0])
             self.assertIn("anchor_overlay", report["cases"][0]["artifacts"])
             self.assertIn("contact_sheet", report["cases"][0]["artifacts"])
+            self.assertIn("promoted_svg", report["cases"][0]["artifacts"])
+            self.assertIn("fallback_svg", report["cases"][0]["artifacts"])
+            self.assertIn("promotion_export", report["cases"][0]["artifacts"])
             self.assertEqual(
                 report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",

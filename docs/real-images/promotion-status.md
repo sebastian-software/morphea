@@ -54,7 +54,8 @@ calibration suite for false-positive promotion risk.
 
 Current curated runs emit per-case run directories with input copy, SVG output,
 debug SVG, manifest JSON, preview PNG, SVG render PNG, red/blue diff PNG,
-contact-sheet PNG, palette summary, mask summary, and report files.
+contact-sheet PNG, promoted/fallback SVGs, promotion-export JSON, palette
+summary, mask summary, and report files.
 
 Curated reports also include derived promotion gates:
 
@@ -88,6 +89,9 @@ depth.
 Curated reports now derive `promotion_regions` from source-region gates. Each
 region records `promoted`, `deferred`, or `rejected` state with bounds, gate id,
 and reason. This is the first RIP3 promotion-pipeline state artifact.
+Checked promotion cases with an output directory also write `promoted.svg`,
+`fallback.svg`, and `promotion-export.json`, so trusted region anchors can be
+separated from debug/fallback output.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`.
@@ -117,5 +121,5 @@ label is green.
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
 
-The next implementation block should extend RIP3 from report-level region state
-into promoted/fallback SVG export filtering.
+The next implementation block should deepen RIP3 fallback/rejected-region review
+artifacts and ensure failed semantic candidates cannot disappear silently.
