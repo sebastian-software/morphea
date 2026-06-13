@@ -32,11 +32,12 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 | --- | --- | --- | --- | --- | --- |
 | `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, table group 2/8, layer count 4 > 3, visual L1 0.235448 > 0.18 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit |
-| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | yellow | `fragmentation`, `missing_promotion_state` | configured topology and shape-class gates pass; current label still keeps promotion deferred |
+| `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor`, `missing_promotion_state` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
 
-Current curated result: 3 cases, 1 checked pass, 1 checked failure, 1 missing
-source. No real-image case is green under the v10+ definition because green
-requires explicit promotion state and visual review artifacts.
+Current curated semantic result: 3 cases, 1 checked expectation pass, 1 checked
+expectation failure, 1 missing source. No real-image case is green under the
+v10+ definition because green requires explicit promotion state and all
+promotion gates passing.
 
 ## Lucide Calibration
 
@@ -103,6 +104,14 @@ label is green.
 
 ## Next Gate
 
-The next implementation block should audit RIP2 exit criteria against generated
-reports and decide whether the remaining work should move to RIP3 promotion
-pipeline state.
+## RIP2 Exit Audit
+
+| Criterion | Status | Evidence |
+| --- | --- | --- |
+| `badge-check` cannot pass as a circle-like substitute. | met | Lucide calibration remains 23/24 with `badge-check` red. |
+| Wrong topology is red even with acceptable L1. | met | `ui-radio-acceptance-screenshot` has visual L1 0.033861 under its 0.08 family threshold, but `radio-control-region-topology` is red because one intended control selects 2 components. |
+| Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
+| Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
+
+The next implementation block should move to RIP3 promotion pipeline state:
+region-level promoted/fallback/deferred/rejected state in manifests and reports.

@@ -306,10 +306,12 @@
           "thin_ui_strokes",
           "mostly_white_background"
         ],
-        "current_quality_label": "yellow",
-        "current_status": "checked_expectations_pass_but_not_promotable",
+        "current_quality_label": "red",
+        "current_status": "checked_failed_promotion_gates",
         "current_issues": [
           "fragmentation",
+          "topology_mismatch",
+          "duplicate_radio_control_anchor",
           "missing_promotion_state"
         ],
         "visual_audit_status": "contact_sheet_available",
@@ -368,7 +370,7 @@
             "max_open_anchors": 0,
             "max_hole_count": 0,
             "max_cutout_count": 0,
-            "max_disconnected_components": 2,
+            "max_disconnected_components": 1,
             "severity": "red",
             "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds."
           }
@@ -388,7 +390,7 @@
         ],
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
-          "Still yellow under v10+ rules because promotion state is not implemented."
+          "Still red under v10+ rules because the radio-control region currently selects two stroke-circle anchors for one intended control."
         ]
       },
       "recommended_config": {
