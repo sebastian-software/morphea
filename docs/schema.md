@@ -462,6 +462,10 @@ directory includes the standard vectorize artifacts plus:
 - `fallback.svg`: SVG containing anchors not selected for promoted export
 - `promotion-export.json`: anchor-index partition, region-state counts, region
   state records, and promoted/fallback SVG paths
+- `promotion-regions.json`: region-state review data with selected anchor ids,
+  selected anchor indexes, gate status, state, and rejection/defer reason
+- `promotion-review.md`: scan-friendly Markdown review of promoted, deferred,
+  and rejected regions
 - `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
@@ -478,7 +482,8 @@ case reports also include:
   count, and red/yellow gate counts
 - `promotion_regions`: region-level promotion state derived from
   `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
-  or `rejected`), bounds, gate id, and reason
+  or `rejected`), bounds, gate id, selected anchor ids/indexes, gate status, and
+  reason
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only

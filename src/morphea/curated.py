@@ -1364,15 +1364,31 @@ def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
             quality=str(promotion.get("current_quality_label", "")),
             gate=gate,
         )
+        selected_ids = _gate_selected_anchor_ids(gate)
         regions.append(
             {
                 "id": region_id,
                 "state": state,
                 "gate_id": region_id,
                 "gate_type": region.get("gate_type", "shape_class"),
+                "gate_ok": bool(gate.get("ok", False)) if isinstance(gate, dict) else False,
+                "severity": (
+                    str(gate.get("severity", "red"))
+                    if isinstance(gate, dict)
+                    else "red"
+                ),
                 "bounds": region.get("bounds"),
                 "expected_kinds": region.get("expected_kinds", []),
                 "forbidden_kinds": region.get("forbidden_kinds", []),
+                "selected_anchor_ids": selected_ids,
+                "selected_anchor_indexes": [
+                    index
+                    for index in (
+                        _anchor_index_from_id(anchor_id) for anchor_id in selected_ids
+                    )
+                    if index is not None
+                ],
+                "selected_anchor_count": len(selected_ids),
                 "reason": (
                     str(gate.get("reason", "missing gate result"))
                     if isinstance(gate, dict)
@@ -1400,6 +1416,22 @@ def _promotion_region_state(
     return "deferred"
 
 
+def _gate_selected_anchor_ids(gate: dict[str, object] | None) -> list[str]:
+    if not isinstance(gate, dict):
+        return []
+    evidence = gate.get("evidence", {})
+    if not isinstance(evidence, dict):
+        return []
+    selected = evidence.get("selected_anchors", [])
+    if not isinstance(selected, list):
+        return []
+    anchor_ids: list[str] = []
+    for anchor in selected:
+        if isinstance(anchor, dict) and isinstance(anchor.get("id"), str):
+            anchor_ids.append(str(anchor["id"]))
+    return anchor_ids
+
+
 def _write_promotion_export_artifacts(
     run_dir: Path,
     *,
@@ -1412,6 +1444,8 @@ def _write_promotion_export_artifacts(
     promoted_svg_path = run_dir / "promoted.svg"
     fallback_svg_path = run_dir / "fallback.svg"
     promotion_export_path = run_dir / "promotion-export.json"
+    promotion_regions_path = run_dir / "promotion-regions.json"
+    promotion_review_path = run_dir / "promotion-review.md"
     promoted_indexes = _promoted_anchor_indexes(promotion_regions, promotion_gates)
     anchor_count = len(scene.anchors)
     fallback_indexes = [
@@ -1451,10 +1485,29 @@ def _write_promotion_export_artifacts(
         json.dumps(export_manifest, indent=2, sort_keys=True),
         encoding="utf-8",
     )
+    regions = promotion_regions if isinstance(promotion_regions, list) else []
+    promotion_regions_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "region_state_counts": _promotion_region_state_counts(regions),
+                "regions": regions,
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    promotion_review_path.write_text(
+        _render_promotion_review_markdown(export_manifest),
+        encoding="utf-8",
+    )
     return {
         "promoted_svg": str(promoted_svg_path),
         "fallback_svg": str(fallback_svg_path),
         "promotion_export": str(promotion_export_path),
+        "promotion_regions": str(promotion_regions_path),
+        "promotion_review": str(promotion_review_path),
     }
 
 
@@ -1508,6 +1561,40 @@ def _promotion_region_state_counts(value: object) -> dict[str, int]:
         for region in value
         if isinstance(region, dict)
     )
+
+
+def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str:
+    regions = export_manifest.get("regions", [])
+    regions = regions if isinstance(regions, list) else []
+    promoted = export_manifest.get("promoted_anchor_indexes", [])
+    promoted_count = len(promoted) if isinstance(promoted, list) else None
+    fallback = export_manifest.get("fallback_anchor_indexes", [])
+    fallback_count = len(fallback) if isinstance(fallback, list) else None
+    lines = [
+        "# Morphēa Promotion Review",
+        "",
+        f"- Anchors: {_fmt_markdown_value(export_manifest.get('anchor_count'))}",
+        f"- Promoted anchors: {_fmt_markdown_value(promoted_count)}",
+        f"- Fallback anchors: {_fmt_markdown_value(fallback_count)}",
+        f"- Region states: {_fmt_markdown_counts(export_manifest.get('region_state_counts'))}",
+        "",
+        "| Region | State | Gate | Selected anchors | Reason |",
+        "| --- | --- | --- | ---: | --- |",
+    ]
+    if not regions:
+        lines.append("| n/a | `deferred` | n/a | 0 | no promotion regions |")
+    for region in regions:
+        if not isinstance(region, dict):
+            continue
+        lines.append(
+            "| "
+            f"`{region.get('id', 'n/a')}` | "
+            f"`{region.get('state', 'n/a')}` | "
+            f"`{region.get('gate_id', 'n/a')}` | "
+            f"{_fmt_markdown_value(region.get('selected_anchor_count'))} | "
+            f"{region.get('reason', 'n/a')} |"
+        )
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _write_visual_audit_artifacts(

@@ -181,6 +181,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "promoted.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "fallback.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "promotion-export.json").exists())
+            self.assertTrue((output_dir / "simple-circle" / "promotion-regions.json").exists())
+            self.assertTrue((output_dir / "simple-circle" / "promotion-review.md").exists())
             self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
@@ -200,6 +202,19 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertEqual(promotion_export["region_state_counts"]["promoted"], 1)
             self.assertEqual(promotion_export["promoted_anchor_indexes"], [0])
+            promotion_regions = json.loads(
+                (output_dir / "simple-circle" / "promotion-regions.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                promotion_regions["regions"][0]["selected_anchor_indexes"],
+                [0],
+            )
+            promotion_review = (
+                output_dir / "simple-circle" / "promotion-review.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("| `circle-region` | `promoted` |", promotion_review)
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
                     encoding="utf-8"
@@ -216,6 +231,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("promoted_svg", report["cases"][0]["artifacts"])
             self.assertIn("fallback_svg", report["cases"][0]["artifacts"])
             self.assertIn("promotion_export", report["cases"][0]["artifacts"])
+            self.assertIn("promotion_regions", report["cases"][0]["artifacts"])
+            self.assertIn("promotion_review", report["cases"][0]["artifacts"])
             self.assertEqual(
                 report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",
@@ -562,6 +579,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 1,
             )
             self.assertEqual(region_by_id["circle-region"]["state"], "promoted")
+            self.assertEqual(
+                region_by_id["circle-region"]["selected_anchor_indexes"],
+                [0],
+            )
             topology = gate_by_id["circle-region"]["evidence"]["topology_summary"]
             self.assertEqual(topology["closed_anchor_count"], 1)
             self.assertEqual(topology["open_anchor_count"], 0)
