@@ -201,6 +201,9 @@ SELF_LEARN_CONFIG_KEYS = {
     "curated_output_dir",
     "curated_report",
     "curated_snapshot",
+    "lucide_suite",
+    "lucide_output_dir",
+    "lucide_report",
     "output_dir",
     "markdown",
     "min_train_examples_delta",
@@ -691,6 +694,9 @@ def main(argv: list[str] | None = None) -> None:
     self_learn.add_argument("--curated-output-dir", type=Path)
     self_learn.add_argument("--curated-report", type=Path)
     self_learn.add_argument("--curated-snapshot", type=Path)
+    self_learn.add_argument("--lucide-suite", type=Path)
+    self_learn.add_argument("--lucide-output-dir", type=Path)
+    self_learn.add_argument("--lucide-report", type=Path)
     self_learn.add_argument("-o", "--output-dir", type=Path)
     self_learn.add_argument("--markdown", type=Path)
     self_learn.add_argument("--min-train-examples-delta", type=int)
@@ -1372,6 +1378,9 @@ def main(argv: list[str] | None = None) -> None:
             curated_output_dir=cycle_config.get("curated_output_dir"),
             curated_report=cycle_config.get("curated_report"),
             curated_snapshot=cycle_config.get("curated_snapshot"),
+            lucide_suite=cycle_config.get("lucide_suite"),
+            lucide_output_dir=cycle_config.get("lucide_output_dir"),
+            lucide_report=cycle_config.get("lucide_report"),
             output_dir=cycle_config["output_dir"],
             markdown=cycle_config.get("markdown"),
             min_train_examples_delta=int(cycle_config["min_train_examples_delta"]),
@@ -2010,6 +2019,12 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         config["curated_report"] = args.curated_report
     if args.curated_snapshot is not None:
         config["curated_snapshot"] = args.curated_snapshot
+    if args.lucide_suite is not None:
+        config["lucide_suite"] = args.lucide_suite
+    if args.lucide_output_dir is not None:
+        config["lucide_output_dir"] = args.lucide_output_dir
+    if args.lucide_report is not None:
+        config["lucide_report"] = args.lucide_report
     if args.output_dir is not None:
         config["output_dir"] = args.output_dir
     if args.markdown is not None:
@@ -2037,6 +2052,9 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         "curated_output_dir",
         "curated_report",
         "curated_snapshot",
+        "lucide_suite",
+        "lucide_output_dir",
+        "lucide_report",
         "output_dir",
         "markdown",
     ):
@@ -2832,6 +2850,9 @@ def _load_self_learn_config(path: Path) -> dict[str, object]:
         "curated_output_dir",
         "curated_report",
         "curated_snapshot",
+        "lucide_suite",
+        "lucide_output_dir",
+        "lucide_report",
         "output_dir",
         "markdown",
     ):

@@ -377,6 +377,11 @@ and cycle summaries expose reviewed-label issue and applied-decision counts.
 Training comparisons now include per-label validation accuracy deltas, and
 those deltas feed best/worst gate summaries so primitive-family regressions can
 block acceptance.
+Self-learning cycle reports now expose normalized `suite_family_validation`
+across primitive label families, curated real-image family summaries, and
+optional Lucide family summaries. `morphea self-learn --lucide-suite` validates
+accepted models with the same `classifier_model` override and blocks acceptance
+on Lucide failures.
 
 Canonical issue tags:
 
@@ -516,6 +521,9 @@ dependency:
 16. **Promote suite-family validation**: compare real-image, Lucide, and
    primitive validation views side by side before accepting self-learning
    models.
+17. **Baseline suite-family validation**: compare those family views against
+   fixed real-image, Lucide, and primitive baselines so newly introduced
+   regressions are separated from known suite debt.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

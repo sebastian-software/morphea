@@ -242,8 +242,14 @@ Training comparison reports now include per-label validation accuracy and
 gate summary, so a primitive-family regression can block model acceptance even
 when an aggregate split metric improves.
 
+Self-learning cycle reports now expose `suite_family_validation`: primitive
+label-family deltas, curated real-image family summaries, and optional Lucide
+family summaries are rendered side by side. `--lucide-suite` is accepted by
+`morphea self-learn`; when configured, failed Lucide validation blocks model
+acceptance just like failed curated validation.
+
 ## Next Gate
 
-The next mainline block should broaden family-level regression evidence from
-label families to suite families: real-image, Lucide, and primitive validation
-views should report which families improved, held steady, or regressed.
+The next mainline block should compare suite-family validation against fixed
+baselines, so a real-image, Lucide, or primitive family regression can be
+flagged as newly introduced instead of merely reported in the current run.

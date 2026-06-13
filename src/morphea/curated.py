@@ -179,6 +179,7 @@ def check_curated_suite(
         "run": run,
         "case_count": len(cases),
         "ok": all(case["ok"] for case in cases),
+        "family_summary": _curated_family_summary(cases),
         "cases": cases,
     }
     if overrides:
@@ -223,11 +224,36 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
         f"- Cases: {_fmt_markdown_value(report.get('case_count'))}",
         f"- OK: `{str(report.get('ok', False)).lower()}`",
         "",
-        "## Promotion Gates",
+        "## Families",
         "",
-        "| Case | Decision | Quality | Failed gates |",
-        "| --- | --- | --- | --- |",
+        "| Family | Cases | Checked | Passed | Failed | Missing |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
+    family_summary = report.get("family_summary")
+    if not isinstance(family_summary, dict):
+        family_summary = _curated_family_summary(
+            [case for case in cases if isinstance(case, dict)]
+        )
+    for family, summary in sorted(family_summary.items()):
+        if isinstance(summary, dict):
+            lines.append(
+                "| "
+                f"`{family}` | "
+                f"{_fmt_markdown_value(summary.get('case_count'))} | "
+                f"{_fmt_markdown_value(summary.get('checked_count'))} | "
+                f"{_fmt_markdown_value(summary.get('passed_count'))} | "
+                f"{_fmt_markdown_value(summary.get('failed_count'))} | "
+                f"{_fmt_markdown_value(summary.get('missing_source_count'))} |"
+            )
+    lines.extend(
+        [
+            "",
+            "## Promotion Gates",
+            "",
+            "| Case | Decision | Quality | Failed gates |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
     for case in _promotion_sorted_cases(cases):
         if not isinstance(case, dict):
             continue
@@ -404,6 +430,52 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
             )
         ],
     }
+
+
+def _curated_family_summary(cases: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+    summary: dict[str, dict[str, int]] = {}
+    for case in cases:
+        family = _curated_case_family(case)
+        family_summary = summary.setdefault(
+            family,
+            {
+                "case_count": 0,
+                "checked_count": 0,
+                "passed_count": 0,
+                "failed_count": 0,
+                "missing_source_count": 0,
+            },
+        )
+        family_summary["case_count"] += 1
+        if case.get("status") == "checked":
+            family_summary["checked_count"] += 1
+        if case.get("ok"):
+            family_summary["passed_count"] += 1
+        else:
+            family_summary["failed_count"] += 1
+        if case.get("status") == "missing_source":
+            family_summary["missing_source_count"] += 1
+    return dict(sorted(summary.items()))
+
+
+def _curated_case_family(case: dict[str, Any]) -> str:
+    promotion = case.get("promotion")
+    if isinstance(promotion, dict):
+        stress_family = promotion.get("stress_family")
+        if isinstance(stress_family, str) and stress_family:
+            return stress_family
+    gates = case.get("promotion_gates")
+    if isinstance(gates, list):
+        for gate in gates:
+            if not isinstance(gate, dict):
+                continue
+            evidence = gate.get("evidence")
+            if not isinstance(evidence, dict):
+                continue
+            family = evidence.get("family")
+            if isinstance(family, str) and family:
+                return family
+    return "unknown"
 
 
 def _baseline_snapshot_cases(path: str | Path | None) -> dict[str, dict[str, Any]]:

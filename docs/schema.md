@@ -577,6 +577,12 @@ splits and `delta.label_accuracy` rows. These label-level deltas are included
 in the best/worst accuracy summary, so a regression in one primitive family can
 block the training gate even if aggregate accuracy improves.
 
+Curated real-image reports include `family_summary` keyed by stress family,
+with case, checked, passed, failed, and missing-source counts. Self-learning
+cycle reports normalize primitive label deltas, curated real-image families,
+and optional Lucide families into `suite_family_validation`, so acceptance can
+be reviewed side by side instead of by aggregate suite status alone.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.
@@ -1037,12 +1043,18 @@ Top-level fields:
 - `model`: compact model summary when retraining was accepted
 - `curated_validation`: optional fixed-suite validation summary when
   `curated_suite` is configured
+- `lucide_validation`: optional Lucide benchmark validation summary when
+  `lucide_suite` is configured
+- `suite_family_validation`: normalized primitive, real-image, and Lucide
+  family evidence used to inspect regressions before model acceptance
 
 `morphea self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label
 augmentation. When `curated_suite` is configured and retraining is accepted,
 the cycle runs `morphea curated-check` with the accepted model as
-`classifier_model` and writes curated validation artifacts.
+`classifier_model` and writes curated validation artifacts. When `lucide_suite`
+is configured and retraining is accepted, the cycle runs `morphea lucide-check`
+with the same model override; failed Lucide validation blocks acceptance.
 
 ## Self-Learning Config v1
 
@@ -1057,6 +1069,9 @@ Supported fields:
 - `curated_output_dir`
 - `curated_report`
 - `curated_snapshot`
+- `lucide_suite`
+- `lucide_output_dir`
+- `lucide_report`
 - `output_dir`
 - `markdown`: optional cycle Markdown summary path
 - `min_train_examples_delta`

@@ -16,6 +16,7 @@ from morphea.classifier import (
     feature_importance_from_centroids,
 )
 from morphea.curated import check_curated_suite
+from morphea.lucide_quality import check_lucide_suite
 from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
@@ -723,6 +724,9 @@ def run_self_learning_cycle(
     curated_output_dir: str | Path | None = None,
     curated_report: str | Path | None = None,
     curated_snapshot: str | Path | None = None,
+    lucide_suite: str | Path | None = None,
+    lucide_output_dir: str | Path | None = None,
+    lucide_report: str | Path | None = None,
     min_train_examples_delta: int = 1,
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
@@ -753,6 +757,16 @@ def run_self_learning_cycle(
         Path(curated_output_dir)
         if curated_output_dir is not None
         else output / "curated-validation-runs"
+    )
+    lucide_report_path = (
+        Path(lucide_report)
+        if lucide_report is not None
+        else output / "lucide-validation.json"
+    )
+    lucide_output_path = (
+        Path(lucide_output_dir)
+        if lucide_output_dir is not None
+        else output / "lucide-validation-runs"
     )
 
     pseudo_dataset = merge_reviewed_pseudo_label_dataset(
@@ -794,23 +808,7 @@ def run_self_learning_cycle(
                 snapshot=curated_snapshot_path,
                 config_overrides={"classifier_model": model_path},
             )
-            curated_validation = {
-                "status": "checked",
-                "suite": str(curated_suite),
-                "ok": curated["ok"],
-                "case_count": curated["case_count"],
-                "checked_count": sum(
-                    1
-                    for case in curated.get("cases", [])
-                    if isinstance(case, dict) and case.get("status") == "checked"
-                ),
-                "missing_source_count": sum(
-                    1
-                    for case in curated.get("cases", [])
-                    if isinstance(case, dict)
-                    and case.get("status") == "missing_source"
-                ),
-            }
+            curated_validation = _curated_validation_summary(curated, curated_suite)
         else:
             curated_validation = {
                 "status": "skipped_gate_not_accepted",
@@ -819,12 +817,41 @@ def run_self_learning_cycle(
                 "case_count": 0,
                 "checked_count": 0,
                 "missing_source_count": 0,
+                "family_summary": {},
             }
 
+    lucide_validation: dict[str, object] | None = None
+    if lucide_suite is not None:
+        if model is not None:
+            lucide = check_lucide_suite(
+                lucide_suite,
+                output=lucide_report_path,
+                output_dir=lucide_output_path,
+                config_overrides={"classifier_model": model_path},
+            )
+            lucide_validation = _lucide_validation_summary(lucide, lucide_suite)
+        else:
+            lucide_validation = {
+                "status": "skipped_gate_not_accepted",
+                "suite": str(lucide_suite),
+                "ok": None,
+                "case_count": 0,
+                "checked_count": 0,
+                "failed_count": 0,
+                "family_summary": {},
+            }
+
+    suite_family_validation = _suite_family_validation_summary(
+        comparison=comparison,
+        curated_validation=curated_validation,
+        lucide_validation=lucide_validation,
+    )
     acceptance_gate = _self_learning_acceptance_gate(
         gate=gate,
         curated_validation=curated_validation,
         curated_required=curated_suite is not None,
+        lucide_validation=lucide_validation,
+        lucide_required=lucide_suite is not None,
     )
     result = {
         "schema_version": 1,
@@ -856,6 +883,16 @@ def run_self_learning_cycle(
                 if curated_validation is not None and model is not None
                 else None
             ),
+            "lucide_report": (
+                str(lucide_report_path)
+                if lucide_validation is not None and model is not None
+                else None
+            ),
+            "lucide_output_dir": (
+                str(lucide_output_path)
+                if lucide_validation is not None and model is not None
+                else None
+            ),
         },
         "pseudo_dataset": {
             "count": pseudo_dataset["count"],
@@ -882,6 +919,8 @@ def run_self_learning_cycle(
             else None
         ),
         "curated_validation": curated_validation,
+        "lucide_validation": lucide_validation,
+        "suite_family_validation": suite_family_validation,
     }
     summary_path = output / "self-learning-cycle.json"
     summary_path.write_text(
@@ -903,11 +942,246 @@ def run_self_learning_cycle(
     return result
 
 
+def _curated_validation_summary(
+    report: dict[str, object],
+    suite: str | Path,
+) -> dict[str, object]:
+    cases = _report_cases(report)
+    return {
+        "status": "checked",
+        "suite": str(suite),
+        "ok": report.get("ok"),
+        "case_count": report.get("case_count", len(cases)),
+        "checked_count": _case_status_count(cases, "checked"),
+        "missing_source_count": _case_status_count(cases, "missing_source"),
+        "family_summary": _family_summary_from_report(report, cases),
+    }
+
+
+def _lucide_validation_summary(
+    report: dict[str, object],
+    suite: str | Path,
+) -> dict[str, object]:
+    cases = _report_cases(report)
+    return {
+        "status": "checked",
+        "suite": str(suite),
+        "ok": report.get("ok"),
+        "case_count": report.get("case_count", len(cases)),
+        "checked_count": _case_status_count(cases, "checked"),
+        "failed_count": report.get("failed_count", _failed_case_count(cases)),
+        "family_summary": _family_summary_from_report(report, cases),
+    }
+
+
+def _suite_family_validation_summary(
+    *,
+    comparison: dict[str, object],
+    curated_validation: dict[str, object] | None,
+    lucide_validation: dict[str, object] | None,
+) -> dict[str, object]:
+    return {
+        "primitive": _primitive_family_validation(comparison),
+        "real_image": _suite_validation_view(curated_validation),
+        "lucide": _suite_validation_view(lucide_validation),
+    }
+
+
+def _primitive_family_validation(report: dict[str, object]) -> dict[str, object]:
+    delta = report.get("delta", {})
+    label_accuracy = {}
+    if isinstance(delta, dict):
+        value = delta.get("label_accuracy", {})
+        if isinstance(value, dict):
+            label_accuracy = value
+    families: list[dict[str, object]] = []
+    for split, split_data in sorted(label_accuracy.items()):
+        if not isinstance(split_data, dict):
+            continue
+        for family, item in sorted(split_data.items()):
+            if not isinstance(item, dict):
+                continue
+            accuracy_delta = item.get("accuracy_delta")
+            families.append(
+                {
+                    "split": str(split),
+                    "family": str(family),
+                    "baseline_accuracy": item.get("baseline_accuracy"),
+                    "augmented_accuracy": item.get("augmented_accuracy"),
+                    "accuracy_delta": accuracy_delta,
+                    "baseline_examples": item.get("baseline_examples"),
+                    "augmented_examples": item.get("augmented_examples"),
+                    "outcome": _accuracy_delta_outcome(accuracy_delta),
+                }
+            )
+    return {
+        "status": _family_validation_status(families),
+        "ok": _families_have_no_regressions(families) if families else None,
+        "families": families,
+    }
+
+
+def _suite_validation_view(
+    validation: dict[str, object] | None,
+) -> dict[str, object]:
+    if not isinstance(validation, dict):
+        return {"status": "not_configured", "ok": None, "families": []}
+    families = []
+    family_summary = validation.get("family_summary", {})
+    if isinstance(family_summary, dict):
+        for family, summary in sorted(family_summary.items()):
+            if not isinstance(summary, dict):
+                continue
+            families.append(
+                {
+                    "family": str(family),
+                    "case_count": summary.get("case_count"),
+                    "checked_count": summary.get("checked_count"),
+                    "passed_count": summary.get("passed_count"),
+                    "failed_count": summary.get("failed_count"),
+                    "missing_source_count": summary.get("missing_source_count"),
+                    "outcome": _suite_family_outcome(summary),
+                }
+            )
+    return {
+        "status": validation.get("status", "n/a"),
+        "ok": validation.get("ok"),
+        "suite": validation.get("suite"),
+        "families": families,
+    }
+
+
+def _family_summary_from_report(
+    report: dict[str, object],
+    cases: list[dict[str, object]],
+) -> dict[str, dict[str, int]]:
+    summary = report.get("family_summary", {})
+    if isinstance(summary, dict):
+        normalized: dict[str, dict[str, int]] = {}
+        for family, item in summary.items():
+            if not isinstance(item, dict):
+                continue
+            case_count = _int_count(item.get("case_count"))
+            normalized[str(family)] = {
+                "case_count": case_count,
+                "checked_count": (
+                    _int_count(item.get("checked_count"))
+                    if "checked_count" in item
+                    else case_count
+                ),
+                "passed_count": _int_count(item.get("passed_count")),
+                "failed_count": _int_count(item.get("failed_count")),
+                "missing_source_count": _int_count(item.get("missing_source_count")),
+            }
+        return dict(sorted(normalized.items()))
+    return _family_summary_from_cases(cases)
+
+
+def _family_summary_from_cases(
+    cases: list[dict[str, object]],
+) -> dict[str, dict[str, int]]:
+    summary: dict[str, dict[str, int]] = {}
+    for case in cases:
+        family = _case_family(case)
+        item = summary.setdefault(
+            family,
+            {
+                "case_count": 0,
+                "checked_count": 0,
+                "passed_count": 0,
+                "failed_count": 0,
+                "missing_source_count": 0,
+            },
+        )
+        item["case_count"] += 1
+        if case.get("status") == "checked":
+            item["checked_count"] += 1
+        if case.get("ok"):
+            item["passed_count"] += 1
+        else:
+            item["failed_count"] += 1
+        if case.get("status") == "missing_source":
+            item["missing_source_count"] += 1
+    return dict(sorted(summary.items()))
+
+
+def _case_family(case: dict[str, object]) -> str:
+    family = case.get("family")
+    if isinstance(family, str) and family:
+        return family
+    promotion = case.get("promotion")
+    if isinstance(promotion, dict):
+        stress_family = promotion.get("stress_family")
+        if isinstance(stress_family, str) and stress_family:
+            return stress_family
+    return "unknown"
+
+
+def _report_cases(report: dict[str, object]) -> list[dict[str, object]]:
+    cases = report.get("cases", [])
+    if not isinstance(cases, list):
+        return []
+    return [case for case in cases if isinstance(case, dict)]
+
+
+def _case_status_count(cases: list[dict[str, object]], status: str) -> int:
+    return sum(1 for case in cases if case.get("status") == status)
+
+
+def _failed_case_count(cases: list[dict[str, object]]) -> int:
+    return sum(1 for case in cases if case.get("ok") is not True)
+
+
+def _int_count(value: object) -> int:
+    return int(value) if isinstance(value, (int, float)) else 0
+
+
+def _accuracy_delta_outcome(value: object) -> str:
+    if not isinstance(value, (int, float)):
+        return "insufficient"
+    if float(value) > 0:
+        return "improved"
+    if float(value) < 0:
+        return "regressed"
+    return "held"
+
+
+def _family_validation_status(families: list[dict[str, object]]) -> str:
+    outcomes = {str(family.get("outcome")) for family in families}
+    if not families or outcomes == {"insufficient"}:
+        return "insufficient"
+    if "regressed" in outcomes:
+        return "regressed"
+    if "improved" in outcomes:
+        return "improved"
+    if outcomes <= {"held", "insufficient"}:
+        return "held"
+    return "mixed"
+
+
+def _families_have_no_regressions(families: list[dict[str, object]]) -> bool:
+    return all(family.get("outcome") != "regressed" for family in families)
+
+
+def _suite_family_outcome(summary: dict[str, object]) -> str:
+    failed_count = _int_count(summary.get("failed_count"))
+    missing_count = _int_count(summary.get("missing_source_count"))
+    if failed_count > 0 and missing_count > 0:
+        return "failed_missing"
+    if failed_count > 0:
+        return "failed"
+    if missing_count > 0:
+        return "missing"
+    return "passed"
+
+
 def _self_learning_acceptance_gate(
     *,
     gate: dict[str, object],
     curated_validation: dict[str, object] | None,
     curated_required: bool,
+    lucide_validation: dict[str, object] | None,
+    lucide_required: bool,
 ) -> dict[str, object]:
     reasons: list[str] = []
     if gate.get("accepted") is not True:
@@ -917,10 +1191,16 @@ def _self_learning_acceptance_gate(
             reasons.append("missing_curated_validation")
         elif curated_validation.get("ok") is not True:
             reasons.append("curated_validation_failed")
+    if lucide_required:
+        if not isinstance(lucide_validation, dict):
+            reasons.append("missing_lucide_validation")
+        elif lucide_validation.get("ok") is not True:
+            reasons.append("lucide_validation_failed")
     return {
         "accepted": not reasons,
         "reasons": reasons,
         "curated_required": curated_required,
+        "lucide_required": lucide_required,
     }
 
 
@@ -966,6 +1246,31 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 f"- Curated checked cases: {_fmt_metric(curated.get('checked_count'))}",
             ]
         )
+    lucide = result.get("lucide_validation")
+    if isinstance(lucide, dict):
+        lines.extend(
+            [
+                f"- Lucide validation: `{lucide.get('status', 'n/a')}`",
+                f"- Lucide OK: `{lucide.get('ok', 'n/a')}`",
+                f"- Lucide checked cases: {_fmt_metric(lucide.get('checked_count'))}",
+            ]
+        )
+    suite_family_validation = result.get("suite_family_validation")
+    if isinstance(suite_family_validation, dict):
+        lines.extend(
+            [
+                "",
+                "## Suite Family Validation",
+                "",
+                "| Suite | Status | OK | Family | Evidence | Outcome |",
+                "| --- | --- | ---: | --- | --- | --- |",
+            ]
+        )
+        rows = _suite_family_validation_rows(suite_family_validation)
+        if rows:
+            lines.extend(rows)
+        else:
+            lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
     lines.extend(
         [
             "",
@@ -991,6 +1296,57 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _suite_family_validation_rows(
+    validation: dict[str, object],
+) -> list[str]:
+    rows: list[str] = []
+    for suite_name in ("primitive", "real_image", "lucide"):
+        suite = validation.get(suite_name, {})
+        if not isinstance(suite, dict):
+            continue
+        families = suite.get("families", [])
+        if not isinstance(families, list) or not families:
+            rows.append(
+                "| "
+                f"`{suite_name}` | "
+                f"`{suite.get('status', 'n/a')}` | "
+                f"`{suite.get('ok', 'n/a')}` | "
+                "n/a | n/a | n/a |"
+            )
+            continue
+        for family in families:
+            if not isinstance(family, dict):
+                continue
+            rows.append(
+                "| "
+                f"`{suite_name}` | "
+                f"`{suite.get('status', 'n/a')}` | "
+                f"`{suite.get('ok', 'n/a')}` | "
+                f"`{family.get('family', 'n/a')}` | "
+                f"{_suite_family_evidence(family)} | "
+                f"`{family.get('outcome', 'n/a')}` |"
+            )
+    return rows
+
+
+def _suite_family_evidence(family: dict[str, object]) -> str:
+    if "accuracy_delta" in family:
+        split = family.get("split", "n/a")
+        return (
+            f"split=`{split}`, "
+            f"baseline={_fmt_metric(family.get('baseline_accuracy'))}, "
+            f"augmented={_fmt_metric(family.get('augmented_accuracy'))}, "
+            f"delta={_fmt_metric(family.get('accuracy_delta'))}"
+        )
+    return (
+        f"cases={_fmt_metric(family.get('case_count'))}, "
+        f"checked={_fmt_metric(family.get('checked_count'))}, "
+        f"passed={_fmt_metric(family.get('passed_count'))}, "
+        f"failed={_fmt_metric(family.get('failed_count'))}, "
+        f"missing={_fmt_metric(family.get('missing_source_count'))}"
+    )
 
 
 def _format_reason_list(value: object) -> str:

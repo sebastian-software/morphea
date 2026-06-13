@@ -162,6 +162,16 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             self.assertTrue(result["ok"])
+            self.assertEqual(
+                result["family_summary"]["test_fixture"],
+                {
+                    "case_count": 1,
+                    "checked_count": 1,
+                    "passed_count": 1,
+                    "failed_count": 0,
+                    "missing_source_count": 0,
+                },
+            )
             self.assertEqual(result["cases"][0]["status"], "checked")
             self.assertTrue(result["cases"][0]["expectations"][0]["ok"])
             self.assertTrue(result["cases"][0]["expectations"][1]["ok"])
@@ -737,6 +747,8 @@ class CuratedSuiteTests(unittest.TestCase):
         )
 
         self.assertIn("# Morphēa Curated Check", markdown)
+        self.assertIn("## Families", markdown)
+        self.assertIn("| `test_fixture` | 1 | 1 | 0 | 1 | 0 |", markdown)
         self.assertIn(
             "| `simple-circle` | `rejected` | `red` | `current_quality_label`, `circle-shape-class` |",
             markdown,

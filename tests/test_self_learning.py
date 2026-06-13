@@ -1676,6 +1676,17 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["acceptance_gate"]["reasons"], [])
             self.assertEqual(result["curated_validation"]["status"], "checked")
             self.assertEqual(result["curated_validation"]["checked_count"], 1)
+            self.assertEqual(
+                result["suite_family_validation"]["real_image"]["status"],
+                "checked",
+            )
+            self.assertIn(
+                "primitive",
+                result["suite_family_validation"],
+            )
+            self.assertTrue(
+                result["suite_family_validation"]["real_image"]["families"]
+            )
             self.assertTrue((output_dir / "model.json").exists())
             self.assertTrue((output_dir / "curated-validation.json").exists())
             self.assertTrue(
@@ -1690,6 +1701,86 @@ class SelfLearningTests(unittest.TestCase):
                 curated_report["config_overrides"]["classifier_model"],
                 str(output_dir / "model.json"),
             )
+
+    def test_self_learning_cycle_validates_accepted_model_on_lucide_suite(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            lucide_suite = root / "lucide-suite.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=102,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            def passing_lucide(*args, **kwargs):
+                self.assertEqual(args[0], lucide_suite)
+                self.assertEqual(
+                    kwargs["config_overrides"]["classifier_model"],
+                    output_dir / "model.json",
+                )
+                report = {
+                    "ok": True,
+                    "case_count": 2,
+                    "failed_count": 0,
+                    "family_summary": {
+                        "outline_circle": {
+                            "case_count": 2,
+                            "passed_count": 2,
+                            "failed_count": 0,
+                        }
+                    },
+                    "cases": [
+                        {"id": "circle-a", "status": "checked", "ok": True},
+                        {"id": "circle-b", "status": "checked", "ok": True},
+                    ],
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                return report
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.self_learning.check_lucide_suite", passing_lucide),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    lucide_suite=lucide_suite,
+                )
+
+            self.assertTrue(result["accepted"])
+            self.assertEqual(result["lucide_validation"]["status"], "checked")
+            self.assertEqual(result["lucide_validation"]["checked_count"], 2)
+            self.assertEqual(
+                result["suite_family_validation"]["lucide"]["families"][0]["family"],
+                "outline_circle",
+            )
+            self.assertTrue((output_dir / "lucide-validation.json").exists())
 
     def test_self_learning_cycle_requires_curated_validation_for_acceptance(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1773,6 +1864,81 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertTrue((output_dir / "model.json").exists())
 
+    def test_self_learning_cycle_requires_lucide_validation_for_acceptance(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            lucide_suite = root / "lucide-suite.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=103,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            def failing_lucide(*args, **kwargs):
+                report = {
+                    "ok": False,
+                    "case_count": 1,
+                    "failed_count": 1,
+                    "family_summary": {
+                        "outline_circle": {
+                            "case_count": 1,
+                            "passed_count": 0,
+                            "failed_count": 1,
+                        }
+                    },
+                    "cases": [
+                        {"id": "circle-a", "status": "checked", "ok": False},
+                    ],
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                return report
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.self_learning.check_lucide_suite", failing_lucide),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    lucide_suite=lucide_suite,
+                )
+
+            self.assertFalse(result["accepted"])
+            self.assertIn(
+                "lucide_validation_failed",
+                result["acceptance_gate"]["reasons"],
+            )
+            self.assertEqual(
+                result["suite_family_validation"]["lucide"]["families"][0]["outcome"],
+                "failed",
+            )
+
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -1840,6 +2006,42 @@ class SelfLearningTests(unittest.TestCase):
                     "comparison": "comparison.json",
                     "gate": "gate.json",
                 },
+                "suite_family_validation": {
+                    "primitive": {
+                        "status": "improved",
+                        "ok": True,
+                        "families": [
+                            {
+                                "split": "val",
+                                "family": "circle",
+                                "baseline_accuracy": 0.5,
+                                "augmented_accuracy": 1.0,
+                                "accuracy_delta": 0.5,
+                                "outcome": "improved",
+                            }
+                        ],
+                    },
+                    "real_image": {
+                        "status": "checked",
+                        "ok": True,
+                        "families": [
+                            {
+                                "family": "generated_table",
+                                "case_count": 2,
+                                "checked_count": 2,
+                                "passed_count": 2,
+                                "failed_count": 0,
+                                "missing_source_count": 0,
+                                "outcome": "passed",
+                            }
+                        ],
+                    },
+                    "lucide": {
+                        "status": "not_configured",
+                        "ok": None,
+                        "families": [],
+                    },
+                },
             }
         )
 
@@ -1848,6 +2050,19 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("- Accepted: `False`", markdown)
         self.assertIn("`training_gate_not_accepted`", markdown)
         self.assertIn("- Applied review decisions: `accepted: 1`", markdown)
+        self.assertIn("## Suite Family Validation", markdown)
+        self.assertIn(
+            "| `primitive` | `improved` | `True` | `circle` |",
+            markdown,
+        )
+        self.assertIn(
+            "| `real_image` | `checked` | `True` | `generated_table` |",
+            markdown,
+        )
+        self.assertIn(
+            "| `lucide` | `not_configured` | `None` | n/a | n/a | n/a |",
+            markdown,
+        )
         self.assertIn("| `gate` | `gate.json` |", markdown)
         self.assertIn("`comparison_status_mixed`", markdown)
 
@@ -1878,6 +2093,9 @@ class SelfLearningTests(unittest.TestCase):
                         "output_dir": str(output_dir),
                         "markdown": str(markdown),
                         "curated_suite": str(curated_suite),
+                        "lucide_suite": str(root / "lucide-suite.json"),
+                        "lucide_output_dir": str(root / "lucide-runs"),
+                        "lucide_report": str(root / "lucide-report.json"),
                         "min_train_examples_delta": 10,
                         "max_worst_accuracy_drop": 1.0,
                         "allow_unchanged": True,
@@ -1902,6 +2120,10 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertEqual(
                 result["curated_validation"]["status"],
+                "skipped_gate_not_accepted",
+            )
+            self.assertEqual(
+                result["lucide_validation"]["status"],
                 "skipped_gate_not_accepted",
             )
 

@@ -431,6 +431,10 @@ Implemented so far:
 - training comparisons expose per-label validation accuracy deltas, and those
   label-level deltas feed the best/worst gate summary so primitive-family
   regressions can block acceptance.
+- self-learning cycle summaries expose normalized suite-family validation
+  across primitive label deltas, curated real-image family summaries, and
+  optional Lucide family summaries; configured Lucide validation blocks
+  acceptance on failure.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
@@ -796,6 +800,10 @@ Implemented so far:
 - `morphea self-learn --curated-suite suite.json` validates an accepted
   retrained model against the fixed curated real-image suite by passing the
   model as `classifier_model`; skipped gates do not pretend validation ran
+- `morphea self-learn --lucide-suite suite.json` validates an accepted
+  retrained model against the curated Lucide benchmark with the same
+  `classifier_model` override and reports the result beside primitive and
+  real-image families
 - `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics
