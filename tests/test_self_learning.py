@@ -1939,6 +1939,105 @@ class SelfLearningTests(unittest.TestCase):
                 "failed",
             )
 
+    def test_self_learning_cycle_allows_known_suite_baseline_debt(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            lucide_suite = root / "lucide-suite.json"
+            baseline = root / "suite-family-baseline.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=109,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            baseline.write_text(
+                json.dumps(
+                    {
+                        "suite_family_validation": {
+                            "primitive": {"families": []},
+                            "real_image": {"families": []},
+                            "lucide": {
+                                "status": "checked",
+                                "ok": False,
+                                "families": [
+                                    {
+                                        "family": "outline_circle",
+                                        "outcome": "failed",
+                                    }
+                                ],
+                            },
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            def failing_lucide(*args, **kwargs):
+                report = {
+                    "ok": False,
+                    "case_count": 1,
+                    "failed_count": 1,
+                    "family_summary": {
+                        "outline_circle": {
+                            "case_count": 1,
+                            "passed_count": 0,
+                            "failed_count": 1,
+                        }
+                    },
+                    "cases": [
+                        {"id": "circle-a", "status": "checked", "ok": False},
+                    ],
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                return report
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.self_learning.check_lucide_suite", failing_lucide),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    lucide_suite=lucide_suite,
+                    suite_family_baseline=baseline,
+                )
+
+            self.assertTrue(result["accepted"])
+            self.assertEqual(
+                result["suite_family_baseline_comparison"]["ok"],
+                True,
+            )
+            self.assertIn(
+                "lucide_validation_known_baseline_debt",
+                result["acceptance_gate"]["reasons"],
+            )
+            self.assertEqual(result["acceptance_gate"]["blocking_reasons"], [])
+
     def test_self_learning_cycle_blocks_new_suite_family_baseline_regression(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -2304,6 +2403,7 @@ class SelfLearningTests(unittest.TestCase):
                 "acceptance_gate": {
                     "accepted": False,
                     "reasons": ["training_gate_not_accepted"],
+                    "blocking_reasons": ["training_gate_not_accepted"],
                 },
                 "artifacts": {
                     "comparison": "comparison.json",
@@ -2374,6 +2474,7 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("- Status: `skipped_retrain`", markdown)
         self.assertIn("- Accepted: `False`", markdown)
         self.assertIn("`training_gate_not_accepted`", markdown)
+        self.assertIn("- Blocking acceptance reasons: `training_gate_not_accepted`", markdown)
         self.assertIn("- Applied review decisions: `accepted: 1`", markdown)
         self.assertIn("## Suite Family Validation", markdown)
         self.assertIn(

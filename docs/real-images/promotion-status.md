@@ -252,6 +252,9 @@ acceptance just like failed curated validation.
 normalized family view against a fixed baseline. Newly introduced primitive,
 real-image, or Lucide bad outcomes block acceptance, while known baseline debt
 is reported separately from new regressions.
+When the baseline comparison is clean, configured curated or Lucide validation
+failures remain visible as known baseline debt but no longer block acceptance;
+new family regressions still block.
 
 `morphea self-learn --suite-family-baseline-output next-baseline.json` writes
 the accepted cycle's current `suite_family_validation` as a reusable baseline

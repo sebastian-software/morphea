@@ -1471,20 +1471,31 @@ def _self_learning_acceptance_gate(
         if not isinstance(curated_validation, dict):
             reasons.append("missing_curated_validation")
         elif curated_validation.get("ok") is not True:
-            reasons.append("curated_validation_failed")
+            if _validation_failure_is_known_baseline_debt(
+                suite_family_baseline_comparison,
+            ):
+                reasons.append("curated_validation_known_baseline_debt")
+            else:
+                reasons.append("curated_validation_failed")
     if lucide_required:
         if not isinstance(lucide_validation, dict):
             reasons.append("missing_lucide_validation")
         elif lucide_validation.get("ok") is not True:
-            reasons.append("lucide_validation_failed")
+            if _validation_failure_is_known_baseline_debt(
+                suite_family_baseline_comparison,
+            ):
+                reasons.append("lucide_validation_known_baseline_debt")
+            else:
+                reasons.append("lucide_validation_failed")
     if (
         isinstance(suite_family_baseline_comparison, dict)
         and suite_family_baseline_comparison.get("ok") is not True
     ):
         reasons.append("suite_family_baseline_regressed")
     return {
-        "accepted": not reasons,
+        "accepted": not _blocking_acceptance_reasons(reasons),
         "reasons": reasons,
+        "blocking_reasons": _blocking_acceptance_reasons(reasons),
         "curated_required": curated_required,
         "lucide_required": lucide_required,
         "suite_family_baseline_checked": isinstance(
@@ -1492,6 +1503,24 @@ def _self_learning_acceptance_gate(
             dict,
         ),
     }
+
+
+def _validation_failure_is_known_baseline_debt(
+    baseline_comparison: dict[str, object] | None,
+) -> bool:
+    return (
+        isinstance(baseline_comparison, dict)
+        and baseline_comparison.get("status") == "checked"
+        and baseline_comparison.get("ok") is True
+    )
+
+
+def _blocking_acceptance_reasons(reasons: list[str]) -> list[str]:
+    non_blocking = {
+        "curated_validation_known_baseline_debt",
+        "lucide_validation_known_baseline_debt",
+    }
+    return [reason for reason in reasons if reason not in non_blocking]
 
 
 def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
@@ -1521,6 +1550,7 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         f"- Gate decision: `{gate.get('decision', 'n/a')}`",
         f"- Gate accepted: `{gate.get('accepted', False)}`",
         f"- Acceptance reasons: {_format_reason_list(acceptance_gate.get('reasons'))}",
+        f"- Blocking acceptance reasons: {_format_reason_list(acceptance_gate.get('blocking_reasons'))}",
         f"- Pseudo-label examples: {_fmt_metric(pseudo_dataset.get('count'))}",
         f"- Applied review decisions: {_format_issue_counts(_counts_from_object(reviewed_summary.get('applied_review_decision_counts')))}",
         f"- Comparison status: `{comparison.get('status', 'n/a')}`",

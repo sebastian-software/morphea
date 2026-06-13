@@ -438,6 +438,9 @@ Implemented so far:
 - `morphea self-learn --suite-family-baseline baseline.json` compares current
   suite-family validation with a fixed baseline and blocks acceptance only for
   newly introduced bad family outcomes.
+- baseline-gedeckte curated/Lucide suite failures bleiben in
+  `acceptance_gate.reasons` sichtbar, werden aber nicht mehr als
+  `blocking_reasons` behandelt.
 - `morphea self-learn --suite-family-baseline-output next-baseline.json` writes
   accepted suite-family validation as a reusable baseline artifact and skips
   writes for rejected cycles.
@@ -822,6 +825,8 @@ Implemented so far:
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle
+- known baseline debt is separated from blocking acceptance reasons so reviewed
+  suite debt can be carried without hiding new regressions
 - `morphea self-learn --suite-family-baseline-output next-baseline.json`
   persists accepted `suite_family_validation` snapshots for the next baseline
   comparison

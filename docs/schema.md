@@ -1070,6 +1070,10 @@ or Lucide family regressions also block acceptance. When
 reason, and changelog evidence are supplied; rejected cycles report
 `skipped_not_accepted`, and missing review evidence reports
 `skipped_missing_review_evidence` without overwriting the requested output.
+When `suite_family_baseline_comparison.ok` is true, configured curated or
+Lucide suite failures are treated as known baseline debt: they remain in
+`acceptance_gate.reasons` but are omitted from
+`acceptance_gate.blocking_reasons`. New family regressions remain blocking.
 If the requested baseline output already exists, the cycle writes it only when
 `suite_family_baseline` points to that same path; otherwise it reports
 `skipped_existing_output_requires_matching_baseline` and leaves the existing

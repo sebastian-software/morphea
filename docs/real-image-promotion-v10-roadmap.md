@@ -386,6 +386,8 @@ on Lucide failures.
 family view against a fixed baseline and blocks acceptance only for newly
 introduced bad family outcomes, separating known suite debt from fresh
 regressions.
+When baseline comparison is clean, known curated/Lucide validation failures
+remain visible but are not blocking acceptance reasons.
 `morphea self-learn --suite-family-baseline-output` writes accepted
 `suite_family_validation` snapshots as reusable baseline artifacts and skips
 writes for rejected cycles.
