@@ -876,6 +876,9 @@ def run_self_learning_cycle(
     summary_path = output / "self-learning-cycle.json"
     suite_family_baseline_snapshot = _write_suite_family_baseline_snapshot(
         output=suite_family_baseline_output_path,
+        baseline_source=Path(suite_family_baseline)
+        if suite_family_baseline is not None
+        else None,
         accepted=bool(acceptance_gate["accepted"]),
         suite_family_validation=suite_family_validation,
         changelog=suite_family_baseline_changelog_path,
@@ -1090,6 +1093,7 @@ def _suite_family_validation_from_baseline(value: object) -> dict[str, object]:
 def _write_suite_family_baseline_snapshot(
     *,
     output: Path | None,
+    baseline_source: Path | None,
     accepted: bool,
     suite_family_validation: dict[str, object],
     changelog: Path | None,
@@ -1116,6 +1120,17 @@ def _write_suite_family_baseline_snapshot(
             "output": str(output),
             "changelog": str(changelog) if changelog is not None else None,
             "missing_review_fields": missing_review_fields,
+            "review": normalized_review,
+        }
+    if output.exists() and not _baseline_output_matches_source(
+        output,
+        baseline_source,
+    ):
+        return {
+            "status": "skipped_existing_output_requires_matching_baseline",
+            "output": str(output),
+            "baseline_source": str(baseline_source) if baseline_source else None,
+            "changelog": str(changelog) if changelog is not None else None,
             "review": normalized_review,
         }
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -1148,9 +1163,19 @@ def _write_suite_family_baseline_snapshot(
     return {
         "status": "written",
         "output": str(output),
+        "baseline_source": str(baseline_source) if baseline_source else None,
         "changelog": str(changelog),
         "review": normalized_review,
     }
+
+
+def _baseline_output_matches_source(
+    output: Path,
+    baseline_source: Path | None,
+) -> bool:
+    if baseline_source is None:
+        return False
+    return output.resolve() == baseline_source.resolve()
 
 
 def _suite_family_baseline_review(review: dict[str, object]) -> dict[str, object]:

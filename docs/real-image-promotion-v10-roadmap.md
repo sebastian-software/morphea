@@ -391,6 +391,9 @@ regressions.
 writes for rejected cycles.
 Baseline snapshot writes now require reviewer, reason, and changelog evidence;
 successful writes embed the review record and append a JSONL changelog entry.
+Existing baseline output files are protected unless the configured
+`suite_family_baseline` path matches the output path, so checked-in baselines
+cannot be overwritten by an accidental ad hoc output path.
 
 Canonical issue tags:
 
@@ -541,6 +544,9 @@ dependency:
 20. **Constrain baseline replacement paths**: require an explicit expected
    baseline target before overwriting an existing checked-in suite-family
    baseline.
+21. **Check in a suite-family baseline smoke**: add a small baseline fixture and
+   documented CLI smoke path that exercises the baseline-gated self-learning
+   flow end to end.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

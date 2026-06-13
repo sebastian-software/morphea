@@ -2182,6 +2182,66 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertFalse(baseline_output.exists())
 
+    def test_self_learning_cycle_refuses_accidental_baseline_overwrite(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline_output = root / "checked-in-baseline.json"
+            changelog = root / "suite-family-baseline-changelog.jsonl"
+            baseline_output.write_text(
+                json.dumps({"sentinel": "do-not-overwrite"}),
+                encoding="utf-8",
+            )
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=107,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with patch("morphea.self_learning.gate_training_comparison", accepted_gate):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline_output=baseline_output,
+                    suite_family_baseline_reviewer="qa",
+                    suite_family_baseline_reason="accidental overwrite guard",
+                    suite_family_baseline_changelog=changelog,
+                )
+
+            self.assertTrue(result["accepted"])
+            snapshot = result["suite_family_baseline_snapshot"]
+            self.assertEqual(
+                snapshot["status"],
+                "skipped_existing_output_requires_matching_baseline",
+            )
+            self.assertEqual(
+                json.loads(baseline_output.read_text(encoding="utf-8")),
+                {"sentinel": "do-not-overwrite"},
+            )
+            self.assertFalse(changelog.exists())
+
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

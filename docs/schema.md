@@ -1070,6 +1070,10 @@ or Lucide family regressions also block acceptance. When
 reason, and changelog evidence are supplied; rejected cycles report
 `skipped_not_accepted`, and missing review evidence reports
 `skipped_missing_review_evidence` without overwriting the requested output.
+If the requested baseline output already exists, the cycle writes it only when
+`suite_family_baseline` points to that same path; otherwise it reports
+`skipped_existing_output_requires_matching_baseline` and leaves the existing
+file untouched.
 
 ## Self-Learning Config v1
 

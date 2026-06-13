@@ -444,6 +444,9 @@ Implemented so far:
 - suite-family baseline snapshots require reviewer, reason, and changelog
   evidence before writing, so accepted baseline refreshes produce a review
   record and JSONL changelog entry.
+- existing suite-family baseline output files are protected unless
+  `--suite-family-baseline` points to the same path, preventing accidental
+  overwrites of checked-in baseline artifacts.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
@@ -822,6 +825,8 @@ Implemented so far:
 - `--suite-family-baseline-reviewer`, `--suite-family-baseline-reason`, and
   `--suite-family-baseline-changelog` make baseline refreshes auditable and
   prevent silent baseline replacement
+- existing `--suite-family-baseline-output` paths require a matching
+  `--suite-family-baseline` path before they can be overwritten
 - `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics

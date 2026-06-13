@@ -261,8 +261,14 @@ provided. Successful updates include a review record in the snapshot and append
 a JSONL changelog entry; rejected cycles and missing review evidence do not
 write the requested baseline output.
 
+Existing baseline output files are protected: the cycle writes an existing
+`--suite-family-baseline-output` path only when `--suite-family-baseline`
+points to that same path. Otherwise it reports
+`skipped_existing_output_requires_matching_baseline` and leaves the file
+untouched.
+
 ## Next Gate
 
-The next mainline block should add a stricter replacement policy for checked-in
-baseline files, so existing fixed baselines require an explicit expected source
-path and cannot be overwritten through an accidental ad hoc output path.
+The next mainline block should add a checked-in suite-family baseline fixture
+and a smoke command in docs, so the baseline-gated self-learning path is
+exercised with the real CLI rather than only unit fixtures.
