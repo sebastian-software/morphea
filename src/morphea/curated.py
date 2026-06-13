@@ -73,6 +73,10 @@ PROMOTION_REGION_TOPOLOGY_LIMITS = {
     "max_cutout_count",
     "max_disconnected_components",
 }
+PROMOTION_VISUAL_THRESHOLD_KEYS = {
+    "max_raster_l1_error",
+    "max_raster_edge_error",
+}
 
 
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
@@ -401,6 +405,14 @@ def _check_curated_case(
             "input": str(vectorize_run.input_path),
             **_visual_audit_artifact_paths(vectorize_run.run_dir),
         }
+        run_manifest = json.loads(
+            vectorize_run.manifest_path.read_text(encoding="utf-8")
+        )
+        if isinstance(run_manifest, dict):
+            manifest = run_manifest
+            metrics = manifest.get("metrics", {})
+            if isinstance(metrics, dict):
+                result["metrics"] = dict(sorted(metrics.items()))
     if isinstance(result.get("promotion"), dict):
         result["promotion_gates"] = _promotion_gate_results(result, manifest=manifest)
         result["promotion_summary"] = _promotion_summary(result["promotion_gates"])
@@ -652,6 +664,9 @@ def _promotion_gate_results(
     if isinstance(promotion, dict):
         gates.extend(_configured_promotion_gates(case, promotion))
         gates.extend(_region_promotion_gates(case, promotion, manifest=manifest))
+        visual_gate = _visual_threshold_promotion_gate(case, promotion)
+        if visual_gate is not None:
+            gates.append(visual_gate)
     return gates
 
 
@@ -802,6 +817,56 @@ def _region_promotion_gates(
             )
         )
     return gates
+
+
+def _visual_threshold_promotion_gate(
+    case: dict[str, Any],
+    promotion: dict[str, Any],
+) -> dict[str, object] | None:
+    thresholds = promotion.get("visual_thresholds")
+    if not isinstance(thresholds, dict):
+        return None
+    checked = case.get("status") == "checked"
+    metrics = case.get("metrics", {})
+    metrics = metrics if isinstance(metrics, dict) else {}
+    failures: list[str] = []
+    actuals: dict[str, float | None] = {}
+    limits: dict[str, float] = {}
+    for key in sorted(PROMOTION_VISUAL_THRESHOLD_KEYS):
+        limit = thresholds.get(key)
+        if not isinstance(limit, (int, float)):
+            continue
+        metric_name = key.removeprefix("max_")
+        actual = metrics.get(metric_name)
+        actuals[metric_name] = float(actual) if isinstance(actual, (int, float)) else None
+        limits[key] = float(limit)
+        if not isinstance(actual, (int, float)):
+            failures.append(f"{metric_name} missing")
+        elif float(actual) > float(limit):
+            failures.append(f"{metric_name} {float(actual):.6g} > {float(limit):.6g}")
+    ok = checked and not failures and bool(limits)
+    if not checked:
+        reason = f"case status is {case.get('status', 'unknown')}"
+    elif not limits:
+        reason = "no visual thresholds configured"
+    elif failures:
+        reason = "visual thresholds failed: " + ", ".join(failures)
+    else:
+        reason = "visual thresholds passed"
+    return _promotion_gate(
+        "visual_fidelity_thresholds",
+        gate_type="visual_fidelity",
+        ok=ok,
+        severity=str(thresholds.get("severity", "red")),
+        reason=reason,
+        evidence={
+            "family": thresholds.get("family", promotion.get("stress_family")),
+            "actual": actuals,
+            "thresholds": limits,
+            "failures": failures,
+            "description": thresholds.get("description"),
+        },
+    )
 
 
 def _anchors_overlapping_region(
@@ -1521,6 +1586,9 @@ def _validate_promotion_metadata(
     region_gates = value.get("region_gates", [])
     if region_gates is not None:
         _validate_promotion_region_gates(case_id, region_gates)
+    visual_thresholds = value.get("visual_thresholds")
+    if visual_thresholds is not None:
+        _validate_promotion_visual_thresholds(case_id, visual_thresholds)
 
 
 def _validate_promotion_hard_gates(
@@ -1710,3 +1778,44 @@ def _validate_region_topology_limits(
                 f"case {case_id} promotion region gate {gate_id} "
                 f"{maximum_key} must be >= {minimum_key}"
             )
+
+
+def _validate_promotion_visual_thresholds(case_id: str, value: Any) -> None:
+    if not isinstance(value, dict):
+        raise ValueError(f"case {case_id} promotion visual_thresholds must be an object")
+    family = value.get("family")
+    if family is not None and (not isinstance(family, str) or not family):
+        raise ValueError(
+            f"case {case_id} promotion visual_thresholds family must be a string"
+        )
+    configured = False
+    for key in sorted(PROMOTION_VISUAL_THRESHOLD_KEYS):
+        threshold = value.get(key)
+        if threshold is None:
+            continue
+        configured = True
+        if not isinstance(threshold, (int, float)) or threshold < 0:
+            raise ValueError(
+                f"case {case_id} promotion visual_thresholds {key} "
+                "must be a non-negative number"
+            )
+    if not configured:
+        allowed = ", ".join(sorted(PROMOTION_VISUAL_THRESHOLD_KEYS))
+        raise ValueError(
+            f"case {case_id} promotion visual_thresholds must set at least one of: "
+            f"{allowed}"
+        )
+    severity = value.get("severity", "red")
+    if severity not in PROMOTION_GATE_SEVERITIES:
+        allowed = ", ".join(sorted(PROMOTION_GATE_SEVERITIES))
+        raise ValueError(
+            f"case {case_id} promotion visual_thresholds severity "
+            f"must be one of: {allowed}"
+        )
+    description = value.get("description")
+    if description is not None and (
+        not isinstance(description, str) or not description
+    ):
+        raise ValueError(
+            f"case {case_id} promotion visual_thresholds description must be a string"
+        )

@@ -384,6 +384,11 @@ Promotion metadata fields:
   `fragmentation`, `missing_promotion_state`, or `missing_local_source`
 - `visual_audit_status`: current visual artifact posture, for example
   `contact_sheet_available` or `unavailable_missing_source`
+- `visual_thresholds`: optional per-family visual fidelity thresholds. The
+  object includes optional `family`, `max_raster_l1_error` and/or
+  `max_raster_edge_error`, optional `severity`, and optional `description`.
+  Thresholds are evaluated as a derived `visual_fidelity_thresholds` promotion
+  gate after the checked run has written raster metrics into the report.
 - `hard_gates`: optional array of explicit promotion gates. Each gate includes
   `id`, `gate_type`, `expectation_ids`, optional `severity`, and optional
   `description`. Supported `gate_type` values are `shape_class`, `topology`,
@@ -449,7 +454,8 @@ case reports also include:
 
 - `promotion_gates`: derived hard-gate results for `source_available`,
   `semantic_expectations`, `visual_contact_sheet`, `current_quality_label`, and
-  any case-specific `promotion.hard_gates` or `promotion.region_gates`
+  any case-specific `promotion.hard_gates`, `promotion.region_gates`, or
+  `promotion.visual_thresholds`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, and red/yellow gate counts
 

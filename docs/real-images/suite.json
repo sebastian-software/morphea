@@ -28,6 +28,13 @@
           "weak_visual_fidelity"
         ],
         "visual_audit_status": "contact_sheet_available",
+        "visual_thresholds": {
+          "family": "generated_illustration_table_grid",
+          "max_raster_l1_error": 0.18,
+          "max_raster_edge_error": 0.025,
+          "severity": "red",
+          "description": "Generated illustration table-grid cases need tighter L1 fidelity after structural gates pass."
+        },
         "hard_gates": [
           {
             "id": "circle-anchor-shape-class",
@@ -155,6 +162,13 @@
           "missing_local_source"
         ],
         "visual_audit_status": "unavailable_missing_source",
+        "visual_thresholds": {
+          "family": "generated_illustration_table_grid",
+          "max_raster_l1_error": 0.18,
+          "max_raster_edge_error": 0.025,
+          "severity": "red",
+          "description": "Generated illustration table-grid cases use the same visual threshold family as the local transparent variant."
+        },
         "hard_gates": [
           {
             "id": "circle-anchor-shape-class",
@@ -261,6 +275,13 @@
           "missing_promotion_state"
         ],
         "visual_audit_status": "contact_sheet_available",
+        "visual_thresholds": {
+          "family": "ui_screenshot_text_and_controls",
+          "max_raster_l1_error": 0.08,
+          "max_raster_edge_error": 0.04,
+          "severity": "red",
+          "description": "UI screenshot cases allow text antialiasing drift but should keep controls and thin strokes visually close."
+        },
         "hard_gates": [
           {
             "id": "radio-control-topology",

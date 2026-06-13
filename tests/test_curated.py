@@ -26,6 +26,13 @@ def _promotion_metadata(label: str) -> dict[str, object]:
         "current_status": "checked",
         "current_issues": ["fragmentation"] if label != "green" else [],
         "visual_audit_status": "run_artifacts_only",
+        "visual_thresholds": {
+            "family": "test_fixture",
+            "max_raster_l1_error": 1.0,
+            "max_raster_edge_error": 1.0,
+            "severity": "red",
+            "description": "Synthetic fixture visual thresholds should pass when run artifacts exist.",
+        },
         "review_notes": ["synthetic metadata fixture"],
         "hard_gates": [
             {
@@ -164,6 +171,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("raster_l1_error", manifest["metrics"])
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
+            self.assertIn("raster_l1_error", report["cases"][0]["metrics"])
+            self.assertIn("raster_edge_error", report["cases"][0]["metrics"])
             self.assertIn("artifacts", report["cases"][0])
             self.assertIn("anchor_overlay", report["cases"][0]["artifacts"])
             self.assertIn("contact_sheet", report["cases"][0]["artifacts"])
@@ -186,6 +195,11 @@ class CuratedSuiteTests(unittest.TestCase):
                 "shape_class",
             )
             self.assertTrue(gate_by_id["circle-shape-class"]["ok"])
+            self.assertTrue(gate_by_id["visual_fidelity_thresholds"]["ok"])
+            self.assertEqual(
+                gate_by_id["visual_fidelity_thresholds"]["evidence"]["family"],
+                "test_fixture",
+            )
             self.assertEqual(
                 report["cases"][0]["promotion"]["current_quality_label"],
                 "green",
@@ -646,6 +660,40 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "max_closed_anchors"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_visual_thresholds(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["visual_thresholds"] = {
+                "family": "test_fixture",
+                "max_raster_l1_error": -0.1,
+            }
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "max_raster_l1_error"):
                 load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):
