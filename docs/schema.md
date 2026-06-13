@@ -543,6 +543,11 @@ terminal review decision, rejects still-pending decisions, writes an applied
 review summary, and can persist `review_decision_applied` back into the run
 manifest and its top-level `promotion` object.
 
+`morphea harvest --require-applied-review` filters run manifests through
+`review_decision_applied`: only `accepted` and `corrected` applied decisions
+can become pseudo-label candidates. Missing, invalid, `rejected`, and
+`deferred` applied decisions remain visible in `rejected_runs`.
+
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
 yellow gates fail.

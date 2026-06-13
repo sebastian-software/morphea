@@ -276,6 +276,100 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["pseudo_label_count"], 0)
             self.assertEqual(result["filters"]["max_anchor_quality_error"], 0.1)
 
+    def test_harvest_can_require_accepted_applied_review(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "missing-review",
+                diagnostics=[],
+                classifier_error=0.0,
+            )
+            _write_manifest(
+                root,
+                "corrected-review",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review={
+                    "decision": "corrected",
+                    "issue_tags": ["topology_mismatch"],
+                },
+            )
+            _write_manifest(
+                root,
+                "rejected-review",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review={
+                    "decision": "rejected",
+                    "issue_tags": ["weak_visual_fidelity"],
+                },
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                require_applied_review=True,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(
+                result["pseudo_labels"][0]["run"],
+                "corrected-review",
+            )
+            self.assertEqual(
+                result["pseudo_labels"][0]["review_decision_applied"]["decision"],
+                "corrected",
+            )
+            self.assertEqual(result["filters"]["require_applied_review"], True)
+            rejected = {
+                item["run"]: item
+                for item in result["rejected_runs"]
+            }
+            self.assertEqual(
+                rejected["missing-review"]["reason"],
+                "missing_applied_review",
+            )
+            self.assertEqual(
+                rejected["rejected-review"]["reason"],
+                "applied_review_not_accepted",
+            )
+
+    def test_harvest_cli_can_require_applied_review(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "accepted-review",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review={"decision": "accepted"},
+            )
+            output = Path(temp_dir) / "pseudo.json"
+            markdown = Path(temp_dir) / "pseudo.md"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "harvest",
+                        str(root),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--require-applied-review",
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertTrue(result["filters"]["require_applied_review"])
+            self.assertIn(
+                "| `require_applied_review` | true |",
+                markdown.read_text(encoding="utf-8"),
+            )
+
     def test_harvest_cli_writes_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
@@ -1655,32 +1749,34 @@ def _write_manifest(
     raster_edge_error: float = 0.0,
     anchor_metrics: dict[str, float] | None = None,
     groups: list[dict[str, object]] | None = None,
+    applied_review: dict[str, object] | None = None,
 ) -> None:
     run_dir = root / run_name
     run_dir.mkdir(parents=True)
     metrics = {"classifier_prior_error": classifier_error}
     if anchor_metrics is not None:
         metrics.update(anchor_metrics)
-    (run_dir / "manifest.json").write_text(
-        json.dumps(
+    manifest = {
+        "anchors": [
             {
-                "anchors": [
-                    {
-                        "kind": "circle",
-                        "color": "#dd2222",
-                        "metrics": metrics,
-                    }
-                ],
-                "diagnostics": diagnostics,
-                "groups": groups or [],
-                "metrics": {
-                    "editability_score": editability_score,
-                    "fragmentation_penalty": fragmentation_penalty,
-                    "raster_l1_error": raster_l1_error,
-                    "raster_edge_error": raster_edge_error,
-                },
+                "kind": "circle",
+                "color": "#dd2222",
+                "metrics": metrics,
             }
-        ),
+        ],
+        "diagnostics": diagnostics,
+        "groups": groups or [],
+        "metrics": {
+            "editability_score": editability_score,
+            "fragmentation_penalty": fragmentation_penalty,
+            "raster_l1_error": raster_l1_error,
+            "raster_edge_error": raster_edge_error,
+        },
+    }
+    if applied_review is not None:
+        manifest["review_decision_applied"] = applied_review
+    (run_dir / "manifest.json").write_text(
+        json.dumps(manifest),
         encoding="utf-8",
     )
 

@@ -211,9 +211,14 @@ tags plus failed gate/component evidence for later application.
 review summary JSON/Markdown, and can persist `review_decision_applied` back
 into the run manifest and its `promotion` object.
 
+`morphea harvest --require-applied-review` now gates pseudo-label harvesting on
+`review_decision_applied`: only `accepted` and `corrected` applied decisions
+can become candidates; missing, invalid, `rejected`, or `deferred` applied
+decisions remain visible in `rejected_runs`.
+
 ## Next Gate
 
-The next mainline block should connect applied promotion review decisions to
-pseudo-label harvesting: only `accepted` and `corrected` applied decisions
-should become training candidates, and rejected/deferred decisions should stay
-visible as review evidence.
+The next mainline block should wire applied promotion review decisions into the
+curated harvesting workflow end to end: preserve edited decisions across a
+fresh `harvest-curated` run or provide a reviewed run-root mode so curated
+self-learning cannot accidentally regenerate unreviewed labels.

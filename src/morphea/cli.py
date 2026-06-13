@@ -586,6 +586,12 @@ def main(argv: list[str] | None = None) -> None:
     harvest.add_argument("--max-raster-l1-error", type=float)
     harvest.add_argument("--max-raster-edge-error", type=float)
     harvest.add_argument("--max-anchor-quality-error", type=float)
+    harvest.add_argument(
+        "--require-applied-review",
+        action="store_true",
+        default=None,
+        help="Harvest only runs with accepted/corrected applied review decisions.",
+    )
     harvest.add_argument("--config", type=Path)
 
     harvest_curated = subcommands.add_parser(
@@ -605,6 +611,12 @@ def main(argv: list[str] | None = None) -> None:
     harvest_curated.add_argument("--max-raster-l1-error", type=float)
     harvest_curated.add_argument("--max-raster-edge-error", type=float)
     harvest_curated.add_argument("--max-anchor-quality-error", type=float)
+    harvest_curated.add_argument(
+        "--require-applied-review",
+        action="store_true",
+        default=None,
+        help="Harvest only accepted/corrected applied promotion reviews.",
+    )
     harvest_curated.add_argument("--config", type=Path)
 
     review = subcommands.add_parser(
@@ -1242,6 +1254,7 @@ def main(argv: list[str] | None = None) -> None:
             max_anchor_quality_error=float(
                 harvest_config["max_anchor_quality_error"]
             ),
+            require_applied_review=bool(harvest_config["require_applied_review"]),
         )
         print(f"harvested {result['pseudo_label_count']} pseudo-labels")
         return
@@ -1268,6 +1281,7 @@ def main(argv: list[str] | None = None) -> None:
             max_anchor_quality_error=float(
                 harvest_config["max_anchor_quality_error"]
             ),
+            require_applied_review=bool(harvest_config["require_applied_review"]),
         )
         print(
             f"harvested {result['pseudo_label_count']} pseudo-labels "
@@ -2349,6 +2363,7 @@ def _resolved_harvest_config(args: argparse.Namespace) -> dict[str, object]:
         "max_raster_l1_error",
         "max_raster_edge_error",
         "max_anchor_quality_error",
+        "require_applied_review",
     ):
         value = getattr(args, key, None)
         if value is not None:
@@ -2385,6 +2400,7 @@ def _resolved_harvest_curated_config(args: argparse.Namespace) -> dict[str, obje
         "max_raster_l1_error",
         "max_raster_edge_error",
         "max_anchor_quality_error",
+        "require_applied_review",
     ):
         value = getattr(args, key, None)
         if value is not None:

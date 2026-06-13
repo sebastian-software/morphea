@@ -361,6 +361,8 @@ gate/component evidence needed for review.
 `morphea promotion-apply-review` consumes edited terminal decision records,
 rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests.
+`morphea harvest --require-applied-review` can then gate pseudo-label
+harvesting so only accepted/corrected applied decisions become candidates.
 
 Canonical issue tags:
 
@@ -481,9 +483,12 @@ dependency:
 9. **Gate harvesting on applied decisions**: accepted/corrected applied
    decisions can become training candidates; rejected/deferred decisions stay
    as review evidence.
-10. **Run MLX/SAM side by side**: compare segmentation sources only after the
+10. **Preserve applied decisions in curated harvests**: make rerunnable
+   curated self-learning consume reviewed run roots or reapply edited decision
+   records before harvesting.
+11. **Run MLX/SAM side by side**: compare segmentation sources only after the
    promotion evaluator can tell whether a region proposal helped.
-11. **Start reviewed pseudo-label collection**: collect labels only from green
+12. **Start reviewed pseudo-label collection**: collect labels only from green
    or corrected review artifacts.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before

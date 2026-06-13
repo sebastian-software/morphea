@@ -30,6 +30,7 @@ HARVEST_FILTER_DEFAULTS = {
     "max_raster_l1_error": 1.0,
     "max_raster_edge_error": 1.0,
     "max_anchor_quality_error": 1.0,
+    "require_applied_review": False,
 }
 
 
@@ -45,6 +46,7 @@ def harvest_pseudo_labels(
     max_raster_l1_error: float = 1.0,
     max_raster_edge_error: float = 1.0,
     max_anchor_quality_error: float = 1.0,
+    require_applied_review: bool = False,
 ) -> dict[str, object]:
     root = Path(run_root)
     records: list[dict[str, object]] = []
@@ -52,6 +54,17 @@ def harvest_pseudo_labels(
 
     for manifest_path in sorted(root.glob("*/manifest.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        applied_review = _applied_review_decision(manifest)
+        applied_review_status = _applied_review_harvest_status(applied_review)
+        if require_applied_review and not applied_review_status["ok"]:
+            rejected_runs.append(
+                {
+                    "run": manifest_path.parent.name,
+                    "reason": applied_review_status["reason"],
+                    "review_decision": applied_review_status["decision"],
+                }
+            )
+            continue
         diagnostics = [
             diagnostic
             for diagnostic in manifest.get("diagnostics", [])
@@ -120,20 +133,21 @@ def harvest_pseudo_labels(
             quality_error = _anchor_quality_error(metrics)
             if quality_error > max_anchor_quality_error:
                 continue
-            records.append(
-                {
-                    "run": manifest_path.parent.name,
-                    "anchor_index": index,
-                    "kind": anchor.get("kind"),
-                    "color": anchor.get("color"),
-                    "anchor": anchor,
-                    "metrics": metrics,
-                    "anchor_quality_error": quality_error,
-                    "run_metrics": run_metrics,
-                    "group_context": _anchor_group_context(manifest, index),
-                    "source_manifest": str(manifest_path),
-                }
-            )
+            record = {
+                "run": manifest_path.parent.name,
+                "anchor_index": index,
+                "kind": anchor.get("kind"),
+                "color": anchor.get("color"),
+                "anchor": anchor,
+                "metrics": metrics,
+                "anchor_quality_error": quality_error,
+                "run_metrics": run_metrics,
+                "group_context": _anchor_group_context(manifest, index),
+                "source_manifest": str(manifest_path),
+            }
+            if applied_review:
+                record["review_decision_applied"] = applied_review
+            records.append(record)
 
     result = {
         "pseudo_label_count": len(records),
@@ -147,6 +161,7 @@ def harvest_pseudo_labels(
             "max_raster_l1_error": max_raster_l1_error,
             "max_raster_edge_error": max_raster_edge_error,
             "max_anchor_quality_error": max_anchor_quality_error,
+            "require_applied_review": require_applied_review,
         },
     }
     output = Path(output)
@@ -177,6 +192,7 @@ def harvest_curated_pseudo_labels(
     max_raster_l1_error: float = 1.0,
     max_raster_edge_error: float = 1.0,
     max_anchor_quality_error: float = 1.0,
+    require_applied_review: bool = False,
 ) -> dict[str, object]:
     curated = check_curated_suite(
         suite,
@@ -195,6 +211,7 @@ def harvest_curated_pseudo_labels(
         max_raster_l1_error=max_raster_l1_error,
         max_raster_edge_error=max_raster_edge_error,
         max_anchor_quality_error=max_anchor_quality_error,
+        require_applied_review=require_applied_review,
     )
     result.update(
         {
@@ -227,6 +244,43 @@ def harvest_curated_pseudo_labels(
         markdown_path.parent.mkdir(parents=True, exist_ok=True)
         markdown_path.write_text(render_harvest_markdown(result), encoding="utf-8")
     return result
+
+
+def _applied_review_decision(manifest: dict[str, object]) -> dict[str, object]:
+    applied = manifest.get("review_decision_applied")
+    if isinstance(applied, dict):
+        return applied
+    promotion = manifest.get("promotion")
+    if isinstance(promotion, dict):
+        applied = promotion.get("review_decision_applied")
+        if isinstance(applied, dict):
+            return applied
+    return {}
+
+
+def _applied_review_harvest_status(
+    applied_review: dict[str, object],
+) -> dict[str, object]:
+    if not applied_review:
+        return {
+            "ok": False,
+            "reason": "missing_applied_review",
+            "decision": "n/a",
+        }
+    decision = applied_review.get("decision")
+    if decision in {"accepted", "corrected"}:
+        return {"ok": True, "reason": "accepted_applied_review", "decision": decision}
+    if decision in {"rejected", "deferred"}:
+        return {
+            "ok": False,
+            "reason": "applied_review_not_accepted",
+            "decision": decision,
+        }
+    return {
+        "ok": False,
+        "reason": "invalid_applied_review_decision",
+        "decision": str(decision),
+    }
 
 
 def render_harvest_markdown(report: dict[str, object]) -> str:
@@ -1587,7 +1641,9 @@ def _delta_for_markdown(
 
 
 def _fmt_metric(value: object) -> str:
-    if isinstance(value, bool) or value is None:
+    if isinstance(value, bool):
+        return str(value).lower()
+    if value is None:
         return "n/a"
     if isinstance(value, int):
         return str(value)

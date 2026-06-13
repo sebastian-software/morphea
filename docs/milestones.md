@@ -409,6 +409,10 @@ Implemented so far:
 - `morphea promotion-apply-review` validates edited promotion review decisions,
   rejects pending records, writes applied JSON/Markdown summaries, and can
   persist `review_decision_applied` into a run manifest.
+- `morphea harvest --require-applied-review` gates pseudo-label harvesting on
+  applied promotion review decisions, so only `accepted` and `corrected`
+  applied decisions become candidates while missing, invalid, rejected, and
+  deferred decisions remain visible in `rejected_runs`.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
