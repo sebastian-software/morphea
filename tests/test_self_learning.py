@@ -2056,6 +2056,60 @@ class SelfLearningTests(unittest.TestCase):
                 comparison["resolved_regressions"][0]["current_outcome"],
             )
 
+    def test_self_learning_cycle_writes_accepted_suite_family_baseline_snapshot(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline_output = root / "accepted-suite-family-baseline.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=105,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with patch("morphea.self_learning.gate_training_comparison", accepted_gate):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline_output=baseline_output,
+                )
+
+            self.assertTrue(result["accepted"])
+            self.assertEqual(
+                result["suite_family_baseline_snapshot"]["status"],
+                "written",
+            )
+            self.assertEqual(
+                result["artifacts"]["suite_family_baseline_snapshot"],
+                str(baseline_output),
+            )
+            snapshot = json.loads(baseline_output.read_text(encoding="utf-8"))
+            self.assertEqual(snapshot["source"], "self_learning_cycle")
+            self.assertTrue(snapshot["accepted"])
+            self.assertIn("suite_family_validation", snapshot)
+
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -2177,6 +2231,10 @@ class SelfLearningTests(unittest.TestCase):
                     ],
                     "resolved_regressions": [],
                 },
+                "suite_family_baseline_snapshot": {
+                    "status": "skipped_not_accepted",
+                    "output": "next-baseline.json",
+                },
             }
         )
 
@@ -2204,6 +2262,8 @@ class SelfLearningTests(unittest.TestCase):
             "| `primitive` | `val` | `circle` | `held` | `regressed` | delta=-0.25 |",
             markdown,
         )
+        self.assertIn("## Suite Family Baseline Snapshot", markdown)
+        self.assertIn("- Status: `skipped_not_accepted`", markdown)
         self.assertIn("| `gate` | `gate.json` |", markdown)
         self.assertIn("`comparison_status_mixed`", markdown)
 
@@ -2216,6 +2276,7 @@ class SelfLearningTests(unittest.TestCase):
             config = root / "self-learn.json"
             markdown = root / "cycle.md"
             suite_family_baseline = root / "suite-family-baseline.json"
+            suite_family_baseline_output = root / "next-suite-family-baseline.json"
             curated_suite = _write_curated_circle_suite(root)
             generate_synthetic_dataset(
                 output_dir=base_dir,
@@ -2251,6 +2312,9 @@ class SelfLearningTests(unittest.TestCase):
                         "lucide_output_dir": str(root / "lucide-runs"),
                         "lucide_report": str(root / "lucide-report.json"),
                         "suite_family_baseline": str(suite_family_baseline),
+                        "suite_family_baseline_output": str(
+                            suite_family_baseline_output
+                        ),
                         "min_train_examples_delta": 10,
                         "max_worst_accuracy_drop": 1.0,
                         "allow_unchanged": True,
@@ -2285,6 +2349,11 @@ class SelfLearningTests(unittest.TestCase):
                 result["suite_family_baseline_comparison"]["status"],
                 "checked",
             )
+            self.assertEqual(
+                result["suite_family_baseline_snapshot"]["status"],
+                "skipped_not_accepted",
+            )
+            self.assertFalse(suite_family_baseline_output.exists())
 
     def test_retrain_centroid_classifier_writes_augmented_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:

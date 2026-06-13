@@ -386,6 +386,9 @@ on Lucide failures.
 family view against a fixed baseline and blocks acceptance only for newly
 introduced bad family outcomes, separating known suite debt from fresh
 regressions.
+`morphea self-learn --suite-family-baseline-output` writes accepted
+`suite_family_validation` snapshots as reusable baseline artifacts and skips
+writes for rejected cycles.
 
 Canonical issue tags:
 
@@ -531,6 +534,8 @@ dependency:
 18. **Persist accepted suite-family baselines**: write accepted
    `suite_family_validation` snapshots as reviewed baseline artifacts for the
    next self-learning cycle.
+19. **Review baseline updates**: require metadata and changelog evidence before
+   replacing a fixed suite-family baseline.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

@@ -728,6 +728,7 @@ def run_self_learning_cycle(
     lucide_output_dir: str | Path | None = None,
     lucide_report: str | Path | None = None,
     suite_family_baseline: str | Path | None = None,
+    suite_family_baseline_output: str | Path | None = None,
     min_train_examples_delta: int = 1,
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
@@ -768,6 +769,11 @@ def run_self_learning_cycle(
         Path(lucide_output_dir)
         if lucide_output_dir is not None
         else output / "lucide-validation-runs"
+    )
+    suite_family_baseline_output_path = (
+        Path(suite_family_baseline_output)
+        if suite_family_baseline_output is not None
+        else None
     )
 
     pseudo_dataset = merge_reviewed_pseudo_label_dataset(
@@ -859,6 +865,18 @@ def run_self_learning_cycle(
         lucide_required=lucide_suite is not None,
         suite_family_baseline_comparison=suite_family_baseline_comparison,
     )
+    summary_path = output / "self-learning-cycle.json"
+    suite_family_baseline_snapshot = _write_suite_family_baseline_snapshot(
+        output=suite_family_baseline_output_path,
+        accepted=bool(acceptance_gate["accepted"]),
+        suite_family_validation=suite_family_validation,
+        metadata={
+            "base_dataset": str(base_dataset),
+            "reviewed_labels": str(reviewed_labels),
+            "validation_dataset": str(validation_dataset or base_dataset),
+            "source_cycle": str(summary_path),
+        },
+    )
     result = {
         "schema_version": 1,
         "status": "retrained" if model is not None else "skipped_retrain",
@@ -899,6 +917,11 @@ def run_self_learning_cycle(
                 if lucide_validation is not None and model is not None
                 else None
             ),
+            "suite_family_baseline_snapshot": (
+                suite_family_baseline_snapshot.get("output")
+                if suite_family_baseline_snapshot.get("status") == "written"
+                else None
+            ),
         },
         "pseudo_dataset": {
             "count": pseudo_dataset["count"],
@@ -928,8 +951,8 @@ def run_self_learning_cycle(
         "lucide_validation": lucide_validation,
         "suite_family_validation": suite_family_validation,
         "suite_family_baseline_comparison": suite_family_baseline_comparison,
+        "suite_family_baseline_snapshot": suite_family_baseline_snapshot,
     }
-    summary_path = output / "self-learning-cycle.json"
     summary_path.write_text(
         json.dumps(result, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -1049,6 +1072,32 @@ def _suite_family_validation_from_baseline(value: object) -> dict[str, object]:
     if isinstance(nested, dict):
         return nested
     return value
+
+
+def _write_suite_family_baseline_snapshot(
+    *,
+    output: Path | None,
+    accepted: bool,
+    suite_family_validation: dict[str, object],
+    metadata: dict[str, object],
+) -> dict[str, object]:
+    if output is None:
+        return {"status": "not_configured", "output": None}
+    if not accepted:
+        return {"status": "skipped_not_accepted", "output": str(output)}
+    output.parent.mkdir(parents=True, exist_ok=True)
+    snapshot = {
+        "schema_version": 1,
+        "source": "self_learning_cycle",
+        "accepted": True,
+        **metadata,
+        "suite_family_validation": suite_family_validation,
+    }
+    output.write_text(
+        json.dumps(snapshot, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return {"status": "written", "output": str(output)}
 
 
 def _suite_family_outcomes_by_key(
@@ -1423,6 +1472,20 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
             lines.extend(rows)
         else:
             lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
+    baseline_snapshot = result.get("suite_family_baseline_snapshot")
+    if (
+        isinstance(baseline_snapshot, dict)
+        and baseline_snapshot.get("status") != "not_configured"
+    ):
+        lines.extend(
+            [
+                "",
+                "## Suite Family Baseline Snapshot",
+                "",
+                f"- Status: `{baseline_snapshot.get('status', 'n/a')}`",
+                f"- Output: `{baseline_snapshot.get('output', 'n/a')}`",
+            ]
+        )
     lines.extend(
         [
             "",

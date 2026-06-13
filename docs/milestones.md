@@ -438,6 +438,9 @@ Implemented so far:
 - `morphea self-learn --suite-family-baseline baseline.json` compares current
   suite-family validation with a fixed baseline and blocks acceptance only for
   newly introduced bad family outcomes.
+- `morphea self-learn --suite-family-baseline-output next-baseline.json` writes
+  accepted suite-family validation as a reusable baseline artifact and skips
+  writes for rejected cycles.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
@@ -810,6 +813,9 @@ Implemented so far:
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle
+- `morphea self-learn --suite-family-baseline-output next-baseline.json`
+  persists accepted `suite_family_validation` snapshots for the next baseline
+  comparison
 - `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics

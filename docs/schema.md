@@ -1053,6 +1053,8 @@ Top-level fields:
   family evidence used to inspect regressions before model acceptance
 - `suite_family_baseline_comparison`: optional comparison against a fixed
   `suite_family_validation` baseline with new and resolved regression counts
+- `suite_family_baseline_snapshot`: optional snapshot-write status when
+  `suite_family_baseline_output` is configured
 
 `morphea self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label
@@ -1062,7 +1064,10 @@ the cycle runs `morphea curated-check` with the accepted model as
 is configured and retraining is accepted, the cycle runs `morphea lucide-check`
 with the same model override; failed Lucide validation blocks acceptance. When
 `suite_family_baseline` is configured, newly introduced primitive, real-image,
-or Lucide family regressions also block acceptance.
+or Lucide family regressions also block acceptance. When
+`suite_family_baseline_output` is configured, accepted cycles write the current
+`suite_family_validation` as the next baseline artifact; rejected cycles report
+`skipped_not_accepted` and do not overwrite the requested output.
 
 ## Self-Learning Config v1
 
@@ -1081,6 +1086,7 @@ Supported fields:
 - `lucide_output_dir`
 - `lucide_report`
 - `suite_family_baseline`
+- `suite_family_baseline_output`
 - `output_dir`
 - `markdown`: optional cycle Markdown summary path
 - `min_train_examples_delta`
