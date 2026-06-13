@@ -245,6 +245,13 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ("arc_up", "arc_up", "base", (32, 40, 20, -150, -30, 3)),
             ("arc_up_small", "arc_up", "small", (30, 38, 17, -150, -30, 3)),
             ("arc_up_large", "arc_up", "large", (33, 42, 22, -152, -28, 3)),
+            ("arc_up_thin", "arc_up", "thin", (32, 40, 20, -150, -30, 2)),
+            ("arc_up_heavy", "arc_up", "heavy", (32, 41, 19, -149, -31, 5)),
+            ("arc_up_wide_span", "arc_up", "wide_span", (32, 38, 19, -160, -20, 3)),
+            ("arc_up_narrow_span", "arc_up", "narrow_span", (32, 44, 21, -135, -45, 3)),
+            ("arc_up_offset_left", "arc_up", "offset_left", (28, 40, 18, -150, -30, 3)),
+            ("arc_up_offset_right", "arc_up", "offset_right", (37, 41, 18, -151, -29, 3)),
+            ("arc_up_high", "arc_up", "high", (32, 34, 16, -148, -32, 3)),
             ("arc_down", "arc_down", "base", (32, 24, 20, 30, 150, 3)),
             ("arc_down_small", "arc_down", "small", (30, 22, 17, 30, 150, 3)),
             ("arc_down_large", "arc_down", "large", (33, 26, 22, 28, 152, 3)),
@@ -277,6 +284,13 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
             ("curve_s", "curve_s", "base", ((8, 44), (28, 10), (36, 54), (56, 20)), 3, "round"),
             ("curve_s_mirrored", "curve_s", "mirrored", ((8, 20), (28, 54), (36, 10), (56, 44)), 3, "round"),
             ("curve_s_tight", "curve_s", "tight", ((10, 46), (26, 14), (38, 52), (54, 18)), 3, "round"),
+            ("curve_s_wide", "curve_s", "wide", ((6, 42), (26, 8), (38, 56), (58, 22)), 3, "round"),
+            ("curve_s_thin", "curve_s", "thin", ((8, 44), (28, 10), (36, 54), (56, 20)), 2, "round"),
+            ("curve_s_heavy", "curve_s", "heavy", ((8, 42), (28, 12), (36, 52), (56, 22)), 5, "round"),
+            ("curve_s_steep", "curve_s", "steep", ((10, 50), (28, 8), (36, 56), (54, 14)), 3, "round"),
+            ("curve_s_low", "curve_s", "low", ((8, 50), (30, 24), (34, 58), (58, 30)), 3, "round"),
+            ("curve_s_compact", "curve_s", "compact", ((14, 42), (30, 16), (36, 48), (52, 24)), 3, "round"),
+            ("curve_s_offset", "curve_s", "offset", ((10, 40), (30, 8), (38, 50), (58, 18)), 3, "round"),
             ("curve_wave", "curve_wave", "base", ((6, 32), (18, 14), (32, 50), (46, 14), (58, 32)), 3, "round"),
             ("curve_wave_inverted", "curve_wave", "inverted", ((6, 32), (18, 50), (32, 14), (46, 50), (58, 32)), 3, "round"),
             ("curve_wave_offset", "curve_wave", "offset", ((8, 30), (20, 12), (32, 48), (44, 16), (56, 34)), 3, "round"),
@@ -1421,6 +1435,62 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     specs.extend(
+        _palette_spec(
+            case_id,
+            family,
+            variant,
+            primitives,
+            seams,
+            max_colors=max_colors,
+        )
+        for case_id, family, variant, primitives, seams, max_colors in (
+            ("dominant_palette_pair", "dominant_palette", "pair",
+             (
+                 _circle_primitive("disc", (10, 18, 36, 44)),
+                 _rect_primitive("panel", (42, 14, 58, 50), color="#dd2222"),
+             ),
+             (), 2),
+            ("dominant_palette_trio", "dominant_palette", "trio",
+             (
+                 _circle_primitive("disc", (8, 8, 30, 30)),
+                 _rect_primitive("panel", (38, 10, 56, 28), color="#c99700"),
+                 _stroke_primitive("bar", (10, 44, 54, 44), 5, color="#17656b"),
+             ),
+             (), 3),
+            ("dominant_palette_close_blues", "dominant_palette", "close_blues",
+             (
+                 _circle_primitive("disc", (8, 18, 34, 44)),
+                 _rect_primitive("panel", (40, 16, 58, 46), color="#2f78d8"),
+             ),
+             (), 2),
+            ("palette_seam_between", "palette_seam", "between",
+             (
+                 # The seam snaps to whichever brand color is nearer, so the
+                 # shared edge may drift by the seam width; the pinned
+                 # behaviour is that no third anchor appears.
+                 _rect_primitive("left", (8, 20, 30, 44),
+                                 coordinate_tolerance=5.0, min_bbox_iou=0.72),
+                 _rect_primitive("right", (34, 20, 56, 44), color="#c99700",
+                                 coordinate_tolerance=5.0, min_bbox_iou=0.72),
+             ),
+             (("rect", (30, 20, 34, 44), "#746b5c"),), 2),
+            ("palette_seam_halo", "palette_seam", "halo",
+             (
+                 _circle_primitive("disc", (16, 16, 48, 48)),
+             ),
+             (("ellipse", (13, 13, 51, 51), "#a8b3e2"),), 2),
+            ("palette_seam_pair_halo", "palette_seam", "pair_halo",
+             (
+                 _circle_primitive("left", (6, 22, 28, 44)),
+                 _circle_primitive("right", (36, 22, 58, 44), color="#dd2222"),
+             ),
+             (
+                 ("ellipse", (4, 20, 30, 46), "#a8b3e2"),
+                 ("ellipse", (34, 20, 60, 46), "#eeb3ac"),
+             ), 2),
+        )
+    )
+    specs.extend(
         _composition_spec(
             case_id,
             "group_parallel_strokes",
@@ -2424,6 +2494,62 @@ def _scaled_arc(arc: ArcParams, scale: int) -> ArcParams:
     return (cx * scale, cy * scale, radius * scale, start_deg, end_deg, width * scale)
 
 
+def _palette_spec(
+    case_id: str,
+    family: str,
+    variant: str,
+    primitives: tuple[ExpectedPrimitive, ...],
+    seams: tuple[tuple[str, tuple, str], ...],
+    *,
+    max_colors: int,
+    color_tolerance: float = 28.0,
+) -> PrimitiveSpec:
+    """Brand shapes plus blend seams; the seams must not become anchors.
+
+    The dominant-palette quantizer aggregates exact-color frequencies and
+    suppresses candidates that sit on the RGB segment between two kept
+    colors (or a color and the background). These pin that behaviour:
+    every brand shape survives as one anchor of its own color while wide
+    constant blend seams are snapped away instead of forming phantom
+    primitives, which is exactly where the previous median-cut failed.
+    """
+
+    def _source(
+        primitives: tuple = primitives,
+        seams: tuple = seams,
+    ) -> Image.Image:
+        image = Image.new("RGB", (64, 64), "#ffffff")
+        draw = ImageDraw.Draw(image)
+        # Seams go first so the brand shapes own their true outline.
+        for kind, params, color in seams:
+            if kind == "rect":
+                draw.rectangle(params, fill=color)
+            elif kind == "ellipse":
+                draw.ellipse(params, fill=color)
+        _draw_expected_primitives(draw, primitives)
+        return image
+
+    return PrimitiveSpec(
+        id=case_id,
+        family=family,
+        variant=variant,
+        expected_kinds=primitives[0].expected_kinds,
+        geometry_type=primitives[0].geometry_type,
+        geometry=primitives[0].geometry,
+        color=primitives[0].color,
+        expected_primitives=primitives,
+        draw=lambda draw: None,
+        source_factory=_source,
+        vectorize_config={"max_colors": max_colors},
+        color_tolerance=color_tolerance,
+        max_anchor_count=len(primitives),
+        coordinate_tolerance=3.0,
+        max_raster_l1_error=0.05,
+        max_raster_edge_error=0.06,
+        min_bbox_iou=0.78,
+    )
+
+
 def _antialiased_curve_spec(
     case_id: str,
     variant: str,
@@ -2921,6 +3047,8 @@ def _rect_primitive(
     box: tuple[int, int, int, int],
     *,
     color: str = BLUE,
+    coordinate_tolerance: float | None = None,
+    min_bbox_iou: float = 0.88,
 ) -> ExpectedPrimitive:
     x0, y0, x1, y1 = box
     return ExpectedPrimitive(
@@ -2932,7 +3060,8 @@ def _rect_primitive(
             "draw": ("rect", box),
         },
         color=color,
-        min_bbox_iou=0.88,
+        coordinate_tolerance=coordinate_tolerance,
+        min_bbox_iou=min_bbox_iou,
     )
 
 
