@@ -221,6 +221,18 @@ class CuratedSuiteTests(unittest.TestCase):
                 )
             )
             self.assertIn("raster_l1_error", manifest["metrics"])
+            self.assertEqual(
+                manifest["promotion"]["regions"][0]["state"],
+                "promoted",
+            )
+            self.assertEqual(
+                manifest["anchors"][0]["promotion_state"],
+                "promoted",
+            )
+            self.assertEqual(
+                manifest["anchors"][0]["promotion_regions"][0]["region_id"],
+                "circle-region",
+            )
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
             self.assertIn("raster_l1_error", report["cases"][0]["metrics"])

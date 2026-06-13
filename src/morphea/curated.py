@@ -442,6 +442,7 @@ def _check_curated_case(
                     cutout_strategy=str(config.get("cutout_export", "overlay_stroke")),
                 )
             )
+            _write_manifest_promotion_state(vectorize_run.manifest_path, result)
     if output_dir is not None:
         _write_visual_audit_artifacts(
             vectorize_run.run_dir,
@@ -1595,6 +1596,86 @@ def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str
             f"{region.get('reason', 'n/a')} |"
         )
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _write_manifest_promotion_state(
+    manifest_path: Path,
+    case_result: dict[str, Any],
+) -> None:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        return
+    regions = case_result.get("promotion_regions", [])
+    regions = regions if isinstance(regions, list) else []
+    gates = case_result.get("promotion_gates", [])
+    gates = gates if isinstance(gates, list) else []
+    artifacts = case_result.get("artifacts", {})
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    manifest["promotion"] = {
+        "case_id": case_result.get("id"),
+        "summary": case_result.get("promotion_summary", {}),
+        "regions": regions,
+        "gates": gates,
+        "artifacts": {
+            key: artifacts[key]
+            for key in (
+                "promoted_svg",
+                "fallback_svg",
+                "promotion_export",
+                "promotion_regions",
+                "promotion_review",
+            )
+            if key in artifacts
+        },
+    }
+    anchors = manifest.get("anchors", [])
+    if isinstance(anchors, list):
+        _annotate_manifest_anchor_promotion(anchors, regions)
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def _annotate_manifest_anchor_promotion(
+    anchors: list[object],
+    regions: list[object],
+) -> None:
+    region_refs_by_index: dict[int, list[dict[str, object]]] = {}
+    for region in regions:
+        if not isinstance(region, dict):
+            continue
+        indexes = region.get("selected_anchor_indexes", [])
+        if not isinstance(indexes, list):
+            continue
+        for index in indexes:
+            if not isinstance(index, int):
+                continue
+            region_refs_by_index.setdefault(index, []).append(
+                {
+                    "region_id": region.get("id"),
+                    "state": region.get("state"),
+                    "gate_id": region.get("gate_id"),
+                    "reason": region.get("reason"),
+                }
+            )
+    for index, anchor in enumerate(anchors):
+        if not isinstance(anchor, dict):
+            continue
+        refs = region_refs_by_index.get(index, [])
+        anchor["promotion_regions"] = refs
+        anchor["promotion_state"] = _anchor_promotion_state(refs)
+
+
+def _anchor_promotion_state(refs: list[dict[str, object]]) -> str:
+    states = {str(ref.get("state")) for ref in refs}
+    if "promoted" in states:
+        return "promoted"
+    if "rejected" in states:
+        return "rejected"
+    if "deferred" in states:
+        return "deferred"
+    return "fallback"
 
 
 def _write_visual_audit_artifacts(

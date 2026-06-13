@@ -37,6 +37,10 @@ Anchor fields:
 - `source_mask`: stable source-mask proxy used by run artifacts and reviews
 - `provenance`: source stage and fitting stage
 - `export_policy`: editability and debug label metadata
+- `promotion_state`: present in curated promotion manifests; one of
+  `promoted`, `deferred`, `rejected`, or `fallback`
+- `promotion_regions`: present in curated promotion manifests; region refs that
+  selected this anchor, with region id, state, gate id, and reason
 - `raster_error`
 - `node_count`
 - `parameter_count`
@@ -484,6 +488,12 @@ case reports also include:
   `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
   or `rejected`), bounds, gate id, selected anchor ids/indexes, gate status, and
   reason
+
+For checked cases with `--output-dir`, the run `manifest.json` also includes a
+top-level `promotion` object with summary, gates, regions, and promotion export
+artifact paths. Anchors selected by promotion regions are annotated with
+`promotion_state` and `promotion_regions`; unselected anchors are marked
+`fallback`.
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
