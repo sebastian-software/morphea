@@ -1074,6 +1074,8 @@ If the requested baseline output already exists, the cycle writes it only when
 `suite_family_baseline` points to that same path; otherwise it reports
 `skipped_existing_output_requires_matching_baseline` and leaves the existing
 file untouched.
+The checked-in smoke baseline lives at
+`docs/real-images/baselines/current-suite-family-baseline.json`.
 
 ## Self-Learning Config v1
 

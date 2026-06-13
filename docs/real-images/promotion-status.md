@@ -267,8 +267,12 @@ points to that same path. Otherwise it reports
 `skipped_existing_output_requires_matching_baseline` and leaves the file
 untouched.
 
+`docs/real-images/baselines/current-suite-family-baseline.json` is now a
+checked-in smoke baseline for `morphea self-learn --suite-family-baseline`.
+`tests.test_self_learning` runs the real CLI against this fixture so the
+baseline comparison path is covered outside helper-only unit tests.
+
 ## Next Gate
 
-The next mainline block should add a checked-in suite-family baseline fixture
-and a smoke command in docs, so the baseline-gated self-learning path is
-exercised with the real CLI rather than only unit fixtures.
+The next mainline block should promote the smoke baseline from empty family
+views to a reviewed real suite-family baseline produced by an accepted cycle.

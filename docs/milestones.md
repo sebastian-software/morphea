@@ -447,6 +447,9 @@ Implemented so far:
 - existing suite-family baseline output files are protected unless
   `--suite-family-baseline` points to the same path, preventing accidental
   overwrites of checked-in baseline artifacts.
+- checked-in suite-family smoke baseline at
+  `docs/real-images/baselines/current-suite-family-baseline.json`, exercised
+  through the real `morphea self-learn --suite-family-baseline` CLI path.
 - metrics surfaced in reports, eval summaries, and sweep summaries
 - diagnostic stage counts surfaced in reports, eval summaries, and sweep
   summaries for cross-run failure attribution.
@@ -827,6 +830,8 @@ Implemented so far:
   prevent silent baseline replacement
 - existing `--suite-family-baseline-output` paths require a matching
   `--suite-family-baseline` path before they can be overwritten
+- `docs/real-images/baselines/current-suite-family-baseline.json` provides a
+  checked-in smoke fixture for baseline-gated self-learning CLI runs
 - `morphea retrain` writes an augmented primitive classifier model from base plus
   reviewed pseudo-label train examples, including source-dataset provenance and
   validation/test evaluation metrics

@@ -2494,6 +2494,56 @@ class SelfLearningTests(unittest.TestCase):
             self.assertFalse(suite_family_baseline_output.exists())
             self.assertFalse(suite_family_baseline_changelog.exists())
 
+    def test_self_learn_cli_smokes_checked_in_suite_family_baseline(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline = Path(
+                "docs/real-images/baselines/current-suite-family-baseline.json"
+            )
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=108,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "self-learn",
+                        str(base_dir / "dataset.json"),
+                        "--reviewed-labels",
+                        str(reviewed),
+                        "-o",
+                        str(output_dir),
+                        "--suite-family-baseline",
+                        str(baseline),
+                        "--min-train-examples-delta",
+                        "10",
+                    ]
+                )
+
+            result = json.loads(
+                (output_dir / "self-learning-cycle.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                result["suite_family_baseline_comparison"]["status"],
+                "checked",
+            )
+            self.assertEqual(
+                result["suite_family_baseline_comparison"]["baseline"],
+                str(baseline),
+            )
+
     def test_retrain_centroid_classifier_writes_augmented_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

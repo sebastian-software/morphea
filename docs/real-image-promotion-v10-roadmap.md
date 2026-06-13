@@ -394,6 +394,9 @@ successful writes embed the review record and append a JSONL changelog entry.
 Existing baseline output files are protected unless the configured
 `suite_family_baseline` path matches the output path, so checked-in baselines
 cannot be overwritten by an accidental ad hoc output path.
+`docs/real-images/baselines/current-suite-family-baseline.json` is checked in
+as the first smoke baseline and is exercised through the real
+`morphea self-learn --suite-family-baseline` CLI path.
 
 Canonical issue tags:
 
@@ -547,6 +550,9 @@ dependency:
 21. **Check in a suite-family baseline smoke**: add a small baseline fixture and
    documented CLI smoke path that exercises the baseline-gated self-learning
    flow end to end.
+22. **Promote a reviewed suite-family baseline**: replace the empty smoke
+   baseline with an accepted cycle artifact once the real-image, Lucide, and
+   primitive family evidence has been reviewed.
 
 Do not broaden icon suites, train models, or chase benchmark aggregates before
 steps 1-5 are credible. More data amplifies bad gates.

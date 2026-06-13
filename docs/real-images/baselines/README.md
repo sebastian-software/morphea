@@ -37,3 +37,24 @@ PYTHONPATH=src python3 -m morphea.cli snapshot-git-ref HEAD \
 
 Update the checked-in snapshot only when a detector behavior change is
 intentional and the semantic expectations still pass.
+
+## Suite-Family Self-Learning Baseline
+
+`current-suite-family-baseline.json` is the checked-in smoke baseline for
+`morphea self-learn --suite-family-baseline`. It intentionally starts with
+empty primitive, real-image, and Lucide family views so the CLI path can be
+validated before a production baseline is promoted.
+
+Smoke the baseline-gated self-learning path after generating a temporary base
+dataset and reviewed-label file:
+
+```sh
+PYTHONPATH=src python3 -m morphea.cli self-learn /tmp/morphea-base/dataset.json \
+  --reviewed-labels /tmp/morphea-reviewed-labels.json \
+  --suite-family-baseline docs/real-images/baselines/current-suite-family-baseline.json \
+  -o /tmp/morphea-self-learning-baseline-smoke \
+  --min-train-examples-delta 10
+```
+
+That command intentionally exercises the baseline comparison path even when
+the training gate skips retraining.

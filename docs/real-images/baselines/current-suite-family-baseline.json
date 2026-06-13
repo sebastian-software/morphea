@@ -1,0 +1,26 @@
+{
+  "accepted": true,
+  "review": {
+    "reason": "Initial smoke baseline for suite-family self-learning validation.",
+    "reviewer": "morphea"
+  },
+  "schema_version": 1,
+  "source": "checked_in_suite_family_smoke",
+  "suite_family_validation": {
+    "lucide": {
+      "families": [],
+      "ok": null,
+      "status": "not_configured"
+    },
+    "primitive": {
+      "families": [],
+      "ok": null,
+      "status": "insufficient"
+    },
+    "real_image": {
+      "families": [],
+      "ok": null,
+      "status": "not_configured"
+    }
+  }
+}
