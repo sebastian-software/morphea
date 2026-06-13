@@ -14,6 +14,24 @@ promoted SVG is visually credible, semantically honest, and useful to edit.
 The main track is **Real-Image Promotion**. MLX/SAM is an enabling segmentation
 track. Editability scoring is the promotion gate and ranking discipline.
 
+## Roadmap Operating Model
+
+This roadmap separates four concerns that must not collapse into one score:
+
+- **Mainline**: real-image promotion. This decides whether source regions
+  become trusted semantic SVG, honest fallback, deferred work, or rejected
+  attempts.
+- **Segmentation enablers**: classical masks, color grouping, MLX/SAM, and
+  future learned region proposal systems. These propose regions; they do not
+  certify output quality.
+- **Quality gates**: deterministic checks that can block promotion regardless
+  of aggregate score.
+- **Learning loop**: reviewed pseudo-label collection and model improvement.
+  This loop consumes accepted evidence; it does not decide what is true.
+
+Every major change should answer the same question: did it increase trusted
+green promotion on real images without hiding red failures?
+
 ## Current Honest State
 
 Morphēa already has the foundation for real-image work:
@@ -36,6 +54,26 @@ but visibly loose.
 
 Future gates must catch this class of error. A benchmark may be useful while
 red. It is harmful when it calls red output green.
+
+## Non-Negotiable Invariants
+
+These invariants override milestone convenience, aggregate scores, and demo
+pressure:
+
+- **No semantic lies**: a shape with the wrong class, topology, or grouping is
+  red, even if it looks superficially close.
+- **No silent degradation**: every failed, deferred, or rejected semantic
+  attempt must remain visible in reports.
+- **No unreviewed learning**: pseudo-labels become training data only after
+  review.
+- **No cloud dependency**: cloud tools and external vectorizers may be
+  comparison references, never required runtime dependencies or label sources.
+- **No dashboard laundering**: thresholds may not be loosened merely to turn a
+  suite green.
+- **No single-metric promotion**: L1, edge error, node count, or classifier
+  confidence can support a decision but cannot certify promotion alone.
+- **No hidden fallback**: fallback output must be explicitly labeled and must
+  not masquerade as promoted structure.
 
 ## Quality Doctrine
 
@@ -88,6 +126,44 @@ Promotion requires all of the following:
 - deterministic artifacts for human review.
 
 The system should prefer an honest fallback over a confident lie.
+
+## Artifact Model
+
+The v10+ pipeline should make these artifacts explicit. Names are conceptual
+contracts; implementation may choose concrete JSON field names later, but must
+preserve the same boundaries.
+
+- **Corpus case**: source image reference, licensing/provenance, intended
+  stress family, recommended bounded config, current red/yellow/green status,
+  and review notes.
+- **Region proposal**: source crop, region bounds, mask source, segmentation
+  method, parent case id, and reason the region is being evaluated.
+- **Semantic candidate**: proposed SVG structure, anchor ids, primitive kinds,
+  grouping, detector provenance, score components, and rejected alternatives.
+- **Promotion decision**: one of `promoted`, `fallback`, `deferred`, or
+  `rejected`, with gate outcomes and human-readable rationale.
+- **Review record**: reviewer decision, issue tags, correction notes, accepted
+  label payload when applicable, and provenance of the reviewed artifact.
+- **Snapshot**: stable machine-readable summary of case status, promotion
+  counts, metrics, gates, failures, and visual artifact paths.
+
+The report hierarchy should flow from case to region to candidate to decision.
+Aggregate suite summaries are useful only after the individual decisions remain
+inspectable.
+
+## Green/Yellow/Red Rubric
+
+Promotion color is a decision label, not a visualization preference.
+
+| Label | Meaning | Allowed in promoted SVG? | Typical Action |
+| --- | --- | ---: | --- |
+| Green | Correct shape identity, topology, grouping, fidelity, and editability. | yes | Promote and track for regression. |
+| Yellow | Useful evidence, but visibly loose, under-specified, or missing a gate. | no | Keep in reports, improve detector or contract. |
+| Red | Wrong semantic structure, hidden failure, severe visual mismatch, or unsafe learning signal. | no | Block promotion and tag failure cause. |
+
+Green requires passing all hard gates. Yellow may have acceptable raster
+metrics. Red may have acceptable raster metrics. The label is assigned by the
+promotion contract, not by a single metric.
 
 ## Milestone Ladder
 
@@ -345,4 +421,3 @@ This roadmap is satisfied only when a later implementation can demonstrate:
 - MLX/SAM improves promotion outcomes before it becomes default;
 - reviewed pseudo-labels are the only training source for self-learning;
 - exported SVGs are useful to edit, not just plausible to view.
-
