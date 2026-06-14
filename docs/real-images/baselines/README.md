@@ -46,7 +46,6 @@ self-learning cycle and records primitive, real-image, and Lucide family
 outcomes side by side. Current known debt is intentionally carried in the
 baseline rather than hidden:
 
-- Real-image `generated_illustration_table_grid` is checked and failing.
 - Real-image `generated_illustration_opaque_table_grid` is failing because the
   local source image is missing.
 

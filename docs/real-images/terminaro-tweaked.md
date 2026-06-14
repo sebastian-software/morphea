@@ -42,17 +42,21 @@ Result:
 
 - Completed successfully under an external 15 second timeout.
 - Wrote SVG and JSON manifest.
-- Produced 60 anchors:
-  - 16 `quad`
-  - 23 `stroke_polyline`
-  - 16 `cubic_path`
+- Produced 62 anchors:
+  - 14 `quad`
+  - 13 `cubic_path`
+  - 12 `stroke_path`
+  - 9 `stroke_polyline`
+  - 6 `arc`
   - 5 `circle`
+  - 2 `rect`
+  - 1 `stroke_circle`
 - Reported one `perspective_grid` group for the table quads.
 - Diagnostics included:
   - `image_resized_for_analysis` from 1254 x 1254 to 256 x 256
-  - `palette_quantized` with max 10 colors
-  - `color_mask_split_for_components` for a large near-white region
-  - `component_deferred` for the remaining oversized component
+  - `palette_quantized` with max 10 colors and preserved navy, gold, and
+    beige table anchors
+  - `transparent_pixels_ignored`
 
 Curated suite entry:
 
@@ -125,12 +129,16 @@ Secondary anchors:
   - cut-out scan needs component-size limits or ROI processing.
 - Preprocessing:
   - transparent background must be ignored deliberately.
-  - near-white and beige colors need palette grouping.
+  - near-white and beige colors need palette grouping. Current behavior
+    preserves the large beige table palette instead of snapping it to
+    background.
   - antialiasing and indexed palette edges need quantization before component
     extraction.
 - Shape semantics:
   - outer ring should be found before general color components fragment it.
-  - table should become a grid group, not independent noisy regions.
+  - table semantic expectations now pass with 14 editable quads and one grid
+    group, but v10 promotion still fails on region-circle matching,
+    fragmentation/layer depth, and raster L1 fidelity.
   - white line gaps in hair/clothing need curved cut-out detection, not only
     horizontal/vertical gaps.
 - Reporting:

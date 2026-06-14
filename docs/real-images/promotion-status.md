@@ -30,12 +30,12 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations failed | red | `missing_semantic_detector`, `shape_class_mismatch`, `weak_visual_fidelity` | `gold-circle-anchors` 4/5, region gate 2/5 with `hole_count=1`, table group 2/8, layer count 4 > 3, visual L1 0.235448 > 0.18 |
+| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `shape_class_mismatch`, `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; v10 remains red because region gate matches 2/5 circles with `hole_count=1`, layer count 4 > 3, visual L1 0.230301 > 0.18 |
 | `chatgpt-image-2026-06-11` | missing local file | missing_source, promotion deferred | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit; `deferred_reason=missing_source` |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
 
-Current curated semantic result: 3 cases, 1 checked expectation pass, 1 checked
-expectation failure, 1 missing source. No real-image case is green under the
+Current curated semantic result: 3 cases, 2 checked expectation passes, 0
+checked expectation failures, 1 missing source. No real-image case is green under the
 v10+ definition because green requires all promotion gates passing and an
 available reviewed source.
 
@@ -286,9 +286,8 @@ untouched.
 checked-in reviewed accepted-cycle baseline for
 `morphea self-learn --suite-family-baseline`. It records 22 suite-family rows:
 16 held primitive split/family rows, three Lucide family rows, and three
-real-image family rows. The current known debt is:
+real-image family rows. The current known baseline debt is:
 
-- real-image `generated_illustration_table_grid`: checked, failing;
 - real-image `generated_illustration_opaque_table_grid`: missing source,
   failing-missing.
 
@@ -297,9 +296,9 @@ baseline comparison path is covered outside helper-only unit tests.
 
 ## Next Gate
 
-The next mainline block should reduce reviewed baseline debt without hiding it:
-resolve the checked `generated_illustration_table_grid` failure. The opaque
-generated-illustration case is now explicitly deferred as missing source, but
-it remains baseline debt until the local source is restored or replaced by
-reviewed evidence. A future accepted cycle should move at least one real-image
-known-debt row into `resolved_regressions` without introducing new regressions.
+The next baseline-debt block should restore or replace the missing opaque
+generated-illustration source so `generated_illustration_opaque_table_grid`
+can move out of known debt through reviewed evidence. The next
+promotion-quality block should keep `terminaro-tweaked` semantic expectations
+green while addressing its remaining v10 red gates: region-circle matching,
+fallback layer depth, and raster L1 fidelity.

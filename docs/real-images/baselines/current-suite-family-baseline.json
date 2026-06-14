@@ -1,7 +1,7 @@
 {
   "accepted": true,
   "review": {
-    "reason": "Resolved Lucide badge-check baseline debt with irregular outline detection.",
+    "reason": "Resolved generated illustration table-grid baseline debt with preserved table palette.",
     "reviewer": "morphea"
   },
   "schema_version": 1,
@@ -65,9 +65,9 @@
         },
         {
           "accuracy_delta": 0.0,
-          "augmented_accuracy": 0.8541666666666666,
+          "augmented_accuracy": 0.7291666666666666,
           "augmented_examples": 96,
-          "baseline_accuracy": 0.8541666666666666,
+          "baseline_accuracy": 0.7291666666666666,
           "baseline_examples": 96,
           "family": "quad",
           "outcome": "held",
@@ -115,9 +115,9 @@
         },
         {
           "accuracy_delta": 0.0,
-          "augmented_accuracy": 0.625,
+          "augmented_accuracy": 0.5,
           "augmented_examples": 32,
-          "baseline_accuracy": 0.625,
+          "baseline_accuracy": 0.5,
           "baseline_examples": 32,
           "family": "stroke_polyline",
           "outcome": "held",
@@ -195,9 +195,9 @@
         },
         {
           "accuracy_delta": 0.0,
-          "augmented_accuracy": 0.625,
+          "augmented_accuracy": 0.46875,
           "augmented_examples": 32,
-          "baseline_accuracy": 0.625,
+          "baseline_accuracy": 0.46875,
           "baseline_examples": 32,
           "family": "stroke_polyline",
           "outcome": "held",
@@ -221,11 +221,11 @@
         {
           "case_count": 1,
           "checked_count": 1,
-          "failed_count": 1,
+          "failed_count": 0,
           "family": "generated_illustration_table_grid",
           "missing_source_count": 0,
-          "outcome": "failed",
-          "passed_count": 0
+          "outcome": "passed",
+          "passed_count": 1
         },
         {
           "case_count": 1,

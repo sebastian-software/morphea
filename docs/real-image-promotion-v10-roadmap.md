@@ -402,10 +402,13 @@ Existing baseline output files are protected unless the configured
 cannot be overwritten by an accidental ad hoc output path.
 `docs/real-images/baselines/current-suite-family-baseline.json` is checked in
 as a reviewed accepted-cycle baseline and is exercised through the real
-`morphea self-learn --suite-family-baseline` CLI path. Current known debt is
-limited to two real-image generated illustration table families; the Lucide
+`morphea self-learn --suite-family-baseline` CLI path. Current known baseline
+debt is limited to the missing-source
+`generated_illustration_opaque_table_grid` family; the Lucide
 `circle_compound_strokes` debt was resolved by preserving the irregular
-`badge-check` outline as a closed `stroke_path`.
+`badge-check` outline as a closed `stroke_path`, and the checked
+`generated_illustration_table_grid` family now passes current semantic
+expectations after preserving the large beige table palette.
 
 Canonical issue tags:
 

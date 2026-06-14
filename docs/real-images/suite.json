@@ -21,10 +21,10 @@
           "large_organic_fallback"
         ],
         "current_quality_label": "red",
-        "current_status": "checked_failed_expectations",
+        "current_status": "checked_semantic_pass_promotion_failed",
         "current_issues": [
-          "missing_semantic_detector",
           "shape_class_mismatch",
+          "fragmentation",
           "weak_visual_fidelity"
         ],
         "visual_audit_status": "contact_sheet_available",
@@ -106,8 +106,8 @@
           }
         ],
         "review_notes": [
-          "2026-06-13 curated-check failed gold-circle-anchors and table-perspective-quads.",
-          "Perspective grid group exists, but only 2 of expected 8 quad anchors are recovered."
+          "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
+          "v10 promotion remains red: the gold-circle region gate still matches only 2 in-region circle anchors, layer_count is 4 > 3, and raster L1 remains above the family threshold."
         ]
       },
       "recommended_config": {
