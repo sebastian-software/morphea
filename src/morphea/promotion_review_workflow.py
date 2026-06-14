@@ -53,6 +53,10 @@ def prepare_promotion_review_harvest(
         override_map,
     )
     choice_command_map = _decision_choice_commands(review_config, template_map)
+    choice_evidence_flags = _decision_choice_evidence_flags(
+        choice_command_map,
+        template_readiness,
+    )
     unknown_cases = sorted(set(decision_map) - set(cases_by_id))
     if unknown_cases:
         raise ValueError(
@@ -110,6 +114,7 @@ def prepare_promotion_review_harvest(
         decision_templates=template_map,
         decision_template_readiness=template_readiness,
         decision_choice_commands=choice_command_map,
+        decision_choice_evidence_flags=choice_evidence_flags,
     )
     harvest_cfg = _harvest_curated_config(
         packet=packet,
@@ -146,6 +151,7 @@ def prepare_promotion_review_harvest(
         "decision_overrides": override_map,
         "decision_template_readiness": template_readiness,
         "decision_choice_commands": choice_command_map,
+        "decision_choice_evidence_flags": choice_evidence_flags,
         "harvest_config": harvest_cfg,
         "harvest_config_path": str(harvest_config) if harvest_config else None,
         "next_commands": _next_commands(harvest_config),
@@ -249,6 +255,7 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         lines,
         result.get("decision_choice_commands"),
         result.get("decision_template_readiness"),
+        result.get("decision_choice_evidence_flags"),
     )
 
     config_path = result.get("harvest_config_path")
@@ -301,6 +308,7 @@ def _packet_review_status(
     decision_templates: dict[str, dict[str, str]],
     decision_template_readiness: dict[str, dict[str, dict[str, object]]],
     decision_choice_commands: dict[str, dict[str, str]],
+    decision_choice_evidence_flags: dict[str, dict[str, list[str]]],
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     applied_cases: list[dict[str, object]] = []
     pending_cases: list[dict[str, object]] = []
@@ -344,6 +352,9 @@ def _packet_review_status(
                     "decision_choice_commands": decision_choice_commands.get(
                         case_id,
                         {},
+                    ),
+                    "decision_choice_evidence_flags": (
+                        decision_choice_evidence_flags.get(case_id, {})
                     ),
                     "manifest": str(manifest_path) if manifest_path else None,
                 }
@@ -485,6 +496,47 @@ def _decision_choice_commands(
         if case_commands:
             commands[case_id] = case_commands
     return commands
+
+
+def _decision_choice_evidence_flags(
+    commands: dict[str, dict[str, str]],
+    readiness: dict[str, dict[str, dict[str, object]]],
+) -> dict[str, dict[str, list[str]]]:
+    flags: dict[str, dict[str, list[str]]] = {}
+    for case_id, case_commands in sorted(commands.items()):
+        if not isinstance(case_commands, dict):
+            continue
+        case_readiness = readiness.get(case_id, {})
+        case_flags: dict[str, list[str]] = {}
+        for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS:
+            if decision not in case_commands:
+                continue
+            decision_readiness = case_readiness.get(decision, {})
+            missing = decision_readiness.get("missing_fields")
+            if not isinstance(missing, list):
+                continue
+            decision_flags = _evidence_flags_for_missing_fields(case_id, missing)
+            if decision_flags:
+                case_flags[decision] = decision_flags
+        if case_flags:
+            flags[case_id] = case_flags
+    return flags
+
+
+def _evidence_flags_for_missing_fields(
+    case_id: str,
+    missing_fields: list[object],
+) -> list[str]:
+    flags = []
+    for field, option, placeholder in (
+        ("reviewer", "--reviewer", "<reviewer>"),
+        ("reason", "--reason", "<reason>"),
+        ("correction_notes", "--correction-notes", "<notes>"),
+        ("corrected_artifacts", "--corrected-artifact", "<path>"),
+    ):
+        if field in missing_fields:
+            flags.append(f"{option} {shlex.quote(f'{case_id}={placeholder}')}")
+    return flags
 
 
 def _decision_template_map(
@@ -653,10 +705,12 @@ def _append_decision_choice_commands(
     lines: list[str],
     value: object,
     readiness: object,
+    evidence_flags: object,
 ) -> None:
     if not isinstance(value, dict) or not value:
         return
     readiness = readiness if isinstance(readiness, dict) else {}
+    evidence_flags = evidence_flags if isinstance(evidence_flags, dict) else {}
     block = ["", "## Decision Choice Commands", ""]
     for case_id in sorted(value):
         commands = value.get(case_id)
@@ -681,9 +735,22 @@ def _append_decision_choice_commands(
                     "```sh",
                     str(command),
                     "```",
-                    "",
                 ]
             )
+            flags_label = _fmt_decision_evidence_flags(
+                evidence_flags.get(case_id)
+                if isinstance(evidence_flags, dict)
+                else None,
+                decision,
+            )
+            if flags_label:
+                block.extend(
+                    [
+                        "Evidence flags to add (replace placeholders before running): "
+                        + flags_label,
+                    ]
+                )
+            block.append("")
     if len(block) > 3:
         lines.extend(block)
 
@@ -700,6 +767,16 @@ def _fmt_template_readiness(value: object, decision: str) -> str:
     if isinstance(missing, list) and missing:
         return "needs edit: " + ", ".join(f"`{field}`" for field in missing)
     return "`not_ready`"
+
+
+def _fmt_decision_evidence_flags(value: object, decision: str) -> str:
+    if not isinstance(value, dict):
+        return ""
+    flags = value.get(decision)
+    if not isinstance(flags, list):
+        return ""
+    parts = [f"`{flag}`" for flag in flags if isinstance(flag, str) and flag]
+    return ", ".join(parts)
 
 
 def _write_json(path: Path, data: Any) -> None:

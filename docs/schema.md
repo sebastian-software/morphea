@@ -738,13 +738,17 @@ paths. The same command accepts case-scoped CLI evidence flags:
 `--corrected-artifact case=path`; these flags override same-case
 `decision_overrides` from config and are passed through to
 `promotion-apply-review`. When the prep run itself is driven by `--config`,
-pending cases also carry `decision_choice_commands` in JSON and Markdown, one copy/paste
-`promotion-review-harvest --config ... --decision-choice case=decision` command
-per available terminal template. The prep report also carries
-`decision_template_readiness`, marking whether each terminal template already
-has required reviewer evidence; generated templates normally report missing
-`reviewer` and `reason` until edited or until case-scoped
-`decision_overrides` supply the same evidence.
+pending cases also carry `decision_choice_commands` in JSON and Markdown:
+one copy/paste command per available terminal template, shaped like
+`promotion-review-harvest --config ... --decision-choice case=decision`. The
+prep report also carries `decision_template_readiness`, marking whether each
+terminal template already has required reviewer evidence; generated templates
+normally report missing `reviewer` and `reason` until edited or until
+case-scoped `decision_overrides` supply the same evidence. It also carries
+`decision_choice_evidence_flags`, a non-executing hint map of reviewer-evidence
+flags to add to a selected decision-choice command. Markdown renders those
+flags beside each command with a reminder to replace placeholders before
+running.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

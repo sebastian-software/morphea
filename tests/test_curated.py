@@ -2749,6 +2749,22 @@ class CuratedSuiteTests(unittest.TestCase):
                 ],
                 expected_choice_command,
             )
+            expected_evidence_flags = [
+                "--reviewer 'simple-circle=<reviewer>'",
+                "--reason 'simple-circle=<reason>'",
+            ]
+            self.assertEqual(
+                review_harvest["pending_cases"][0][
+                    "decision_choice_evidence_flags"
+                ]["accepted"],
+                expected_evidence_flags,
+            )
+            self.assertEqual(
+                review_harvest["decision_choice_evidence_flags"]["simple-circle"][
+                    "accepted"
+                ],
+                expected_evidence_flags,
+            )
             self.assertTrue((output_dir / "review-harvest.md").exists())
             review_harvest_markdown = (output_dir / "review-harvest.md").read_text(
                 encoding="utf-8"
@@ -2756,6 +2772,15 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("Decision templates", review_harvest_markdown)
             self.assertIn("## Decision Choice Commands", review_harvest_markdown)
             self.assertIn("needs edit: `reviewer`, `reason`", review_harvest_markdown)
+            self.assertIn("Evidence flags to add", review_harvest_markdown)
+            self.assertIn(
+                "--reviewer 'simple-circle=<reviewer>'",
+                review_harvest_markdown,
+            )
+            self.assertIn(
+                "--reason 'simple-circle=<reason>'",
+                review_harvest_markdown,
+            )
             self.assertIn(expected_choice_command, review_harvest_markdown)
             self.assertIn("accepted", review_harvest_markdown)
             self.assertTrue((output_dir / "harvest-curated.json").exists())

@@ -1237,7 +1237,9 @@ Implemented so far:
   into `promotion-apply-review`. The same evidence can be supplied directly
   with case-scoped CLI flags such as `--reviewer case=name`,
   `--reason case=reason`, `--correction-notes case=notes`, and
-  `--corrected-artifact case=path`.
+  `--corrected-artifact case=path`; harvest prep Markdown shows those
+  evidence-flag hints beside decision-choice commands when reviewer evidence is
+  missing.
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

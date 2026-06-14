@@ -532,6 +532,9 @@ Current implementation:
 - `promotion-review-harvest --config` also accepts the same evidence directly
   as case-scoped CLI flags, so a reviewer can choose a terminal template and
   supply reviewer/reason evidence from one command line.
+- Harvest prep reports render evidence-flag hints beside decision-choice
+  commands when templates are missing reviewer fields, making the no-JSON-edit
+  path visible without turning placeholder values into executable defaults.
 
 Exit criteria:
 

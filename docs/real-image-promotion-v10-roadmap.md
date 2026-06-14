@@ -430,7 +430,9 @@ remains the final override. Config-driven prep reports also emit
 `decision_choice_commands` for pending cases, making those explicit selections
 copy/pasteable from the same Markdown report. The report marks template
 readiness next to those commands, so unedited generated templates clearly show
-which reviewer evidence is still missing before they can be applied.
+which reviewer evidence is still missing before they can be applied. It also
+prints evidence-flag hints for missing reviewer fields, keeping the selected
+command executable while showing the exact case-scoped flags to add.
 
 Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
 `correction_notes`, and `corrected_artifacts` to the selected terminal

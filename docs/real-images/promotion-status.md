@@ -315,8 +315,9 @@ visible terminal template has a copy/paste command that reruns the same config
 with the selected choice. The same report marks template readiness; generated
 terminal templates remain `needs edit` until required `reviewer` and `reason`
 fields, plus corrected-evidence fields when relevant, are filled or supplied
-through config-level `decision_overrides`. Reviewers can also avoid editing the
-config by appending case-scoped `--reviewer`, `--reason`,
+through config-level `decision_overrides`. The report now also prints
+evidence-flag hints beside each decision-choice command, so reviewers can avoid
+editing the config by appending case-scoped `--reviewer`, `--reason`,
 `--correction-notes`, and `--corrected-artifact` flags to the selected
 `promotion-review-harvest --config ... --decision-choice ...` command.
 
