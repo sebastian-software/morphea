@@ -1691,6 +1691,15 @@ class CliTests(unittest.TestCase):
                                 "case_id": "real-case",
                                 "suggested_review_decision": "deferred",
                                 "review_decision_state": "pending",
+                                "failed_gate_ids": ["region-visual-fidelity"],
+                                "failed_gate_details": [
+                                    {
+                                        "id": "region-visual-fidelity",
+                                        "gate_type": "visual_fidelity",
+                                        "severity": "yellow",
+                                        "reason": "raster_l1_error 0.21 > 0.12",
+                                    }
+                                ],
                                 "artifacts": {
                                     "manifest": str(manifest),
                                     "review_templates": templates,
@@ -1724,6 +1733,14 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["pending_case_count"], 1)
             self.assertEqual(result["pending_cases"][0]["case_id"], "real-case")
             self.assertEqual(
+                result["pending_cases"][0]["failed_gate_ids"],
+                ["region-visual-fidelity"],
+            )
+            self.assertEqual(
+                result["pending_cases"][0]["failed_gate_details"][0]["reason"],
+                "raster_l1_error 0.21 > 0.12",
+            )
+            self.assertEqual(
                 result["pending_cases"][0]["decision_templates"],
                 templates,
             )
@@ -1737,6 +1754,9 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["decision_choice_commands"], {})
             rendered = markdown.read_text(encoding="utf-8")
             self.assertIn("Decision templates", rendered)
+            self.assertIn("## Pending Gate Details", rendered)
+            self.assertIn("region-visual-fidelity", rendered)
+            self.assertIn("raster_l1_error 0.21 > 0.12", rendered)
             self.assertIn(templates["accepted"], rendered)
             self.assertNotIn("Decision Choice Commands", rendered)
 

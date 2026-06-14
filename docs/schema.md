@@ -752,7 +752,10 @@ accepted/corrected/rejected/deferred choices without applying them
 automatically. Pending cases also preserve packet `review_artifacts` links for
 contact sheets, promotion reviews, editability reviews, pending decision
 records, and promotion exports, so the harvest-prep report can be used without
-opening raw packet JSON. The same inputs can be loaded from
+opening raw packet JSON. Pending cases also carry packet `failed_gate_ids` and
+structured `failed_gate_details`; Markdown renders a compact failed-gate list
+in the Pending Cases table plus a Pending Gate Details table with case, gate,
+type, severity, and reason. The same inputs can be loaded from
 `morphea promotion-review-harvest --config promotion-review-harvest.json`;
 CLI arguments override config values, and individual `--decision case=path`
 arguments override same-case entries in the config `decisions` object. The

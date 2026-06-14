@@ -706,7 +706,10 @@ These RP10 planning questions are now answered by the current review workflow:
   SVG traceability, and an applied accepted/corrected review when manual
   policy is involved. Harvest-prep Markdown now keeps reviewed region ids,
   review-promoted region ids, and review-promoted anchor indexes visible after
-  pending cases move into applied status.
+  pending cases move into applied status. Pending harvest cases now also carry
+  failed gate ids and structured failed-gate reasons forward from the review
+  packet, so reviewers can see why a case remains blocked without opening raw
+  packet JSON.
 
 ## Commit Discipline
 

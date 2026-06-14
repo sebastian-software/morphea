@@ -2730,6 +2730,14 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             packet_case = review_packet["cases"][0]
             self.assertIn(
+                "current_quality_label",
+                packet_case["failed_gate_ids"],
+            )
+            self.assertEqual(
+                packet_case["failed_gate_details"][0]["id"],
+                "current_quality_label",
+            )
+            self.assertIn(
                 "--decision-choice simple-circle=deferred",
                 packet_case["decision_choice_commands"]["deferred"],
             )
@@ -2796,6 +2804,14 @@ class CuratedSuiteTests(unittest.TestCase):
                 (output_dir / "review-harvest.json").read_text(encoding="utf-8")
             )
             self.assertEqual(review_harvest["pending_case_count"], 1)
+            self.assertIn(
+                "current_quality_label",
+                review_harvest["pending_cases"][0]["failed_gate_ids"],
+            )
+            self.assertEqual(
+                review_harvest["pending_cases"][0]["failed_gate_details"][0]["id"],
+                "current_quality_label",
+            )
             self.assertEqual(
                 sorted(
                     review_harvest["pending_cases"][0]["decision_templates"]
@@ -2896,6 +2912,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("contact_sheet", review_harvest_markdown)
             self.assertIn("promotion_review", review_harvest_markdown)
             self.assertIn("editability_review", review_harvest_markdown)
+            self.assertIn("## Pending Gate Details", review_harvest_markdown)
+            self.assertIn("current_quality_label", review_harvest_markdown)
             self.assertIn("## Decision Choice Commands", review_harvest_markdown)
             self.assertIn("needs edit: `reviewer`, `reason`", review_harvest_markdown)
             self.assertIn("Evidence flags to add", review_harvest_markdown)

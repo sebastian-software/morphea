@@ -261,8 +261,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
             "",
             "## Pending Cases",
             "",
-            "| Case | Suggested | Review decision | Review artifacts | Decision templates | Manifest |",
-            "| --- | --- | --- | --- | --- | --- |",
+            "| Case | Suggested | Review decision | Failed gates | Review artifacts | Decision templates | Manifest |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     pending = result.get("pending_cases", [])
@@ -275,12 +275,15 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('suggested_review_decision', 'n/a')}` | "
                 f"`{item.get('review_decision', 'n/a')}` | "
+                f"{_fmt_value_list(item.get('failed_gate_ids'))} | "
                 f"{_fmt_review_artifacts(item.get('review_artifacts'))} | "
                 f"{_fmt_decision_templates(item.get('decision_templates'))} | "
                 f"`{item.get('manifest', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+
+    _append_pending_gate_details(lines, pending)
 
     _append_decision_choice_commands(
         lines,
@@ -403,6 +406,8 @@ def _packet_review_status(
                         "n/a",
                     ),
                     "review_decision": case.get("review_decision_state", "n/a"),
+                    "failed_gate_ids": _case_failed_gate_ids(case),
+                    "failed_gate_details": _case_failed_gate_details(case),
                     "review_artifacts": _case_review_artifacts(case),
                     "decision_templates": decision_templates.get(case_id, {}),
                     "decision_template_readiness": decision_template_readiness.get(
@@ -420,6 +425,49 @@ def _packet_review_status(
                 }
             )
     return applied_cases, pending_cases
+
+
+def _case_failed_gate_ids(case: dict[str, object]) -> list[str]:
+    ids = [
+        item
+        for item in _string_list(case.get("failed_gate_ids"))
+        if item
+    ]
+    if ids:
+        return ids
+    return [
+        item["id"]
+        for item in _case_failed_gate_details(case)
+        if isinstance(item.get("id"), str) and item["id"]
+    ]
+
+
+def _case_failed_gate_details(case: dict[str, object]) -> list[dict[str, str]]:
+    details = case.get("failed_gate_details")
+    if not isinstance(details, list):
+        return []
+    normalized: list[dict[str, str]] = []
+    for item in details:
+        if not isinstance(item, dict):
+            continue
+        gate_id = _string_value(item.get("id"))
+        if not gate_id:
+            continue
+        normalized.append(
+            {
+                "id": gate_id,
+                "gate_type": _string_value(item.get("gate_type")) or "n/a",
+                "severity": _string_value(item.get("severity")) or "n/a",
+                "reason": _string_value(item.get("reason")) or "n/a",
+            }
+        )
+    return normalized
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str)]
 
 
 def _case_review_artifacts(case: dict[str, object]) -> dict[str, str]:
@@ -889,6 +937,12 @@ def _fmt_table_code(value: object) -> str:
     return f"`{escaped}`"
 
 
+def _fmt_table_text(value: object) -> str:
+    if not isinstance(value, str) or not value:
+        return "n/a"
+    return value.replace("|", "\\|").replace("\n", " ").replace("`", "'")
+
+
 def _fmt_review_artifacts(value: object) -> str:
     if not isinstance(value, dict):
         return "n/a"
@@ -904,6 +958,42 @@ def _fmt_review_artifacts(value: object) -> str:
         if isinstance(value.get(key), str) and value[key]
     ]
     return ", ".join(parts) if parts else "n/a"
+
+
+def _append_pending_gate_details(lines: list[str], value: object) -> None:
+    if not isinstance(value, list) or not value:
+        return
+    rows: list[tuple[str, dict[str, object]]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        case_id = item.get("case_id")
+        details = item.get("failed_gate_details")
+        if not isinstance(case_id, str) or not isinstance(details, list):
+            continue
+        for gate in details:
+            if isinstance(gate, dict):
+                rows.append((case_id, gate))
+    if not rows:
+        return
+    lines.extend(
+        [
+            "",
+            "## Pending Gate Details",
+            "",
+            "| Case | Gate | Type | Severity | Reason |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
+    for case_id, gate in rows:
+        lines.append(
+            "| "
+            f"{_fmt_table_code(case_id)} | "
+            f"{_fmt_table_code(gate.get('id'))} | "
+            f"{_fmt_table_code(gate.get('gate_type'))} | "
+            f"{_fmt_table_code(gate.get('severity'))} | "
+            f"{_fmt_table_text(gate.get('reason'))} |"
+        )
 
 
 def _append_decision_choice_commands(
