@@ -411,6 +411,10 @@ Implemented so far:
   `review-templates/{accepted,corrected,rejected,deferred}.json`, so reviewers
   can start from terminal decision templates that preserve the same evidence
   and indicate whether correction artifacts are required.
+- curated output roots write `review-gallery.html`, a local static review
+  gallery with contact sheets, quality labels, promotion/editability decisions,
+  failed gates/components, artifact links, and terminal decision-template
+  links.
 - `morphea promotion-apply-review` validates edited promotion review decisions,
   rejects pending records, writes applied JSON/Markdown summaries, and can
   persist `review_decision_applied` into a run manifest.

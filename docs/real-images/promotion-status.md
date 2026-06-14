@@ -121,6 +121,9 @@ The curated output root also writes `review-packet.json` and
 `review-packet.md`, which collect all deferred/rejected cases into one
 reviewer-facing queue with contact-sheet, promotion-review, editability-review,
 pending review-decision paths, and terminal decision-template paths.
+It also writes `review-gallery.html`, a local static gallery that shows each
+promotion case's contact sheet, quality label, promotion/editability decision,
+failed gates/components, review links, and terminal decision-template links.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may

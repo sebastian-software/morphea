@@ -551,6 +551,10 @@ The curated output root also includes suite-level review packet artifacts:
   links/paths to contact sheets, promotion reviews, editability reviews, and
   `review-decision.json` files plus accepted/corrected/rejected/deferred
   template paths
+- `review-gallery.html`: local static gallery for promotion cases in the suite
+  run. It shows quality label, promotion/editability decisions, issue tags,
+  failed gate/component ids, the contact sheet image, review artifact links,
+  and terminal decision-template links without requiring raw JSON inspection.
 
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:

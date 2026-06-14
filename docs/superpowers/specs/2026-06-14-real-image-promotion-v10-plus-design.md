@@ -301,7 +301,10 @@ Deliverables:
   `review-templates/`, and suite-level review packets link those paths per
   case;
 - applied-review summaries that link back to region truth and promotion gates;
-- a small local gallery for current green/yellow/red examples.
+- a small local gallery for current green/yellow/red examples. Current slice:
+  curated runs with `--output-dir` write `review-gallery.html`, a static local
+  page with contact sheets, quality labels, promotion/editability decisions,
+  failed gates/components, review links, and terminal decision-template links.
 
 Exit criteria:
 
@@ -404,7 +407,9 @@ and quality-label review-policy refinements:
    human can apply `accepted`, `corrected`, `rejected`, or `deferred` decisions
    without reading raw JSON. The packet now links contact sheets, promotion
    reviews, editability reviews, pending review decisions, and terminal
-   decision templates for all four outcomes.
+   decision templates for all four outcomes. The same output root now includes
+   `review-gallery.html` for scanning those cases visually before editing or
+   applying a decision.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
    review evidence.

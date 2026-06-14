@@ -364,6 +364,8 @@ record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal
 accepted/corrected/rejected/deferred review templates that preserve the same
 evidence.
+Curated output roots also write `review-gallery.html`, so those artifacts can
+be scanned visually from one local page before a terminal decision is applied.
 `morphea promotion-apply-review` consumes edited terminal decision records,
 rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests.

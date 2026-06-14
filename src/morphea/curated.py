@@ -9,6 +9,7 @@ from typing import Any
 
 from PIL import Image, ImageDraw
 
+from morphea.curated_gallery import render_review_gallery_html
 from morphea.images import scene_from_flat_color_image
 from morphea.runs import VectorizeRun, write_vectorize_run
 from morphea.scene import SvgStyle, anchors_to_svg
@@ -102,8 +103,6 @@ EDITABILITY_REVIEW_OBSERVED_THRESHOLDS = {
     "classifier_prior_agreement": 0.75,
 }
 EDITABILITY_REVIEW_MAX_COMPONENT_REGRESSION = 0.05
-
-
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
     """Load and lightly validate a curated real-image suite file."""
 
@@ -2163,6 +2162,7 @@ def _write_review_packet_artifacts(
     packet = _review_packet(report)
     packet_path = output_dir / "review-packet.json"
     markdown_path = output_dir / "review-packet.md"
+    gallery_path = output_dir / "review-gallery.html"
     packet_path.write_text(
         json.dumps(packet, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -2171,9 +2171,14 @@ def _write_review_packet_artifacts(
         _render_review_packet_markdown(packet),
         encoding="utf-8",
     )
+    gallery_path.write_text(
+        render_review_gallery_html(report, packet, html_path=gallery_path),
+        encoding="utf-8",
+    )
     return {
         "review_packet": str(packet_path),
         "review_packet_markdown": str(markdown_path),
+        "review_gallery": str(gallery_path),
     }
 
 

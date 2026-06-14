@@ -198,6 +198,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "review-decision.json").exists())
             self.assertTrue((output_dir / "simple-circle" / "contact-sheet.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
+            self.assertTrue((output_dir / "review-gallery.html").exists())
             with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
                 self.assertEqual(sheet.size, (1636, 268))
             promoted_svg = (output_dir / "simple-circle" / "promoted.svg").read_text(
@@ -286,6 +287,7 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
+            self.assertIn("review_gallery", report["artifacts"])
             self.assertIn("raster_l1_error", report["cases"][0]["metrics"])
             self.assertIn("raster_edge_error", report["cases"][0]["metrics"])
             self.assertIn("artifacts", report["cases"][0])
@@ -318,6 +320,15 @@ class CuratedSuiteTests(unittest.TestCase):
                     if not gate["ok"]
                 ]
             )
+            review_gallery = (output_dir / "review-gallery.html").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("Morphēa review gallery", review_gallery)
+            self.assertIn('<article class="case-card green">', review_gallery)
+            self.assertIn("simple-circle/contact-sheet.png", review_gallery)
+            self.assertIn("Promotion review", review_gallery)
+            self.assertIn("review-packet.md", review_gallery)
+            self.assertNotIn("review queue", review_gallery)
             gate_by_id = {
                 gate["id"]: gate for gate in report["cases"][0]["promotion_gates"]
             }
@@ -422,6 +433,7 @@ class CuratedSuiteTests(unittest.TestCase):
 
             self.assertIn("review_packet", result["artifacts"])
             self.assertIn("review_packet_markdown", result["artifacts"])
+            self.assertIn("review_gallery", result["artifacts"])
             case = result["cases"][0]
             self.assertTrue(case["ok"])
             self.assertEqual(case["promotion_summary"]["decision"], "deferred")
@@ -542,6 +554,18 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("| `simple-circle` | `deferred` |", review_packet_markdown)
             self.assertIn("- Review decision: `", review_packet_markdown)
             self.assertIn("- Decision templates: accepted=`", review_packet_markdown)
+            review_gallery = (output_dir / "review-gallery.html").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('<article class="case-card red">', review_gallery)
+            self.assertIn("review queue", review_gallery)
+            self.assertIn("manual_review_pending", review_gallery)
+            self.assertIn("current_quality_label", review_gallery)
+            self.assertIn("simple-circle/contact-sheet.png", review_gallery)
+            self.assertIn(
+                "simple-circle/review-templates/deferred.json",
+                review_gallery,
+            )
 
     def test_promotion_export_artifacts_partition_rejected_anchors(self):
         with tempfile.TemporaryDirectory() as temp_dir:
