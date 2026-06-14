@@ -384,8 +384,10 @@ manifests and curated JSON reports before harvesting.
 `morphea review --accept-applied-reviews` maps harvested applied promotion
 reviews into the existing review/apply-review loop while preserving issue tags.
 `morphea merge-labels` preserves review and applied-review provenance in
-accepted pseudo-label manifests and dataset samples while excluding
-rejected/deferred review items from trainable datasets.
+accepted pseudo-label manifests, and dataset samples carry review item id,
+review reason, issue tags, applied decision, applied case id, and source
+review-decision path while excluding rejected/deferred review items from
+trainable datasets.
 `morphea self-learn` separates retraining from acceptance: acceptance requires
 the training comparison gate plus passing curated validation when configured,
 and cycle summaries expose reviewed-label issue and applied-decision counts.

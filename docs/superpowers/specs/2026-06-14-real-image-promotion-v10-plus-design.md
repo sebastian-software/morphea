@@ -384,6 +384,14 @@ Deliverables:
 - retraining gates across primitive, Lucide, and real-image families;
 - accepted suite-family baseline updates after reviewed improvements.
 
+Current implementation:
+
+- `harvest-curated --require-applied-review` preserves applied decisions across
+  reruns and harvests only accepted/corrected applied reviews. `merge-labels`
+  keeps review and applied-review provenance in pseudo-label manifests, and
+  dataset samples carry review item id, review reason, issue tags, applied
+  decision, applied case id, and source review-decision path.
+
 Exit criteria:
 
 - a model update cannot be accepted if it introduces new real-image, Lucide, or

@@ -2011,8 +2011,14 @@ def merge_reviewed_pseudo_label_dataset(
                 "source_manifest": label.get("source_manifest"),
                 "source_anchor_index": label.get("anchor_index"),
                 "review_decision": review.get("decision"),
+                "review_item_id": review.get("review_item_id"),
+                "review_reason": review.get("reason"),
                 "review_issues": _issues_from_value(review.get("issues")),
                 "applied_review_decision": applied_review.get("decision"),
+                "applied_review_case_id": applied_review.get("case_id"),
+                "applied_review_source_review_decision": applied_review.get(
+                    "source_review_decision"
+                ),
             }
         )
 
@@ -2464,6 +2470,7 @@ def _reviewed_label(item: dict[str, object]) -> dict[str, object]:
             label["anchor"] = changed_anchor
     label["review"] = {
         "decision": "accept",
+        "review_item_id": item.get("id"),
         "reason": item.get("reason", ""),
         "corrected_kind": corrected_kind,
         "issues": issues,

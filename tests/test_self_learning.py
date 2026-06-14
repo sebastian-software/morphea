@@ -1107,6 +1107,7 @@ class SelfLearningTests(unittest.TestCase):
                                     "case_id": "circle-case",
                                     "decision": "accepted",
                                     "issue_tags": ["fragmentation"],
+                                    "source_review_decision": "circle-review.json",
                                 },
                             },
                             {
@@ -1141,6 +1142,22 @@ class SelfLearningTests(unittest.TestCase):
                 "accepted",
             )
             self.assertEqual(
+                dataset["samples"][0]["applied_review_case_id"],
+                "circle-case",
+            )
+            self.assertEqual(
+                dataset["samples"][0]["applied_review_source_review_decision"],
+                "circle-review.json",
+            )
+            self.assertEqual(
+                dataset["samples"][0]["review_item_id"],
+                "review-00000",
+            )
+            self.assertEqual(
+                dataset["samples"][0]["review_reason"],
+                "applied_review_accepted",
+            )
+            self.assertEqual(
                 dataset["samples"][0]["review_issues"],
                 ["fragmentation"],
             )
@@ -1164,6 +1181,10 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(
                 pseudo_manifest["review"]["issues"],
                 ["fragmentation"],
+            )
+            self.assertEqual(
+                pseudo_manifest["review"]["review_item_id"],
+                "review-00000",
             )
 
     def test_merge_labels_cli_writes_dataset(self):

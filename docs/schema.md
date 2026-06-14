@@ -644,9 +644,11 @@ tags are preserved for reviewed-label reports and training datasets.
 
 `morphea merge-labels` writes accepted reviewed pseudo-label manifests with
 `review` and `review_decision_applied` provenance when available. Dataset
-samples also carry `review_issues` and `applied_review_decision`, so
-accepted/corrected applied promotion reviews remain auditable after conversion
-to trainable data while rejected/deferred review items are excluded.
+samples also carry `review_item_id`, `review_reason`, `review_issues`,
+`applied_review_decision`, `applied_review_case_id`, and
+`applied_review_source_review_decision`, so accepted/corrected applied
+promotion reviews remain auditable after conversion to trainable data while
+rejected/deferred review items are excluded.
 
 `morphea self-learn` now separates retraining from acceptance: the cycle can
 write a model after the training comparison gate passes, but `accepted` is only
