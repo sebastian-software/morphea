@@ -1511,6 +1511,8 @@ Top-level fields:
 - `added_ids`
 - `removed_ids`
 - `items`
+- `promotion_region_delta_count`
+- `promotion_region_deltas`
 - `git`: present for `compare-git-snapshots`
 
 Each item records the shared `id`, `changed_metric_count`, and numeric
@@ -1520,9 +1522,17 @@ Each item records the shared `id`, `changed_metric_count`, and numeric
 that id as the flattened path segment. Boolean fields are not treated as
 numeric metrics.
 
+When compared items include `promotion_regions`, the comparison also records
+explicit `promotion_region_deltas` for shared cases. Each delta includes
+`case_id`, `region_id`, `status` (`changed`, `added`, or `removed`), before/after
+state, before/after gate status, before/after selected anchor counts/indexes,
+before/after reasons, and a field-level `changes` list. This avoids relying on
+aggregate metric paths to identify which source-region contract changed.
+
 `morphea compare-snapshots --markdown comparison.md` writes a scan-friendly table
 for reviewing differences between saved reports from different commits or
-configurations.
+configurations. The Markdown report includes a `Promotion Region Deltas` table
+when region-level promotion state is present.
 
 ## Snapshot Comparison Config v1
 

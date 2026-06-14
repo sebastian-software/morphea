@@ -658,6 +658,113 @@ class SnapshotComparisonTests(unittest.TestCase):
             deltas,
         )
 
+    def test_render_snapshot_comparison_reports_promotion_region_deltas(self):
+        before_region = {
+            "id": "gold-circle-region",
+            "state": "deferred",
+            "gate_ok": False,
+            "selected_anchor_count": 1,
+            "selected_anchor_indexes": [36],
+            "selected_anchor_ids": ["anchor-0036"],
+            "reason": "matching anchors in region: 1",
+            "bounds": [220, 480, 1005, 700],
+            "expected_kinds": ["circle"],
+            "gate_id": "gold-circle-region",
+            "gate_type": "shape_class",
+        }
+        after_region = {
+            "id": "gold-circle-region",
+            "state": "promoted",
+            "gate_ok": True,
+            "selected_anchor_count": 5,
+            "selected_anchor_indexes": [36, 37, 38, 39, 40],
+            "selected_anchor_ids": [
+                "anchor-0036",
+                "anchor-0037",
+                "anchor-0038",
+                "anchor-0039",
+                "anchor-0040",
+            ],
+            "reason": "matching anchors in region: 5",
+            "bounds": [220, 480, 1005, 700],
+            "expected_kinds": ["circle"],
+            "gate_id": "gold-circle-region",
+            "gate_type": "shape_class",
+        }
+        comparison = render_snapshot_comparison(
+            {
+                "cases": [
+                    {
+                        "id": "terminaro",
+                        "promotion_regions": [
+                            before_region,
+                            {
+                                "id": "removed-region",
+                                "state": "rejected",
+                                "gate_ok": False,
+                                "selected_anchor_count": 0,
+                            },
+                        ],
+                    }
+                ]
+            },
+            {
+                "cases": [
+                    {
+                        "id": "terminaro",
+                        "promotion_regions": [
+                            after_region,
+                            {
+                                "id": "new-region",
+                                "state": "deferred",
+                                "gate_ok": True,
+                                "selected_anchor_count": 2,
+                            },
+                        ],
+                    }
+                ]
+            },
+            before="before.json",
+            after="after.json",
+        )
+
+        self.assertEqual(comparison["promotion_region_delta_count"], 3)
+        deltas = {
+            (delta["region_id"], delta["status"]): delta
+            for delta in comparison["promotion_region_deltas"]
+        }
+        changed = deltas[("gold-circle-region", "changed")]
+        self.assertEqual(changed["case_id"], "terminaro")
+        self.assertEqual(changed["before_state"], "deferred")
+        self.assertEqual(changed["after_state"], "promoted")
+        self.assertEqual(changed["before_selected_anchor_indexes"], [36])
+        self.assertEqual(
+            changed["after_selected_anchor_indexes"],
+            [36, 37, 38, 39, 40],
+        )
+        self.assertIn(
+            {"field": "state", "before": "deferred", "after": "promoted"},
+            changed["changes"],
+        )
+        self.assertIn(
+            {"field": "gate_ok", "before": False, "after": True},
+            changed["changes"],
+        )
+        self.assertEqual(deltas[("new-region", "added")]["after_state"], "deferred")
+        self.assertEqual(
+            deltas[("removed-region", "removed")]["before_state"],
+            "rejected",
+        )
+
+        markdown = render_snapshot_comparison_markdown(comparison)
+        self.assertIn("## Promotion Region Deltas", markdown)
+        self.assertIn(
+            "`terminaro` | `gold-circle-region` | `changed`",
+            markdown,
+        )
+        self.assertIn("`deferred` -> `promoted`", markdown)
+        self.assertIn("`1 [36]` -> `5 [36,37,38,39,40]`", markdown)
+
     def test_compare_snapshots_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

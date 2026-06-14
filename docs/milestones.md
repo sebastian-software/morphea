@@ -1017,6 +1017,8 @@ Implemented so far:
 - the same Markdown report includes a Region Truth table for configured
   source-region gates, with stable region ids, state, bounds, expected kinds,
   actual matching counts, and topology evidence.
+- snapshot comparisons include explicit `promotion_region_deltas` and Markdown
+  rows that identify the changed, added, or removed source-region id.
 - second documented curated case:
   `chatgpt-image-2026-06-11`, covering the opaque white-background version of
   the Greek-figures/table illustration.
@@ -1148,6 +1150,8 @@ Implemented so far:
   summaries from different commits/configurations
 - `morphea compare-snapshots --config compare-snapshots.json` for repeatable
   saved-summary comparisons
+- snapshot comparisons surface promotion-region deltas when curated snapshots
+  include `promotion_regions`
 - `morphea compare-git-snapshots before_ref after_ref --path snapshot.json` for
   comparing the same checked-in snapshot file across git refs without changing
   the working tree

@@ -12,6 +12,21 @@ from pathlib import Path
 from typing import Any
 
 
+PROMOTION_REGION_DELTA_FIELDS = (
+    "state",
+    "gate_ok",
+    "selected_anchor_count",
+    "selected_anchor_indexes",
+    "selected_anchor_ids",
+    "reason",
+    "bounds",
+    "expected_kinds",
+    "forbidden_kinds",
+    "gate_id",
+    "gate_type",
+)
+
+
 def compare_snapshots(
     before: str | Path,
     after: str | Path,
@@ -467,6 +482,7 @@ def render_snapshot_comparison(
                 "metric_deltas": changed,
             }
         )
+    promotion_region_deltas = _promotion_region_deltas(before_items, after_items)
 
     return {
         "schema_version": 1,
@@ -477,6 +493,8 @@ def render_snapshot_comparison(
         "added_ids": added_ids,
         "removed_ids": removed_ids,
         "items": items,
+        "promotion_region_delta_count": len(promotion_region_deltas),
+        "promotion_region_deltas": promotion_region_deltas,
     }
 
 
@@ -507,10 +525,182 @@ def render_snapshot_comparison_markdown(comparison: dict[str, Any]) -> str:
     if change_count == 0:
         lines.append("| n/a | n/a | n/a | n/a | n/a |")
 
+    region_deltas = _list_value(comparison.get("promotion_region_deltas"))
+    lines.extend(
+        [
+            "",
+            "## Promotion Region Deltas",
+            "",
+            "| Case | Region | Status | State | Gate OK | Selected | Reason |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    if region_deltas:
+        for delta in region_deltas:
+            delta_item = _dict_value(delta)
+            state_cell = _transition_cell(
+                delta_item.get("before_state"),
+                delta_item.get("after_state"),
+            )
+            gate_cell = _transition_cell(
+                delta_item.get("before_gate_ok"),
+                delta_item.get("after_gate_ok"),
+            )
+            before_selected = _selected_summary(delta_item, "before")
+            after_selected = _selected_summary(delta_item, "after")
+            selected_cell = _transition_cell(before_selected, after_selected)
+            reason_cell = _transition_cell(
+                delta_item.get("before_reason"),
+                delta_item.get("after_reason"),
+            )
+            lines.append(
+                "| "
+                f"{_code_cell(delta_item.get('case_id'))} | "
+                f"{_code_cell(delta_item.get('region_id'))} | "
+                f"{_code_cell(delta_item.get('status'))} | "
+                f"{state_cell} | "
+                f"{gate_cell} | "
+                f"{selected_cell} | "
+                f"{reason_cell} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+
     lines.extend(["", "## Added / Removed", ""])
     lines.append(f"- Added: {_id_list(comparison.get('added_ids', []))}")
     lines.append(f"- Removed: {_id_list(comparison.get('removed_ids', []))}")
     return "\n".join(lines) + "\n"
+
+
+def _promotion_region_deltas(
+    before_items: dict[str, dict[str, Any]],
+    after_items: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    deltas: list[dict[str, Any]] = []
+    for item_id in sorted(set(before_items) & set(after_items)):
+        before_regions = _promotion_regions_by_id(before_items[item_id])
+        after_regions = _promotion_regions_by_id(after_items[item_id])
+        shared_region_ids = sorted(set(before_regions) & set(after_regions))
+        for region_id in shared_region_ids:
+            delta = _promotion_region_delta(
+                item_id,
+                region_id,
+                "changed",
+                before_regions[region_id],
+                after_regions[region_id],
+            )
+            if delta["changes"]:
+                deltas.append(delta)
+        for region_id in sorted(set(after_regions) - set(before_regions)):
+            deltas.append(
+                _promotion_region_delta(
+                    item_id,
+                    region_id,
+                    "added",
+                    None,
+                    after_regions[region_id],
+                )
+            )
+        for region_id in sorted(set(before_regions) - set(after_regions)):
+            deltas.append(
+                _promotion_region_delta(
+                    item_id,
+                    region_id,
+                    "removed",
+                    before_regions[region_id],
+                    None,
+                )
+            )
+    return deltas
+
+
+def _promotion_regions_by_id(item: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    indexed: dict[str, dict[str, Any]] = {}
+    for index, region in enumerate(_list_value(item.get("promotion_regions"))):
+        if not isinstance(region, dict):
+            continue
+        region_id = (
+            region.get("id")
+            or region.get("region_id")
+            or region.get("gate_id")
+            or f"region-{index:05d}"
+        )
+        indexed[str(region_id)] = region
+    return indexed
+
+
+def _promotion_region_delta(
+    case_id: str,
+    region_id: str,
+    status: str,
+    before_region: dict[str, Any] | None,
+    after_region: dict[str, Any] | None,
+) -> dict[str, Any]:
+    changes = []
+    for field in PROMOTION_REGION_DELTA_FIELDS:
+        before_value = _region_field(before_region, field)
+        after_value = _region_field(after_region, field)
+        if before_value != after_value:
+            changes.append(
+                {
+                    "field": field,
+                    "before": before_value,
+                    "after": after_value,
+                }
+            )
+    return {
+        "case_id": case_id,
+        "region_id": region_id,
+        "status": status,
+        "before_state": _region_field(before_region, "state"),
+        "after_state": _region_field(after_region, "state"),
+        "before_gate_ok": _region_field(before_region, "gate_ok"),
+        "after_gate_ok": _region_field(after_region, "gate_ok"),
+        "before_selected_anchor_count": _region_field(
+            before_region,
+            "selected_anchor_count",
+        ),
+        "after_selected_anchor_count": _region_field(
+            after_region,
+            "selected_anchor_count",
+        ),
+        "before_selected_anchor_indexes": _region_field(
+            before_region,
+            "selected_anchor_indexes",
+        ),
+        "after_selected_anchor_indexes": _region_field(
+            after_region,
+            "selected_anchor_indexes",
+        ),
+        "before_reason": _region_field(before_region, "reason"),
+        "after_reason": _region_field(after_region, "reason"),
+        "changes": changes,
+    }
+
+
+def _region_field(region: dict[str, Any] | None, field: str) -> Any:
+    if not isinstance(region, dict):
+        return None
+    return region.get(field)
+
+
+def _selected_summary(delta: dict[str, Any], side: str) -> str | None:
+    count = delta.get(f"{side}_selected_anchor_count")
+    indexes = delta.get(f"{side}_selected_anchor_indexes")
+    if isinstance(indexes, list) and indexes:
+        index_text = ",".join(str(index) for index in indexes)
+        if count is None:
+            return f"[{index_text}]"
+        return f"{count} [{index_text}]"
+    if count is not None:
+        return str(count)
+    return None
+
+
+def _transition_cell(before: Any, after: Any) -> str:
+    if before == after:
+        return _code_cell(before)
+    return f"{_code_cell(before)} -> {_code_cell(after)}"
 
 
 def _indexed_items(data: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], str]:

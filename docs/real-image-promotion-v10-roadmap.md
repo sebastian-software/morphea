@@ -214,6 +214,7 @@ Every report should include:
 - score component breakdowns;
 - reference/render/diff contact sheet links;
 - snapshot comparison when a baseline exists;
+- snapshot comparison rows that identify changed source-region ids;
 - missing-source or capability warnings.
 
 Reports that show only aggregate pass/fail counts are incomplete for v10+

@@ -232,6 +232,11 @@ for configured source-region gates, listing stable region/gate ids, promotion
 state, bounds, expected kinds, actual matching/selected/forbidden counts, and
 topology summaries.
 
+Current comparison slice: `compare-snapshots` and `compare-git-snapshots` now
+write explicit `promotion_region_deltas` for shared cases, so a baseline diff
+can identify the changed, added, or removed region id plus before/after state,
+gate status, selected anchors, and reason.
+
 Exit criteria:
 
 - every real-image red gate references a stable region id;
