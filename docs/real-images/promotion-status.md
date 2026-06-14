@@ -26,6 +26,27 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
   --markdown /tmp/morphea-real-image-promotion-lucide-report.md
 ```
 
+Raster-target model gate smoke:
+
+```sh
+PYTHONPATH=src python3 -m morphea.cli lucide-corpus assets/lucide/suite.json \
+  -o /tmp/morphea-raster-target-gate/corpus.json \
+  --output-dir /tmp/morphea-raster-target-gate/corpus
+PYTHONPATH=src python3 -m morphea.cli train-lucide-targets \
+  /tmp/morphea-raster-target-gate/corpus.json \
+  -o /tmp/morphea-raster-target-gate/model.json \
+  --markdown /tmp/morphea-raster-target-gate/model.md
+PYTHONPATH=src python3 -m morphea.cli eval-raster-targets \
+  /tmp/morphea-raster-target-gate/model.json \
+  /tmp/morphea-raster-target-gate/corpus.json \
+  -o /tmp/morphea-raster-target-gate/eval.json \
+  --markdown /tmp/morphea-raster-target-gate/eval.md \
+  --splits train \
+  --min-target-accuracy 1 \
+  --min-exact-match-accuracy 1 \
+  --max-unknown-expected-targets 0
+```
+
 ## Real-Image Cases
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
@@ -76,7 +97,12 @@ default head is a small 12x12-raster-feature MLP and reaches 1.0 train
 exact-match accuracy on the checked-in 24-case Lucide corpus smoke.
 `morphea eval-raster-targets` evaluates the stored generic model against any
 rendered target corpus and records unknown expected targets explicitly, so new
-shape vocabulary cannot be hidden by aggregate target accuracy.
+shape vocabulary cannot be hidden by aggregate target accuracy. When configured
+with acceptance thresholds, the same command writes a `gate` block with
+accept/manual-review/reject decision, active gates, reasons, and per-split gate
+results. The current checked-in Lucide corpus smoke accepts the trained generic
+model with 24 train examples, `target_accuracy=1.0`,
+`exact_match_accuracy=1.0`, and zero unknown expected targets.
 
 ## Visual Artifact Posture
 
