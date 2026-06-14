@@ -522,14 +522,15 @@ optional Lucide family summaries. `morphea self-learn --lucide-suite` validates
 accepted models with the same `classifier_model` override and blocks acceptance
 on Lucide failures.
 `morphea self-learn --suite-family-baseline` compares the current normalized
-family view against a fixed baseline and blocks acceptance only for newly
-introduced bad family outcomes, separating known suite debt from fresh
-regressions.
+family view against a fixed baseline. It now reports every compared family as
+held, improved, new-family, known-debt, resolved-regression, new-regression, or
+missing-current-family, and blocks acceptance when a current run introduces new
+bad outcomes or fails to cover a previously good baseline family.
 When baseline comparison is clean, known curated/Lucide validation failures
 remain visible but are not blocking acceptance reasons.
-Known baseline debt is also listed as `known_debt` / `known_debt_count` in
-cycle reports, so accepted runs show carried red families separately from new
-or resolved regressions.
+Known baseline debt is also listed as `known_debt` / `known_debt_count`, while
+full comparison counts and rows let accepted runs show carried red families,
+held/improved families, and resolved regressions side by side.
 `morphea self-learn --suite-family-baseline-output` writes accepted
 `suite_family_validation` snapshots as reusable baseline artifacts and skips
 writes for rejected cycles.

@@ -2656,6 +2656,248 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertEqual(result["acceptance_gate"]["blocking_reasons"], [])
 
+    def test_self_learning_cycle_reports_complete_suite_family_baseline_comparisons(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline = root / "suite-family-baseline.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=114,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            baseline.write_text(
+                json.dumps(
+                    {
+                        "suite_family_validation": {
+                            "primitive": {
+                                "status": "held",
+                                "ok": True,
+                                "families": [
+                                    {
+                                        "split": "val",
+                                        "family": "circle",
+                                        "outcome": "held",
+                                    },
+                                    {
+                                        "split": "val",
+                                        "family": "rect",
+                                        "outcome": "held",
+                                    },
+                                ],
+                            },
+                            "real_image": {"families": []},
+                            "lucide": {"families": []},
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            def comparison_with_family_outcomes(**kwargs):
+                report = {
+                    "schema_version": 1,
+                    "summary": {
+                        "status": "improved",
+                        "train_examples_delta": 1,
+                        "best_accuracy_delta": 0.25,
+                        "worst_accuracy_delta": 0.0,
+                    },
+                    "delta": {
+                        "label_accuracy": {
+                            "val": {
+                                "circle": {
+                                    "baseline_accuracy": 1.0,
+                                    "augmented_accuracy": 1.0,
+                                    "accuracy_delta": 0.0,
+                                    "baseline_examples": 1,
+                                    "augmented_examples": 1,
+                                },
+                                "rect": {
+                                    "baseline_accuracy": 0.5,
+                                    "augmented_accuracy": 0.75,
+                                    "accuracy_delta": 0.25,
+                                    "baseline_examples": 4,
+                                    "augmented_examples": 4,
+                                },
+                            }
+                        }
+                    },
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# comparison\n", encoding="utf-8")
+                return report
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch(
+                    "morphea.self_learning.compare_retraining",
+                    comparison_with_family_outcomes,
+                ),
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline=baseline,
+                )
+
+            comparison = result["suite_family_baseline_comparison"]
+            self.assertTrue(comparison["ok"])
+            self.assertEqual(comparison["comparison_count"], 2)
+            self.assertEqual(
+                comparison["comparison_outcome_counts"],
+                {"held": 1, "improved": 1},
+            )
+            by_family = {
+                item["family"]: item
+                for item in comparison["comparisons"]
+            }
+            self.assertEqual(by_family["circle"]["status"], "held")
+            self.assertEqual(by_family["rect"]["status"], "improved")
+            markdown = (output_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("- Compared families: 2", markdown)
+            self.assertIn("`held: 1`", markdown)
+            self.assertIn("`improved: 1`", markdown)
+            self.assertIn("| `improved` | `primitive` | `val` | `rect` |", markdown)
+
+    def test_self_learning_cycle_blocks_missing_current_suite_family_baseline_coverage(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline = root / "suite-family-baseline.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=115,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            baseline.write_text(
+                json.dumps(
+                    {
+                        "suite_family_validation": {
+                            "primitive": {"families": []},
+                            "real_image": {
+                                "status": "checked",
+                                "ok": True,
+                                "families": [
+                                    {
+                                        "family": "ui_screenshot_text_and_controls",
+                                        "outcome": "passed",
+                                    }
+                                ],
+                            },
+                            "lucide": {"families": []},
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            def comparison_without_family_outcomes(**kwargs):
+                report = {
+                    "schema_version": 1,
+                    "summary": {
+                        "status": "improved",
+                        "train_examples_delta": 1,
+                        "best_accuracy_delta": 0.25,
+                        "worst_accuracy_delta": 0.0,
+                    },
+                    "delta": {"label_accuracy": {}},
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# comparison\n", encoding="utf-8")
+                return report
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch(
+                    "morphea.self_learning.compare_retraining",
+                    comparison_without_family_outcomes,
+                ),
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline=baseline,
+                )
+
+            self.assertFalse(result["accepted"])
+            self.assertIn(
+                "suite_family_baseline_regressed",
+                result["acceptance_gate"]["reasons"],
+            )
+            comparison = result["suite_family_baseline_comparison"]
+            self.assertFalse(comparison["ok"])
+            self.assertEqual(comparison["missing_current_family_count"], 1)
+            self.assertEqual(
+                comparison["comparison_outcome_counts"],
+                {"missing_current_family": 1},
+            )
+            self.assertEqual(
+                comparison["comparisons"][0]["status"],
+                "missing_current_family",
+            )
+            markdown = (output_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("- Missing current families: 1", markdown)
+            self.assertIn(
+                "| `missing_current_family` | `real_image` | `n/a` | "
+                "`ui_screenshot_text_and_controls` |",
+                markdown,
+            )
+
     def test_self_learning_cycle_blocks_new_suite_family_baseline_regression(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

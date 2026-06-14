@@ -61,7 +61,11 @@ PYTHONPATH=src python3 -m morphea.cli self-learn /tmp/morphea-base/dataset.json 
 ```
 
 That command intentionally exercises the baseline comparison path even when
-the training gate skips retraining.
+the training gate skips retraining. Because it is a minimal smoke without
+`--curated-suite` or `--lucide-suite`, its baseline comparison should expose
+primitive rows plus `missing_current_family` rows for the checked-in real-image
+and Lucide baseline families; those coverage gaps are conservative blockers
+for accepted cycles, not known debt.
 
 Refresh the checked-in suite-family baseline only from an accepted cycle and
 only with review evidence:

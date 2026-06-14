@@ -1180,49 +1180,49 @@ def _compare_suite_family_validation_to_baseline(
     baseline = _suite_family_validation_from_baseline(baseline_data)
     baseline_rows = _suite_family_outcomes_by_key(baseline)
     current_rows = _suite_family_outcomes_by_key(current)
+    comparisons = []
     new_regressions = []
     resolved_regressions = []
     known_debt = []
-    for key, row in sorted(current_rows.items()):
-        baseline_row = baseline_rows.get(key, {})
-        current_outcome = row.get("outcome")
-        baseline_outcome = baseline_row.get("outcome")
-        if _is_bad_family_outcome(current_outcome) and not _is_bad_family_outcome(
-            baseline_outcome
-        ):
-            new_regressions.append(
-                _baseline_comparison_row(row, baseline_outcome)
-            )
-        elif _is_bad_family_outcome(current_outcome) and _is_bad_family_outcome(
-            baseline_outcome
-        ):
-            known_debt.append(
-                _baseline_comparison_row(row, baseline_outcome)
-            )
-    for key, row in sorted(baseline_rows.items()):
-        if not _is_bad_family_outcome(row.get("outcome")):
-            continue
-        current_row = current_rows.get(key, {})
-        if not _is_bad_family_outcome(current_row.get("outcome")):
-            resolved_row = current_row or {
-                "suite": row.get("suite"),
-                "split": row.get("split"),
-                "family": row.get("family"),
-                "outcome": None,
-            }
-            resolved_regressions.append(
-                _baseline_comparison_row(resolved_row, row.get("outcome"))
-            )
+    missing_current_families = []
+    for key in sorted(set(current_rows) | set(baseline_rows)):
+        current_row = current_rows.get(key)
+        baseline_row = baseline_rows.get(key)
+        current_outcome = current_row.get("outcome") if current_row else None
+        baseline_outcome = baseline_row.get("outcome") if baseline_row else None
+        row = current_row or _missing_current_family_row(baseline_row)
+        status = _suite_family_baseline_comparison_status(
+            current_outcome=current_outcome,
+            baseline_outcome=baseline_outcome,
+            has_current=current_row is not None,
+            has_baseline=baseline_row is not None,
+        )
+        comparison = _baseline_comparison_row(row, baseline_outcome)
+        comparison["status"] = status
+        comparisons.append(comparison)
+        if status == "new_regression":
+            new_regressions.append(comparison)
+        elif status == "known_debt":
+            known_debt.append(comparison)
+        elif status == "resolved_regression":
+            resolved_regressions.append(comparison)
+        elif status == "missing_current_family":
+            missing_current_families.append(comparison)
     return {
         "status": "checked",
         "baseline": str(baseline_file),
-        "ok": not new_regressions,
+        "ok": not new_regressions and not missing_current_families,
+        "comparison_count": len(comparisons),
+        "comparison_outcome_counts": _suite_family_comparison_counts(comparisons),
         "new_regression_count": len(new_regressions),
         "resolved_regression_count": len(resolved_regressions),
         "known_debt_count": len(known_debt),
+        "missing_current_family_count": len(missing_current_families),
+        "comparisons": comparisons,
         "new_regressions": new_regressions,
         "resolved_regressions": resolved_regressions,
         "known_debt": known_debt,
+        "missing_current_families": missing_current_families,
     }
 
 
@@ -1379,6 +1379,61 @@ def _suite_family_outcomes_by_key(
             row["split"] = key[1]
             rows[key] = row
     return rows
+
+
+def _suite_family_baseline_comparison_status(
+    *,
+    current_outcome: object,
+    baseline_outcome: object,
+    has_current: bool,
+    has_baseline: bool,
+) -> str:
+    current_bad = _is_bad_family_outcome(current_outcome)
+    baseline_bad = _is_bad_family_outcome(baseline_outcome)
+    if has_baseline and not has_current:
+        return "resolved_regression" if baseline_bad else "missing_current_family"
+    if has_current and not has_baseline:
+        return "new_regression" if current_bad else "new_family"
+    if current_bad and baseline_bad:
+        return "known_debt"
+    if current_bad:
+        return "new_regression"
+    if baseline_bad:
+        return "resolved_regression"
+    if current_outcome == "improved":
+        return "improved"
+    if current_outcome in {"held", "passed"} and current_outcome == baseline_outcome:
+        return "held"
+    if current_outcome == "held":
+        return "held"
+    if current_outcome == "passed":
+        return "held"
+    return "changed"
+
+
+def _missing_current_family_row(
+    baseline_row: dict[str, object] | None,
+) -> dict[str, object]:
+    if not isinstance(baseline_row, dict):
+        return {}
+    return {
+        "suite": baseline_row.get("suite"),
+        "split": baseline_row.get("split"),
+        "family": baseline_row.get("family"),
+        "outcome": None,
+    }
+
+
+def _suite_family_comparison_counts(
+    comparisons: list[dict[str, object]],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for comparison in comparisons:
+        status = comparison.get("status")
+        if not isinstance(status, str) or not status:
+            continue
+        counts[status] = counts.get(status, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _baseline_comparison_row(
@@ -1774,9 +1829,12 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 "",
                 f"- Baseline: `{baseline_comparison.get('baseline', 'n/a')}`",
                 f"- OK: `{baseline_comparison.get('ok', 'n/a')}`",
+                f"- Compared families: {_fmt_metric(baseline_comparison.get('comparison_count'))}",
+                f"- Outcome counts: {_format_count_map(baseline_comparison.get('comparison_outcome_counts'))}",
                 f"- New regressions: {_fmt_metric(baseline_comparison.get('new_regression_count'))}",
                 f"- Known debt: {_fmt_metric(baseline_comparison.get('known_debt_count'))}",
                 f"- Resolved regressions: {_fmt_metric(baseline_comparison.get('resolved_regression_count'))}",
+                f"- Missing current families: {_fmt_metric(baseline_comparison.get('missing_current_family_count'))}",
                 "",
                 "| Status | Suite | Split | Family | Baseline | Current | Evidence |",
                 "| --- | --- | --- | --- | --- | --- | --- |",
@@ -1848,10 +1906,19 @@ def _suite_family_baseline_rows(
     comparison: dict[str, object],
 ) -> list[str]:
     rows = []
+    comparisons = comparison.get("comparisons", [])
+    if isinstance(comparisons, list):
+        for item in comparisons:
+            if not isinstance(item, dict):
+                continue
+            rows.append(_suite_family_baseline_row(item))
+        if rows:
+            return rows
     for section, status in (
         ("new_regressions", "new_regression"),
         ("known_debt", "known_debt"),
         ("resolved_regressions", "resolved_regression"),
+        ("missing_current_families", "missing_current_family"),
     ):
         items = comparison.get(section, [])
         if not isinstance(items, list):
@@ -1859,17 +1926,23 @@ def _suite_family_baseline_rows(
         for item in items:
             if not isinstance(item, dict):
                 continue
-            rows.append(
-                "| "
-                f"`{status}` | "
-                f"`{item.get('suite', 'n/a')}` | "
-                f"`{item.get('split') or 'n/a'}` | "
-                f"`{item.get('family', 'n/a')}` | "
-                f"`{item.get('baseline_outcome', 'n/a')}` | "
-                f"`{item.get('current_outcome', 'n/a')}` | "
-                f"{_suite_family_baseline_evidence(item)} |"
-            )
+            row = dict(item)
+            row["status"] = status
+            rows.append(_suite_family_baseline_row(row))
     return rows
+
+
+def _suite_family_baseline_row(item: dict[str, object]) -> str:
+    return (
+        "| "
+        f"`{item.get('status', 'n/a')}` | "
+        f"`{item.get('suite', 'n/a')}` | "
+        f"`{item.get('split') or 'n/a'}` | "
+        f"`{item.get('family', 'n/a')}` | "
+        f"`{item.get('baseline_outcome', 'n/a')}` | "
+        f"`{item.get('current_outcome', 'n/a')}` | "
+        f"{_suite_family_baseline_evidence(item)} |"
+    )
 
 
 def _suite_family_baseline_evidence(item: dict[str, object]) -> str:
@@ -1937,6 +2010,15 @@ def _format_reason_list(value: object) -> str:
     if not isinstance(value, list) or not value:
         return "`none`"
     return ", ".join(f"`{reason}`" for reason in value)
+
+
+def _format_count_map(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return "`none`"
+    return ", ".join(
+        f"`{key}: {_fmt_metric(count)}`"
+        for key, count in sorted(value.items())
+    )
 
 
 def retrain_centroid_classifier(

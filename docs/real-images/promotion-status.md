@@ -421,13 +421,16 @@ acceptance just like failed curated validation.
 
 `morphea self-learn --suite-family-baseline baseline.json` compares the current
 normalized family view against a fixed baseline. Newly introduced primitive,
-real-image, or Lucide bad outcomes block acceptance, while known baseline debt
-is reported separately from new regressions.
+real-image, or Lucide bad outcomes block acceptance, while good baseline
+families that are missing from the current validation view are now reported as
+`missing_current_family` coverage gaps and also block acceptance.
 When the baseline comparison is clean, configured curated or Lucide validation
 failures remain visible as known baseline debt but no longer block acceptance;
 new family regressions still block.
-Cycle reports now include `known_debt` / `known_debt_count`, making carried
-red families visible beside `new_regressions` and `resolved_regressions`.
+Cycle reports now include full `comparisons`, `comparison_outcome_counts`,
+`known_debt`, and `missing_current_families`, making held/improved families,
+carried red families, coverage gaps, new regressions, and resolved regressions
+visible in one baseline view.
 
 `morphea self-learn --suite-family-baseline-output next-baseline.json` writes
 the accepted cycle's current `suite_family_validation` as a reusable baseline
