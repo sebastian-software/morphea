@@ -608,7 +608,8 @@ The curated output root also includes suite-level review packet artifacts:
 - `review-gallery.html`: local static gallery for promotion cases in the suite
   run. It shows quality label, promotion/editability decisions, issue tags,
   failed gate/component ids, the contact sheet image, review artifact links,
-  and terminal decision-template links without requiring raw JSON inspection.
+  terminal decision-template links, and review-packet apply commands without
+  requiring raw JSON inspection.
 
 When `curated-check --markdown` is used, the suite Markdown report includes a
 Corpus Ledger table before the promotion-gate details. The ledger surfaces each

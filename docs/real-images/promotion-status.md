@@ -139,7 +139,8 @@ chosen terminal template and apply it without reconstructing manifest, output,
 or Markdown paths by hand.
 It also writes `review-gallery.html`, a local static gallery that shows each
 promotion case's contact sheet, quality label, promotion/editability decision,
-failed gates/components, review links, and terminal decision-template links.
+failed gates/components, review links, terminal decision-template links, and
+per-decision apply commands for queued review cases.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may

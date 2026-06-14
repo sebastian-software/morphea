@@ -683,6 +683,9 @@ class CuratedSuiteTests(unittest.TestCase):
                 "simple-circle/review-templates/deferred.json",
                 review_gallery,
             )
+            self.assertIn("Apply commands", review_gallery)
+            self.assertIn("promotion-apply-review", review_gallery)
+            self.assertIn("simple-circle/applied-review.json", review_gallery)
 
     def test_promotion_export_artifacts_partition_rejected_anchors(self):
         with tempfile.TemporaryDirectory() as temp_dir:

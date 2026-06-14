@@ -278,6 +278,32 @@ code {
   color: var(--muted);
 }
 
+.command-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.command-panel summary {
+  cursor: pointer;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.command-panel dl {
+  margin: 10px 0 0;
+}
+
+.command-panel div {
+  margin-top: 8px;
+}
+
+.command-panel code {
+  display: block;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 760px) {
   .page-header {
     grid-template-columns: 1fr;
@@ -311,6 +337,11 @@ def render_review_gallery_html(
         for case in packet_cases
         if isinstance(case, dict) and isinstance(case.get("case_id"), str)
     }
+    packet_cases_by_id = {
+        str(case.get("case_id")): case
+        for case in packet_cases
+        if isinstance(case, dict) and isinstance(case.get("case_id"), str)
+    }
     label_counts = _review_gallery_label_counts(cases)
     decision_counts = _review_gallery_decision_counts(cases)
     cards = "\n".join(
@@ -318,6 +349,7 @@ def render_review_gallery_html(
             case,
             html_path=html_path,
             queued=case.get("id") in queued_case_ids,
+            packet_case=packet_cases_by_id.get(str(case.get("id"))),
         )
         for case in cases
     )
@@ -369,6 +401,7 @@ def _render_review_gallery_case_card(
     *,
     html_path: Path,
     queued: bool,
+    packet_case: dict[str, object] | None = None,
 ) -> str:
     case_id = str(case.get("id", "n/a"))
     promotion = case.get("promotion", {})
@@ -403,6 +436,7 @@ def _render_review_gallery_case_card(
         artifacts.get("review_templates"),
         html_path=html_path,
     )
+    review_commands = _review_gallery_review_commands(packet_case)
     queue_badge = '<span class="queue-badge">review queue</span>' if queued else ""
     return f"""      <article class="case-card {quality_class}">
         <div class="case-visual">{contact_sheet}</div>
@@ -423,6 +457,7 @@ def _render_review_gallery_case_card(
           <p class="tag-line"><strong>Failed components</strong> {_html_list(failed_components)}</p>
           <div class="link-row">{links}</div>
           <div class="template-row">{template_links}</div>
+          {review_commands}
         </div>
       </article>"""
 
@@ -541,6 +576,33 @@ def _review_gallery_template_links(value: object, *, html_path: Path) -> str:
     if not links:
         return '<span class="muted">No decision templates</span>'
     return "\n            ".join(links)
+
+
+def _review_gallery_review_commands(packet_case: object) -> str:
+    if not isinstance(packet_case, dict):
+        return ""
+    commands = packet_case.get("review_commands")
+    if not isinstance(commands, dict) or not commands:
+        return ""
+    rows: list[str] = []
+    for decision in PROMOTION_REVIEW_DECISIONS:
+        command = commands.get(decision)
+        if not isinstance(command, str) or not command:
+            continue
+        rows.append(
+            "              "
+            f"<div><dt>{_html(decision)}</dt>"
+            f"<dd><code>{_html(command)}</code></dd></div>"
+        )
+    if not rows:
+        return ""
+    return (
+        '<details class="command-panel">'
+        "<summary>Apply commands</summary>"
+        "<dl>\n"
+        + "\n".join(rows)
+        + "\n            </dl></details>"
+    )
 
 
 def _review_gallery_uri(value: str, *, html_path: Path) -> str:

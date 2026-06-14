@@ -392,6 +392,8 @@ Queued cases also include per-decision `review_commands`, so the apply step can
 be run from an edited terminal template without reconstructing paths manually.
 Curated output roots also write `review-gallery.html`, so those artifacts can
 be scanned visually from one local page before a terminal decision is applied.
+Queued gallery cards render the same per-decision apply commands as the review
+packet, keeping the visual review path out of raw JSON.
 `morphea promotion-apply-review` consumes edited terminal decision records,
 rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests. Terminal records require

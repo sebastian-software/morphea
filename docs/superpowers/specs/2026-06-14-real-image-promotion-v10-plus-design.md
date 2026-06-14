@@ -383,7 +383,8 @@ Deliverables:
 - a small local gallery for current green/yellow/red examples. Current slice:
   curated runs with `--output-dir` write `review-gallery.html`, a static local
   page with contact sheets, quality labels, promotion/editability decisions,
-  failed gates/components, review links, and terminal decision-template links.
+  failed gates/components, review links, terminal decision-template links, and
+  per-decision apply commands for queued cases.
 
 Exit criteria:
 

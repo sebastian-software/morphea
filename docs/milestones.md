@@ -438,8 +438,8 @@ Implemented so far:
   accepted/corrected applied reviews update implicitly.
 - curated output roots write `review-gallery.html`, a local static review
   gallery with contact sheets, quality labels, promotion/editability decisions,
-  failed gates/components, artifact links, and terminal decision-template
-  links.
+  failed gates/components, artifact links, terminal decision-template links,
+  and per-decision apply commands for queued cases.
 - `morphea promotion-apply-review` validates edited promotion review decisions,
   rejects pending records, requires reviewer/reason evidence, requires
   correction notes and corrected artifacts for `corrected` records, writes
