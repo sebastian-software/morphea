@@ -671,6 +671,10 @@ class SnapshotComparisonTests(unittest.TestCase):
             "expected_kinds": ["circle"],
             "gate_id": "gold-circle-region",
             "gate_type": "shape_class",
+            "region_layer_count": 2,
+            "layer_roles": ["cutout_overlays", "filled_primitives"],
+            "structural_layer_count": 1,
+            "structural_layer_roles": ["filled_primitives"],
         }
         after_region = {
             "id": "gold-circle-region",
@@ -690,6 +694,10 @@ class SnapshotComparisonTests(unittest.TestCase):
             "expected_kinds": ["circle"],
             "gate_id": "gold-circle-region",
             "gate_type": "shape_class",
+            "region_layer_count": 1,
+            "layer_roles": ["filled_primitives"],
+            "structural_layer_count": 1,
+            "structural_layer_roles": ["filled_primitives"],
         }
         comparison = render_snapshot_comparison(
             {
@@ -748,6 +756,18 @@ class SnapshotComparisonTests(unittest.TestCase):
         )
         self.assertIn(
             {"field": "gate_ok", "before": False, "after": True},
+            changed["changes"],
+        )
+        self.assertIn(
+            {"field": "region_layer_count", "before": 2, "after": 1},
+            changed["changes"],
+        )
+        self.assertIn(
+            {
+                "field": "layer_roles",
+                "before": ["cutout_overlays", "filled_primitives"],
+                "after": ["filled_primitives"],
+            },
             changed["changes"],
         )
         self.assertEqual(deltas[("new-region", "added")]["after_state"], "deferred")

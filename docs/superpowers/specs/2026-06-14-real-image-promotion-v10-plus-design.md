@@ -257,6 +257,13 @@ Deliverables:
 - merge rules for harmless cutout overlays and same-object fragments;
 - hard limits for accidental layer explosion.
 
+Current region slice: promotion-region records now carry `layer_roles`,
+`layer_role_counts`, `region_layer_count`, `structural_layer_roles`, and
+`structural_layer_count` derived from selected anchors. They reuse
+`promotion.structure_thresholds.non_structural_layer_roles`, so harmless
+overlay roles can be visible without inflating structural layer depth.
+`curated-check --markdown` shows the same evidence in the Region Truth table.
+
 Exit criteria:
 
 - generated illustration cases can distinguish useful overlay layers from

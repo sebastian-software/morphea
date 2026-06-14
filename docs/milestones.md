@@ -1016,7 +1016,8 @@ Implemented so far:
   failed expectations, key metrics, and artifact directories.
 - the same Markdown report includes a Region Truth table for configured
   source-region gates, with stable region ids, state, bounds, expected kinds,
-  actual matching counts, and topology evidence.
+  actual matching counts, topology evidence, and per-region layer-depth
+  evidence.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

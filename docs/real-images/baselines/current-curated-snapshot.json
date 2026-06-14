@@ -1428,7 +1428,17 @@
           "gate_ok": true,
           "gate_type": "shape_class",
           "id": "gold-circle-region-shape-class",
+          "layer_role_counts": {
+            "filled_primitives": 5
+          },
+          "layer_roles": [
+            "filled_primitives"
+          ],
+          "non_structural_layer_roles": [
+            "cutout_overlays"
+          ],
           "reason": "matching anchors in region: 5",
+          "region_layer_count": 1,
           "selected_anchor_count": 5,
           "selected_anchor_ids": [
             "anchor-0036",
@@ -1445,7 +1455,11 @@
             40
           ],
           "severity": "red",
-          "state": "deferred"
+          "state": "deferred",
+          "structural_layer_count": 1,
+          "structural_layer_roles": [
+            "filled_primitives"
+          ]
         }
       ],
       "promotion_summary": {
@@ -2128,7 +2142,15 @@
           "gate_ok": true,
           "gate_type": "topology",
           "id": "radio-control-region-topology",
+          "layer_role_counts": {
+            "strokes": 1
+          },
+          "layer_roles": [
+            "strokes"
+          ],
+          "non_structural_layer_roles": [],
           "reason": "matching anchors in region: 1",
+          "region_layer_count": 1,
           "selected_anchor_count": 1,
           "selected_anchor_ids": [
             "anchor-0083"
@@ -2137,7 +2159,11 @@
             83
           ],
           "severity": "red",
-          "state": "deferred"
+          "state": "deferred",
+          "structural_layer_count": 1,
+          "structural_layer_roles": [
+            "strokes"
+          ]
         }
       ],
       "promotion_summary": {

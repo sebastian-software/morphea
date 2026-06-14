@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from morphea.cli import main
 from morphea.curated import (
+    _promotion_region_results,
     _structure_threshold_promotion_gate,
     check_curated_suite,
     load_curated_suite,
@@ -1350,6 +1351,19 @@ class CuratedSuiteTests(unittest.TestCase):
                 [0],
             )
             self.assertEqual(
+                region_by_id["circle-region"]["layer_roles"],
+                ["filled_primitives"],
+            )
+            self.assertEqual(region_by_id["circle-region"]["region_layer_count"], 1)
+            self.assertEqual(
+                region_by_id["circle-region"]["structural_layer_roles"],
+                ["filled_primitives"],
+            )
+            self.assertEqual(
+                region_by_id["circle-region"]["structural_layer_count"],
+                1,
+            )
+            self.assertEqual(
                 region_by_id["wide-circle-region"]["selected_anchor_indexes"],
                 [0],
             )
@@ -1403,19 +1417,22 @@ class CuratedSuiteTests(unittest.TestCase):
                 "| `single-circle` | `circle-region` | `promoted` | "
                 "`shape_class` | `4,4,18,18` | kinds=`circle`, "
                 "min_iou=0.3 | matching=1, selected=1, forbidden=0 | "
+                "layers=1, structural=1, roles=`filled_primitives` | "
                 "closed=1, open=0, holes=0, cutouts=0, failures=n/a |",
                 markdown,
             )
             self.assertIn(
                 "| `single-circle` | `empty-region` | `rejected` | "
                 "`shape_class` | `0,0,4,4` | kinds=`circle`, "
-                "min_iou=0.1 | matching=0, selected=0, forbidden=0 |",
+                "min_iou=0.1 | matching=0, selected=0, forbidden=0 | "
+                "layers=0, structural=0, roles=`none` |",
                 markdown,
             )
             self.assertIn(
                 "| `single-circle` | `circle-topology` | `rejected` | "
                 "`topology` | `4,4,18,18` | kinds=`circle`, min_iou=0.3 | "
                 "matching=1, selected=1, forbidden=0 | "
+                "layers=1, structural=1, roles=`filled_primitives` | "
                 "closed=1, open=0, holes=0, cutouts=0, "
                 "failures=`closed_anchor_count 1 > 0` |",
                 markdown,
@@ -1459,6 +1476,77 @@ class CuratedSuiteTests(unittest.TestCase):
             gate["evidence"]["non_structural_layer_roles"],
             ["cutout_overlays"],
         )
+
+    def test_promotion_region_results_report_region_layer_depth(self):
+        regions = _promotion_region_results(
+            {
+                "id": "layered-case",
+                "status": "checked",
+                "promotion": {
+                    "current_quality_label": "green",
+                    "structure_thresholds": {
+                        "non_structural_layer_roles": ["cutout_overlays"]
+                    },
+                    "region_gates": [
+                        {
+                            "id": "layered-region",
+                            "gate_type": "shape_class",
+                            "bounds": [0, 0, 10, 10],
+                            "expected_kinds": ["circle"],
+                        }
+                    ],
+                },
+                "promotion_gates": [
+                    {
+                        "id": "layered-region",
+                        "gate_type": "shape_class",
+                        "ok": True,
+                        "severity": "red",
+                        "reason": "matching anchors in region: 2",
+                        "evidence": {
+                            "selected_anchors": [
+                                {"id": "anchor-0000"},
+                                {"id": "anchor-0002"},
+                            ]
+                        },
+                    }
+                ],
+            },
+            manifest={
+                "anchors": [
+                    {"layer": "filled_primitives"},
+                    {"layer": "strokes"},
+                    {"layer": "cutout_overlays"},
+                ],
+                "layers": [
+                    {
+                        "name": "filled_primitives",
+                        "anchor_indexes": [0],
+                        "anchor_count": 1,
+                    },
+                    {
+                        "name": "cutout_overlays",
+                        "anchor_indexes": [2],
+                        "anchor_count": 1,
+                    },
+                ],
+            },
+        )
+
+        self.assertEqual(regions[0]["state"], "promoted")
+        self.assertEqual(regions[0]["selected_anchor_indexes"], [0, 2])
+        self.assertEqual(
+            regions[0]["layer_role_counts"],
+            {"cutout_overlays": 1, "filled_primitives": 1},
+        )
+        self.assertEqual(
+            regions[0]["layer_roles"],
+            ["cutout_overlays", "filled_primitives"],
+        )
+        self.assertEqual(regions[0]["region_layer_count"], 2)
+        self.assertEqual(regions[0]["structural_layer_roles"], ["filled_primitives"])
+        self.assertEqual(regions[0]["structural_layer_count"], 1)
+        self.assertEqual(regions[0]["non_structural_layer_roles"], ["cutout_overlays"])
 
     def test_group_promotion_gates_check_group_membership(self):
         with tempfile.TemporaryDirectory() as temp_dir:

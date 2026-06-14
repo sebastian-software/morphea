@@ -24,6 +24,11 @@ PROMOTION_REGION_DELTA_FIELDS = (
     "forbidden_kinds",
     "gate_id",
     "gate_type",
+    "region_layer_count",
+    "layer_roles",
+    "layer_role_counts",
+    "structural_layer_count",
+    "structural_layer_roles",
 )
 
 

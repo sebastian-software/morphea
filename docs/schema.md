@@ -597,7 +597,10 @@ case reports also include:
 - `promotion_regions`: region-level promotion state derived from
   `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
   or `rejected`), bounds, gate id, selected anchor ids/indexes, gate status, and
-  reason
+  reason. Checked cases also include per-region layer evidence derived from the
+  selected anchors: `layer_roles`, `layer_role_counts`, `region_layer_count`,
+  `structural_layer_roles`, `structural_layer_count`, and
+  `non_structural_layer_roles`.
 - `editability_review`: accepted-output review decision with `decision`
   (`accepted`, `manual_review`, or `rejected`), `accepted`, component
   `thresholds`, `component_scores`, `failed_components`,
@@ -614,7 +617,8 @@ top-level `promotion` object with summary, gates, regions, and promotion export
 editability-review, and review-decision artifact paths. Anchors selected by
 promotion regions are annotated with `promotion_state` and
 `promotion_regions`; unselected anchors are marked `fallback`. The manifest
-also includes review-template paths plus top-level `editability_review` and
+also preserves the same per-region layer evidence under `promotion.regions`,
+plus review-template paths and top-level `editability_review` and
 `review_decision`, so the accepted-output decision and the editable
 human-review decision record are preserved with the run artifact.
 
@@ -1526,8 +1530,10 @@ When compared items include `promotion_regions`, the comparison also records
 explicit `promotion_region_deltas` for shared cases. Each delta includes
 `case_id`, `region_id`, `status` (`changed`, `added`, or `removed`), before/after
 state, before/after gate status, before/after selected anchor counts/indexes,
-before/after reasons, and a field-level `changes` list. This avoids relying on
-aggregate metric paths to identify which source-region contract changed.
+before/after reasons, region layer-depth fields such as `region_layer_count`
+and `structural_layer_count`, and a field-level `changes` list. This avoids
+relying on aggregate metric paths to identify which source-region contract
+changed.
 
 `morphea compare-snapshots --markdown comparison.md` writes a scan-friendly table
 for reviewing differences between saved reports from different commits or

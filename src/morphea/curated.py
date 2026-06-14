@@ -307,8 +307,8 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 "",
                 "## Region Truth",
                 "",
-                "| Case | Region | State | Gate | Bounds | Expected | Actual | Topology |",
-                "| --- | --- | --- | --- | --- | --- | --- | --- |",
+                "| Case | Region | State | Gate | Bounds | Expected | Actual | Layers | Topology |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         lines.extend(region_rows)
@@ -672,7 +672,10 @@ def _check_curated_case(
             result["promotion_gates"],
             case_status=result.get("status"),
         )
-        result["promotion_regions"] = _promotion_region_results(result)
+        result["promotion_regions"] = _promotion_region_results(
+            result,
+            manifest=manifest,
+        )
         result["editability_review"] = _editability_review(
             result,
             baseline_case=baseline_case,
@@ -1994,7 +1997,11 @@ def _component_score(component: object) -> object:
     return None
 
 
-def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
+def _promotion_region_results(
+    case: dict[str, Any],
+    *,
+    manifest: dict[str, Any] | None = None,
+) -> list[dict[str, object]]:
     promotion = case.get("promotion")
     if not isinstance(promotion, dict):
         return []
@@ -2006,6 +2013,12 @@ def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
         for gate in case.get("promotion_gates", [])
         if isinstance(gate, dict) and isinstance(gate.get("id"), str)
     }
+    thresholds = promotion.get("structure_thresholds")
+    non_structural_roles = (
+        _non_structural_layer_roles(thresholds)
+        if isinstance(thresholds, dict)
+        else ()
+    )
     regions: list[dict[str, object]] = []
     for region in configured:
         if not isinstance(region, dict):
@@ -2018,38 +2031,97 @@ def _promotion_region_results(case: dict[str, Any]) -> list[dict[str, object]]:
             gate=gate,
         )
         selected_ids = _gate_selected_anchor_ids(gate)
-        regions.append(
-            {
-                "id": region_id,
-                "state": state,
-                "gate_id": region_id,
-                "gate_type": region.get("gate_type", "shape_class"),
-                "gate_ok": bool(gate.get("ok", False)) if isinstance(gate, dict) else False,
-                "severity": (
-                    str(gate.get("severity", "red"))
-                    if isinstance(gate, dict)
-                    else "red"
-                ),
-                "bounds": region.get("bounds"),
-                "expected_kinds": region.get("expected_kinds", []),
-                "forbidden_kinds": region.get("forbidden_kinds", []),
-                "selected_anchor_ids": selected_ids,
-                "selected_anchor_indexes": [
-                    index
-                    for index in (
-                        _anchor_index_from_id(anchor_id) for anchor_id in selected_ids
-                    )
-                    if index is not None
-                ],
-                "selected_anchor_count": len(selected_ids),
-                "reason": (
-                    str(gate.get("reason", "missing gate result"))
-                    if isinstance(gate, dict)
-                    else "missing gate result"
-                ),
-            }
+        selected_indexes = [
+            index
+            for index in (_anchor_index_from_id(anchor_id) for anchor_id in selected_ids)
+            if index is not None
+        ]
+        region_result = {
+            "id": region_id,
+            "state": state,
+            "gate_id": region_id,
+            "gate_type": region.get("gate_type", "shape_class"),
+            "gate_ok": bool(gate.get("ok", False)) if isinstance(gate, dict) else False,
+            "severity": (
+                str(gate.get("severity", "red"))
+                if isinstance(gate, dict)
+                else "red"
+            ),
+            "bounds": region.get("bounds"),
+            "expected_kinds": region.get("expected_kinds", []),
+            "forbidden_kinds": region.get("forbidden_kinds", []),
+            "selected_anchor_ids": selected_ids,
+            "selected_anchor_indexes": selected_indexes,
+            "selected_anchor_count": len(selected_ids),
+            "reason": (
+                str(gate.get("reason", "missing gate result"))
+                if isinstance(gate, dict)
+                else "missing gate result"
+            ),
+        }
+        region_result.update(
+            _promotion_region_layer_summary(
+                selected_indexes,
+                manifest=manifest,
+                non_structural_layer_roles=non_structural_roles,
+            )
         )
+        regions.append(region_result)
     return regions
+
+
+def _promotion_region_layer_summary(
+    selected_anchor_indexes: list[int],
+    *,
+    manifest: dict[str, Any] | None,
+    non_structural_layer_roles: tuple[str, ...],
+) -> dict[str, object]:
+    layer_by_index = _manifest_anchor_layers(manifest)
+    roles = [
+        layer_by_index[index]
+        for index in selected_anchor_indexes
+        if index in layer_by_index
+    ]
+    role_counts = _counts(roles)
+    layer_roles = sorted(role_counts)
+    structural_roles = [
+        role for role in layer_roles if role not in set(non_structural_layer_roles)
+    ]
+    return {
+        "layer_roles": layer_roles,
+        "layer_role_counts": role_counts,
+        "region_layer_count": len(layer_roles),
+        "structural_layer_roles": structural_roles,
+        "structural_layer_count": len(structural_roles),
+        "non_structural_layer_roles": list(non_structural_layer_roles),
+    }
+
+
+def _manifest_anchor_layers(manifest: dict[str, Any] | None) -> dict[int, str]:
+    if not isinstance(manifest, dict):
+        return {}
+    layer_by_index: dict[int, str] = {}
+    anchors = manifest.get("anchors", [])
+    if isinstance(anchors, list):
+        for index, anchor in enumerate(anchors):
+            if not isinstance(anchor, dict):
+                continue
+            layer = anchor.get("layer")
+            if isinstance(layer, str) and layer:
+                layer_by_index[index] = layer
+    layers = manifest.get("layers", [])
+    if isinstance(layers, list):
+        for layer in layers:
+            if not isinstance(layer, dict):
+                continue
+            name = layer.get("name")
+            indexes = layer.get("anchor_indexes")
+            if not isinstance(name, str) or not isinstance(indexes, list):
+                continue
+            for index in indexes:
+                if isinstance(index, int):
+                    layer_by_index.setdefault(index, name)
+    return layer_by_index
 
 
 def _promotion_region_state(
@@ -3526,6 +3598,7 @@ def _region_truth_rows(cases: object) -> list[str]:
                 f"{_fmt_region_bounds(evidence.get('bounds'))} | "
                 f"{_fmt_region_expected(evidence)} | "
                 f"{_fmt_region_actual(evidence)} | "
+                f"{_fmt_region_layers(region)} | "
                 f"{_fmt_region_topology(evidence)} |"
             )
     return rows
@@ -3560,6 +3633,19 @@ def _fmt_region_actual(evidence: dict[str, object]) -> str:
         f"matching={_fmt_markdown_value(evidence.get('matching_count'))}, "
         f"selected={_fmt_markdown_value(evidence.get('selected_count'))}, "
         f"forbidden={_fmt_markdown_value(evidence.get('forbidden_count'))}"
+    )
+
+
+def _fmt_region_layers(region: object) -> str:
+    if not isinstance(region, dict):
+        return "n/a"
+    roles = _fmt_markdown_list(region.get("layer_roles"))
+    if roles == "n/a":
+        roles = "`none`"
+    return (
+        f"layers={_fmt_markdown_value(region.get('region_layer_count'))}, "
+        f"structural={_fmt_markdown_value(region.get('structural_layer_count'))}, "
+        f"roles={roles}"
     )
 
 
