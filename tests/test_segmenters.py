@@ -1018,6 +1018,37 @@ class SegmenterTests(unittest.TestCase):
                     ]
                 )
 
+    def test_segment_cli_rejects_unknown_mlx_prompt_strategy(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "segments.json"
+            config = root / "segment-mlx.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "segmenter": "mlx_sam",
+                        "mlx_model_path": "models/sam.safetensors",
+                        "mlx_prompt_strategy": "centerish",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "unsupported mlx_prompt_strategy: centerish",
+            ):
+                main(
+                    [
+                        "segment",
+                        str(_write_two_color_image()),
+                        "-o",
+                        str(output),
+                        "--config",
+                        str(config),
+                    ]
+                )
+
     def test_checked_in_mlx_sam_smoke_configs_are_repeatable(self):
         repo_root = Path(__file__).resolve().parents[1]
         config_dir = repo_root / "docs" / "real-images" / "mlx-sam-smoke"

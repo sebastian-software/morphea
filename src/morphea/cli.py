@@ -163,6 +163,7 @@ SEGMENT_CONFIG_DEFAULTS = {
     "max_anchor_quality_error": 1.0,
     "require_reserved_anchor": False,
 }
+MLX_PROMPT_STRATEGIES = ("grid_points", "flat_color_centers")
 SEGMENT_ARTIFACT_CONFIG_KEYS = {"input", "output", "markdown"}
 COMPARE_SNAPSHOTS_CONFIG_KEYS = {"before", "after", "output", "markdown"}
 COMPARE_SEGMENTS_CONFIG_KEYS = {"before", "after", "output", "markdown"}
@@ -523,7 +524,7 @@ def main(argv: list[str] | None = None) -> None:
     segment.add_argument("--mlx-timeout-seconds", type=float)
     segment.add_argument(
         "--mlx-prompt-strategy",
-        choices=("grid_points", "flat_color_centers"),
+        choices=MLX_PROMPT_STRATEGIES,
     )
     segment.add_argument(
         "--geometry-gate",
@@ -2355,6 +2356,13 @@ def _resolved_segment_config(args: argparse.Namespace) -> dict[str, object]:
             config[key] = value
     if config.get("mlx_model_path") is not None:
         config["mlx_model_path"] = str(config["mlx_model_path"])
+    if str(config["mlx_prompt_strategy"]) not in MLX_PROMPT_STRATEGIES:
+        supported = ", ".join(MLX_PROMPT_STRATEGIES)
+        msg = (
+            "unsupported mlx_prompt_strategy: "
+            f"{config['mlx_prompt_strategy']} (expected one of: {supported})"
+        )
+        raise ValueError(msg)
     return config
 
 
