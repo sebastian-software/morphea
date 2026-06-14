@@ -74,6 +74,28 @@ class RunWriterTests(unittest.TestCase):
                 run.html_report_path.read_text(encoding="utf-8"),
             )
 
+    def test_write_vectorize_run_flattens_transparent_input_for_preview_metrics(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "transparent-input.png"
+            image = Image.new("RGBA", (24, 16), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((2, 2, 10, 10), fill="#dd2222")
+            image.save(input_path)
+
+            scene = scene_from_flat_color_image(input_path, min_area=4)
+            run_dir = create_run_dir(Path(temp_dir) / "runs")
+            run = write_vectorize_run(
+                run_dir=run_dir,
+                input_path=input_path,
+                scene=scene,
+                config={"command": "vectorize", "min_area": 4},
+            )
+
+            manifest = json.loads(run.manifest_path.read_text())
+            metrics = manifest["metrics"]
+            self.assertEqual(metrics["raster_alpha_error"], 0.0)
+            self.assertLess(metrics["raster_l1_error"], 0.05)
+
     def test_write_vectorize_run_applies_negative_mask_export_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_path = Path(temp_dir) / "input.png"

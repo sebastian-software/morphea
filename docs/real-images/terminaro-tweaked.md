@@ -141,8 +141,10 @@ Secondary anchors:
   - the gold-circle region gate now matches the two shoulder brooches plus the
     three center dots as five editable `circle` anchors using anchor-coverage
     region matching.
-  - v10 promotion still fails on raster L1 fidelity and editability review
-    components for parameter economy, fragmentation, and raster fidelity.
+  - transparent-source raster metrics now flatten against the white preview
+    background, so the visual L1 gate passes at 0.056356 < 0.18.
+  - v10 promotion still fails on the current red quality label and editability
+    review components for parameter economy and fragmentation.
   - white line gaps in hair/clothing need curved cut-out detection, not only
     horizontal/vertical gaps.
 - Reporting:

@@ -40,6 +40,7 @@ def raster_fidelity_metrics(
     *,
     source: Image.Image,
     rendered: Image.Image,
+    background: str | None = None,
 ) -> dict[str, object]:
     """Compare a rendered preview with its source image using bounded metrics."""
 
@@ -48,6 +49,10 @@ def raster_fidelity_metrics(
     size_matches = source_rgba.size == rendered_rgba.size
     if not size_matches:
         rendered_rgba = rendered_rgba.resize(source_rgba.size, Image.Resampling.NEAREST)
+    if background is not None:
+        backdrop = _rgba(background)
+        source_rgba = _flatten_on_background(source_rgba, backdrop)
+        rendered_rgba = _flatten_on_background(rendered_rgba, backdrop)
 
     source_pixels = source_rgba.tobytes()
     rendered_pixels = rendered_rgba.tobytes()
@@ -74,6 +79,14 @@ def raster_fidelity_metrics(
             6,
         ),
     }
+
+
+def _flatten_on_background(
+    image: Image.Image,
+    background: tuple[int, int, int, int],
+) -> Image.Image:
+    backdrop = Image.new("RGBA", image.size, background)
+    return Image.alpha_composite(backdrop, image)
 
 
 def _draw_anchor(draw: ImageDraw.ImageDraw, anchor: dict[str, Any]) -> None:

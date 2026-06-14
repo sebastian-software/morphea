@@ -30,7 +30,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate now passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; structure gate passes with `structural_layer_count` 3/3 while raw layer count remains 4 due cutout overlays; v10 remains red because `current_quality_label` is red, visual L1 0.230301 > 0.18, and editability review rejects parameter economy, fragmentation, and raster fidelity |
+| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; transparent-source raster metrics now flatten against the white preview background, so visual L1 is 0.056356 < 0.18 with alpha error 0; structure gate passes with `structural_layer_count` 3/3 while raw layer count remains 4 due cutout overlays; v10 remains red because `current_quality_label` is red and editability review rejects parameter economy and fragmentation |
 | `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `fragmentation` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.056356 < 0.18, `structural_layer_count` 3/3; v10 remains red because `current_quality_label` is red and editability review rejects parameter economy and fragmentation |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation` | visual L1 0.033861 < 0.08; radio topology gate now passes with 1 selected `stroke_circle` and `disconnected_component_count=1`; v10 remains red because `current_quality_label` is red and editability review rejects shape identity, fragmentation, and provenance |
 
@@ -155,7 +155,7 @@ candidate.
 | Criterion | Status | Evidence |
 | --- | --- | --- |
 | `badge-check` cannot pass as a circle-like substitute. | met | Lucide calibration is 24/24; `badge-check` passes only because the badge outline is preserved as a closed irregular `stroke_path`, not as a circle substitute. |
-| Wrong topology is red even with acceptable L1. | met | `radio-control-region-topology` remains a red topology gate; the prior duplicate-anchor failure selected 2 components and was rejected, while the current deduped run selects 1 component and passes. |
+| Wrong topology is red even with acceptable L1. | met | The prior `radio-control-region-topology` duplicate-anchor failure selected 2 components and was rejected; the current deduped run selects 1 component and passes, proving the red topology gate caught the earlier bad shape before it was fixed. |
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
 
@@ -189,8 +189,9 @@ For example, the current UI screenshot keeps `raster_fidelity=0.944073` and now
 keeps `topology_consistency=1.0` after duplicate radio anchors are deduplicated,
 but it still fails shape identity, fragmentation, and provenance component
 thresholds. The current Terminaro run no longer caps shape identity after the
-gold-circle region gate moved to 5/5 matched `circle` anchors, but it still caps
-raster fidelity because the visual L1 gate fails.
+gold-circle region gate moved to 5/5 matched `circle` anchors, and no longer
+caps raster fidelity after transparent-source metrics were flattened against
+the white preview background.
 
 Curated promotion reports now also include `editability_review`, which turns
 promotion state plus v10 component thresholds into an accepted-output decision:
@@ -300,9 +301,8 @@ baseline comparison path is covered outside helper-only unit tests.
 ## Next Gate
 
 The next promotion-quality block should keep all real-image semantic
-expectations green while addressing the remaining v10 red gates:
-`terminaro-tweaked` raster L1 fidelity plus the review/editability failures that
-keep all three real-image cases red. The transparent Terminaro region-circle
-gate, the opaque generated-illustration structure gate, and the UI radio
-topology gate are now mechanically green or deferred only because the containing
-case still has red review state.
+expectations green while addressing the remaining review/editability failures
+that keep all three real-image cases red. The transparent Terminaro
+region-circle and raster-fidelity gates, the opaque generated-illustration
+structure gate, and the UI radio topology gate are now mechanically green or
+deferred only because the containing case still has red review state.

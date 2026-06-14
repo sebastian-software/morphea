@@ -71,12 +71,17 @@ def write_vectorize_run(
     mask_summary_path = run_dir / "mask-summary.json"
 
     manifest = scene.to_manifest()
-    preview = render_manifest_image(manifest)
+    preview_background = str(config.get("preview_background", "#ffffff"))
+    preview = render_manifest_image(manifest, background=preview_background)
     if input_path.exists():
         with Image.open(input_path) as source:
             metrics = manifest.setdefault("metrics", {})
             metrics.update(
-                raster_fidelity_metrics(source=source, rendered=preview)
+                raster_fidelity_metrics(
+                    source=source,
+                    rendered=preview,
+                    background=preview_background,
+                )
             )
             if isinstance(metrics, dict):
                 refresh_raster_editability_component(metrics)

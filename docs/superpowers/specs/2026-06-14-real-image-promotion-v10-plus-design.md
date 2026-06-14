@@ -27,12 +27,11 @@ Known evidence:
 - All three current real-image cases are still v10 red because promotion gates,
   not semantic expectations, block trusted output.
 
-Current red gates after the structural-layer, UI-topology, and Terminaro
-region-coverage refinements:
+Current red gates after the structural-layer, UI-topology, Terminaro
+region-coverage, and transparent-raster flattening refinements:
 
-- `terminaro-tweaked`: current quality label, raster L1 fidelity, and
-  editability review failures for parameter economy, fragmentation, and raster
-  fidelity.
+- `terminaro-tweaked`: current quality label plus editability review failures
+  for parameter economy and fragmentation.
 - `chatgpt-image-2026-06-11`: current quality label plus editability review
   failures for parameter economy and fragmentation.
 - `ui-radio-acceptance-screenshot`: current quality label plus editability
@@ -372,11 +371,12 @@ Scope:
 - update the fixture, report, snapshot, and suite-family baseline only after the
   fix is backed by command output.
 
-Recommended target order after the structural-layer, UI-topology, and Terminaro
-region-coverage refinements:
+Recommended target order after the structural-layer, UI-topology, Terminaro
+region-coverage, and transparent-raster flattening refinements:
 
-1. Address `terminaro-tweaked` raster L1, then its parameter-economy and
-   fragmentation editability failures.
+1. Address `terminaro-tweaked` parameter-economy and fragmentation editability
+   failures, then decide whether the case can move from red to yellow/manual
+   review.
 2. Decide whether `chatgpt-image-2026-06-11` should stay red for editability
    component failures or move to yellow pending manual review.
 3. Decide whether `ui-radio-acceptance-screenshot` should stay red for
@@ -384,9 +384,9 @@ region-coverage refinements:
 
 Reasoning:
 
-- The transparent Terminaro case no longer fails region-circle matching, but it
-  still combines visual fidelity, parameter economy, and fragmentation debt, so
-  it remains the most valuable broad target.
+- The transparent Terminaro case no longer fails region-circle matching or
+  raster fidelity, but it still combines parameter economy and fragmentation
+  debt, so it remains the most valuable broad target.
 - The opaque generated illustration no longer has a mechanical red gate besides
   the intentionally red quality label, but its editability review still rejects
   parameter economy and fragmentation, so it should not be promoted silently.
@@ -418,8 +418,8 @@ suite-family comparison reports no new regressions.
 
 These are the planning questions to answer before starting RP10.1:
 
-- Should the next target be Terminaro raster fidelity, Terminaro editability
-  economy, or review-label policy for mechanically green but editability-red
+- Should the next target be Terminaro editability economy, fragmentation, or
+  review-label policy for mechanically green but editability-red
   cases?
 - Should `current_quality_label` remain manually red until all gates pass, or
   should it be derived from gate state once a case becomes mechanically green?

@@ -624,7 +624,7 @@
           "node_economy": 0.758065,
           "parameter_economy": 0.215726,
           "provenance_confidence": 0.790323,
-          "raster_fidelity": 0.0,
+          "raster_fidelity": 0.928933,
           "shape_identity_confidence": 0.790323,
           "stroke_width_stability": 0.663784,
           "topology_consistency": 1.0
@@ -642,27 +642,12 @@
             "reason": "below_threshold",
             "score": 0.064516,
             "threshold": 0.25
-          },
-          {
-            "id": "raster_fidelity",
-            "reason": "below_threshold",
-            "score": 0.0,
-            "threshold": 0.75
           }
         ],
-        "gate_blocked_components": [
-          {
-            "failed_gates": [
-              "visual_fidelity_thresholds"
-            ],
-            "id": "raster_fidelity",
-            "uncapped_score": 0.755348
-          }
-        ],
+        "gate_blocked_components": [],
         "promotion_decision": "rejected",
         "reasons": [
           "component_threshold_failures",
-          "gate_blocked_components",
           "promotion_decision_rejected"
         ],
         "regressed_components": [],
@@ -858,15 +843,10 @@
             "score": 0.790323
           },
           "raster_fidelity": {
-            "failed_gates": [
-              "visual_fidelity_thresholds"
-            ],
-            "gate_blocked": true,
             "observed": true,
-            "raster_edge_error": 0.014351,
-            "raster_l1_error": 0.230301,
-            "score": 0.0,
-            "uncapped_score": 0.755348
+            "raster_edge_error": 0.014711,
+            "raster_l1_error": 0.056356,
+            "score": 0.928933
           },
           "shape_identity_confidence": {
             "generic_path_count": 13,
@@ -893,9 +873,9 @@
         "negative_mask_candidate_count": 12,
         "node_count": 360,
         "parameter_count": 778,
-        "raster_alpha_error": 0.303708,
-        "raster_edge_error": 0.014351,
-        "raster_l1_error": 0.230301,
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.014711,
+        "raster_l1_error": 0.056356,
         "raster_size_match": true,
         "reserved_simple_shape_area": 1963399.167834,
         "reserved_simple_shape_area_ratio": 1.0,
@@ -907,8 +887,7 @@
       "ok": true,
       "promotion": {
         "current_issues": [
-          "fragmentation",
-          "weak_visual_fidelity"
+          "fragmentation"
         ],
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
@@ -988,7 +967,8 @@
         "review_notes": [
           "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
-          "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI; v10 promotion remains red because raster L1 remains above the family threshold and the current quality label is still red."
+          "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI.",
+          "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.056356 < 0.18. v10 promotion remains red because the current quality label is still red and editability review rejects parameter economy and fragmentation."
         ],
         "source_provenance": "local generated image from the user's Desktop; source image is not checked in",
         "stress_family": "generated_illustration_table_grid",
@@ -1263,13 +1243,11 @@
         {
           "evidence": {
             "actual": {
-              "raster_edge_error": 0.014351,
-              "raster_l1_error": 0.230301
+              "raster_edge_error": 0.014711,
+              "raster_l1_error": 0.056356
             },
             "description": "Generated illustration table-grid cases need tighter L1 fidelity after structural gates pass.",
-            "failures": [
-              "raster_l1_error 0.230301 > 0.18"
-            ],
+            "failures": [],
             "family": "generated_illustration_table_grid",
             "thresholds": {
               "max_raster_edge_error": 0.025,
@@ -1278,8 +1256,8 @@
           },
           "gate_type": "visual_fidelity",
           "id": "visual_fidelity_thresholds",
-          "ok": false,
-          "reason": "visual thresholds failed: raster_l1_error 0.230301 > 0.18",
+          "ok": true,
+          "reason": "visual thresholds passed",
           "severity": "red"
         }
       ],
@@ -1321,8 +1299,8 @@
       ],
       "promotion_summary": {
         "decision": "rejected",
-        "failed_gate_count": 2,
-        "red_gate_count": 2,
+        "failed_gate_count": 1,
+        "red_gate_count": 1,
         "yellow_gate_count": 0
       },
       "review_decision": {
@@ -1348,12 +1326,6 @@
             "reason": "below_threshold",
             "score": 0.064516,
             "threshold": 0.25
-          },
-          {
-            "id": "raster_fidelity",
-            "reason": "below_threshold",
-            "score": 0.0,
-            "threshold": 0.75
           }
         ],
         "failed_gates": [
@@ -1362,26 +1334,11 @@
             "id": "current_quality_label",
             "reason": "current quality label is red",
             "severity": "red"
-          },
-          {
-            "gate_type": "visual_fidelity",
-            "id": "visual_fidelity_thresholds",
-            "reason": "visual thresholds failed: raster_l1_error 0.230301 > 0.18",
-            "severity": "red"
           }
         ],
-        "gate_blocked_components": [
-          {
-            "failed_gates": [
-              "visual_fidelity_thresholds"
-            ],
-            "id": "raster_fidelity",
-            "uncapped_score": 0.755348
-          }
-        ],
+        "gate_blocked_components": [],
         "issue_tags": [
-          "fragmentation",
-          "weak_visual_fidelity"
+          "fragmentation"
         ],
         "reason": "",
         "regressed_components": [],

@@ -23,8 +23,7 @@
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
         "current_issues": [
-          "fragmentation",
-          "weak_visual_fidelity"
+          "fragmentation"
         ],
         "visual_audit_status": "contact_sheet_available",
         "visual_thresholds": {
@@ -111,7 +110,8 @@
         "review_notes": [
           "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
-          "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI; v10 promotion remains red because raster L1 remains above the family threshold and the current quality label is still red."
+          "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI.",
+          "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.056356 < 0.18. v10 promotion remains red because the current quality label is still red and editability review rejects parameter economy and fragmentation."
         ]
       },
       "recommended_config": {

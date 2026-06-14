@@ -125,6 +125,22 @@ class RenderingTests(unittest.TestCase):
         self.assertEqual(metrics["raster_l1_error"], 0.0)
         self.assertEqual(metrics["raster_alpha_error"], 0.0)
 
+    def test_raster_fidelity_can_flatten_transparent_source_to_background(self):
+        source = Image.new("RGBA", (2, 2), (0, 0, 0, 0))
+        rendered = Image.new("RGBA", (2, 2), (255, 255, 255, 255))
+
+        raw_metrics = raster_fidelity_metrics(source=source, rendered=rendered)
+        flattened_metrics = raster_fidelity_metrics(
+            source=source,
+            rendered=rendered,
+            background="#ffffff",
+        )
+
+        self.assertGreater(raw_metrics["raster_l1_error"], 0.0)
+        self.assertGreater(raw_metrics["raster_alpha_error"], 0.0)
+        self.assertEqual(flattened_metrics["raster_l1_error"], 0.0)
+        self.assertEqual(flattened_metrics["raster_alpha_error"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

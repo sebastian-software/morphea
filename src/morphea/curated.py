@@ -2604,14 +2604,20 @@ def _write_visual_audit_artifacts(
     anchor_overlay_path = run_dir / "anchor-overlay.png"
     contact_sheet_path = run_dir / "contact-sheet.png"
 
+    render_background = "#ffffff"
     svg_text = run.svg_path.read_text(encoding="utf-8")
-    svg_render = rasterized_svg_image(svg_text, background="#ffffff").convert("RGBA")
+    svg_render = rasterized_svg_image(svg_text, background=render_background).convert(
+        "RGBA"
+    )
     svg_render.save(svg_render_path)
     with Image.open(run.input_path) as source_image:
         source = source_image.convert("RGBA")
     with Image.open(run.preview_path) as preview_image:
         preview = preview_image.convert("RGBA")
-    diff = _visual_diff_image(source, svg_render)
+    diff = _visual_diff_image(
+        _flatten_visual_audit_source(source, render_background),
+        svg_render,
+    )
     diff.save(diff_path)
     anchor_overlay = _anchor_overlay_image(source, manifest)
     anchor_overlay.save(anchor_overlay_path)
@@ -2649,6 +2655,22 @@ def _visual_audit_artifact_paths(run_dir: Path) -> dict[str, str]:
         "anchor_overlay": str(run_dir / "anchor-overlay.png"),
         "contact_sheet": str(run_dir / "contact-sheet.png"),
     }
+
+
+def _flatten_visual_audit_source(source: Image.Image, background: str) -> Image.Image:
+    backdrop = Image.new("RGBA", source.size, _visual_audit_rgba(background))
+    return Image.alpha_composite(backdrop, source.convert("RGBA"))
+
+
+def _visual_audit_rgba(background: str) -> tuple[int, int, int, int]:
+    value = background.strip()
+    if not value.startswith("#") or len(value) not in {7, 9}:
+        return (255, 255, 255, 255)
+    red = int(value[1:3], 16)
+    green = int(value[3:5], 16)
+    blue = int(value[5:7], 16)
+    alpha = int(value[7:9], 16) if len(value) == 9 else 255
+    return (red, green, blue, alpha)
 
 
 def _visual_diff_image(source: Image.Image, rendered: Image.Image) -> Image.Image:
