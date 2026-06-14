@@ -876,11 +876,18 @@ applies only explicitly supplied terminal decision files, writes
 `applied-review.json` / `applied-review.md` beside the case manifest via the
 same `promotion-apply-review` rules, summarizes applied, harvestable, and
 pending cases, and writes a `harvest-curated --config` file with
-`require_applied_review: true`. Applied case rows include reviewer, reason,
-source decision path, promoted-anchor count, harvest block reason, and applied
-review-artifact links, so harvestable and blocked applied cases remain
-auditable from the prep report. Cases without an applied review remain
-pending in the prep report rather than becoming implicit training candidates.
+`require_applied_review: true`. The JSON report includes `review_harvest_audit`,
+a RIP10 review-to-learning contract with `schema_version`, `ok`, suite-level
+`checks`, aggregate coverage counts, missing checks, case counts, harvestable
+counts, and reviewed-region counts. The checks cover case accounting, explicit
+terminal decisions, reviewer evidence records, harvestable decision gating,
+reviewed-region evidence, pending review visibility, terminal-template
+readiness records, and the generated harvest config contract. Applied case rows
+include reviewer, reason, source decision path, promoted-anchor count, harvest
+block reason, and applied review-artifact links, so harvestable and blocked
+applied cases remain auditable from the prep report. Cases without an applied
+review remain pending in the prep report rather than becoming implicit training
+candidates.
 Pending cases carry available terminal `decision_templates` in JSON and
 Markdown when the review packet or config exposes them, so reviewers can see the
 accepted/corrected/rejected/deferred choices without applying them

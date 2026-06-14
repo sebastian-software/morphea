@@ -460,6 +460,12 @@ Reviewer choices and evidence can also be stored in a portable
 `decision_plan` overlay with `decision_choices` and `decision_overrides`, then
 merged into a fresh generated harvest config without committing run-local
 template paths.
+Harvest-prep reports now include `review_harvest_audit`, a RIP10 contract for
+the review-to-learning bridge. It checks case accounting, explicit terminal
+review decisions, reviewer/reason evidence, harvestable accepted/corrected
+gates, reviewed-region evidence, pending review visibility, terminal-template
+readiness, and the generated `require_applied_review` harvest config before a
+review packet is considered self-learning-ready.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

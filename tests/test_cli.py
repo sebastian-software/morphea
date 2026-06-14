@@ -12,6 +12,7 @@ from morphea.cli import main
 from morphea.dataset import generate_synthetic_dataset
 from morphea.classifier import train_centroid_classifier
 from morphea.promotion_export import promotion_export_audit
+from morphea.promotion_review_workflow import promotion_review_harvest_audit
 
 
 class CliTests(unittest.TestCase):
@@ -726,6 +727,11 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["applied_case_count"], 1)
             self.assertEqual(result["harvestable_case_count"], 1)
             self.assertEqual(result["pending_case_count"], 0)
+            self.assertTrue(result["review_harvest_audit"]["ok"])
+            self.assertEqual(
+                result["review_harvest_audit"]["summary"]["missing_checks"],
+                [],
+            )
             self.assertEqual(result["applied_cases"][0]["reviewer"], "qa")
             self.assertEqual(
                 result["applied_cases"][0]["reason"],
@@ -754,9 +760,70 @@ class CliTests(unittest.TestCase):
             self.assertTrue(config["require_applied_review"])
             rendered = markdown.read_text(encoding="utf-8")
             self.assertIn("harvest-curated --config", rendered)
+            self.assertIn("## RIP10 Review Harvest Audit", rendered)
+            self.assertIn("| `harvestable_review_gate` | `true` |", rendered)
             self.assertIn("reviewed current deferred evidence", rendered)
             self.assertIn("promotion_review", rendered)
             self.assertIn(str(terminal_decision), rendered)
+
+    def test_promotion_review_harvest_audit_rejects_deferred_harvestable_case(self):
+        audit = promotion_review_harvest_audit(
+            {
+                "case_count": 1,
+                "newly_applied_decision_count": 0,
+                "newly_applied_decisions": [],
+                "applied_case_count": 1,
+                "applied_cases": [
+                    {
+                        "case_id": "real-case",
+                        "decision": "deferred",
+                        "harvestable": True,
+                        "harvest_block_reason": None,
+                        "promoted_anchor_count": None,
+                        "reviewed_region_ids": [],
+                        "review_promoted_region_ids": [],
+                        "review_promoted_anchor_indexes": [],
+                        "reviewer": "qa",
+                        "reason": "explicitly deferred",
+                        "source_review_decision": "deferred.json",
+                    }
+                ],
+                "harvestable_case_count": 1,
+                "pending_case_count": 0,
+                "pending_cases": [],
+                "reviewable_region_summary": {
+                    "total_region_count": 0,
+                    "pending_region_count": 0,
+                    "pending_case_count": 0,
+                    "applied_reviewed_region_count": 0,
+                    "applied_review_promoted_region_count": 0,
+                    "applied_case_count": 0,
+                    "harvestable_reviewed_region_count": 0,
+                    "applied_decision_counts": {},
+                },
+                "decision_template_readiness": {},
+                "decision_template_readiness_summary": {
+                    "case_count": 0,
+                    "template_count": 0,
+                    "ready_case_count": 0,
+                    "ready_template_count": 0,
+                    "missing_field_counts": {},
+                },
+                "harvest_config": {
+                    "suite": "suite.json",
+                    "run_root": "runs",
+                    "require_applied_review": True,
+                },
+                "harvest_config_path": None,
+                "next_commands": [],
+            }
+        )
+
+        self.assertFalse(audit["ok"])
+        self.assertIn(
+            "harvestable_review_gate",
+            audit["summary"]["missing_checks"],
+        )
 
     def test_promotion_review_harvest_cli_resolves_decision_choice(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1049,6 +1116,12 @@ class CliTests(unittest.TestCase):
             self.assertIn("regions_promoted=1", stdout.getvalue())
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["harvestable_case_count"], 1)
+            self.assertTrue(result["review_harvest_audit"]["ok"])
+            self.assertTrue(
+                result["review_harvest_audit"]["checks"][
+                    "reviewed_region_evidence"
+                ]
+            )
             self.assertEqual(
                 result["reviewable_region_summary"],
                 {

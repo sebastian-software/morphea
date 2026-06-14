@@ -1216,6 +1216,12 @@ Implemented so far:
   `require_applied_review: true`; the CLI regression path proves the generated
   config harvests accepted applied reviews while excluding deferred applied
   reviews as `applied_review_not_accepted`.
+- promotion-review-harvest reports include `review_harvest_audit`, a
+  machine-readable RIP10 review-to-learning block for case accounting, explicit
+  terminal reviewer decisions, reviewer/reason evidence, harvestable
+  accepted/corrected gates, reviewed-region evidence, pending review
+  visibility, terminal-template readiness, and generated
+  `require_applied_review` harvest configs.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

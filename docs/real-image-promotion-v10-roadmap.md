@@ -784,6 +784,14 @@ The target system:
 
 The v10+ bar is not "vectorize more images." It is "earn trust on real images."
 
+Current machine-readable evidence: `morphea promotion-review-harvest` reports
+include `review_harvest_audit`, a RIP10 review-to-learning contract. The audit
+checks that explicit terminal reviewer decisions, reviewer evidence,
+harvestable accepted/corrected gates, reviewed-region evidence, pending review
+visibility, terminal-template readiness, and `require_applied_review` harvest
+configs remain consistent before reviewed real-image evidence can feed the
+self-learning path.
+
 ## Recommended Execution Order
 
 Work should proceed in this order unless a later audit proves a different

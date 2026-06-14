@@ -177,6 +177,7 @@ def prepare_promotion_review_harvest(
         "harvest_config_path": str(harvest_config) if harvest_config else None,
         "next_commands": _next_commands(harvest_config),
     }
+    result["review_harvest_audit"] = promotion_review_harvest_audit(result)
     _write_json(Path(output), result)
     if markdown is not None:
         markdown_path = Path(markdown)
@@ -202,12 +203,38 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         f"- Pending cases: {_fmt_value(result.get('pending_case_count'))}",
         f"- Reviewable region coverage: {_fmt_region_summary(result.get('reviewable_region_summary'))}",
         f"- Ready terminal templates: {_fmt_readiness_summary(result.get('decision_template_readiness_summary'))}",
+    ]
+    audit = _object_dict(result.get("review_harvest_audit"))
+    if audit:
+        audit_summary = _object_dict(audit.get("summary"))
+        lines.extend(
+            [
+                "",
+                "## RIP10 Review Harvest Audit",
+                "",
+                f"- Status: `{'pass' if audit.get('ok', False) else 'fail'}`",
+                (
+                    "- Covered checks: "
+                    f"{_fmt_value(audit_summary.get('covered_check_count'))} / "
+                    f"{_fmt_value(audit_summary.get('required_check_count'))}"
+                ),
+                f"- Missing checks: {_fmt_value_list(audit_summary.get('missing_checks'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        for name, covered in sorted(_object_dict(audit.get("checks")).items()):
+            lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+    lines.extend(
+        [
         "",
         "## Newly Applied",
         "",
         "| Case | Decision | Accepted | Review-promoted regions | Review-promoted anchors | Overrides | Manifest | Output |",
         "| --- | --- | --- | --- | --- | --- | --- | --- |",
-    ]
+        ]
+    )
     applied = result.get("newly_applied_decisions", [])
     if isinstance(applied, list) and applied:
         for item in applied:
@@ -361,6 +388,190 @@ def _reviewable_region_summary(
         "harvestable_reviewed_region_count": harvestable_reviewed_region_count,
         "applied_decision_counts": dict(sorted(decision_counts.items())),
     }
+
+
+def promotion_review_harvest_audit(
+    result: dict[str, object],
+) -> dict[str, object]:
+    checks = {
+        "case_accounting": _review_harvest_case_accounting_ok(result),
+        "explicit_terminal_decisions": _explicit_terminal_decisions_ok(result),
+        "reviewer_evidence_records": _reviewer_evidence_records_ok(result),
+        "harvestable_review_gate": _harvestable_review_gate_ok(result),
+        "reviewed_region_evidence": _reviewed_region_evidence_ok(result),
+        "pending_review_visibility": _pending_review_visibility_ok(result),
+        "template_readiness_records": _template_readiness_records_ok(result),
+        "harvest_config_contract": _harvest_config_contract_ok(result),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    applied_cases = _dict_list(result.get("applied_cases"))
+    pending_cases = _dict_list(result.get("pending_cases"))
+    region_summary = _object_dict(result.get("reviewable_region_summary"))
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for covered in checks.values() if covered),
+            "missing_checks": missing_checks,
+            "case_count": _int_value(result.get("case_count")),
+            "applied_case_count": len(applied_cases),
+            "harvestable_case_count": sum(
+                1 for case in applied_cases if case.get("harvestable") is True
+            ),
+            "pending_case_count": len(pending_cases),
+            "applied_reviewed_region_count": _int_value(
+                region_summary.get("applied_reviewed_region_count")
+            ),
+            "applied_review_promoted_region_count": _int_value(
+                region_summary.get("applied_review_promoted_region_count")
+            ),
+            "pending_region_count": _int_value(
+                region_summary.get("pending_region_count")
+            ),
+        },
+    }
+
+
+def _review_harvest_case_accounting_ok(result: dict[str, object]) -> bool:
+    applied_cases = _dict_list(result.get("applied_cases"))
+    pending_cases = _dict_list(result.get("pending_cases"))
+    newly_applied = _dict_list(result.get("newly_applied_decisions"))
+    if _int_value(result.get("case_count")) != len(applied_cases) + len(pending_cases):
+        return False
+    if _int_value(result.get("applied_case_count")) != len(applied_cases):
+        return False
+    if _int_value(result.get("pending_case_count")) != len(pending_cases):
+        return False
+    if _int_value(result.get("newly_applied_decision_count")) != len(newly_applied):
+        return False
+    harvestable_count = sum(
+        1 for case in applied_cases if case.get("harvestable") is True
+    )
+    return _int_value(result.get("harvestable_case_count")) == harvestable_count
+
+
+def _explicit_terminal_decisions_ok(result: dict[str, object]) -> bool:
+    for item in _dict_list(result.get("newly_applied_decisions")):
+        if item.get("decision") not in TERMINAL_PROMOTION_REVIEW_DECISIONS:
+            return False
+        if not _non_empty_string(item.get("case_id")):
+            return False
+        if not _non_empty_string(item.get("source_review_decision")):
+            return False
+        if not _non_empty_string(item.get("manifest")):
+            return False
+        if not isinstance(item.get("accepted_for_promotion"), bool):
+            return False
+    for item in _dict_list(result.get("applied_cases")):
+        if item.get("decision") not in TERMINAL_PROMOTION_REVIEW_DECISIONS:
+            return False
+        if not _non_empty_string(item.get("case_id")):
+            return False
+        if not isinstance(item.get("harvestable"), bool):
+            return False
+    return True
+
+
+def _reviewer_evidence_records_ok(result: dict[str, object]) -> bool:
+    for item in _dict_list(result.get("applied_cases")):
+        if not _non_empty_string(item.get("reviewer")):
+            return False
+        if not _non_empty_string(item.get("reason")):
+            return False
+        if not _non_empty_string(item.get("source_review_decision")):
+            return False
+    return True
+
+
+def _harvestable_review_gate_ok(result: dict[str, object]) -> bool:
+    for item in _dict_list(result.get("applied_cases")):
+        decision = item.get("decision")
+        harvestable = item.get("harvestable") is True
+        promoted_anchor_count = item.get("promoted_anchor_count")
+        if harvestable:
+            if decision not in HARVESTABLE_PROMOTION_DECISIONS:
+                return False
+            if _non_empty_string(item.get("harvest_block_reason")):
+                return False
+            if isinstance(promoted_anchor_count, int) and promoted_anchor_count <= 0:
+                return False
+            continue
+        if decision not in HARVESTABLE_PROMOTION_DECISIONS:
+            continue
+        if isinstance(promoted_anchor_count, int) and promoted_anchor_count <= 0:
+            if item.get("harvest_block_reason") != (
+                "applied_review_without_promoted_anchors"
+            ):
+                return False
+    return True
+
+
+def _reviewed_region_evidence_ok(result: dict[str, object]) -> bool:
+    applied_cases = _dict_list(result.get("applied_cases"))
+    pending_cases = _dict_list(result.get("pending_cases"))
+    expected = _reviewable_region_summary(applied_cases, pending_cases)
+    if _object_dict(result.get("reviewable_region_summary")) != expected:
+        return False
+    for item in applied_cases:
+        reviewed = _string_list(item.get("reviewed_region_ids"))
+        promoted = _string_list(item.get("review_promoted_region_ids"))
+        promoted_indexes = _int_list(item.get("review_promoted_anchor_indexes"))
+        if promoted and not set(promoted).issubset(set(reviewed)):
+            return False
+        if promoted and not promoted_indexes:
+            return False
+    return True
+
+
+def _pending_review_visibility_ok(result: dict[str, object]) -> bool:
+    for item in _dict_list(result.get("pending_cases")):
+        if not _non_empty_string(item.get("case_id")):
+            return False
+        if not _non_empty_string(item.get("manifest")):
+            return False
+        templates = item.get("decision_templates")
+        readiness = item.get("decision_template_readiness")
+        if isinstance(templates, dict) and templates and not isinstance(
+            readiness,
+            dict,
+        ):
+            return False
+        for region in _dict_list(item.get("reviewable_regions")):
+            if not _non_empty_string(region.get("id")):
+                return False
+            if not isinstance(region.get("selected_anchor_indexes"), list):
+                return False
+    return True
+
+
+def _template_readiness_records_ok(result: dict[str, object]) -> bool:
+    readiness = result.get("decision_template_readiness")
+    if not isinstance(readiness, dict):
+        return False
+    summary = result.get("decision_template_readiness_summary")
+    if not isinstance(summary, dict):
+        return False
+    return summary == _decision_template_readiness_summary(readiness)
+
+
+def _harvest_config_contract_ok(result: dict[str, object]) -> bool:
+    config = result.get("harvest_config")
+    if not isinstance(config, dict):
+        return False
+    if config.get("require_applied_review") is not True:
+        return False
+    if not _non_empty_string(config.get("suite")):
+        return False
+    if not _non_empty_string(config.get("run_root")):
+        return False
+    config_path = result.get("harvest_config_path")
+    if _non_empty_string(config_path):
+        commands = result.get("next_commands")
+        if not isinstance(commands, list) or not commands:
+            return False
+    return True
 
 
 def _load_review_packet(path: Path) -> dict[str, object]:
@@ -612,6 +823,26 @@ def _object_dict(value: object) -> dict[str, object]:
     if not isinstance(value, dict):
         return {}
     return {str(key): item for key, item in value.items()}
+
+
+def _dict_list(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _int_list(value: object) -> list[int]:
+    if not isinstance(value, list):
+        return []
+    return [
+        item
+        for item in value
+        if isinstance(item, int) and not isinstance(item, bool)
+    ]
+
+
+def _int_value(value: object) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _decision_template_readiness(
