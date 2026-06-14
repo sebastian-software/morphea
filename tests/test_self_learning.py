@@ -2235,6 +2235,74 @@ class SelfLearningTests(unittest.TestCase):
                 str(output_dir / "model.json"),
             )
 
+    def test_self_learning_cycle_can_train_mlx_backend_model(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=111,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=False),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    backend="mlx",
+                    mlx_config=MlxClassifierTrainingConfig(
+                        epochs=1,
+                        crop_size=6,
+                        allow_unavailable=True,
+                    ),
+                )
+
+            self.assertEqual(result["training_backend"], "mlx")
+            self.assertEqual(result["status"], "retrained")
+            self.assertEqual(
+                result["model"]["model_type"],
+                "mlx_transformer_primitive_classifier",
+            )
+            self.assertEqual(result["model"]["retraining_backend"], "mlx")
+            self.assertEqual(result["model"]["status"], "unavailable")
+            model = json.loads((output_dir / "model.json").read_text(encoding="utf-8"))
+            self.assertEqual(model["retraining_backend"], "mlx")
+            self.assertEqual(model["status"], "unavailable")
+            self.assertTrue(
+                Path(model["source_datasets"]["augmented_dataset"]).exists()
+            )
+            markdown = (output_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("- Training backend: `mlx`", markdown)
+            self.assertIn("## Model", markdown)
+            self.assertIn("- Retraining backend: `mlx`", markdown)
+
     def test_self_learning_cycle_validates_accepted_model_on_lucide_suite(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -3215,6 +3283,71 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertFalse(suite_family_baseline_output.exists())
             self.assertFalse(suite_family_baseline_changelog.exists())
+
+    def test_self_learn_cli_accepts_mlx_backend_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            config = root / "self-learn-mlx.json"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=112,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            config.write_text(
+                json.dumps(
+                    {
+                        "base_dataset": str(base_dir / "dataset.json"),
+                        "reviewed_labels": str(reviewed),
+                        "output_dir": str(output_dir),
+                        "backend": "mlx",
+                        "epochs": 1,
+                        "crop_size": 6,
+                        "allow_unavailable": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=False),
+                redirect_stdout(StringIO()),
+            ):
+                main(["self-learn", "--config", str(config)])
+
+            result = json.loads(
+                (output_dir / "self-learning-cycle.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(result["training_backend"], "mlx")
+            self.assertEqual(result["model"]["retraining_backend"], "mlx")
+            model = json.loads((output_dir / "model.json").read_text(encoding="utf-8"))
+            self.assertEqual(model["model_type"], "mlx_transformer_primitive_classifier")
+            self.assertEqual(model["retraining_backend"], "mlx")
+            self.assertEqual(model["status"], "unavailable")
 
     def test_self_learn_cli_smokes_checked_in_suite_family_baseline(self):
         with tempfile.TemporaryDirectory() as temp_dir:

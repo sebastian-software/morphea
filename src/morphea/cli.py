@@ -223,6 +223,14 @@ SELF_LEARN_CONFIG_KEYS = {
     "min_best_accuracy_delta",
     "max_worst_accuracy_drop",
     "allow_unchanged",
+    "backend",
+    "epochs",
+    "hidden_dim",
+    "num_heads",
+    "num_layers",
+    "learning_rate",
+    "crop_size",
+    "allow_unavailable",
 }
 RETRAIN_CONFIG_KEYS = {
     "base_dataset",
@@ -748,6 +756,14 @@ def main(argv: list[str] | None = None) -> None:
     self_learn.add_argument("--min-best-accuracy-delta", type=float)
     self_learn.add_argument("--max-worst-accuracy-drop", type=float)
     self_learn.add_argument("--allow-unchanged", action="store_true")
+    self_learn.add_argument("--backend", choices=("centroid", "mlx"))
+    self_learn.add_argument("--epochs", type=int)
+    self_learn.add_argument("--hidden-dim", type=int)
+    self_learn.add_argument("--num-heads", type=int)
+    self_learn.add_argument("--num-layers", type=int)
+    self_learn.add_argument("--learning-rate", type=float)
+    self_learn.add_argument("--crop-size", type=int)
+    self_learn.add_argument("--allow-unavailable", action="store_true")
     self_learn.add_argument("--config", type=Path)
 
     retrain = subcommands.add_parser(
@@ -1591,6 +1607,12 @@ def main(argv: list[str] | None = None) -> None:
             min_best_accuracy_delta=float(cycle_config["min_best_accuracy_delta"]),
             max_worst_accuracy_drop=float(cycle_config["max_worst_accuracy_drop"]),
             allow_unchanged=bool(cycle_config["allow_unchanged"]),
+            backend=str(cycle_config.get("backend", "centroid")),
+            mlx_config=(
+                _retrain_mlx_config(cycle_config)
+                if cycle_config.get("backend") == "mlx"
+                else None
+            ),
         )
         print(
             f"self-learning cycle {result['status']} "
@@ -2420,6 +2442,7 @@ def _resolved_training_gate_config(args: argparse.Namespace) -> dict[str, object
         "min_best_accuracy_delta": 0.0,
         "max_worst_accuracy_drop": 0.0,
         "allow_unchanged": False,
+        "backend": "centroid",
     }
     config.update(
         _load_training_gate_config(args.config)
@@ -2495,16 +2518,26 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         config["output_dir"] = args.output_dir
     if args.markdown is not None:
         config["markdown"] = args.markdown
+    if args.backend is not None:
+        config["backend"] = args.backend
     for key in (
         "min_train_examples_delta",
         "min_best_accuracy_delta",
         "max_worst_accuracy_drop",
+        "epochs",
+        "hidden_dim",
+        "num_heads",
+        "num_layers",
+        "learning_rate",
+        "crop_size",
     ):
         value = getattr(args, key, None)
         if value is not None:
             config[key] = value
     if args.allow_unchanged:
         config["allow_unchanged"] = True
+    if args.allow_unavailable:
+        config["allow_unavailable"] = True
     _require_config_paths(
         config,
         ("base_dataset", "reviewed_labels", "output_dir"),

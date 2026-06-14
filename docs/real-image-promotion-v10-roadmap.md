@@ -584,6 +584,15 @@ The loop must follow ADR 0008:
 - preserve provenance, gates, group context, and issue tags;
 - compare retrained models against curated real-image and synthetic suites.
 
+Current implementation evidence: `morphea self-learn` can now choose the
+retraining backend with `backend: centroid` or `backend: mlx`. The MLX path
+uses the existing local `mlx_transformer_primitive_classifier` retraining
+artifact over reviewed pseudo-label datasets, carries the same training gate
+and suite-family acceptance discipline as the centroid path, and supports
+`allow_unavailable` for reproducible fallback artifacts when MLX is absent.
+This is the first own-model training path in the reviewed loop; it is separate
+from MLX/SAM segmentation inference and does not train SAM itself.
+
 Exit criteria:
 
 - unreviewed pseudo-labels never become training labels;

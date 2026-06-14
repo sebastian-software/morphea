@@ -394,6 +394,13 @@ be written after the training comparison gate accepts, but the cycle's
 validation suite also passes. Cycle summaries include reviewed-label issue
 counts, applied-review decision counts, and provenance-field coverage from the
 pseudo-label dataset.
+The cycle can now write its accepted model with `backend: centroid` or
+`backend: mlx`. The MLX route trains the local
+`mlx_transformer_primitive_classifier` from the same reviewed pseudo-label
+dataset and keeps the comparison gate, curated/Lucide validation, and
+suite-family acceptance checks unchanged. `allow_unavailable` remains available
+for reproducible fallback artifacts when the MLX runtime is missing; this is
+own classifier training, not MLX/SAM segmentation fine-tuning.
 
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training

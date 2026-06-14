@@ -506,7 +506,12 @@ Current implementation:
   deferred evidence stays excluded. The current checked-in replay keeps model
   acceptance conservative: five accepted Terminaro region labels are carried
   into the cycle, but the training gate rejects the update when the comparison
-  status regresses. Training gate artifacts now include worst/best metric
+  status regresses. `self-learn` can now train the accepted cycle model with
+  either the default centroid backend or the local
+  `mlx_transformer_primitive_classifier` backend (`backend: mlx`). The MLX path
+  still depends on reviewed pseudo-labels and the same acceptance gates; it is
+  an own primitive-classifier model path, not SAM fine-tuning. Training gate
+  artifacts now include worst/best metric
   contributors, so rejected self-learning cycles can identify the metric,
   split, and label behind the gate decision. Training comparison artifacts now
   also include ranking-decision deltas, so a reviewer can inspect which

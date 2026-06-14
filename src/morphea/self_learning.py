@@ -862,9 +862,14 @@ def run_self_learning_cycle(
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
     allow_unchanged: bool = False,
+    backend: str = "centroid",
+    mlx_config: MlxClassifierTrainingConfig | None = None,
     markdown: str | Path | None = None,
 ) -> dict[str, object]:
     """Run the reviewed-label retraining decision loop as one repeatable cycle."""
+
+    if backend not in {"centroid", "mlx"}:
+        raise ValueError("self-learning backend must be one of: centroid, mlx")
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -932,12 +937,21 @@ def run_self_learning_cycle(
     )
     model: dict[str, object] | None = None
     if gate["accepted"]:
-        model = retrain_centroid_classifier(
-            base_dataset=base_dataset,
-            pseudo_dataset=pseudo_dir / "dataset.json",
-            validation_dataset=validation_dataset,
-            output=model_path,
-        )
+        if backend == "mlx":
+            model = retrain_mlx_classifier(
+                base_dataset=base_dataset,
+                pseudo_dataset=pseudo_dir / "dataset.json",
+                validation_dataset=validation_dataset,
+                output=model_path,
+                config=mlx_config,
+            )
+        else:
+            model = retrain_centroid_classifier(
+                base_dataset=base_dataset,
+                pseudo_dataset=pseudo_dir / "dataset.json",
+                validation_dataset=validation_dataset,
+                output=model_path,
+            )
     curated_validation: dict[str, object] | None = None
     if curated_suite is not None:
         if model is not None:
@@ -1023,6 +1037,7 @@ def run_self_learning_cycle(
         "base_dataset": str(base_dataset),
         "reviewed_labels": str(reviewed_labels),
         "validation_dataset": str(validation_dataset or base_dataset),
+        "training_backend": backend,
         "output_dir": str(output),
         "artifacts": {
             "pseudo_dataset": str(pseudo_dir / "dataset.json"),
@@ -1083,6 +1098,9 @@ def run_self_learning_cycle(
             {
                 "model_type": model["model_type"],
                 "train_examples": model["train_examples"],
+                "retraining_backend": model.get("retraining_backend", backend),
+                "status": model.get("status", "trained"),
+                "training_implementation": model.get("training_implementation"),
                 "augmentation": model["augmentation"],
             }
             if model is not None
@@ -1671,6 +1689,7 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         "",
         f"- Status: `{result.get('status', 'n/a')}`",
         f"- Accepted: `{result.get('accepted', False)}`",
+        f"- Training backend: `{result.get('training_backend', 'centroid')}`",
         f"- Gate decision: `{gate.get('decision', 'n/a')}`",
         f"- Gate accepted: `{gate.get('accepted', False)}`",
         f"- Acceptance reasons: {_format_reason_list(acceptance_gate.get('reasons'))}",
@@ -1681,6 +1700,20 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         f"- Best accuracy delta: {_fmt_metric(comparison.get('best_accuracy_delta'))}",
         f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
     ]
+    model = result.get("model")
+    if isinstance(model, dict):
+        lines.extend(
+            [
+                "",
+                "## Model",
+                "",
+                f"- Model type: `{model.get('model_type', 'n/a')}`",
+                f"- Retraining backend: `{model.get('retraining_backend', 'n/a')}`",
+                f"- Status: `{model.get('status', 'n/a')}`",
+                f"- Training implementation: `{model.get('training_implementation', 'n/a')}`",
+                f"- Train examples: {_fmt_metric(model.get('train_examples'))}",
+            ]
+        )
     if reviewed_summary or isinstance(pseudo_dataset.get("samples"), list):
         provenance_counts = _counts_from_object(
             reviewed_summary.get("provenance_field_counts")
@@ -1924,6 +1957,9 @@ def retrain_centroid_classifier(
 
     model = {
         "model_type": "centroid_primitive_classifier",
+        "retraining_backend": "centroid",
+        "status": "trained",
+        "training_implementation": "centroid_feature_model",
         "feature_names": list(FEATURE_NAMES),
         "classes": sorted(centroids),
         "centroids": {
