@@ -910,6 +910,59 @@ class CuratedSuiteTests(unittest.TestCase):
             written = json.loads(output.read_text(encoding="utf-8"))
             self.assertFalse(written["ok"])
 
+    def test_kind_set_expectation_counts_multiple_anchor_kinds(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "input.png"
+            suite_path = Path(temp_dir) / "suite.json"
+            output = Path(temp_dir) / "report.json"
+            image = Image.new("RGB", (50, 20), "white")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((4, 4, 24, 6), fill="#003366")
+            draw.arc((28, 4, 46, 18), start=180, end=360, fill="#c99700", width=3)
+            image.save(source)
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "mixed-strokes",
+                                "source": str(source),
+                                "recommended_config": {
+                                    "min_area": 4,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "editable-strokes",
+                                        "kinds": ["stroke_polyline", "stroke_path", "arc"],
+                                        "min_count": 2,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(suite_path, output=output, run=True)
+
+            expectation = result["cases"][0]["expectations"][0]
+            self.assertTrue(expectation["ok"])
+            self.assertEqual(
+                expectation["kinds"],
+                ["stroke_polyline", "stroke_path", "arc"],
+            )
+            self.assertGreaterEqual(expectation["actual_count"], 2)
+            snapshot = render_curated_snapshot(result)
+            self.assertEqual(
+                snapshot["cases"][0]["expectations"][0]["kinds"],
+                ["stroke_polyline", "stroke_path", "arc"],
+            )
+            markdown = render_curated_markdown(result)
+            self.assertIn("`kinds:stroke_polyline,stroke_path,arc`", markdown)
+
     def test_region_promotion_gates_check_anchor_kind_inside_bounds(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             source = Path(temp_dir) / "input.png"
@@ -1141,6 +1194,34 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "min_value or max_value"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_empty_kind_set_expectation(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "bad-kinds",
+                                "source": "/tmp/simple-circle.png",
+                                "expectations": [
+                                    {
+                                        "id": "editable-strokes",
+                                        "kinds": [],
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "kind, kinds, group_kind, or metric"):
                 load_curated_suite(suite_path)
 
     def test_load_curated_suite_rejects_invalid_promotion_label(self):

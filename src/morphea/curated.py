@@ -701,6 +701,15 @@ def _check_expectation(
             if anchor.get("kind") == kind
         )
         label = {"kind": kind}
+    elif "kinds" in expectation:
+        kinds = tuple(str(kind) for kind in expectation["kinds"])
+        kind_set = set(kinds)
+        actual = sum(
+            1
+            for anchor in manifest.get("anchors", [])
+            if anchor.get("kind") in kind_set
+        )
+        label = {"kinds": list(kinds)}
     else:
         kind = expectation["group_kind"]
         actual = sum(
@@ -728,6 +737,9 @@ def _shape_expectation_selector(expectation: dict[str, Any]) -> tuple[str, str]:
     kind = expectation.get("kind")
     if kind is not None:
         return ("kind", str(kind))
+    kinds = expectation.get("kinds")
+    if isinstance(kinds, list):
+        return ("kinds", ",".join(str(kind) for kind in kinds))
     return ("group_kind", str(expectation.get("group_kind")))
 
 
@@ -796,6 +808,12 @@ def _expectation_snapshot(expectation: dict[str, Any]) -> dict[str, Any]:
         "actual_count": expectation.get("actual_count", 0),
         "min_count": expectation.get("min_count", 1),
     }
+    if "kind" in expectation:
+        snapshot["kind"] = expectation.get("kind")
+    if "kinds" in expectation:
+        snapshot["kinds"] = expectation.get("kinds")
+    if "group_kind" in expectation:
+        snapshot["group_kind"] = expectation.get("group_kind")
     for key in ("cumulative_min_count", "max_count"):
         if key in expectation:
             snapshot[key] = expectation[key]
@@ -2750,9 +2768,13 @@ def _expectation_markdown_row(expectation: dict[str, Any]) -> str:
             f"{', '.join(required_parts) if required_parts else 'n/a'} | "
             f"`{str(expectation.get('ok', False)).lower()}` |"
         )
-    expectation_type = expectation.get("kind")
-    label = "kind"
-    if expectation_type is None:
+    if "kind" in expectation:
+        expectation_type = expectation.get("kind")
+        label = "kind"
+    elif "kinds" in expectation:
+        expectation_type = ",".join(str(kind) for kind in expectation.get("kinds", []))
+        label = "kinds"
+    else:
         expectation_type = expectation.get("group_kind")
         label = "group"
     required_parts = [
@@ -2938,12 +2960,13 @@ def _validate_expectation(
     if not isinstance(expectation_id, str) or not expectation_id:
         raise ValueError(f"case {case_id} expectation {index} must have an id")
     has_kind = isinstance(expectation.get("kind"), str)
+    has_kinds = _valid_expectation_kinds(expectation.get("kinds"))
     has_group_kind = isinstance(expectation.get("group_kind"), str)
     has_metric = isinstance(expectation.get("metric"), str)
-    if sum((has_kind, has_group_kind, has_metric)) != 1:
+    if sum((has_kind, has_kinds, has_group_kind, has_metric)) != 1:
         raise ValueError(
             f"case {case_id} expectation {expectation_id} must set kind, "
-            "group_kind, or metric"
+            "kinds, group_kind, or metric"
         )
     if has_metric:
         has_min = "min_value" in expectation
@@ -2975,6 +2998,14 @@ def _validate_expectation(
             f"case {case_id} expectation {expectation_id} max_count "
             "must be >= min_count"
         )
+
+
+def _valid_expectation_kinds(value: object) -> bool:
+    return (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(item, str) and item for item in value)
+    )
 
 
 def _validate_promotion_metadata(
