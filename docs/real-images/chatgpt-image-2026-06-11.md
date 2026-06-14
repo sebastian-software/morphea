@@ -58,8 +58,13 @@ Result:
 - Diagnostics included:
   - `image_resized_for_analysis` from 1254 x 1254 to 256 x 256
   - `palette_quantized` with max 10 colors
-- Semantic expectations pass; v10 promotion remains red because fallback layer
-  depth is still above the structure threshold.
+- Semantic expectations pass.
+- The structure gate now treats `cutout_overlays` as review-visible
+  non-structural layers: raw `layer_count` remains 4, while
+  `structural_layer_count=3` satisfies the threshold.
+- v10 promotion remains red because the current quality label is still red and
+  editability review still rejects parameter economy and fragmentation
+  components.
 
 ## Expected Semantic Anchors
 

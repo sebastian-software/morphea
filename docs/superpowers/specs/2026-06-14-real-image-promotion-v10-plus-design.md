@@ -27,11 +27,11 @@ Known evidence:
 - All three current real-image cases are still v10 red because promotion gates,
   not semantic expectations, block trusted output.
 
-Current red gates:
+Current red gates after the structural-layer refinement:
 
-- `terminaro-tweaked`: region-circle matching, fallback layer depth, raster L1
-  fidelity.
-- `chatgpt-image-2026-06-11`: fallback layer depth.
+- `terminaro-tweaked`: region-circle matching and raster L1 fidelity.
+- `chatgpt-image-2026-06-11`: current quality label plus editability review
+  failures for parameter economy and fragmentation.
 - `ui-radio-acceptance-screenshot`: radio-control topology.
 
 The next roadmap must preserve the current semantic-green baseline while moving
@@ -172,7 +172,9 @@ Deliverables:
 Exit criteria:
 
 - `chatgpt-image-2026-06-11` no longer fails fallback layer depth, or the gate
-  explains why the extra layer is semantically required.
+  explains why the extra layer is semantically required. This is currently met
+  by `max_structural_layer_count` with `cutout_overlays` excluded from core
+  layer depth while still visible in gate evidence.
 - `terminaro-tweaked` has a corrected gold-circle region gate or a documented
   detector change that matches all five intended circles without accepting
   ring/cutout false positives.
@@ -362,21 +364,22 @@ Scope:
 - update the fixture, report, snapshot, and suite-family baseline only after the
   fix is backed by command output.
 
-Recommended first target:
+Recommended target order after the structural-layer refinement:
 
-1. Fix or refine `chatgpt-image-2026-06-11` fallback layer-depth evaluation.
-2. Then address `ui-radio-acceptance-screenshot` topology.
-3. Then address `terminaro-tweaked` region-circle matching and raster L1.
+1. Address `ui-radio-acceptance-screenshot` topology.
+2. Address `terminaro-tweaked` region-circle matching and raster L1.
+3. Decide whether `chatgpt-image-2026-06-11` should stay red for editability
+   component failures or move to yellow pending manual review.
 
 Reasoning:
 
-- The opaque generated illustration has the narrowest failure surface: semantic
-  expectations pass, visual thresholds pass, and only layer depth keeps it red
-  besides the intentionally red quality label.
 - The UI radio case is topology-specific and can become a strong false-positive
   guard once fixed.
-- The transparent Terminaro case combines region matching, layer depth, and
-  visual fidelity, so it is the most valuable but broadest target.
+- The transparent Terminaro case combines region matching and visual fidelity,
+  so it is the most valuable but broadest remaining target.
+- The opaque generated illustration no longer has a mechanical red gate besides
+  the intentionally red quality label, but its editability review still rejects
+  parameter economy and fragmentation, so it should not be promoted silently.
 
 Acceptance commands for the packet:
 

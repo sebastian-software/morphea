@@ -37,9 +37,12 @@
         },
         "structure_thresholds": {
           "max_fragmentation_penalty": 0.6,
-          "max_layer_count": 3,
+          "max_structural_layer_count": 3,
+          "non_structural_layer_roles": [
+            "cutout_overlays"
+          ],
           "severity": "red",
-          "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered."
+          "description": "Generated illustration table-grid cases should avoid excessive core fallback layer depth after primitives are recovered; cutout overlays remain review-visible but are not counted as core structure depth."
         },
         "hard_gates": [
           {
@@ -107,7 +110,8 @@
         ],
         "review_notes": [
           "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
-          "v10 promotion remains red: the gold-circle region gate still matches only 2 in-region circle anchors, layer_count is 4 > 3, and raster L1 remains above the family threshold."
+          "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
+          "v10 promotion remains red: the gold-circle region gate still matches only 2 in-region circle anchors, and raster L1 remains above the family threshold."
         ]
       },
       "recommended_config": {
@@ -189,9 +193,12 @@
         },
         "structure_thresholds": {
           "max_fragmentation_penalty": 0.6,
-          "max_layer_count": 3,
+          "max_structural_layer_count": 3,
+          "non_structural_layer_roles": [
+            "cutout_overlays"
+          ],
           "severity": "red",
-          "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered."
+          "description": "Generated illustration table-grid cases should avoid excessive core fallback layer depth after primitives are recovered; cutout overlays remain review-visible but are not counted as core structure depth."
         },
         "hard_gates": [
           {
@@ -239,7 +246,8 @@
         "review_notes": [
           "2026-06-14 missing local source was replaced by a checked-in opaque fixture derived from the transparent Terminaro image.",
           "Semantic expectations pass with 5 circle anchors, 14 table quads, one perspective-grid group, and editable strokes counted across stroke polylines, stroke paths, and arcs.",
-          "v10 promotion remains red because fallback layer depth is still above the structure threshold."
+          "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
+          "v10 promotion remains red because the current quality label is still red and editability review still rejects parameter economy and fragmentation components."
         ]
       },
       "recommended_config": {

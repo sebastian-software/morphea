@@ -30,8 +30,8 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `shape_class_mismatch`, `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; v10 remains red because region gate matches 2/5 circles with `hole_count=1`, layer count 4 > 3, visual L1 0.230301 > 0.18 |
-| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `fragmentation` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.056356 < 0.18; v10 remains red because layer count 4 > 3 |
+| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `shape_class_mismatch`, `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; structure gate now passes with `structural_layer_count` 3/3 while raw layer count remains 4 due cutout overlays; v10 remains red because region gate matches 2/5 circles with `hole_count=1`, visual L1 0.230301 > 0.18 |
+| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `fragmentation` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.056356 < 0.18, `structural_layer_count` 3/3; v10 remains red because `current_quality_label` is red and editability review rejects parameter economy and fragmentation |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
 
 Current curated semantic result: 3 cases, 3 checked expectation passes, 0
@@ -299,6 +299,8 @@ baseline comparison path is covered outside helper-only unit tests.
 
 The next promotion-quality block should keep all real-image semantic
 expectations green while addressing the remaining v10 red gates:
-`terminaro-tweaked` region-circle matching, fallback layer depth, and raster L1
-fidelity; `chatgpt-image-2026-06-11` fallback layer depth; and
-`ui-radio-acceptance-screenshot` radio-control topology.
+`ui-radio-acceptance-screenshot` radio-control topology and
+`terminaro-tweaked` region-circle matching plus raster L1 fidelity. The opaque
+generated-illustration case no longer fails the structure gate, but still needs
+a review/quality-label decision and editability component improvement before it
+can move out of red.
