@@ -245,7 +245,7 @@ def render_homepage_teaser_html(
             These panels are generated from passing <code>primitive-check</code>
             artifacts. Each bitmap and SVG pair uses the same fixed canvas.
           </p>
-          <a class="text-link" href="{_esc(gallery_href)}">Primitive quality gallery: {report.get("case_count", 0)} passing cases</a>
+          <a class="text-link" href="{_esc(gallery_href)}">Primitive quality gallery: {_passing_case_count(report)} passing cases</a>
         </div>
         <div class="primitive-gallery">
 {cards}
@@ -462,6 +462,13 @@ def _select_passing_cases(
             selected.append(case)
             selected_ids.add(str(case.get("id")))
     return selected[:limit]
+
+
+def _passing_case_count(report: dict[str, Any]) -> int:
+    value = report.get("passed_count")
+    if isinstance(value, int):
+        return value
+    return sum(1 for case in report.get("cases", []) if case.get("ok"))
 
 
 def _artifact_uri(case: dict[str, Any], key: str, html_path: Path) -> str:

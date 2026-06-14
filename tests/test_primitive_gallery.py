@@ -6,7 +6,10 @@ from io import StringIO
 from pathlib import Path
 
 from morphea.cli import main
-from morphea.primitive_gallery import write_primitive_gallery_site
+from morphea.primitive_gallery import (
+    render_homepage_teaser_html,
+    write_primitive_gallery_site,
+)
 
 
 class PrimitiveGalleryTests(unittest.TestCase):
@@ -77,6 +80,63 @@ class PrimitiveGalleryTests(unittest.TestCase):
             self.assertNotIn("old", updated)
             self.assertIn("Primitive quality gallery: 1 passing cases", updated)
             self.assertIn("filled_square/input.png", updated)
+
+    def test_homepage_teaser_counts_only_passing_cases(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            homepage = root / "site" / "index.html"
+            gallery = root / "site" / "primitive-quality" / "index.html"
+            passed_input = root / "site" / "cases" / "passed" / "input.png"
+            passed_svg = root / "site" / "cases" / "passed" / "output.svg"
+            failed_input = root / "site" / "cases" / "failed" / "input.png"
+            failed_svg = root / "site" / "cases" / "failed" / "output.svg"
+            for path in (passed_input, passed_svg, failed_input, failed_svg):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("", encoding="utf-8")
+
+            html = render_homepage_teaser_html(
+                {
+                    "case_count": 2,
+                    "passed_count": 1,
+                    "cases": [
+                        {
+                            "id": "passed",
+                            "ok": True,
+                            "actual_kind": "rect",
+                            "anchor_count": 1,
+                            "metrics": {
+                                "raster_l1_error": 0.0,
+                                "raster_edge_error": 0.0,
+                            },
+                            "artifacts": {
+                                "input": str(passed_input),
+                                "output_svg": str(passed_svg),
+                            },
+                        },
+                        {
+                            "id": "failed",
+                            "ok": False,
+                            "actual_kind": "cubic_path",
+                            "anchor_count": 1,
+                            "metrics": {
+                                "raster_l1_error": 0.5,
+                                "raster_edge_error": 0.5,
+                            },
+                            "artifacts": {
+                                "input": str(failed_input),
+                                "output_svg": str(failed_svg),
+                            },
+                        },
+                    ],
+                },
+                homepage_path=homepage,
+                full_gallery_path=gallery,
+                teaser_cases=("failed", "passed"),
+            )
+
+            self.assertIn("Primitive quality gallery: 1 passing cases", html)
+            self.assertIn("passed/input.png", html)
+            self.assertNotIn("failed/input.png", html)
 
     def test_gallery_generator_refreshes_homepage_hero_markers(self):
         with tempfile.TemporaryDirectory() as temp_dir:

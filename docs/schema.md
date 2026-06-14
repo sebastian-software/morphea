@@ -314,7 +314,10 @@ Default outputs:
 
 The command reuses `primitive-check`, supports the same `--case` and `--filter`
 selection options, and refreshes the marked homepage teaser block by default.
-The generated HTML is deterministic and contains no timestamps.
+The generated HTML is deterministic and contains no timestamps. Homepage hero
+and teaser blocks select only passing primitive-check cases and count passing
+cases in their gallery link text; failed cases may remain visible in the full
+QA gallery but are not published as proof examples.
 
 ## Primitive Check Config v1
 

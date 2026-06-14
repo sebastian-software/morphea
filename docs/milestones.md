@@ -1288,18 +1288,29 @@ Remaining:
 
 ## M17: Honest Basic Gallery
 
-Status: pending.
+Status: implemented for the current primitive-check-backed gallery baseline.
 
 Purpose: publish only examples that are backed by passing primitive contracts.
 
-Planned behavior:
+Implemented so far:
 
-- generate a small static gallery from `primitive-check` artifacts after the
-  basic gate is stable.
-- show bitmap input, rendered SVG preview, primitive contract summary, selected
-  kind, coordinates, node count, and raster errors.
-- keep complex illustrations out of the homepage until their own semantic and
-  visual contracts are strong enough.
+- `morphea primitive-gallery` generates deterministic static QA pages from
+  `primitive-check` artifacts.
+- homepage hero and teaser panels select only passing primitive-check cases;
+  failed QA cases can remain inspectable in the full gallery without being
+  published as proof examples.
+- homepage gallery links count passing cases, not total checked cases.
+- gallery cards show bitmap input, exported SVG preview, primitive contract
+  family, selected kind, anchor/node counts, raster errors, and detailed QA
+  metrics.
+- complex real-image illustrations remain out of the homepage until their own
+  semantic and visual contracts are strong enough.
+
+Remaining:
+
+- none for the current primitive gallery baseline; future public galleries
+  should keep the same passing-contract rule when real-image cases become
+  promotable.
 
 ## Commit Discipline
 
