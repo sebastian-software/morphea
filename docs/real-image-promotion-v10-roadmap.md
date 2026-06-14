@@ -14,6 +14,9 @@ promoted SVG is visually credible, semantically honest, and useful to edit.
 The main track is **Real-Image Promotion**. MLX/SAM is an enabling segmentation
 track. Editability scoring is the promotion gate and ranking discipline.
 
+The execution design for the next v10+ planning layer lives in
+[`docs/superpowers/specs/2026-06-14-real-image-promotion-v10-plus-design.md`](superpowers/specs/2026-06-14-real-image-promotion-v10-plus-design.md).
+
 ## Roadmap Operating Model
 
 This roadmap separates four concerns that must not collapse into one score:
