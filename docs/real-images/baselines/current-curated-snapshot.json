@@ -1431,11 +1431,11 @@
       "status": "checked"
     },
     {
-      "anchor_count": 119,
+      "anchor_count": 115,
       "anchor_kind_counts": {
         "arc": 8,
         "cubic_path": 52,
-        "stroke_circle": 8,
+        "stroke_circle": 4,
         "stroke_path": 21,
         "stroke_polyline": 30
       },
@@ -1451,57 +1451,42 @@
       "editability_review": {
         "accepted": false,
         "component_scores": {
-          "fragmentation": 0.016807,
+          "fragmentation": 0.017391,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 1.0,
-          "node_economy": 0.827031,
-          "parameter_economy": 0.397584,
-          "provenance_confidence": 0.563025,
+          "node_economy": 0.822464,
+          "parameter_economy": 0.385326,
+          "provenance_confidence": 0.547826,
           "raster_fidelity": 0.944073,
-          "shape_identity_confidence": 0.563025,
+          "shape_identity_confidence": 0.547826,
           "stroke_width_stability": 0.6569,
-          "topology_consistency": 0.0
+          "topology_consistency": 1.0
         },
         "decision": "rejected",
         "failed_components": [
           {
             "id": "shape_identity_confidence",
             "reason": "below_threshold",
-            "score": 0.563025,
+            "score": 0.547826,
             "threshold": 0.65
-          },
-          {
-            "id": "topology_consistency",
-            "reason": "below_threshold",
-            "score": 0.0,
-            "threshold": 0.75
           },
           {
             "id": "fragmentation",
             "reason": "below_threshold",
-            "score": 0.016807,
+            "score": 0.017391,
             "threshold": 0.25
           },
           {
             "id": "provenance_confidence",
             "reason": "below_threshold",
-            "score": 0.563025,
+            "score": 0.547826,
             "threshold": 0.65
           }
         ],
-        "gate_blocked_components": [
-          {
-            "failed_gates": [
-              "radio-control-region-topology"
-            ],
-            "id": "topology_consistency",
-            "uncapped_score": 1.0
-          }
-        ],
+        "gate_blocked_components": [],
         "promotion_decision": "rejected",
         "reasons": [
           "component_threshold_failures",
-          "gate_blocked_components",
           "promotion_decision_rejected"
         ],
         "regressed_components": [],
@@ -1527,7 +1512,7 @@
       },
       "expectations": [
         {
-          "actual_count": 8,
+          "actual_count": 4,
           "cumulative_min_count": 1,
           "id": "radio-circle-anchor",
           "kind": "stroke_circle",
@@ -1535,7 +1520,7 @@
           "ok": true
         },
         {
-          "actual_value": 0.563025,
+          "actual_value": 0.547826,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
           "min_value": 0.2,
@@ -1560,12 +1545,12 @@
       "layer_anchor_counts": {
         "cutout_overlays": 20,
         "generic_paths": 52,
-        "strokes": 47
+        "strokes": 43
       },
       "layer_count": 3,
       "metrics": {
         "anchor_quality_error_max": 0.3431,
-        "anchor_quality_error_mean": 0.052465,
+        "anchor_quality_error_mean": 0.04618,
         "anchor_quality_metric_summary": {
           "arc_fit_residual_error": {
             "count": 8,
@@ -1573,40 +1558,40 @@
             "mean": 0.019794
           },
           "circle_fit_residual_error": {
-            "count": 8,
+            "count": 4,
             "max": 0.115191,
             "mean": 0.103945
           },
           "circle_roundness_error": {
-            "count": 8,
+            "count": 4,
             "max": 0.146318,
             "mean": 0.129196
           },
           "cutout_anchor_error": {
-            "count": 38,
+            "count": 34,
             "max": 0.0,
             "mean": 0.0
           },
           "line_smoothness_error": {
-            "count": 38,
+            "count": 34,
             "max": 0.0,
             "mean": 0.0
           },
           "stroke_width_variance": {
-            "count": 67,
+            "count": 63,
             "max": 0.3431,
-            "mean": 0.062982
+            "mean": 0.066981
           }
         },
         "anchor_scoring_summary": {
           "semantic_anchor_score_max": 1.05,
-          "semantic_anchor_score_mean": 0.419802,
+          "semantic_anchor_score_mean": 0.423329,
           "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.147479,
-          "simple_shape_priority_bonus_total": 17.55
+          "simple_shape_priority_bonus_mean": 0.140435,
+          "simple_shape_priority_bonus_total": 16.15
         },
         "color_fragment_counts": {
-          "#000000": 99,
+          "#000000": 95,
           "#ffffff": 20
         },
         "cutout_anchor_count": 20,
@@ -1615,10 +1600,10 @@
         "editability_components": {
           "clipped_score": 0.0,
           "diagnostic_penalty": 0.0,
-          "fragmentation_penalty": 0.491597,
+          "fragmentation_penalty": 0.491304,
           "generic_path_penalty": 0.4,
-          "simple_shape_ratio": 0.563025,
-          "unclipped_score": -0.328571
+          "simple_shape_ratio": 0.547826,
+          "unclipped_score": -0.343478
         },
         "editability_score": 0.0,
         "editability_v10_components": {
@@ -1629,15 +1614,15 @@
             "score": 1.0
           },
           "fragmentation": {
-            "fragmentation_penalty": 0.491597,
-            "score": 0.016807
+            "fragmentation_penalty": 0.491304,
+            "score": 0.017391
           },
           "grouping_quality": {
             "group_count": 24,
             "score": 1.0
           },
           "line_curve_smoothness": {
-            "count": 38,
+            "count": 34,
             "max": 0.0,
             "mean": 0.0,
             "metric": "line_smoothness_error",
@@ -1645,18 +1630,18 @@
             "score": 1.0
           },
           "node_economy": {
-            "average_node_count": 4.151261,
-            "node_count": 494,
-            "score": 0.827031
+            "average_node_count": 4.26087,
+            "node_count": 490,
+            "score": 0.822464
           },
           "parameter_economy": {
-            "average_parameter_count": 9.638655,
-            "parameter_count": 1147,
-            "score": 0.397584
+            "average_parameter_count": 9.834783,
+            "parameter_count": 1131,
+            "score": 0.385326
           },
           "provenance_confidence": {
-            "fallback_path_ratio": 0.436975,
-            "score": 0.563025
+            "fallback_path_ratio": 0.452174,
+            "score": 0.547826
           },
           "raster_fidelity": {
             "observed": true,
@@ -1666,51 +1651,44 @@
           },
           "shape_identity_confidence": {
             "generic_path_count": 52,
-            "generic_path_ratio": 0.436975,
-            "score": 0.563025,
-            "simple_shape_count": 67
+            "generic_path_ratio": 0.452174,
+            "score": 0.547826,
+            "simple_shape_count": 63
           },
           "stroke_width_stability": {
-            "count": 67,
+            "count": 63,
             "max": 0.3431,
-            "mean": 0.062982,
+            "mean": 0.066981,
             "metric": "stroke_width_variance",
             "observed": true,
             "score": 0.6569
           },
           "topology_consistency": {
             "diagnostic_penalty": 0.0,
-            "failed_gates": [
-              "radio-control-region-topology"
-            ],
-            "gate_blocked": true,
-            "score": 0.0,
-            "uncapped_score": 1.0
+            "score": 1.0
           }
         },
-        "fragmentation_penalty": 0.491597,
+        "fragmentation_penalty": 0.491304,
         "generic_path_count": 52,
         "group_count": 24,
         "negative_mask_candidate_count": 20,
-        "node_count": 494,
-        "parameter_count": 1147,
+        "node_count": 490,
+        "parameter_count": 1131,
         "raster_alpha_error": 0.0,
         "raster_edge_error": 0.022066,
         "raster_l1_error": 0.033861,
         "raster_size_match": true,
-        "reserved_simple_shape_area": 9941.277328,
-        "reserved_simple_shape_area_ratio": 0.03739,
-        "reserved_simple_shape_count": 67,
-        "shape_count": 119,
-        "simple_shape_count": 67,
-        "simple_shape_ratio": 0.563025
+        "reserved_simple_shape_area": 8767.886321,
+        "reserved_simple_shape_area_ratio": 0.032977,
+        "reserved_simple_shape_count": 63,
+        "shape_count": 115,
+        "simple_shape_count": 63,
+        "simple_shape_ratio": 0.547826
       },
       "ok": true,
       "promotion": {
         "current_issues": [
-          "fragmentation",
-          "topology_mismatch",
-          "duplicate_radio_control_anchor"
+          "fragmentation"
         ],
         "current_quality_label": "red",
         "current_status": "checked_failed_promotion_gates",
@@ -1783,7 +1761,8 @@
         ],
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
-          "Still red under v10+ rules because the radio-control region currently selects two stroke-circle anchors for one intended control."
+          "2026-06-14 neutral composite anchor deduplication reduced the radio-control region from two duplicate stroke-circle anchors to one topology-compatible stroke-circle anchor.",
+          "Still red under v10+ rules because the current quality label is red and editability review still rejects shape identity, fragmentation, and provenance components."
         ],
         "source_provenance": "local UI screenshot from the user's Desktop; source image is not checked in",
         "stress_family": "ui_screenshot_text_and_controls",
@@ -1881,7 +1860,7 @@
             "forbidden_kinds": [
               "cubic_path"
             ],
-            "matching_count": 2,
+            "matching_count": 1,
             "min_iou": 0.25,
             "selected_anchors": [
               {
@@ -1896,41 +1875,26 @@
                 "hole_count": 0,
                 "id": "anchor-0083",
                 "kind": "stroke_circle"
-              },
-              {
-                "bounds": [
-                  179.53793622562586,
-                  153.4129781187383,
-                  196.2104061702604,
-                  170.08544806337284
-                ],
-                "closed": true,
-                "cutout": false,
-                "hole_count": 0,
-                "id": "anchor-0118",
-                "kind": "stroke_circle"
               }
             ],
-            "selected_count": 2,
-            "topology_failures": [
-              "disconnected_component_count 2 > 1"
-            ],
+            "selected_count": 1,
+            "topology_failures": [],
             "topology_summary": {
-              "closed_anchor_count": 2,
+              "closed_anchor_count": 1,
               "cutout_count": 0,
-              "disconnected_component_count": 2,
+              "disconnected_component_count": 1,
               "hole_count": 0,
               "kind_counts": {
-                "stroke_circle": 2
+                "stroke_circle": 1
               },
               "open_anchor_count": 0,
-              "selected_anchor_count": 2
+              "selected_anchor_count": 1
             }
           },
           "gate_type": "topology",
           "id": "radio-control-region-topology",
-          "ok": false,
-          "reason": "topology constraints failed: disconnected_component_count 2 > 1",
+          "ok": true,
+          "reason": "matching anchors in region: 1",
           "severity": "red"
         },
         {
@@ -1962,7 +1926,7 @@
         {
           "evidence": {
             "actual": {
-              "fragmentation_penalty": 0.491597,
+              "fragmentation_penalty": 0.491304,
               "layer_count": 3
             },
             "description": "UI screenshots may contain many text fragments, but layer depth and aggregate fragmentation should stay bounded for review.",
@@ -1970,7 +1934,7 @@
             "layer_anchor_counts": {
               "cutout_overlays": 20,
               "generic_paths": 52,
-              "strokes": 47
+              "strokes": 43
             },
             "non_structural_layer_roles": [],
             "thresholds": {
@@ -2020,27 +1984,25 @@
             "cubic_path"
           ],
           "gate_id": "radio-control-region-topology",
-          "gate_ok": false,
+          "gate_ok": true,
           "gate_type": "topology",
           "id": "radio-control-region-topology",
-          "reason": "topology constraints failed: disconnected_component_count 2 > 1",
-          "selected_anchor_count": 2,
+          "reason": "matching anchors in region: 1",
+          "selected_anchor_count": 1,
           "selected_anchor_ids": [
-            "anchor-0083",
-            "anchor-0118"
+            "anchor-0083"
           ],
           "selected_anchor_indexes": [
-            83,
-            118
+            83
           ],
           "severity": "red",
-          "state": "rejected"
+          "state": "deferred"
         }
       ],
       "promotion_summary": {
         "decision": "rejected",
-        "failed_gate_count": 2,
-        "red_gate_count": 2,
+        "failed_gate_count": 1,
+        "red_gate_count": 1,
         "yellow_gate_count": 0
       },
       "review_decision": {
@@ -2058,25 +2020,19 @@
           {
             "id": "shape_identity_confidence",
             "reason": "below_threshold",
-            "score": 0.563025,
+            "score": 0.547826,
             "threshold": 0.65
-          },
-          {
-            "id": "topology_consistency",
-            "reason": "below_threshold",
-            "score": 0.0,
-            "threshold": 0.75
           },
           {
             "id": "fragmentation",
             "reason": "below_threshold",
-            "score": 0.016807,
+            "score": 0.017391,
             "threshold": 0.25
           },
           {
             "id": "provenance_confidence",
             "reason": "below_threshold",
-            "score": 0.563025,
+            "score": 0.547826,
             "threshold": 0.65
           }
         ],
@@ -2086,27 +2042,11 @@
             "id": "current_quality_label",
             "reason": "current quality label is red",
             "severity": "red"
-          },
-          {
-            "gate_type": "topology",
-            "id": "radio-control-region-topology",
-            "reason": "topology constraints failed: disconnected_component_count 2 > 1",
-            "severity": "red"
           }
         ],
-        "gate_blocked_components": [
-          {
-            "failed_gates": [
-              "radio-control-region-topology"
-            ],
-            "id": "topology_consistency",
-            "uncapped_score": 1.0
-          }
-        ],
+        "gate_blocked_components": [],
         "issue_tags": [
-          "duplicate_radio_control_anchor",
-          "fragmentation",
-          "topology_mismatch"
+          "fragmentation"
         ],
         "reason": "",
         "regressed_components": [],

@@ -321,9 +321,7 @@
         "current_quality_label": "red",
         "current_status": "checked_failed_promotion_gates",
         "current_issues": [
-          "fragmentation",
-          "topology_mismatch",
-          "duplicate_radio_control_anchor"
+          "fragmentation"
         ],
         "visual_audit_status": "contact_sheet_available",
         "visual_thresholds": {
@@ -401,7 +399,8 @@
         ],
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
-          "Still red under v10+ rules because the radio-control region currently selects two stroke-circle anchors for one intended control."
+          "2026-06-14 neutral composite anchor deduplication reduced the radio-control region from two duplicate stroke-circle anchors to one topology-compatible stroke-circle anchor.",
+          "Still red under v10+ rules because the current quality label is red and editability review still rejects shape identity, fragmentation, and provenance components."
         ]
       },
       "recommended_config": {

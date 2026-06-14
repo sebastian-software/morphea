@@ -32,7 +32,8 @@ Current red gates after the structural-layer refinement:
 - `terminaro-tweaked`: region-circle matching and raster L1 fidelity.
 - `chatgpt-image-2026-06-11`: current quality label plus editability review
   failures for parameter economy and fragmentation.
-- `ui-radio-acceptance-screenshot`: radio-control topology.
+- `ui-radio-acceptance-screenshot`: current quality label plus editability
+  review failures for shape identity, fragmentation, and provenance.
 
 The next roadmap must preserve the current semantic-green baseline while moving
 from "the detector found plausible anchors" to "the promoted SVG is trustworthy
@@ -179,7 +180,9 @@ Exit criteria:
   detector change that matches all five intended circles without accepting
   ring/cutout false positives.
 - `ui-radio-acceptance-screenshot` represents one intended radio control as one
-  topology-compatible promoted region, not duplicate semantic components.
+  topology-compatible region, not duplicate semantic components. This is
+  currently met mechanically by neutral composite anchor deduplication; the
+  region remains deferred until the case quality decision changes.
 
 ### RP10.2: Region Truth Schema
 
@@ -364,22 +367,23 @@ Scope:
 - update the fixture, report, snapshot, and suite-family baseline only after the
   fix is backed by command output.
 
-Recommended target order after the structural-layer refinement:
+Recommended target order after the structural-layer and UI-topology refinements:
 
-1. Address `ui-radio-acceptance-screenshot` topology.
-2. Address `terminaro-tweaked` region-circle matching and raster L1.
-3. Decide whether `chatgpt-image-2026-06-11` should stay red for editability
+1. Address `terminaro-tweaked` region-circle matching and raster L1.
+2. Decide whether `chatgpt-image-2026-06-11` should stay red for editability
    component failures or move to yellow pending manual review.
+3. Decide whether `ui-radio-acceptance-screenshot` should stay red for
+   editability component failures or move to yellow pending manual review.
 
 Reasoning:
 
-- The UI radio case is topology-specific and can become a strong false-positive
-  guard once fixed.
 - The transparent Terminaro case combines region matching and visual fidelity,
   so it is the most valuable but broadest remaining target.
 - The opaque generated illustration no longer has a mechanical red gate besides
   the intentionally red quality label, but its editability review still rejects
   parameter economy and fragmentation, so it should not be promoted silently.
+- The UI radio case now has a topology-compatible radio region, but text-heavy
+  fragmentation keeps editability review below the v10 green bar.
 
 Acceptance commands for the packet:
 
@@ -406,8 +410,9 @@ suite-family comparison reports no new regressions.
 
 These are the planning questions to answer before starting RP10.1:
 
-- Is the first target the opaque layer-depth gate, or should we intentionally
-  tackle the higher-risk UI topology case first?
+- Should the next target be Terminaro region-circle matching, Terminaro raster
+  fidelity, or review-label policy for mechanically green but editability-red
+  cases?
 - Should `current_quality_label` remain manually red until all gates pass, or
   should it be derived from gate state once a case becomes mechanically green?
 - Do we want region truth annotations inside `docs/real-images/suite.json`, or

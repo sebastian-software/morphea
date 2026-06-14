@@ -46,4 +46,6 @@ acceptable for this milestone; the case exists to keep runtime bounded and to
 make the simple circular control visible in regression snapshots. The radio
 ring is recovered through neutral composite circle detection because its
 individual gray antialias fragments are too small to survive per-color
-component filtering.
+component filtering. Neutral composite anchors are deduplicated against
+per-color primitive anchors, so the radio-control region now selects one
+topology-compatible `stroke_circle` instead of duplicate stroke-circle anchors.
