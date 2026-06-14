@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 from pathlib import Path
 
 from morphea.classifier import evaluate_classifier_model, train_centroid_classifier
@@ -13,7 +14,7 @@ from morphea.comparison import (
     compare_snapshots,
     generate_git_curated_snapshot,
 )
-from morphea.curated import check_curated_suite
+from morphea.curated import check_curated_suite, render_curated_markdown
 from morphea.dataset import generate_synthetic_dataset
 from morphea.eval import write_eval_summary
 from morphea.images import scene_from_flat_color_image
@@ -1728,7 +1729,15 @@ def main(argv: list[str] | None = None) -> None:
         result.setdefault("artifacts", {})[
             "promotion_review_harvest_config"
         ] = str(review_harvest_config_path)
+        result["next_commands"] = _promotion_review_run_next_commands(
+            review_harvest_config_path
+        )
         _write_json_file(review_run_config["output"], result)
+        review_run_config["markdown"].parent.mkdir(parents=True, exist_ok=True)
+        review_run_config["markdown"].write_text(
+            render_curated_markdown(result),
+            encoding="utf-8",
+        )
         print(
             "prepared promotion review run "
             f"({result['case_count']} curated cases, "
@@ -2764,6 +2773,13 @@ def _promotion_review_run_harvest_config(
         "snapshot": str(config["snapshot"]),
         "harvest_markdown": str(output_dir / "harvested-pseudo-labels.md"),
     }
+
+
+def _promotion_review_run_next_commands(config_path: str | Path) -> list[str]:
+    return [
+        "PYTHONPATH=src python3 -m morphea.cli promotion-review-harvest "
+        f"--config {shlex.quote(str(config_path))}"
+    ]
 
 
 def _write_json_file(path: str | Path, data: object) -> None:

@@ -385,7 +385,9 @@ the review-oriented one-command entry point for that flow: it runs the suite,
 derives default JSON, Markdown, and snapshot paths under the output root, and
 writes the review packet and gallery artifacts plus a starter
 `promotion-review-harvest.json` config for the follow-up review-to-harvest
-step.
+step. The final curated report JSON and Markdown now surface that generated
+harvest command directly, so reviewers can continue without inspecting the
+starter config by hand.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal

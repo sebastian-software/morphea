@@ -2648,6 +2648,17 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "curated-snapshot.json").exists())
             self.assertTrue((output_dir / "review-packet.json").exists())
             review_harvest_config = output_dir / "promotion-review-harvest.json"
+            expected_next_command = (
+                "PYTHONPATH=src python3 -m morphea.cli "
+                "promotion-review-harvest --config "
+                f"{review_harvest_config}"
+            )
+            self.assertEqual(report["next_commands"], [expected_next_command])
+            curated_markdown = (output_dir / "curated-report.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("## Next Commands", curated_markdown)
+            self.assertIn(expected_next_command, curated_markdown)
             self.assertEqual(
                 report["artifacts"]["promotion_review_harvest_config"],
                 str(review_harvest_config),

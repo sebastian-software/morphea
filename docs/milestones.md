@@ -1017,7 +1017,8 @@ Implemented so far:
 - `morphea promotion-review-run suite.json --output-dir review-run` for the
   review-oriented one-command suite run that writes default JSON, Markdown,
   snapshot, review packet, gallery artifacts, and a starter
-  `promotion-review-harvest.json` config.
+  `promotion-review-harvest.json` config, with the generated harvest command
+  surfaced in the final report JSON and Markdown.
 - optional `--run` mode using each case's bounded `recommended_config`.
 - per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
   `report.md`, `report.html`, and `preview.png` artifacts via `--output-dir`.
@@ -1186,7 +1187,8 @@ Implemented so far:
   real-image suite validation
 - `morphea promotion-review-run suite.json --output-dir review-run` for a
   review-ready curated run with default report, Markdown, snapshot, packet, and
-  gallery artifacts plus a starter `promotion-review-harvest.json` config
+  gallery artifacts plus a starter `promotion-review-harvest.json` config and
+  report-level harvest follow-up command
 - `morphea segment --config segment.json` for repeatable input/output,
   report, and segment proposal runs
 - `morphea segment --markdown proposals.md` for scan-friendly segment proposal

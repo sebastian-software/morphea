@@ -268,12 +268,30 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
         f"- Run: `{str(report.get('run', False)).lower()}`",
         f"- Cases: {_fmt_markdown_value(report.get('case_count'))}",
         f"- OK: `{str(report.get('ok', False)).lower()}`",
-        "",
-        "## Families",
-        "",
-        "| Family | Cases | Checked | Passed | Failed | Missing |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
+    raw_next_commands = report.get("next_commands", [])
+    if not isinstance(raw_next_commands, list):
+        raw_next_commands = []
+    next_commands = [
+        command
+        for command in raw_next_commands
+        if isinstance(command, str) and command
+    ]
+    if next_commands:
+        lines.extend(["", "## Next Commands", ""])
+        for index, command in enumerate(next_commands):
+            if index:
+                lines.append("")
+            lines.extend(["```sh", command, "```"])
+    lines.extend(
+        [
+            "",
+            "## Families",
+            "",
+            "| Family | Cases | Checked | Passed | Failed | Missing |",
+            "| --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
     family_summary = report.get("family_summary")
     if not isinstance(family_summary, dict):
         family_summary = _curated_family_summary(

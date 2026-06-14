@@ -404,7 +404,10 @@ review-oriented wrapper around `curated-check`: it runs the suite, writes
 the output root by default, and emits the same per-case artifacts,
 `review-packet.json`, `review-packet.md`, and `review-gallery.html`. It also
 writes `promotion-review-harvest.json`, a starter config with empty
-`decisions` and stable paths for `promotion-review-harvest --config`.
+`decisions` and stable paths for `promotion-review-harvest --config`. The
+final `curated-report.json` and `curated-report.md` also include
+`next_commands`, starting with the exact harvest command for the generated
+starter config.
 
 Curated suite expectations support four mutually exclusive check types:
 `kind` with `min_count` and optional `max_count`, `kinds` with a non-empty array
