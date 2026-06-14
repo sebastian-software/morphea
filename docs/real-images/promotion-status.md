@@ -46,17 +46,16 @@ calibration suite for false-positive promotion risk.
 
 | Status | Cases | Notes |
 | --- | ---: | --- |
-| passed current semantic contracts | 23 | Useful regression evidence, not proof of visual perfection. |
-| red | 1 | `badge-check` still fails because the scalloped badge outline is not represented as a distinct editable path. |
+| passed current semantic contracts | 24 | Useful regression evidence, not proof of visual perfection. |
+| red | 0 | `badge-check` now represents the scalloped badge outline as a closed editable `stroke_path`, not as a circle substitute. |
 | yellow | 5 | `move`, `image`, `alarm-clock`, `arrow-left-right`, and `share-2` pass current contracts but remain visibly loose enough to require review before promotion-style claims. |
 
 Lucide case reports now include `failed_expectation_count`,
 `failed_expectation_ids`, and per-expectation `failure_reason` fields with
 shortfall/excess details. `badge-check` now uses bounded expectations to
 separate the outer badge outline from the inner check mark. The inner
-`check-stroke` region passes, while the outer `editable-badge-outline`
-expectation is diagnosed as `insufficient_anchors`: no `stroke_path` anchor
-matches the full badge-outline region.
+`check-stroke` region passes, and the outer `editable-badge-outline`
+expectation now matches the closed irregular `stroke_path` outline.
 
 ## Visual Artifact Posture
 
@@ -154,7 +153,7 @@ as known baseline debt, but their promotion decision is now `deferred` with
 
 | Criterion | Status | Evidence |
 | --- | --- | --- |
-| `badge-check` cannot pass as a circle-like substitute. | met | Lucide calibration remains 23/24 with `badge-check` red. |
+| `badge-check` cannot pass as a circle-like substitute. | met | Lucide calibration is 24/24; `badge-check` passes only because the badge outline is preserved as a closed irregular `stroke_path`, not as a circle substitute. |
 | Wrong topology is red even with acceptable L1. | met | `ui-radio-acceptance-screenshot` has visual L1 0.033861 under its 0.08 family threshold, but `radio-control-region-topology` is red because one intended control selects 2 components. |
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |
@@ -289,8 +288,6 @@ checked-in reviewed accepted-cycle baseline for
 16 held primitive split/family rows, three Lucide family rows, and three
 real-image family rows. The current known debt is:
 
-- Lucide `circle_compound_strokes`: 7/8 passing, 1 failing
-  (`badge-check`);
 - real-image `generated_illustration_table_grid`: checked, failing;
 - real-image `generated_illustration_opaque_table_grid`: missing source,
   failing-missing.
@@ -301,9 +298,8 @@ baseline comparison path is covered outside helper-only unit tests.
 ## Next Gate
 
 The next mainline block should reduce reviewed baseline debt without hiding it:
-resolve the Lucide `badge-check` outline mismatch and the checked
-`generated_illustration_table_grid` failure. The opaque generated-illustration
-case is now explicitly deferred as missing source, but it remains baseline debt
-until the local source is restored or replaced by reviewed evidence. A future
-accepted cycle should move at least one known debt row into
-`resolved_regressions` without introducing new regressions.
+resolve the checked `generated_illustration_table_grid` failure. The opaque
+generated-illustration case is now explicitly deferred as missing source, but
+it remains baseline debt until the local source is restored or replaced by
+reviewed evidence. A future accepted cycle should move at least one real-image
+known-debt row into `resolved_regressions` without introducing new regressions.

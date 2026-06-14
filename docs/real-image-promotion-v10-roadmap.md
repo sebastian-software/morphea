@@ -48,9 +48,9 @@ Morphēa already has the foundation for real-image work:
 The Lucide audit is the warning sign that shapes this roadmap. A prior green
 aggregate pass still allowed `badge-check` to be visually wrong: a scalloped
 badge was promoted as a round ring. That is a false positive, not a tolerable
-approximation. The current honest Lucide posture is therefore 23/24 with
-`badge-check` red, plus several yellow cases that are semantically plausible
-but visibly loose.
+approximation. The current honest Lucide posture is now 24/24 after preserving
+`badge-check` as a closed irregular `stroke_path`, plus several yellow cases
+that are semantically plausible but visibly loose.
 
 Future gates must catch this class of error. A benchmark may be useful while
 red. It is harmful when it calls red output green.
@@ -223,7 +223,8 @@ Exit criteria:
 
 - `docs/milestones.md` links to this roadmap as the forward-looking real-image
   track.
-- Lucide status is documented as 23/24, with `badge-check` red.
+- Lucide status is documented as 24/24, with the prior `badge-check` false
+  positive resolved and named yellow cases still visible.
 - Real-image suite status is summarized with green/yellow/red labels.
 - Existing snapshot and run artifact commands remain documented.
 - No document claims that aggregate pass/fail equals visual quality.
@@ -401,9 +402,10 @@ Existing baseline output files are protected unless the configured
 cannot be overwritten by an accidental ad hoc output path.
 `docs/real-images/baselines/current-suite-family-baseline.json` is checked in
 as a reviewed accepted-cycle baseline and is exercised through the real
-`morphea self-learn --suite-family-baseline` CLI path. Its current known debt
-covers Lucide `circle_compound_strokes` plus two real-image generated
-illustration table families.
+`morphea self-learn --suite-family-baseline` CLI path. Current known debt is
+limited to two real-image generated illustration table families; the Lucide
+`circle_compound_strokes` debt was resolved by preserving the irregular
+`badge-check` outline as a closed `stroke_path`.
 
 Canonical issue tags:
 
@@ -576,8 +578,8 @@ in `docs/real-images/suite.json`.
 Required deliverables:
 
 - update milestone and plan docs to point to this roadmap;
-- record the Lucide status as 23/24 with `badge-check` red and named yellow
-  cases;
+- record the Lucide status as 24/24 with the prior `badge-check` false
+  positive resolved and named yellow cases still visible;
 - add a real-image status ledger that labels each curated case green, yellow,
   or red under the current pipeline;
 - define a minimal corpus schema extension for source provenance, licensing
