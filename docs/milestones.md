@@ -651,6 +651,10 @@ Implemented so far:
   promotion, red candidate, manual-review, and proposal-count deltas while
   recording whether the basis is true promotion-region state counts or
   downstream-status proxy counts.
+- `compare-segments` CLI stdout now summarizes before/after sources, proposal
+  counts, shared proposal count, source verdict, and green/red/manual-review
+  deltas instead of only reporting shared proposal ids, keeping MLX/SAM
+  side-by-side smoke runs understandable when sources use different id spaces.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

@@ -537,7 +537,7 @@ class SnapshotComparisonTests(unittest.TestCase):
                 output=output,
                 markdown=markdown,
             )
-            with redirect_stdout(StringIO()):
+            with redirect_stdout(StringIO()) as stdout:
                 main(
                     [
                         "compare-segments",
@@ -551,6 +551,16 @@ class SnapshotComparisonTests(unittest.TestCase):
                 )
 
             self.assertEqual(result["shared_proposal_count"], 1)
+            rendered_stdout = stdout.getvalue()
+            self.assertIn(
+                "compared segment sources flat_color -> flat_color",
+                rendered_stdout,
+            )
+            self.assertIn("proposals 1 -> 1 (delta 0)", rendered_stdout)
+            self.assertIn("shared=1", rendered_stdout)
+            self.assertIn("verdict=improved", rendered_stdout)
+            self.assertIn("green_delta=1.0", rendered_stdout)
+            self.assertIn("manual_delta=-1.0", rendered_stdout)
             self.assertEqual(result["added_group_ids"], ["proposal-group-0000"])
             self.assertTrue(output.exists())
             self.assertIn(

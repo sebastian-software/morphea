@@ -1877,7 +1877,11 @@ Top-level fields:
 `morphea compare-segments --markdown comparison.md` writes a scan-friendly
 Markdown summary with Source Assessment, Source Summaries, Promotion Proxy
 Deltas, and Source Deltas tables for comparing flat-color and MLX/SAM proposal
-outputs or for comparing gated and ungated segment configs.
+outputs or for comparing gated and ungated segment configs. The CLI stdout
+summarizes the same source-level evidence with before/after sources, proposal
+counts, shared proposal count, verdict, and green/red/manual-review deltas, so
+side-by-side runs with no shared proposal ids do not look like empty
+comparisons.
 
 ## Segment Comparison Config v1
 

@@ -1635,7 +1635,7 @@ def main(argv: list[str] | None = None) -> None:
             output=compare_config["output"],
             markdown=compare_config.get("markdown"),
         )
-        print(f"compared {result['shared_proposal_count']} segment proposals")
+        print(_compare_segments_stdout_summary(result))
         return
 
     if args.command == "compare-git-snapshots":
@@ -2588,6 +2588,23 @@ def _resolved_compare_segments_config(args: argparse.Namespace) -> dict[str, Pat
         config["markdown"] = args.markdown
     _require_config_paths(config, ("before", "after", "output"), "compare-segments")
     return config
+
+
+def _compare_segments_stdout_summary(result: dict[str, object]) -> str:
+    assessment = result.get("source_delta_assessment")
+    assessment = assessment if isinstance(assessment, dict) else {}
+    return (
+        "compared segment sources "
+        f"{result.get('before_source', 'n/a')} -> {result.get('after_source', 'n/a')}: "
+        f"proposals {result.get('before_proposal_count', 0)} -> "
+        f"{result.get('after_proposal_count', 0)} "
+        f"(delta {result.get('proposal_count_delta', 0)}), "
+        f"shared={result.get('shared_proposal_count', 0)}, "
+        f"verdict={assessment.get('verdict', 'n/a')}, "
+        f"green_delta={assessment.get('green_promotion_delta', 'n/a')}, "
+        f"red_delta={assessment.get('red_candidate_delta', 'n/a')}, "
+        f"manual_delta={assessment.get('manual_review_delta', 'n/a')}"
+    )
 
 
 def _resolved_compare_git_snapshots_config(
