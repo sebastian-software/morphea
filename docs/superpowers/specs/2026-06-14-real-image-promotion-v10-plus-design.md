@@ -580,18 +580,21 @@ Exit criteria:
 - the project can show honest examples without overclaiming quality;
 - false-positive semantic promotion remains the highest-severity failure.
 
-## First Concrete Implementation Packet
+## Implemented First Packet
 
-The next packet should be **RP10.1 Red Gate Kill List**, because the baseline is
-now clean and the suite is semantically green. More corpus or MLX work before
-this would amplify unresolved promotion failures.
+The first packet was **RP10.1 Red Gate Kill List**. The baseline is now clean,
+the suite is semantically green, and the current implementation has moved the
+three real-image cases from mechanical red gates to explicit manual-review
+evidence with portable decision plans. Further corpus and MLX/SAM work should
+preserve these review and gate contracts instead of bypassing them.
 
 Scope:
 
 - keep Lucide and primitive checks green;
 - keep all three current real-image cases semantically green;
-- choose one current red gate as the first fix target;
-- update the fixture, report, snapshot, and suite-family baseline only after the
+- make every current red gate explainable at region, editability, or review
+  policy level;
+- update fixtures, reports, snapshots, and suite-family baselines only after the
   fix is backed by command output.
 
 Recommended target order after the structural-layer, UI-topology, Terminaro
@@ -663,12 +666,12 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-Baseline refresh should happen only after the acceptance commands pass and the
-suite-family comparison reports no new regressions.
+Baseline refreshes should continue to happen only after the acceptance commands
+pass and suite-family comparison reports no new regressions.
 
 ## Review Questions for Us
 
-These are the planning questions to answer before starting RP10.1:
+These RP10 planning questions are now answered by the current review workflow:
 
 - Should `current_quality_label` remain manually red until explicit applied
   review, or should applied `accepted`/`corrected` reviews update the suite
@@ -682,10 +685,24 @@ These are the planning questions to answer before starting RP10.1:
   and individual review sidecars remain linked, but raw JSON inspection is not
   required for the first pass.
 - Do we want region truth annotations inside `docs/real-images/suite.json`, or
-  in per-case sidecar files to keep the suite compact?
+  in per-case sidecar files to keep the suite compact? Answer: current curated
+  region truth remains in `docs/real-images/suite.json` so gates, snapshots,
+  promotion exports, review packets, and harvest plans share one authoritative
+  case contract. Portable review decisions live in sidecar plan files because
+  they are reviewer evidence overlays, not source-region truth. If the corpus
+  grows enough to make the suite hard to review, split region truth into
+  per-case sidecars only after the loader preserves the same stable ids and
+  snapshot diff semantics.
 - What is the minimum visible artifact that convinces us a region is truly
   editable: SVG node count, side-by-side render, editability component scores,
-  or reviewer-applied correction?
+  or reviewer-applied correction? Answer: no single artifact is enough. A
+  trusted region needs the contact sheet or gallery for visual inspection,
+  region truth with gate-ok state for semantic contract evidence, editability
+  v10 component scores for structure evidence, promotion export metadata for
+  SVG traceability, and an applied accepted/corrected review when manual
+  policy is involved. Harvest-prep Markdown now keeps reviewed region ids,
+  review-promoted region ids, and review-promoted anchor indexes visible after
+  pending cases move into applied status.
 
 ## Commit Discipline
 
