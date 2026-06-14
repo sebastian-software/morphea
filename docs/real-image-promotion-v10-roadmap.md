@@ -778,6 +778,10 @@ Required deliverables:
   silently dropping them;
 - avoid detector tuning until the corpus and labels make failure modes visible.
 
+Current implementation: `curated-check --markdown` writes a Corpus Ledger with
+separate `Quality` and `Pipeline` labels, so manual suite quality metadata is
+kept distinct from the current pipeline's green/yellow/red result.
+
 Exit criteria:
 
 - a reviewer can open one report and see which real-image families are green,

@@ -490,6 +490,13 @@ class CuratedSuiteTests(unittest.TestCase):
                 gate_by_id["current_quality_label"]["reason"],
                 "current quality label is red; manual review pending",
             )
+            suite_markdown = render_curated_markdown(result)
+            self.assertIn(
+                "| `simple-circle` | `red` | `yellow` | `checked` | "
+                "`test_fixture` | `circle` | `manual_review_pending` | "
+                "`test_fixture` |",
+                suite_markdown,
+            )
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
                     encoding="utf-8"
@@ -1180,7 +1187,7 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertIn("| `test_fixture` | 1 | 1 | 0 | 1 | 0 |", markdown)
         self.assertIn("## Corpus Ledger", markdown)
         self.assertIn(
-            "| `simple-circle` | `red` | `checked` | `test_fixture` | "
+            "| `simple-circle` | `red` | `red` | `checked` | `test_fixture` | "
             "`circle` | `fragmentation` | `test_fixture` |",
             markdown,
         )

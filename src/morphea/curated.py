@@ -313,8 +313,8 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             "",
             "## Corpus Ledger",
             "",
-            "| Case | Quality | Current status | Stress family | Expected families | Issues | Licensing |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| Case | Quality | Pipeline | Current status | Stress family | Expected families | Issues | Licensing |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for case in _promotion_sorted_cases(cases):
@@ -326,6 +326,7 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             "| "
             f"`{case.get('id', 'n/a')}` | "
             f"{_fmt_promotion_quality(promotion)} | "
+            f"{_fmt_pipeline_quality(case)} | "
             f"`{promotion.get('current_status', 'n/a')}` | "
             f"`{promotion.get('stress_family', 'n/a')}` | "
             f"{_fmt_markdown_list(promotion.get('expected_promotion_families'))} | "
@@ -4530,6 +4531,39 @@ def _fmt_promotion_quality(value: object) -> str:
     if not isinstance(label, str):
         return "n/a"
     return f"`{label}`"
+
+
+def _fmt_pipeline_quality(case: dict[str, Any]) -> str:
+    label = _pipeline_quality_label(case)
+    return f"`{label}`" if label is not None else "n/a"
+
+
+def _pipeline_quality_label(case: dict[str, Any]) -> str | None:
+    summary = case.get("promotion_summary")
+    if isinstance(summary, dict):
+        decision = summary.get("decision")
+        red_count = _safe_int(summary.get("red_gate_count"))
+        yellow_count = _safe_int(summary.get("yellow_gate_count"))
+        if decision == "rejected" or red_count > 0:
+            return "red"
+        if decision == "deferred" or yellow_count > 0:
+            return "yellow"
+        if decision == "promoted":
+            return "green"
+    status = case.get("status")
+    if status == "missing_source":
+        return "red"
+    if status == "checked" and case.get("ok") is True:
+        return "green"
+    if status == "checked" and case.get("ok") is False:
+        return "red"
+    return None
+
+
+def _safe_int(value: object) -> int:
+    if isinstance(value, int):
+        return value
+    return 0
 
 
 def _fmt_markdown_list(value: object) -> str:

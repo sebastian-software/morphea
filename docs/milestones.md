@@ -1111,7 +1111,8 @@ Implemented so far:
 - `morphea curated-check --markdown report.md` writes scan-friendly real-image
   suite reports with a Corpus Ledger for quality labels, stress families,
   expected promotion families, issue tags, licensing status, plus case status,
-  failed expectations, key metrics, and artifact directories.
+  derived current pipeline labels, failed expectations, key metrics, and
+  artifact directories.
 - the same Markdown report includes a Region Truth table for configured
   source-region gates, with stable region ids, state, bounds, expected kinds,
   actual matching counts, topology evidence including descriptor labels and

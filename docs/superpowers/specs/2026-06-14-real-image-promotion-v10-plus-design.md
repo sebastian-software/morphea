@@ -181,9 +181,9 @@ Deliverables:
 - no Lucide or primitive regression.
 
 Current report slice: `curated-check --markdown` now writes a Corpus Ledger that
-lists each promotion case's quality label, current status, stress family,
-expected promotion families, issue tags, and licensing status before the
-promotion-gate details.
+lists each promotion case's manual quality label, derived current pipeline
+label, current status, stress family, expected promotion families, issue tags,
+and licensing status before the promotion-gate details.
 
 Exit criteria:
 
