@@ -30,6 +30,7 @@ from morphea.token_transformer import (
 
 
 MLX_MODEL_TYPE = "mlx_transformer_primitive_classifier"
+MLX_CLASSIFIER_INSTALL_ACTION = "Install the MLX extra with uv: uv pip install -e '.[mlx]'"
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,7 @@ def is_mlx_available() -> bool:
 
 def mlx_classifier_runtime_status() -> dict[str, object]:
     available = is_mlx_available()
+    next_action = None if available else MLX_CLASSIFIER_INSTALL_ACTION
     return {
         "backend": "mlx",
         "backend_available": available,
@@ -61,6 +63,7 @@ def mlx_classifier_runtime_status() -> dict[str, object]:
         "training_implementation": (
             "mlx_feature_head" if available else "centroid_fallback"
         ),
+        "next_action": next_action,
         "capabilities": _mlx_classifier_capabilities(available),
     }
 
@@ -72,31 +75,37 @@ def _mlx_classifier_capabilities(available: bool) -> dict[str, dict[str, object]
         if available
         else "MLX primitive classifier runtime is not installed"
     )
+    next_action = None if available else MLX_CLASSIFIER_INSTALL_ACTION
     return {
         "feature_head_training": {
             "available": available,
             "status": runtime_status,
             "reason": runtime_reason,
+            "next_action": next_action,
         },
         "raster_token_mixer_training": {
             "available": available,
             "status": runtime_status,
             "reason": runtime_reason,
+            "next_action": next_action,
         },
         "token_transformer_serialization": {
             "available": available,
             "status": runtime_status,
             "reason": runtime_reason,
+            "next_action": next_action,
         },
         "end_to_end_token_projection_training": {
             "available": available,
             "status": runtime_status,
             "reason": runtime_reason,
+            "next_action": next_action,
         },
         "end_to_end_attention_training": {
             "available": available,
             "status": runtime_status,
             "reason": runtime_reason,
+            "next_action": next_action,
         },
     }
 

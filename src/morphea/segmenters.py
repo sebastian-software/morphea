@@ -18,6 +18,28 @@ from morphea.images import ColorMask, flat_color_masks_from_image
 from morphea.masks import MaskComponent, connected_components
 
 
+MLX_SAM_RUNTIME_INSTALL_ACTION = (
+    "Use a Python 3.14+ venv and install MLX/SAM extras with uv: "
+    "uv venv .venv-mlx-sam --python 3.14 && "
+    "uv pip install --python .venv-mlx-sam/bin/python -e '.[mlx,sam]'"
+)
+MLX_SAM_MODEL_CONFIG_ACTION = (
+    "Configure --mlx-sam-model-path with a .json proposal payload or "
+    "a .safetensors SAM checkpoint"
+)
+MLX_SAM_MODEL_MISSING_ACTION = (
+    "Create or download the configured proposal/checkpoint file, or update "
+    "--mlx-sam-model-path"
+)
+MLX_SAM_ADAPTER_PENDING_ACTION = (
+    "Use a .json proposal payload for the local bridge or a .safetensors "
+    "checkpoint for live SAM"
+)
+MLX_SAM_JSON_ADAPTER_ACTION = (
+    "Configure the MLX/SAM model path with a .json proposal payload"
+)
+
+
 @dataclass(frozen=True)
 class SegmentProposal:
     id: str
@@ -168,9 +190,13 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
     elif not model_exists:
         status = "model_missing"
         reason = "MLX SAM model path does not exist"
+    elif package_adapter_candidate and not sam_package_available:
+        status = "mlx_sam_package_missing"
+        reason = "mlx-sam package is not installed in this Python environment"
     else:
         status = "adapter_pending"
         reason = "MLX SAM package adapter requires mlx-sam and a .safetensors checkpoint"
+    next_action = _mlx_sam_next_action(status)
     return {
         "source": segmenter.source,
         "backend_available": status in {
@@ -179,6 +205,7 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         },
         "status": status,
         "reason": reason,
+        "next_action": next_action,
         "package_available": package_available,
         "sam_package_available": sam_package_available,
         "model_configured": model_configured,
@@ -250,13 +277,35 @@ def _mlx_sam_capabilities(
                 if json_adapter_available
                 else "Configure mlx_model_path with a JSON proposal payload"
             ),
+            "next_action": (
+                None if json_adapter_available else MLX_SAM_JSON_ADAPTER_ACTION
+            ),
         },
         "live_sam_model_adapter": {
             "available": package_adapter_available,
             "status": live_status,
             "reason": live_reason,
+            "next_action": _mlx_sam_next_action(live_status),
         },
     }
+
+
+def _mlx_sam_next_action(status: str) -> str | None:
+    if status in {"json_adapter_available", "mlx_sam_package_available", "available"}:
+        return None
+    if status == "not_installed":
+        return MLX_SAM_RUNTIME_INSTALL_ACTION
+    if status == "not_configured":
+        return MLX_SAM_MODEL_CONFIG_ACTION
+    if status == "model_missing":
+        return MLX_SAM_MODEL_MISSING_ACTION
+    if status == "mlx_sam_package_missing":
+        return MLX_SAM_RUNTIME_INSTALL_ACTION
+    if status in {"adapter_pending", "pending_implementation"}:
+        return MLX_SAM_ADAPTER_PENDING_ACTION
+    if status == "requires_json_proposal_payload":
+        return MLX_SAM_JSON_ADAPTER_ACTION
+    return None
 
 
 def segmenter_backend_status(

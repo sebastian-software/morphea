@@ -669,6 +669,9 @@ Implemented so far:
 - `morphea status` treats the `mlx_sam_package_available` adapter state as an
   available backend state, so a configured MLX/SAM package adapter is not
   reported as blocked merely because its status name is adapter-specific.
+- `morphea status` now carries `next_action` hints through backend and
+  capability rows, including concrete `uv` setup commands for MLX/MLX-SAM,
+  checkpoint configuration, missing model paths, and JSON proposal payloads.
 
 ## M7: Primitive Classifier Training
 

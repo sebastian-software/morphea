@@ -74,8 +74,8 @@ def render_runtime_status_markdown(status: dict[str, Any]) -> str:
     lines = [
         "# Morphēa Runtime Status",
         "",
-        "| Area | Backend | Status | Available | Reason |",
-        "| --- | --- | --- | ---: | --- |",
+        "| Area | Backend | Status | Available | Reason | Next action |",
+        "| --- | --- | --- | ---: | --- | --- |",
     ]
     for row in rows:
         lines.append(
@@ -84,7 +84,8 @@ def render_runtime_status_markdown(status: dict[str, Any]) -> str:
             f"`{row['backend']}` | "
             f"`{row['status']}` | "
             f"{str(row['available']).lower()} | "
-            f"{row['reason'] or 'n/a'} |"
+            f"{row['reason'] or 'n/a'} | "
+            f"{row['next_action'] or 'n/a'} |"
         )
     blocked = status.get("blocked_backends", [])
     if not isinstance(blocked, list):
@@ -99,7 +100,7 @@ def render_runtime_status_markdown(status: dict[str, Any]) -> str:
                 f"{row.get('area', 'unknown')}/"
                 f"{row.get('backend', 'unknown')}: "
                 f"{row.get('status', 'unknown')} - "
-                f"{row.get('reason') or 'n/a'}"
+                f"{_reason_with_action(row)}"
             )
     else:
         lines.append("n/a")
@@ -117,7 +118,7 @@ def render_runtime_status_markdown(status: dict[str, Any]) -> str:
                 f"{row.get('backend', 'unknown')}/"
                 f"{row.get('capability', 'unknown')}: "
                 f"{row.get('status', 'unknown')} - "
-                f"{row.get('reason') or 'n/a'}"
+                f"{_reason_with_action(row)}"
             )
     else:
         lines.append("n/a")
@@ -198,6 +199,7 @@ def _backend_capability_rows(
                 "status": capability_detail.get("status", "unknown"),
                 "available": bool(capability_detail.get("available", False)),
                 "reason": capability_detail.get("reason"),
+                "next_action": capability_detail.get("next_action"),
             }
         )
     return rows
@@ -212,4 +214,13 @@ def _row(area: str, backend: str, detail: object) -> dict[str, Any]:
         "status": detail.get("status", "unknown"),
         "available": bool(detail.get("backend_available", False)),
         "reason": detail.get("reason"),
+        "next_action": detail.get("next_action"),
     }
+
+
+def _reason_with_action(row: dict[str, Any]) -> str:
+    reason = row.get("reason") or "n/a"
+    next_action = row.get("next_action")
+    if not next_action:
+        return str(reason)
+    return f"{reason}; next action: {next_action}"

@@ -11,6 +11,10 @@ from PIL import Image, ImageDraw
 from morphea.cli import main
 from morphea.segmenters import (
     FlatColorSegmenter,
+    MLX_SAM_ADAPTER_PENDING_ACTION,
+    MLX_SAM_MODEL_CONFIG_ACTION,
+    MLX_SAM_MODEL_MISSING_ACTION,
+    MLX_SAM_RUNTIME_INSTALL_ACTION,
     MlxSamSegmenter,
     SegmentProposal,
     gate_segment_proposals,
@@ -226,12 +230,24 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(missing_model["status"], "model_missing")
             self.assertTrue(missing_model["package_available"])
             self.assertFalse(missing_model["model_exists"])
+            self.assertEqual(
+                missing_model["next_action"],
+                MLX_SAM_MODEL_MISSING_ACTION,
+            )
             self.assertEqual(configured["status"], "adapter_pending")
             self.assertTrue(configured["model_exists"])
             self.assertFalse(configured["backend_available"])
             self.assertEqual(
+                configured["next_action"],
+                MLX_SAM_ADAPTER_PENDING_ACTION,
+            )
+            self.assertEqual(
                 configured["capabilities"]["live_sam_model_adapter"]["status"],
                 "pending_implementation",
+            )
+            self.assertEqual(
+                configured["capabilities"]["live_sam_model_adapter"]["next_action"],
+                MLX_SAM_ADAPTER_PENDING_ACTION,
             )
             self.assertFalse(
                 configured["capabilities"]["live_sam_model_adapter"]["available"]
@@ -257,8 +273,40 @@ class SegmenterTests(unittest.TestCase):
             self.assertTrue(status["backend_available"])
             self.assertEqual(status["adapter"], "mlx_sam_grid_points")
             self.assertTrue(status["sam_package_available"])
+            self.assertIsNone(status["next_action"])
             self.assertTrue(
                 status["capabilities"]["live_sam_model_adapter"]["available"]
+            )
+            self.assertIsNone(
+                status["capabilities"]["live_sam_model_adapter"]["next_action"]
+            )
+
+    def test_mlx_sam_runtime_status_reports_missing_sam_package_action(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam.safetensors"
+            model_path.write_text("placeholder", encoding="utf-8")
+
+            with (
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=True),
+                patch(
+                    "morphea.segmenters.is_mlx_sam_package_available",
+                    return_value=False,
+                ),
+            ):
+                status = mlx_sam_runtime_status(
+                    MlxSamSegmenter(model_path=str(model_path))
+                )
+
+            self.assertEqual(status["status"], "mlx_sam_package_missing")
+            self.assertFalse(status["backend_available"])
+            self.assertEqual(status["next_action"], MLX_SAM_RUNTIME_INSTALL_ACTION)
+            self.assertEqual(
+                status["capabilities"]["live_sam_model_adapter"]["status"],
+                "mlx_sam_package_missing",
+            )
+            self.assertEqual(
+                status["capabilities"]["live_sam_model_adapter"]["next_action"],
+                MLX_SAM_RUNTIME_INSTALL_ACTION,
             )
 
     def test_mlx_sam_runtime_status_requires_model_configuration(self):
@@ -268,9 +316,14 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(status["status"], "not_configured")
         self.assertTrue(status["package_available"])
         self.assertFalse(status["model_configured"])
+        self.assertEqual(status["next_action"], MLX_SAM_MODEL_CONFIG_ACTION)
         self.assertEqual(
             status["capabilities"]["live_sam_model_adapter"]["status"],
             "not_configured",
+        )
+        self.assertEqual(
+            status["capabilities"]["live_sam_model_adapter"]["next_action"],
+            MLX_SAM_MODEL_CONFIG_ACTION,
         )
 
     def test_mlx_sam_segmenter_keeps_adapter_pending_non_operational(self):
@@ -296,12 +349,20 @@ class SegmenterTests(unittest.TestCase):
             self.assertTrue(status["backend_available"])
             self.assertEqual(status["adapter"], "json_proposals")
             self.assertFalse(status["package_available"])
+            self.assertIsNone(status["next_action"])
             self.assertTrue(
                 status["capabilities"]["json_proposal_adapter"]["available"]
+            )
+            self.assertIsNone(
+                status["capabilities"]["json_proposal_adapter"]["next_action"]
             )
             self.assertEqual(
                 status["capabilities"]["live_sam_model_adapter"]["status"],
                 "not_installed",
+            )
+            self.assertEqual(
+                status["capabilities"]["live_sam_model_adapter"]["next_action"],
+                MLX_SAM_RUNTIME_INSTALL_ACTION,
             )
 
     def test_mlx_sam_json_adapter_filters_and_limits_proposals(self):
@@ -433,6 +494,7 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(mlx["status"], "not_installed")
         self.assertFalse(mlx["package_available"])
         self.assertEqual(mlx["model_path"], "models/sam.mlx")
+        self.assertEqual(mlx["next_action"], MLX_SAM_RUNTIME_INSTALL_ACTION)
 
     def test_mlx_sam_segmenter_reports_not_configured_legacy_regex(self):
         with self.assertRaisesRegex(RuntimeError, "not installed/configured"):

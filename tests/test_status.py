@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from morphea.segmenters import MLX_SAM_RUNTIME_INSTALL_ACTION
 from morphea.status import collect_runtime_status, render_runtime_status_markdown
 
 
@@ -56,6 +57,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     "status": "not_installed",
                     "available": False,
                     "reason": "missing",
+                    "next_action": None,
                 },
                 written["blocked_backends"],
             )
@@ -67,6 +69,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     "status": "not_installed",
                     "available": False,
                     "reason": "MLX runtime package is not installed",
+                    "next_action": MLX_SAM_RUNTIME_INSTALL_ACTION,
                 },
                 written["blocked_capabilities"],
             )
@@ -116,6 +119,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     "status": "json_adapter_available",
                     "available": True,
                     "reason": None,
+                    "next_action": None,
                 },
                 result["blocked_backends"],
             )
@@ -127,6 +131,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     "status": "not_installed",
                     "available": False,
                     "reason": "MLX runtime package is not installed",
+                    "next_action": MLX_SAM_RUNTIME_INSTALL_ACTION,
                 },
                 result["blocked_capabilities"],
             )
@@ -182,6 +187,7 @@ class RuntimeStatusTests(unittest.TestCase):
                     "status": "available",
                     "available": True,
                     "reason": None,
+                    "next_action": None,
                 },
                 result["blocked_capabilities"],
             )
@@ -210,6 +216,7 @@ class RuntimeStatusTests(unittest.TestCase):
                         "status": "not_configured",
                         "available": False,
                         "reason": "model missing",
+                        "next_action": "configure a model",
                     }
                 ],
                 "blocked_capabilities": [
@@ -220,6 +227,7 @@ class RuntimeStatusTests(unittest.TestCase):
                         "status": "pending_implementation",
                         "available": False,
                         "reason": "attention training pending",
+                        "next_action": "finish attention training",
                     }
                 ],
             }
@@ -228,10 +236,12 @@ class RuntimeStatusTests(unittest.TestCase):
         self.assertIn("# Morphēa Runtime Status", markdown)
         self.assertIn("`flat_color`", markdown)
         self.assertIn("segmenter/mlx_sam: not_configured", markdown)
+        self.assertIn("next action: configure a model", markdown)
         self.assertIn(
             "classifier/mlx/end_to_end_attention_training: pending_implementation",
             markdown,
         )
+        self.assertIn("next action: finish attention training", markdown)
 
 
 if __name__ == "__main__":

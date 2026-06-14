@@ -35,6 +35,7 @@ from morphea.dataset import generate_synthetic_dataset
 from morphea.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
 from morphea.masks import BinaryMask, connected_components
 from morphea.mlx_classifier import (
+    MLX_CLASSIFIER_INSTALL_ACTION,
     MLX_MODEL_TYPE,
     MlxClassifierTrainingConfig,
     mlx_classifier_runtime_status,
@@ -449,11 +450,20 @@ class PrimitiveClassifierTests(unittest.TestCase):
         self.assertEqual(unavailable["status"], "not_installed")
         self.assertFalse(unavailable["backend_available"])
         self.assertEqual(unavailable["training_implementation"], "centroid_fallback")
+        self.assertEqual(unavailable["next_action"], MLX_CLASSIFIER_INSTALL_ACTION)
+        self.assertEqual(
+            unavailable["capabilities"]["feature_head_training"]["next_action"],
+            MLX_CLASSIFIER_INSTALL_ACTION,
+        )
         self.assertEqual(available["status"], "available")
         self.assertTrue(available["backend_available"])
         self.assertEqual(available["training_implementation"], "mlx_feature_head")
+        self.assertIsNone(available["next_action"])
         self.assertTrue(
             available["capabilities"]["feature_head_training"]["available"]
+        )
+        self.assertIsNone(
+            available["capabilities"]["feature_head_training"]["next_action"]
         )
         self.assertTrue(
             available["capabilities"][

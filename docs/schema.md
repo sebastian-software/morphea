@@ -958,10 +958,11 @@ Proposal group fields:
 - `metrics`: includes `row_count`, `column_count`, `tile_count`,
   `grid_occupancy_ratio`, row/column spacing errors, and mean tile dimensions
 
-`backend` records `source`, `backend_available`, `status`, and an optional
-`reason`. MLX SAM status distinguishes `json_adapter_available`,
-`mlx_sam_package_available`, `not_installed`, `not_configured`,
-`model_missing`, and `adapter_pending`; it also records `package_available`,
+`backend` records `source`, `backend_available`, `status`, an optional
+`reason`, and an optional `next_action`. MLX SAM status distinguishes
+`json_adapter_available`, `mlx_sam_package_available`, `not_installed`,
+`not_configured`, `model_missing`, `mlx_sam_package_missing`, and
+`adapter_pending`; it also records `package_available`,
 `sam_package_available`, `model_configured`, `model_exists`, adapter name,
 runtime knobs, and per-capability status for `json_proposal_adapter` and
 `live_sam_model_adapter`. The JSON adapter is a local bridge for checked-in or
@@ -1000,15 +1001,16 @@ Top-level fields:
 - `blocked_capabilities`: normalized rows for backend capabilities that are
   unavailable or still pending implementation
 
-Each status entry records `status`, `backend_available`, and optional `reason`
-where the underlying backend exposes those fields. The report is intentionally
-diagnostic: missing MLX/SAM/DiffVG integrations are reported explicitly instead
-of being treated as partial success.
+Each status entry records `status`, `backend_available`, optional `reason`, and
+optional `next_action` where the underlying backend exposes those fields. The
+report is intentionally diagnostic: missing MLX/SAM/DiffVG integrations are
+reported explicitly instead of being treated as partial success.
 
 Optional status entries may expose a `capabilities` object. Each capability
-records `available`, `status`, and optional `reason`. The current MLX/SAM
-capability statuses make `live_sam_model_adapter` explicit as a remaining
-blocker. The classifier status also reports available
+records `available`, `status`, optional `reason`, and optional `next_action`.
+The current MLX/SAM capability statuses make `live_sam_model_adapter` explicit
+as a remaining blocker and point missing runtimes at the corresponding `uv`
+setup command. The classifier status also reports available
 `end_to_end_token_projection_training` and `end_to_end_attention_training`
 capabilities when MLX autograd is usable.
 
