@@ -1140,6 +1140,11 @@ Implemented so far:
   coverage block for bounded region gates, shape-class gates, topology gates,
   fragmentation/layer thresholds, grouping, visual fidelity, per-family visual
   thresholds, contact-sheet gate records, and per-case gate coverage.
+- curated reports include `promotion_pipeline_audit`, a machine-readable RIP3
+  pipeline block for promotion decisions, configured region-state records,
+  failed-gate visibility, review-decision records, review artifact links,
+  promoted/fallback SVG exports, promotion-export partitions, and manifest
+  promotion annotations.
 - curated reports and deterministic snapshots include
   `pipeline_quality_label`, so current green/yellow/red pipeline state can be
   consumed without parsing Markdown.

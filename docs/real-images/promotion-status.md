@@ -275,6 +275,13 @@ missing gate categories.
 
 ## RIP3 Exit Audit
 
+Current machine-readable evidence: `promotion_pipeline_audit` now checks the
+RIP3 contract directly. In checked runs with `--output-dir`, it requires
+promotion decisions, configured region-state records, failed-gate visibility,
+review artifact links, promoted/fallback SVG artifacts, `promotion-export.json`
+partitions, and manifest promotion annotations before the suite is considered
+pipeline-ready.
+
 | Criterion | Status | Evidence |
 | --- | --- | --- |
 | Manifests expose region-level promotion state. | met | Checked run manifests include `promotion.regions`; `terminaro-tweaked` now records `gold-circle-region-shape-class` as `deferred` because the containing case is manual-review pending, and `ui-radio-acceptance-screenshot` records `radio-control-region-topology` as `deferred` while the containing case remains red. |

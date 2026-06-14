@@ -729,6 +729,18 @@ fidelity gates, per-family visual thresholds, contact-sheet gate records, and
 per-case gate coverage. This audit measures gate coverage, not whether current
 promotion output is green.
 
+Curated reports also include top-level `promotion_pipeline_audit` for the RIP3
+promotion-pipeline contract. The audit records `schema_version`, `ok`,
+suite-level `checks`, aggregate coverage counts, decision counts, region-state
+counts, failed-gate counts, and one row per promotion case. The checks cover
+promotion decision records, region-level state records for configured region
+gates, failed-gate visibility in review decisions, review-decision records,
+review artifact links, promoted/fallback SVG export artifacts, promotion-export
+partitions, and promotion annotations in manifests. When `curated-check --run`
+also writes an `output_dir`, the artifact checks require the referenced files to
+exist and the JSON export/manifest records to expose rejected, deferred,
+fallback, and promoted candidate partitions.
+
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 

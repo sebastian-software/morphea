@@ -341,6 +341,14 @@ Exit criteria:
 - promoted SVG output can be filtered from debug/fallback output;
 - no failed semantic candidate disappears silently.
 
+Current implementation evidence: `curated-check` reports top-level
+`promotion_pipeline_audit` for RIP3 pipeline coverage. In run mode with an
+`output_dir`, the audit requires promotion decisions, configured region-state
+records, failed-gate visibility in review decisions, review artifact links,
+`promoted.svg`/`fallback.svg`, `promotion-export.json` partitions, and manifest
+promotion annotations to be present and readable before the suite is considered
+RIP3-ready.
+
 ### RIP4: Editability Score
 
 Purpose: turn semantic-first intent into a measurable, reviewable score.

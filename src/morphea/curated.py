@@ -74,6 +74,23 @@ PROMOTION_GATE_TYPES = {
 }
 PROMOTION_GATE_SEVERITIES = {"red", "yellow"}
 PROMOTION_REVIEW_DECISIONS = ("accepted", "corrected", "rejected", "deferred")
+PROMOTION_PIPELINE_DECISIONS = {"promoted", "deferred", "rejected"}
+PROMOTION_PIPELINE_REGION_STATES = {"promoted", "deferred", "rejected"}
+PROMOTION_PIPELINE_EXPORT_ARTIFACTS = (
+    "promoted_svg",
+    "fallback_svg",
+    "promotion_export",
+    "promotion_regions",
+)
+PROMOTION_PIPELINE_REVIEW_ARTIFACTS = (
+    "contact_sheet",
+    "manifest",
+    "promotion_export",
+    "promotion_regions",
+    "promotion_review",
+    "editability_review",
+    "review_decision",
+)
 PROMOTION_REGION_TOPOLOGY_LIMITS = {
     "min_closed_anchors",
     "max_closed_anchors",
@@ -225,6 +242,11 @@ def check_curated_suite(
         contact_sheet_artifacts_required=run and suite_output_dir is not None,
     )
     quality_gate_audit = _curated_quality_gate_audit(suite["cases"], cases)
+    promotion_pipeline_audit = _curated_promotion_pipeline_audit(
+        suite["cases"],
+        cases,
+        export_artifacts_required=run and suite_output_dir is not None,
+    )
     report = {
         "suite": str(suite_file),
         "version": suite["version"],
@@ -234,6 +256,7 @@ def check_curated_suite(
         "family_summary": _curated_family_summary(cases),
         "corpus_audit": corpus_audit,
         "quality_gate_audit": quality_gate_audit,
+        "promotion_pipeline_audit": promotion_pipeline_audit,
         "cases": cases,
     }
     if suite_output_dir is not None:
@@ -405,6 +428,55 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                     "| "
                     f"`{item.get('id', 'n/a')}` | "
                     f"`{str(item.get('ok', False)).lower()}` | "
+                    f"{_fmt_markdown_list(item.get('missing'))} |"
+                )
+    else:
+        lines.extend(["- Status: `not_available`", ""])
+    lines.extend(
+        [
+            "",
+            "## RIP3 Promotion Pipeline Audit",
+            "",
+        ]
+    )
+    pipeline_audit = report.get("promotion_pipeline_audit")
+    if isinstance(pipeline_audit, dict):
+        summary = pipeline_audit.get("summary", {})
+        summary = summary if isinstance(summary, dict) else {}
+        pipeline_status = "pass" if pipeline_audit.get("ok", False) else "fail"
+        lines.extend(
+            [
+                f"- Status: `{pipeline_status}`",
+                f"- Covered checks: {_fmt_markdown_value(summary.get('covered_check_count'))} / {_fmt_markdown_value(summary.get('required_check_count'))}",
+                f"- Missing checks: {_fmt_markdown_list(summary.get('missing_checks'))}",
+                f"- Promotion cases: {_fmt_markdown_value(summary.get('promotion_case_count'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        checks = pipeline_audit.get("checks", {})
+        if isinstance(checks, dict):
+            for name, covered in sorted(checks.items()):
+                lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+        lines.extend(
+            [
+                "",
+                "| Case | Ready | Decision | Regions | Missing |",
+                "| --- | --- | --- | ---: | --- |",
+            ]
+        )
+        audit_cases = pipeline_audit.get("cases", [])
+        if isinstance(audit_cases, list):
+            for item in audit_cases:
+                if not isinstance(item, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{item.get('id', 'n/a')}` | "
+                    f"`{str(item.get('ok', False)).lower()}` | "
+                    f"`{item.get('decision', 'n/a')}` | "
+                    f"{_fmt_markdown_value(item.get('region_count'))} | "
                     f"{_fmt_markdown_list(item.get('missing'))} |"
                 )
     else:
@@ -649,6 +721,7 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
         "ok": report.get("ok", False),
         "corpus_audit": report.get("corpus_audit"),
         "quality_gate_audit": report.get("quality_gate_audit"),
+        "promotion_pipeline_audit": report.get("promotion_pipeline_audit"),
         "cases": [
             _case_snapshot(case)
             for case in sorted(
@@ -1082,6 +1155,392 @@ def _case_gate_type_counts(report_case: dict[str, Any]) -> dict[str, int]:
         for gate in gates
         if isinstance(gate, dict)
     )
+
+
+def _curated_promotion_pipeline_audit(
+    suite_cases: list[dict[str, Any]],
+    report_cases: list[dict[str, Any]],
+    *,
+    export_artifacts_required: bool,
+) -> dict[str, Any]:
+    report_by_id = {
+        str(case.get("id")): case
+        for case in report_cases
+        if isinstance(case, dict) and isinstance(case.get("id"), str)
+    }
+    audited_cases = [
+        _curated_promotion_pipeline_case_audit(
+            case,
+            report_by_id.get(str(case.get("id")), {}),
+            export_artifacts_required=export_artifacts_required,
+        )
+        for case in suite_cases
+        if isinstance(case, dict) and isinstance(case.get("promotion"), dict)
+    ]
+    checks = {
+        "case_pipeline_coverage": all(case["ok"] for case in audited_cases),
+        "promotion_decision_records": all(
+            _bool_case_check(case, "promotion_decision_record")
+            for case in audited_cases
+        ),
+        "region_state_records": all(
+            _bool_case_check(case, "region_state_records")
+            for case in audited_cases
+        ),
+        "failed_gate_visibility": all(
+            _bool_case_check(case, "failed_gate_visibility")
+            for case in audited_cases
+        ),
+        "review_decision_records": all(
+            _bool_case_check(case, "review_decision_record")
+            for case in audited_cases
+        ),
+        "review_artifact_links": all(
+            _bool_case_check(case, "review_artifact_links")
+            for case in audited_cases
+        ),
+        "filtered_svg_artifacts": all(
+            _bool_case_check(case, "filtered_svg_artifacts")
+            for case in audited_cases
+        ),
+        "promotion_export_partitions": all(
+            _bool_case_check(case, "promotion_export_partition")
+            for case in audited_cases
+        ),
+        "manifest_region_annotations": all(
+            _bool_case_check(case, "manifest_region_annotations")
+            for case in audited_cases
+        ),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "promotion_case_count": len(audited_cases),
+            "ready_case_count": sum(1 for case in audited_cases if case["ok"]),
+            "incomplete_case_count": sum(
+                1 for case in audited_cases if not case["ok"]
+            ),
+            "export_artifacts_required": export_artifacts_required,
+            "decision_counts": _counts(
+                case["decision"]
+                for case in audited_cases
+                if isinstance(case.get("decision"), str)
+            ),
+            "region_state_counts": _counts(
+                state
+                for case in audited_cases
+                for state in case.get("region_states", [])
+                if isinstance(state, str)
+            ),
+            "failed_gate_count": sum(
+                len(case.get("failed_gate_ids", [])) for case in audited_cases
+            ),
+            "non_promoted_region_count": sum(
+                1
+                for case in audited_cases
+                for state in case.get("region_states", [])
+                if state != "promoted"
+            ),
+        },
+        "cases": audited_cases,
+    }
+
+
+def _curated_promotion_pipeline_case_audit(
+    suite_case: dict[str, Any],
+    report_case: dict[str, Any],
+    *,
+    export_artifacts_required: bool,
+) -> dict[str, Any]:
+    case_id = str(suite_case.get("id", "n/a"))
+    promotion = suite_case.get("promotion", {})
+    promotion = promotion if isinstance(promotion, dict) else {}
+    region_gate_ids = _promotion_region_gate_ids(promotion)
+    artifact_required = (
+        export_artifacts_required and report_case.get("status") == "checked"
+    )
+    summary = report_case.get("promotion_summary", {})
+    summary = summary if isinstance(summary, dict) else {}
+    decision = summary.get("decision")
+    regions = _case_promotion_regions(report_case)
+    checks = {
+        "promotion_decision_record": decision in PROMOTION_PIPELINE_DECISIONS,
+        "region_state_records": _case_has_pipeline_region_records(
+            report_case,
+            region_gate_ids,
+        ),
+        "failed_gate_visibility": _case_has_failed_gate_visibility(report_case),
+        "review_decision_record": _case_has_review_decision_record(report_case),
+        "review_artifact_links": _case_has_review_artifact_links(
+            report_case,
+            required=artifact_required,
+        ),
+        "filtered_svg_artifacts": _case_has_filtered_svg_artifacts(
+            report_case,
+            required=artifact_required,
+        ),
+        "promotion_export_partition": _case_has_promotion_export_partition(
+            report_case,
+            required=artifact_required,
+        ),
+        "manifest_region_annotations": _case_has_manifest_promotion_annotations(
+            report_case,
+            required=artifact_required,
+        ),
+    }
+    missing = [name for name, passed in checks.items() if not passed]
+    return {
+        "id": case_id,
+        "ok": not missing,
+        "missing": missing,
+        "checks": checks,
+        "decision": decision if isinstance(decision, str) else "n/a",
+        "status": report_case.get("status", "unknown"),
+        "region_count": len(regions),
+        "region_states": [
+            str(region.get("state"))
+            for region in regions
+            if isinstance(region.get("state"), str)
+        ],
+        "region_gate_ids": region_gate_ids,
+        "failed_gate_ids": _failed_gate_ids(report_case.get("promotion_gates")),
+        "export_artifacts_required": artifact_required,
+    }
+
+
+def _promotion_region_gate_ids(promotion: dict[str, Any]) -> list[str]:
+    return [
+        str(gate["id"])
+        for gate in _promotion_metadata_gate_list(promotion, "region_gates")
+        if isinstance(gate.get("id"), str) and gate["id"]
+    ]
+
+
+def _case_promotion_regions(report_case: dict[str, Any]) -> list[dict[str, Any]]:
+    regions = report_case.get("promotion_regions")
+    if not isinstance(regions, list):
+        return []
+    return [region for region in regions if isinstance(region, dict)]
+
+
+def _case_has_pipeline_region_records(
+    report_case: dict[str, Any],
+    region_gate_ids: list[str],
+) -> bool:
+    if not region_gate_ids:
+        return True
+    regions = _case_promotion_regions(report_case)
+    if not regions:
+        return False
+    region_by_gate_id = {
+        str(region.get("gate_id", region.get("id"))): region
+        for region in regions
+        if isinstance(region.get("gate_id", region.get("id")), str)
+    }
+    if any(gate_id not in region_by_gate_id for gate_id in region_gate_ids):
+        return False
+    for region in region_by_gate_id.values():
+        if region.get("state") not in PROMOTION_PIPELINE_REGION_STATES:
+            return False
+        if not _non_empty_string(region.get("id")):
+            return False
+        if not _non_empty_string(region.get("gate_id")):
+            return False
+        if not _non_empty_string(region.get("gate_type")):
+            return False
+        if not isinstance(region.get("selected_anchor_indexes"), list):
+            return False
+        if not isinstance(region.get("selected_anchor_ids"), list):
+            return False
+    return True
+
+
+def _case_has_failed_gate_visibility(report_case: dict[str, Any]) -> bool:
+    gates = report_case.get("promotion_gates")
+    summary = report_case.get("promotion_summary")
+    review = report_case.get("review_decision")
+    if not isinstance(gates, list) or not isinstance(summary, dict):
+        return False
+    if not isinstance(review, dict):
+        return False
+    failed_ids = _failed_gate_ids(gates)
+    if summary.get("failed_gate_count") != len(failed_ids):
+        return False
+    review_failed_gates = review.get("failed_gates")
+    if not isinstance(review_failed_gates, list):
+        return False
+    review_failed_ids = {
+        str(gate.get("id"))
+        for gate in review_failed_gates
+        if isinstance(gate, dict) and isinstance(gate.get("id"), str)
+    }
+    return all(gate_id in review_failed_ids for gate_id in failed_ids)
+
+
+def _case_has_review_decision_record(report_case: dict[str, Any]) -> bool:
+    review = report_case.get("review_decision")
+    if not isinstance(review, dict):
+        return False
+    decision = review.get("decision")
+    suggested = review.get("suggested_decision")
+    allowed = review.get("allowed_decisions")
+    return (
+        review.get("schema_version") == 1
+        and decision in {"pending", *PROMOTION_REVIEW_DECISIONS}
+        and suggested in PROMOTION_REVIEW_DECISIONS
+        and isinstance(allowed, list)
+        and set(PROMOTION_REVIEW_DECISIONS).issubset(set(allowed))
+        and isinstance(review.get("failed_gates"), list)
+    )
+
+
+def _case_has_review_artifact_links(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    review = report_case.get("review_decision")
+    if not isinstance(review, dict):
+        return False
+    artifacts = review.get("review_artifacts")
+    if not isinstance(artifacts, dict):
+        return False
+    return all(
+        _artifact_path_exists(artifacts, key)
+        for key in PROMOTION_PIPELINE_REVIEW_ARTIFACTS
+    )
+
+
+def _case_has_filtered_svg_artifacts(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    artifacts = report_case.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return False
+    return all(
+        _artifact_path_exists(artifacts, key)
+        for key in PROMOTION_PIPELINE_EXPORT_ARTIFACTS
+    )
+
+
+def _case_has_promotion_export_partition(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    export = _case_artifact_json(report_case, "promotion_export")
+    if not isinstance(export, dict):
+        return False
+    list_keys = (
+        "promoted_anchor_indexes",
+        "fallback_anchor_indexes",
+        "fallback_only_anchor_indexes",
+        "rejected_anchor_indexes",
+        "deferred_anchor_indexes",
+        "missing_from_promoted",
+        "regions",
+    )
+    if any(not isinstance(export.get(key), list) for key in list_keys):
+        return False
+    if not isinstance(export.get("anchor_state_counts"), dict):
+        return False
+    if not isinstance(export.get("region_state_counts"), dict):
+        return False
+    if not isinstance(export.get("export_summary"), dict):
+        return False
+    if not _non_empty_string(export.get("promoted_svg")):
+        return False
+    if not _non_empty_string(export.get("fallback_svg")):
+        return False
+    non_promoted_indexes = (
+        len(export["fallback_only_anchor_indexes"])
+        + len(export["rejected_anchor_indexes"])
+        + len(export["deferred_anchor_indexes"])
+    )
+    return non_promoted_indexes == 0 or bool(export["missing_from_promoted"])
+
+
+def _case_has_manifest_promotion_annotations(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    manifest = _case_artifact_json(report_case, "manifest")
+    if not isinstance(manifest, dict):
+        return False
+    promotion = manifest.get("promotion")
+    if not isinstance(promotion, dict):
+        return False
+    manifest_regions = promotion.get("regions")
+    if not isinstance(manifest_regions, list):
+        return False
+    manifest_region_ids = {
+        str(region.get("id"))
+        for region in manifest_regions
+        if isinstance(region, dict) and isinstance(region.get("id"), str)
+    }
+    for region in _case_promotion_regions(report_case):
+        region_id = region.get("id")
+        if isinstance(region_id, str) and region_id not in manifest_region_ids:
+            return False
+    artifacts = promotion.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return False
+    if any(key not in artifacts for key in PROMOTION_PIPELINE_EXPORT_ARTIFACTS):
+        return False
+    anchors = manifest.get("anchors")
+    if not isinstance(anchors, list):
+        return False
+    for anchor in anchors:
+        if not isinstance(anchor, dict):
+            return False
+        if not _non_empty_string(anchor.get("promotion_state")):
+            return False
+        if not isinstance(anchor.get("promotion_regions"), list):
+            return False
+    return True
+
+
+def _case_artifact_json(report_case: dict[str, Any], key: str) -> dict[str, Any] | None:
+    artifacts = report_case.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return None
+    path = _artifact_path(artifacts, key)
+    if path is None:
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _artifact_path_exists(artifacts: dict[str, Any], key: str) -> bool:
+    path = _artifact_path(artifacts, key)
+    return path is not None and path.exists()
+
+
+def _artifact_path(artifacts: dict[str, Any], key: str) -> Path | None:
+    value = artifacts.get(key)
+    if not isinstance(value, str) or not value:
+        return None
+    return Path(value).expanduser()
 
 
 def _curated_case_family(case: dict[str, Any]) -> str:

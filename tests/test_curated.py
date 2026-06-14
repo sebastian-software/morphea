@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from morphea.cli import main
 from morphea.curated import (
+    _curated_promotion_pipeline_audit,
     _promotion_region_results,
     _region_topology_failures,
     _region_topology_summary,
@@ -319,6 +320,28 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             report = json.loads(output.read_text())
             self.assertEqual(report["case_count"], 1)
+            pipeline_audit = report["promotion_pipeline_audit"]
+            self.assertTrue(pipeline_audit["ok"])
+            self.assertEqual(
+                pipeline_audit["summary"]["missing_checks"],
+                [],
+            )
+            self.assertEqual(
+                pipeline_audit["summary"]["covered_check_count"],
+                9,
+            )
+            self.assertEqual(
+                pipeline_audit["summary"]["decision_counts"],
+                {"promoted": 1},
+            )
+            self.assertEqual(
+                pipeline_audit["summary"]["region_state_counts"],
+                {"promoted": 1},
+            )
+            self.assertEqual(
+                pipeline_audit["cases"][0]["missing"],
+                [],
+            )
             self.assertIn("review_gallery", report["artifacts"])
             self.assertIn("raster_l1_error", report["cases"][0]["metrics"])
             self.assertIn("raster_edge_error", report["cases"][0]["metrics"])
@@ -426,6 +449,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 snapshot_report["cases"][0]["promotion_summary"]["decision"],
                 "promoted",
             )
+            self.assertTrue(snapshot_report["promotion_pipeline_audit"]["ok"])
             self.assertEqual(
                 snapshot_report["cases"][0]["editability_review"]["decision"],
                 "accepted",
@@ -1198,6 +1222,8 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertIn("- Status: `not_available`", markdown)
         self.assertIn("## RIP2 Quality Gate Audit", markdown)
         self.assertIn("- Status: `not_available`", markdown)
+        self.assertIn("## RIP3 Promotion Pipeline Audit", markdown)
+        self.assertIn("- Status: `not_available`", markdown)
         self.assertIn("## Corpus Ledger", markdown)
         self.assertIn(
             "| `simple-circle` | `red` | `red` | `checked` | `test_fixture` | "
@@ -1479,6 +1505,87 @@ class CuratedSuiteTests(unittest.TestCase):
                     "per_family_visual_thresholds",
                 ],
             )
+
+    def test_curated_promotion_pipeline_audit_marks_missing_export_artifacts(self):
+        suite_case = {
+            "id": "simple-circle",
+            "promotion": {
+                "region_gates": [
+                    {
+                        "id": "circle-region",
+                        "gate_type": "shape_class",
+                    }
+                ]
+            },
+        }
+        report_case = {
+            "id": "simple-circle",
+            "status": "checked",
+            "promotion_summary": {
+                "decision": "deferred",
+                "failed_gate_count": 1,
+            },
+            "promotion_regions": [
+                {
+                    "id": "circle-region",
+                    "state": "deferred",
+                    "gate_id": "circle-region",
+                    "gate_type": "shape_class",
+                    "selected_anchor_indexes": [0],
+                    "selected_anchor_ids": ["anchor-0000"],
+                }
+            ],
+            "promotion_gates": [
+                {
+                    "id": "current_quality_label",
+                    "gate_type": "review_safety",
+                    "ok": False,
+                    "severity": "yellow",
+                    "reason": "manual review pending",
+                }
+            ],
+            "review_decision": {
+                "schema_version": 1,
+                "decision": "pending",
+                "allowed_decisions": [
+                    "accepted",
+                    "corrected",
+                    "rejected",
+                    "deferred",
+                ],
+                "suggested_decision": "deferred",
+                "failed_gates": [{"id": "current_quality_label"}],
+                "review_artifacts": {},
+            },
+            "artifacts": {},
+        }
+
+        audit = _curated_promotion_pipeline_audit(
+            [suite_case],
+            [report_case],
+            export_artifacts_required=True,
+        )
+
+        self.assertFalse(audit["ok"])
+        self.assertEqual(
+            audit["summary"]["missing_checks"],
+            [
+                "case_pipeline_coverage",
+                "review_artifact_links",
+                "filtered_svg_artifacts",
+                "promotion_export_partitions",
+                "manifest_region_annotations",
+            ],
+        )
+        self.assertEqual(
+            audit["cases"][0]["missing"],
+            [
+                "review_artifact_links",
+                "filtered_svg_artifacts",
+                "promotion_export_partition",
+                "manifest_region_annotations",
+            ],
+        )
 
     def test_check_curated_suite_applies_config_overrides(self):
         with tempfile.TemporaryDirectory() as temp_dir:
