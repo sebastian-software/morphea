@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 from morphea.classifier import (
@@ -159,6 +160,7 @@ def harvest_pseudo_labels(
             quality_error = _anchor_quality_error(metrics)
             if quality_error > max_anchor_quality_error:
                 continue
+            source_image = _source_image_from_manifest_path(manifest_path)
             record = {
                 "run": manifest_path.parent.name,
                 "anchor_index": index,
@@ -171,6 +173,8 @@ def harvest_pseudo_labels(
                 "group_context": _anchor_group_context(manifest, index),
                 "source_manifest": str(manifest_path),
             }
+            if source_image is not None:
+                record["source_image"] = str(source_image)
             if applied_review:
                 record["review_decision_applied"] = applied_review
             records.append(record)
@@ -540,6 +544,16 @@ def _anchor_group_context(
             }
         )
     return context
+
+
+def _source_image_from_manifest_path(manifest_path: Path) -> Path | None:
+    input_dir = manifest_path.parent / "input"
+    if not input_dir.is_dir():
+        return None
+    files = sorted(path for path in input_dir.iterdir() if path.is_file())
+    if len(files) != 1:
+        return None
+    return files[0]
 
 
 def _group_context_suffix(value: object) -> str:
@@ -2300,7 +2314,8 @@ def merge_reviewed_pseudo_label_dataset(
     reviewed_labels: str | Path,
     output_dir: str | Path,
 ) -> dict[str, object]:
-    reviewed = json.loads(Path(reviewed_labels).read_text(encoding="utf-8"))
+    reviewed_path = Path(reviewed_labels)
+    reviewed = json.loads(reviewed_path.read_text(encoding="utf-8"))
     output = Path(output_dir)
     train_dir = output / "train"
     train_dir.mkdir(parents=True, exist_ok=True)
@@ -2331,31 +2346,42 @@ def merge_reviewed_pseudo_label_dataset(
             manifest["review_decision_applied"] = applied_review
         manifest_name = f"pseudo-{index:05d}.json"
         manifest_path = train_dir / manifest_name
+        source_image = _reviewed_label_source_image(label, reviewed_path.parent)
+        image_ref = None
+        if source_image is not None:
+            manifest["source_image"] = str(source_image)
+            image_ref = _copy_pseudo_label_source_image(
+                source_image,
+                output=output,
+                train_dir=train_dir,
+                index=index,
+            )
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True),
             encoding="utf-8",
         )
-        samples.append(
-            {
-                "id": f"pseudo-{index:05d}",
-                "seed": None,
-                "split": "train",
-                "difficulty": "pseudo_label",
-                "image": None,
-                "manifest": str(manifest_path.relative_to(output)),
-                "source_manifest": label.get("source_manifest"),
-                "source_anchor_index": label.get("anchor_index"),
-                "review_decision": review.get("decision"),
-                "review_item_id": review.get("review_item_id"),
-                "review_reason": review.get("reason"),
-                "review_issues": _issues_from_value(review.get("issues")),
-                "applied_review_decision": applied_review.get("decision"),
-                "applied_review_case_id": applied_review.get("case_id"),
-                "applied_review_source_review_decision": applied_review.get(
-                    "source_review_decision"
-                ),
-            }
-        )
+        sample = {
+            "id": f"pseudo-{index:05d}",
+            "seed": None,
+            "split": "train",
+            "difficulty": "pseudo_label",
+            "image": image_ref,
+            "manifest": str(manifest_path.relative_to(output)),
+            "source_manifest": label.get("source_manifest"),
+            "source_anchor_index": label.get("anchor_index"),
+            "review_decision": review.get("decision"),
+            "review_item_id": review.get("review_item_id"),
+            "review_reason": review.get("reason"),
+            "review_issues": _issues_from_value(review.get("issues")),
+            "applied_review_decision": applied_review.get("decision"),
+            "applied_review_case_id": applied_review.get("case_id"),
+            "applied_review_source_review_decision": applied_review.get(
+                "source_review_decision"
+            ),
+        }
+        if source_image is not None:
+            sample["source_image"] = str(source_image)
+        samples.append(sample)
 
     dataset = {
         "count": len(samples),
@@ -2415,6 +2441,42 @@ def _anchor_from_label(label: dict[str, object]) -> dict[str, object]:
         "color": label.get("color"),
         "metrics": dict(label.get("metrics", {})),
     }
+
+
+def _reviewed_label_source_image(
+    label: dict[str, object],
+    root: Path,
+) -> Path | None:
+    explicit = label.get("source_image")
+    if isinstance(explicit, str) and explicit:
+        path = Path(explicit)
+        if not path.is_absolute():
+            path = root / path
+        if path.exists():
+            return path
+
+    source_manifest = label.get("source_manifest")
+    if isinstance(source_manifest, str) and source_manifest:
+        manifest_path = Path(source_manifest)
+        if not manifest_path.is_absolute():
+            manifest_path = root / manifest_path
+        if manifest_path.exists():
+            return _source_image_from_manifest_path(manifest_path)
+    return None
+
+
+def _copy_pseudo_label_source_image(
+    source_image: Path,
+    *,
+    output: Path,
+    train_dir: Path,
+    index: int,
+) -> str:
+    suffix = source_image.suffix or ".png"
+    image_path = train_dir / f"pseudo-{index:05d}{suffix}"
+    if source_image.resolve() != image_path.resolve():
+        shutil.copy2(source_image, image_path)
+    return str(image_path.relative_to(output))
 
 
 def _pseudo_label_groups(label: dict[str, object]) -> list[dict[str, object]]:
@@ -2842,6 +2904,7 @@ def _reviewed_sample_provenance_counts(value: object) -> dict[str, int]:
     fields = (
         "review_item_id",
         "review_reason",
+        "source_image",
         "applied_review_case_id",
         "applied_review_source_review_decision",
     )

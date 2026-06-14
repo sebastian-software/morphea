@@ -979,6 +979,10 @@ Implemented so far:
   raster-capable base/pseudo examples, so reviewed pseudo labels without source
   images are visible as feature-path learning rather than implied raster-token
   training.
+- harvested run-directory pseudo labels now retain detected `source_image`
+  provenance, and `merge-labels` copies valid reviewed source images into the
+  pseudo dataset so reviewed image-backed labels can train MLX raster-token
+  components.
 
 Remaining:
 

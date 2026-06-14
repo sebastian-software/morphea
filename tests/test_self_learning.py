@@ -11,7 +11,7 @@ from unittest.mock import patch
 from PIL import Image, ImageDraw
 
 from morphea.cli import main
-from morphea.classifier import examples_from_dataset
+from morphea.classifier import examples_from_dataset, raster_examples_from_dataset
 from morphea.dataset import generate_synthetic_dataset
 from morphea.self_learning import (
     apply_review_file,
@@ -122,6 +122,20 @@ class SelfLearningTests(unittest.TestCase):
                 "# Morphēa Pseudo-Label Harvest",
                 markdown.read_text(encoding="utf-8"),
             )
+
+    def test_harvest_pseudo_labels_records_run_source_image(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(root, "clean", diagnostics=[], classifier_error=0.0)
+            source = root / "clean" / "input" / "source.png"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (16, 16), (255, 255, 255, 255)).save(source)
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(run_root=root, output=output)
+
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["pseudo_labels"][0]["source_image"], str(source))
 
     def test_harvest_curated_runs_suite_and_collects_labels(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -407,6 +421,7 @@ class SelfLearningTests(unittest.TestCase):
                     "applied_review_source_review_decision": 1,
                     "review_item_id": 1,
                     "review_reason": 1,
+                    "source_image": 1,
                 },
             )
             self.assertTrue(cycle["gate"]["accepted"])
@@ -1593,6 +1608,59 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(
                 pseudo_manifest["review"]["review_item_id"],
                 "review-00000",
+            )
+
+    def test_merge_reviewed_labels_copies_source_images_for_raster_training(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source.png"
+            image = Image.new("RGBA", (24, 24), (255, 255, 255, 255))
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((6, 6, 18, 18), fill=(0, 0, 0, 255))
+            image.save(source)
+            reviewed = root / "reviewed.json"
+            output_dir = root / "dataset"
+            reviewed.write_text(
+                json.dumps(
+                    {
+                        "accepted": [
+                            {
+                                "kind": "circle",
+                                "source_image": str(source),
+                                "anchor": {
+                                    "kind": "circle",
+                                    "node_count": 1,
+                                    "parameter_count": 3,
+                                    "circle": {"cx": 12, "cy": 12, "r": 6},
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            dataset = merge_reviewed_pseudo_label_dataset(
+                reviewed_labels=reviewed,
+                output_dir=output_dir,
+            )
+            raster_examples = raster_examples_from_dataset(
+                output_dir / "dataset.json",
+                crop_size=6,
+            )
+
+            sample = dataset["samples"][0]
+            self.assertEqual(dataset["count"], 1)
+            self.assertEqual(sample["source_image"], str(source))
+            self.assertEqual(sample["image"], "train/pseudo-00000.png")
+            self.assertTrue((output_dir / sample["image"]).exists())
+            self.assertEqual(len(raster_examples), 1)
+            self.assertEqual(raster_examples[0].label, "circle")
+            self.assertEqual(
+                dataset["reviewed_label_summary"]["provenance_field_counts"][
+                    "source_image"
+                ],
+                1,
             )
 
     def test_merge_labels_cli_writes_dataset(self):
@@ -3806,6 +3874,11 @@ class SelfLearningTests(unittest.TestCase):
                 test_count=1,
             )
             _write_reviewed_circle(reviewed)
+            source = root / "reviewed-source.png"
+            Image.new("RGBA", (16, 16), (255, 255, 255, 255)).save(source)
+            reviewed_payload = json.loads(reviewed.read_text(encoding="utf-8"))
+            reviewed_payload["accepted"][0]["source_image"] = str(source)
+            reviewed.write_text(json.dumps(reviewed_payload), encoding="utf-8")
             merge_reviewed_pseudo_label_dataset(
                 reviewed_labels=reviewed,
                 output_dir=pseudo_dir,
@@ -3847,8 +3920,18 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(source_summary["semantic_base_train_examples"], 30)
             self.assertEqual(source_summary["semantic_pseudo_train_examples"], 1)
             self.assertEqual(source_summary["raster_base_train_examples"], 30)
-            self.assertEqual(source_summary["raster_pseudo_train_examples"], 0)
-            self.assertFalse(source_summary["pseudo_labels_train_raster_components"])
+            self.assertEqual(source_summary["raster_pseudo_train_examples"], 1)
+            self.assertTrue(source_summary["pseudo_labels_train_raster_components"])
+            components = {
+                component["name"]: component
+                for component in model["mlx_training"]["component_summary"][
+                    "components"
+                ]
+            }
+            self.assertEqual(
+                components["token_transformer"]["training_example_count"],
+                31,
+            )
             self.assertIn("token_transformer", model["mlx_training"])
 
     def test_retrain_cli_accepts_config_file(self):

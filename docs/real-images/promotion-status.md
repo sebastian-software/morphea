@@ -418,8 +418,11 @@ order, parameter counts, loss epochs, raster-token usage, and MLX-autograd
 participation. Accepted self-learning cycle reports copy that same summary into
 `self-learning-cycle.json` and Markdown. They also split semantic base/pseudo
 training examples from raster-capable base/pseudo examples, making feature-only
-pseudo-label learning distinct from image-backed raster-component learning;
-this is own classifier training, not MLX/SAM segmentation fine-tuning.
+pseudo-label learning distinct from image-backed raster-component learning.
+Harvested run-directory labels now carry a detected `source_image`, and
+`merge-labels` copies valid reviewed source images into the pseudo dataset so
+reviewed image-backed labels can train raster-token components; this is own
+classifier training, not MLX/SAM segmentation fine-tuning.
 
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training

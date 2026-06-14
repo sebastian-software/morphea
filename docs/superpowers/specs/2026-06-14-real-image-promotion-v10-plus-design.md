@@ -515,7 +515,10 @@ Current implementation:
   an own primitive-classifier model path, not SAM fine-tuning. MLX cycle
   reports expose component coverage and split semantic pseudo-label training
   from raster-capable image-backed training, so feature-only reviewed labels
-  are not confused with raster-token learning. Training gate
+  are not confused with raster-token learning. Harvested labels preserve
+  detected run-directory `source_image` provenance, and reviewed labels with
+  valid source images are copied into pseudo datasets so they can train MLX
+  raster-token components. Training gate
   artifacts now include worst/best metric
   contributors, so rejected self-learning cycles can identify the metric,
   split, and label behind the gate decision. Training comparison artifacts now

@@ -1106,7 +1106,9 @@ Top-level fields:
 
 Each accepted pseudo-label includes `anchor_quality_error`, copied anchor
 metrics, run metrics, `source_manifest` provenance, and `group_context` for
-scene groups that contained the harvested anchor.
+scene groups that contained the harvested anchor. When the source run directory
+contains a single copied `input/*` file, harvest records it as `source_image`
+so reviewed labels can later train raster-token components.
 
 `morphea harvest-curated` first runs a curated real-image suite with each case's
 bounded `recommended_config`, then harvests the generated run directories with
@@ -1267,7 +1269,9 @@ and embedded anchor kind when present.
 When harvested labels carry `group_context`, `morphea merge-labels` preserves it
 in each generated pseudo-sample manifest as single-anchor groups with
 `source_group_id`, `source_anchor_indexes`, and `source_anchor_position`
-provenance.
+provenance. When accepted labels carry a valid `source_image`, `merge-labels`
+copies it into the generated pseudo dataset, sets the sample `image` path, and
+keeps the original `source_image` as provenance.
 
 ## Review Config v1
 
@@ -1699,7 +1703,9 @@ and finally centroid fallback.
 adds `source_datasets`, `augmentation`, `retraining_backend`, and the generated
 `augmented_dataset` index path. Reviewed pseudo-label samples may omit source
 images; they still contribute feature examples, while raster-token training
-uses image-backed samples only.
+uses image-backed samples only. Reviewed labels with valid `source_image`
+provenance are copied into the pseudo dataset and therefore contribute both
+semantic features and raster crop tokens.
 When `self-learn` accepts an MLX retraining run, the cycle's compact `model`
 summary copies the same `training_component_summary` into
 `self-learning-cycle.json` and renders it in Markdown, so reviewers can inspect
