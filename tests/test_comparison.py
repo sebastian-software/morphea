@@ -410,6 +410,77 @@ class SnapshotComparisonTests(unittest.TestCase):
             assessment["risk_signals"],
         )
 
+    def test_render_segment_manifest_comparison_uses_region_promotion_labels(self):
+        comparison = render_segment_manifest_comparison(
+            _segment_manifest(
+                source="flat_color",
+                summary={"downstream_status_counts": {"accepted": 1}},
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                    }
+                ],
+                promotion_regions=[
+                    {"id": "region-1", "state": "deferred"},
+                    {"id": "region-2", "state": "rejected"},
+                ],
+            ),
+            _segment_manifest(
+                source="mlx_sam",
+                summary={"downstream_status_counts": {"pending": 2}},
+                proposals=[
+                    {
+                        "id": "mlx_sam-0000",
+                        "source": "mlx_sam",
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                    }
+                ],
+                promotion_regions=[
+                    {"id": "region-1", "state": "promoted"},
+                    {"id": "region-2", "state": "promoted"},
+                ],
+            ),
+            before="flat-color.json",
+            after="mlx-sam.json",
+        )
+
+        assessment = comparison["source_delta_assessment"]
+        self.assertEqual(
+            assessment["promotion_delta_basis"],
+            "promotion_region_state_counts",
+        )
+        self.assertTrue(assessment["uses_region_promotion_labels"])
+        self.assertEqual(assessment["green_promotion_delta"], 2.0)
+        self.assertEqual(assessment["red_candidate_delta"], -1.0)
+        self.assertEqual(assessment["manual_review_delta"], -1.0)
+        self.assertEqual(assessment["verdict"], "improved")
+        self.assertIn(
+            {
+                "group": "promotion_region_state_counts",
+                "key": "promoted",
+                "before": 0.0,
+                "after": 2.0,
+                "delta": 2.0,
+            },
+            comparison["source_deltas"],
+        )
+        self.assertEqual(
+            comparison["source_summaries"][0]["promotion_region_state_counts"],
+            {"deferred": 1, "rejected": 1},
+        )
+
+        markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn(
+            "- Promotion delta basis: `promotion_region_state_counts`",
+            markdown,
+        )
+        self.assertIn("- Uses region promotion labels: `true`", markdown)
+        self.assertIn("`promoted: 2`", markdown)
+
     def test_compare_segment_manifests_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -1321,12 +1392,14 @@ def _segment_manifest(
     summary=None,
     proposals=None,
     proposal_groups=None,
+    promotion_regions=None,
 ):
     backend = backend or {}
     config = config or {}
     summary = summary or {}
     proposals = proposals or []
     proposal_groups = proposal_groups or []
+    promotion_regions = promotion_regions or []
     return {
         "schema_version": 1,
         "input": "input.png",
@@ -1334,6 +1407,7 @@ def _segment_manifest(
         "backend": {"source": source, "status": "available", **backend},
         "proposal_count": len(proposals),
         "summary": summary,
+        "promotion_regions": promotion_regions,
         "proposal_groups": proposal_groups,
         "proposals": proposals,
     }

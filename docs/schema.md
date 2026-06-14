@@ -1707,7 +1707,8 @@ Top-level fields:
 - `after_source`
 - `source_summaries`: before/after source summaries with backend status,
   optional backend adapter, proposal count, status counts, downstream status
-  counts, anchor-kind counts, reserved-anchor count, and proposal-group counts
+  counts, optional promotion-region state counts, anchor-kind counts,
+  reserved-anchor count, and proposal-group counts
 - `source_deltas`: count deltas derived from `source_summaries`, useful for
   flat-color vs MLX/SAM side-by-side review
 - `downstream_status_deltas`: filtered source deltas for
@@ -1721,7 +1722,10 @@ Top-level fields:
   `green_promotion_delta`, `red_candidate_delta`, `manual_review_delta`,
   `proposal_count_delta`, `promotion_delta_basis`,
   `uses_region_promotion_labels`, `positive_signals`, `risk_signals`, and a
-  `verdict` of `improved`, `mixed`, `noise`, `unchanged`, or `needs_review`
+  `verdict` of `improved`, `mixed`, `noise`, `unchanged`, or `needs_review`.
+  When compared manifests expose promotion-region states, the assessment uses
+  `promotion_region_state_counts`; otherwise it falls back to downstream-status
+  proxy counts.
 - `before_proposal_count`
 - `after_proposal_count`
 - `proposal_count_delta`

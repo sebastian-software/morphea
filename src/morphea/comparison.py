@@ -280,9 +280,10 @@ def render_segment_manifest_comparison_markdown(
             "",
             (
                 "| Side | Source | Backend | Adapter | Proposals | "
-                "Downstream Status | Anchor Kinds | Reserved Anchors | Groups |"
+                "Downstream Status | Promotion Regions | Anchor Kinds | "
+                "Reserved Anchors | Groups |"
             ),
-            "| --- | --- | --- | --- | ---: | --- | --- | ---: | --- |",
+            "| --- | --- | --- | --- | ---: | --- | --- | --- | ---: | --- |",
         ]
     )
     source_summaries = _list_value(comparison.get("source_summaries"))
@@ -296,12 +297,15 @@ def render_segment_manifest_comparison_markdown(
                 f"{_code_cell(summary.get('backend_adapter'))} | "
                 f"{_fmt(summary.get('proposal_count'))} | "
                 f"{_count_cell(summary.get('downstream_status_counts'))} | "
+                f"{_count_cell(summary.get('promotion_region_state_counts'))} | "
                 f"{_count_cell(summary.get('anchor_kind_counts'))} | "
                 f"{_fmt(summary.get('reserved_anchor_count'))} | "
                 f"{_count_cell(summary.get('proposal_group_counts'))} |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+        lines.append(
+            "| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |"
+        )
 
     lines.extend(
         [
@@ -927,6 +931,7 @@ def _segment_source_summary(
             field="downstream_decision_reason",
             include_missing=False,
         ),
+        "promotion_region_state_counts": _promotion_region_state_counts(data),
         "anchor_kind_counts": _segment_count_group(
             summary,
             proposals,
@@ -1002,20 +1007,36 @@ def _segment_promotion_proxy_delta(
 def _segment_source_delta_assessment(
     source_deltas: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    uses_region_labels = any(
+        delta.get("group") == "promotion_region_state_counts"
+        for delta in source_deltas
+    )
+    if uses_region_labels:
+        basis = "promotion_region_state_counts"
+        green_group = red_group = manual_group = "promotion_region_state_counts"
+        green_key = "promoted"
+        red_key = "rejected"
+        manual_key = "deferred"
+    else:
+        basis = "downstream_status_counts_proxy"
+        green_group = red_group = manual_group = "downstream_status_counts"
+        green_key = "accepted"
+        red_key = "rejected"
+        manual_key = "pending"
     green_delta = _segment_delta_value(
         source_deltas,
-        group="downstream_status_counts",
-        key="accepted",
+        group=green_group,
+        key=green_key,
     )
     red_delta = _segment_delta_value(
         source_deltas,
-        group="downstream_status_counts",
-        key="rejected",
+        group=red_group,
+        key=red_key,
     )
     manual_delta = _segment_delta_value(
         source_deltas,
-        group="downstream_status_counts",
-        key="pending",
+        group=manual_group,
+        key=manual_key,
     )
     proposal_delta = _segment_delta_value(
         source_deltas,
@@ -1061,8 +1082,8 @@ def _segment_source_delta_assessment(
         "red_candidate_delta": red_delta,
         "manual_review_delta": manual_delta,
         "proposal_count_delta": proposal_delta,
-        "promotion_delta_basis": "downstream_status_counts_proxy",
-        "uses_region_promotion_labels": False,
+        "promotion_delta_basis": basis,
+        "uses_region_promotion_labels": uses_region_labels,
         "positive_signals": positive_signals,
         "risk_signals": risk_signals,
     }
@@ -1101,10 +1122,32 @@ def _segment_delta_groups(summary: dict[str, Any]) -> dict[str, Any]:
         "downstream_decision_reason_counts": _dict_value(
             summary.get("downstream_decision_reason_counts")
         ),
+        "promotion_region_state_counts": _dict_value(
+            summary.get("promotion_region_state_counts")
+        ),
         "anchor_kind_counts": _dict_value(summary.get("anchor_kind_counts")),
         "reserved_anchor_count": summary.get("reserved_anchor_count", 0),
         "proposal_group_counts": _dict_value(summary.get("proposal_group_counts")),
     }
+
+
+def _promotion_region_state_counts(data: dict[str, Any]) -> dict[str, int]:
+    summary = _dict_value(data.get("summary"))
+    summary_counts = _dict_value(summary.get("promotion_region_state_counts"))
+    if summary_counts:
+        return {
+            str(key): int(value)
+            for key, value in sorted(summary_counts.items())
+            if _is_number(value)
+        }
+    counts: dict[str, int] = {}
+    for region in _list_value(data.get("promotion_regions")):
+        if not isinstance(region, dict):
+            continue
+        state = region.get("state")
+        if isinstance(state, str) and state:
+            counts[state] = counts.get(state, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _segment_count_group(

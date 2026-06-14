@@ -414,9 +414,9 @@ Current implementation:
   classical and MLX/SAM runs can be reviewed side by side. It also emits a
   source delta assessment that labels the comparison as improved, mixed, noise,
   unchanged, or needing review from green promotion, red candidate,
-  manual-review, and proposal-count deltas. The current promotion basis is
-  recorded as downstream-status proxy counts until region-level promotion
-  labels exist.
+  manual-review, and proposal-count deltas. When segment manifests carry
+  `promotion_regions`, the assessment uses true promotion-region state counts;
+  otherwise it records downstream-status proxy counts as the basis.
 
 Exit criteria:
 

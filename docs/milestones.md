@@ -634,8 +634,8 @@ Implemented so far:
 - segment comparisons include a source delta assessment that labels side-by-side
   runs as improved, mixed, noise, unchanged, or needing review from green
   promotion, red candidate, manual-review, and proposal-count deltas while
-  recording that the current basis is downstream-status proxy counts rather
-  than region-level promotion labels.
+  recording whether the basis is true promotion-region state counts or
+  downstream-status proxy counts.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
