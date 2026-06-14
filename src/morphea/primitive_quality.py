@@ -1615,6 +1615,9 @@ RANDOM_VARIANT_FAMILIES = (
     "horizontal_stroke",
     "vertical_stroke",
     "simple_quad",
+    "diagonal_stroke",
+    "outlined_ring",
+    "rounded_rectangle",
 )
 
 
@@ -1692,6 +1695,46 @@ def _random_variant_spec(
                 (bottom_right, bottom_y),
                 (bottom_left, bottom_y + rng.randint(-2, 2)),
             ),
+        )
+    elif family == "diagonal_stroke":
+        width = rng.randint(3, 6)
+        if rng.randint(0, 1):
+            line = (
+                rng.randint(8, 18),
+                rng.randint(44, 56),
+                rng.randint(46, 58),
+                rng.randint(8, 22),
+            )
+        else:
+            line = (
+                rng.randint(8, 18),
+                rng.randint(8, 22),
+                rng.randint(46, 58),
+                rng.randint(44, 56),
+            )
+        spec = _diagonal_stroke_spec(case_id, variant, line, width)
+    elif family == "outlined_ring":
+        diameter = rng.randint(30, 44)
+        x0 = rng.randint(4, 60 - diameter)
+        y0 = rng.randint(4, 60 - diameter)
+        width = rng.randint(3, min(6, max(3, diameter // 6)))
+        spec = _ring_spec(
+            case_id,
+            variant,
+            (x0, y0, x0 + diameter, y0 + diameter),
+            width,
+        )
+    elif family == "rounded_rectangle":
+        width = rng.randint(30, 48)
+        height = rng.randint(18, 30)
+        x0 = rng.randint(4, 60 - width)
+        y0 = rng.randint(4, 60 - height)
+        radius = rng.randint(4, max(4, min(8, height // 3, width // 3)))
+        spec = _rounded_rectangle_spec(
+            case_id,
+            variant,
+            (x0, y0, x0 + width, y0 + height),
+            radius,
         )
     else:
         raise ValueError(f"unsupported primitive variant family: {family}")

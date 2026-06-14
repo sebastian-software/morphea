@@ -89,6 +89,35 @@ class PrimitiveQualityTests(unittest.TestCase):
             {"seeded"},
         )
 
+    def test_primitive_quality_harness_adds_extended_seeded_variants(self):
+        report = check_primitive_quality(
+            variant_count=9,
+            variant_seed=11,
+            filter_pattern="variant_*",
+        )
+
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["case_count"], 9)
+        actual_kinds = {
+            case["id"]: case["actual_kind"]
+            for case in report["cases"]
+        }
+        self.assertEqual(
+            actual_kinds,
+            {
+                "variant_filled_square_11_0000": "rect",
+                "variant_filled_rectangle_11_0001": "rect",
+                "variant_filled_circle_11_0002": "circle",
+                "variant_horizontal_stroke_11_0003": "stroke_polyline",
+                "variant_vertical_stroke_11_0004": "stroke_polyline",
+                "variant_simple_quad_11_0005": "quad",
+                "variant_diagonal_stroke_11_0006": "stroke_polyline",
+                "variant_outlined_ring_11_0007": "stroke_circle",
+                "variant_rounded_rectangle_11_0008": "rounded_rect",
+            },
+        )
+        self.assertEqual(report["variant_summary"], {"seeded": 9})
+
     def test_primitive_variant_specs_are_seed_stable(self):
         first = primitive_variant_specs(count=4, seed=7)
         second = primitive_variant_specs(count=4, seed=7)

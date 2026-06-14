@@ -1457,6 +1457,9 @@ Implemented so far:
   seeded variants for simple square, rectangle, circle, stroke, and quad
   families without changing the default fixed-fixture run or checked-in
   baseline discipline.
+- seeded primitive variants now also cover diagonal strokes, outlined rings,
+  and rounded rectangles with bounded random geometry that keeps the intended
+  primitive family distinct from neighboring ellipse/path fallbacks.
 - primitive quality reports include `variant_summary` and per-case
   `variant_source`, so seeded variant coverage is visible separately from
   hand-authored fixed fixtures.
@@ -1468,8 +1471,8 @@ Acceptance evidence:
 
 Remaining:
 
-- expand seeded variants into additional primitive families only after the
-  simple-family opt-in run remains stable.
+- expand seeded variants into arc, ellipse, and cut-out families only after
+  those higher-variance families have similarly tight parameter envelopes.
 
 ## M13: Ground-Truth Primitive Specs
 

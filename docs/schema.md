@@ -309,8 +309,9 @@ The built-in fixture set covers filled square, filled rectangle, filled circle,
 horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a
 simple quad. These cases are intentionally boring and should stay stricter than
 the curated real-image suite. `primitive-check --variant-count N` appends
-seeded variants for simple square, rectangle, circle, stroke, and quad families
-without changing the default full fixed-fixture run.
+seeded variants for square, rectangle, circle, horizontal/vertical/diagonal
+stroke, outlined ring, rounded rectangle, and quad families without changing
+the default full fixed-fixture run.
 
 ## Primitive Gallery Site v1
 
