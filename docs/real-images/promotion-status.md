@@ -417,5 +417,8 @@ mechanically green after text-like fallback grouping. All three real-image
 cases defer to manual review instead of being rejected as detector failures.
 The next narrow promotion-quality target is to run these deferred cases through
 explicit reviewer decisions. The review-harvest policy path is now covered by
-a regression fixture; the remaining work is real review of the three current
-deferred cases, not automatic promotion.
+a regression fixture, and `promotion-review-run` now puts the
+`promotion-review-harvest --decision-choice` commands plus evidence-flag hints
+directly into the first review packet and gallery. The remaining work is the
+actual real review of the three current deferred cases, not automatic
+promotion.

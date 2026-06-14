@@ -581,7 +581,10 @@ and quality-label review-policy refinements:
    reviews, editability reviews, pending review decisions, and terminal
    decision templates for all four outcomes. The same output root now includes
    `review-gallery.html` for scanning those cases visually before editing or
-   applying a decision.
+   applying a decision, and `promotion-review-run` adds per-case
+   `decision_choice_commands` so reviewers can apply a selected terminal
+   outcome through `promotion-review-harvest --decision-choice` plus explicit
+   evidence flags.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
    review evidence. Current policy is sidecar-only: pending decisions,
@@ -640,7 +643,11 @@ These are the planning questions to answer before starting RP10.1:
   evidence and do not update suite metadata automatically.
 - What minimum reviewer packet is enough for the three deferred cases: current
   contact sheets plus `review-decision.json`, or a curated gallery that puts all
-  deferred cases in one scan?
+  deferred cases in one scan? Answer: the minimum packet is the curated gallery
+  plus `review-packet.md/json`, terminal templates, and per-case
+  `decision_choice_commands` with reviewer evidence-flag hints. Contact sheets
+  and individual review sidecars remain linked, but raw JSON inspection is not
+  required for the first pass.
 - Do we want region truth annotations inside `docs/real-images/suite.json`, or
   in per-case sidecar files to keep the suite compact?
 - What is the minimum visible artifact that convinces us a region is truly
