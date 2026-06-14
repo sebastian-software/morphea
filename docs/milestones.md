@@ -1132,6 +1132,10 @@ Implemented so far:
   expected promotion families, issue tags, licensing status, plus case status,
   derived current pipeline labels, failed expectations, key metrics, and
   artifact directories.
+- curated reports include `corpus_audit`, a machine-readable RIP1 readiness
+  block for source provenance, licensing, bounded config, human-readable intent,
+  red/yellow/green labels, red/yellow issue tags, visual-audit status, and
+  contact-sheet artifacts when a run writes an output directory.
 - curated reports and deterministic snapshots include
   `pipeline_quality_label`, so current green/yellow/red pipeline state can be
   consumed without parsing Markdown.

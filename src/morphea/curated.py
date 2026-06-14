@@ -106,6 +106,12 @@ PROMOTION_STRUCTURE_THRESHOLD_KEYS = {
     "max_layer_count",
     "max_structural_layer_count",
 }
+RIP1_BOUNDED_CONFIG_KEYS = (
+    "max_size",
+    "max_colors",
+    "max_component_area",
+    "timeout_seconds",
+)
 SIMPLE_ANCHOR_KINDS = {
     "circle",
     "ellipse",
@@ -213,6 +219,11 @@ def check_curated_suite(
         )
         for case in suite["cases"]
     ]
+    corpus_audit = _curated_corpus_audit(
+        suite["cases"],
+        cases,
+        contact_sheet_artifacts_required=run and suite_output_dir is not None,
+    )
     report = {
         "suite": str(suite_file),
         "version": suite["version"],
@@ -220,6 +231,7 @@ def check_curated_suite(
         "case_count": len(cases),
         "ok": all(case["ok"] for case in cases),
         "family_summary": _curated_family_summary(cases),
+        "corpus_audit": corpus_audit,
         "cases": cases,
     }
     if suite_output_dir is not None:
@@ -308,6 +320,47 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 f"{_fmt_markdown_value(summary.get('failed_count'))} | "
                 f"{_fmt_markdown_value(summary.get('missing_source_count'))} |"
             )
+    lines.extend(
+        [
+            "",
+            "## RIP1 Corpus Audit",
+            "",
+        ]
+    )
+    audit = report.get("corpus_audit")
+    if isinstance(audit, dict):
+        summary = audit.get("summary", {})
+        summary = summary if isinstance(summary, dict) else {}
+        audit_status = "pass" if audit.get("ok", False) else "fail"
+        lines.extend(
+            [
+                f"- Status: `{audit_status}`",
+                f"- Cases: {_fmt_markdown_value(audit.get('case_count'))}",
+                f"- Ready cases: {_fmt_markdown_value(summary.get('ready_case_count'))}",
+                f"- Incomplete cases: {_fmt_markdown_value(summary.get('incomplete_case_count'))}",
+                "",
+                "| Case | Ready | Missing |",
+                "| --- | --- | --- |",
+            ]
+        )
+        audit_cases = audit.get("cases", [])
+        if isinstance(audit_cases, list):
+            for item in audit_cases:
+                if not isinstance(item, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{item.get('id', 'n/a')}` | "
+                    f"`{str(item.get('ok', False)).lower()}` | "
+                    f"{_fmt_markdown_list(item.get('missing'))} |"
+                )
+    else:
+        lines.extend(
+            [
+                "- Status: `not_available`",
+                "",
+            ]
+        )
     lines.extend(
         [
             "",
@@ -546,6 +599,7 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
         "suite": report.get("suite"),
         "case_count": report.get("case_count", 0),
         "ok": report.get("ok", False),
+        "corpus_audit": report.get("corpus_audit"),
         "cases": [
             _case_snapshot(case)
             for case in sorted(
@@ -580,6 +634,136 @@ def _curated_family_summary(cases: list[dict[str, Any]]) -> dict[str, dict[str, 
         if case.get("status") == "missing_source":
             family_summary["missing_source_count"] += 1
     return dict(sorted(summary.items()))
+
+
+def _curated_corpus_audit(
+    suite_cases: list[dict[str, Any]],
+    report_cases: list[dict[str, Any]],
+    *,
+    contact_sheet_artifacts_required: bool,
+) -> dict[str, Any]:
+    report_by_id = {
+        str(case.get("id")): case
+        for case in report_cases
+        if isinstance(case, dict) and isinstance(case.get("id"), str)
+    }
+    audited_cases = [
+        _curated_corpus_case_audit(
+            case,
+            report_by_id.get(str(case.get("id")), {}),
+            contact_sheet_artifacts_required=contact_sheet_artifacts_required,
+        )
+        for case in suite_cases
+        if isinstance(case, dict)
+    ]
+    ready_case_count = sum(1 for case in audited_cases if case["ok"])
+    check_counts: dict[str, int] = {}
+    for item in audited_cases:
+        checks = item.get("checks", {})
+        if not isinstance(checks, dict):
+            continue
+        for name, passed in checks.items():
+            if passed:
+                check_counts[name] = check_counts.get(name, 0) + 1
+    return {
+        "schema_version": 1,
+        "ok": ready_case_count == len(audited_cases),
+        "case_count": len(audited_cases),
+        "summary": {
+            "ready_case_count": ready_case_count,
+            "incomplete_case_count": len(audited_cases) - ready_case_count,
+            "check_pass_counts": dict(sorted(check_counts.items())),
+        },
+        "cases": audited_cases,
+    }
+
+
+def _curated_corpus_case_audit(
+    suite_case: dict[str, Any],
+    report_case: dict[str, Any],
+    *,
+    contact_sheet_artifacts_required: bool,
+) -> dict[str, Any]:
+    case_id = str(suite_case.get("id", "n/a"))
+    promotion = suite_case.get("promotion", {})
+    promotion = promotion if isinstance(promotion, dict) else {}
+    label = promotion.get("current_quality_label")
+    checks = {
+        "source_reference": _non_empty_string(suite_case.get("source")),
+        "source_status_visible": report_case.get("status")
+        in {"not_run", "checked", "missing_source"},
+        "source_provenance": _non_empty_string(promotion.get("source_provenance")),
+        "licensing_status": _non_empty_string(promotion.get("licensing_status")),
+        "stress_family": _non_empty_string(promotion.get("stress_family")),
+        "expected_promotion_families": _non_empty_string_list(
+            promotion.get("expected_promotion_families")
+        ),
+        "recommended_bounded_config": _is_recommended_bounded_config(
+            suite_case.get("recommended_config")
+        ),
+        "human_readable_intent": _non_empty_string_list(suite_case.get("notes")),
+        "current_quality_label": label in PROMOTION_QUALITY_LABELS,
+        "red_yellow_issue_tags": (
+            label == "green" or _non_empty_string_list(promotion.get("current_issues"))
+        ),
+        "visual_audit_status": _non_empty_string(
+            promotion.get("visual_audit_status")
+        ),
+        "contact_sheet_artifact": _corpus_contact_sheet_artifact_ok(
+            report_case,
+            required=contact_sheet_artifacts_required,
+        ),
+    }
+    missing = [name for name, passed in checks.items() if not passed]
+    return {
+        "id": case_id,
+        "ok": not missing,
+        "missing": missing,
+        "checks": checks,
+        "source_exists": report_case.get("source_exists"),
+        "status": report_case.get("status", "unknown"),
+    }
+
+
+def _is_recommended_bounded_config(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return all(_positive_number(value.get(key)) for key in RIP1_BOUNDED_CONFIG_KEYS)
+
+
+def _corpus_contact_sheet_artifact_ok(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required or report_case.get("status") != "checked":
+        return True
+    artifacts = report_case.get("artifacts", {})
+    return (
+        isinstance(artifacts, dict)
+        and isinstance(artifacts.get("contact_sheet"), str)
+        and bool(artifacts["contact_sheet"])
+    )
+
+
+def _non_empty_string(value: object) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _non_empty_string_list(value: object) -> bool:
+    return (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(item, str) and bool(item) for item in value)
+    )
+
+
+def _positive_number(value: object) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and value > 0
+    )
 
 
 def _curated_case_family(case: dict[str, Any]) -> str:

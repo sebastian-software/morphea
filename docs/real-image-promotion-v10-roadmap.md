@@ -282,6 +282,12 @@ Exit criteria:
 - source images that cannot be checked in are represented by stable local-path
   metadata and snapshot artifacts.
 
+Current implementation evidence: `curated-check` reports top-level
+`corpus_audit` with per-case RIP1 checks for provenance, licensing, bounded
+config, intent notes, quality labels, issue tags, visual-audit status, and
+contact-sheet artifacts when a run writes an output directory. The current
+checked-in suite smoke has 3/3 ready cases and 0 incomplete cases.
+
 ### RIP2: Quality Gate v2
 
 Purpose: make false positives harder than honest failures.

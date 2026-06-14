@@ -10,10 +10,10 @@ Curated real images:
 
 ```sh
 PYTHONPATH=src python3 -m morphea.cli curated-check docs/real-images/suite.json \
-  -o /tmp/morphea-rip3-exit-report.json \
-  --output-dir /tmp/morphea-rip3-exit-runs \
-  --snapshot /tmp/morphea-rip3-exit-snapshot.json \
-  --markdown /tmp/morphea-rip3-exit-report.md \
+  -o /tmp/morphea-rip1-audit-run.json \
+  --output-dir /tmp/morphea-rip1-audit-runs \
+  --snapshot /tmp/morphea-rip1-audit-snapshot.json \
+  --markdown /tmp/morphea-rip1-audit-run.md \
   --run
 ```
 
@@ -111,6 +111,11 @@ debug SVG, manifest JSON, preview PNG, SVG render PNG, red/blue diff PNG,
 contact-sheet PNG, promoted/fallback SVGs, promotion-export JSON, palette
 summary, mask summary, promotion-region review files, editability-review
 Markdown, review-decision JSON, and report files.
+
+Curated reports now also write a top-level `corpus_audit` for the RIP1 corpus
+contract. The latest `curated-check --run --output-dir` smoke reports
+`corpus_audit.ok=true`, `ready_case_count=3`, `incomplete_case_count=0`, and
+three concrete `contact-sheet.png` artifacts under `/tmp/morphea-rip1-audit-runs`.
 
 Curated reports also include derived promotion gates:
 

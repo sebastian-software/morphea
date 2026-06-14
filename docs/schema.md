@@ -706,6 +706,19 @@ inspect raw suite JSON for the corpus contract. The
 same Markdown report includes a Promotion Gate Details table for failed gates,
 including case id, gate id, gate type, severity, and reason.
 
+Curated reports also include top-level `corpus_audit` for the RIP1 corpus
+contract. The audit records `schema_version`, `ok`, `case_count`, aggregate
+ready/incomplete counts, per-check pass counts, and one row per suite case. Each
+case row includes `checks`, `missing`, source status, and `ok`. The checks cover
+source reference visibility, source status visibility, source provenance,
+licensing status, stress family, expected promotion families, recommended
+bounded config (`max_size`, `max_colors`, `max_component_area`, and
+`timeout_seconds`), human-readable intent notes, current red/yellow/green
+quality label, issue tags for red/yellow cases, visual-audit status, and
+contact-sheet artifact presence when `curated-check --run` also writes an
+`output_dir`. This audit does not change the suite pass/fail result; it makes
+RIP1 corpus-readiness explicit before detector tuning.
+
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 

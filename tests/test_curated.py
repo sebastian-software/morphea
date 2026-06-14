@@ -1194,6 +1194,8 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertIn("# Morphēa Curated Check", markdown)
         self.assertIn("## Families", markdown)
         self.assertIn("| `test_fixture` | 1 | 1 | 0 | 1 | 0 |", markdown)
+        self.assertIn("## RIP1 Corpus Audit", markdown)
+        self.assertIn("- Status: `not_available`", markdown)
         self.assertIn("## Corpus Ledger", markdown)
         self.assertIn(
             "| `simple-circle` | `red` | `red` | `checked` | `test_fixture` | "
@@ -1215,6 +1217,7 @@ class CuratedSuiteTests(unittest.TestCase):
             "`red` | failed expectations: circle-anchor |",
             markdown,
         )
+
         self.assertIn(
             "| `simple-circle` | `rejected` | `false` | "
             "`not_configured` | "
@@ -1268,6 +1271,92 @@ class CuratedSuiteTests(unittest.TestCase):
             markdown,
         )
         self.assertIn("| `editable-enough` | `metric:editability_score` | 0.75 | >= 0.9 | `false` |", markdown)
+
+    def test_curated_check_reports_rip1_corpus_audit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("red")
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "notes": ["Synthetic fixture with a circle intent."],
+                                "recommended_config": {
+                                    "max_size": 64,
+                                    "max_colors": 4,
+                                    "max_component_area": 512,
+                                    "timeout_seconds": 1,
+                                },
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = check_curated_suite(suite_path)
+
+            audit = report["corpus_audit"]
+            self.assertTrue(audit["ok"])
+            self.assertEqual(audit["summary"]["ready_case_count"], 1)
+            self.assertEqual(audit["cases"][0]["missing"], [])
+
+    def test_curated_check_corpus_audit_marks_incomplete_rip1_metadata(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("red")
+            metadata["current_issues"] = []
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "recommended_config": {
+                                    "max_size": 64,
+                                },
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = check_curated_suite(suite_path)
+
+            audit_case = report["corpus_audit"]["cases"][0]
+            self.assertFalse(report["corpus_audit"]["ok"])
+            self.assertFalse(audit_case["ok"])
+            self.assertEqual(
+                audit_case["missing"],
+                [
+                    "recommended_bounded_config",
+                    "human_readable_intent",
+                    "red_yellow_issue_tags",
+                ],
+            )
 
     def test_check_curated_suite_applies_config_overrides(self):
         with tempfile.TemporaryDirectory() as temp_dir:
