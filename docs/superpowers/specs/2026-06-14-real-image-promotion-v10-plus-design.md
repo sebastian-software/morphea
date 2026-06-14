@@ -180,10 +180,11 @@ Deliverables:
 - updated curated snapshot and suite-family baseline after each accepted fix;
 - no Lucide or primitive regression.
 
-Current report slice: `curated-check --markdown` now writes a Corpus Ledger that
-lists each promotion case's manual quality label, derived current pipeline
-label, current status, stress family, expected promotion families, issue tags,
-and licensing status before the promotion-gate details.
+Current report slice: `curated-check` now records `pipeline_quality_label` in
+case reports and snapshots. `curated-check --markdown` also writes a Corpus
+Ledger that lists each promotion case's manual quality label, derived current
+pipeline label, current status, stress family, expected promotion families,
+issue tags, and licensing status before the promotion-gate details.
 
 Exit criteria:
 

@@ -392,9 +392,17 @@ class CuratedSuiteTests(unittest.TestCase):
                 report["cases"][0]["promotion"]["current_quality_label"],
                 "green",
             )
+            self.assertEqual(
+                report["cases"][0]["pipeline_quality_label"],
+                "green",
+            )
             snapshot_report = json.loads(snapshot.read_text(encoding="utf-8"))
             self.assertEqual(snapshot_report["schema_version"], 1)
             self.assertEqual(snapshot_report["cases"][0]["id"], "simple-circle")
+            self.assertEqual(
+                snapshot_report["cases"][0]["pipeline_quality_label"],
+                "green",
+            )
             self.assertEqual(
                 snapshot_report["cases"][0]["anchor_kind_counts"]["circle"],
                 1,
@@ -478,6 +486,7 @@ class CuratedSuiteTests(unittest.TestCase):
             case = result["cases"][0]
             self.assertTrue(case["ok"])
             self.assertEqual(case["promotion_summary"]["decision"], "deferred")
+            self.assertEqual(case["pipeline_quality_label"], "yellow")
             self.assertEqual(case["promotion_summary"]["red_gate_count"], 0)
             self.assertEqual(case["promotion_summary"]["yellow_gate_count"], 1)
             self.assertEqual(case["editability_review"]["decision"], "manual_review")
@@ -2450,6 +2459,7 @@ class CuratedSuiteTests(unittest.TestCase):
                         "status": "checked",
                         "ok": True,
                         "source_exists": True,
+                        "pipeline_quality_label": "green",
                         "promotion_gates": [
                             {
                                 "id": "source_available",
@@ -2513,6 +2523,7 @@ class CuratedSuiteTests(unittest.TestCase):
             snapshot["cases"][1]["expectations"][1]["actual_value"],
             0.5,
         )
+        self.assertEqual(snapshot["cases"][1]["pipeline_quality_label"], "green")
         gates = {
             gate["id"]: gate
             for gate in snapshot["cases"][1]["promotion_gates"]
@@ -2626,6 +2637,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 case["review_decision"]["suggested_decision"],
                 "deferred",
             )
+            self.assertEqual(case["pipeline_quality_label"], "red")
 
     def test_curated_check_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

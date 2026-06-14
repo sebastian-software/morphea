@@ -1113,6 +1113,9 @@ Implemented so far:
   expected promotion families, issue tags, licensing status, plus case status,
   derived current pipeline labels, failed expectations, key metrics, and
   artifact directories.
+- curated reports and deterministic snapshots include
+  `pipeline_quality_label`, so current green/yellow/red pipeline state can be
+  consumed without parsing Markdown.
 - the same Markdown report includes a Region Truth table for configured
   source-region gates, with stable region ids, state, bounds, expected kinds,
   actual matching counts, topology evidence including descriptor labels and

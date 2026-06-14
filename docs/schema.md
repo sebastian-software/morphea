@@ -556,6 +556,8 @@ Case snapshot fields:
 - `diagnostic_count`
 - `metrics`: run metrics such as editability and raster-fidelity values
 - `promotion`: optional copied promotion metadata from the source suite case
+- `pipeline_quality_label`: optional derived current pipeline label
+  (`green`, `yellow`, or `red`) when promotion evidence is available
 
 Snapshots avoid timestamps and run-directory paths so they can be diffed across
 commits and configurations. Promotion-gate snapshot evidence for source
@@ -654,6 +656,8 @@ case reports also include:
   `promotion.visual_thresholds`
 - `promotion_summary`: compact decision summary with `decision`, failed gate
   count, red/yellow gate counts, and optional `deferred_reason`
+- `pipeline_quality_label`: derived current pipeline label (`green`, `yellow`,
+  or `red`) from `promotion_summary`, gate severity counts, and source status
 - `promotion_regions`: region-level promotion state derived from
   `promotion.region_gates`, including region id, state (`promoted`, `deferred`,
   or `rejected`), bounds, gate id, selected anchor ids/indexes, gate status, and

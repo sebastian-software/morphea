@@ -648,6 +648,7 @@ def _check_curated_case(
                 result["promotion_gates"],
                 case_status=result.get("status"),
             )
+            _attach_pipeline_quality_label(result)
             result["promotion_regions"] = _promotion_region_results(result)
             result["editability_review"] = _editability_review(
                 result,
@@ -663,6 +664,7 @@ def _check_curated_case(
                 result["promotion_gates"],
                 case_status=result.get("status"),
             )
+            _attach_pipeline_quality_label(result)
             result["promotion_regions"] = _promotion_region_results(result)
             result["editability_review"] = _editability_review(
                 result,
@@ -754,6 +756,7 @@ def _check_curated_case(
             result["promotion_gates"],
             case_status=result.get("status"),
         )
+        _attach_pipeline_quality_label(result)
         result["promotion_regions"] = _promotion_region_results(
             result,
             manifest=manifest,
@@ -920,6 +923,7 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "diagnostic_count",
         "metrics",
         "promotion",
+        "pipeline_quality_label",
         "promotion_gates",
         "promotion_summary",
         "promotion_regions",
@@ -4534,8 +4538,16 @@ def _fmt_promotion_quality(value: object) -> str:
 
 
 def _fmt_pipeline_quality(case: dict[str, Any]) -> str:
-    label = _pipeline_quality_label(case)
+    label = case.get("pipeline_quality_label")
+    if not isinstance(label, str):
+        label = _pipeline_quality_label(case)
     return f"`{label}`" if label is not None else "n/a"
+
+
+def _attach_pipeline_quality_label(case: dict[str, Any]) -> None:
+    label = _pipeline_quality_label(case)
+    if label is not None:
+        case["pipeline_quality_label"] = label
 
 
 def _pipeline_quality_label(case: dict[str, Any]) -> str | None:

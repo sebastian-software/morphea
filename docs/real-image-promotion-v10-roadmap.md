@@ -780,7 +780,9 @@ Required deliverables:
 
 Current implementation: `curated-check --markdown` writes a Corpus Ledger with
 separate `Quality` and `Pipeline` labels, so manual suite quality metadata is
-kept distinct from the current pipeline's green/yellow/red result.
+kept distinct from the current pipeline's green/yellow/red result. The same
+pipeline label is also available as `pipeline_quality_label` in curated report
+cases and deterministic snapshots.
 
 Exit criteria:
 
