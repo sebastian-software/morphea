@@ -588,7 +588,9 @@ and quality-label review-policy refinements:
    applying a decision, and `promotion-review-run` adds per-case
    `decision_choice_commands` so reviewers can apply a selected terminal
    outcome through `promotion-review-harvest --decision-choice` plus explicit
-   evidence flags.
+   evidence flags. The current checked-in portable review plan at
+   `docs/real-images/reviews/current-deferred-decision-plan.json` applies
+   explicit `deferred` decisions for all three cases.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
    review evidence. Current policy is sidecar-only: pending decisions,

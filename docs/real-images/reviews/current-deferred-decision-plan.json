@@ -1,0 +1,22 @@
+{
+  "decision_choices": {
+    "chatgpt-image-2026-06-11": "deferred",
+    "terminaro-tweaked": "deferred",
+    "ui-radio-acceptance-screenshot": "deferred"
+  },
+  "decision_overrides": {
+    "chatgpt-image-2026-06-11": {
+      "reason": "Deferred after contact-sheet review on 2026-06-14: the reconstruction is useful evidence, but the current promotion export has zero promoted anchors and no trusted region promotion; keep it out of harvestable training until a reviewer accepts a corrected promotion.",
+      "reviewer": "codex"
+    },
+    "terminaro-tweaked": {
+      "reason": "Deferred after contact-sheet review on 2026-06-14: the transparent reconstruction is visually plausible, but promoted.svg has zero promoted anchors and the quality-label gate remains manual-review pending; keep it as review evidence rather than trusted promotion.",
+      "reviewer": "codex"
+    },
+    "ui-radio-acceptance-screenshot": {
+      "reason": "Deferred after contact-sheet review on 2026-06-14: the text-like fallback grouping is structured evidence, but the radio-control region still has visual-fidelity drift and promoted.svg has zero promoted anchors; keep it out of harvestable training.",
+      "reviewer": "codex"
+    }
+  },
+  "schema_version": 1
+}

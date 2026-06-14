@@ -455,6 +455,10 @@ The same selected choices and evidence can now live in a portable
 `decision_plan` JSON overlay, keeping reviewer decisions in case-id terms
 without embedding run-local template paths. `promotion-review-harvest` merges
 that plan into a fresh generated config before applying explicit CLI overrides.
+The current real-image review outcome is checked in at
+`docs/real-images/reviews/current-deferred-decision-plan.json`: all three
+reviewed cases remain explicitly `deferred` until accepted/corrected region
+evidence exists.
 
 The same evidence can be supplied without editing config JSON by appending
 case-scoped CLI flags (`--reviewer case=name`, `--reason case=reason`, plus
