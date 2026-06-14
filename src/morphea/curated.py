@@ -1039,13 +1039,25 @@ def _region_promotion_gates(
             for item in gate.get("forbidden_kinds", [])
             if isinstance(item, str)
         ]
-        min_iou = float(gate.get("min_iou", 0.1))
+        min_anchor_coverage_value = gate.get("min_anchor_coverage")
+        min_anchor_coverage = (
+            float(min_anchor_coverage_value)
+            if isinstance(min_anchor_coverage_value, (int, float))
+            else None
+        )
+        default_min_iou = 0.0 if min_anchor_coverage is not None else 0.1
+        min_iou = float(gate.get("min_iou", default_min_iou))
         min_count = int(gate.get("min_count", 1))
         max_count = gate.get("max_count")
         if bounds is None:
             selected: list[dict[str, object]] = []
         else:
-            selected = _anchors_overlapping_region(anchors, bounds, min_iou)
+            selected = _anchors_overlapping_region(
+                anchors,
+                bounds,
+                min_iou,
+                min_anchor_coverage=min_anchor_coverage,
+            )
         matching = [
             anchor
             for anchor in selected
@@ -1088,6 +1100,7 @@ def _region_promotion_gates(
                 evidence={
                     "bounds": list(bounds) if bounds is not None else None,
                     "min_iou": min_iou,
+                    "min_anchor_coverage": min_anchor_coverage,
                     "expected_kinds": expected_kinds,
                     "forbidden_kinds": forbidden_kinds,
                     "matching_count": len(matching),
@@ -1095,7 +1108,10 @@ def _region_promotion_gates(
                     "forbidden_count": len(forbidden),
                     "topology_summary": topology_summary,
                     "topology_failures": topology_failures,
-                    "selected_anchors": _region_gate_anchor_evidence(selected),
+                    "selected_anchors": _region_gate_anchor_evidence(
+                        selected,
+                        region_bounds=bounds,
+                    ),
                     "description": gate.get("description"),
                 },
             )
@@ -1390,14 +1406,23 @@ def _anchors_overlapping_region(
     anchors: list[dict[str, object]],
     region_bounds: tuple[float, float, float, float],
     min_iou: float,
+    *,
+    min_anchor_coverage: float | None = None,
 ) -> list[dict[str, object]]:
     selected: list[dict[str, object]] = []
     for anchor in anchors:
         anchor_bounds = _manifest_anchor_bounds(anchor)
         if anchor_bounds is None:
             continue
-        if _bounds_iou(anchor_bounds, region_bounds) >= min_iou:
-            selected.append(anchor)
+        if min_anchor_coverage is None:
+            if _bounds_iou(anchor_bounds, region_bounds) < min_iou:
+                continue
+        elif (
+            _bounds_iou(anchor_bounds, region_bounds) < min_iou
+            or _bounds_coverage(anchor_bounds, region_bounds) < min_anchor_coverage
+        ):
+            continue
+        selected.append(anchor)
     return selected
 
 
@@ -1429,20 +1454,27 @@ def _region_gate_reason(
 
 def _region_gate_anchor_evidence(
     anchors: list[dict[str, object]],
+    *,
+    region_bounds: tuple[float, float, float, float] | None = None,
 ) -> list[dict[str, object]]:
     evidence: list[dict[str, object]] = []
     for anchor in anchors[:12]:
         bounds = _manifest_anchor_bounds(anchor)
-        evidence.append(
-            {
-                "id": anchor.get("id"),
-                "kind": anchor.get("kind"),
-                "bounds": list(bounds) if bounds is not None else None,
-                "closed": _anchor_closed(anchor),
-                "hole_count": _anchor_hole_count(anchor),
-                "cutout": _anchor_has_cutout(anchor),
-            }
-        )
+        item = {
+            "id": anchor.get("id"),
+            "kind": anchor.get("kind"),
+            "bounds": list(bounds) if bounds is not None else None,
+            "closed": _anchor_closed(anchor),
+            "hole_count": _anchor_hole_count(anchor),
+            "cutout": _anchor_has_cutout(anchor),
+        }
+        if bounds is not None and region_bounds is not None:
+            item["region_iou"] = round(_bounds_iou(bounds, region_bounds), 6)
+            item["anchor_coverage"] = round(
+                _bounds_coverage(bounds, region_bounds),
+                6,
+            )
+        evidence.append(item)
     return evidence
 
 
@@ -1571,6 +1603,16 @@ def _bounds_iou(
     if union <= 0:
         return 0.0
     return intersection / union
+
+
+def _bounds_coverage(
+    subject: tuple[float, float, float, float],
+    region: tuple[float, float, float, float],
+) -> float:
+    subject_area = _bounds_area(subject)
+    if subject_area <= 0:
+        return 0.0
+    return _bounds_intersection_area(subject, region) / subject_area
 
 
 def _bounds_intersection_area(
@@ -3240,11 +3282,24 @@ def _validate_promotion_region_gates(case_id: str, gates: Any) -> None:
                 f"case {case_id} promotion region gate {gate_id} bounds "
                 "must be [left, top, right, bottom]"
             )
-        min_iou = gate.get("min_iou", 0.1)
+        min_iou_default = (
+            0.0 if gate.get("min_anchor_coverage") is not None else 0.1
+        )
+        min_iou = gate.get("min_iou", min_iou_default)
         if not isinstance(min_iou, (int, float)) or min_iou < 0 or min_iou > 1:
             raise ValueError(
                 f"case {case_id} promotion region gate {gate_id} min_iou "
                 "must be between 0 and 1"
+            )
+        min_anchor_coverage = gate.get("min_anchor_coverage")
+        if min_anchor_coverage is not None and (
+            not isinstance(min_anchor_coverage, (int, float))
+            or min_anchor_coverage < 0
+            or min_anchor_coverage > 1
+        ):
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} "
+                "min_anchor_coverage must be between 0 and 1"
             )
         _validate_region_kind_list(case_id, gate_id, gate, "expected_kinds")
         _validate_region_kind_list(case_id, gate_id, gate, "forbidden_kinds")

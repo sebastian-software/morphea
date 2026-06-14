@@ -137,8 +137,12 @@ Secondary anchors:
 - Shape semantics:
   - outer ring should be found before general color components fragment it.
   - table semantic expectations now pass with 14 editable quads and one grid
-    group, but v10 promotion still fails on region-circle matching,
-    fragmentation/layer depth, and raster L1 fidelity.
+    group.
+  - the gold-circle region gate now matches the two shoulder brooches plus the
+    three center dots as five editable `circle` anchors using anchor-coverage
+    region matching.
+  - v10 promotion still fails on raster L1 fidelity and editability review
+    components for parameter economy, fragmentation, and raster fidelity.
   - white line gaps in hair/clothing need curved cut-out detection, not only
     horizontal/vertical gaps.
 - Reporting:

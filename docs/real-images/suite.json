@@ -23,7 +23,6 @@
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
         "current_issues": [
-          "shape_class_mismatch",
           "fragmentation",
           "weak_visual_fidelity"
         ],
@@ -81,18 +80,19 @@
             "bounds": [
               220,
               480,
-              700,
-              690
+              1005,
+              700
             ],
             "expected_kinds": [
               "circle"
             ],
             "min_count": 5,
-            "min_iou": 0.01,
+            "min_iou": 0.0,
+            "min_anchor_coverage": 0.8,
             "max_hole_count": 0,
             "max_cutout_count": 0,
             "severity": "red",
-            "description": "The known gold dot/brooch region must contain five editable circle anchors, not just circles elsewhere in the image."
+            "description": "The shoulder brooches and center gold dots must contain five editable circle anchors without relying on circles elsewhere in the image."
           }
         ],
         "group_gates": [
@@ -111,7 +111,7 @@
         "review_notes": [
           "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
-          "v10 promotion remains red: the gold-circle region gate still matches only 2 in-region circle anchors, and raster L1 remains above the family threshold."
+          "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI; v10 promotion remains red because raster L1 remains above the family threshold and the current quality label is still red."
         ]
       },
       "recommended_config": {

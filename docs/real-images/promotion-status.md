@@ -30,7 +30,7 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `shape_class_mismatch`, `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; structure gate now passes with `structural_layer_count` 3/3 while raw layer count remains 4 due cutout overlays; v10 remains red because region gate matches 2/5 circles with `hole_count=1`, visual L1 0.230301 > 0.18 |
+| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate now passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; structure gate passes with `structural_layer_count` 3/3 while raw layer count remains 4 due cutout overlays; v10 remains red because `current_quality_label` is red, visual L1 0.230301 > 0.18, and editability review rejects parameter economy, fragmentation, and raster fidelity |
 | `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `fragmentation` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.056356 < 0.18, `structural_layer_count` 3/3; v10 remains red because `current_quality_label` is red and editability review rejects parameter economy and fragmentation |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation` | visual L1 0.033861 < 0.08; radio topology gate now passes with 1 selected `stroke_circle` and `disconnected_component_count=1`; v10 remains red because `current_quality_label` is red and editability review rejects shape identity, fragmentation, and provenance |
 
@@ -163,10 +163,10 @@ candidate.
 
 | Criterion | Status | Evidence |
 | --- | --- | --- |
-| Manifests expose region-level promotion state. | met | Checked run manifests include `promotion.regions`; `terminaro-tweaked` records `gold-circle-region-shape-class` as `rejected`, and `ui-radio-acceptance-screenshot` records `radio-control-region-topology` as `deferred` after its gate passes but the case remains red. |
-| Fallback and rejected regions are visible in reports. | met | `/tmp/morphea-rip3-exit-report.md` lists `Promotion regions: rejected=1` for both checked real-image cases and shows the failed gate ids before aggregate metrics. |
+| Manifests expose region-level promotion state. | met | Checked run manifests include `promotion.regions`; `terminaro-tweaked` now records `gold-circle-region-shape-class` as `deferred` after its gate passes but the case remains red, and `ui-radio-acceptance-screenshot` records `radio-control-region-topology` as `deferred` after its gate passes but the case remains red. |
+| Fallback and rejected/deferred regions are visible in reports. | met | `/tmp/morphea-rp10-coverage-report.md` lists `Promotion regions: deferred=1` for `terminaro-tweaked` and `ui-radio-acceptance-screenshot` and shows the failed gate ids before aggregate metrics. |
 | Promoted SVG output can be filtered from debug/fallback output. | met | Checked run directories write `promoted.svg`, `fallback.svg`, and `promotion-export.json`; `morphea promotion-export` can regenerate the same partition from a promotion-annotated manifest. |
-| No failed semantic candidate disappears silently. | met | `promotion-export.json` records rejected/deferred anchor indexes and `anchor_state_counts`; current checked real-image manifests keep `terminaro-tweaked` rejected anchors explicit and keep the UI radio anchor deferred until the case quality decision changes. |
+| No failed semantic candidate disappears silently. | met | `promotion-export.json` records rejected/deferred anchor indexes and `anchor_state_counts`; current checked real-image manifests keep `terminaro-tweaked` and the UI radio region deferred until each containing case quality decision changes. |
 
 ## RIP4 Progress
 
@@ -188,8 +188,9 @@ Promotion gates now cap matching v10 components instead of being averaged away.
 For example, the current UI screenshot keeps `raster_fidelity=0.944073` and now
 keeps `topology_consistency=1.0` after duplicate radio anchors are deduplicated,
 but it still fails shape identity, fragmentation, and provenance component
-thresholds. The current Terminaro run still caps shape identity and raster
-fidelity because the corresponding red gates fail.
+thresholds. The current Terminaro run no longer caps shape identity after the
+gold-circle region gate moved to 5/5 matched `circle` anchors, but it still caps
+raster fidelity because the visual L1 gate fails.
 
 Curated promotion reports now also include `editability_review`, which turns
 promotion state plus v10 component thresholds into an accepted-output decision:
@@ -300,7 +301,8 @@ baseline comparison path is covered outside helper-only unit tests.
 
 The next promotion-quality block should keep all real-image semantic
 expectations green while addressing the remaining v10 red gates:
-`terminaro-tweaked` region-circle matching plus raster L1 fidelity. The opaque
-generated-illustration and UI screenshot cases no longer fail their mechanical
-structure/topology gates, but both still need review/quality-label decisions
-and editability component improvements before they can move out of red.
+`terminaro-tweaked` raster L1 fidelity plus the review/editability failures that
+keep all three real-image cases red. The transparent Terminaro region-circle
+gate, the opaque generated-illustration structure gate, and the UI radio
+topology gate are now mechanically green or deferred only because the containing
+case still has red review state.

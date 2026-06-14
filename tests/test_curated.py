@@ -994,6 +994,15 @@ class CuratedSuiteTests(unittest.TestCase):
                     "severity": "red",
                 },
                 {
+                    "id": "wide-circle-region",
+                    "gate_type": "shape_class",
+                    "bounds": [0, 0, 24, 24],
+                    "expected_kinds": ["circle"],
+                    "min_anchor_coverage": 0.8,
+                    "min_count": 1,
+                    "severity": "red",
+                },
+                {
                     "id": "circle-topology",
                     "gate_type": "topology",
                     "bounds": [4, 4, 18, 18],
@@ -1045,9 +1054,32 @@ class CuratedSuiteTests(unittest.TestCase):
                 gate_by_id["circle-region"]["evidence"]["matching_count"],
                 1,
             )
+            self.assertTrue(gate_by_id["wide-circle-region"]["ok"])
+            self.assertEqual(
+                gate_by_id["wide-circle-region"]["evidence"]["matching_count"],
+                1,
+            )
+            self.assertEqual(
+                gate_by_id["wide-circle-region"]["evidence"]["min_anchor_coverage"],
+                0.8,
+            )
+            self.assertEqual(
+                gate_by_id["wide-circle-region"]["evidence"]["min_iou"],
+                0.0,
+            )
+            self.assertGreaterEqual(
+                gate_by_id["wide-circle-region"]["evidence"]["selected_anchors"][0][
+                    "anchor_coverage"
+                ],
+                0.8,
+            )
             self.assertEqual(region_by_id["circle-region"]["state"], "promoted")
             self.assertEqual(
                 region_by_id["circle-region"]["selected_anchor_indexes"],
+                [0],
+            )
+            self.assertEqual(
+                region_by_id["wide-circle-region"]["selected_anchor_indexes"],
                 [0],
             )
             topology = gate_by_id["circle-region"]["evidence"]["topology_summary"]
@@ -1368,6 +1400,45 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "max_closed_anchors"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_region_anchor_coverage(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["region_gates"] = [
+                {
+                    "id": "bad-anchor-coverage",
+                    "gate_type": "shape_class",
+                    "bounds": [0, 0, 10, 10],
+                    "expected_kinds": ["circle"],
+                    "min_anchor_coverage": 1.2,
+                }
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "min_anchor_coverage"):
                 load_curated_suite(suite_path)
 
     def test_load_curated_suite_rejects_invalid_visual_thresholds(self):
