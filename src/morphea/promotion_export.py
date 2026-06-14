@@ -22,6 +22,7 @@ def write_promotion_svg_exports(
     promoted_svg: str | Path | None = None,
     fallback_svg: str | Path | None = None,
     output: str | Path | None = None,
+    markdown: str | Path | None = None,
 ) -> dict[str, object]:
     manifest_path = Path(manifest)
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -36,6 +37,7 @@ def write_promotion_svg_exports(
     anchors = data.get("anchors", [])
     anchors = anchors if isinstance(anchors, list) else []
     state_indexes = _promotion_anchor_state_indexes(data)
+    regions = _promotion_regions(data)
     promoted_indexes = state_indexes["promoted"]
     fallback_indexes = [
         index for index in range(len(anchors)) if index not in promoted_indexes
@@ -59,12 +61,14 @@ def write_promotion_svg_exports(
         "fallback_only_anchor_indexes": state_indexes["fallback"],
         "rejected_anchor_indexes": state_indexes["rejected"],
         "deferred_anchor_indexes": state_indexes["deferred"],
+        "export_summary": _promotion_export_summary(state_indexes, data),
         "anchor_state_counts": {
             state: len(indexes)
             for state, indexes in state_indexes.items()
             if indexes
         },
         "region_state_counts": _promotion_region_state_counts(data),
+        "regions": regions,
         "promoted_svg": str(promoted_path),
         "fallback_svg": str(fallback_path),
     }
@@ -75,7 +79,53 @@ def write_promotion_svg_exports(
             json.dumps(result, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_promotion_export_markdown(result),
+            encoding="utf-8",
+        )
     return result
+
+
+def render_promotion_export_markdown(result: dict[str, object]) -> str:
+    summary = _object_dict(result.get("export_summary"))
+    lines = [
+        "# Morphēa Promotion Export",
+        "",
+        f"- Manifest: `{result.get('manifest', 'n/a')}`",
+        f"- Promoted SVG: `{result.get('promoted_svg', 'n/a')}`",
+        f"- Fallback SVG: `{result.get('fallback_svg', 'n/a')}`",
+        "",
+        "## Export Summary",
+        "",
+        "| State | Anchors | Regions |",
+        "| --- | ---: | ---: |",
+    ]
+    for state in ("promoted", "fallback", "rejected", "deferred"):
+        lines.append(
+            "| "
+            f"`{state}` | "
+            f"{_fmt_markdown_value(summary.get(f'{state}_anchor_count'))} | "
+            f"{_fmt_markdown_value(summary.get(f'{state}_region_count'))} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Missing From Promoted SVG",
+            "",
+            "| State | Anchors | Regions | Reason |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    missing_rows = _promotion_export_missing_rows(result)
+    if missing_rows:
+        lines.extend(missing_rows)
+    else:
+        lines.append("| n/a | n/a | n/a | n/a |")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def apply_promotion_review_decision(
@@ -312,19 +362,109 @@ def _promotion_anchor_state_by_index(manifest: dict[str, Any]) -> dict[int, str]
 
 
 def _promotion_region_state_counts(manifest: dict[str, Any]) -> dict[str, int]:
-    promotion = manifest.get("promotion", {})
-    if not isinstance(promotion, dict):
-        return {}
-    regions = promotion.get("regions", [])
-    if not isinstance(regions, list):
-        return {}
     counts: dict[str, int] = {}
-    for region in regions:
-        if not isinstance(region, dict):
-            continue
+    for region in _promotion_regions(manifest):
         state = str(region.get("state", "unknown"))
         counts[state] = counts.get(state, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _promotion_regions(manifest: dict[str, Any]) -> list[dict[str, object]]:
+    promotion = manifest.get("promotion", {})
+    if not isinstance(promotion, dict):
+        return []
+    regions = promotion.get("regions", [])
+    if not isinstance(regions, list):
+        return []
+    return [region for region in regions if isinstance(region, dict)]
+
+
+def _promotion_export_summary(
+    state_indexes: dict[str, list[int]],
+    manifest: dict[str, Any],
+) -> dict[str, int]:
+    region_counts = _promotion_region_state_counts(manifest)
+    summary: dict[str, int] = {}
+    for state in ("promoted", "fallback", "rejected", "deferred"):
+        summary[f"{state}_anchor_count"] = len(state_indexes.get(state, []))
+        summary[f"{state}_region_count"] = int(region_counts.get(state, 0))
+    return summary
+
+
+def _promotion_export_missing_rows(result: dict[str, object]) -> list[str]:
+    rows: list[str] = []
+    for state, key in (
+        ("fallback", "fallback_only_anchor_indexes"),
+        ("rejected", "rejected_anchor_indexes"),
+        ("deferred", "deferred_anchor_indexes"),
+    ):
+        anchors = _int_list(result.get(key))
+        regions = _regions_for_state(result.get("regions"), state)
+        if not anchors and not regions:
+            continue
+        rows.append(
+            "| "
+            f"`{state}` | "
+            f"{_fmt_markdown_indexes(anchors)} | "
+            f"{_fmt_markdown_region_ids(regions)} | "
+            f"{_fmt_markdown_region_reasons(regions)} |"
+        )
+    return rows
+
+
+def _regions_for_state(value: object, state: str) -> list[dict[str, object]]:
+    regions = value if isinstance(value, list) else []
+    return [
+        region
+        for region in regions
+        if isinstance(region, dict) and region.get("state") == state
+    ]
+
+
+def _int_list(value: object) -> list[int]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, int)]
+
+
+def _fmt_markdown_value(value: object) -> str:
+    if isinstance(value, bool):
+        return "n/a"
+    if isinstance(value, (int, float)):
+        return f"{value:.6g}"
+    return "n/a"
+
+
+def _fmt_markdown_indexes(values: list[int]) -> str:
+    if not values:
+        return "`none`"
+    return ", ".join(f"`{value}`" for value in values)
+
+
+def _fmt_markdown_region_ids(regions: list[dict[str, object]]) -> str:
+    ids = [
+        str(region.get("id"))
+        for region in regions
+        if isinstance(region.get("id"), str) and region.get("id")
+    ]
+    if not ids:
+        return "`none`"
+    return ", ".join(f"`{region_id}`" for region_id in ids)
+
+
+def _fmt_markdown_region_reasons(regions: list[dict[str, object]]) -> str:
+    reasons = []
+    for region in regions:
+        reason = (
+            region.get("reason")
+            or region.get("rejection_reason")
+            or region.get("deferred_reason")
+            or "n/a"
+        )
+        reasons.append(str(reason))
+    if not reasons:
+        return "`n/a`"
+    return "; ".join(reason.replace("|", "\\|") for reason in reasons)
 
 
 def _promotion_region_ids_by_anchor_index(

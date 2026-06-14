@@ -600,13 +600,17 @@ also includes review-template paths plus top-level `editability_review` and
 human-review decision record are preserved with the run artifact.
 
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
---fallback-svg fallback.svg -o promotion-export.json` can regenerate the
-promoted/fallback SVG partition from any promotion-annotated manifest. The JSON
-output includes the same promoted, fallback-only, rejected, and deferred anchor
-state partition as curated run sidecars. Exported SVG shapes are wrapped in
-stable `<g>` nodes with `data-morphea-anchor-id`, `data-anchor-index`,
-`data-promotion-state`, optional `data-promotion-regions`, and applied-review
-decision metadata when the manifest contains `review_decision_applied`.
+--fallback-svg fallback.svg -o promotion-export.json --markdown
+promotion-export.md` can regenerate the promoted/fallback SVG partition from
+any promotion-annotated manifest. The JSON output includes the same promoted,
+fallback-only, rejected, and deferred anchor state partition as curated run
+sidecars, a zero-filled `export_summary`, and copied promotion `regions` with
+gate/reason evidence. Exported SVG shapes are wrapped in stable `<g>` nodes
+with `data-morphea-anchor-id`, `data-anchor-index`, `data-promotion-state`,
+optional `data-promotion-regions`, and applied-review decision metadata when
+the manifest contains `review_decision_applied`. The optional Markdown report
+summarizes promoted/fallback/rejected/deferred anchor and region counts and
+lists fallback, rejected, and deferred items missing from the promoted SVG.
 
 `morphea promotion-apply-review review-decision.json -o applied-review.json
 --markdown applied-review.md --manifest manifest.json` consumes an edited

@@ -987,6 +987,7 @@ def main(argv: list[str] | None = None) -> None:
     promotion_export.add_argument("--promoted-svg", type=Path)
     promotion_export.add_argument("--fallback-svg", type=Path)
     promotion_export.add_argument("-o", "--output", type=Path)
+    promotion_export.add_argument("--markdown", type=Path)
 
     promotion_apply_review = subcommands.add_parser(
         "promotion-apply-review",
@@ -1092,6 +1093,7 @@ def main(argv: list[str] | None = None) -> None:
             promoted_svg=args.promoted_svg,
             fallback_svg=args.fallback_svg,
             output=args.output,
+            markdown=args.markdown,
         )
         print(
             "exported promotion SVGs "

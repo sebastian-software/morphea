@@ -498,6 +498,9 @@ Export policy:
 - exported promotion SVG nodes carry stable anchor, promotion-region, and
   applied-review metadata so trusted output can be inspected without guessing
   which manifest record produced each node.
+- `promotion-export --markdown` writes a scan-friendly export report that shows
+  promoted/fallback/rejected/deferred counts and region reasons for items
+  missing from the promoted SVG.
 
 Exit criteria:
 

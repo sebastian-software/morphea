@@ -276,6 +276,9 @@ Implemented so far:
 - promotion SVG exports wrap each emitted shape in a stable metadata node with
   anchor id, anchor index, promotion state, source promotion region ids, and
   applied review-decision metadata when present.
+- `morphea promotion-export --markdown promotion-export.md` writes a
+  scan-friendly export report with promoted/fallback/rejected/deferred anchor
+  and region counts plus missing-from-promoted rows with region reasons.
 - `morphea vectorize --cutout-export negative_mask` writes editable cut-out
   strokes into an SVG mask instead of painting visible white overlay strokes;
   run directories apply the same export option to `output.svg`.

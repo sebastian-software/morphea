@@ -48,6 +48,7 @@ class CliTests(unittest.TestCase):
             promoted_svg = root / "promoted.svg"
             fallback_svg = root / "fallback.svg"
             output = root / "promotion-export.json"
+            markdown = root / "promotion-export.md"
             manifest.write_text(
                 json.dumps(
                     {
@@ -88,6 +89,8 @@ class CliTests(unittest.TestCase):
                                     "id": "failed-region",
                                     "state": "rejected",
                                     "selected_anchor_indexes": [2],
+                                    "gate_id": "failed-gate",
+                                    "reason": "failed topology gate",
                                 }
                             ]
                         },
@@ -112,6 +115,8 @@ class CliTests(unittest.TestCase):
                         str(fallback_svg),
                         "-o",
                         str(output),
+                        "--markdown",
+                        str(markdown),
                     ]
                 )
 
@@ -139,6 +144,28 @@ class CliTests(unittest.TestCase):
             self.assertEqual(
                 result["anchor_state_counts"],
                 {"fallback": 1, "promoted": 1, "rejected": 1},
+            )
+            self.assertEqual(
+                result["export_summary"],
+                {
+                    "deferred_anchor_count": 0,
+                    "deferred_region_count": 0,
+                    "fallback_anchor_count": 1,
+                    "fallback_region_count": 0,
+                    "promoted_anchor_count": 1,
+                    "promoted_region_count": 1,
+                    "rejected_anchor_count": 1,
+                    "rejected_region_count": 1,
+                },
+            )
+            self.assertEqual(result["regions"][1]["reason"], "failed topology gate")
+            report = markdown.read_text(encoding="utf-8")
+            self.assertIn("# Morphēa Promotion Export", report)
+            self.assertIn("| `promoted` | 1 | 1 |", report)
+            self.assertIn("| `fallback` | `1` | `none` | `n/a` |", report)
+            self.assertIn(
+                "| `rejected` | `2` | `failed-region` | failed topology gate |",
+                report,
             )
 
     def test_promotion_apply_review_cli_applies_terminal_decision(self):
