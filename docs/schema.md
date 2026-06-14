@@ -701,12 +701,16 @@ terminal review decision, rejects still-pending decisions, requires non-empty
 persist `review_decision_applied` back into the run manifest and its top-level
 `promotion` object. `corrected` decisions additionally require
 `correction_notes` and at least one `corrected_artifacts` entry, so corrected
-records cannot be harvested without correction evidence. The applied summary
-includes `quality_label_policy` with `mode: sidecar_only` and
+records cannot be harvested without correction evidence. Generated terminal
+templates may be applied without manually editing JSON by passing
+`--reviewer`, `--reason`, and for corrected reviews `--correction-notes` plus
+one or more `--corrected-artifact` values; these CLI values are recorded as
+review overrides in the applied summary. The applied summary includes
+`quality_label_policy` with `mode: sidecar_only` and
 `updates_current_quality_label: false`, preserves `review_artifacts`, and
-renders those links in Markdown before the gate/component evidence, so
-accepted/corrected reviews remain promotion evidence until suite metadata is
-deliberately edited.
+renders those links plus reviewer/reason evidence in Markdown before the
+gate/component evidence, so accepted/corrected reviews remain promotion
+evidence until suite metadata is deliberately edited.
 
 `morphea promotion-review-harvest review-packet.json -o review-harvest.json
 --harvest-config harvest-curated.json --decision case-id=terminal-decision.json`

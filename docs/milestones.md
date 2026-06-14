@@ -444,8 +444,9 @@ Implemented so far:
   rejects pending records, requires reviewer/reason evidence, requires
   correction notes and corrected artifacts for `corrected` records, writes
   applied JSON/Markdown summaries with preserved `review_artifacts`, and can
-  persist
-  `review_decision_applied` into a run manifest.
+  persist `review_decision_applied` into a run manifest. It can also apply
+  generated terminal templates with explicit CLI evidence overrides such as
+  `--reviewer`, `--reason`, `--correction-notes`, and `--corrected-artifact`.
 - `morphea harvest --require-applied-review` gates pseudo-label harvesting on
   applied promotion review decisions, so only `accepted` and `corrected`
   applied decisions become candidates while missing, invalid, rejected, and

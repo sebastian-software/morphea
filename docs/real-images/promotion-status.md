@@ -282,11 +282,14 @@ and marks correction notes/artifacts as required for `corrected`.
 reason evidence, writes an applied review summary JSON/Markdown, and can
 persist `review_decision_applied` back into the run manifest and its
 `promotion` object. `corrected` decisions also require correction notes and
-corrected-artifact evidence. Applied summaries include the same sidecar-only
-quality-label policy, so accepted/corrected decisions are harvestable evidence
-rather than automatic suite-label updates. They also preserve
-`review_artifacts` and render those links in Markdown before gate/component
-evidence.
+corrected-artifact evidence. The same command can apply an unedited generated
+terminal template when the reviewer supplies `--reviewer`, `--reason`, and any
+required corrected-evidence flags on the CLI; applied summaries record those
+overrides and render reviewer/reason evidence in Markdown. They include the
+same sidecar-only quality-label policy, so accepted/corrected decisions are
+harvestable evidence rather than automatic suite-label updates. They also
+preserve `review_artifacts` and render those links in Markdown before
+gate/component evidence.
 
 `morphea promotion-review-harvest` now turns a suite-level
 `review-packet.json` into a reproducible harvest-prep report. It applies only

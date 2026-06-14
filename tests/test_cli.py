@@ -310,6 +310,49 @@ class CliTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "requires reviewer"):
                 main(["promotion-apply-review", str(review_decision)])
 
+    def test_promotion_apply_review_cli_accepts_review_evidence_overrides(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_decision = root / "accepted-template.json"
+            review_decision.write_text(
+                json.dumps(
+                    {
+                        "case_id": "case",
+                        "decision": "accepted",
+                        "reviewer": "",
+                        "reason": "",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "applied-review.json"
+            markdown = root / "applied-review.md"
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-apply-review",
+                        str(review_decision),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--reviewer",
+                        "qa",
+                        "--reason",
+                        "reviewed terminal template",
+                    ]
+                )
+
+            self.assertIn("decision=accepted", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["reviewer"], "qa")
+            self.assertEqual(result["reason"], "reviewed terminal template")
+            self.assertEqual(result["review_overrides"], ["reason", "reviewer"])
+            rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn("- Reviewer: `qa`", rendered)
+            self.assertIn("- Reason: `reviewed terminal template`", rendered)
+
     def test_promotion_apply_review_cli_requires_corrected_evidence(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             review_decision = Path(temp_dir) / "review-decision.json"
@@ -327,6 +370,60 @@ class CliTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "correction_notes"):
                 main(["promotion-apply-review", str(review_decision)])
+
+    def test_promotion_apply_review_cli_accepts_corrected_evidence_overrides(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_decision = root / "corrected-template.json"
+            review_decision.write_text(
+                json.dumps(
+                    {
+                        "case_id": "case",
+                        "decision": "corrected",
+                        "reviewer": "",
+                        "reason": "",
+                        "correction_notes": "",
+                        "corrected_artifacts": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "applied-review.json"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "promotion-apply-review",
+                        str(review_decision),
+                        "-o",
+                        str(output),
+                        "--reviewer",
+                        "qa",
+                        "--reason",
+                        "corrected reviewed evidence",
+                        "--correction-notes",
+                        "replace fallback path with corrected SVG",
+                        "--corrected-artifact",
+                        "corrected.svg",
+                    ]
+                )
+
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["decision"], "corrected")
+            self.assertEqual(
+                result["correction_notes"],
+                "replace fallback path with corrected SVG",
+            )
+            self.assertEqual(result["corrected_artifacts"], ["corrected.svg"])
+            self.assertEqual(
+                result["review_overrides"],
+                [
+                    "corrected_artifacts",
+                    "correction_notes",
+                    "reason",
+                    "reviewer",
+                ],
+            )
 
     def test_promotion_review_harvest_cli_applies_decision_and_writes_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:

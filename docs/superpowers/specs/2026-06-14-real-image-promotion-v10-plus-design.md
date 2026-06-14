@@ -521,6 +521,10 @@ Current implementation:
   `decision_choices` / `--decision-choice` selection. When run from config, the
   prep report also renders copy/paste `decision_choice_commands` for pending
   cases with template-readiness labels for missing reviewer evidence.
+- `promotion-apply-review` can apply a terminal template with explicit CLI
+  reviewer evidence overrides (`--reviewer`, `--reason`, and corrected-evidence
+  flags), so reviewers can avoid hand-editing JSON while still supplying
+  required evidence.
 
 Exit criteria:
 

@@ -409,11 +409,14 @@ packet, keeping the visual review path out of raw JSON.
 rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests. Terminal records require
 reviewer and reason evidence, and `corrected` records require correction notes
-plus corrected artifacts before they can be applied. Pending, terminal, and
-applied review records carry `quality_label_policy.mode: sidecar_only`, so
-accepted/corrected reviews become auditable evidence without implicitly
-rewriting suite `current_quality_label`. Applied review Markdown preserves and
-renders `review_artifacts` before the gate/component evidence.
+plus corrected artifacts before they can be applied. Reviewer evidence can be
+supplied by editing the terminal template or by passing `--reviewer`,
+`--reason`, `--correction-notes`, and `--corrected-artifact` values to
+`promotion-apply-review`; applied summaries record any CLI overrides. Pending,
+terminal, and applied review records carry `quality_label_policy.mode` set to
+`sidecar_only`, making accepted/corrected reviews auditable evidence without
+implicitly rewriting suite `current_quality_label`. Applied review Markdown
+preserves and renders `review_artifacts` before the gate/component evidence.
 `morphea promotion-review-harvest` applies explicitly selected terminal
 decision files from a suite `review-packet.json`, writes per-case applied
 review summaries beside manifests, reports applied/harvestable/pending packet

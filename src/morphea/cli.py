@@ -1047,6 +1047,14 @@ def main(argv: list[str] | None = None) -> None:
     promotion_apply_review.add_argument("-o", "--output", type=Path)
     promotion_apply_review.add_argument("--markdown", type=Path)
     promotion_apply_review.add_argument("--manifest", type=Path)
+    promotion_apply_review.add_argument("--reviewer")
+    promotion_apply_review.add_argument("--reason")
+    promotion_apply_review.add_argument("--correction-notes")
+    promotion_apply_review.add_argument(
+        "--corrected-artifact",
+        action="append",
+        default=None,
+    )
 
     promotion_review_harvest = subcommands.add_parser(
         "promotion-review-harvest",
@@ -1326,6 +1334,10 @@ def main(argv: list[str] | None = None) -> None:
             output=args.output,
             markdown=args.markdown,
             manifest=args.manifest,
+            reviewer=args.reviewer,
+            reason=args.reason,
+            correction_notes=args.correction_notes,
+            corrected_artifacts=args.corrected_artifact,
         )
         print(
             "applied promotion review "

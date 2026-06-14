@@ -134,6 +134,10 @@ def apply_promotion_review_decision(
     output: str | Path | None = None,
     markdown: str | Path | None = None,
     manifest: str | Path | None = None,
+    reviewer: str | None = None,
+    reason: str | None = None,
+    correction_notes: str | None = None,
+    corrected_artifacts: list[str] | None = None,
 ) -> dict[str, object]:
     review_path = Path(review_decision)
     data = json.loads(review_path.read_text(encoding="utf-8"))
@@ -146,14 +150,34 @@ def apply_promotion_review_decision(
         allowed = ", ".join(sorted(PROMOTION_REVIEW_DECISIONS))
         raise ValueError(f"promotion review decision must be one of: {allowed}")
     suggested = data.get("suggested_decision")
-    reviewer = _required_review_string(data, "reviewer")
-    reason = _required_review_string(data, "reason")
-    correction_notes = _string_value(data.get("correction_notes"))
-    corrected_artifacts = _string_list(data.get("corrected_artifacts"))
+    review_overrides = {
+        key: value
+        for key, value in {
+            "reviewer": reviewer,
+            "reason": reason,
+            "correction_notes": correction_notes,
+            "corrected_artifacts": corrected_artifacts,
+        }.items()
+        if value is not None
+    }
+    reviewer_value = _required_review_value(
+        _review_value(data, "reviewer", reviewer),
+        "reviewer",
+    )
+    reason_value = _required_review_value(
+        _review_value(data, "reason", reason),
+        "reason",
+    )
+    correction_notes_value = _string_value(
+        _review_value(data, "correction_notes", correction_notes)
+    )
+    corrected_artifacts_value = _string_list(
+        _review_value(data, "corrected_artifacts", corrected_artifacts)
+    )
     if decision == "corrected":
-        if not correction_notes:
+        if not correction_notes_value:
             raise ValueError("corrected promotion reviews require correction_notes")
-        if not corrected_artifacts:
+        if not corrected_artifacts_value:
             raise ValueError("corrected promotion reviews require corrected_artifacts")
     result = {
         "schema_version": 1,
@@ -163,10 +187,10 @@ def apply_promotion_review_decision(
         "accepted_for_promotion": decision in {"accepted", "corrected"},
         "suggested_decision": suggested,
         "matches_suggestion": decision == suggested,
-        "reviewer": reviewer,
-        "reason": reason,
-        "correction_notes": correction_notes,
-        "corrected_artifacts": corrected_artifacts,
+        "reviewer": reviewer_value,
+        "reason": reason_value,
+        "correction_notes": correction_notes_value,
+        "corrected_artifacts": corrected_artifacts_value,
         "issue_tags": _string_list(data.get("issue_tags")),
         "source_decisions": _object_dict(data.get("source_decisions")),
         "failed_gates": _object_list(data.get("failed_gates")),
@@ -178,6 +202,8 @@ def apply_promotion_review_decision(
         "review_artifacts": _object_dict(data.get("review_artifacts")),
         "quality_label_policy": promotion_quality_label_policy(),
     }
+    if review_overrides:
+        result["review_overrides"] = sorted(review_overrides)
     if manifest is not None:
         manifest_path = Path(manifest)
         manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -219,7 +245,11 @@ def render_promotion_review_decision_markdown(result: dict[str, object]) -> str:
         f"- Suggested: `{result.get('suggested_decision', 'n/a')}`",
         f"- Matches suggestion: `{str(result.get('matches_suggestion', False)).lower()}`",
         f"- Accepted for promotion: `{str(result.get('accepted_for_promotion', False)).lower()}`",
+        f"- Reviewer: `{result.get('reviewer', 'n/a')}`",
+        f"- Reason: `{result.get('reason', 'n/a')}`",
         f"- Issue tags: {_format_review_values(result.get('issue_tags'))}",
+        f"- Correction notes: `{result.get('correction_notes', '')}`",
+        f"- Corrected artifacts: {_format_review_values(result.get('corrected_artifacts'))}",
         f"- Quality label policy: `{_review_policy_mode(result.get('quality_label_policy'))}`",
         "- Updates `current_quality_label`: "
         f"`{str(_review_policy_updates_label(result.get('quality_label_policy'))).lower()}`",
@@ -311,6 +341,21 @@ def _string_list(value: object) -> list[str]:
 
 def _string_value(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
+
+
+def _review_value(
+    data: dict[str, object],
+    key: str,
+    override: object,
+) -> object:
+    return override if override is not None else data.get(key)
+
+
+def _required_review_value(value: object, key: str) -> str:
+    value = _string_value(value)
+    if not value:
+        raise ValueError(f"promotion review decision requires {key}")
+    return value
 
 
 def _required_review_string(data: dict[str, object], key: str) -> str:
