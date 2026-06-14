@@ -372,15 +372,20 @@ directories when `--output-dir` is used.
 arguments override matching config values, and `run` must be a boolean when
 provided in JSON.
 
-Curated suite expectations support three mutually exclusive check types:
-`kind` with `min_count` and optional `max_count`, `group_kind` with `min_count`
-and optional `max_count`, or `metric` with `min_value` and/or `max_value`.
-Metric expectations read top-level manifest `metrics` values such as
-`editability_score`, `simple_shape_ratio`, and `fragmentation_penalty`.
+Curated suite expectations support four mutually exclusive check types:
+`kind` with `min_count` and optional `max_count`, `kinds` with a non-empty array
+of accepted anchor kinds plus `min_count` and optional `max_count`, `group_kind`
+with `min_count` and optional `max_count`, or `metric` with `min_value` and/or
+`max_value`. Metric expectations read top-level manifest `metrics` values such
+as `editability_score`, `simple_shape_ratio`, and `fragmentation_penalty`.
 
-Repeated `kind` or `group_kind` expectations are cumulative. For example, two
-separate `kind: circle`, `min_count: 1` expectations require two distinct circle
-anchors; the second result records `cumulative_min_count: 2`.
+Repeated `kind`, `kinds`, or `group_kind` expectations are cumulative per
+selector. For example, two separate `kind: circle`, `min_count: 1` expectations
+require two distinct circle anchors; the second result records
+`cumulative_min_count: 2`. A `kinds` expectation counts anchors whose `kind`
+matches any listed value, which is useful when one semantic role may be
+represented by several editable primitive classes such as `stroke_polyline`,
+`stroke_path`, or `arc`.
 
 Lucide suite `kind` expectations may also include `bounds` as
 `[left, top, right, bottom]` plus optional `min_iou` to restrict matching to a
@@ -473,7 +478,9 @@ Case snapshot fields:
 - `promotion`: optional copied promotion metadata from the source suite case
 
 Snapshots avoid timestamps and run-directory paths so they can be diffed across
-commits and configurations.
+commits and configurations. Promotion-gate snapshot evidence for source
+availability and contact sheets is reduced to stable booleans instead of local
+source or artifact paths.
 
 When `curated-check --output-dir` is used for checked cases, each per-case run
 directory includes the standard vectorize artifacts plus:

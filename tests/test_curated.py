@@ -1446,6 +1446,24 @@ class CuratedSuiteTests(unittest.TestCase):
                         "status": "checked",
                         "ok": True,
                         "source_exists": True,
+                        "promotion_gates": [
+                            {
+                                "id": "source_available",
+                                "gate_type": "provenance",
+                                "ok": True,
+                                "severity": "red",
+                                "reason": "source image is available",
+                                "evidence": "/tmp/local-source.png",
+                            },
+                            {
+                                "id": "visual_contact_sheet",
+                                "gate_type": "visual_fidelity",
+                                "ok": True,
+                                "severity": "yellow",
+                                "reason": "contact sheet available",
+                                "evidence": "/tmp/case/contact-sheet.png",
+                            },
+                        ],
                         "expectations": [
                             {
                                 "id": "z-exp",
@@ -1490,6 +1508,18 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertEqual(
             snapshot["cases"][1]["expectations"][1]["actual_value"],
             0.5,
+        )
+        gates = {
+            gate["id"]: gate
+            for gate in snapshot["cases"][1]["promotion_gates"]
+        }
+        self.assertEqual(
+            gates["source_available"]["evidence"],
+            {"source_exists": True},
+        )
+        self.assertEqual(
+            gates["visual_contact_sheet"]["evidence"],
+            {"contact_sheet_path_recorded": True},
         )
 
     def test_curated_check_cli_writes_report(self):

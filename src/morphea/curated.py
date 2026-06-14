@@ -785,8 +785,31 @@ def _case_snapshot(case: dict[str, Any]) -> dict[str, Any]:
         "review_decision",
     ):
         if key in case:
-            snapshot[key] = case[key]
+            if key == "promotion_gates":
+                snapshot[key] = _snapshot_promotion_gates(case[key])
+            else:
+                snapshot[key] = case[key]
     return snapshot
+
+
+def _snapshot_promotion_gates(gates: object) -> object:
+    if not isinstance(gates, list):
+        return gates
+    snapshot_gates: list[object] = []
+    for gate in gates:
+        if not isinstance(gate, dict):
+            snapshot_gates.append(gate)
+            continue
+        snapshot_gate = dict(gate)
+        gate_id = snapshot_gate.get("id")
+        if gate_id == "source_available":
+            snapshot_gate["evidence"] = {"source_exists": bool(gate.get("ok"))}
+        elif gate_id == "visual_contact_sheet":
+            snapshot_gate["evidence"] = {
+                "contact_sheet_path_recorded": bool(gate.get("evidence"))
+            }
+        snapshot_gates.append(snapshot_gate)
+    return snapshot_gates
 
 
 def _expectation_snapshot(expectation: dict[str, Any]) -> dict[str, Any]:
