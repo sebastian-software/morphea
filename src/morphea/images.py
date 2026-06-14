@@ -268,9 +268,13 @@ def _dominant_palette_anchors(
             continue
         # Anti-aliasing ramps sit on the straight RGB line between two real
         # colors; a candidate close to any anchor/background pair's segment
-        # is a blend seam, not a brand color.
+        # is a blend seam, not a brand color. Large near-background fills are
+        # the exception: generated table cells can be intentional beige fills
+        # even when they lie on the same RGB segment as a gold/background ramp.
         if _is_blend_of_existing(color, anchors, background) and (
-            count < large_blend_share or _is_neutral_rgb(color)
+            count < large_blend_share
+            or _is_neutral_rgb(color)
+            or _color_distance(color, background) > 96.0
         ):
             continue
         anchors.append(color)
