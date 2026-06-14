@@ -31,13 +31,13 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `shape_class_mismatch`, `fragmentation`, `weak_visual_fidelity` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; v10 remains red because region gate matches 2/5 circles with `hole_count=1`, layer count 4 > 3, visual L1 0.230301 > 0.18 |
-| `chatgpt-image-2026-06-11` | missing local file | missing_source, promotion deferred | red | `runtime_deferral`, `missing_local_source` | source path unavailable during audit; `deferred_reason=missing_source` |
+| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `fragmentation` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.056356 < 0.18; v10 remains red because layer count 4 > 3 |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed | red | `fragmentation`, `topology_mismatch`, `duplicate_radio_control_anchor` | visual L1 0.033861 < 0.08, but radio topology gate rejects 2 components for 1 intended control |
 
-Current curated semantic result: 3 cases, 2 checked expectation passes, 0
-checked expectation failures, 1 missing source. No real-image case is green under the
-v10+ definition because green requires all promotion gates passing and an
-available reviewed source.
+Current curated semantic result: 3 cases, 3 checked expectation passes, 0
+checked expectation failures, 0 missing sources. No real-image case is green
+under the v10+ definition because green requires all promotion gates passing
+and an available reviewed source.
 
 ## Lucide Calibration
 
@@ -145,9 +145,10 @@ decision and the gate/component evidence a reviewer needs to edit it.
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
 label is green.
-Missing-source promotion cases remain red suite evidence and continue to count
-as known baseline debt, but their promotion decision is now `deferred` with
-`deferred_reason: missing_source` rather than a rejected semantic candidate.
+When present, missing-source promotion cases remain red suite evidence and can
+be carried as known baseline debt, but their promotion decision is `deferred`
+with `deferred_reason: missing_source` rather than a rejected semantic
+candidate.
 
 ## RIP2 Exit Audit
 
@@ -286,19 +287,18 @@ untouched.
 checked-in reviewed accepted-cycle baseline for
 `morphea self-learn --suite-family-baseline`. It records 22 suite-family rows:
 16 held primitive split/family rows, three Lucide family rows, and three
-real-image family rows. The current known baseline debt is:
-
-- real-image `generated_illustration_opaque_table_grid`: missing source,
-  failing-missing.
+real-image family rows. Current known baseline debt is empty: the opaque
+generated-illustration family moved from `failed_missing` to `passed` after the
+checked-in fixture refresh, and the baseline comparison reported
+`known_debt_count=0`, `new_regression_count=0`, and `resolved_regression_count=1`.
 
 `tests.test_self_learning` runs the real CLI against this fixture so the
 baseline comparison path is covered outside helper-only unit tests.
 
 ## Next Gate
 
-The next baseline-debt block should restore or replace the missing opaque
-generated-illustration source so `generated_illustration_opaque_table_grid`
-can move out of known debt through reviewed evidence. The next
-promotion-quality block should keep `terminaro-tweaked` semantic expectations
-green while addressing its remaining v10 red gates: region-circle matching,
-fallback layer depth, and raster L1 fidelity.
+The next promotion-quality block should keep all real-image semantic
+expectations green while addressing the remaining v10 red gates:
+`terminaro-tweaked` region-circle matching, fallback layer depth, and raster L1
+fidelity; `chatgpt-image-2026-06-11` fallback layer depth; and
+`ui-radio-acceptance-screenshot` radio-control topology.

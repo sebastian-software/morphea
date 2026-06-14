@@ -2,12 +2,16 @@
   "case_count": 3,
   "cases": [
     {
-      "anchor_count": 61,
+      "anchor_count": 62,
       "anchor_kind_counts": {
+        "arc": 6,
         "circle": 5,
-        "cubic_path": 12,
-        "quad": 22,
-        "stroke_polyline": 22
+        "cubic_path": 13,
+        "quad": 14,
+        "rect": 2,
+        "stroke_circle": 1,
+        "stroke_path": 12,
+        "stroke_polyline": 9
       },
       "config": {
         "color_tolerance": 18,
@@ -18,9 +22,74 @@
         "timeout_seconds": 8
       },
       "diagnostic_count": 2,
+      "editability_review": {
+        "accepted": false,
+        "component_scores": {
+          "fragmentation": 0.0,
+          "grouping_quality": 1.0,
+          "line_curve_smoothness": 0.754417,
+          "node_economy": 0.758065,
+          "parameter_economy": 0.215726,
+          "provenance_confidence": 0.790323,
+          "raster_fidelity": 0.928933,
+          "shape_identity_confidence": 0.790323,
+          "stroke_width_stability": 0.663784,
+          "topology_consistency": 1.0
+        },
+        "decision": "rejected",
+        "failed_components": [
+          {
+            "id": "parameter_economy",
+            "reason": "below_threshold",
+            "score": 0.215726,
+            "threshold": 0.25
+          },
+          {
+            "id": "fragmentation",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.25
+          }
+        ],
+        "gate_blocked_components": [
+          {
+            "failed_gates": [
+              "fragmentation_layer_thresholds"
+            ],
+            "id": "fragmentation",
+            "uncapped_score": 0.064516
+          }
+        ],
+        "promotion_decision": "rejected",
+        "reasons": [
+          "component_threshold_failures",
+          "gate_blocked_components",
+          "promotion_decision_rejected"
+        ],
+        "regressed_components": [],
+        "regression_delta_status": "not_configured",
+        "regression_deltas": [],
+        "thresholds": {
+          "observed": {
+            "classifier_prior_agreement": 0.75,
+            "line_curve_smoothness": 0.5,
+            "stroke_width_stability": 0.5
+          },
+          "required": {
+            "fragmentation": 0.25,
+            "grouping_quality": 0.5,
+            "node_economy": 0.5,
+            "parameter_economy": 0.25,
+            "provenance_confidence": 0.65,
+            "raster_fidelity": 0.75,
+            "shape_identity_confidence": 0.65,
+            "topology_consistency": 0.75
+          }
+        }
+      },
       "expectations": [
         {
-          "actual_value": 0.467213,
+          "actual_value": 0.467742,
           "id": "fragmentation-bounded",
           "max_value": 0.6,
           "metric": "fragmentation_penalty",
@@ -28,123 +97,537 @@
         },
         {
           "actual_count": 5,
+          "cumulative_min_count": 5,
           "id": "gold-circle-anchors",
+          "kind": "circle",
           "min_count": 5,
           "ok": true
         },
         {
-          "actual_value": 0.803279,
+          "actual_value": 0.790323,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
-          "min_value": 0.8,
+          "min_value": 0.79,
           "ok": true
         },
         {
-          "actual_count": 22,
+          "actual_count": 27,
+          "cumulative_min_count": 12,
           "id": "smooth-stroke-anchors",
+          "kinds": [
+            "stroke_polyline",
+            "stroke_path",
+            "arc"
+          ],
           "min_count": 12,
           "ok": true
         },
         {
           "actual_count": 1,
+          "cumulative_min_count": 1,
+          "group_kind": "perspective_grid",
           "id": "table-grid-group",
           "min_count": 1,
           "ok": true
         },
         {
-          "actual_count": 22,
+          "actual_count": 14,
+          "cumulative_min_count": 12,
           "id": "table-perspective-quads",
+          "kind": "quad",
           "min_count": 12,
           "ok": true
         }
       ],
       "group_kind_counts": {
+        "occluded_primitive_group": 2,
+        "parallel_stroke_group": 2,
         "perspective_grid": 1,
         "primitive_anchor_reservation": 1,
+        "primitive_contact_pair": 85,
         "same_color_fragment_group": 4
       },
       "id": "chatgpt-image-2026-06-11",
+      "layer_anchor_counts": {
+        "cutout_overlays": 12,
+        "filled_primitives": 21,
+        "generic_paths": 13,
+        "strokes": 16
+      },
+      "layer_count": 4,
       "metrics": {
-        "anchor_quality_error_max": 0.660681,
-        "anchor_quality_error_mean": 0.162184,
+        "anchor_quality_error_max": 0.728057,
+        "anchor_quality_error_mean": 0.183019,
         "anchor_quality_metric_summary": {
+          "arc_fit_residual_error": {
+            "count": 6,
+            "max": 0.01869,
+            "mean": 0.016334
+          },
           "circle_fit_residual_error": {
-            "count": 5,
-            "max": 0.048126,
-            "mean": 0.045486
+            "count": 6,
+            "max": 0.096937,
+            "mean": 0.062667
           },
           "circle_roundness_error": {
-            "count": 5,
-            "max": 0.054241,
-            "mean": 0.051206
+            "count": 6,
+            "max": 0.117085,
+            "mean": 0.080807
           },
           "cutout_anchor_error": {
-            "count": 22,
-            "max": 0.0,
-            "mean": 0.0
+            "count": 14,
+            "max": 0.122792,
+            "mean": 0.031476
           },
           "line_smoothness_error": {
-            "count": 22,
-            "max": 0.0,
-            "mean": 0.0
+            "count": 14,
+            "max": 0.245583,
+            "mean": 0.062952
           },
           "quad_corner_consistency_error": {
-            "count": 22,
-            "max": 0.660681,
-            "mean": 0.427718
+            "count": 16,
+            "max": 0.728057,
+            "mean": 0.423874
           },
           "quad_edge_straightness_error": {
-            "count": 22,
+            "count": 16,
             "max": 0.0,
             "mean": 0.0
           },
           "stroke_width_variance": {
-            "count": 22,
-            "max": 0.0,
-            "mean": 0.0
+            "count": 25,
+            "max": 0.336216,
+            "mean": 0.091374
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 46.83,
-          "semantic_anchor_score_mean": 2.567066,
-          "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.209016,
-          "simple_shape_priority_bonus_total": 12.75
+          "semantic_anchor_score_max": 3.01,
+          "semantic_anchor_score_mean": 0.369779,
+          "semantic_anchor_score_min": -0.181276,
+          "simple_shape_priority_bonus_mean": 0.207258,
+          "simple_shape_priority_bonus_total": 12.85
         },
         "color_fragment_counts": {
-          "#1e334a": 10,
-          "#d0b383": 8,
-          "#efe7df": 22,
-          "#ffffff": 21
+          "#002554": 12,
+          "#b67f13": 17,
+          "#f6f0eb": 21,
+          "#ffffff": 12
         },
-        "cutout_anchor_count": 21,
-        "cutout_overlay_count": 21,
+        "cutout_anchor_count": 12,
+        "cutout_overlay_count": 12,
         "diagnostic_penalty": 0.0,
+        "editability_components": {
+          "clipped_score": 0.0,
+          "diagnostic_penalty": 0.0,
+          "fragmentation_penalty": 0.467742,
+          "generic_path_penalty": 0.4,
+          "simple_shape_ratio": 0.790323,
+          "unclipped_score": -0.077419
+        },
         "editability_score": 0.0,
-        "fragmentation_penalty": 0.467213,
-        "generic_path_count": 12,
-        "group_count": 6,
-        "negative_mask_candidate_count": 21,
-        "node_count": 4510,
-        "parameter_count": 9047,
-        "reserved_simple_shape_area": 238642.776776,
-        "reserved_simple_shape_area_ratio": 0.151759,
+        "editability_v10_components": {
+          "classifier_prior_agreement": {
+            "metric": "classifier_prior_error",
+            "observed": false,
+            "reason": "metric unavailable",
+            "score": 1.0
+          },
+          "fragmentation": {
+            "failed_gates": [
+              "fragmentation_layer_thresholds"
+            ],
+            "fragmentation_penalty": 0.467742,
+            "gate_blocked": true,
+            "score": 0.0,
+            "uncapped_score": 0.064516
+          },
+          "grouping_quality": {
+            "group_count": 95,
+            "score": 1.0
+          },
+          "line_curve_smoothness": {
+            "count": 14,
+            "max": 0.245583,
+            "mean": 0.062952,
+            "metric": "line_smoothness_error",
+            "observed": true,
+            "score": 0.754417
+          },
+          "node_economy": {
+            "average_node_count": 5.806452,
+            "node_count": 360,
+            "score": 0.758065
+          },
+          "parameter_economy": {
+            "average_parameter_count": 12.548387,
+            "parameter_count": 778,
+            "score": 0.215726
+          },
+          "provenance_confidence": {
+            "fallback_path_ratio": 0.209677,
+            "score": 0.790323
+          },
+          "raster_fidelity": {
+            "observed": true,
+            "raster_edge_error": 0.014711,
+            "raster_l1_error": 0.056356,
+            "score": 0.928933
+          },
+          "shape_identity_confidence": {
+            "generic_path_count": 13,
+            "generic_path_ratio": 0.209677,
+            "score": 0.790323,
+            "simple_shape_count": 49
+          },
+          "stroke_width_stability": {
+            "count": 25,
+            "max": 0.336216,
+            "mean": 0.091374,
+            "metric": "stroke_width_variance",
+            "observed": true,
+            "score": 0.663784
+          },
+          "topology_consistency": {
+            "diagnostic_penalty": 0.0,
+            "score": 1.0
+          }
+        },
+        "fragmentation_penalty": 0.467742,
+        "generic_path_count": 13,
+        "group_count": 95,
+        "negative_mask_candidate_count": 12,
+        "node_count": 360,
+        "parameter_count": 778,
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.014711,
+        "raster_l1_error": 0.056356,
+        "raster_size_match": true,
+        "reserved_simple_shape_area": 1963399.167834,
+        "reserved_simple_shape_area_ratio": 1.0,
         "reserved_simple_shape_count": 49,
-        "shape_count": 61,
+        "shape_count": 62,
         "simple_shape_count": 49,
-        "simple_shape_ratio": 0.803279
+        "simple_shape_ratio": 0.790323
       },
       "ok": true,
+      "promotion": {
+        "current_issues": [
+          "fragmentation"
+        ],
+        "current_quality_label": "red",
+        "current_status": "checked_semantic_pass_promotion_failed",
+        "expected_promotion_families": [
+          "circle_anchors",
+          "perspective_table_grid",
+          "smooth_strokes",
+          "large_organic_fallback"
+        ],
+        "group_gates": [
+          {
+            "description": "A table grid promotion requires one perspective-grid group covering at least eight editable quad cells.",
+            "expected_group_kinds": [
+              "perspective_grid"
+            ],
+            "gate_type": "grouping",
+            "id": "table-grid-group-consistency",
+            "min_count": 1,
+            "min_member_count": 8,
+            "severity": "red"
+          }
+        ],
+        "hard_gates": [
+          {
+            "description": "The gold dots and brooches must remain circle anchors.",
+            "expectation_ids": [
+              "gold-circle-anchors"
+            ],
+            "gate_type": "shape_class",
+            "id": "circle-anchor-shape-class",
+            "severity": "red"
+          },
+          {
+            "description": "The table must preserve editable quads and perspective-grid grouping.",
+            "expectation_ids": [
+              "table-perspective-quads",
+              "table-grid-group"
+            ],
+            "gate_type": "topology",
+            "id": "table-grid-topology",
+            "severity": "red"
+          },
+          {
+            "description": "Clean line-like details should remain editable strokes.",
+            "expectation_ids": [
+              "smooth-stroke-anchors"
+            ],
+            "gate_type": "shape_class",
+            "id": "smooth-stroke-shape-class",
+            "severity": "yellow"
+          }
+        ],
+        "licensing_status": "local_research_only",
+        "review_notes": [
+          "2026-06-14 missing local source was replaced by a checked-in opaque fixture derived from the transparent Terminaro image.",
+          "Semantic expectations pass with 5 circle anchors, 14 table quads, one perspective-grid group, and editable strokes counted across stroke polylines, stroke paths, and arcs.",
+          "v10 promotion remains red because fallback layer depth is still above the structure threshold."
+        ],
+        "source_provenance": "checked-in opaque RGB fixture derived from the local transparent Terminaro image",
+        "stress_family": "generated_illustration_opaque_table_grid",
+        "structure_thresholds": {
+          "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered.",
+          "max_fragmentation_penalty": 0.6,
+          "max_layer_count": 3,
+          "severity": "red"
+        },
+        "visual_audit_status": "contact_sheet_available",
+        "visual_thresholds": {
+          "description": "Generated illustration table-grid cases use the same visual threshold family as the local transparent variant.",
+          "family": "generated_illustration_table_grid",
+          "max_raster_edge_error": 0.025,
+          "max_raster_l1_error": 0.18,
+          "severity": "red"
+        }
+      },
+      "promotion_gates": [
+        {
+          "evidence": {
+            "source_exists": true
+          },
+          "gate_type": "provenance",
+          "id": "source_available",
+          "ok": true,
+          "reason": "source image is available",
+          "severity": "red"
+        },
+        {
+          "evidence": [],
+          "gate_type": "shape_class",
+          "id": "semantic_expectations",
+          "ok": true,
+          "reason": "semantic expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "contact_sheet_path_recorded": true
+          },
+          "gate_type": "visual_fidelity",
+          "id": "visual_contact_sheet",
+          "ok": true,
+          "reason": "contact sheet available",
+          "severity": "yellow"
+        },
+        {
+          "evidence": "red",
+          "gate_type": "review_safety",
+          "id": "current_quality_label",
+          "ok": false,
+          "reason": "current quality label is red",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "The gold dots and brooches must remain circle anchors.",
+            "expectation_ids": [
+              "gold-circle-anchors"
+            ]
+          },
+          "gate_type": "shape_class",
+          "id": "circle-anchor-shape-class",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "The table must preserve editable quads and perspective-grid grouping.",
+            "expectation_ids": [
+              "table-perspective-quads",
+              "table-grid-group"
+            ]
+          },
+          "gate_type": "topology",
+          "id": "table-grid-topology",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "Clean line-like details should remain editable strokes.",
+            "expectation_ids": [
+              "smooth-stroke-anchors"
+            ]
+          },
+          "gate_type": "shape_class",
+          "id": "smooth-stroke-shape-class",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "yellow"
+        },
+        {
+          "evidence": {
+            "best_member_count": 14,
+            "description": "A table grid promotion requires one perspective-grid group covering at least eight editable quad cells.",
+            "expected_group_kinds": [
+              "perspective_grid"
+            ],
+            "selected_count": 1,
+            "selected_groups": [
+              {
+                "id": null,
+                "kind": "perspective_grid",
+                "member_count": 14,
+                "metrics": {
+                  "perspective_grid_consistency_error": 1.2256300554738717,
+                  "vanishing_line_diagnostics": {
+                    "finite_intersection_count": 21,
+                    "horizontal_edge_pairs": 14,
+                    "vertical_edge_pairs": 14
+                  }
+                }
+              }
+            ],
+            "worst_member_count": 14
+          },
+          "gate_type": "grouping",
+          "id": "table-grid-group-consistency",
+          "ok": true,
+          "reason": "group constraints passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "actual": {
+              "fragmentation_penalty": 0.467742,
+              "layer_count": 4
+            },
+            "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered.",
+            "failures": [
+              "layer_count 4 > 3"
+            ],
+            "layer_anchor_counts": {
+              "cutout_overlays": 12,
+              "filled_primitives": 21,
+              "generic_paths": 13,
+              "strokes": 16
+            },
+            "thresholds": {
+              "max_fragmentation_penalty": 0.6,
+              "max_layer_count": 3
+            }
+          },
+          "gate_type": "fragmentation",
+          "id": "fragmentation_layer_thresholds",
+          "ok": false,
+          "reason": "structure thresholds failed: layer_count 4 > 3",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "actual": {
+              "raster_edge_error": 0.014711,
+              "raster_l1_error": 0.056356
+            },
+            "description": "Generated illustration table-grid cases use the same visual threshold family as the local transparent variant.",
+            "failures": [],
+            "family": "generated_illustration_table_grid",
+            "thresholds": {
+              "max_raster_edge_error": 0.025,
+              "max_raster_l1_error": 0.18
+            }
+          },
+          "gate_type": "visual_fidelity",
+          "id": "visual_fidelity_thresholds",
+          "ok": true,
+          "reason": "visual thresholds passed",
+          "severity": "red"
+        }
+      ],
+      "promotion_regions": [],
+      "promotion_summary": {
+        "decision": "rejected",
+        "failed_gate_count": 2,
+        "red_gate_count": 2,
+        "yellow_gate_count": 0
+      },
+      "review_decision": {
+        "allowed_decisions": [
+          "accepted",
+          "corrected",
+          "rejected",
+          "deferred"
+        ],
+        "case_id": "chatgpt-image-2026-06-11",
+        "corrected_artifacts": [],
+        "correction_notes": "",
+        "decision": "pending",
+        "failed_components": [
+          {
+            "id": "parameter_economy",
+            "reason": "below_threshold",
+            "score": 0.215726,
+            "threshold": 0.25
+          },
+          {
+            "id": "fragmentation",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.25
+          }
+        ],
+        "failed_gates": [
+          {
+            "gate_type": "review_safety",
+            "id": "current_quality_label",
+            "reason": "current quality label is red",
+            "severity": "red"
+          },
+          {
+            "gate_type": "fragmentation",
+            "id": "fragmentation_layer_thresholds",
+            "reason": "structure thresholds failed: layer_count 4 > 3",
+            "severity": "red"
+          }
+        ],
+        "gate_blocked_components": [
+          {
+            "failed_gates": [
+              "fragmentation_layer_thresholds"
+            ],
+            "id": "fragmentation",
+            "uncapped_score": 0.064516
+          }
+        ],
+        "issue_tags": [
+          "fragmentation"
+        ],
+        "reason": "",
+        "regressed_components": [],
+        "reviewer": "",
+        "schema_version": 1,
+        "source_decisions": {
+          "editability_accepted": false,
+          "editability_decision": "rejected",
+          "promotion_decision": "rejected",
+          "regression_delta_status": "not_configured"
+        },
+        "suggested_decision": "rejected"
+      },
       "source_exists": true,
       "status": "checked"
     },
     {
-      "anchor_count": 57,
+      "anchor_count": 62,
       "anchor_kind_counts": {
+        "arc": 6,
         "circle": 5,
-        "cubic_path": 18,
-        "quad": 18,
-        "stroke_polyline": 16
+        "cubic_path": 13,
+        "quad": 14,
+        "rect": 2,
+        "stroke_circle": 1,
+        "stroke_path": 12,
+        "stroke_polyline": 9
       },
       "config": {
         "color_tolerance": 18,
@@ -155,9 +638,100 @@
         "timeout_seconds": 8
       },
       "diagnostic_count": 3,
+      "editability_review": {
+        "accepted": false,
+        "component_scores": {
+          "fragmentation": 0.0,
+          "grouping_quality": 1.0,
+          "line_curve_smoothness": 0.754417,
+          "node_economy": 0.758065,
+          "parameter_economy": 0.215726,
+          "provenance_confidence": 0.790323,
+          "raster_fidelity": 0.0,
+          "shape_identity_confidence": 0.0,
+          "stroke_width_stability": 0.663784,
+          "topology_consistency": 1.0
+        },
+        "decision": "rejected",
+        "failed_components": [
+          {
+            "id": "shape_identity_confidence",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.65
+          },
+          {
+            "id": "parameter_economy",
+            "reason": "below_threshold",
+            "score": 0.215726,
+            "threshold": 0.25
+          },
+          {
+            "id": "fragmentation",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.25
+          },
+          {
+            "id": "raster_fidelity",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.75
+          }
+        ],
+        "gate_blocked_components": [
+          {
+            "failed_gates": [
+              "gold-circle-region-shape-class"
+            ],
+            "id": "shape_identity_confidence",
+            "uncapped_score": 0.790323
+          },
+          {
+            "failed_gates": [
+              "fragmentation_layer_thresholds"
+            ],
+            "id": "fragmentation",
+            "uncapped_score": 0.064516
+          },
+          {
+            "failed_gates": [
+              "visual_fidelity_thresholds"
+            ],
+            "id": "raster_fidelity",
+            "uncapped_score": 0.755348
+          }
+        ],
+        "promotion_decision": "rejected",
+        "reasons": [
+          "component_threshold_failures",
+          "gate_blocked_components",
+          "promotion_decision_rejected"
+        ],
+        "regressed_components": [],
+        "regression_delta_status": "not_configured",
+        "regression_deltas": [],
+        "thresholds": {
+          "observed": {
+            "classifier_prior_agreement": 0.75,
+            "line_curve_smoothness": 0.5,
+            "stroke_width_stability": 0.5
+          },
+          "required": {
+            "fragmentation": 0.25,
+            "grouping_quality": 0.5,
+            "node_economy": 0.5,
+            "parameter_economy": 0.25,
+            "provenance_confidence": 0.65,
+            "raster_fidelity": 0.75,
+            "shape_identity_confidence": 0.65,
+            "topology_consistency": 0.75
+          }
+        }
+      },
       "expectations": [
         {
-          "actual_value": 0.45614,
+          "actual_value": 0.467742,
           "id": "fragmentation-bounded",
           "max_value": 0.6,
           "metric": "fragmentation_penalty",
@@ -165,126 +739,748 @@
         },
         {
           "actual_count": 5,
+          "cumulative_min_count": 5,
           "id": "gold-circle-anchors",
+          "kind": "circle",
           "min_count": 5,
           "ok": true
         },
         {
-          "actual_value": 0.684211,
+          "actual_value": 0.790323,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
           "min_value": 0.65,
           "ok": true
         },
         {
-          "actual_count": 16,
+          "actual_count": 9,
+          "cumulative_min_count": 8,
           "id": "smooth-stroke-anchors",
+          "kind": "stroke_polyline",
           "min_count": 8,
           "ok": true
         },
         {
           "actual_count": 1,
+          "cumulative_min_count": 1,
+          "group_kind": "perspective_grid",
           "id": "table-grid-group",
           "min_count": 1,
           "ok": true
         },
         {
-          "actual_count": 18,
+          "actual_count": 14,
+          "cumulative_min_count": 8,
           "id": "table-perspective-quads",
+          "kind": "quad",
           "min_count": 8,
           "ok": true
         }
       ],
       "group_kind_counts": {
+        "occluded_primitive_group": 2,
+        "parallel_stroke_group": 2,
         "perspective_grid": 1,
         "primitive_anchor_reservation": 1,
-        "same_color_fragment_group": 5
+        "primitive_contact_pair": 85,
+        "same_color_fragment_group": 4
       },
       "id": "terminaro-tweaked",
+      "layer_anchor_counts": {
+        "cutout_overlays": 12,
+        "filled_primitives": 21,
+        "generic_paths": 13,
+        "strokes": 16
+      },
+      "layer_count": 4,
       "metrics": {
-        "anchor_quality_error_max": 0.703362,
-        "anchor_quality_error_mean": 0.152811,
+        "anchor_quality_error_max": 0.728057,
+        "anchor_quality_error_mean": 0.183019,
         "anchor_quality_metric_summary": {
+          "arc_fit_residual_error": {
+            "count": 6,
+            "max": 0.01869,
+            "mean": 0.016334
+          },
           "circle_fit_residual_error": {
-            "count": 5,
+            "count": 6,
             "max": 0.096937,
-            "mean": 0.076582
+            "mean": 0.062667
           },
           "circle_roundness_error": {
-            "count": 5,
-            "max": 0.114787,
-            "mean": 0.089602
+            "count": 6,
+            "max": 0.117085,
+            "mean": 0.080807
           },
           "cutout_anchor_error": {
-            "count": 16,
-            "max": 0.0,
-            "mean": 0.0
+            "count": 14,
+            "max": 0.122792,
+            "mean": 0.031476
           },
           "line_smoothness_error": {
-            "count": 16,
-            "max": 0.0,
-            "mean": 0.0
+            "count": 14,
+            "max": 0.245583,
+            "mean": 0.062952
           },
           "quad_corner_consistency_error": {
-            "count": 18,
-            "max": 0.703362,
-            "mean": 0.43774
+            "count": 16,
+            "max": 0.728057,
+            "mean": 0.423874
           },
           "quad_edge_straightness_error": {
-            "count": 18,
+            "count": 16,
             "max": 0.0,
             "mean": 0.0
           },
           "stroke_width_variance": {
-            "count": 16,
-            "max": 0.0,
-            "mean": 0.0
+            "count": 25,
+            "max": 0.336216,
+            "mean": 0.091374
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 46.865,
-          "semantic_anchor_score_mean": 2.918256,
-          "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.179825,
-          "simple_shape_priority_bonus_total": 10.25
+          "semantic_anchor_score_max": 3.01,
+          "semantic_anchor_score_mean": 0.369779,
+          "semantic_anchor_score_min": -0.181276,
+          "simple_shape_priority_bonus_mean": 0.207258,
+          "simple_shape_priority_bonus_total": 12.85
         },
         "color_fragment_counts": {
-          "#002554": 13,
-          "#b67f13": 8,
-          "#ebe1d7": 7,
-          "#f7f2ee": 15,
-          "#ffffff": 14
+          "#002554": 12,
+          "#b67f13": 17,
+          "#f6f0eb": 21,
+          "#ffffff": 12
         },
-        "cutout_anchor_count": 14,
-        "cutout_overlay_count": 14,
+        "cutout_anchor_count": 12,
+        "cutout_overlay_count": 12,
         "diagnostic_penalty": 0.0,
+        "editability_components": {
+          "clipped_score": 0.0,
+          "diagnostic_penalty": 0.0,
+          "fragmentation_penalty": 0.467742,
+          "generic_path_penalty": 0.4,
+          "simple_shape_ratio": 0.790323,
+          "unclipped_score": -0.077419
+        },
         "editability_score": 0.0,
-        "fragmentation_penalty": 0.45614,
-        "generic_path_count": 18,
-        "group_count": 7,
-        "negative_mask_candidate_count": 14,
-        "node_count": 4727,
-        "parameter_count": 9475,
-        "reserved_simple_shape_area": 211858.733596,
-        "reserved_simple_shape_area_ratio": 0.134726,
-        "reserved_simple_shape_count": 39,
-        "shape_count": 57,
-        "simple_shape_count": 39,
-        "simple_shape_ratio": 0.684211
+        "editability_v10_components": {
+          "classifier_prior_agreement": {
+            "metric": "classifier_prior_error",
+            "observed": false,
+            "reason": "metric unavailable",
+            "score": 1.0
+          },
+          "fragmentation": {
+            "failed_gates": [
+              "fragmentation_layer_thresholds"
+            ],
+            "fragmentation_penalty": 0.467742,
+            "gate_blocked": true,
+            "score": 0.0,
+            "uncapped_score": 0.064516
+          },
+          "grouping_quality": {
+            "group_count": 95,
+            "score": 1.0
+          },
+          "line_curve_smoothness": {
+            "count": 14,
+            "max": 0.245583,
+            "mean": 0.062952,
+            "metric": "line_smoothness_error",
+            "observed": true,
+            "score": 0.754417
+          },
+          "node_economy": {
+            "average_node_count": 5.806452,
+            "node_count": 360,
+            "score": 0.758065
+          },
+          "parameter_economy": {
+            "average_parameter_count": 12.548387,
+            "parameter_count": 778,
+            "score": 0.215726
+          },
+          "provenance_confidence": {
+            "fallback_path_ratio": 0.209677,
+            "score": 0.790323
+          },
+          "raster_fidelity": {
+            "failed_gates": [
+              "visual_fidelity_thresholds"
+            ],
+            "gate_blocked": true,
+            "observed": true,
+            "raster_edge_error": 0.014351,
+            "raster_l1_error": 0.230301,
+            "score": 0.0,
+            "uncapped_score": 0.755348
+          },
+          "shape_identity_confidence": {
+            "failed_gates": [
+              "gold-circle-region-shape-class"
+            ],
+            "gate_blocked": true,
+            "generic_path_count": 13,
+            "generic_path_ratio": 0.209677,
+            "score": 0.0,
+            "simple_shape_count": 49,
+            "uncapped_score": 0.790323
+          },
+          "stroke_width_stability": {
+            "count": 25,
+            "max": 0.336216,
+            "mean": 0.091374,
+            "metric": "stroke_width_variance",
+            "observed": true,
+            "score": 0.663784
+          },
+          "topology_consistency": {
+            "diagnostic_penalty": 0.0,
+            "score": 1.0
+          }
+        },
+        "fragmentation_penalty": 0.467742,
+        "generic_path_count": 13,
+        "group_count": 95,
+        "negative_mask_candidate_count": 12,
+        "node_count": 360,
+        "parameter_count": 778,
+        "raster_alpha_error": 0.303708,
+        "raster_edge_error": 0.014351,
+        "raster_l1_error": 0.230301,
+        "raster_size_match": true,
+        "reserved_simple_shape_area": 1963399.167834,
+        "reserved_simple_shape_area_ratio": 1.0,
+        "reserved_simple_shape_count": 49,
+        "shape_count": 62,
+        "simple_shape_count": 49,
+        "simple_shape_ratio": 0.790323
       },
       "ok": true,
+      "promotion": {
+        "current_issues": [
+          "shape_class_mismatch",
+          "fragmentation",
+          "weak_visual_fidelity"
+        ],
+        "current_quality_label": "red",
+        "current_status": "checked_semantic_pass_promotion_failed",
+        "expected_promotion_families": [
+          "circle_anchors",
+          "perspective_table_grid",
+          "smooth_strokes",
+          "cutout_like_overlay_strokes",
+          "large_organic_fallback"
+        ],
+        "group_gates": [
+          {
+            "description": "A table grid promotion requires one perspective-grid group covering at least eight editable quad cells.",
+            "expected_group_kinds": [
+              "perspective_grid"
+            ],
+            "gate_type": "grouping",
+            "id": "table-grid-group-consistency",
+            "min_count": 1,
+            "min_member_count": 8,
+            "severity": "red"
+          }
+        ],
+        "hard_gates": [
+          {
+            "description": "The gold dots and brooches must remain circle anchors rather than drifting into generic paths or ellipses.",
+            "expectation_ids": [
+              "gold-circle-anchors"
+            ],
+            "gate_type": "shape_class",
+            "id": "circle-anchor-shape-class",
+            "severity": "red"
+          },
+          {
+            "description": "The table must preserve enough editable quad cells and a perspective-grid relationship.",
+            "expectation_ids": [
+              "table-perspective-quads",
+              "table-grid-group"
+            ],
+            "gate_type": "topology",
+            "id": "table-grid-topology",
+            "severity": "red"
+          },
+          {
+            "description": "Clean line-like details should remain editable strokes.",
+            "expectation_ids": [
+              "smooth-stroke-anchors"
+            ],
+            "gate_type": "shape_class",
+            "id": "smooth-stroke-shape-class",
+            "severity": "yellow"
+          }
+        ],
+        "licensing_status": "local_research_only",
+        "region_gates": [
+          {
+            "bounds": [
+              220,
+              480,
+              700,
+              690
+            ],
+            "description": "The known gold dot/brooch region must contain five editable circle anchors, not just circles elsewhere in the image.",
+            "expected_kinds": [
+              "circle"
+            ],
+            "gate_type": "shape_class",
+            "id": "gold-circle-region-shape-class",
+            "max_cutout_count": 0,
+            "max_hole_count": 0,
+            "min_count": 5,
+            "min_iou": 0.01,
+            "severity": "red"
+          }
+        ],
+        "review_notes": [
+          "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
+          "v10 promotion remains red: the gold-circle region gate still matches only 2 in-region circle anchors, layer_count is 4 > 3, and raster L1 remains above the family threshold."
+        ],
+        "source_provenance": "local generated image from the user's Desktop; source image is not checked in",
+        "stress_family": "generated_illustration_table_grid",
+        "structure_thresholds": {
+          "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered.",
+          "max_fragmentation_penalty": 0.6,
+          "max_layer_count": 3,
+          "severity": "red"
+        },
+        "visual_audit_status": "contact_sheet_available",
+        "visual_thresholds": {
+          "description": "Generated illustration table-grid cases need tighter L1 fidelity after structural gates pass.",
+          "family": "generated_illustration_table_grid",
+          "max_raster_edge_error": 0.025,
+          "max_raster_l1_error": 0.18,
+          "severity": "red"
+        }
+      },
+      "promotion_gates": [
+        {
+          "evidence": {
+            "source_exists": true
+          },
+          "gate_type": "provenance",
+          "id": "source_available",
+          "ok": true,
+          "reason": "source image is available",
+          "severity": "red"
+        },
+        {
+          "evidence": [],
+          "gate_type": "shape_class",
+          "id": "semantic_expectations",
+          "ok": true,
+          "reason": "semantic expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "contact_sheet_path_recorded": true
+          },
+          "gate_type": "visual_fidelity",
+          "id": "visual_contact_sheet",
+          "ok": true,
+          "reason": "contact sheet available",
+          "severity": "yellow"
+        },
+        {
+          "evidence": "red",
+          "gate_type": "review_safety",
+          "id": "current_quality_label",
+          "ok": false,
+          "reason": "current quality label is red",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "The gold dots and brooches must remain circle anchors rather than drifting into generic paths or ellipses.",
+            "expectation_ids": [
+              "gold-circle-anchors"
+            ]
+          },
+          "gate_type": "shape_class",
+          "id": "circle-anchor-shape-class",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "The table must preserve enough editable quad cells and a perspective-grid relationship.",
+            "expectation_ids": [
+              "table-perspective-quads",
+              "table-grid-group"
+            ]
+          },
+          "gate_type": "topology",
+          "id": "table-grid-topology",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "Clean line-like details should remain editable strokes.",
+            "expectation_ids": [
+              "smooth-stroke-anchors"
+            ]
+          },
+          "gate_type": "shape_class",
+          "id": "smooth-stroke-shape-class",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "yellow"
+        },
+        {
+          "evidence": {
+            "bounds": [
+              220.0,
+              480.0,
+              700.0,
+              690.0
+            ],
+            "description": "The known gold dot/brooch region must contain five editable circle anchors, not just circles elsewhere in the image.",
+            "expected_kinds": [
+              "circle"
+            ],
+            "forbidden_count": 0,
+            "forbidden_kinds": [],
+            "matching_count": 2,
+            "min_iou": 0.01,
+            "selected_anchors": [
+              {
+                "bounds": [
+                  141.93806773254096,
+                  218.81594242920121,
+                  540.9069602310528,
+                  955.1953125
+                ],
+                "closed": true,
+                "cutout": false,
+                "hole_count": 1,
+                "id": "anchor-0000",
+                "kind": "cubic_path"
+              },
+              {
+                "bounds": [
+                  131.71886474471705,
+                  567.679802244717,
+                  269.95301025528295,
+                  625.089729005283
+                ],
+                "closed": false,
+                "cutout": false,
+                "hole_count": 0,
+                "id": "anchor-0018",
+                "kind": "stroke_path"
+              },
+              {
+                "bounds": [
+                  33.72216095504757,
+                  39.82611721643673,
+                  1206.347553848736,
+                  1212.4515101101251
+                ],
+                "closed": true,
+                "cutout": false,
+                "hole_count": 0,
+                "id": "anchor-0024",
+                "kind": "stroke_circle"
+              },
+              {
+                "bounds": [
+                  230.2265625,
+                  631.8984375,
+                  279.2109375,
+                  680.8828125
+                ],
+                "closed": true,
+                "cutout": false,
+                "hole_count": 0,
+                "id": "anchor-0036",
+                "kind": "circle"
+              },
+              {
+                "bounds": [
+                  612.3046875,
+                  489.84375,
+                  646.59375,
+                  524.1328125
+                ],
+                "closed": true,
+                "cutout": false,
+                "hole_count": 0,
+                "id": "anchor-0038",
+                "kind": "circle"
+              }
+            ],
+            "selected_count": 5,
+            "topology_failures": [
+              "hole_count 1 > 0"
+            ],
+            "topology_summary": {
+              "closed_anchor_count": 4,
+              "cutout_count": 0,
+              "disconnected_component_count": 5,
+              "hole_count": 1,
+              "kind_counts": {
+                "circle": 2,
+                "cubic_path": 1,
+                "stroke_circle": 1,
+                "stroke_path": 1
+              },
+              "open_anchor_count": 1,
+              "selected_anchor_count": 5
+            }
+          },
+          "gate_type": "shape_class",
+          "id": "gold-circle-region-shape-class",
+          "ok": false,
+          "reason": "matching anchors in region: 2 < 5",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "best_member_count": 14,
+            "description": "A table grid promotion requires one perspective-grid group covering at least eight editable quad cells.",
+            "expected_group_kinds": [
+              "perspective_grid"
+            ],
+            "selected_count": 1,
+            "selected_groups": [
+              {
+                "id": null,
+                "kind": "perspective_grid",
+                "member_count": 14,
+                "metrics": {
+                  "perspective_grid_consistency_error": 1.2256300554738717,
+                  "vanishing_line_diagnostics": {
+                    "finite_intersection_count": 21,
+                    "horizontal_edge_pairs": 14,
+                    "vertical_edge_pairs": 14
+                  }
+                }
+              }
+            ],
+            "worst_member_count": 14
+          },
+          "gate_type": "grouping",
+          "id": "table-grid-group-consistency",
+          "ok": true,
+          "reason": "group constraints passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "actual": {
+              "fragmentation_penalty": 0.467742,
+              "layer_count": 4
+            },
+            "description": "Generated illustration table-grid cases should avoid excessive fallback layer depth after primitives are recovered.",
+            "failures": [
+              "layer_count 4 > 3"
+            ],
+            "layer_anchor_counts": {
+              "cutout_overlays": 12,
+              "filled_primitives": 21,
+              "generic_paths": 13,
+              "strokes": 16
+            },
+            "thresholds": {
+              "max_fragmentation_penalty": 0.6,
+              "max_layer_count": 3
+            }
+          },
+          "gate_type": "fragmentation",
+          "id": "fragmentation_layer_thresholds",
+          "ok": false,
+          "reason": "structure thresholds failed: layer_count 4 > 3",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "actual": {
+              "raster_edge_error": 0.014351,
+              "raster_l1_error": 0.230301
+            },
+            "description": "Generated illustration table-grid cases need tighter L1 fidelity after structural gates pass.",
+            "failures": [
+              "raster_l1_error 0.230301 > 0.18"
+            ],
+            "family": "generated_illustration_table_grid",
+            "thresholds": {
+              "max_raster_edge_error": 0.025,
+              "max_raster_l1_error": 0.18
+            }
+          },
+          "gate_type": "visual_fidelity",
+          "id": "visual_fidelity_thresholds",
+          "ok": false,
+          "reason": "visual thresholds failed: raster_l1_error 0.230301 > 0.18",
+          "severity": "red"
+        }
+      ],
+      "promotion_regions": [
+        {
+          "bounds": [
+            220,
+            480,
+            700,
+            690
+          ],
+          "expected_kinds": [
+            "circle"
+          ],
+          "forbidden_kinds": [],
+          "gate_id": "gold-circle-region-shape-class",
+          "gate_ok": false,
+          "gate_type": "shape_class",
+          "id": "gold-circle-region-shape-class",
+          "reason": "matching anchors in region: 2 < 5",
+          "selected_anchor_count": 5,
+          "selected_anchor_ids": [
+            "anchor-0000",
+            "anchor-0018",
+            "anchor-0024",
+            "anchor-0036",
+            "anchor-0038"
+          ],
+          "selected_anchor_indexes": [
+            0,
+            18,
+            24,
+            36,
+            38
+          ],
+          "severity": "red",
+          "state": "rejected"
+        }
+      ],
+      "promotion_summary": {
+        "decision": "rejected",
+        "failed_gate_count": 4,
+        "red_gate_count": 4,
+        "yellow_gate_count": 0
+      },
+      "review_decision": {
+        "allowed_decisions": [
+          "accepted",
+          "corrected",
+          "rejected",
+          "deferred"
+        ],
+        "case_id": "terminaro-tweaked",
+        "corrected_artifacts": [],
+        "correction_notes": "",
+        "decision": "pending",
+        "failed_components": [
+          {
+            "id": "shape_identity_confidence",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.65
+          },
+          {
+            "id": "parameter_economy",
+            "reason": "below_threshold",
+            "score": 0.215726,
+            "threshold": 0.25
+          },
+          {
+            "id": "fragmentation",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.25
+          },
+          {
+            "id": "raster_fidelity",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.75
+          }
+        ],
+        "failed_gates": [
+          {
+            "gate_type": "review_safety",
+            "id": "current_quality_label",
+            "reason": "current quality label is red",
+            "severity": "red"
+          },
+          {
+            "gate_type": "shape_class",
+            "id": "gold-circle-region-shape-class",
+            "reason": "matching anchors in region: 2 < 5",
+            "severity": "red"
+          },
+          {
+            "gate_type": "fragmentation",
+            "id": "fragmentation_layer_thresholds",
+            "reason": "structure thresholds failed: layer_count 4 > 3",
+            "severity": "red"
+          },
+          {
+            "gate_type": "visual_fidelity",
+            "id": "visual_fidelity_thresholds",
+            "reason": "visual thresholds failed: raster_l1_error 0.230301 > 0.18",
+            "severity": "red"
+          }
+        ],
+        "gate_blocked_components": [
+          {
+            "failed_gates": [
+              "gold-circle-region-shape-class"
+            ],
+            "id": "shape_identity_confidence",
+            "uncapped_score": 0.790323
+          },
+          {
+            "failed_gates": [
+              "fragmentation_layer_thresholds"
+            ],
+            "id": "fragmentation",
+            "uncapped_score": 0.064516
+          },
+          {
+            "failed_gates": [
+              "visual_fidelity_thresholds"
+            ],
+            "id": "raster_fidelity",
+            "uncapped_score": 0.755348
+          }
+        ],
+        "issue_tags": [
+          "fragmentation",
+          "shape_class_mismatch",
+          "weak_visual_fidelity"
+        ],
+        "reason": "",
+        "regressed_components": [],
+        "reviewer": "",
+        "schema_version": 1,
+        "source_decisions": {
+          "editability_accepted": false,
+          "editability_decision": "rejected",
+          "promotion_decision": "rejected",
+          "regression_delta_status": "not_configured"
+        },
+        "suggested_decision": "rejected"
+      },
       "source_exists": true,
       "status": "checked"
     },
     {
-      "anchor_count": 187,
+      "anchor_count": 119,
       "anchor_kind_counts": {
-        "arc": 15,
-        "circle": 7,
-        "cubic_path": 144,
-        "quad": 4,
-        "stroke_circle": 3,
-        "stroke_polyline": 14
+        "arc": 8,
+        "cubic_path": 52,
+        "stroke_circle": 8,
+        "stroke_path": 21,
+        "stroke_polyline": 30
       },
       "config": {
         "color_tolerance": 10,
@@ -295,107 +1491,677 @@
         "timeout_seconds": 5
       },
       "diagnostic_count": 2,
+      "editability_review": {
+        "accepted": false,
+        "component_scores": {
+          "fragmentation": 0.016807,
+          "grouping_quality": 1.0,
+          "line_curve_smoothness": 1.0,
+          "node_economy": 0.827031,
+          "parameter_economy": 0.397584,
+          "provenance_confidence": 0.563025,
+          "raster_fidelity": 0.944073,
+          "shape_identity_confidence": 0.563025,
+          "stroke_width_stability": 0.6569,
+          "topology_consistency": 0.0
+        },
+        "decision": "rejected",
+        "failed_components": [
+          {
+            "id": "shape_identity_confidence",
+            "reason": "below_threshold",
+            "score": 0.563025,
+            "threshold": 0.65
+          },
+          {
+            "id": "topology_consistency",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.75
+          },
+          {
+            "id": "fragmentation",
+            "reason": "below_threshold",
+            "score": 0.016807,
+            "threshold": 0.25
+          },
+          {
+            "id": "provenance_confidence",
+            "reason": "below_threshold",
+            "score": 0.563025,
+            "threshold": 0.65
+          }
+        ],
+        "gate_blocked_components": [
+          {
+            "failed_gates": [
+              "radio-control-region-topology"
+            ],
+            "id": "topology_consistency",
+            "uncapped_score": 1.0
+          }
+        ],
+        "promotion_decision": "rejected",
+        "reasons": [
+          "component_threshold_failures",
+          "gate_blocked_components",
+          "promotion_decision_rejected"
+        ],
+        "regressed_components": [],
+        "regression_delta_status": "not_configured",
+        "regression_deltas": [],
+        "thresholds": {
+          "observed": {
+            "classifier_prior_agreement": 0.75,
+            "line_curve_smoothness": 0.5,
+            "stroke_width_stability": 0.5
+          },
+          "required": {
+            "fragmentation": 0.25,
+            "grouping_quality": 0.5,
+            "node_economy": 0.5,
+            "parameter_economy": 0.25,
+            "provenance_confidence": 0.65,
+            "raster_fidelity": 0.75,
+            "shape_identity_confidence": 0.65,
+            "topology_consistency": 0.75
+          }
+        }
+      },
       "expectations": [
         {
-          "actual_count": 3,
+          "actual_count": 8,
+          "cumulative_min_count": 1,
           "id": "radio-circle-anchor",
+          "kind": "stroke_circle",
           "min_count": 1,
           "ok": true
         },
         {
-          "actual_value": 0.229947,
+          "actual_value": 0.563025,
           "id": "simple-shape-ratio",
           "metric": "simple_shape_ratio",
           "min_value": 0.2,
           "ok": true
         },
         {
-          "actual_count": 14,
+          "actual_count": 30,
+          "cumulative_min_count": 10,
           "id": "text-stroke-fragments",
+          "kind": "stroke_polyline",
           "min_count": 10,
           "ok": true
         }
       ],
       "group_kind_counts": {
-        "perspective_grid": 1,
+        "parallel_stroke_group": 1,
         "primitive_anchor_reservation": 1,
-        "same_color_fragment_group": 7
+        "primitive_contact_pair": 20,
+        "same_color_fragment_group": 2
       },
       "id": "ui-radio-acceptance-screenshot",
+      "layer_anchor_counts": {
+        "cutout_overlays": 20,
+        "generic_paths": 52,
+        "strokes": 47
+      },
+      "layer_count": 3,
       "metrics": {
-        "anchor_quality_error_max": 0.846154,
-        "anchor_quality_error_mean": 0.052777,
+        "anchor_quality_error_max": 0.3431,
+        "anchor_quality_error_mean": 0.052465,
         "anchor_quality_metric_summary": {
+          "arc_fit_residual_error": {
+            "count": 8,
+            "max": 0.022198,
+            "mean": 0.019794
+          },
           "circle_fit_residual_error": {
-            "count": 10,
-            "max": 0.212126,
-            "mean": 0.15602
+            "count": 8,
+            "max": 0.115191,
+            "mean": 0.103945
           },
           "circle_roundness_error": {
-            "count": 10,
-            "max": 0.254563,
-            "mean": 0.176782
+            "count": 8,
+            "max": 0.146318,
+            "mean": 0.129196
           },
           "cutout_anchor_error": {
-            "count": 17,
+            "count": 38,
             "max": 0.0,
             "mean": 0.0
           },
           "line_smoothness_error": {
-            "count": 17,
-            "max": 0.0,
-            "mean": 0.0
-          },
-          "quad_corner_consistency_error": {
-            "count": 4,
-            "max": 0.846154,
-            "mean": 0.435255
-          },
-          "quad_edge_straightness_error": {
-            "count": 4,
+            "count": 38,
             "max": 0.0,
             "mean": 0.0
           },
           "stroke_width_variance": {
-            "count": 32,
-            "max": 0.521314,
-            "mean": 0.15001
+            "count": 67,
+            "max": 0.3431,
+            "mean": 0.062982
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 2.415,
-          "semantic_anchor_score_mean": 0.502324,
+          "semantic_anchor_score_max": 1.05,
+          "semantic_anchor_score_mean": 0.419802,
           "semantic_anchor_score_min": -0.17,
-          "simple_shape_priority_bonus_mean": 0.062834,
-          "simple_shape_priority_bonus_total": 11.75
+          "simple_shape_priority_bonus_mean": 0.147479,
+          "simple_shape_priority_bonus_total": 17.55
         },
         "color_fragment_counts": {
-          "#000000": 135,
-          "#0f0f0f": 9,
-          "#474747": 9,
-          "#8c8c8c": 15,
-          "#c0c0c0": 11,
-          "#e6e6e6": 5,
-          "#f8f8f8": 3
+          "#000000": 99,
+          "#ffffff": 20
         },
-        "cutout_anchor_count": 0,
-        "cutout_overlay_count": 0,
+        "cutout_anchor_count": 20,
+        "cutout_overlay_count": 20,
         "diagnostic_penalty": 0.0,
+        "editability_components": {
+          "clipped_score": 0.0,
+          "diagnostic_penalty": 0.0,
+          "fragmentation_penalty": 0.491597,
+          "generic_path_penalty": 0.4,
+          "simple_shape_ratio": 0.563025,
+          "unclipped_score": -0.328571
+        },
         "editability_score": 0.0,
-        "fragmentation_penalty": 0.481283,
-        "generic_path_count": 144,
-        "group_count": 9,
-        "negative_mask_candidate_count": 0,
-        "node_count": 2557,
-        "parameter_count": 5186,
-        "reserved_simple_shape_area": 6231.179021,
-        "reserved_simple_shape_area_ratio": 0.023436,
-        "reserved_simple_shape_count": 43,
-        "shape_count": 187,
-        "simple_shape_count": 43,
-        "simple_shape_ratio": 0.229947
+        "editability_v10_components": {
+          "classifier_prior_agreement": {
+            "metric": "classifier_prior_error",
+            "observed": false,
+            "reason": "metric unavailable",
+            "score": 1.0
+          },
+          "fragmentation": {
+            "fragmentation_penalty": 0.491597,
+            "score": 0.016807
+          },
+          "grouping_quality": {
+            "group_count": 24,
+            "score": 1.0
+          },
+          "line_curve_smoothness": {
+            "count": 38,
+            "max": 0.0,
+            "mean": 0.0,
+            "metric": "line_smoothness_error",
+            "observed": true,
+            "score": 1.0
+          },
+          "node_economy": {
+            "average_node_count": 4.151261,
+            "node_count": 494,
+            "score": 0.827031
+          },
+          "parameter_economy": {
+            "average_parameter_count": 9.638655,
+            "parameter_count": 1147,
+            "score": 0.397584
+          },
+          "provenance_confidence": {
+            "fallback_path_ratio": 0.436975,
+            "score": 0.563025
+          },
+          "raster_fidelity": {
+            "observed": true,
+            "raster_edge_error": 0.022066,
+            "raster_l1_error": 0.033861,
+            "score": 0.944073
+          },
+          "shape_identity_confidence": {
+            "generic_path_count": 52,
+            "generic_path_ratio": 0.436975,
+            "score": 0.563025,
+            "simple_shape_count": 67
+          },
+          "stroke_width_stability": {
+            "count": 67,
+            "max": 0.3431,
+            "mean": 0.062982,
+            "metric": "stroke_width_variance",
+            "observed": true,
+            "score": 0.6569
+          },
+          "topology_consistency": {
+            "diagnostic_penalty": 0.0,
+            "failed_gates": [
+              "radio-control-region-topology"
+            ],
+            "gate_blocked": true,
+            "score": 0.0,
+            "uncapped_score": 1.0
+          }
+        },
+        "fragmentation_penalty": 0.491597,
+        "generic_path_count": 52,
+        "group_count": 24,
+        "negative_mask_candidate_count": 20,
+        "node_count": 494,
+        "parameter_count": 1147,
+        "raster_alpha_error": 0.0,
+        "raster_edge_error": 0.022066,
+        "raster_l1_error": 0.033861,
+        "raster_size_match": true,
+        "reserved_simple_shape_area": 9941.277328,
+        "reserved_simple_shape_area_ratio": 0.03739,
+        "reserved_simple_shape_count": 67,
+        "shape_count": 119,
+        "simple_shape_count": 67,
+        "simple_shape_ratio": 0.563025
       },
       "ok": true,
+      "promotion": {
+        "current_issues": [
+          "fragmentation",
+          "topology_mismatch",
+          "duplicate_radio_control_anchor"
+        ],
+        "current_quality_label": "red",
+        "current_status": "checked_failed_promotion_gates",
+        "expected_promotion_families": [
+          "ui_control_stroke_circle",
+          "text_like_fragments",
+          "thin_ui_strokes",
+          "mostly_white_background"
+        ],
+        "group_gates": [
+          {
+            "description": "Text and thin UI strokes should expose at least one sizeable parallel-stroke group for review.",
+            "expected_group_kinds": [
+              "parallel_stroke_group"
+            ],
+            "gate_type": "grouping",
+            "id": "text-parallel-stroke-grouping",
+            "min_count": 1,
+            "min_member_count": 10,
+            "severity": "yellow"
+          }
+        ],
+        "hard_gates": [
+          {
+            "description": "The unselected radio control must remain an editable stroked circle.",
+            "expectation_ids": [
+              "radio-circle-anchor"
+            ],
+            "gate_type": "topology",
+            "id": "radio-control-topology",
+            "severity": "red"
+          },
+          {
+            "description": "Text-like fragments should remain bounded stroke-like primitives until text handling exists.",
+            "expectation_ids": [
+              "text-stroke-fragments"
+            ],
+            "gate_type": "shape_class",
+            "id": "text-fragment-shape-class",
+            "severity": "yellow"
+          }
+        ],
+        "licensing_status": "local_research_only",
+        "region_gates": [
+          {
+            "bounds": [
+              176,
+              150,
+              200,
+              174
+            ],
+            "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds.",
+            "expected_kinds": [
+              "stroke_circle"
+            ],
+            "forbidden_kinds": [
+              "cubic_path"
+            ],
+            "gate_type": "topology",
+            "id": "radio-control-region-topology",
+            "max_cutout_count": 0,
+            "max_disconnected_components": 1,
+            "max_hole_count": 0,
+            "max_open_anchors": 0,
+            "min_closed_anchors": 1,
+            "min_count": 1,
+            "min_iou": 0.25,
+            "severity": "red"
+          }
+        ],
+        "review_notes": [
+          "2026-06-13 curated-check passed current semantic expectations.",
+          "Still red under v10+ rules because the radio-control region currently selects two stroke-circle anchors for one intended control."
+        ],
+        "source_provenance": "local UI screenshot from the user's Desktop; source image is not checked in",
+        "stress_family": "ui_screenshot_text_and_controls",
+        "structure_thresholds": {
+          "description": "UI screenshots may contain many text fragments, but layer depth and aggregate fragmentation should stay bounded for review.",
+          "max_fragmentation_penalty": 0.55,
+          "max_layer_count": 3,
+          "severity": "yellow"
+        },
+        "visual_audit_status": "contact_sheet_available",
+        "visual_thresholds": {
+          "description": "UI screenshot cases allow text antialiasing drift but should keep controls and thin strokes visually close.",
+          "family": "ui_screenshot_text_and_controls",
+          "max_raster_edge_error": 0.04,
+          "max_raster_l1_error": 0.08,
+          "severity": "red"
+        }
+      },
+      "promotion_gates": [
+        {
+          "evidence": {
+            "source_exists": true
+          },
+          "gate_type": "provenance",
+          "id": "source_available",
+          "ok": true,
+          "reason": "source image is available",
+          "severity": "red"
+        },
+        {
+          "evidence": [],
+          "gate_type": "shape_class",
+          "id": "semantic_expectations",
+          "ok": true,
+          "reason": "semantic expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "contact_sheet_path_recorded": true
+          },
+          "gate_type": "visual_fidelity",
+          "id": "visual_contact_sheet",
+          "ok": true,
+          "reason": "contact sheet available",
+          "severity": "yellow"
+        },
+        {
+          "evidence": "red",
+          "gate_type": "review_safety",
+          "id": "current_quality_label",
+          "ok": false,
+          "reason": "current quality label is red",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "The unselected radio control must remain an editable stroked circle.",
+            "expectation_ids": [
+              "radio-circle-anchor"
+            ]
+          },
+          "gate_type": "topology",
+          "id": "radio-control-topology",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "description": "Text-like fragments should remain bounded stroke-like primitives until text handling exists.",
+            "expectation_ids": [
+              "text-stroke-fragments"
+            ]
+          },
+          "gate_type": "shape_class",
+          "id": "text-fragment-shape-class",
+          "ok": true,
+          "reason": "referenced expectations passed",
+          "severity": "yellow"
+        },
+        {
+          "evidence": {
+            "bounds": [
+              176.0,
+              150.0,
+              200.0,
+              174.0
+            ],
+            "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds.",
+            "expected_kinds": [
+              "stroke_circle"
+            ],
+            "forbidden_count": 0,
+            "forbidden_kinds": [
+              "cubic_path"
+            ],
+            "matching_count": 2,
+            "min_iou": 0.25,
+            "selected_anchors": [
+              {
+                "bounds": [
+                  179.53793622562586,
+                  153.4129781187383,
+                  196.2104061702604,
+                  170.08544806337284
+                ],
+                "closed": true,
+                "cutout": false,
+                "hole_count": 0,
+                "id": "anchor-0083",
+                "kind": "stroke_circle"
+              },
+              {
+                "bounds": [
+                  179.53793622562586,
+                  153.4129781187383,
+                  196.2104061702604,
+                  170.08544806337284
+                ],
+                "closed": true,
+                "cutout": false,
+                "hole_count": 0,
+                "id": "anchor-0118",
+                "kind": "stroke_circle"
+              }
+            ],
+            "selected_count": 2,
+            "topology_failures": [
+              "disconnected_component_count 2 > 1"
+            ],
+            "topology_summary": {
+              "closed_anchor_count": 2,
+              "cutout_count": 0,
+              "disconnected_component_count": 2,
+              "hole_count": 0,
+              "kind_counts": {
+                "stroke_circle": 2
+              },
+              "open_anchor_count": 0,
+              "selected_anchor_count": 2
+            }
+          },
+          "gate_type": "topology",
+          "id": "radio-control-region-topology",
+          "ok": false,
+          "reason": "topology constraints failed: disconnected_component_count 2 > 1",
+          "severity": "red"
+        },
+        {
+          "evidence": {
+            "best_member_count": 16,
+            "description": "Text and thin UI strokes should expose at least one sizeable parallel-stroke group for review.",
+            "expected_group_kinds": [
+              "parallel_stroke_group"
+            ],
+            "selected_count": 1,
+            "selected_groups": [
+              {
+                "id": "auto-000000-vertical",
+                "kind": "parallel_stroke_group",
+                "member_count": 16,
+                "metrics": {
+                  "parallel_spacing_error": 0.5889893755442336
+                }
+              }
+            ],
+            "worst_member_count": 16
+          },
+          "gate_type": "grouping",
+          "id": "text-parallel-stroke-grouping",
+          "ok": true,
+          "reason": "group constraints passed",
+          "severity": "yellow"
+        },
+        {
+          "evidence": {
+            "actual": {
+              "fragmentation_penalty": 0.491597,
+              "layer_count": 3
+            },
+            "description": "UI screenshots may contain many text fragments, but layer depth and aggregate fragmentation should stay bounded for review.",
+            "failures": [],
+            "layer_anchor_counts": {
+              "cutout_overlays": 20,
+              "generic_paths": 52,
+              "strokes": 47
+            },
+            "thresholds": {
+              "max_fragmentation_penalty": 0.55,
+              "max_layer_count": 3
+            }
+          },
+          "gate_type": "fragmentation",
+          "id": "fragmentation_layer_thresholds",
+          "ok": true,
+          "reason": "structure thresholds passed",
+          "severity": "yellow"
+        },
+        {
+          "evidence": {
+            "actual": {
+              "raster_edge_error": 0.022066,
+              "raster_l1_error": 0.033861
+            },
+            "description": "UI screenshot cases allow text antialiasing drift but should keep controls and thin strokes visually close.",
+            "failures": [],
+            "family": "ui_screenshot_text_and_controls",
+            "thresholds": {
+              "max_raster_edge_error": 0.04,
+              "max_raster_l1_error": 0.08
+            }
+          },
+          "gate_type": "visual_fidelity",
+          "id": "visual_fidelity_thresholds",
+          "ok": true,
+          "reason": "visual thresholds passed",
+          "severity": "red"
+        }
+      ],
+      "promotion_regions": [
+        {
+          "bounds": [
+            176,
+            150,
+            200,
+            174
+          ],
+          "expected_kinds": [
+            "stroke_circle"
+          ],
+          "forbidden_kinds": [
+            "cubic_path"
+          ],
+          "gate_id": "radio-control-region-topology",
+          "gate_ok": false,
+          "gate_type": "topology",
+          "id": "radio-control-region-topology",
+          "reason": "topology constraints failed: disconnected_component_count 2 > 1",
+          "selected_anchor_count": 2,
+          "selected_anchor_ids": [
+            "anchor-0083",
+            "anchor-0118"
+          ],
+          "selected_anchor_indexes": [
+            83,
+            118
+          ],
+          "severity": "red",
+          "state": "rejected"
+        }
+      ],
+      "promotion_summary": {
+        "decision": "rejected",
+        "failed_gate_count": 2,
+        "red_gate_count": 2,
+        "yellow_gate_count": 0
+      },
+      "review_decision": {
+        "allowed_decisions": [
+          "accepted",
+          "corrected",
+          "rejected",
+          "deferred"
+        ],
+        "case_id": "ui-radio-acceptance-screenshot",
+        "corrected_artifacts": [],
+        "correction_notes": "",
+        "decision": "pending",
+        "failed_components": [
+          {
+            "id": "shape_identity_confidence",
+            "reason": "below_threshold",
+            "score": 0.563025,
+            "threshold": 0.65
+          },
+          {
+            "id": "topology_consistency",
+            "reason": "below_threshold",
+            "score": 0.0,
+            "threshold": 0.75
+          },
+          {
+            "id": "fragmentation",
+            "reason": "below_threshold",
+            "score": 0.016807,
+            "threshold": 0.25
+          },
+          {
+            "id": "provenance_confidence",
+            "reason": "below_threshold",
+            "score": 0.563025,
+            "threshold": 0.65
+          }
+        ],
+        "failed_gates": [
+          {
+            "gate_type": "review_safety",
+            "id": "current_quality_label",
+            "reason": "current quality label is red",
+            "severity": "red"
+          },
+          {
+            "gate_type": "topology",
+            "id": "radio-control-region-topology",
+            "reason": "topology constraints failed: disconnected_component_count 2 > 1",
+            "severity": "red"
+          }
+        ],
+        "gate_blocked_components": [
+          {
+            "failed_gates": [
+              "radio-control-region-topology"
+            ],
+            "id": "topology_consistency",
+            "uncapped_score": 1.0
+          }
+        ],
+        "issue_tags": [
+          "duplicate_radio_control_anchor",
+          "fragmentation",
+          "topology_mismatch"
+        ],
+        "reason": "",
+        "regressed_components": [],
+        "reviewer": "",
+        "schema_version": 1,
+        "source_decisions": {
+          "editability_accepted": false,
+          "editability_decision": "rejected",
+          "promotion_decision": "rejected",
+          "regression_delta_status": "not_configured"
+        },
+        "suggested_decision": "rejected"
+      },
       "source_exists": true,
       "status": "checked"
     }

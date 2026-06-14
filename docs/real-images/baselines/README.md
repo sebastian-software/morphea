@@ -43,11 +43,11 @@ intentional and the semantic expectations still pass.
 `current-suite-family-baseline.json` is the checked-in reviewed baseline for
 `morphea self-learn --suite-family-baseline`. It is produced by an accepted
 self-learning cycle and records primitive, real-image, and Lucide family
-outcomes side by side. Current known debt is intentionally carried in the
-baseline rather than hidden:
-
-- Real-image `generated_illustration_opaque_table_grid` is failing because the
-  local source image is missing.
+outcomes side by side. Current known baseline debt is empty: the opaque
+generated-illustration family now uses a checked-in fixture and all real-image
+families pass current semantic expectations. v10 promotion-quality failures
+remain tracked in `docs/real-images/promotion-status.md`; they are no longer
+baseline-comparison debt.
 
 Smoke the baseline-gated self-learning path after generating a temporary base
 dataset and reviewed-label file:

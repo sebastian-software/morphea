@@ -403,12 +403,12 @@ cannot be overwritten by an accidental ad hoc output path.
 `docs/real-images/baselines/current-suite-family-baseline.json` is checked in
 as a reviewed accepted-cycle baseline and is exercised through the real
 `morphea self-learn --suite-family-baseline` CLI path. Current known baseline
-debt is limited to the missing-source
-`generated_illustration_opaque_table_grid` family; the Lucide
-`circle_compound_strokes` debt was resolved by preserving the irregular
-`badge-check` outline as a closed `stroke_path`, and the checked
-`generated_illustration_table_grid` family now passes current semantic
-expectations after preserving the large beige table palette.
+debt is empty: the Lucide `circle_compound_strokes` debt was resolved by
+preserving the irregular `badge-check` outline as a closed `stroke_path`, the
+checked `generated_illustration_table_grid` family passes after preserving the
+large beige table palette, and the
+`generated_illustration_opaque_table_grid` family moved from `failed_missing`
+to `passed` through the checked-in opaque fixture.
 
 Canonical issue tags:
 

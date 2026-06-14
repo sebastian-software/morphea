@@ -2,25 +2,26 @@
 
 Source path:
 
-`/Users/sebastian/Downloads/ChatGPT Image 11. Juni 2026, 20_46_25.png`
+`assets/curated/terminaro-opaque-table-grid.png`
 
 ## Image Facts
 
 - PNG, 1254 x 1254.
-- Opaque white background.
-- 36,241 unique RGBA colors after loading, mostly antialiasing and subtle
-  fill variations.
+- Checked-in opaque RGB fixture derived from the local transparent Terminaro
+  image.
+- 254 unique RGBA values after loading, mostly antialiasing and subtle fill
+  variations over an opaque white background.
 - Major colors include near-white background/fills, navy figure regions, gold
   circles/ring elements, and beige table tiles.
 
 Observed via local inspection:
 
 - top colors by count include:
-  - near-white `(254, 254, 254, 255)`
   - white `(255, 255, 255, 255)`
+  - near-white `(254, 253, 253, 255)`
+  - navy `(0, 37, 84, 255)`
   - near-white `(253, 253, 253, 255)`
-  - beige `(228, 213, 197, 255)`
-  - navy `(0, 36, 83, 255)`
+  - gold `(182, 127, 19, 255)`
 
 ## Current Prototype Behavior
 
@@ -28,7 +29,7 @@ Bounded run:
 
 ```sh
 PYTHONPATH=src python3 -m morphea.cli vectorize \
-  "/Users/sebastian/Downloads/ChatGPT Image 11. Juni 2026, 20_46_25.png" \
+  assets/curated/terminaro-opaque-table-grid.png \
   -o /private/tmp/morphea-chatgpt-example.svg \
   --color-tolerance 18 \
   --max-size 256 \
@@ -40,17 +41,25 @@ PYTHONPATH=src python3 -m morphea.cli vectorize \
 
 Result:
 
-- Completed successfully under an external 15 second timeout.
-- Wrote SVG and JSON manifest.
-- Produced 54 anchors:
-  - 19 `quad`
-  - 19 `stroke_polyline`
-  - 11 `cubic_path`
+- Completed successfully as part of the curated suite.
+- Wrote SVG, JSON manifest, promotion sidecars, and contact sheet.
+- Produced 62 anchors:
+  - 14 `quad`
+  - 13 `cubic_path`
+  - 12 `stroke_path`
+  - 9 `stroke_polyline`
+  - 6 `arc`
   - 5 `circle`
+  - 2 `rect`
+  - 1 `stroke_circle`
 - Reported one `perspective_grid` group for the table quads.
+- Reported `simple_shape_ratio=0.790323`, `fragmentation_penalty=0.467742`,
+  `raster_l1_error=0.056356`, and `raster_edge_error=0.014711`.
 - Diagnostics included:
   - `image_resized_for_analysis` from 1254 x 1254 to 256 x 256
   - `palette_quantized` with max 10 colors
+- Semantic expectations pass; v10 promotion remains red because fallback layer
+  depth is still above the structure threshold.
 
 ## Expected Semantic Anchors
 
@@ -77,7 +86,8 @@ Secondary anchors:
   - circle anchors
   - table quad anchors
   - one perspective grid group
-  - smooth stroke anchors
+  - editable stroke anchors counted across stroke polylines, stroke paths, and
+    arcs
 
 ## Milestone Mapping
 
