@@ -1118,6 +1118,10 @@ Supported fields:
 - `output`: harvest-prep JSON report path
 - `markdown`: optional harvest-prep Markdown report path
 - `harvest_config`: optional generated `harvest-curated` config path
+- `decision_plan`: optional portable reviewer decision overlay path. The plan
+  can carry `decision_choices` and `decision_overrides` without embedding
+  run-local template paths; those choices are resolved through the generated
+  config's `decision_templates` or the review packet.
 - `decisions`: object mapping case ids to terminal
   `review-decision.json` paths
 - `decision_choices`: optional object mapping case ids to terminal decision
@@ -1146,13 +1150,35 @@ Supported fields:
 - `harvest_markdown`: optional pseudo-label Markdown report path for the
   generated harvest config
 
-CLI arguments override values loaded from the config file. `--decision`
+CLI arguments override values loaded from the config file. `decision_plan`
+values are merged after the base config and before explicit CLI flags, so a
+checked-in portable review plan can be replayed against a fresh generated
+review run while still allowing one-off command-line overrides. `--decision`
 arguments are merged into the config `decisions` object and override the same
 case id. `decision_overrides` are case-scoped and are applied to whichever
 terminal decision path or decision choice is selected for that case. The
 case-scoped CLI flags `--reviewer`, `--reason`, `--correction-notes`, and
-`--corrected-artifact` override same-field config evidence for the selected
-case.
+`--corrected-artifact` override same-field config or plan evidence for the
+selected case.
+
+## Promotion Review Decision Plan v1
+
+Read by `morphea promotion-review-harvest --decision-plan` or by the
+`decision_plan` field in a promotion-review-harvest config.
+
+Supported fields:
+
+- `schema_version`: optional schema version marker
+- `decision_choices`: object mapping case ids to terminal decision names
+  (`accepted`, `corrected`, `rejected`, or `deferred`)
+- `decision_overrides`: object mapping case ids to the same explicit reviewer
+  evidence fields supported by harvest configs: `reviewer`, `reason`,
+  `correction_notes`, and `corrected_artifacts`
+
+Decision plans intentionally do not contain run-local template paths. They are
+portable review evidence overlays that become actionable only when combined
+with a generated review packet or harvest config that exposes terminal
+decision templates.
 
 ## Review Queue and Reviewed Labels v1
 

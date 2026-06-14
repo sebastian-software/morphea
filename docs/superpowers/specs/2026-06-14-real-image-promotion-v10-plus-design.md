@@ -533,6 +533,10 @@ Current implementation:
   `decision_overrides` for the same reviewer evidence fields, allowing
   template-backed `decision_choices` to apply generated terminal templates
   without mutating those template files.
+- `promotion-review-harvest --config` can also load a portable
+  `decision_plan` overlay with `decision_choices` and `decision_overrides`, so
+  explicit reviewer decisions can be checked in without run-local template
+  paths and replayed against a fresh review run.
 - `promotion-review-harvest --config` also accepts the same evidence directly
   as case-scoped CLI flags, so a reviewer can choose a terminal template and
   supply reviewer/reason evidence from one command line.

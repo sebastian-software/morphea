@@ -451,6 +451,10 @@ Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
 `correction_notes`, and `corrected_artifacts` to the selected terminal
 template, so generated templates can remain untouched while applied summaries
 still record the explicit evidence override fields.
+The same selected choices and evidence can now live in a portable
+`decision_plan` JSON overlay, keeping reviewer decisions in case-id terms
+without embedding run-local template paths. `promotion-review-harvest` merges
+that plan into a fresh generated config before applying explicit CLI overrides.
 
 The same evidence can be supplied without editing config JSON by appending
 case-scoped CLI flags (`--reviewer case=name`, `--reason case=reason`, plus

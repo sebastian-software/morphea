@@ -296,6 +296,7 @@ PROMOTION_REVIEW_HARVEST_CONFIG_KEYS = {
     "output",
     "markdown",
     "harvest_config",
+    "decision_plan",
     "decisions",
     "decision_choices",
     "decision_templates",
@@ -1118,6 +1119,14 @@ def main(argv: list[str] | None = None) -> None:
     promotion_review_harvest.add_argument("--snapshot", type=Path)
     promotion_review_harvest.add_argument("--harvest-markdown", type=Path)
     promotion_review_harvest.add_argument("--config", type=Path)
+    promotion_review_harvest.add_argument(
+        "--decision-plan",
+        type=Path,
+        help=(
+            "Portable reviewer decision overlay with decision_choices and "
+            "decision_overrides."
+        ),
+    )
 
     sweep = subcommands.add_parser(
         "sweep",
@@ -2001,6 +2010,7 @@ def _resolved_promotion_review_harvest_config(
         "curated_report",
         "snapshot",
         "harvest_markdown",
+        "decision_plan",
     ):
         value = getattr(args, key, None)
         if value is not None:
@@ -2010,6 +2020,10 @@ def _resolved_promotion_review_harvest_config(
         ("review_packet", "output"),
         "promotion-review-harvest",
     )
+    decision_plan = _load_promotion_review_decision_plan(
+        config.get("decision_plan")
+    )
+    plan_choices = dict(decision_plan.get("decision_choices", {}))
     config_choices = dict(config.get("decision_choices", {}))
     cli_choices = _promotion_review_decision_choice_args(args.decision_choice)
     decisions: dict[str, Path] = {}
@@ -2017,6 +2031,7 @@ def _resolved_promotion_review_harvest_config(
         _promotion_review_decisions_from_choices(config, config_choices)
     )
     decisions.update(dict(config.get("decisions", {})))
+    decisions.update(_promotion_review_decisions_from_choices(config, plan_choices))
     decisions.update(_promotion_review_decisions_from_choices(config, cli_choices))
     decisions.update(_promotion_review_decision_args(args.decision))
     if decisions:
@@ -2030,7 +2045,10 @@ def _resolved_promotion_review_harvest_config(
         corrected_artifacts=args.corrected_artifact,
     )
     config["decision_overrides"] = _merge_promotion_review_overrides(
-        config.get("decision_overrides", {}),
+        _merge_promotion_review_overrides(
+            config.get("decision_overrides", {}),
+            dict(decision_plan.get("decision_overrides", {})),
+        ),
         cli_overrides,
     )
     return config
@@ -3349,6 +3367,7 @@ def _load_promotion_review_harvest_config(
         "curated_report",
         "snapshot",
         "harvest_markdown",
+        "decision_plan",
     ):
         if config.get(key) is not None:
             config[key] = Path(str(config[key]))
@@ -3373,6 +3392,34 @@ def _load_promotion_review_harvest_config(
             )
         )
     return config
+
+
+def _load_promotion_review_decision_plan(
+    path: object,
+) -> dict[str, object]:
+    if path is None:
+        return {}
+    plan_path = Path(str(path))
+    loaded = json.loads(plan_path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("promotion-review-harvest decision_plan must be a JSON object")
+    allowed = {"schema_version", "decision_choices", "decision_overrides"}
+    unknown = sorted(set(loaded) - allowed)
+    if unknown:
+        raise ValueError(
+            "promotion-review-harvest decision_plan unsupported fields: "
+            + ", ".join(unknown)
+        )
+    plan: dict[str, object] = {}
+    if "decision_choices" in loaded:
+        plan["decision_choices"] = _promotion_review_decision_choices_from_config(
+            loaded["decision_choices"],
+        )
+    if "decision_overrides" in loaded:
+        plan["decision_overrides"] = _promotion_review_decision_overrides_from_config(
+            loaded["decision_overrides"],
+        )
+    return plan
 
 
 def _promotion_review_decisions_from_config(value: object) -> dict[str, Path]:

@@ -330,6 +330,10 @@ evidence-flag hints beside each decision-choice command, so reviewers can avoid
 editing the config by appending case-scoped `--reviewer`, `--reason`,
 `--correction-notes`, and `--corrected-artifact` flags to the selected
 `promotion-review-harvest --config ... --decision-choice ...` command.
+Reviewer choices and evidence can also be stored in a portable
+`decision_plan` overlay with `decision_choices` and `decision_overrides`, then
+merged into a fresh generated harvest config without committing run-local
+template paths.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

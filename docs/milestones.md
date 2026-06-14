@@ -1237,8 +1237,11 @@ Implemented so far:
   template-backed `decision_choices`, copy/paste decision-choice commands for
   pending cases, template-readiness labels, and case-scoped
   `decision_overrides` that pass reviewer/reason and corrected-review evidence
-  into `promotion-apply-review`. The same evidence can be supplied directly
-  with case-scoped CLI flags such as `--reviewer case=name`,
+  into `promotion-apply-review`. The command can also load a portable
+  `decision_plan` overlay with `decision_choices` and `decision_overrides`, so
+  explicit reviewer decisions can be replayed against fresh run-local terminal
+  templates without committing those paths. The same evidence can be supplied
+  directly with case-scoped CLI flags such as `--reviewer case=name`,
   `--reason case=reason`, `--correction-notes case=notes`, and
   `--corrected-artifact case=path`; harvest prep Markdown shows those
   evidence-flag hints and aggregate readiness counts beside decision-choice
