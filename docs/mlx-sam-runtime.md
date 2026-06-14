@@ -43,7 +43,8 @@ Without `--mlx-sam-model-path`, `mlx_sam` should remain `not_configured`. With
 a valid local `.safetensors` checkpoint in the Python 3.14 environment, it
 should report `mlx_sam_package_available`. For quantized checkpoints, also
 check that `model_sidecar_exists` is `true`; that means the adjacent
-`.safetensors.json` quantization sidecar is present.
+`.safetensors.json` quantization sidecar is present. The default Markdown
+status output includes these values in the Backend Diagnostics table.
 
 ## Checkpoint Handling
 

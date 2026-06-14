@@ -1018,6 +1018,10 @@ Each status entry records `status`, `backend_available`, optional `reason`, and
 optional `next_action` where the underlying backend exposes those fields. The
 report is intentionally diagnostic: missing MLX/SAM/DiffVG integrations are
 reported explicitly instead of being treated as partial success.
+Markdown status reports include a Backend Diagnostics table when status entries
+carry runtime detail fields such as `adapter`, `model_path`, `model_exists`,
+`model_sidecar_path`, `model_sidecar_exists`, `package_available`, or
+`sam_package_available`.
 
 Optional status entries may expose a `capabilities` object. Each capability
 records `available`, `status`, optional `reason`, and optional `next_action`.

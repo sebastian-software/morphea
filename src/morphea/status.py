@@ -21,6 +21,15 @@ AVAILABLE_STATUSES = {
     "mlx_sam_package_available",
     "trained",
 }
+BACKEND_DIAGNOSTIC_FIELDS = (
+    "adapter",
+    "model_path",
+    "model_exists",
+    "model_sidecar_path",
+    "model_sidecar_exists",
+    "package_available",
+    "sam_package_available",
+)
 
 
 def collect_runtime_status(
@@ -87,6 +96,25 @@ def render_runtime_status_markdown(status: dict[str, Any]) -> str:
             f"{row['reason'] or 'n/a'} | "
             f"{row['next_action'] or 'n/a'} |"
         )
+    diagnostics = _backend_diagnostic_rows(status)
+    if diagnostics:
+        lines.extend(
+            [
+                "",
+                "## Backend Diagnostics",
+                "",
+                "| Area | Backend | Field | Value |",
+                "| --- | --- | --- | --- |",
+            ]
+        )
+        for row in diagnostics:
+            lines.append(
+                "| "
+                f"{row['area']} | "
+                f"`{row['backend']}` | "
+                f"`{row['field']}` | "
+                f"{_markdown_code(row['value'])} |"
+            )
     blocked = status.get("blocked_backends", [])
     if not isinstance(blocked, list):
         blocked = []
@@ -140,6 +168,46 @@ def _status_rows(status: dict[str, Any]) -> list[dict[str, Any]]:
     if isinstance(details, dict):
         for backend, detail in sorted(details.items()):
             rows.append(_row("refinement", backend, detail))
+    return rows
+
+
+def _backend_diagnostic_rows(status: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    segmenters = status.get("segmenters", {})
+    if isinstance(segmenters, dict):
+        for backend, detail in sorted(segmenters.items()):
+            rows.extend(_diagnostic_rows("segmenter", backend, detail))
+    classifiers = status.get("classifiers", {})
+    if isinstance(classifiers, dict):
+        for backend, detail in sorted(classifiers.items()):
+            rows.extend(_diagnostic_rows("classifier", backend, detail))
+    refinement = status.get("refinement", {})
+    details = refinement.get("details", {}) if isinstance(refinement, dict) else {}
+    if isinstance(details, dict):
+        for backend, detail in sorted(details.items()):
+            rows.extend(_diagnostic_rows("refinement", backend, detail))
+    return rows
+
+
+def _diagnostic_rows(
+    area: str,
+    backend: str,
+    detail: object,
+) -> list[dict[str, Any]]:
+    if not isinstance(detail, dict):
+        return []
+    rows = []
+    for field in BACKEND_DIAGNOSTIC_FIELDS:
+        if field not in detail or detail[field] is None:
+            continue
+        rows.append(
+            {
+                "area": area,
+                "backend": backend,
+                "field": field,
+                "value": detail[field],
+            }
+        )
     return rows
 
 
@@ -224,3 +292,12 @@ def _reason_with_action(row: dict[str, Any]) -> str:
     if not next_action:
         return str(reason)
     return f"{reason}; next action: {next_action}"
+
+
+def _markdown_code(value: object) -> str:
+    if isinstance(value, bool):
+        text = str(value).lower()
+    else:
+        text = str(value)
+    escaped = text.replace("|", "\\|").replace("`", "'")
+    return f"`{escaped}`"

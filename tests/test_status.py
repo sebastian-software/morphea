@@ -210,6 +210,11 @@ class RuntimeStatusTests(unittest.TestCase):
                         "backend_available": False,
                         "status": "not_configured",
                         "reason": "model missing",
+                        "adapter": "mlx_sam_grid_points",
+                        "model_path": "checkpoints/sam.safetensors",
+                        "model_exists": True,
+                        "model_sidecar_path": "checkpoints/sam.safetensors.json",
+                        "model_sidecar_exists": False,
                     },
                 },
                 "classifiers": {},
@@ -240,6 +245,12 @@ class RuntimeStatusTests(unittest.TestCase):
 
         self.assertIn("# Morphēa Runtime Status", markdown)
         self.assertIn("`flat_color`", markdown)
+        self.assertIn("## Backend Diagnostics", markdown)
+        self.assertIn("| segmenter | `mlx_sam` | `adapter` | `mlx_sam_grid_points` |", markdown)
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `model_sidecar_exists` | `false` |",
+            markdown,
+        )
         self.assertIn("segmenter/mlx_sam: not_configured", markdown)
         self.assertIn("next action: configure a model", markdown)
         self.assertIn(

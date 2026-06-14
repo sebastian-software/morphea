@@ -664,6 +664,9 @@ Implemented so far:
 - MLX SAM status reports the adjacent `.safetensors.json` sidecar path and
   existence as non-blocking diagnostics, making quantized checkpoint setup
   inspectable without marking unquantized checkpoints unavailable.
+- runtime status Markdown renders backend diagnostics such as MLX/SAM adapter,
+  model path, model existence, sidecar path, and sidecar existence, so the
+  default `morphea status` output exposes the same setup evidence as JSON.
 - MLX SAM status includes per-capability diagnostics for the JSON proposal
   adapter and the optional live SAM model adapter.
 - `MlxSamSegmenter` can consume local JSON proposal payloads through the same

@@ -425,8 +425,9 @@ Current implementation:
   shared proposal-id count, which is usually zero across classical and MLX/SAM
   sources. Runtime status now also records whether the adjacent
   `.safetensors.json` sidecar exists for configured MLX/SAM checkpoints, so
-  quantized-checkpoint setup is inspectable before a run. The first local tiny
-  4-bit SAM2.1 MLX smoke on
+  quantized-checkpoint setup is inspectable before a run; the same fields are
+  visible in the default status Markdown Backend Diagnostics table. The first
+  local tiny 4-bit SAM2.1 MLX smoke on
   `assets/curated/terminaro-opaque-table-grid.png` now proves live
   `mlx_sam_grid_points` execution and comparison artifact generation: 4 MLX/SAM
   proposals passed the geometry gate, but the source assessment was `noise`
