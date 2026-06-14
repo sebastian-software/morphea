@@ -196,6 +196,7 @@ def primitive_candidates_for_component(
 
 
 ORGANIC_FALLBACK_MAX_NODES = 16
+ORGANIC_FALLBACK_NODE_BUDGET_CAP = 36
 # The roadmap ranking demands that the generic fallback only wins when no
 # semantic candidate passes its plausibility gates, so the candidate carries
 # a flat ranking penalty on top of its node complexity.
@@ -1679,7 +1680,10 @@ def _organic_fallback_candidate(component: MaskComponent) -> AnchorCandidate:
     # One node per ~12 px of contour: a 64 px fixture blob keeps the 16-node
     # budget while a large detailed silhouette earns enough segments to keep
     # noses and lobes instead of melting them into the tolerance.
-    node_budget = min(64, max(ORGANIC_FALLBACK_MAX_NODES, round(perimeter / 12)))
+    node_budget = min(
+        ORGANIC_FALLBACK_NODE_BUDGET_CAP,
+        max(ORGANIC_FALLBACK_MAX_NODES, round(perimeter / 12)),
+    )
     points, controls, fit_error = _fit_closed_bezier_outline(
         smoothed,
         max_segments=node_budget,

@@ -1,4 +1,5 @@
 import unittest
+from math import cos, pi, sin
 
 from PIL import Image, ImageDraw
 
@@ -7,6 +8,7 @@ from morphea.anchors import Point
 from morphea.detection import (
     AnchorThresholdConfig,
     _fit_circle_from_boundary,
+    _organic_fallback_candidate,
     _stroke_polyline_centerline,
     _stroke_width_samples_along_centerline,
     detect_cutout_strokes_for_component,
@@ -64,6 +66,27 @@ class MaskComponentTests(unittest.TestCase):
         self.assertIs(component.centroid, component.centroid)
         self.assertIs(component.boundary_pixels, component.boundary_pixels)
         self.assertIs(component.row_spans(), component.row_spans())
+
+    def test_large_organic_fallback_respects_node_budget_cap(self):
+        image = Image.new("RGB", (180, 180), "white")
+        draw = ImageDraw.Draw(image)
+        points = []
+        for index in range(32):
+            angle = index / 32 * 2 * pi
+            radius = 68 if index % 2 == 0 else 48
+            points.append(
+                (
+                    90 + radius * cos(angle),
+                    90 + radius * sin(angle),
+                )
+            )
+        draw.polygon(points, fill="black")
+        component = connected_components(_mask_from_non_white_pixels(image))[0]
+
+        anchor = _organic_fallback_candidate(component)
+
+        self.assertEqual(anchor.kind, AnchorKind.CUBIC_PATH)
+        self.assertLessEqual(anchor.node_count, 36)
 
     def test_connected_components_keep_diagonal_neighbors_connected(self):
         mask = BinaryMask.from_rows(
