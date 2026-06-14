@@ -315,7 +315,10 @@ visible terminal template has a copy/paste command that reruns the same config
 with the selected choice. The same report marks template readiness; generated
 terminal templates remain `needs edit` until required `reviewer` and `reason`
 fields, plus corrected-evidence fields when relevant, are filled or supplied
-through config-level `decision_overrides`.
+through config-level `decision_overrides`. Reviewers can also avoid editing the
+config by appending case-scoped `--reviewer`, `--reason`,
+`--correction-notes`, and `--corrected-artifact` flags to the selected
+`promotion-review-harvest --config ... --decision-choice ...` command.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

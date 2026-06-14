@@ -1083,6 +1083,30 @@ def main(argv: list[str] | None = None) -> None:
             "resolved through review decision templates."
         ),
     )
+    promotion_review_harvest.add_argument(
+        "--reviewer",
+        action="append",
+        default=[],
+        help="Reviewer evidence as CASE_ID=name for the selected terminal decision.",
+    )
+    promotion_review_harvest.add_argument(
+        "--reason",
+        action="append",
+        default=[],
+        help="Review reason evidence as CASE_ID=reason.",
+    )
+    promotion_review_harvest.add_argument(
+        "--correction-notes",
+        action="append",
+        default=[],
+        help="Corrected-decision notes as CASE_ID=notes.",
+    )
+    promotion_review_harvest.add_argument(
+        "--corrected-artifact",
+        action="append",
+        default=[],
+        help="Corrected-decision artifact path as CASE_ID=path; repeatable.",
+    )
     promotion_review_harvest.add_argument("--suite", type=Path)
     promotion_review_harvest.add_argument("--run-root", type=Path)
     promotion_review_harvest.add_argument("--harvest-output", type=Path)
@@ -1870,6 +1894,87 @@ def _promotion_review_decision_choice_args(values: list[str]) -> dict[str, str]:
     return choices
 
 
+def _promotion_review_override_args(
+    *,
+    reviewers: list[str],
+    reasons: list[str],
+    correction_notes: list[str],
+    corrected_artifacts: list[str],
+) -> dict[str, dict[str, object]]:
+    overrides: dict[str, dict[str, object]] = {}
+    for field, values in (
+        ("reviewer", reviewers),
+        ("reason", reasons),
+        ("correction_notes", correction_notes),
+    ):
+        for case_id, value in _promotion_review_string_assignments(
+            values,
+            field,
+        ).items():
+            overrides.setdefault(case_id, {})[field] = value
+    for case_id, value in _promotion_review_string_assignment_items(
+        corrected_artifacts,
+        "corrected_artifacts",
+    ):
+        artifacts = overrides.setdefault(case_id, {}).setdefault(
+            "corrected_artifacts",
+            [],
+        )
+        if not isinstance(artifacts, list):
+            artifacts = []
+            overrides[case_id]["corrected_artifacts"] = artifacts
+        artifacts.append(value)
+    return overrides
+
+
+def _promotion_review_string_assignments(
+    values: list[str],
+    field: str,
+) -> dict[str, str]:
+    assignments: dict[str, str] = {}
+    for case_id, value in _promotion_review_string_assignment_items(values, field):
+        assignments[case_id] = value
+    return assignments
+
+
+def _promotion_review_string_assignment_items(
+    values: list[str],
+    field: str,
+) -> list[tuple[str, str]]:
+    assignments: list[tuple[str, str]] = []
+    for value in values:
+        if "=" not in value:
+            raise ValueError(
+                f"promotion review {field} overrides must be CASE_ID=value"
+            )
+        case_id, assignment = value.split("=", 1)
+        if not case_id or not assignment.strip():
+            raise ValueError(
+                f"promotion review {field} overrides must be CASE_ID=value"
+            )
+        assignments.append((case_id, assignment))
+    return assignments
+
+
+def _merge_promotion_review_overrides(
+    base: object,
+    cli: dict[str, dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    merged: dict[str, dict[str, object]] = {}
+    if isinstance(base, dict):
+        for case_id, overrides in base.items():
+            if isinstance(case_id, str) and isinstance(overrides, dict):
+                merged[case_id] = dict(overrides)
+    for case_id, overrides in cli.items():
+        case_overrides = merged.setdefault(case_id, {})
+        for field, value in overrides.items():
+            if field == "corrected_artifacts":
+                case_overrides[field] = list(value) if isinstance(value, list) else []
+            else:
+                case_overrides[field] = value
+    return merged
+
+
 def _resolved_promotion_review_harvest_config(
     args: argparse.Namespace,
 ) -> dict[str, object]:
@@ -1909,6 +2014,16 @@ def _resolved_promotion_review_harvest_config(
         config["decisions"] = decisions
     else:
         config["decisions"] = {}
+    cli_overrides = _promotion_review_override_args(
+        reviewers=args.reviewer,
+        reasons=args.reason,
+        correction_notes=args.correction_notes,
+        corrected_artifacts=args.corrected_artifact,
+    )
+    config["decision_overrides"] = _merge_promotion_review_overrides(
+        config.get("decision_overrides", {}),
+        cli_overrides,
+    )
     return config
 
 

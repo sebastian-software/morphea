@@ -437,6 +437,11 @@ Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
 template, so generated templates can remain untouched while applied summaries
 still record the explicit evidence override fields.
 
+The same evidence can be supplied without editing config JSON by appending
+case-scoped CLI flags (`--reviewer case=name`, `--reason case=reason`, plus
+corrected-decision notes/artifacts) to a `promotion-review-harvest --config`
+command with `--decision-choice case=decision`.
+
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied

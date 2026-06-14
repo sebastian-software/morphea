@@ -732,8 +732,13 @@ arguments override same-case entries in the config `decisions` object. The
 shortcut `--decision-choice case=accepted` resolves an explicit terminal choice
 through the available `decision_templates`; config `decision_choices` use the
 same mechanism and remain overrideable by CLI choices or direct `--decision`
-paths. When the prep run itself is driven by `--config`, pending cases also
-carry `decision_choice_commands` in JSON and Markdown, one copy/paste
+paths. The same command accepts case-scoped CLI evidence flags:
+`--reviewer case=name`, `--reason case=reason`,
+`--correction-notes case=notes`, and repeatable
+`--corrected-artifact case=path`; these flags override same-case
+`decision_overrides` from config and are passed through to
+`promotion-apply-review`. When the prep run itself is driven by `--config`,
+pending cases also carry `decision_choice_commands` in JSON and Markdown, one copy/paste
 `promotion-review-harvest --config ... --decision-choice case=decision` command
 per available terminal template. The prep report also carries
 `decision_template_readiness`, marking whether each terminal template already
@@ -1124,7 +1129,10 @@ Supported fields:
 CLI arguments override values loaded from the config file. `--decision`
 arguments are merged into the config `decisions` object and override the same
 case id. `decision_overrides` are case-scoped and are applied to whichever
-terminal decision path or decision choice is selected for that case.
+terminal decision path or decision choice is selected for that case. The
+case-scoped CLI flags `--reviewer`, `--reason`, `--correction-notes`, and
+`--corrected-artifact` override same-field config evidence for the selected
+case.
 
 ## Review Queue and Reviewed Labels v1
 

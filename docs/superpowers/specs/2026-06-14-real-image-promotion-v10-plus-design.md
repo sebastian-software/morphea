@@ -529,6 +529,9 @@ Current implementation:
   `decision_overrides` for the same reviewer evidence fields, allowing
   template-backed `decision_choices` to apply generated terminal templates
   without mutating those template files.
+- `promotion-review-harvest --config` also accepts the same evidence directly
+  as case-scoped CLI flags, so a reviewer can choose a terminal template and
+  supply reviewer/reason evidence from one command line.
 
 Exit criteria:
 

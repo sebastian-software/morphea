@@ -1234,7 +1234,10 @@ Implemented so far:
   template-backed `decision_choices`, copy/paste decision-choice commands for
   pending cases, template-readiness labels, and case-scoped
   `decision_overrides` that pass reviewer/reason and corrected-review evidence
-  into `promotion-apply-review`
+  into `promotion-apply-review`. The same evidence can be supplied directly
+  with case-scoped CLI flags such as `--reviewer case=name`,
+  `--reason case=reason`, `--correction-notes case=notes`, and
+  `--corrected-artifact case=path`.
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

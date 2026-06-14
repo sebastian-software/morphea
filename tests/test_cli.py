@@ -987,6 +987,170 @@ class CliTests(unittest.TestCase):
             self.assertEqual(applied["correction_notes"], "use corrected artifact")
             self.assertEqual(applied["corrected_artifacts"], ["corrected.svg"])
 
+    def test_promotion_review_harvest_cli_accepts_case_scoped_review_overrides(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            manifests = {}
+            for case_id in ("accepted-case", "corrected-case"):
+                case_dir = run_root / case_id
+                case_dir.mkdir(parents=True)
+                manifest = case_dir / "manifest.json"
+                manifest.write_text(
+                    json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                    encoding="utf-8",
+                )
+                manifests[case_id] = manifest
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "accepted-case",
+                                "suggested_review_decision": "accepted",
+                                "review_decision_state": "pending",
+                                "artifacts": {
+                                    "manifest": str(manifests["accepted-case"])
+                                },
+                            },
+                            {
+                                "case_id": "corrected-case",
+                                "suggested_review_decision": "corrected",
+                                "review_decision_state": "pending",
+                                "artifacts": {
+                                    "manifest": str(manifests["corrected-case"])
+                                },
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            accepted_decision = root / "accepted.json"
+            accepted_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "accepted-case",
+                        "decision": "accepted",
+                        "reviewer": "",
+                        "reason": "",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            corrected_decision = root / "corrected.json"
+            corrected_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "corrected-case",
+                        "decision": "corrected",
+                        "reviewer": "",
+                        "reason": "",
+                        "correction_notes": "",
+                        "corrected_artifacts": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "review-harvest.json"
+            config = root / "promotion-review-harvest.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "review_packet": str(review_packet),
+                        "output": str(output),
+                        "run_root": str(run_root),
+                        "decision_choices": {
+                            "accepted-case": "accepted",
+                            "corrected-case": "corrected",
+                        },
+                        "decision_templates": {
+                            "accepted-case": {"accepted": str(accepted_decision)},
+                            "corrected-case": {"corrected": str(corrected_decision)},
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        "--config",
+                        str(config),
+                        "--reviewer",
+                        "accepted-case=qa-a",
+                        "--reason",
+                        "accepted-case=accepted from CLI evidence",
+                        "--reviewer",
+                        "corrected-case=qa-b",
+                        "--reason",
+                        "corrected-case=corrected from CLI evidence",
+                        "--correction-notes",
+                        "corrected-case=replace fallback path",
+                        "--corrected-artifact",
+                        "corrected-case=corrected.svg",
+                    ]
+                )
+
+            self.assertIn("harvestable=2", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["pending_case_count"], 0)
+            self.assertTrue(
+                result["decision_template_readiness"]["accepted-case"]["accepted"][
+                    "ready"
+                ]
+            )
+            self.assertTrue(
+                result["decision_template_readiness"]["corrected-case"]["corrected"][
+                    "ready"
+                ]
+            )
+            by_case = {
+                item["case_id"]: item
+                for item in result["newly_applied_decisions"]
+            }
+            self.assertEqual(
+                by_case["accepted-case"]["review_overrides"],
+                ["reason", "reviewer"],
+            )
+            self.assertEqual(
+                by_case["corrected-case"]["review_overrides"],
+                [
+                    "corrected_artifacts",
+                    "correction_notes",
+                    "reason",
+                    "reviewer",
+                ],
+            )
+            accepted_applied = json.loads(
+                manifests["accepted-case"].read_text(encoding="utf-8")
+            )["review_decision_applied"]
+            corrected_applied = json.loads(
+                manifests["corrected-case"].read_text(encoding="utf-8")
+            )["review_decision_applied"]
+            self.assertEqual(accepted_applied["reviewer"], "qa-a")
+            self.assertEqual(
+                accepted_applied["reason"],
+                "accepted from CLI evidence",
+            )
+            self.assertEqual(corrected_applied["reviewer"], "qa-b")
+            self.assertEqual(
+                corrected_applied["correction_notes"],
+                "replace fallback path",
+            )
+            self.assertEqual(
+                corrected_applied["corrected_artifacts"],
+                ["corrected.svg"],
+            )
+
     def test_promotion_review_harvest_cli_reports_pending_packet_cases(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
