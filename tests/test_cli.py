@@ -91,6 +91,11 @@ class CliTests(unittest.TestCase):
                                 }
                             ]
                         },
+                        "review_decision_applied": {
+                            "case_id": "case-a",
+                            "decision": "accepted",
+                            "source_review_decision": "review-decision.json",
+                        },
                     }
                 ),
                 encoding="utf-8",
@@ -111,10 +116,21 @@ class CliTests(unittest.TestCase):
                 )
 
             self.assertIn("promoted=1", stdout.getvalue())
-            self.assertIn("#dd2222", promoted_svg.read_text(encoding="utf-8"))
-            self.assertNotIn("#003366", promoted_svg.read_text(encoding="utf-8"))
-            self.assertIn("#003366", fallback_svg.read_text(encoding="utf-8"))
-            self.assertIn("#229944", fallback_svg.read_text(encoding="utf-8"))
+            promoted_text = promoted_svg.read_text(encoding="utf-8")
+            fallback_text = fallback_svg.read_text(encoding="utf-8")
+            self.assertIn("#dd2222", promoted_text)
+            self.assertNotIn("#003366", promoted_text)
+            self.assertIn('id="morphea-anchor-0000-anchor-0000"', promoted_text)
+            self.assertIn('data-morphea-anchor-id="anchor-0000"', promoted_text)
+            self.assertIn('data-anchor-index="0"', promoted_text)
+            self.assertIn('data-promotion-state="promoted"', promoted_text)
+            self.assertIn('data-promotion-regions="circle-region"', promoted_text)
+            self.assertIn('data-review-decision="accepted"', promoted_text)
+            self.assertIn('data-review-case-id="case-a"', promoted_text)
+            self.assertIn("#003366", fallback_text)
+            self.assertIn("#229944", fallback_text)
+            self.assertIn('data-promotion-state="rejected"', fallback_text)
+            self.assertIn('data-promotion-regions="failed-region"', fallback_text)
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["promoted_anchor_indexes"], [0])
             self.assertEqual(result["fallback_anchor_indexes"], [1, 2])

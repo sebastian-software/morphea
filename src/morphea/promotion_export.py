@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from html import escape
 from math import cos, sin
 from pathlib import Path
@@ -195,6 +196,9 @@ def manifest_to_svg(
     height = int(manifest.get("height", 1))
     anchors = manifest.get("anchors", [])
     anchors = anchors if isinstance(anchors, list) else []
+    states_by_index = _promotion_anchor_state_by_index(manifest)
+    region_ids_by_index = _promotion_region_ids_by_anchor_index(manifest)
+    review_metadata = _promotion_review_metadata(manifest)
     lines = [
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" '
@@ -203,7 +207,16 @@ def manifest_to_svg(
     ]
     for index in anchor_indexes:
         if 0 <= index < len(anchors) and isinstance(anchors[index], dict):
-            lines.append(f"  {_manifest_anchor_to_svg(anchors[index])}")
+            lines.append(
+                "  "
+                + _manifest_anchor_svg_group(
+                    anchors[index],
+                    index=index,
+                    promotion_state=states_by_index.get(index, "fallback"),
+                    region_ids=region_ids_by_index.get(index, []),
+                    review_metadata=review_metadata,
+                )
+            )
     lines.append("</svg>")
     return "\n".join(lines)
 
@@ -290,6 +303,14 @@ def _anchor_promotion_state(states: set[str]) -> str:
     return "fallback"
 
 
+def _promotion_anchor_state_by_index(manifest: dict[str, Any]) -> dict[int, str]:
+    states_by_index: dict[int, str] = {}
+    for state, indexes in _promotion_anchor_state_indexes(manifest).items():
+        for index in indexes:
+            states_by_index[index] = state
+    return states_by_index
+
+
 def _promotion_region_state_counts(manifest: dict[str, Any]) -> dict[str, int]:
     promotion = manifest.get("promotion", {})
     if not isinstance(promotion, dict):
@@ -304,6 +325,97 @@ def _promotion_region_state_counts(manifest: dict[str, Any]) -> dict[str, int]:
         state = str(region.get("state", "unknown"))
         counts[state] = counts.get(state, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _promotion_region_ids_by_anchor_index(
+    manifest: dict[str, Any],
+) -> dict[int, list[str]]:
+    anchors = manifest.get("anchors", [])
+    anchors = anchors if isinstance(anchors, list) else []
+    ids_by_index: dict[int, list[str]] = {index: [] for index in range(len(anchors))}
+    for index, anchor in enumerate(anchors):
+        if not isinstance(anchor, dict):
+            continue
+        for region_id in _string_list(anchor.get("promotion_regions")):
+            if region_id not in ids_by_index[index]:
+                ids_by_index[index].append(region_id)
+
+    promotion = manifest.get("promotion", {})
+    if not isinstance(promotion, dict):
+        return ids_by_index
+    regions = promotion.get("regions", [])
+    if not isinstance(regions, list):
+        return ids_by_index
+    for region in regions:
+        if not isinstance(region, dict):
+            continue
+        region_id = region.get("id")
+        if not isinstance(region_id, str) or not region_id:
+            continue
+        selected = region.get("selected_anchor_indexes", [])
+        if not isinstance(selected, list):
+            continue
+        for index in selected:
+            if isinstance(index, int) and 0 <= index < len(anchors):
+                if region_id not in ids_by_index[index]:
+                    ids_by_index[index].append(region_id)
+    return ids_by_index
+
+
+def _promotion_review_metadata(manifest: dict[str, Any]) -> dict[str, str]:
+    review = manifest.get("review_decision_applied")
+    if not isinstance(review, dict):
+        promotion = manifest.get("promotion", {})
+        if isinstance(promotion, dict):
+            review = promotion.get("review_decision_applied")
+    if not isinstance(review, dict):
+        return {}
+    metadata: dict[str, str] = {}
+    for source, target in (
+        ("decision", "review-decision"),
+        ("case_id", "review-case-id"),
+        ("source_review_decision", "review-decision-source"),
+    ):
+        value = review.get(source)
+        if isinstance(value, str) and value:
+            metadata[target] = value
+    return metadata
+
+
+def _manifest_anchor_svg_group(
+    anchor: dict[str, Any],
+    *,
+    index: int,
+    promotion_state: str,
+    region_ids: list[str],
+    review_metadata: dict[str, str],
+) -> str:
+    anchor_id = str(anchor.get("id") or f"anchor-{index:04d}")
+    attrs = {
+        "id": _svg_node_id(anchor_id, index=index),
+        "data-morphea-anchor-id": anchor_id,
+        "data-anchor-index": str(index),
+        "data-promotion-state": promotion_state,
+    }
+    if region_ids:
+        attrs["data-promotion-regions"] = " ".join(region_ids)
+    attrs.update({f"data-{key}": value for key, value in review_metadata.items()})
+    return f"<g{_svg_attrs(attrs)}>{_manifest_anchor_to_svg(anchor)}</g>"
+
+
+def _svg_attrs(attrs: dict[str, str]) -> str:
+    return "".join(
+        f' {name}="{escape(str(value), quote=True)}"'
+        for name, value in attrs.items()
+        if value
+    )
+
+
+def _svg_node_id(anchor_id: str, *, index: int) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_.:-]+", "-", anchor_id).strip("-")
+    if not slug:
+        slug = f"anchor-{index:04d}"
+    return f"morphea-anchor-{index:04d}-{slug}"
 
 
 def _manifest_anchor_to_svg(anchor: dict[str, Any]) -> str:

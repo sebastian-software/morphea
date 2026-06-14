@@ -355,6 +355,13 @@ Deliverables:
 - stable ids linking SVG nodes to source regions and review decisions;
 - export summaries with promoted, fallback, rejected, and deferred counts.
 
+Current implementation:
+
+- `promotion-export` can regenerate promoted and fallback SVG partitions plus a
+  JSON export summary. Exported shapes are wrapped in stable metadata nodes
+  carrying anchor id, anchor index, promotion state, source promotion region
+  ids, and applied review-decision metadata when present.
+
 Exit criteria:
 
 - green regions can be consumed independently of rejected candidates;

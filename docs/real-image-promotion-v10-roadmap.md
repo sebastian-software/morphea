@@ -495,6 +495,9 @@ Export policy:
 - rejected semantic candidates stay in debug artifacts;
 - deferred regions are visible in manifests and reports;
 - groups preserve semantic names and provenance ids.
+- exported promotion SVG nodes carry stable anchor, promotion-region, and
+  applied-review metadata so trusted output can be inspected without guessing
+  which manifest record produced each node.
 
 Exit criteria:
 

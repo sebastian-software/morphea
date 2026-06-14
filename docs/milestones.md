@@ -273,6 +273,9 @@ Implemented so far:
 - cut-out strokes are assigned to a `cutout_overlays` layer.
 - cut-out export policy records the default `overlay_stroke` strategy and
   whether the anchor is eligible for negative-mask SVG export.
+- promotion SVG exports wrap each emitted shape in a stable metadata node with
+  anchor id, anchor index, promotion state, source promotion region ids, and
+  applied review-decision metadata when present.
 - `morphea vectorize --cutout-export negative_mask` writes editable cut-out
   strokes into an SVG mask instead of painting visible white overlay strokes;
   run directories apply the same export option to `output.svg`.
