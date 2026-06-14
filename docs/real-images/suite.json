@@ -388,6 +388,16 @@
             "max_hole_count": 0,
             "max_cutout_count": 0,
             "max_disconnected_components": 1,
+            "required_topology_descriptors": [
+              "closed",
+              "single_component"
+            ],
+            "forbidden_topology_descriptors": [
+              "multi_component",
+              "holes",
+              "cutouts",
+              "nested_contours"
+            ],
             "severity": "red",
             "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds."
           }

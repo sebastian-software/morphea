@@ -1021,6 +1021,9 @@ Implemented so far:
   profiles, and candidate rejection counts.
 - source-region topology gates can require or forbid descriptor labels such as
   `single_component`, `multi_component`, or `nested_contours`.
+- the UI radio-control source region uses descriptor gates to require one
+  closed component and reject multi-component, holed, cutout, or nested
+  candidates.
 - checked promotion runs include Candidate Rejections in `promotion-review.md`,
   so shape/topology reject reasons are reviewable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown

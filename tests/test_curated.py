@@ -1264,6 +1264,11 @@ class CuratedSuiteTests(unittest.TestCase):
                     "expected_kinds": ["circle"],
                     "min_iou": 0.3,
                     "min_count": 1,
+                    "required_topology_descriptors": ["closed", "single_component"],
+                    "forbidden_topology_descriptors": [
+                        "multi_component",
+                        "nested_contours",
+                    ],
                     "severity": "red",
                 },
                 {
@@ -1349,6 +1354,18 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 gate_by_id["circle-region"]["evidence"]["candidate_rejections"],
                 [],
+            )
+            self.assertEqual(
+                gate_by_id["circle-region"]["evidence"][
+                    "required_topology_descriptors"
+                ],
+                ["closed", "single_component"],
+            )
+            self.assertEqual(
+                gate_by_id["circle-region"]["evidence"][
+                    "forbidden_topology_descriptors"
+                ],
+                ["multi_component", "nested_contours"],
             )
             self.assertTrue(gate_by_id["wide-circle-region"]["ok"])
             self.assertEqual(
@@ -1473,6 +1490,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn(
                 "| `single-circle` | `circle-region` | `promoted` | "
                 "`shape_class` | `4,4,18,18` | kinds=`circle`, "
+                "requires=`closed`, `single_component`, "
+                "forbids=`multi_component`, `nested_contours`, "
                 "min_iou=0.3 | matching=1, selected=1, forbidden=0, rejected=0 | "
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "

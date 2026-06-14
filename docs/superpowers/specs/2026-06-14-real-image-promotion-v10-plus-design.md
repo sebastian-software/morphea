@@ -302,6 +302,8 @@ closed/open state, component count, holes, cutouts, and nested contours.
 Region gates can require or forbid these labels with
 `required_topology_descriptors` and `forbidden_topology_descriptors`, allowing
 single-control regions to reject multi-component or nested candidates directly.
+The real UI radio-control region now requires `closed` and `single_component`
+and forbids multi-component, hole, cutout, and nested-contour descriptors.
 
 Exit criteria:
 
