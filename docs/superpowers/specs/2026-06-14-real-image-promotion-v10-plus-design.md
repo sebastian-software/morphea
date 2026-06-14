@@ -569,8 +569,9 @@ Current implementation:
   pending decisions, and promotion exports from the same report that contains
   the decision-choice commands.
 - Harvest prep applied rows include reviewer, reason, source decision path, and
-  applied review-artifact links, keeping harvestable decisions auditable after
-  they move out of the pending queue.
+  applied review-artifact links, plus reviewed-region ids, review-promoted
+  region ids, and review-promoted anchor indexes, keeping harvestable decisions
+  auditable after they move out of the pending queue.
 
 Exit criteria:
 

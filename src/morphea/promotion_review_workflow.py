@@ -226,8 +226,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
             "",
             "## Applied Case Status",
             "",
-            "| Case | Decision | Harvestable | Block reason | Promoted anchors | Reviewer | Reason | Source decision | Review artifacts | Manifest |",
-            "| --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- |",
+            "| Case | Decision | Harvestable | Block reason | Promoted anchors | Reviewed regions | Review-promoted regions | Review-promoted anchors | Reviewer | Reason | Source decision | Review artifacts | Manifest |",
+            "| --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     applied_cases = result.get("applied_cases", [])
@@ -242,6 +242,9 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{str(item.get('harvestable', False)).lower()}` | "
                 f"{_fmt_table_code(item.get('harvest_block_reason'))} | "
                 f"{_fmt_value(item.get('promoted_anchor_count'))} | "
+                f"{_fmt_value_list(item.get('reviewed_region_ids'))} | "
+                f"{_fmt_value_list(item.get('review_promoted_region_ids'))} | "
+                f"{_fmt_value_list(item.get('review_promoted_anchor_indexes'))} | "
                 f"{_fmt_table_code(item.get('reviewer'))} | "
                 f"{_fmt_table_code(item.get('reason'))} | "
                 f"{_fmt_table_code(item.get('source_review_decision'))} | "
@@ -249,7 +252,9 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('manifest', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+        lines.append(
+            "| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |"
+        )
 
     lines.extend(
         [

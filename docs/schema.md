@@ -1198,6 +1198,13 @@ portable review evidence overlays that become actionable only when combined
 with a generated review packet or harvest config that exposes terminal
 decision templates.
 
+Harvest-prep Markdown reports keep region-scoped accepted/corrected evidence
+visible in the Applied Case Status table. Applied rows include the selected
+`reviewed_region_ids`, the gate-ok `review_promoted_region_ids`, and the
+`review_promoted_anchor_indexes` that became promoted through the review,
+alongside reviewer, reason, source decision path, review artifacts, harvest
+state, and harvest block reason.
+
 ## Review Queue and Reviewed Labels v1
 
 Written by `morphea review` and `morphea apply-review`.

@@ -1262,8 +1262,9 @@ Implemented so far:
   evidence-flag hints and aggregate readiness counts beside decision-choice
   commands when reviewer evidence is missing, pending rows preserve
   review-artifact links from the packet, and applied rows show reviewer,
-  reason, source decision path, promoted-anchor count, harvest block reason,
-  and applied review-artifact links.
+  reason, source decision path, promoted-anchor count, reviewed region ids,
+  review-promoted region ids, review-promoted anchor indexes, harvest block
+  reason, and applied review-artifact links.
 - `docs/real-images/reviews/current-deferred-decision-plan.json` records the
   current explicit reviewer outcome for the three real-image cases as
   `deferred`, keeping them visible as review evidence while excluding them from

@@ -968,6 +968,14 @@ class CliTests(unittest.TestCase):
                 ["circle-region"],
             )
             rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn(
+                "| Case | Decision | Harvestable | Block reason | Promoted anchors | Reviewed regions | Review-promoted regions | Review-promoted anchors |",
+                rendered,
+            )
+            self.assertIn(
+                "| `real-case` | `accepted` | `true` | n/a | 1 | `circle-region` | `circle-region` | `0` |",
+                rendered,
+            )
             self.assertIn("`circle-region`", rendered)
             self.assertIn("`0`", rendered)
 
