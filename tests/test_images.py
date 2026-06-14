@@ -171,9 +171,9 @@ class FlatColorImageTests(unittest.TestCase):
             max_colors=8,
         )
 
-        self.assertIn(
-            AnchorKind.STROKE_CIRCLE,
-            [anchor.kind for anchor in scene.anchors],
+        self.assertEqual(
+            sum(1 for anchor in scene.anchors if anchor.kind == AnchorKind.STROKE_CIRCLE),
+            1,
         )
 
     def test_irregular_neutral_badge_outline_stays_stroke_path(self):

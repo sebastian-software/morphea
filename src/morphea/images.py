@@ -485,12 +485,13 @@ def scene_from_flat_color_image(
             analysis_scale=mask_result.scale,
         )
     )
+    deduplicated_anchors = _deduplicate_equivalent_anchors(tuple(anchors))
     return Scene(
         width=mask_result.width,
         height=mask_result.height,
         anchors=merge_auto_mergeable_same_color_fragments(
             promote_occluded_rect_fragment_groups(
-                promote_occluded_rect_primitives(tuple(anchors))
+                promote_occluded_rect_primitives(deduplicated_anchors)
             )
         ),
         diagnostics=tuple(diagnostics),
@@ -559,6 +560,59 @@ def _neutral_composite_circle_anchors(
         anchor = choose_best_anchor(circle_candidates, scoring=scoring)
         anchors.append(_scale_anchor(_with_color(anchor, "#000000"), analysis_scale))
     return tuple(anchors)
+
+
+def _deduplicate_equivalent_anchors(
+    anchors: tuple[AnchorCandidate, ...],
+) -> tuple[AnchorCandidate, ...]:
+    seen: set[tuple[object, ...]] = set()
+    deduplicated: list[AnchorCandidate] = []
+    for anchor in anchors:
+        key = _anchor_equivalence_key(anchor)
+        if key is not None:
+            if key in seen:
+                continue
+            seen.add(key)
+        deduplicated.append(anchor)
+    return tuple(deduplicated)
+
+
+def _anchor_equivalence_key(anchor: AnchorCandidate) -> tuple[object, ...] | None:
+    if anchor.circle is not None:
+        stroke_key = None
+        if anchor.stroke is not None:
+            stroke_key = (
+                tuple(_round_float(value) for value in anchor.stroke.width_samples),
+                anchor.stroke.is_cutout,
+                anchor.stroke.cap_style,
+                anchor.stroke.join_style,
+                anchor.stroke.closed,
+            )
+        return (
+            str(anchor.kind),
+            anchor.color,
+            _point_key(anchor.circle.center),
+            _round_float(anchor.circle.radius),
+            stroke_key,
+        )
+    if anchor.ellipse is not None:
+        return (
+            str(anchor.kind),
+            anchor.color,
+            _point_key(anchor.ellipse.center),
+            _round_float(anchor.ellipse.rx),
+            _round_float(anchor.ellipse.ry),
+            _round_float(anchor.ellipse.rotation),
+        )
+    return None
+
+
+def _point_key(point: Point) -> tuple[float, float]:
+    return (_round_float(point.x), _round_float(point.y))
+
+
+def _round_float(value: float) -> float:
+    return round(float(value), 6)
 
 
 def _bounded_connected_components(
