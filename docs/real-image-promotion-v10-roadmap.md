@@ -278,8 +278,8 @@ Required gates:
 - shape-class mismatch detection for cases such as scalloped badge vs circle;
 - fragmentation and layer-depth penalties;
 - group consistency checks for grids, repeated icons, and parallel strokes;
-- visual diff summaries with red/yellow/green thresholds and region-level
-  source-vs-SVG crop deltas;
+- visual diff summaries with red/yellow/green thresholds, region-level
+  source-vs-SVG crop deltas, and named region visual failures;
 - per-family thresholds rather than one global raster score.
 
 Exit criteria:

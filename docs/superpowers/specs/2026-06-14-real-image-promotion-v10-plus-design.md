@@ -334,14 +334,18 @@ Deliverables:
 - contact sheets that highlight failed regions, not only whole-image diffs;
 - visual regression comparison against the checked-in curated snapshot.
 
-Current evidence slice: checked curated runs with `--output-dir` now attach
-`visual_delta` to each source-region gate. The delta is computed from the
-source-vs-exported-SVG crop for the configured region bounds and records crop
-bounds, size, L1 error, edge error, alpha error, and size-match status.
-`promotion_regions`, manifest promotion state, `promotion-export.json`,
-`promotion-review.md`, and the suite Region Truth table all carry the same
-region-level visual delta, so reviewers can inspect visual drift at the region
-that the semantic gate is already discussing.
+Current evidence slice: checked curated runs now attach `visual_delta` to each
+source-region gate. The delta is computed from the source-vs-exported-SVG crop
+for the configured region bounds and records crop bounds, size, L1 error, edge
+error, alpha error, and size-match status. Region gates can also set
+`max_raster_l1_error` and `max_raster_edge_error`; failures are stored as
+`visual_failures` and participate in the gate result. `promotion_regions`,
+manifest promotion state, `promotion-export.json`, `promotion-review.md`, and
+the suite Region Truth table all carry the same region-level visual delta,
+thresholds, and failures, so reviewers can inspect visual drift at the region
+that the semantic gate is already discussing. The real gold-circle region now
+passes a red region visual gate, while the real radio-control crop records a
+yellow region visual-fidelity failure after its topology gate passes.
 
 Exit criteria:
 

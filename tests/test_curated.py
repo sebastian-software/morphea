@@ -1313,6 +1313,17 @@ class CuratedSuiteTests(unittest.TestCase):
                     "severity": "red",
                 },
                 {
+                    "id": "circle-region-visual-fidelity",
+                    "gate_type": "visual_fidelity",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "min_iou": 0.3,
+                    "min_count": 1,
+                    "max_raster_l1_error": 0.01,
+                    "max_raster_edge_error": 0.01,
+                    "severity": "yellow",
+                },
+                {
                     "id": "forbid-circle-region",
                     "gate_type": "shape_class",
                     "bounds": [4, 4, 18, 18],
@@ -1433,6 +1444,9 @@ class CuratedSuiteTests(unittest.TestCase):
                 region_by_id["wide-circle-region"]["selected_anchor_indexes"],
                 [0],
             )
+            visual_delta = gate_by_id["circle-region"]["evidence"]["visual_delta"]
+            self.assertEqual(visual_delta["bounds"], [4, 4, 18, 18])
+            self.assertGreater(visual_delta["raster_l1_error"], 0.0)
             topology = gate_by_id["circle-region"]["evidence"]["topology_summary"]
             self.assertEqual(topology["closed_anchor_count"], 1)
             self.assertEqual(topology["open_anchor_count"], 0)
@@ -1452,6 +1466,33 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn(
                 "closed_anchor_count 1 > 0",
                 gate_by_id["circle-topology"]["reason"],
+            )
+            self.assertFalse(gate_by_id["circle-region-visual-fidelity"]["ok"])
+            self.assertEqual(
+                region_by_id["circle-region-visual-fidelity"]["state"],
+                "deferred",
+            )
+            self.assertEqual(
+                gate_by_id["circle-region-visual-fidelity"]["gate_type"],
+                "visual_fidelity",
+            )
+            self.assertEqual(
+                gate_by_id["circle-region-visual-fidelity"]["evidence"][
+                    "visual_thresholds"
+                ],
+                {"max_raster_edge_error": 0.01, "max_raster_l1_error": 0.01},
+            )
+            self.assertIn(
+                "region visual thresholds failed",
+                gate_by_id["circle-region-visual-fidelity"]["reason"],
+            )
+            self.assertTrue(
+                any(
+                    "raster_l1_error" in failure
+                    for failure in gate_by_id["circle-region-visual-fidelity"][
+                        "evidence"
+                    ]["visual_failures"]
+                )
             )
             topology_rejection = gate_by_id["circle-topology"]["evidence"][
                 "candidate_rejections"
@@ -1510,7 +1551,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, nested=0, "
                 "descriptors=`closed`, `single_component`, failures=n/a | "
-                "n/a |",
+                "l1=",
                 markdown,
             )
             self.assertIn(
@@ -1520,9 +1561,18 @@ class CuratedSuiteTests(unittest.TestCase):
                 "layers=0, structural=0, roles=`none`, kinds=`none` | "
                 "closed=0, open=0, holes=0, cutouts=0, nested=0, "
                 "descriptors=`empty`, failures=n/a | "
-                "n/a |",
+                "l1=0",
                 markdown,
             )
+            self.assertIn(
+                "| `single-circle` | `circle-region-visual-fidelity` | "
+                "`deferred` | `visual_fidelity` | `4,4,18,18` | "
+                "kinds=`circle`, min_iou=0.3 | matching=1, selected=1, "
+                "forbidden=0, rejected=0 |",
+                markdown,
+            )
+            self.assertIn("max_l1=0.01", markdown)
+            self.assertIn("failures=`raster_edge_error", markdown)
             self.assertIn(
                 "| `single-circle` | `circle-topology` | `rejected` | "
                 "`topology` | `4,4,18,18` | kinds=`circle`, min_iou=0.3 | "
@@ -1531,7 +1581,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, nested=0, "
                 "descriptors=`closed`, `single_component`, "
-                "failures=`closed_anchor_count 1 > 0` | n/a |",
+                "failures=`closed_anchor_count 1 > 0` | l1=",
                 markdown,
             )
 
@@ -2076,6 +2126,46 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "max_raster_l1_error"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_region_visual_threshold(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["region_gates"] = [
+                {
+                    "id": "region-visual",
+                    "gate_type": "visual_fidelity",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "max_raster_edge_error": -0.01,
+                    "severity": "yellow",
+                }
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "max_raster_edge_error"):
                 load_curated_suite(suite_path)
 
     def test_load_curated_suite_rejects_invalid_group_gate(self):

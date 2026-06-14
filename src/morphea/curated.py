@@ -99,6 +99,7 @@ PROMOTION_VISUAL_THRESHOLD_KEYS = {
     "max_raster_l1_error",
     "max_raster_edge_error",
 }
+PROMOTION_REGION_VISUAL_THRESHOLD_KEYS = PROMOTION_VISUAL_THRESHOLD_KEYS
 PROMOTION_STRUCTURE_THRESHOLD_KEYS = {
     "max_fragmentation_penalty",
     "max_layer_count",
@@ -666,6 +667,16 @@ def _check_curated_case(
             "expectations": expectation_results,
         }
     )
+    if isinstance(result.get("promotion"), dict):
+        region_visuals = _region_visual_context(
+            source,
+            scene.to_svg(
+                SvgStyle(
+                    cutout_strategy=str(config.get("cutout_export", "overlay_stroke"))
+                )
+            ),
+            background=str(config.get("background", "#ffffff")),
+        )
     if output_dir is not None:
         case_dir = output_dir / case["id"]
         vectorize_run = write_vectorize_run(
@@ -695,11 +706,6 @@ def _check_curated_case(
             metrics = manifest.get("metrics", {})
             if isinstance(metrics, dict):
                 result["metrics"] = dict(sorted(metrics.items()))
-        if isinstance(result.get("promotion"), dict):
-            region_visuals = _region_visual_context_from_run(
-                vectorize_run,
-                background=str(config.get("background", "#ffffff")),
-            )
     if isinstance(result.get("promotion"), dict):
         result["promotion_gates"] = _promotion_gate_results(
             result,
@@ -1207,6 +1213,12 @@ def _region_promotion_gates(
         ]
         topology_summary = _region_topology_summary(selected)
         topology_failures = _region_topology_failures(gate, topology_summary)
+        visual_delta = _region_visual_delta(region_visuals, bounds)
+        visual_thresholds = _region_visual_thresholds(gate)
+        visual_failures = _region_visual_threshold_failures(
+            visual_delta,
+            visual_thresholds,
+        )
         candidate_rejections = _region_gate_candidate_rejections(
             selected,
             expected_kinds=expected_kinds,
@@ -1223,6 +1235,7 @@ def _region_promotion_gates(
             and count_ok
             and not forbidden
             and not topology_failures
+            and not visual_failures
         )
         reason = _region_gate_reason(
             checked=checked,
@@ -1233,7 +1246,33 @@ def _region_promotion_gates(
             max_count=max_count if isinstance(max_count, int) else None,
             forbidden_count=len(forbidden),
             topology_failures=topology_failures,
+            visual_failures=visual_failures,
         )
+        evidence: dict[str, object] = {
+            "bounds": list(bounds) if bounds is not None else None,
+            "min_iou": min_iou,
+            "min_anchor_coverage": min_anchor_coverage,
+            "expected_kinds": expected_kinds,
+            "forbidden_kinds": forbidden_kinds,
+            "required_topology_descriptors": required_topology_descriptors,
+            "forbidden_topology_descriptors": forbidden_topology_descriptors,
+            "matching_count": len(matching),
+            "selected_count": len(selected),
+            "forbidden_count": len(forbidden),
+            "topology_summary": topology_summary,
+            "topology_failures": topology_failures,
+            "candidate_rejections": candidate_rejections,
+            "selected_anchors": _region_gate_anchor_evidence(
+                selected,
+                region_bounds=bounds,
+            ),
+            "description": gate.get("description"),
+        }
+        if visual_delta is not None:
+            evidence["visual_delta"] = visual_delta
+        if visual_thresholds:
+            evidence["visual_thresholds"] = visual_thresholds
+            evidence["visual_failures"] = visual_failures
         gates.append(
             _promotion_gate(
                 str(gate.get("id", "region_gate")),
@@ -1241,43 +1280,23 @@ def _region_promotion_gates(
                 ok=ok,
                 severity=str(gate.get("severity", "red")),
                 reason=reason,
-                evidence={
-                    "bounds": list(bounds) if bounds is not None else None,
-                    "min_iou": min_iou,
-                    "min_anchor_coverage": min_anchor_coverage,
-                    "expected_kinds": expected_kinds,
-                    "forbidden_kinds": forbidden_kinds,
-                    "required_topology_descriptors": required_topology_descriptors,
-                    "forbidden_topology_descriptors": forbidden_topology_descriptors,
-                    "matching_count": len(matching),
-                    "selected_count": len(selected),
-                    "forbidden_count": len(forbidden),
-                    "topology_summary": topology_summary,
-                    "topology_failures": topology_failures,
-                    "visual_delta": _region_visual_delta(region_visuals, bounds),
-                    "candidate_rejections": candidate_rejections,
-                    "selected_anchors": _region_gate_anchor_evidence(
-                        selected,
-                        region_bounds=bounds,
-                    ),
-                    "description": gate.get("description"),
-                },
+                evidence=evidence,
             )
         )
     return gates
 
 
-def _region_visual_context_from_run(
-    run: VectorizeRun,
+def _region_visual_context(
+    source_path: Path,
+    svg_text: str,
     *,
     background: str,
 ) -> dict[str, object]:
-    with Image.open(run.input_path) as source_image:
+    with Image.open(source_path) as source_image:
         source = _flatten_visual_audit_source(
             source_image.convert("RGBA"),
             background,
         )
-    svg_text = run.svg_path.read_text(encoding="utf-8")
     rendered = rasterized_svg_image(svg_text, background=background).convert("RGBA")
     return {
         "source": source,
@@ -1327,6 +1346,34 @@ def _region_visual_crop_box(
     if right <= left or bottom <= top:
         return None
     return (left, top, right, bottom)
+
+
+def _region_visual_thresholds(gate: dict[str, Any]) -> dict[str, float]:
+    thresholds: dict[str, float] = {}
+    for key in sorted(PROMOTION_REGION_VISUAL_THRESHOLD_KEYS):
+        value = gate.get(key)
+        if isinstance(value, (int, float)):
+            thresholds[key] = float(value)
+    return thresholds
+
+
+def _region_visual_threshold_failures(
+    visual_delta: object,
+    thresholds: dict[str, float],
+) -> list[str]:
+    if not thresholds:
+        return []
+    if not isinstance(visual_delta, dict):
+        return ["visual_delta missing"]
+    failures: list[str] = []
+    for key, limit in sorted(thresholds.items()):
+        metric_name = key.removeprefix("max_")
+        actual = visual_delta.get(metric_name)
+        if not isinstance(actual, (int, float)):
+            failures.append(f"{metric_name} missing")
+        elif float(actual) > limit:
+            failures.append(f"{metric_name} {float(actual):.6g} > {limit:.6g}")
+    return failures
 
 
 def _visual_threshold_promotion_gate(
@@ -1646,6 +1693,7 @@ def _region_gate_reason(
     max_count: int | None,
     forbidden_count: int,
     topology_failures: list[str],
+    visual_failures: list[str],
 ) -> str:
     if not checked:
         return f"case status is {status}"
@@ -1659,6 +1707,8 @@ def _region_gate_reason(
         return f"matching anchors in region: {matching_count} > {max_count}"
     if topology_failures:
         return "topology constraints failed: " + ", ".join(topology_failures)
+    if visual_failures:
+        return "region visual thresholds failed: " + ", ".join(visual_failures)
     return f"matching anchors in region: {matching_count}"
 
 
@@ -2282,11 +2332,15 @@ def _promotion_region_results(
         }
         if isinstance(gate, dict):
             evidence = gate.get("evidence")
-            if isinstance(evidence, dict) and isinstance(
-                evidence.get("visual_delta"),
-                dict,
-            ):
-                region_result["visual_delta"] = evidence["visual_delta"]
+            if isinstance(evidence, dict):
+                for visual_key in (
+                    "visual_delta",
+                    "visual_thresholds",
+                    "visual_failures",
+                ):
+                    value = evidence.get(visual_key)
+                    if value:
+                        region_result[visual_key] = value
         region_result.update(
             _promotion_region_layer_summary(
                 selected_indexes,
@@ -4019,6 +4073,17 @@ def _fmt_region_visual(evidence: dict[str, object]) -> str:
     bounds = _fmt_region_bounds(visual.get("bounds"))
     if bounds != "n/a":
         parts.append(f"crop={bounds}")
+    thresholds = evidence.get("visual_thresholds")
+    if isinstance(thresholds, dict):
+        l1_limit = thresholds.get("max_raster_l1_error")
+        if isinstance(l1_limit, (int, float)):
+            parts.append(f"max_l1={_fmt_markdown_value(l1_limit)}")
+        edge_limit = thresholds.get("max_raster_edge_error")
+        if isinstance(edge_limit, (int, float)):
+            parts.append(f"max_edge={_fmt_markdown_value(edge_limit)}")
+    failures = _fmt_markdown_list(evidence.get("visual_failures"))
+    if failures != "n/a":
+        parts.append(f"failures={failures}")
     return ", ".join(parts) if parts else "n/a"
 
 
@@ -4389,6 +4454,7 @@ def _validate_promotion_region_gates(case_id: str, gates: Any) -> None:
             gate,
             "forbidden_topology_descriptors",
         )
+        _validate_region_visual_thresholds(case_id, gate_id, gate)
         description = gate.get("description")
         if description is not None and (
             not isinstance(description, str) or not description
@@ -4396,6 +4462,22 @@ def _validate_promotion_region_gates(case_id: str, gates: Any) -> None:
             raise ValueError(
                 f"case {case_id} promotion region gate {gate_id} "
                 "description must be a string"
+            )
+
+
+def _validate_region_visual_thresholds(
+    case_id: str,
+    gate_id: str,
+    gate: dict[str, Any],
+) -> None:
+    for key in sorted(PROMOTION_REGION_VISUAL_THRESHOLD_KEYS):
+        threshold = gate.get(key)
+        if threshold is None:
+            continue
+        if not isinstance(threshold, (int, float)) or threshold < 0:
+            raise ValueError(
+                f"case {case_id} promotion region gate {gate_id} {key} "
+                "must be a non-negative number"
             )
 
 

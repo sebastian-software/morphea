@@ -103,6 +103,26 @@
             ],
             "severity": "red",
             "description": "The shoulder brooches and center gold dots must contain five editable circle anchors without relying on circles elsewhere in the image."
+          },
+          {
+            "id": "gold-circle-region-visual-fidelity",
+            "gate_type": "visual_fidelity",
+            "bounds": [
+              220,
+              480,
+              1005,
+              700
+            ],
+            "expected_kinds": [
+              "circle"
+            ],
+            "min_count": 5,
+            "min_iou": 0.0,
+            "min_anchor_coverage": 0.8,
+            "max_raster_l1_error": 0.1,
+            "max_raster_edge_error": 0.025,
+            "severity": "red",
+            "description": "The gold-circle source region should remain visually close after the five-circle semantic contract passes."
           }
         ],
         "group_gates": [
@@ -339,7 +359,8 @@
         "quality_label_review_policy": "manual_review_pending",
         "current_status": "checked_semantic_pass_manual_review_pending",
         "current_issues": [
-          "manual_review_pending"
+          "manual_review_pending",
+          "weak_visual_fidelity"
         ],
         "visual_audit_status": "contact_sheet_available",
         "visual_thresholds": {
@@ -410,6 +431,28 @@
             ],
             "severity": "red",
             "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds."
+          },
+          {
+            "id": "radio-control-region-visual-fidelity",
+            "gate_type": "visual_fidelity",
+            "bounds": [
+              176,
+              150,
+              200,
+              174
+            ],
+            "expected_kinds": [
+              "stroke_circle"
+            ],
+            "forbidden_kinds": [
+              "cubic_path"
+            ],
+            "min_count": 1,
+            "min_iou": 0.25,
+            "max_raster_l1_error": 0.12,
+            "max_raster_edge_error": 0.12,
+            "severity": "yellow",
+            "description": "The radio-control crop still needs visual review even after the topology-compatible stroke-circle anchor is recovered."
           }
         ],
         "group_gates": [
@@ -429,7 +472,8 @@
           "2026-06-13 curated-check passed current semantic expectations.",
           "2026-06-14 neutral composite anchor deduplication reduced the radio-control region from two duplicate stroke-circle anchors to one topology-compatible stroke-circle anchor.",
           "2026-06-14 text-like fallback grouping classifies the sparse black glyph fragment group as structured review evidence: shape identity, fragmentation, and provenance components no longer fail.",
-          "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure."
+          "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure.",
+          "2026-06-14 region visual-fidelity gating keeps the radio-control crop in yellow review because local L1/edge drift remains high despite the passing topology contract."
         ]
       },
       "recommended_config": {

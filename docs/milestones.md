@@ -1019,7 +1019,7 @@ Implemented so far:
   actual matching counts, topology evidence including descriptor labels and
   nested-contour counts, per-region layer-depth evidence, selected-anchor kind
   profiles, candidate rejection counts, and source-vs-exported-SVG
-  `visual_delta` metrics when the case was checked with run artifacts.
+  `visual_delta` metrics, thresholds, and failures for checked cases.
 - source-region topology gates can require or forbid descriptor labels such as
   `single_component`, `multi_component`, or `nested_contours`.
 - the UI radio-control source region uses descriptor gates to require one
@@ -1038,6 +1038,10 @@ Implemented so far:
   `promotion_regions`, manifests, exports, Region Truth, and
   `promotion-review.md`, so visual drift can be inspected at the same source
   region as the semantic gate.
+- source-region gates can set `max_raster_l1_error` and
+  `max_raster_edge_error`; the Terminaro gold-circle region now passes a red
+  region visual-fidelity gate, while the UI radio-control crop carries a
+  yellow region visual-fidelity failure after its topology contract passes.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:
