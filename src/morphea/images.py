@@ -520,12 +520,29 @@ def _neutral_composite_circle_anchors(
     )
     anchors: list[AnchorCandidate] = []
     for component in connected_components(composite_mask, min_area=min_area):
+        component_mask = BinaryMask(
+            width=composite_mask.width,
+            height=composite_mask.height,
+            pixels=component.pixels,
+        )
+        component_anchors = detect_primitive_anchors(
+            component_mask,
+            min_area=min_area,
+            thresholds=thresholds,
+        )
+        if any(
+            anchor.kind == AnchorKind.STROKE_PATH
+            and anchor.metrics.get("irregular_circular_outline") == 1.0
+            for anchor in component_anchors
+        ):
+            continue
+        candidates = primitive_candidates_for_component(
+            component,
+            thresholds=thresholds,
+        )
         circle_candidates = tuple(
             candidate
-            for candidate in primitive_candidates_for_component(
-                component,
-                thresholds=thresholds,
-            )
+            for candidate in candidates
             if candidate.kind in {AnchorKind.CIRCLE, AnchorKind.STROKE_CIRCLE}
         )
         if not circle_candidates:

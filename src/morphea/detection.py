@@ -791,6 +791,13 @@ def _circular_gap_compound_strokes(
     if len(circle_pixels) < component.area * 0.35:
         return ()
     residual_pixels = frozenset(component.pixels - circle_pixels)
+    if residual_pixels and _balanced_residual_lobes(
+        side_widths,
+        residual_ratio=len(residual_pixels) / component.area,
+    ):
+        irregular_outline = _irregular_circular_outline_path(component, stroke_width)
+        if irregular_outline is not None:
+            return (irregular_outline,)
     if (
         not residual_pixels
         and max(component.width, component.height) > thresholds.stroke_circle_min_diameter + 4
@@ -822,6 +829,42 @@ def _circular_gap_compound_strokes(
         )
 
     return tuple(anchors)
+
+
+def _balanced_residual_lobes(
+    side_widths: list[int],
+    *,
+    residual_ratio: float,
+) -> bool:
+    positive = [width for width in side_widths if width > 0]
+    if not positive:
+        return False
+    return residual_ratio <= 0.05 and max(positive) / min(positive) <= 1.25
+
+
+def _irregular_circular_outline_path(
+    component: MaskComponent,
+    stroke_width: float,
+) -> AnchorCandidate | None:
+    outline = _traced_outline(component)
+    if outline is None or len(outline) < 32:
+        return None
+    corners = _detect_outline_corners(outline)
+    smoothed = _smoothed_closed_outline(outline, window=2, pinned=corners)
+    points, _, fit_error = _fit_closed_bezier_outline(
+        smoothed,
+        max_segments=16,
+        corners=corners,
+    )
+    if len(points) < 10 or len(corners) > 2:
+        return None
+    anchor = _simple_stroke_path_anchor(
+        tuple(points),
+        stroke_width,
+        kind_metric="irregular_circular_outline",
+        closed=True,
+    )
+    return _with_metric(anchor, "closed_outline_fit_error", fit_error)
 
 
 def _circular_gap_residual_anchors(

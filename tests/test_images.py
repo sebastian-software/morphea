@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from math import cos, pi, sin
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -135,6 +136,26 @@ class FlatColorImageTests(unittest.TestCase):
         self.assertIn(
             AnchorKind.STROKE_CIRCLE,
             [anchor.kind for anchor in scene.anchors],
+        )
+
+    def test_irregular_neutral_badge_outline_stays_stroke_path(self):
+        image_path = _write_irregular_badge_outline_image()
+
+        scene = scene_from_flat_color_image(
+            image_path,
+            min_area=2,
+            color_tolerance=48,
+            max_colors=3,
+        )
+
+        self.assertEqual(
+            [anchor.kind for anchor in scene.anchors],
+            [AnchorKind.STROKE_PATH],
+        )
+        self.assertTrue(scene.anchors[0].stroke.closed)
+        self.assertEqual(
+            scene.anchors[0].metrics["irregular_circular_outline"],
+            1.0,
         )
 
     def test_transparent_background_is_ignored(self):
@@ -275,6 +296,31 @@ def _write_antialiased_radio_ring_image() -> Path:
     draw = ImageDraw.Draw(high_res)
     draw.ellipse((48, 48, 144, 144), outline="#000000", width=5)
     image = high_res.resize(image.size, Image.Resampling.LANCZOS)
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_irregular_badge_outline_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "irregular-badge-outline.png"
+    scale = 4
+    size = 64
+    center = size * scale / 2
+    high_res = Image.new("RGB", (size * scale, size * scale), "white")
+    draw = ImageDraw.Draw(high_res)
+    points = []
+    for index in range(64):
+        theta = index * 2 * pi / 64
+        radius = (26 + sin(8 * theta)) * scale
+        points.append(
+            (
+                center + cos(theta) * radius,
+                center + sin(theta) * radius,
+            )
+        )
+    draw.line(points + [points[0]], fill="black", width=5 * scale, joint="curve")
+    image = high_res.resize((size, size), Image.Resampling.LANCZOS)
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
