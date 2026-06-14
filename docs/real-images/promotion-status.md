@@ -308,7 +308,9 @@ to resolve a named terminal choice through the visible template paths, while
 direct `--decision` paths remain the most explicit override. Config-driven
 prep reports now include `decision_choice_commands` for pending cases, so each
 visible terminal template has a copy/paste command that reruns the same config
-with the selected choice.
+with the selected choice. The same report marks template readiness; generated
+terminal templates remain `needs edit` until required `reviewer` and `reason`
+fields, plus corrected-evidence fields when relevant, are filled.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

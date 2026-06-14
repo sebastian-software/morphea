@@ -520,7 +520,7 @@ Current implementation:
   `decisions` entry, passes `--decision`, or uses an explicit template-backed
   `decision_choices` / `--decision-choice` selection. When run from config, the
   prep report also renders copy/paste `decision_choice_commands` for pending
-  cases.
+  cases with template-readiness labels for missing reviewer evidence.
 
 Exit criteria:
 

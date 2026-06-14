@@ -425,7 +425,9 @@ without turning templates into implicit decisions. `decision_choices` and
 into the underlying template path explicitly; direct `--decision case=path`
 remains the final override. Config-driven prep reports also emit
 `decision_choice_commands` for pending cases, making those explicit selections
-copy/pasteable from the same Markdown report.
+copy/pasteable from the same Markdown report. The report marks template
+readiness next to those commands, so unedited generated templates clearly show
+which reviewer evidence is still missing before they can be applied.
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied

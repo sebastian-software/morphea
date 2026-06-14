@@ -772,6 +772,12 @@ class CliTests(unittest.TestCase):
                 result["pending_cases"][0]["decision_templates"],
                 templates,
             )
+            self.assertEqual(
+                result["pending_cases"][0]["decision_template_readiness"][
+                    "accepted"
+                ]["missing_fields"],
+                ["decision", "reviewer", "reason"],
+            )
             self.assertEqual(result["decision_templates"]["real-case"], templates)
             self.assertEqual(result["decision_choice_commands"], {})
             rendered = markdown.read_text(encoding="utf-8")

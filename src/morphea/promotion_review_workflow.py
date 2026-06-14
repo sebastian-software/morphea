@@ -45,6 +45,7 @@ def prepare_promotion_review_harvest(
     cases_by_id = _cases_by_id(cases)
     decision_map = decisions or {}
     template_map = _decision_template_map(cases, decision_templates)
+    template_readiness = _decision_template_readiness(template_map, base_dir)
     choice_command_map = _decision_choice_commands(review_config, template_map)
     unknown_cases = sorted(set(decision_map) - set(cases_by_id))
     if unknown_cases:
@@ -87,6 +88,7 @@ def prepare_promotion_review_harvest(
         base_dir=base_dir,
         run_root=run_root_path,
         decision_templates=template_map,
+        decision_template_readiness=template_readiness,
         decision_choice_commands=choice_command_map,
     )
     harvest_cfg = _harvest_curated_config(
@@ -121,6 +123,7 @@ def prepare_promotion_review_harvest(
         "pending_case_count": len(pending_cases),
         "pending_cases": pending_cases,
         "decision_templates": template_map,
+        "decision_template_readiness": template_readiness,
         "decision_choice_commands": choice_command_map,
         "harvest_config": harvest_cfg,
         "harvest_config_path": str(harvest_config) if harvest_config else None,
@@ -220,7 +223,11 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
     else:
         lines.append("| n/a | n/a | n/a | n/a | n/a |")
 
-    _append_decision_choice_commands(lines, result.get("decision_choice_commands"))
+    _append_decision_choice_commands(
+        lines,
+        result.get("decision_choice_commands"),
+        result.get("decision_template_readiness"),
+    )
 
     config_path = result.get("harvest_config_path")
     commands = result.get("next_commands", [])
@@ -270,6 +277,7 @@ def _packet_review_status(
     base_dir: Path,
     run_root: Path,
     decision_templates: dict[str, dict[str, str]],
+    decision_template_readiness: dict[str, dict[str, dict[str, object]]],
     decision_choice_commands: dict[str, dict[str, str]],
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     applied_cases: list[dict[str, object]] = []
@@ -304,6 +312,10 @@ def _packet_review_status(
                     ),
                     "review_decision": case.get("review_decision_state", "n/a"),
                     "decision_templates": decision_templates.get(case_id, {}),
+                    "decision_template_readiness": decision_template_readiness.get(
+                        case_id,
+                        {},
+                    ),
                     "decision_choice_commands": decision_choice_commands.get(
                         case_id,
                         {},
@@ -312,6 +324,90 @@ def _packet_review_status(
                 }
             )
     return applied_cases, pending_cases
+
+
+def _decision_template_readiness(
+    decision_templates: dict[str, dict[str, str]],
+    base_dir: Path,
+) -> dict[str, dict[str, dict[str, object]]]:
+    readiness: dict[str, dict[str, dict[str, object]]] = {}
+    for case_id, templates in sorted(decision_templates.items()):
+        case_readiness: dict[str, dict[str, object]] = {}
+        for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS:
+            template = templates.get(decision)
+            if not template:
+                continue
+            case_readiness[decision] = _terminal_template_readiness(
+                decision=decision,
+                template_path=_resolve_path(template, base_dir),
+            )
+        if case_readiness:
+            readiness[case_id] = case_readiness
+    return readiness
+
+
+def _terminal_template_readiness(
+    *,
+    decision: str,
+    template_path: Path,
+) -> dict[str, object]:
+    try:
+        data = json.loads(template_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {
+            "path": str(template_path),
+            "ready": False,
+            "missing_fields": ["template_file"],
+        }
+    except json.JSONDecodeError:
+        return {
+            "path": str(template_path),
+            "ready": False,
+            "missing_fields": ["template_json"],
+        }
+    if not isinstance(data, dict):
+        return {
+            "path": str(template_path),
+            "ready": False,
+            "missing_fields": ["template_object"],
+        }
+    missing = _terminal_template_missing_fields(decision, data)
+    return {
+        "path": str(template_path),
+        "ready": not missing,
+        "missing_fields": missing,
+    }
+
+
+def _terminal_template_missing_fields(
+    decision: str,
+    data: dict[str, object],
+) -> list[str]:
+    missing: list[str] = []
+    if data.get("decision") != decision:
+        missing.append("decision")
+    if not _non_empty_string(data.get("reviewer")):
+        missing.append("reviewer")
+    if not _non_empty_string(data.get("reason")):
+        missing.append("reason")
+    if decision == "corrected":
+        if not _non_empty_string(data.get("correction_notes")):
+            missing.append("correction_notes")
+        if not _non_empty_string_list(data.get("corrected_artifacts")):
+            missing.append("corrected_artifacts")
+    return missing
+
+
+def _non_empty_string(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _non_empty_string_list(value: object) -> bool:
+    return (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(item, str) and bool(item.strip()) for item in value)
+    )
 
 
 def _decision_choice_commands(
@@ -495,9 +591,11 @@ def _fmt_decision_templates(value: object) -> str:
 def _append_decision_choice_commands(
     lines: list[str],
     value: object,
+    readiness: object,
 ) -> None:
     if not isinstance(value, dict) or not value:
         return
+    readiness = readiness if isinstance(readiness, dict) else {}
     block = ["", "## Decision Choice Commands", ""]
     for case_id in sorted(value):
         commands = value.get(case_id)
@@ -512,9 +610,35 @@ def _append_decision_choice_commands(
             continue
         block.extend([f"### {case_id}", ""])
         for decision, command in command_items:
-            block.extend([f"- `{decision}`", "```sh", str(command), "```", ""])
+            readiness_label = _fmt_template_readiness(
+                readiness.get(case_id) if isinstance(readiness, dict) else None,
+                decision,
+            )
+            block.extend(
+                [
+                    f"- `{decision}`: {readiness_label}",
+                    "```sh",
+                    str(command),
+                    "```",
+                    "",
+                ]
+            )
     if len(block) > 3:
         lines.extend(block)
+
+
+def _fmt_template_readiness(value: object, decision: str) -> str:
+    if not isinstance(value, dict):
+        return "`unknown`"
+    item = value.get(decision)
+    if not isinstance(item, dict):
+        return "`unknown`"
+    if item.get("ready") is True:
+        return "`ready`"
+    missing = item.get("missing_fields")
+    if isinstance(missing, list) and missing:
+        return "needs edit: " + ", ".join(f"`{field}`" for field in missing)
+    return "`not_ready`"
 
 
 def _write_json(path: Path, data: Any) -> None:

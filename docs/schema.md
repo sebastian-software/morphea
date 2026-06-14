@@ -730,7 +730,10 @@ same mechanism and remain overrideable by CLI choices or direct `--decision`
 paths. When the prep run itself is driven by `--config`, pending cases also
 carry `decision_choice_commands` in JSON and Markdown, one copy/paste
 `promotion-review-harvest --config ... --decision-choice case=decision` command
-per available terminal template.
+per available terminal template. The prep report also carries
+`decision_template_readiness`, marking whether each terminal template already
+has required reviewer evidence; generated templates normally report missing
+`reviewer` and `reason` until edited.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
