@@ -518,7 +518,10 @@ Current implementation:
   are not confused with raster-token learning. Harvested labels preserve
   detected run-directory `source_image` provenance, and reviewed labels with
   valid source images are copied into pseudo datasets so they can train MLX
-  raster-token components. Training gate
+  raster-token components. MLX self-learning cycles can require those reviewed
+  image-backed raster pseudo examples with `min_mlx_raster_pseudo_examples`,
+  blocking acceptance with `mlx_raster_pseudo_examples_below_min` when the
+  threshold is not met. Training gate
   artifacts now include worst/best metric
   contributors, so rejected self-learning cycles can identify the metric,
   split, and label behind the gate decision. Training comparison artifacts now

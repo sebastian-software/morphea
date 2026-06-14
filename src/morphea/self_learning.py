@@ -876,6 +876,7 @@ def run_self_learning_cycle(
     min_train_examples_delta: int = 1,
     min_best_accuracy_delta: float = 0.0,
     max_worst_accuracy_drop: float = 0.0,
+    min_mlx_raster_pseudo_examples: int = 0,
     allow_unchanged: bool = False,
     backend: str = "centroid",
     mlx_config: MlxClassifierTrainingConfig | None = None,
@@ -1022,6 +1023,9 @@ def run_self_learning_cycle(
     )
     acceptance_gate = _self_learning_acceptance_gate(
         gate=gate,
+        model=model,
+        backend=backend,
+        min_mlx_raster_pseudo_examples=min_mlx_raster_pseudo_examples,
         curated_validation=curated_validation,
         curated_required=curated_suite is not None,
         lucide_validation=lucide_validation,
@@ -1053,6 +1057,7 @@ def run_self_learning_cycle(
         "reviewed_labels": str(reviewed_labels),
         "validation_dataset": str(validation_dataset or base_dataset),
         "training_backend": backend,
+        "min_mlx_raster_pseudo_examples": min_mlx_raster_pseudo_examples,
         "output_dir": str(output),
         "artifacts": {
             "pseudo_dataset": str(pseudo_dir / "dataset.json"),
@@ -1696,6 +1701,9 @@ def _suite_family_outcome(summary: dict[str, object]) -> str:
 def _self_learning_acceptance_gate(
     *,
     gate: dict[str, object],
+    model: dict[str, object] | None,
+    backend: str,
+    min_mlx_raster_pseudo_examples: int,
     curated_validation: dict[str, object] | None,
     curated_required: bool,
     lucide_validation: dict[str, object] | None,
@@ -1730,12 +1738,21 @@ def _self_learning_acceptance_gate(
         and suite_family_baseline_comparison.get("ok") is not True
     ):
         reasons.append("suite_family_baseline_regressed")
+    if backend == "mlx" and min_mlx_raster_pseudo_examples > 0:
+        source_summary = _model_training_source_summary(model)
+        raster_pseudo = source_summary.get("raster_pseudo_train_examples")
+        if (
+            not isinstance(raster_pseudo, int)
+            or raster_pseudo < min_mlx_raster_pseudo_examples
+        ):
+            reasons.append("mlx_raster_pseudo_examples_below_min")
     return {
         "accepted": not _blocking_acceptance_reasons(reasons),
         "reasons": reasons,
         "blocking_reasons": _blocking_acceptance_reasons(reasons),
         "curated_required": curated_required,
         "lucide_required": lucide_required,
+        "min_mlx_raster_pseudo_examples": min_mlx_raster_pseudo_examples,
         "suite_family_baseline_checked": isinstance(
             suite_family_baseline_comparison,
             dict,
@@ -1751,6 +1768,17 @@ def _validation_failure_is_known_baseline_debt(
         and baseline_comparison.get("status") == "checked"
         and baseline_comparison.get("ok") is True
     )
+
+
+def _model_training_source_summary(
+    model: dict[str, object] | None,
+) -> dict[str, object]:
+    if not isinstance(model, dict):
+        return {}
+    source_summary = model.get("training_source_summary")
+    if isinstance(source_summary, dict):
+        return source_summary
+    return {}
 
 
 def _blocking_acceptance_reasons(reasons: list[str]) -> list[str]:

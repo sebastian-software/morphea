@@ -608,7 +608,11 @@ detected `source_image` provenance, and `merge-labels` copies valid reviewed
 source images into the pseudo dataset so reviewed image-backed labels can train
 raster-token components. This is the first own-model training path in the
 reviewed loop; it is separate from MLX/SAM segmentation inference and does not
-train SAM itself.
+train SAM itself. MLX self-learning cycles can require a minimum number of
+reviewed image-backed raster pseudo examples with
+`min_mlx_raster_pseudo_examples`, blocking acceptance with
+`mlx_raster_pseudo_examples_below_min` when the MLX model only learned from
+semantic pseudo labels.
 
 Exit criteria:
 

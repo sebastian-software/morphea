@@ -983,6 +983,9 @@ Implemented so far:
   provenance, and `merge-labels` copies valid reviewed source images into the
   pseudo dataset so reviewed image-backed labels can train MLX raster-token
   components.
+- MLX self-learning can require `min_mlx_raster_pseudo_examples`, blocking
+  acceptance with `mlx_raster_pseudo_examples_below_min` when reviewed pseudo
+  labels have not actually trained raster-token components.
 
 Remaining:
 

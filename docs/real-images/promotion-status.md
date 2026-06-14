@@ -422,7 +422,10 @@ pseudo-label learning distinct from image-backed raster-component learning.
 Harvested run-directory labels now carry a detected `source_image`, and
 `merge-labels` copies valid reviewed source images into the pseudo dataset so
 reviewed image-backed labels can train raster-token components; this is own
-classifier training, not MLX/SAM segmentation fine-tuning.
+classifier training, not MLX/SAM segmentation fine-tuning. MLX self-learning
+cycles can now set `min_mlx_raster_pseudo_examples` to require those reviewed
+image-backed pseudo labels before acceptance; otherwise the cycle is rejected
+with `mlx_raster_pseudo_examples_below_min`.
 
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training

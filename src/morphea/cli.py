@@ -222,6 +222,7 @@ SELF_LEARN_CONFIG_KEYS = {
     "min_train_examples_delta",
     "min_best_accuracy_delta",
     "max_worst_accuracy_drop",
+    "min_mlx_raster_pseudo_examples",
     "allow_unchanged",
     "backend",
     "epochs",
@@ -755,6 +756,7 @@ def main(argv: list[str] | None = None) -> None:
     self_learn.add_argument("--min-train-examples-delta", type=int)
     self_learn.add_argument("--min-best-accuracy-delta", type=float)
     self_learn.add_argument("--max-worst-accuracy-drop", type=float)
+    self_learn.add_argument("--min-mlx-raster-pseudo-examples", type=int)
     self_learn.add_argument("--allow-unchanged", action="store_true")
     self_learn.add_argument("--backend", choices=("centroid", "mlx"))
     self_learn.add_argument("--epochs", type=int)
@@ -1607,6 +1609,9 @@ def main(argv: list[str] | None = None) -> None:
             min_train_examples_delta=int(cycle_config["min_train_examples_delta"]),
             min_best_accuracy_delta=float(cycle_config["min_best_accuracy_delta"]),
             max_worst_accuracy_drop=float(cycle_config["max_worst_accuracy_drop"]),
+            min_mlx_raster_pseudo_examples=int(
+                cycle_config["min_mlx_raster_pseudo_examples"]
+            ),
             allow_unchanged=bool(cycle_config["allow_unchanged"]),
             backend=str(cycle_config.get("backend", "centroid")),
             mlx_config=(
@@ -2478,6 +2483,7 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         "min_train_examples_delta": 1,
         "min_best_accuracy_delta": 0.0,
         "max_worst_accuracy_drop": 0.0,
+        "min_mlx_raster_pseudo_examples": 0,
         "allow_unchanged": False,
     }
     config.update(
@@ -2525,6 +2531,7 @@ def _resolved_self_learn_config(args: argparse.Namespace) -> dict[str, object]:
         "min_train_examples_delta",
         "min_best_accuracy_delta",
         "max_worst_accuracy_drop",
+        "min_mlx_raster_pseudo_examples",
         "epochs",
         "hidden_dim",
         "num_heads",

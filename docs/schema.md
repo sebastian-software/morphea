@@ -1419,6 +1419,8 @@ Top-level fields:
 - `gate`: copied gate decision, accepted flag, and reasons
 - `model`: compact model summary when retraining was accepted; MLX retraining
   includes the `training_component_summary` copied from `model.json`
+- `min_mlx_raster_pseudo_examples`: optional MLX acceptance threshold requiring
+  reviewed image-backed pseudo labels to train raster-token components
 - `curated_validation`: optional fixed-suite validation summary when
   `curated_suite` is configured
 - `lucide_validation`: optional Lucide benchmark validation summary when
@@ -1440,9 +1442,13 @@ is configured and retraining is accepted, the cycle runs `morphea lucide-check`
 with the same model override; failed Lucide validation blocks acceptance. When
 `suite_family_baseline` is configured, newly introduced primitive, real-image,
 or Lucide family regressions also block acceptance. When
-`suite_family_baseline_output` is configured, accepted cycles write the current
-`suite_family_validation` as the next baseline artifact only when reviewer,
-reason, and changelog evidence are supplied; rejected cycles report
+`backend` is `mlx` and `min_mlx_raster_pseudo_examples` is greater than zero,
+cycles also block acceptance with
+`mlx_raster_pseudo_examples_below_min` unless the accepted model's
+`training_source_summary.raster_pseudo_train_examples` reaches that threshold.
+When `suite_family_baseline_output` is configured, accepted cycles write the
+current `suite_family_validation` as the next baseline artifact only when
+reviewer, reason, and changelog evidence are supplied; rejected cycles report
 `skipped_not_accepted`, and missing review evidence reports
 `skipped_missing_review_evidence` without overwriting the requested output.
 Persisted suite-family baseline snapshots and changelog entries are portable
@@ -1490,6 +1496,9 @@ Supported fields:
 - `min_train_examples_delta`
 - `min_best_accuracy_delta`
 - `max_worst_accuracy_drop`
+- `min_mlx_raster_pseudo_examples`: MLX backend only; when greater than zero,
+  requires reviewed image-backed pseudo labels to train raster-token components
+  before the cycle can be accepted
 - `allow_unchanged`
 
 CLI arguments override values loaded from the config file.

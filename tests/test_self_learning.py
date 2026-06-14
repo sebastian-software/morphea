@@ -2473,6 +2473,128 @@ class SelfLearningTests(unittest.TestCase):
             self.assertIn("- Pseudo labels train raster components: `False`", markdown)
             self.assertIn("`token_transformer`", markdown)
 
+    def test_self_learning_cycle_can_require_mlx_raster_pseudo_examples(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=114,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=False),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    backend="mlx",
+                    min_mlx_raster_pseudo_examples=1,
+                    mlx_config=MlxClassifierTrainingConfig(
+                        epochs=1,
+                        crop_size=6,
+                        allow_unavailable=True,
+                    ),
+                )
+
+            self.assertFalse(result["accepted"])
+            self.assertIn(
+                "mlx_raster_pseudo_examples_below_min",
+                result["acceptance_gate"]["blocking_reasons"],
+            )
+            self.assertEqual(
+                result["model"]["training_source_summary"][
+                    "raster_pseudo_train_examples"
+                ],
+                0,
+            )
+
+    def test_self_learning_cycle_accepts_mlx_raster_pseudo_examples_when_present(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            source = root / "source.png"
+            Image.new("RGBA", (16, 16), (255, 255, 255, 255)).save(source)
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=115,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+            reviewed_payload = json.loads(reviewed.read_text(encoding="utf-8"))
+            reviewed_payload["accepted"][0]["source_image"] = str(source)
+            reviewed.write_text(json.dumps(reviewed_payload), encoding="utf-8")
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=False),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    backend="mlx",
+                    min_mlx_raster_pseudo_examples=1,
+                    mlx_config=MlxClassifierTrainingConfig(
+                        epochs=1,
+                        crop_size=6,
+                        allow_unavailable=True,
+                    ),
+                )
+
+            self.assertTrue(result["accepted"])
+            self.assertEqual(result["acceptance_gate"]["blocking_reasons"], [])
+            self.assertEqual(
+                result["model"]["training_source_summary"][
+                    "raster_pseudo_train_examples"
+                ],
+                1,
+            )
+
     def test_self_learning_cycle_validates_accepted_model_on_lucide_suite(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -3755,6 +3877,11 @@ class SelfLearningTests(unittest.TestCase):
                 )
             )
             self.assertEqual(result["training_backend"], "mlx")
+            self.assertEqual(result["min_mlx_raster_pseudo_examples"], 0)
+            self.assertEqual(
+                result["acceptance_gate"]["min_mlx_raster_pseudo_examples"],
+                0,
+            )
             self.assertEqual(result["model"]["retraining_backend"], "mlx")
             model = json.loads((output_dir / "model.json").read_text(encoding="utf-8"))
             self.assertEqual(model["model_type"], "mlx_transformer_primitive_classifier")
