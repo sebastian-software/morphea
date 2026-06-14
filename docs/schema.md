@@ -2036,6 +2036,15 @@ Top-level fields:
   When compared manifests expose promotion-region states, the assessment uses
   `promotion_region_state_counts`; otherwise it falls back to downstream-status
   proxy counts.
+- `segment_comparison_audit`: machine-readable RIP5 side-by-side audit with
+  `schema_version`, `ok`, suite-level `checks`, and a summary. The checks cover
+  recorded source pairs, comparison scope, an MLX/SAM candidate source,
+  per-proposal provenance, source summaries, downstream geometry-gate visibility,
+  promotion-proxy deltas, source-delta assessment records, and spatial match
+  evidence. The comparison scope passes for classical-vs-MLX/SAM source pairs and
+  for MLX/SAM prompt/runtime comparisons with explicit MLX config deltas. This
+  audit reports whether a comparison is usable as MLX/SAM evidence; it does not
+  require the MLX/SAM verdict to be `improved`.
 - `before_proposal_count`
 - `after_proposal_count`
 - `proposal_count_delta`
@@ -2063,10 +2072,11 @@ Top-level fields:
   numeric group metrics for shared proposal group ids
 
 `morphea compare-segments --markdown comparison.md` writes a scan-friendly
-Markdown summary with Source Assessment, Source Summaries, Promotion Proxy
-Deltas, Source Deltas, Spatial Match Summary, and Spatial Proposal Matches
-tables for comparing flat-color and MLX/SAM proposal outputs or for comparing
-gated and ungated segment configs. The CLI stdout summarizes the same
+Markdown summary with RIP5 Segment Comparison Audit, Source Assessment, Source
+Summaries, Promotion Proxy Deltas, Source Deltas, Spatial Match Summary, and
+Spatial Proposal Matches tables for comparing flat-color and MLX/SAM proposal
+outputs or for comparing gated and ungated segment configs. The CLI stdout
+summarizes the same
 source-level evidence with before/after sources, proposal counts, shared
 proposal count, spatial match count, mean spatial IoU, verdict, and
 green/red/manual-review deltas, so side-by-side runs with different proposal id

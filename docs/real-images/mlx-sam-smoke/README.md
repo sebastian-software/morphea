@@ -63,3 +63,10 @@ The direct `grid_points` -> `flat_color_centers` prompt comparison currently
 reports `verdict=mixed`: accepted proposals rise by 5, but rejected candidates
 also rise by 7. Use that comparison to guide prompt work; do not use the guided
 strategy as a default quality claim.
+
+Each comparison report also writes `segment_comparison_audit`. The two
+Flat-Color -> MLX/SAM comparisons and the direct prompt-strategy comparison are
+expected to report `ok=true`, 9/9 covered checks, and no missing checks. A
+`noise` or `mixed` verdict is still acceptable here because the audit measures
+whether the comparison evidence is complete, not whether MLX/SAM should be
+promoted as the default segmenter.

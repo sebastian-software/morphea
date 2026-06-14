@@ -413,6 +413,15 @@ Exit criteria:
   decrease, not by mask aesthetics alone;
 - the system remains usable without cloud APIs.
 
+Current implementation evidence: `compare-segments` reports top-level
+`segment_comparison_audit` for RIP5 side-by-side coverage. The audit requires a
+recorded classical-vs-MLX/SAM source pair or explicit MLX/SAM prompt/runtime
+delta, per-proposal source provenance, source summaries, downstream geometry-gate
+visibility, promotion-proxy deltas, source assessment verdict/basis records, and
+spatial match evidence. A `noise` or `mixed` verdict can still audit-pass because
+the audit measures evidence quality, not whether MLX/SAM should become the
+default.
+
 ### RIP6: Human Review Artifacts
 
 Purpose: make review fast enough to support a self-learning loop.

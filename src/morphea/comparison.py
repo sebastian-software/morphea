@@ -35,6 +35,22 @@ PROMOTION_REGION_DELTA_FIELDS = (
     "selected_generic_path_anchor_count",
 )
 SEGMENT_SPATIAL_MATCH_MIN_IOU = 0.5
+SEGMENT_COMPARISON_AUDIT_VERDICTS = {
+    "improved",
+    "mixed",
+    "noise",
+    "unchanged",
+    "needs_review",
+}
+SEGMENT_COMPARISON_AUDIT_BASES = {
+    "promotion_region_state_counts",
+    "downstream_status_counts_proxy",
+}
+SEGMENT_COMPARISON_PROMOTION_PROXY_KEYS = {
+    "green_promotion",
+    "manual_review",
+    "red_candidate",
+}
 
 
 def compare_snapshots(
@@ -188,7 +204,7 @@ def render_segment_manifest_comparison(
     spatial_matches = _spatial_proposal_matches(before_proposals, after_proposals)
     spatial_match_summary = _spatial_match_summary(spatial_matches)
 
-    return {
+    comparison = {
         "schema_version": 1,
         "before": before,
         "after": after,
@@ -224,6 +240,12 @@ def render_segment_manifest_comparison(
         "proposal_changes": proposal_changes,
         "proposal_group_changes": group_changes,
     }
+    comparison["segment_comparison_audit"] = _segment_comparison_audit(
+        before_data,
+        after_data,
+        comparison,
+    )
+    return comparison
 
 
 def render_segment_manifest_comparison_markdown(
@@ -249,9 +271,41 @@ def render_segment_manifest_comparison_markdown(
         f"- Added groups: {_id_list(comparison.get('added_group_ids', []))}",
         f"- Removed groups: {_id_list(comparison.get('removed_group_ids', []))}",
         "",
-        "## Source Assessment",
+        "## RIP5 Segment Comparison Audit",
         "",
     ]
+    audit = _dict_value(comparison.get("segment_comparison_audit"))
+    if audit:
+        audit_summary = _dict_value(audit.get("summary"))
+        audit_status = "pass" if audit.get("ok", False) else "fail"
+        lines.extend(
+            [
+                f"- Status: `{audit_status}`",
+                (
+                    "- Covered checks: "
+                    f"`{_fmt(audit_summary.get('covered_check_count'))}` / "
+                    f"`{_fmt(audit_summary.get('required_check_count'))}`"
+                ),
+                f"- Missing checks: {_signal_cell(audit_summary.get('missing_checks'))}",
+                f"- Verdict: {_code_cell(audit_summary.get('verdict'))}",
+                "- Promotion delta basis: "
+                f"{_code_cell(audit_summary.get('promotion_delta_basis'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        for name, covered in sorted(_dict_value(audit.get("checks")).items()):
+            lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+    else:
+        lines.append("- Status: `not_available`")
+    lines.extend(
+        [
+            "",
+            "## Source Assessment",
+            "",
+        ]
+    )
     assessment = _dict_value(comparison.get("source_delta_assessment"))
     if assessment:
         lines.extend(
@@ -1080,6 +1134,227 @@ def _proposal_group_changes(
             }
         )
     return changes
+
+
+def _segment_comparison_audit(
+    before_data: dict[str, Any],
+    after_data: dict[str, Any],
+    comparison: dict[str, Any],
+) -> dict[str, Any]:
+    checks = {
+        "source_pair_recorded": _segment_audit_source_pair_recorded(comparison),
+        "comparison_scope_recorded": _segment_audit_comparison_scope_recorded(
+            comparison
+        ),
+        "mlx_sam_candidate_source": _segment_audit_has_mlx_sam_source(comparison),
+        "proposal_provenance": _segment_audit_proposal_provenance(
+            before_data,
+            after_data,
+        ),
+        "source_summaries": _segment_audit_source_summaries(comparison),
+        "geometry_gate_visibility": _segment_audit_geometry_gate_visibility(
+            before_data,
+            after_data,
+            comparison,
+        ),
+        "promotion_proxy_deltas": _segment_audit_promotion_proxy_deltas(comparison),
+        "source_delta_assessment": _segment_audit_source_delta_assessment(comparison),
+        "spatial_match_evidence": _segment_audit_spatial_match_evidence(comparison),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    assessment = _dict_value(comparison.get("source_delta_assessment"))
+    spatial_summary = _dict_value(comparison.get("spatial_match_summary"))
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "before_source": comparison.get("before_source", "unknown"),
+            "after_source": comparison.get("after_source", "unknown"),
+            "verdict": assessment.get("verdict", "n/a"),
+            "promotion_delta_basis": assessment.get("promotion_delta_basis", "n/a"),
+            "uses_region_promotion_labels": bool(
+                assessment.get("uses_region_promotion_labels", False)
+            ),
+            "green_promotion_delta": assessment.get("green_promotion_delta", 0.0),
+            "red_candidate_delta": assessment.get("red_candidate_delta", 0.0),
+            "manual_review_delta": assessment.get("manual_review_delta", 0.0),
+            "proposal_count_delta": comparison.get("proposal_count_delta", 0),
+            "spatial_match_count": comparison.get("spatial_match_count", 0),
+            "spatial_mean_iou": spatial_summary.get("mean_bbox_iou"),
+            "positive_signals": _list_value(assessment.get("positive_signals")),
+            "risk_signals": _list_value(assessment.get("risk_signals")),
+        },
+    }
+
+
+def _segment_audit_source_pair_recorded(comparison: dict[str, Any]) -> bool:
+    return all(
+        isinstance(comparison.get(key), str)
+        and comparison.get(key)
+        and comparison.get(key) != "unknown"
+        for key in ("before_source", "after_source")
+    )
+
+
+def _segment_audit_comparison_scope_recorded(comparison: dict[str, Any]) -> bool:
+    before_source = comparison.get("before_source")
+    after_source = comparison.get("after_source")
+    if not isinstance(before_source, str) or not isinstance(after_source, str):
+        return False
+    if before_source != after_source:
+        return True
+    if before_source != "mlx_sam":
+        return False
+    mlx_delta_keys = {
+        "mlx_max_masks",
+        "mlx_model_path",
+        "mlx_prompt_strategy",
+        "mlx_score_threshold",
+        "mlx_timeout_seconds",
+    }
+    return any(
+        isinstance(delta, dict) and delta.get("key") in mlx_delta_keys
+        for delta in _list_value(comparison.get("config_deltas"))
+    )
+
+
+def _segment_audit_has_mlx_sam_source(comparison: dict[str, Any]) -> bool:
+    return "mlx_sam" in {
+        comparison.get("before_source"),
+        comparison.get("after_source"),
+    }
+
+
+def _segment_audit_proposal_provenance(
+    before_data: dict[str, Any],
+    after_data: dict[str, Any],
+) -> bool:
+    return _segment_manifest_provenance_ok(
+        before_data
+    ) and _segment_manifest_provenance_ok(after_data)
+
+
+def _segment_manifest_provenance_ok(data: dict[str, Any]) -> bool:
+    source = _backend_source(data)
+    proposals = _list_value(data.get("proposals"))
+    if source == "unknown" or not proposals:
+        return False
+    for proposal in proposals:
+        if not isinstance(proposal, dict):
+            return False
+        if proposal.get("source") != source:
+            return False
+        if not isinstance(proposal.get("id"), str) or not proposal.get("id"):
+            return False
+        if proposal.get("status") not in {"proposed", "deferred", "rejected"}:
+            return False
+    return True
+
+
+def _segment_audit_source_summaries(comparison: dict[str, Any]) -> bool:
+    summaries = _list_value(comparison.get("source_summaries"))
+    if len(summaries) != 2:
+        return False
+    for summary in summaries:
+        if not isinstance(summary, dict):
+            return False
+        if summary.get("source") in {None, "", "unknown"}:
+            return False
+        if not isinstance(summary.get("proposal_count"), int):
+            return False
+        if not isinstance(summary.get("downstream_status_counts"), dict):
+            return False
+        if not isinstance(summary.get("status_counts"), dict):
+            return False
+    return True
+
+
+def _segment_audit_geometry_gate_visibility(
+    before_data: dict[str, Any],
+    after_data: dict[str, Any],
+    comparison: dict[str, Any],
+) -> bool:
+    summaries = _list_value(comparison.get("source_summaries"))
+    if any(
+        not _dict_value(summary).get("downstream_status_counts")
+        for summary in summaries
+    ):
+        return False
+    return _segment_manifest_downstream_status_ok(
+        before_data
+    ) and _segment_manifest_downstream_status_ok(after_data)
+
+
+def _segment_manifest_downstream_status_ok(data: dict[str, Any]) -> bool:
+    proposals = _list_value(data.get("proposals"))
+    return bool(proposals) and all(
+        isinstance(proposal, dict)
+        and proposal.get("downstream_status") in {"accepted", "pending", "rejected"}
+        for proposal in proposals
+    )
+
+
+def _segment_audit_promotion_proxy_deltas(comparison: dict[str, Any]) -> bool:
+    deltas = _list_value(comparison.get("promotion_proxy_deltas"))
+    if len(deltas) != len(SEGMENT_COMPARISON_PROMOTION_PROXY_KEYS):
+        return False
+    keys = {
+        delta.get("key")
+        for delta in deltas
+        if isinstance(delta, dict)
+        and delta.get("group") == "promotion_proxy_counts"
+        and delta.get("source_group") == "downstream_status_counts"
+        and _is_number(delta.get("before"))
+        and _is_number(delta.get("after"))
+        and _is_number(delta.get("delta"))
+    }
+    return keys == SEGMENT_COMPARISON_PROMOTION_PROXY_KEYS
+
+
+def _segment_audit_source_delta_assessment(comparison: dict[str, Any]) -> bool:
+    assessment = _dict_value(comparison.get("source_delta_assessment"))
+    return (
+        assessment.get("verdict") in SEGMENT_COMPARISON_AUDIT_VERDICTS
+        and assessment.get("promotion_delta_basis") in SEGMENT_COMPARISON_AUDIT_BASES
+        and isinstance(assessment.get("uses_region_promotion_labels"), bool)
+        and _is_number(assessment.get("green_promotion_delta"))
+        and _is_number(assessment.get("red_candidate_delta"))
+        and _is_number(assessment.get("manual_review_delta"))
+        and _is_number(assessment.get("proposal_count_delta"))
+        and isinstance(assessment.get("positive_signals"), list)
+        and isinstance(assessment.get("risk_signals"), list)
+    )
+
+
+def _segment_audit_spatial_match_evidence(comparison: dict[str, Any]) -> bool:
+    summary = _dict_value(comparison.get("spatial_match_summary"))
+    matches = _list_value(comparison.get("spatial_matches"))
+    count = comparison.get("spatial_match_count")
+    if not isinstance(count, int) or count <= 0:
+        return False
+    if summary.get("count") != count or len(matches) != count:
+        return False
+    if comparison.get("spatial_match_min_iou") != SEGMENT_SPATIAL_MATCH_MIN_IOU:
+        return False
+    for key in ("mean_bbox_iou", "min_bbox_iou", "max_bbox_iou"):
+        value = summary.get(key)
+        if not _is_number(value) or float(value) < SEGMENT_SPATIAL_MATCH_MIN_IOU:
+            return False
+    for match in matches:
+        if not isinstance(match, dict):
+            return False
+        if not _is_number(match.get("bbox_iou")):
+            return False
+        if float(match["bbox_iou"]) < SEGMENT_SPATIAL_MATCH_MIN_IOU:
+            return False
+        for key in ("before_id", "after_id"):
+            if not isinstance(match.get(key), str) or not match.get(key):
+                return False
+    return True
 
 
 def _segment_source_summary(

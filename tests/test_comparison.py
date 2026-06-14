@@ -251,7 +251,15 @@ class SnapshotComparisonTests(unittest.TestCase):
         self.assertEqual(match["before_id"], "flat_color-0000")
         self.assertEqual(match["after_id"], "mlx_sam-0000")
         self.assertGreater(match["bbox_iou"], 0.7)
+        audit = comparison["segment_comparison_audit"]
+        self.assertTrue(audit["ok"])
+        self.assertEqual(audit["summary"]["missing_checks"], [])
+        self.assertEqual(audit["summary"]["before_source"], "flat_color")
+        self.assertEqual(audit["summary"]["after_source"], "mlx_sam")
+        self.assertEqual(audit["summary"]["spatial_match_count"], 1)
         markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn("## RIP5 Segment Comparison Audit", markdown)
+        self.assertIn("- Status: `pass`", markdown)
         self.assertIn("Spatial Match Summary", markdown)
         self.assertIn("Spatial Proposal Matches", markdown)
         self.assertIn("`flat_color-0000`", markdown)
@@ -481,6 +489,43 @@ class SnapshotComparisonTests(unittest.TestCase):
         self.assertIn(
             "proposal_count_increase_without_green_gain",
             assessment["risk_signals"],
+        )
+
+    def test_segment_comparison_audit_flags_missing_provenance(self):
+        comparison = render_segment_manifest_comparison(
+            _segment_manifest(
+                source="flat_color",
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                    }
+                ],
+            ),
+            _segment_manifest(
+                source="mlx_sam",
+                proposals=[
+                    {
+                        "id": "mlx_sam-0000",
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                    }
+                ],
+            ),
+            before="flat-color.json",
+            after="mlx-sam.json",
+        )
+
+        audit = comparison["segment_comparison_audit"]
+        self.assertFalse(audit["ok"])
+        self.assertEqual(
+            audit["summary"]["missing_checks"],
+            [
+                "proposal_provenance",
+                "spatial_match_evidence",
+            ],
         )
 
     def test_render_segment_manifest_comparison_uses_region_promotion_labels(self):

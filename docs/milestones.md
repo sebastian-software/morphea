@@ -664,6 +664,11 @@ Implemented so far:
 - segment comparisons summarize spatial matches with mean/min/max IoU and
   downstream/anchor transition counts, making prompt-strategy runs comparable
   without opening every raw match row.
+- segment comparisons include `segment_comparison_audit`, a machine-readable
+  RIP5 evidence block for classical-vs-MLX/SAM source pairs or explicit
+  MLX/SAM prompt/runtime deltas, proposal provenance, source summaries,
+  downstream geometry-gate visibility, promotion-proxy deltas, source assessment
+  verdict/basis records, and spatial match evidence.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

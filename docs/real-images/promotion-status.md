@@ -360,6 +360,17 @@ rejected, or deferred outcome without stripping pending state manually. Template
 guidance now marks reviewer and reason as required for every terminal decision,
 and marks correction notes/artifacts as required for `corrected`.
 
+## RIP5 Progress
+
+`morphea compare-segments` now writes `segment_comparison_audit`, a
+machine-readable side-by-side audit for MLX/SAM proposal experiments. It checks
+that a comparison records a classical-vs-MLX/SAM source pair or explicit MLX/SAM
+prompt/runtime delta, proposal provenance, source summaries, downstream
+geometry-gate visibility, promotion-proxy deltas, source assessment
+verdict/basis records, and spatial match evidence. The audit is evidence-focused:
+a `noise` or `mixed` source assessment can still audit-pass when the report
+clearly proves why MLX/SAM should not be promoted by default.
+
 `morphea promotion-apply-review` consumes an edited terminal
 `review-decision.json`, rejects still-pending decisions, requires reviewer and
 reason evidence, writes an applied review summary JSON/Markdown, and can
