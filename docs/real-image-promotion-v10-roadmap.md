@@ -403,10 +403,11 @@ config exists, the review packet and gallery also expose per-case
 surface contains the no-JSON-edit `promotion-review-harvest --decision-choice`
 path directly.
 Review packets now also list gate-ok `reviewable_regions` with stable region
-ids, gate types, states, reasons, and selected-anchor counts. Accepted and
-corrected harvest-choice hints include matching `--reviewed-region
-case=region-id` examples, making region-scoped acceptance visible without
-opening `promotion-regions.json`.
+ids, gate types, states, reasons, and selected-anchor counts, plus a packet
+summary of reviewable region cases, total regions, selected anchors, states,
+and gate types. Accepted and corrected harvest-choice hints include matching
+`--reviewed-region case=region-id` examples, making region-scoped acceptance
+visible without opening `promotion-regions.json`.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal

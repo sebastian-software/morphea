@@ -559,10 +559,11 @@ Current implementation:
   initial reviewer surface contains the no-JSON-edit harvest path directly.
   The packet also derives gate-ok `reviewable_regions` from promotion-region
   state and renders stable region ids, gate types, states, selected-anchor
-  counts, and reasons. Accepted/corrected choice hints include matching
-  `--reviewed-region case=region-id` flags, so reviewers can choose a
-  region-scoped path from the first packet instead of opening raw
-  `promotion-regions.json`.
+  counts, and reasons, plus a packet-level summary of reviewable region cases,
+  total regions, selected anchors, states, and gate types. Accepted/corrected
+  choice hints include matching `--reviewed-region case=region-id` flags, so
+  reviewers can choose a region-scoped path from the first packet instead of
+  opening raw `promotion-regions.json`.
 - `curated-check --run --output-dir --markdown --snapshot` remains the lower
   level suite-run entry point for explicit artifact paths.
 - `promotion-review-harvest` is the review-to-harvest bridge: it applies only

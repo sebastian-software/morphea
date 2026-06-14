@@ -593,6 +593,16 @@ class CuratedSuiteTests(unittest.TestCase):
                 {"current_quality_label": ["simple-circle"]},
             )
             self.assertEqual(
+                review_packet["reviewable_region_summary"],
+                {
+                    "case_count": 1,
+                    "region_count": 1,
+                    "selected_anchor_count": 1,
+                    "state_counts": {"deferred": 1},
+                    "gate_type_counts": {"shape_class": 1},
+                },
+            )
+            self.assertEqual(
                 review_packet["cases"][0]["case_id"],
                 "simple-circle",
             )
@@ -685,6 +695,11 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn(
                 "| `current_quality_label` | `simple-circle` |",
+                review_packet_markdown,
+            )
+            self.assertIn(
+                "- Reviewable regions: 1 regions, 1 cases, 1 anchors; "
+                "states=`deferred`=1; gates=`shape_class`=1",
                 review_packet_markdown,
             )
             self.assertIn("| `simple-circle` | `deferred` |", review_packet_markdown)

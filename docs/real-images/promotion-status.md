@@ -343,13 +343,14 @@ the selected `promotion-review-harvest --config ... --decision-choice ...`
 command.
 The initial review packet now derives `reviewable_regions` from gate-ok
 promotion regions and renders them in JSON/Markdown with region ids, gate
-types, states, selected-anchor counts, and reasons. For accepted/corrected
-harvest choices, the packet-level evidence hints include the matching
-`--reviewed-region case=region-id` flags, so a reviewer can start a
-region-scoped applied decision from the first packet without opening raw
-promotion-region JSON. The follow-up harvest-prep JSON/Markdown preserves
-those region summaries and repeats the reviewed-region flags beside
-accepted/corrected choice commands. It also writes a
+types, states, selected-anchor counts, and reasons, plus a packet-level
+`reviewable_region_summary` with case, region, anchor, state, and gate-type
+counts. For accepted/corrected harvest choices, the packet-level evidence
+hints include the matching `--reviewed-region case=region-id` flags, so a
+reviewer can start a region-scoped applied decision from the first packet
+without opening raw promotion-region JSON. The follow-up harvest-prep
+JSON/Markdown preserves those region summaries and repeats the reviewed-region
+flags beside accepted/corrected choice commands. It also writes a
 `reviewable_region_summary` with applied reviewed-region counts,
 review-promoted region counts, harvestable reviewed-region counts, pending
 region counts, and applied decision counts, making region-evidence progress

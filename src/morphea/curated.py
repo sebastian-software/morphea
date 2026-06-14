@@ -2829,6 +2829,7 @@ def _review_packet(report: dict[str, Any]) -> dict[str, object]:
         "manual_review_count": sum(
             1 for case in cases if case.get("editability_decision") == "manual_review"
         ),
+        "reviewable_region_summary": _review_packet_region_summary(cases),
         "issue_groups": _review_packet_groups(cases, "issue_tags"),
         "failed_gate_groups": _review_packet_groups(cases, "failed_gate_ids"),
         "cases": cases,
@@ -2925,6 +2926,42 @@ def _review_packet_requirements() -> dict[str, list[str]]:
             "corrected_artifacts",
         ],
     }
+
+
+def _review_packet_region_summary(cases: list[dict[str, object]]) -> dict[str, object]:
+    region_count = 0
+    selected_anchor_count = 0
+    case_count = 0
+    state_counts: dict[str, int] = {}
+    gate_type_counts: dict[str, int] = {}
+    for case in cases:
+        regions = case.get("reviewable_regions")
+        if not isinstance(regions, list) or not regions:
+            continue
+        case_has_regions = False
+        for region in regions:
+            if not isinstance(region, dict):
+                continue
+            region_count += 1
+            case_has_regions = True
+            selected_anchor_count += _int_value(region.get("selected_anchor_count"))
+            state = str(region.get("state") or "n/a")
+            gate_type = str(region.get("gate_type") or "n/a")
+            state_counts[state] = state_counts.get(state, 0) + 1
+            gate_type_counts[gate_type] = gate_type_counts.get(gate_type, 0) + 1
+        if case_has_regions:
+            case_count += 1
+    return {
+        "case_count": case_count,
+        "region_count": region_count,
+        "selected_anchor_count": selected_anchor_count,
+        "state_counts": dict(sorted(state_counts.items())),
+        "gate_type_counts": dict(sorted(gate_type_counts.items())),
+    }
+
+
+def _int_value(value: object) -> int:
+    return int(value) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _reviewable_region_summaries(value: object) -> list[dict[str, object]]:
@@ -3040,6 +3077,18 @@ def _review_packet_groups(
     return {key: groups[key] for key in sorted(groups)}
 
 
+def _fmt_review_packet_region_summary(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    return (
+        f"{_fmt_markdown_value(value.get('region_count'))} regions, "
+        f"{_fmt_markdown_value(value.get('case_count'))} cases, "
+        f"{_fmt_markdown_value(value.get('selected_anchor_count'))} anchors; "
+        f"states={_fmt_markdown_counts(value.get('state_counts'))}; "
+        f"gates={_fmt_markdown_counts(value.get('gate_type_counts'))}"
+    )
+
+
 def _render_review_packet_markdown(packet: dict[str, object]) -> str:
     cases = packet.get("cases", [])
     cases = cases if isinstance(cases, list) else []
@@ -3051,6 +3100,7 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
         f"- Deferred: {_fmt_markdown_value(packet.get('deferred_count'))}",
         f"- Rejected: {_fmt_markdown_value(packet.get('rejected_count'))}",
         f"- Manual review: {_fmt_markdown_value(packet.get('manual_review_count'))}",
+        f"- Reviewable regions: {_fmt_review_packet_region_summary(packet.get('reviewable_region_summary'))}",
     ]
     if isinstance(packet.get("review_harvest_config"), str):
         lines.append(f"- Review harvest config: `{packet['review_harvest_config']}`")
