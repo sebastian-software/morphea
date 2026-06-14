@@ -363,6 +363,9 @@ Current implementation:
   ids, and applied review-decision metadata when present. It can also write a
   Markdown export report with promoted/fallback/rejected/deferred counts and
   missing-from-promoted rows that surface region reasons.
+- curated promotion run sidecars now apply the same stable metadata wrappers to
+  `promoted.svg` and `fallback.svg` while preserving the configured cut-out
+  export strategy.
 
 Exit criteria:
 

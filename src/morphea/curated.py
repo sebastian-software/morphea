@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 from PIL import Image, ImageDraw
@@ -2053,22 +2054,38 @@ def _write_promotion_export_artifacts(
     editability_review_path = run_dir / "editability-review.md"
     review_decision_path = run_dir / "review-decision.json"
     review_templates_dir = run_dir / "review-templates"
+    promotion_artifacts = {
+        "promoted_svg": str(promoted_svg_path),
+        "fallback_svg": str(fallback_svg_path),
+        "promotion_export": str(promotion_export_path),
+        "promotion_regions": str(promotion_regions_path),
+        "promotion_review": str(promotion_review_path),
+        "editability_review": str(editability_review_path),
+        "review_decision": str(review_decision_path),
+    }
     anchor_count = len(scene.anchors)
     state_indexes = _promotion_anchor_state_indexes(
         promotion_regions,
         anchor_count=anchor_count,
     )
     promoted_indexes = set(state_indexes["promoted"])
+    promoted_order = sorted(promoted_indexes)
     fallback_indexes = [
         index for index in range(anchor_count) if index not in promoted_indexes
     ]
     style = SvgStyle(cutout_strategy=cutout_strategy)
+    export_source_manifest = _manifest_with_promotion_state(
+        manifest,
+        case_result,
+        promotion_artifacts=promotion_artifacts,
+    )
     promoted_svg_path.write_text(
         anchors_to_svg(
-            (scene.anchors[index] for index in sorted(promoted_indexes)),
+            (scene.anchors[index] for index in promoted_order),
             scene.width,
             scene.height,
             style=style,
+            metadata=_promotion_svg_metadata(export_source_manifest, promoted_order),
         ),
         encoding="utf-8",
     )
@@ -2078,6 +2095,7 @@ def _write_promotion_export_artifacts(
             scene.width,
             scene.height,
             style=style,
+            metadata=_promotion_svg_metadata(export_source_manifest, fallback_indexes),
         ),
         encoding="utf-8",
     )
@@ -2089,6 +2107,10 @@ def _write_promotion_export_artifacts(
         "fallback_only_anchor_indexes": state_indexes["fallback"],
         "rejected_anchor_indexes": state_indexes["rejected"],
         "deferred_anchor_indexes": state_indexes["deferred"],
+        "export_summary": _promotion_export_summary(
+            state_indexes,
+            promotion_regions,
+        ),
         "anchor_state_counts": {
             state: len(indexes)
             for state, indexes in state_indexes.items()
@@ -2099,6 +2121,12 @@ def _write_promotion_export_artifacts(
         "promoted_svg": str(promoted_svg_path),
         "fallback_svg": str(fallback_svg_path),
         "source_manifest_anchor_count": len(manifest.get("anchors", [])),
+        "svg_metadata": {
+            "anchor_id_attribute": "data-morphea-anchor-id",
+            "anchor_index_attribute": "data-anchor-index",
+            "promotion_state_attribute": "data-promotion-state",
+            "promotion_regions_attribute": "data-promotion-regions",
+        },
     }
     promotion_export_path.write_text(
         json.dumps(export_manifest, indent=2, sort_keys=True),
@@ -2477,6 +2505,18 @@ def _promotion_region_state_counts(value: object) -> dict[str, int]:
     )
 
 
+def _promotion_export_summary(
+    state_indexes: dict[str, list[int]],
+    promotion_regions: object,
+) -> dict[str, int]:
+    region_counts = _promotion_region_state_counts(promotion_regions)
+    summary: dict[str, int] = {}
+    for state in ("promoted", "fallback", "rejected", "deferred"):
+        summary[f"{state}_anchor_count"] = len(state_indexes.get(state, []))
+        summary[f"{state}_region_count"] = int(region_counts.get(state, 0))
+    return summary
+
+
 def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str:
     regions = export_manifest.get("regions", [])
     regions = regions if isinstance(regions, list) else []
@@ -2829,19 +2869,6 @@ def _write_manifest_promotion_state(
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict):
         return
-    metrics = case_result.get("metrics")
-    if isinstance(metrics, dict):
-        manifest["metrics"] = metrics
-    review = case_result.get("editability_review")
-    if isinstance(review, dict):
-        manifest["editability_review"] = review
-    decision = case_result.get("review_decision")
-    if isinstance(decision, dict):
-        manifest["review_decision"] = decision
-    regions = case_result.get("promotion_regions", [])
-    regions = regions if isinstance(regions, list) else []
-    gates = case_result.get("promotion_gates", [])
-    gates = gates if isinstance(gates, list) else []
     artifacts = case_result.get("artifacts", {})
     artifacts = artifacts if isinstance(artifacts, dict) else {}
     promotion_artifacts: dict[str, object] = {
@@ -2864,20 +2891,48 @@ def _write_manifest_promotion_state(
             for decision, path in sorted(review_templates.items())
             if isinstance(decision, str) and isinstance(path, str)
         }
+    manifest = _manifest_with_promotion_state(
+        manifest,
+        case_result,
+        promotion_artifacts=promotion_artifacts,
+    )
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def _manifest_with_promotion_state(
+    manifest: dict[str, Any],
+    case_result: dict[str, Any],
+    *,
+    promotion_artifacts: dict[str, object] | None = None,
+) -> dict[str, Any]:
+    manifest = deepcopy(manifest)
+    metrics = case_result.get("metrics")
+    if isinstance(metrics, dict):
+        manifest["metrics"] = metrics
+    review = case_result.get("editability_review")
+    if isinstance(review, dict):
+        manifest["editability_review"] = review
+    decision = case_result.get("review_decision")
+    if isinstance(decision, dict):
+        manifest["review_decision"] = decision
+    regions = case_result.get("promotion_regions", [])
+    regions = regions if isinstance(regions, list) else []
+    gates = case_result.get("promotion_gates", [])
+    gates = gates if isinstance(gates, list) else []
     manifest["promotion"] = {
         "case_id": case_result.get("id"),
         "summary": case_result.get("promotion_summary", {}),
         "regions": regions,
         "gates": gates,
-        "artifacts": promotion_artifacts,
+        "artifacts": promotion_artifacts or {},
     }
     anchors = manifest.get("anchors", [])
     if isinstance(anchors, list):
         _annotate_manifest_anchor_promotion(anchors, regions)
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
+    return manifest
 
 
 def _annotate_manifest_anchor_promotion(
@@ -2919,6 +2974,66 @@ def _anchor_promotion_state(refs: list[dict[str, object]]) -> str:
     if "deferred" in states:
         return "deferred"
     return "fallback"
+
+
+def _promotion_svg_metadata(
+    manifest: dict[str, Any],
+    anchor_indexes: list[int],
+) -> list[dict[str, object]]:
+    anchors = manifest.get("anchors", [])
+    anchors = anchors if isinstance(anchors, list) else []
+    review_decision = manifest.get("review_decision")
+    review_decision = review_decision if isinstance(review_decision, dict) else {}
+    promotion = manifest.get("promotion")
+    promotion = promotion if isinstance(promotion, dict) else {}
+    artifacts = promotion.get("artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    metadata: list[dict[str, object]] = []
+    for index in anchor_indexes:
+        anchor = anchors[index] if 0 <= index < len(anchors) else {}
+        anchor = anchor if isinstance(anchor, dict) else {}
+        anchor_id = str(anchor.get("id") or f"anchor-{index:04d}")
+        item: dict[str, object] = {
+            "id": _promotion_svg_node_id(anchor_id, index=index),
+            "data-morphea-anchor-id": anchor_id,
+            "data-anchor-index": index,
+            "data-promotion-state": str(anchor.get("promotion_state") or "fallback"),
+        }
+        region_ids = _promotion_anchor_region_ids(anchor)
+        if region_ids:
+            item["data-promotion-regions"] = " ".join(region_ids)
+        decision = review_decision.get("decision")
+        if isinstance(decision, str) and decision:
+            item["data-review-decision"] = decision
+        case_id = review_decision.get("case_id") or promotion.get("case_id")
+        if isinstance(case_id, str) and case_id:
+            item["data-review-case-id"] = case_id
+        review_artifact = artifacts.get("review_decision")
+        if isinstance(review_artifact, str) and review_artifact:
+            item["data-review-decision-artifact"] = review_artifact
+        metadata.append(item)
+    return metadata
+
+
+def _promotion_anchor_region_ids(anchor: dict[str, object]) -> list[str]:
+    refs = anchor.get("promotion_regions")
+    if not isinstance(refs, list):
+        return []
+    region_ids: list[str] = []
+    for ref in refs:
+        if not isinstance(ref, dict):
+            continue
+        region_id = ref.get("region_id")
+        if isinstance(region_id, str) and region_id and region_id not in region_ids:
+            region_ids.append(region_id)
+    return region_ids
+
+
+def _promotion_svg_node_id(anchor_id: str, *, index: int) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_.:-]+", "-", anchor_id).strip("-")
+    if not slug:
+        slug = f"anchor-{index:04d}"
+    return f"morphea-anchor-{index:04d}-{slug}"
 
 
 def _write_visual_audit_artifacts(

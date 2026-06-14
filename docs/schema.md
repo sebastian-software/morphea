@@ -599,6 +599,11 @@ also includes review-template paths plus top-level `editability_review` and
 `review_decision`, so the accepted-output decision and the editable
 human-review decision record are preserved with the run artifact.
 
+Curated `promoted.svg` and `fallback.svg` use the same stable promotion-node
+metadata as `morphea promotion-export`: emitted SVG shapes are wrapped with
+anchor id, anchor index, promotion state, source promotion region ids, and
+review-decision metadata.
+
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
 --fallback-svg fallback.svg -o promotion-export.json --markdown
 promotion-export.md` can regenerate the promoted/fallback SVG partition from

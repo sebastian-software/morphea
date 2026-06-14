@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from html import escape
 from math import cos, degrees, sin, sqrt
 from statistics import mean
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from morphea.anchors import (
     AnchorCandidate,
@@ -318,9 +318,11 @@ def anchors_to_svg(
     height: int,
     *,
     style: SvgStyle | None = None,
+    metadata: Iterable[Mapping[str, object]] | None = None,
 ) -> str:
     style = style or SvgStyle()
     anchor_tuple = tuple(anchors)
+    metadata_tuple = _svg_metadata_tuple(metadata, len(anchor_tuple))
     lines = [
         (
             f'<svg xmlns="http://www.w3.org/2000/svg" '
@@ -335,10 +337,24 @@ def anchors_to_svg(
     if style.cutout_strategy == "negative_mask" and any(
         _cutout_mask_eligible(anchor) for anchor in anchor_tuple
     ):
-        lines.extend(_negative_cutout_mask_elements(anchor_tuple, width, height, style))
+        lines.extend(
+            _negative_cutout_mask_elements(
+                anchor_tuple,
+                width,
+                height,
+                style,
+                metadata_tuple,
+            )
+        )
     else:
-        for anchor in anchor_tuple:
-            lines.append(f"  {anchor_to_svg_element(anchor, style)}")
+        for index, anchor in enumerate(anchor_tuple):
+            lines.append(
+                "  "
+                + _svg_metadata_group(
+                    anchor_to_svg_element(anchor, style),
+                    metadata_tuple[index],
+                )
+            )
     lines.append("</svg>")
     return "\n".join(lines)
 
@@ -483,6 +499,7 @@ def _negative_cutout_mask_elements(
     width: int,
     height: int,
     style: SvgStyle,
+    metadata: tuple[Mapping[str, object], ...],
 ) -> list[str]:
     mask_id = "morphea-cutout-mask"
     lines = [
@@ -490,17 +507,54 @@ def _negative_cutout_mask_elements(
         f'    <mask id="{mask_id}" maskUnits="userSpaceOnUse">',
         f'      <rect x="0" y="0" width="{width}" height="{height}" fill="white" />',
     ]
-    for anchor in anchors:
+    for index, anchor in enumerate(anchors):
         if _cutout_mask_eligible(anchor):
             lines.append(
-                f"      {anchor_to_svg_element(anchor, style, color_override='black')}"
+                "      "
+                + _svg_metadata_group(
+                    anchor_to_svg_element(
+                        anchor,
+                        style,
+                        color_override="black",
+                    ),
+                    metadata[index],
+                )
             )
     lines.extend(["    </mask>", "  </defs>", f'  <g mask="url(#{mask_id})">'])
-    for anchor in anchors:
+    for index, anchor in enumerate(anchors):
         if not _cutout_mask_eligible(anchor):
-            lines.append(f"    {anchor_to_svg_element(anchor, style)}")
+            lines.append(
+                "    "
+                + _svg_metadata_group(
+                    anchor_to_svg_element(anchor, style),
+                    metadata[index],
+                )
+            )
     lines.append("  </g>")
     return lines
+
+
+def _svg_metadata_tuple(
+    metadata: Iterable[Mapping[str, object]] | None,
+    count: int,
+) -> tuple[Mapping[str, object], ...]:
+    if metadata is None:
+        return tuple({} for _ in range(count))
+    values = tuple(metadata)
+    if len(values) >= count:
+        return values[:count]
+    return values + tuple({} for _ in range(count - len(values)))
+
+
+def _svg_metadata_group(element: str, metadata: Mapping[str, object]) -> str:
+    attrs = "".join(
+        f' {name}="{escape(str(value), quote=True)}"'
+        for name, value in metadata.items()
+        if value is not None and value != ""
+    )
+    if not attrs:
+        return element
+    return f"<g{attrs}>{element}</g>"
 
 
 def anchor_to_manifest(anchor: AnchorCandidate) -> dict[str, object]:

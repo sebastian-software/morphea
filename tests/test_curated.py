@@ -208,6 +208,12 @@ class CuratedSuiteTests(unittest.TestCase):
                 encoding="utf-8"
             )
             self.assertIn("<circle", promoted_svg)
+            self.assertIn('id="morphea-anchor-0000-anchor-0000"', promoted_svg)
+            self.assertIn('data-morphea-anchor-id="anchor-0000"', promoted_svg)
+            self.assertIn('data-anchor-index="0"', promoted_svg)
+            self.assertIn('data-promotion-state="promoted"', promoted_svg)
+            self.assertIn('data-promotion-regions="circle-region"', promoted_svg)
+            self.assertIn('data-review-decision="pending"', promoted_svg)
             self.assertNotIn("<circle", fallback_svg)
             promotion_export = json.loads(
                 (output_dir / "simple-circle" / "promotion-export.json").read_text(
@@ -222,6 +228,10 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 promotion_export["anchor_state_counts"],
                 {"promoted": 1},
+            )
+            self.assertEqual(
+                promotion_export["export_summary"]["promoted_anchor_count"],
+                1,
             )
             promotion_regions = json.loads(
                 (output_dir / "simple-circle" / "promotion-regions.json").read_text(
@@ -694,6 +704,33 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 promotion_export["fallback_anchor_indexes"],
                 promotion_export["rejected_anchor_indexes"],
+            )
+            self.assertEqual(
+                promotion_export["export_summary"],
+                {
+                    "deferred_anchor_count": 0,
+                    "deferred_region_count": 0,
+                    "fallback_anchor_count": 0,
+                    "fallback_region_count": 0,
+                    "promoted_anchor_count": 1,
+                    "promoted_region_count": 1,
+                    "rejected_anchor_count": 1,
+                    "rejected_region_count": 1,
+                },
+            )
+            promoted_svg = (output_dir / "two-circles" / "promoted.svg").read_text(
+                encoding="utf-8"
+            )
+            fallback_svg = (output_dir / "two-circles" / "fallback.svg").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('data-promotion-state="promoted"', promoted_svg)
+            self.assertIn('data-promotion-regions="left-circle-region"', promoted_svg)
+            self.assertIn('data-review-decision="pending"', promoted_svg)
+            self.assertIn('data-promotion-state="rejected"', fallback_svg)
+            self.assertIn(
+                'data-promotion-regions="right-circle-topology"',
+                fallback_svg,
             )
             promotion_review = (
                 output_dir / "two-circles" / "promotion-review.md"

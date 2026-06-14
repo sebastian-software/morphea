@@ -276,6 +276,9 @@ Implemented so far:
 - promotion SVG exports wrap each emitted shape in a stable metadata node with
   anchor id, anchor index, promotion state, source promotion region ids, and
   applied review-decision metadata when present.
+- curated promotion sidecars use the same stable SVG metadata nodes for
+  `promoted.svg` and `fallback.svg`, while preserving the configured cut-out
+  export strategy.
 - `morphea promotion-export --markdown promotion-export.md` writes a
   scan-friendly export report with promoted/fallback/rejected/deferred anchor
   and region counts plus missing-from-promoted rows with region reasons.
