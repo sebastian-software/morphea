@@ -435,9 +435,10 @@ explicit reviewer decisions. The review-harvest policy path is now covered by
 a regression fixture, and `promotion-review-run` now puts the
 `promotion-review-harvest --decision-choice` commands plus evidence-flag hints
 directly into the first review packet and gallery. The checked-in
-`docs/real-images/reviews/current-deferred-decision-plan.json` now records the
-current explicit review outcome: all three cases remain `deferred` because the
-contact sheets are review-useful but `promoted.svg` has no trusted promoted
-anchors, and the UI radio case still has local visual-fidelity drift. The next
-work is accepted/corrected promotion evidence for specific regions, not
-automatic promotion.
+`docs/real-images/reviews/current-deferred-decision-plan.json` records the
+conservative explicit review outcome: all three cases remain `deferred`.
+`docs/real-images/reviews/current-region-decision-plan.json` records the first
+region-scoped accepted evidence: `terminaro-tweaked` accepts only
+`gold-circle-region-shape-class` via `reviewed_region_ids`, while the opaque
+generated illustration and UI radio case remain deferred. The next work is more
+accepted/corrected region evidence, not automatic whole-case promotion.

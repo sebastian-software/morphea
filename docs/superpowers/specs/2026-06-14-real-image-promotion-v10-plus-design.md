@@ -597,7 +597,12 @@ and quality-label review-policy refinements:
    outcome through `promotion-review-harvest --decision-choice` plus explicit
    evidence flags. The current checked-in portable review plan at
    `docs/real-images/reviews/current-deferred-decision-plan.json` applies
-   explicit `deferred` decisions for all three cases.
+   explicit `deferred` decisions for all three cases. The current checked-in
+   region-scoped plan at
+   `docs/real-images/reviews/current-region-decision-plan.json` accepts only
+   the Terminaro `gold-circle-region-shape-class` region via
+   `reviewed_region_ids`; the opaque generated illustration and UI radio case
+   remain deferred.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
    review evidence. Current policy is sidecar-only: pending decisions,

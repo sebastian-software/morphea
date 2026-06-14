@@ -1180,7 +1180,28 @@ class CliTests(unittest.TestCase):
             case_dir.mkdir(parents=True)
             manifest = case_dir / "manifest.json"
             manifest.write_text(
-                json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "anchors": [
+                            {
+                                "id": "anchor-0000",
+                                "kind": "circle",
+                                "promotion_state": "deferred",
+                            }
+                        ],
+                        "promotion": {
+                            "regions": [
+                                {
+                                    "id": "circle-region",
+                                    "state": "deferred",
+                                    "gate_ok": True,
+                                    "selected_anchor_indexes": [0],
+                                }
+                            ]
+                        },
+                    }
+                ),
                 encoding="utf-8",
             )
             accepted_decision = root / "accepted.json"
@@ -1244,6 +1265,7 @@ class CliTests(unittest.TestCase):
                             "real-case": {
                                 "reviewer": "qa-plan",
                                 "reason": "portable accepted review",
+                                "reviewed_region_ids": ["circle-region"],
                             }
                         },
                     }
@@ -1275,13 +1297,19 @@ class CliTests(unittest.TestCase):
             )
             self.assertEqual(
                 result["newly_applied_decisions"][0]["review_overrides"],
-                ["reason", "reviewer"],
+                ["reason", "reviewed_region_ids", "reviewer"],
             )
             manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
             applied = manifest_data["review_decision_applied"]
             self.assertEqual(applied["source_review_decision"], str(accepted_decision))
             self.assertEqual(applied["reviewer"], "qa-plan")
             self.assertEqual(applied["reason"], "portable accepted review")
+            self.assertEqual(applied["reviewed_region_ids"], ["circle-region"])
+            self.assertEqual(
+                applied["review_promoted_region_ids"],
+                ["circle-region"],
+            )
+            self.assertEqual(manifest_data["anchors"][0]["promotion_state"], "promoted")
 
     def test_promotion_review_harvest_cli_applies_config_review_overrides(self):
         with tempfile.TemporaryDirectory() as temp_dir:

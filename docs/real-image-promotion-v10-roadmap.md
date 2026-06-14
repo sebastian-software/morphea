@@ -463,8 +463,12 @@ without embedding run-local template paths. `promotion-review-harvest` merges
 that plan into a fresh generated config before applying explicit CLI overrides.
 The current real-image review outcome is checked in at
 `docs/real-images/reviews/current-deferred-decision-plan.json`: all three
-reviewed cases remain explicitly `deferred` until accepted/corrected region
-evidence exists.
+reviewed cases remain explicitly `deferred` in the conservative baseline. The
+first accepted region plan is checked in at
+`docs/real-images/reviews/current-region-decision-plan.json`: it accepts only
+the Terminaro `gold-circle-region-shape-class` region via
+`reviewed_region_ids` while keeping the opaque generated illustration and UI
+radio case deferred.
 
 The same evidence can be supplied without editing config JSON by appending
 case-scoped CLI flags (`--reviewer case=name`, `--reason case=reason`, plus

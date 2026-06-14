@@ -1260,6 +1260,11 @@ Implemented so far:
   current explicit reviewer outcome for the three real-image cases as
   `deferred`, keeping them visible as review evidence while excluding them from
   harvestable accepted/corrected training labels.
+- `docs/real-images/reviews/current-region-decision-plan.json` records the
+  first region-scoped accepted review evidence: only the Terminaro
+  `gold-circle-region-shape-class` region is accepted via
+  `reviewed_region_ids`, while the opaque generated illustration and UI radio
+  case remain deferred.
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

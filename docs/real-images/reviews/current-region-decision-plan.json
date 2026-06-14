@@ -1,0 +1,25 @@
+{
+  "decision_choices": {
+    "chatgpt-image-2026-06-11": "deferred",
+    "terminaro-tweaked": "accepted",
+    "ui-radio-acceptance-screenshot": "deferred"
+  },
+  "decision_overrides": {
+    "chatgpt-image-2026-06-11": {
+      "reason": "Deferred after region-scope review on 2026-06-14: the opaque generated illustration is mechanically useful but has no accepted trusted region decision yet; keep it visible as review evidence and out of harvestable training.",
+      "reviewer": "codex"
+    },
+    "terminaro-tweaked": {
+      "reason": "Accepted after region-scope review on 2026-06-14: the gold circle region is gate-ok, visually bounded, and suitable as trusted circle-anchor evidence; keep the wider case quality label manual and promote only the reviewed region anchors.",
+      "reviewed_region_ids": [
+        "gold-circle-region-shape-class"
+      ],
+      "reviewer": "codex"
+    },
+    "ui-radio-acceptance-screenshot": {
+      "reason": "Deferred after region-scope review on 2026-06-14: the radio topology is mechanically useful but the radio-control visual-fidelity region remains yellow; keep it visible as review evidence and out of harvestable training.",
+      "reviewer": "codex"
+    }
+  },
+  "schema_version": 1
+}
