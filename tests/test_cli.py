@@ -367,6 +367,103 @@ class CliTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_promotion_review_harvest_cli_accepts_config_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            case_dir = run_root / "real-case"
+            case_dir.mkdir(parents=True)
+            manifest = case_dir / "manifest.json"
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(manifest)},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            deferred_decision = root / "deferred.json"
+            deferred_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "deferred",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            accepted_decision = root / "accepted.json"
+            accepted_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "accepted",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "configured-review-harvest.json"
+            harvest_config = root / "configured-harvest-curated.json"
+            config = root / "promotion-review-harvest.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "review_packet": str(review_packet),
+                        "output": str(output),
+                        "harvest_config": str(harvest_config),
+                        "run_root": str(run_root),
+                        "decisions": {"real-case": str(deferred_decision)},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        "--config",
+                        str(config),
+                        "--decision",
+                        f"real-case={accepted_decision}",
+                    ]
+                )
+
+            self.assertIn("harvestable=1", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                result["newly_applied_decisions"][0]["decision"],
+                "accepted",
+            )
+            self.assertEqual(result["harvest_config_path"], str(harvest_config))
+            manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["source_review_decision"],
+                str(accepted_decision),
+            )
+            self.assertTrue(
+                json.loads(harvest_config.read_text(encoding="utf-8"))[
+                    "require_applied_review"
+                ]
+            )
+
     def test_promotion_review_harvest_cli_reports_pending_packet_cases(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

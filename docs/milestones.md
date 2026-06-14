@@ -1200,6 +1200,9 @@ Implemented so far:
 - `morphea promotion-review-harvest review-packet.json -o review-harvest.json`
   for repeatable review-to-harvest preparation after terminal promotion review
   decisions have been selected
+- `morphea promotion-review-harvest --config promotion-review-harvest.json` for
+  repeatable review-to-harvest preparation with case-id decision maps and
+  per-case CLI overrides
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

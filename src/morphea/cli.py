@@ -286,6 +286,19 @@ REVIEW_CONFIG_KEYS = {
 }
 APPLY_REVIEW_CONFIG_KEYS = {"review", "output", "markdown"}
 MERGE_LABELS_CONFIG_KEYS = {"reviewed_labels", "output_dir"}
+PROMOTION_REVIEW_HARVEST_CONFIG_KEYS = {
+    "review_packet",
+    "output",
+    "markdown",
+    "harvest_config",
+    "decisions",
+    "suite",
+    "run_root",
+    "harvest_output",
+    "curated_report",
+    "snapshot",
+    "harvest_markdown",
+}
 CURATED_CHECK_CONFIG_KEYS = {
     "suite",
     "output",
@@ -1006,8 +1019,8 @@ def main(argv: list[str] | None = None) -> None:
             "harvest-curated config."
         ),
     )
-    promotion_review_harvest.add_argument("review_packet", type=Path)
-    promotion_review_harvest.add_argument("-o", "--output", type=Path, required=True)
+    promotion_review_harvest.add_argument("review_packet", type=Path, nargs="?")
+    promotion_review_harvest.add_argument("-o", "--output", type=Path)
     promotion_review_harvest.add_argument("--markdown", type=Path)
     promotion_review_harvest.add_argument("--harvest-config", type=Path)
     promotion_review_harvest.add_argument(
@@ -1022,6 +1035,7 @@ def main(argv: list[str] | None = None) -> None:
     promotion_review_harvest.add_argument("--curated-report", type=Path)
     promotion_review_harvest.add_argument("--snapshot", type=Path)
     promotion_review_harvest.add_argument("--harvest-markdown", type=Path)
+    promotion_review_harvest.add_argument("--config", type=Path)
 
     sweep = subcommands.add_parser(
         "sweep",
@@ -1275,18 +1289,19 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "promotion-review-harvest":
+        review_harvest_config = _resolved_promotion_review_harvest_config(args)
         result = prepare_promotion_review_harvest(
-            review_packet=args.review_packet,
-            output=args.output,
-            markdown=args.markdown,
-            harvest_config=args.harvest_config,
-            decisions=_promotion_review_decision_args(args.decision),
-            suite=args.suite,
-            run_root=args.run_root,
-            harvest_output=args.harvest_output,
-            curated_report=args.curated_report,
-            snapshot=args.snapshot,
-            harvest_markdown=args.harvest_markdown,
+            review_packet=review_harvest_config["review_packet"],
+            output=review_harvest_config["output"],
+            markdown=review_harvest_config.get("markdown"),
+            harvest_config=review_harvest_config.get("harvest_config"),
+            decisions=review_harvest_config.get("decisions"),
+            suite=review_harvest_config.get("suite"),
+            run_root=review_harvest_config.get("run_root"),
+            harvest_output=review_harvest_config.get("harvest_output"),
+            curated_report=review_harvest_config.get("curated_report"),
+            snapshot=review_harvest_config.get("snapshot"),
+            harvest_markdown=review_harvest_config.get("harvest_markdown"),
         )
         print(
             "prepared promotion review harvest "
@@ -1728,6 +1743,39 @@ def _promotion_review_decision_args(values: list[str]) -> dict[str, Path]:
             raise ValueError("promotion review decision args must be CASE_ID=path")
         decisions[case_id] = Path(path)
     return decisions
+
+
+def _resolved_promotion_review_harvest_config(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    config = _load_promotion_review_harvest_config(args.config)
+    for key in (
+        "review_packet",
+        "output",
+        "markdown",
+        "harvest_config",
+        "suite",
+        "run_root",
+        "harvest_output",
+        "curated_report",
+        "snapshot",
+        "harvest_markdown",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    decisions = dict(config.get("decisions", {}))
+    decisions.update(_promotion_review_decision_args(args.decision))
+    if decisions:
+        config["decisions"] = decisions
+    else:
+        config["decisions"] = {}
+    _require_config_paths(
+        config,
+        ("review_packet", "output"),
+        "promotion-review-harvest",
+    )
+    return config
 
 
 def _resolved_vectorize_artifact_config(
@@ -2913,6 +2961,62 @@ def _load_harvest_curated_config(path: Path) -> dict[str, object]:
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config
+
+
+def _load_promotion_review_harvest_config(
+    path: Path | None,
+) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("promotion-review-harvest config must be a JSON object")
+    unknown = sorted(set(loaded) - PROMOTION_REVIEW_HARVEST_CONFIG_KEYS)
+    if unknown:
+        msg = (
+            "unsupported promotion-review-harvest config keys: "
+            + ", ".join(unknown)
+        )
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in (
+        "review_packet",
+        "output",
+        "markdown",
+        "harvest_config",
+        "suite",
+        "run_root",
+        "harvest_output",
+        "curated_report",
+        "snapshot",
+        "harvest_markdown",
+    ):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    if "decisions" in config:
+        config["decisions"] = _promotion_review_decisions_from_config(
+            config["decisions"],
+        )
+    return config
+
+
+def _promotion_review_decisions_from_config(value: object) -> dict[str, Path]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("promotion-review-harvest decisions must be an object")
+    decisions: dict[str, Path] = {}
+    for case_id, path in value.items():
+        if not isinstance(case_id, str) or not case_id:
+            raise ValueError(
+                "promotion-review-harvest decisions must use non-empty case ids"
+            )
+        if not isinstance(path, str) or not path:
+            raise ValueError(
+                "promotion-review-harvest decisions must map case ids to paths"
+            )
+        decisions[case_id] = Path(path)
+    return decisions
 
 
 def _load_training_gate_config(path: Path) -> dict[str, object]:

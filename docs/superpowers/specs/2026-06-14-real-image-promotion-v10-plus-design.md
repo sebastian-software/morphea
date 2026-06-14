@@ -496,6 +496,8 @@ Current implementation:
   config with `require_applied_review: true`. The CLI regression path proves
   the generated config carries accepted applied reviews forward while keeping
   deferred applied reviews visible but out of pseudo-label harvesting.
+  `promotion-review-harvest --config` makes the same bridge repeatable with a
+  case-id decision map and explicit per-case CLI overrides.
 
 Exit criteria:
 

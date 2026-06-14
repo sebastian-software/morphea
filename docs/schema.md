@@ -690,7 +690,11 @@ applies only explicitly supplied terminal decision files, writes
 same `promotion-apply-review` rules, summarizes applied, harvestable, and
 pending cases, and writes a `harvest-curated --config` file with
 `require_applied_review: true`. Cases without an applied review remain pending
-in the prep report rather than becoming implicit training candidates.
+in the prep report rather than becoming implicit training candidates. The same
+inputs can be loaded from
+`morphea promotion-review-harvest --config promotion-review-harvest.json`;
+CLI arguments override config values, and individual `--decision case=path`
+arguments override same-case entries in the config `decisions` object.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
@@ -1033,6 +1037,33 @@ Supported fields:
 - `max_anchor_quality_error`
 
 CLI arguments override values loaded from the config file.
+
+## Promotion Review Harvest Config v1
+
+Read by `morphea promotion-review-harvest --config`.
+
+Supported fields:
+
+- `review_packet`: suite-level `review-packet.json` path
+- `output`: harvest-prep JSON report path
+- `markdown`: optional harvest-prep Markdown report path
+- `harvest_config`: optional generated `harvest-curated` config path
+- `decisions`: object mapping case ids to terminal
+  `review-decision.json` paths
+- `suite`: optional suite override for the generated harvest config
+- `run_root`: optional run-root override for manifest lookup and generated
+  harvest config
+- `harvest_output`: optional pseudo-label output path for the generated
+  harvest config
+- `curated_report`: optional curated report path for the generated harvest
+  config
+- `snapshot`: optional curated snapshot path for the generated harvest config
+- `harvest_markdown`: optional pseudo-label Markdown report path for the
+  generated harvest config
+
+CLI arguments override values loaded from the config file. `--decision`
+arguments are merged into the config `decisions` object and override the same
+case id.
 
 ## Review Queue and Reviewed Labels v1
 
