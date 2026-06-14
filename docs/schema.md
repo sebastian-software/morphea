@@ -993,7 +993,9 @@ gate. Other non-JSON SAM model paths remain `adapter_pending`.
 
 Written by `morphea status`.
 `morphea status --config status.json` accepts `output`, `markdown`, and
-`mlx_sam_model_path`. CLI arguments override matching config values.
+`mlx_sam_model_path`. CLI arguments override matching config values. `output`
+and `markdown` are optional; when neither is provided, the CLI renders the
+Markdown status report to stdout.
 
 Top-level fields:
 

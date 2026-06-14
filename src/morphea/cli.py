@@ -76,7 +76,7 @@ from morphea.refinement import (
     gate_refinement_result,
     refine_manifest,
 )
-from morphea.status import collect_runtime_status
+from morphea.status import collect_runtime_status, render_runtime_status_markdown
 from morphea.sweeps import run_sweep
 
 
@@ -1707,10 +1707,16 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "status":
         status_config = _resolved_status_config(args)
         result = collect_runtime_status(
-            output=status_config["output"],
+            output=status_config.get("output"),
             markdown=status_config.get("markdown"),
             mlx_sam_model_path=status_config.get("mlx_sam_model_path"),
         )
+        if (
+            status_config.get("output") is None
+            and status_config.get("markdown") is None
+        ):
+            print(render_runtime_status_markdown(result), end="")
+            return
         print(
             "wrote runtime status with "
             f"{len(result['blocked_backends'])} backend blockers and "
@@ -2789,7 +2795,6 @@ def _resolved_status_config(args: argparse.Namespace) -> dict[str, object]:
         config["markdown"] = args.markdown
     if args.mlx_sam_model_path is not None:
         config["mlx_sam_model_path"] = args.mlx_sam_model_path
-    _require_config_paths(config, ("output",), "status")
     for key in ("output", "markdown", "mlx_sam_model_path"):
         if config.get(key) is not None:
             config[key] = Path(str(config[key]))

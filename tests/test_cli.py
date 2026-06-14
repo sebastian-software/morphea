@@ -1758,6 +1758,38 @@ class CliTests(unittest.TestCase):
             self.assertIn("capability blockers", stdout.getvalue())
             self.assertTrue(markdown.exists())
 
+    def test_status_cli_prints_markdown_without_output(self):
+        with (
+            patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
+            redirect_stdout(StringIO()) as stdout,
+        ):
+            main(["status"])
+
+        rendered = stdout.getvalue()
+        self.assertIn("# Morphēa Runtime Status", rendered)
+        self.assertIn(
+            "| Area | Backend | Status | Available | Reason | Next action |",
+            rendered,
+        )
+        self.assertIn("## Blocked Backends", rendered)
+
+    def test_status_cli_can_write_markdown_without_json_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            markdown = Path(temp_dir) / "status.md"
+
+            with (
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=False),
+                redirect_stdout(StringIO()) as stdout,
+            ):
+                main(["status", "--markdown", str(markdown)])
+
+            self.assertTrue(markdown.exists())
+            self.assertIn(
+                "# Morphēa Runtime Status",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn("capability blockers", stdout.getvalue())
+
     def test_status_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

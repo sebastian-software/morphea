@@ -1198,6 +1198,7 @@ Implemented so far:
 - `morphea refine --config refine.json` for repeatable bounded refinement runs
 - `morphea refinement-gate --config refinement-gate.json` for repeatable
   structure-preserving refinement acceptance decisions
+- `morphea status` for a stdout Markdown runtime/backend availability report
 - `morphea status -o status.json --markdown status.md` for a single
   machine-readable report of segmenter, classifier, and refinement backend
   availability/blockers
