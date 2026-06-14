@@ -30,6 +30,7 @@ from morphea.token_transformer import (
 
 
 MLX_MODEL_TYPE = "mlx_transformer_primitive_classifier"
+MLX_TRAINING_IMPLEMENTATION = "mlx_feature_raster_token_classifier"
 MLX_CLASSIFIER_INSTALL_ACTION = "Install the MLX extra with uv: uv pip install -e '.[mlx]'"
 MLX_CLASSIFIER_UPGRADE_ACTION = "Upgrade the MLX extra with uv: uv pip install -U -e '.[mlx]'"
 MLX_AUTOGRAD_SYMBOLS = (
@@ -83,7 +84,7 @@ def mlx_classifier_runtime_status() -> dict[str, object]:
         "status": status,
         "reason": reason,
         "training_implementation": (
-            "mlx_feature_head" if available else "centroid_fallback"
+            MLX_TRAINING_IMPLEMENTATION if available else "centroid_fallback"
         ),
         "next_action": next_action,
         "package_available": package_available,
@@ -311,12 +312,11 @@ def _train_mlx_weights(
     labels: list[str],
     config: MlxClassifierTrainingConfig,
 ) -> dict[str, Any]:
-    """Return an optimized MLX feature-head artifact.
+    """Return an optimized MLX primitive-classifier artifact.
 
     The import is intentionally local so the project remains usable without
-    MLX installed. The first implemented MLX-backed head trains over the
-    semantic feature sequence and keeps the centroid fallback as the runtime
-    ranking prior until the full raster-crop Transformer is wired.
+    MLX installed. The current artifact trains a feature head, raster-token
+    mixer, feature/raster fusion head, and serialized token-transformer path.
     """
 
     import mlx.core as mx  # type: ignore[import-not-found]
@@ -587,7 +587,7 @@ def _train_feature_head(
     return {
         "weight_format": "mlx_feature_head_v1",
         "architecture": "normalized_feature_softmax_head",
-        "transformer_status": "pending_raster_crop_encoder",
+        "transformer_status": "feature_head_trained",
         "parameter_count": len(labels) * (feature_count + 1),
         "trained_examples": len(rows),
         "epochs": config.epochs,
@@ -604,7 +604,8 @@ def _train_feature_head(
         "loss_history": loss_history,
         "note": (
             "MLX backend detected; this artifact contains optimized feature-head "
-            "weights while the raster-crop Transformer encoder remains pending."
+            "weights plus raster-token mixer, feature/raster fusion, and "
+            "token-transformer components when assembled by train-mlx."
         ),
     }
 

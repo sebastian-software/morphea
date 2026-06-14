@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from morphea.mlx_classifier import MLX_TRAINING_IMPLEMENTATION
 from morphea.segmenters import MLX_SAM_RUNTIME_INSTALL_ACTION
 from morphea.status import collect_runtime_status, render_runtime_status_markdown
 
@@ -218,7 +219,14 @@ class RuntimeStatusTests(unittest.TestCase):
                         "prompt_strategy": "grid_points",
                     },
                 },
-                "classifiers": {},
+                "classifiers": {
+                    "mlx": {
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                        "training_implementation": MLX_TRAINING_IMPLEMENTATION,
+                    }
+                },
                 "refinement": {"details": {}},
                 "blocked_backends": [
                     {
@@ -254,6 +262,11 @@ class RuntimeStatusTests(unittest.TestCase):
         )
         self.assertIn(
             "| segmenter | `mlx_sam` | `model_sidecar_exists` | `false` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `mlx` | `training_implementation` | "
+            f"`{MLX_TRAINING_IMPLEMENTATION}` |",
             markdown,
         )
         self.assertIn("segmenter/mlx_sam: not_configured", markdown)

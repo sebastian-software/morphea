@@ -30,6 +30,7 @@ BACKEND_DIAGNOSTIC_FIELDS = (
     "package_available",
     "sam_package_available",
     "prompt_strategy",
+    "training_implementation",
 )
 
 

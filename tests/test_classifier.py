@@ -39,6 +39,7 @@ from morphea.mlx_classifier import (
     MLX_CLASSIFIER_INSTALL_ACTION,
     MLX_CLASSIFIER_UPGRADE_ACTION,
     MLX_MODEL_TYPE,
+    MLX_TRAINING_IMPLEMENTATION,
     MlxClassifierTrainingConfig,
     mlx_classifier_runtime_status,
     train_mlx_transformer_classifier,
@@ -480,7 +481,10 @@ class PrimitiveClassifierTests(unittest.TestCase):
         )
         self.assertEqual(available["status"], "available")
         self.assertTrue(available["backend_available"])
-        self.assertEqual(available["training_implementation"], "mlx_feature_head")
+        self.assertEqual(
+            available["training_implementation"],
+            MLX_TRAINING_IMPLEMENTATION,
+        )
         self.assertIsNone(available["next_action"])
         self.assertTrue(
             available["capabilities"]["feature_head_training"]["available"]
@@ -624,7 +628,10 @@ class PrimitiveClassifierTests(unittest.TestCase):
 
             self.assertEqual(model["status"], "trained")
             self.assertEqual(model["runtime"]["status"], "available")
-            self.assertEqual(model["training_implementation"], "mlx_feature_head")
+            self.assertEqual(
+                model["training_implementation"],
+                MLX_TRAINING_IMPLEMENTATION,
+            )
             self.assertEqual(
                 model["mlx_training"]["weight_format"],
                 "mlx_feature_head_v1",
