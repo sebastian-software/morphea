@@ -175,6 +175,7 @@ def apply_promotion_review_decision(
             data.get("gate_blocked_components"),
         ),
         "regressed_components": _object_list(data.get("regressed_components")),
+        "review_artifacts": _object_dict(data.get("review_artifacts")),
         "quality_label_policy": promotion_quality_label_policy(),
     }
     if manifest is not None:
@@ -222,15 +223,37 @@ def render_promotion_review_decision_markdown(result: dict[str, object]) -> str:
         f"- Quality label policy: `{_review_policy_mode(result.get('quality_label_policy'))}`",
         "- Updates `current_quality_label`: "
         f"`{str(_review_policy_updates_label(result.get('quality_label_policy'))).lower()}`",
-        "",
-        "## Evidence",
-        "",
-        f"- Failed gates: {_format_review_records(result.get('failed_gates'))}",
-        f"- Failed components: {_format_review_records(result.get('failed_components'))}",
-        f"- Gate-blocked components: {_format_review_records(result.get('gate_blocked_components'))}",
-        f"- Regressed components: {_format_review_records(result.get('regressed_components'))}",
     ]
+    lines.extend(_review_artifact_markdown(result.get("review_artifacts")))
+    lines.extend(
+        [
+            "",
+            "## Evidence",
+            "",
+            f"- Failed gates: {_format_review_records(result.get('failed_gates'))}",
+            f"- Failed components: {_format_review_records(result.get('failed_components'))}",
+            f"- Gate-blocked components: {_format_review_records(result.get('gate_blocked_components'))}",
+            f"- Regressed components: {_format_review_records(result.get('regressed_components'))}",
+        ]
+    )
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _review_artifact_markdown(value: object) -> list[str]:
+    if not isinstance(value, dict) or not value:
+        return []
+    lines = [
+        "",
+        "## Review Artifacts",
+        "",
+        "| Artifact | Path |",
+        "| --- | --- |",
+    ]
+    for key in sorted(value):
+        path = value.get(key)
+        if isinstance(path, str) and path:
+            lines.append(f"| `{key}` | `{path}` |")
+    return lines
 
 
 def _review_policy_mode(value: object) -> str:

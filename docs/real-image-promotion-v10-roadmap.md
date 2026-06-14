@@ -380,7 +380,8 @@ They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal
 accepted/corrected/rejected/deferred review templates that preserve the same
-evidence.
+evidence. Those records also preserve `review_artifacts` links back to the
+manifest, promotion-region JSON, promotion review, and editability review.
 Suite review packets also surface `review_requirements`, so terminal
 reviewer/reason requirements and corrected-decision evidence requirements are
 visible before opening individual templates.
@@ -395,7 +396,8 @@ reviewer and reason evidence, and `corrected` records require correction notes
 plus corrected artifacts before they can be applied. Pending, terminal, and
 applied review records carry `quality_label_policy.mode: sidecar_only`, so
 accepted/corrected reviews become auditable evidence without implicitly
-rewriting suite `current_quality_label`.
+rewriting suite `current_quality_label`. Applied review Markdown preserves and
+renders `review_artifacts` before the gate/component evidence.
 `morphea promotion-review-harvest` applies explicitly selected terminal
 decision files from a suite `review-packet.json`, writes per-case applied
 review summaries beside manifests, reports applied/harvestable/pending packet

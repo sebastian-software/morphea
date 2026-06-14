@@ -376,7 +376,9 @@ Deliverables:
   `review-templates/`, and suite-level review packets link those paths per
   case. Applying a terminal decision now requires reviewer and reason evidence;
   applying `corrected` also requires correction notes and corrected-artifact
-  evidence;
+  evidence. Pending and terminal decision records preserve `review_artifacts`
+  links back to the manifest, promotion-region JSON, promotion review, and
+  editability review;
 - applied-review summaries that link back to region truth and promotion gates;
 - a small local gallery for current green/yellow/red examples. Current slice:
   curated runs with `--output-dir` write `review-gallery.html`, a static local

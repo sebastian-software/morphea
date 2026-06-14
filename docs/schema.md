@@ -573,7 +573,9 @@ directory includes the standard vectorize artifacts plus:
   `decision: pending`, allowed terminal decisions (`accepted`, `corrected`,
   `rejected`, `deferred`), suggested decision, issue tags, failed gates,
   failed/gate-blocked components, regression evidence, and
-  `quality_label_policy`
+  `quality_label_policy`. Checked output records also carry `review_artifacts`
+  that link back to the manifest, promotion-region JSON, promotion review, and
+  editability review.
 - `review-templates/{accepted,corrected,rejected,deferred}.json`: terminal
   reviewer decision templates derived from the pending decision record. Each
   template preserves the same gate/component evidence, sets one terminal
@@ -647,8 +649,10 @@ case reports also include:
 - `review_decision`: machine-editable reviewer decision record with a pending
   `decision`, suggested accepted/corrected/rejected/deferred outcome, issue
   tags, failed gates, component failures, gate-blocked components, and
-  regression evidence. Its `quality_label_policy.mode` is `sidecar_only`:
-  applied reviews do not update `current_quality_label` automatically.
+  regression evidence. Checked output records include `review_artifacts` links
+  to the run manifest, promotion-region JSON, promotion review, and editability
+  review. Its `quality_label_policy.mode` is `sidecar_only`: applied reviews do
+  not update `current_quality_label` automatically.
 
 For checked cases with `--output-dir`, the run `manifest.json` also includes a
 top-level `promotion` object with summary, gates, regions, and promotion export
@@ -687,8 +691,10 @@ persist `review_decision_applied` back into the run manifest and its top-level
 `correction_notes` and at least one `corrected_artifacts` entry, so corrected
 records cannot be harvested without correction evidence. The applied summary
 includes `quality_label_policy` with `mode: sidecar_only` and
-`updates_current_quality_label: false`, so accepted/corrected reviews remain
-promotion evidence until suite metadata is deliberately edited.
+`updates_current_quality_label: false`, preserves `review_artifacts`, and
+renders those links in Markdown before the gate/component evidence, so
+accepted/corrected reviews remain promotion evidence until suite metadata is
+deliberately edited.
 
 `morphea promotion-review-harvest review-packet.json -o review-harvest.json
 --harvest-config harvest-curated.json --decision case-id=terminal-decision.json`

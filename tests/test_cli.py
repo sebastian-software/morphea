@@ -190,6 +190,11 @@ class CliTests(unittest.TestCase):
                         "source_decisions": {
                             "editability_decision": "manual_review",
                         },
+                        "review_artifacts": {
+                            "promotion_regions": "promotion-regions.json",
+                            "promotion_review": "promotion-review.md",
+                            "editability_review": "editability-review.md",
+                        },
                         "failed_gates": [
                             {
                                 "id": "radio-control-region-topology",
@@ -230,6 +235,10 @@ class CliTests(unittest.TestCase):
                 result["failed_gates"][0]["id"],
                 "radio-control-region-topology",
             )
+            self.assertEqual(
+                result["review_artifacts"]["promotion_review"],
+                "promotion-review.md",
+            )
             self.assertEqual(result["quality_label_policy"]["mode"], "sidecar_only")
             self.assertFalse(
                 result["quality_label_policy"]["updates_current_quality_label"]
@@ -242,6 +251,12 @@ class CliTests(unittest.TestCase):
             self.assertEqual(
                 manifest_data["review_decision_applied"]["manifest"],
                 str(manifest),
+            )
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["review_artifacts"][
+                    "promotion_regions"
+                ],
+                "promotion-regions.json",
             )
             self.assertEqual(
                 manifest_data["promotion"]["review_decision_applied"]["decision"],
@@ -262,6 +277,14 @@ class CliTests(unittest.TestCase):
             )
             self.assertIn(
                 "- Updates `current_quality_label`: `false`",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "## Review Artifacts",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "| `promotion_review` | `promotion-review.md` |",
                 markdown.read_text(encoding="utf-8"),
             )
 

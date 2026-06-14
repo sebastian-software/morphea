@@ -511,6 +511,18 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertEqual(accepted_template["decision"], "accepted")
             self.assertEqual(accepted_template["case_id"], "simple-circle")
+            self.assertIn(
+                "simple-circle/promotion-regions.json",
+                accepted_template["review_artifacts"]["promotion_regions"],
+            )
+            self.assertIn(
+                "simple-circle/promotion-review.md",
+                accepted_template["review_artifacts"]["promotion_review"],
+            )
+            self.assertIn(
+                "simple-circle/editability-review.md",
+                accepted_template["review_artifacts"]["editability_review"],
+            )
             self.assertEqual(
                 accepted_template["suggested_decision"],
                 "deferred",

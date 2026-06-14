@@ -418,7 +418,9 @@ Implemented so far:
 - checked promotion runs write `review-decision.json`, so reviewers get a
   pending machine-readable decision record with suggested
   accepted/corrected/rejected/deferred outcome, issue tags, failed gates,
-  component failures, and regression evidence.
+  component failures, regression evidence, and `review_artifacts` links back
+  to the manifest, promotion-region JSON, promotion review, and editability
+  review.
 - checked promotion runs write
   `review-templates/{accepted,corrected,rejected,deferred}.json`, so reviewers
   can start from terminal decision templates that preserve the same evidence
@@ -441,7 +443,8 @@ Implemented so far:
 - `morphea promotion-apply-review` validates edited promotion review decisions,
   rejects pending records, requires reviewer/reason evidence, requires
   correction notes and corrected artifacts for `corrected` records, writes
-  applied JSON/Markdown summaries, and can persist
+  applied JSON/Markdown summaries with preserved `review_artifacts`, and can
+  persist
   `review_decision_applied` into a run manifest.
 - `morphea harvest --require-applied-review` gates pseudo-label harvesting on
   applied promotion review decisions, so only `accepted` and `corrected`

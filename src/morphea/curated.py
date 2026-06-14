@@ -2597,9 +2597,22 @@ def _write_promotion_export_artifacts(
         _render_editability_review_markdown(case_result),
         encoding="utf-8",
     )
+    review_artifacts = _promotion_review_artifacts(
+        case_result,
+        promotion_artifacts,
+    )
     review_decision = case_result.get("review_decision")
     if not isinstance(review_decision, dict):
-        review_decision = _promotion_review_decision_record(case_result)
+        review_decision = _promotion_review_decision_record(
+            case_result,
+            review_artifacts=review_artifacts,
+        )
+    else:
+        review_decision = {
+            **review_decision,
+            "review_artifacts": review_artifacts,
+        }
+    case_result["review_decision"] = review_decision
     review_decision_path.write_text(
         json.dumps(review_decision, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -2608,6 +2621,7 @@ def _write_promotion_export_artifacts(
     review_templates: dict[str, str] = {}
     for decision, template in _promotion_review_decision_templates(
         case_result,
+        review_artifacts=review_artifacts,
     ).items():
         template_path = review_templates_dir / f"{decision}.json"
         template_path.write_text(
@@ -3309,7 +3323,11 @@ def _editability_threshold_status(
     return "passed"
 
 
-def _promotion_review_decision_record(case_result: dict[str, Any]) -> dict[str, object]:
+def _promotion_review_decision_record(
+    case_result: dict[str, Any],
+    *,
+    review_artifacts: dict[str, str] | None = None,
+) -> dict[str, object]:
     review = case_result.get("editability_review", {})
     review = review if isinstance(review, dict) else {}
     promotion = case_result.get("promotion", {})
@@ -3351,14 +3369,22 @@ def _promotion_review_decision_record(case_result: dict[str, Any]) -> dict[str, 
         "regressed_components": _review_decision_list(
             review.get("regressed_components"),
         ),
+        "review_artifacts": review_artifacts
+        if review_artifacts is not None
+        else _promotion_review_artifacts(case_result),
         "quality_label_policy": promotion_quality_label_policy(),
     }
 
 
 def _promotion_review_decision_templates(
     case_result: dict[str, Any],
+    *,
+    review_artifacts: dict[str, str] | None = None,
 ) -> dict[str, dict[str, object]]:
-    base = _promotion_review_decision_record(case_result)
+    base = _promotion_review_decision_record(
+        case_result,
+        review_artifacts=review_artifacts,
+    )
     templates: dict[str, dict[str, object]] = {}
     for decision in PROMOTION_REVIEW_DECISIONS:
         template = deepcopy(base)
@@ -3369,6 +3395,32 @@ def _promotion_review_decision_templates(
         )
         templates[decision] = template
     return templates
+
+
+def _promotion_review_artifacts(
+    case_result: dict[str, Any],
+    extra_artifacts: dict[str, object] | None = None,
+) -> dict[str, str]:
+    artifacts: dict[str, object] = {}
+    base_artifacts = case_result.get("artifacts")
+    if isinstance(base_artifacts, dict):
+        artifacts.update(base_artifacts)
+    if extra_artifacts:
+        artifacts.update(extra_artifacts)
+    keys = (
+        "manifest",
+        "contact_sheet",
+        "promotion_export",
+        "promotion_regions",
+        "promotion_review",
+        "editability_review",
+        "review_decision",
+    )
+    return {
+        key: value
+        for key in keys
+        if isinstance((value := artifacts.get(key)), str) and value
+    }
 
 
 def _promotion_review_template_guidance(

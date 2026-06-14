@@ -259,6 +259,9 @@ record in reports, snapshots, and run manifests. This is the first RIP6
 machine-readable decision artifact: it is pending by default, carries the
 suggested accepted/corrected/rejected/deferred outcome, and preserves issue
 tags plus failed gate/component evidence for later application.
+Checked output records now also preserve `review_artifacts`, linking the
+decision back to the run manifest, promotion-region JSON, promotion review, and
+editability review.
 Checked promotion runs also write the four terminal decision templates beside
 that pending record, so a reviewer can start from the accepted, corrected,
 rejected, or deferred outcome without stripping pending state manually. Template
@@ -272,7 +275,9 @@ persist `review_decision_applied` back into the run manifest and its
 `promotion` object. `corrected` decisions also require correction notes and
 corrected-artifact evidence. Applied summaries include the same sidecar-only
 quality-label policy, so accepted/corrected decisions are harvestable evidence
-rather than automatic suite-label updates.
+rather than automatic suite-label updates. They also preserve
+`review_artifacts` and render those links in Markdown before gate/component
+evidence.
 
 `morphea promotion-review-harvest` now turns a suite-level
 `review-packet.json` into a reproducible harvest-prep report. It applies only
