@@ -1440,7 +1440,8 @@ def main(argv: list[str] | None = None) -> None:
             "prepared promotion review harvest "
             f"(applied={result['newly_applied_decision_count']}, "
             f"pending={result['pending_case_count']}, "
-            f"harvestable={result['harvestable_case_count']})"
+            f"harvestable={result['harvestable_case_count']}, "
+            f"{_promotion_review_harvest_region_stdout(result)})"
         )
         return
 
@@ -2655,6 +2656,29 @@ def _compare_segments_stdout_summary(result: dict[str, object]) -> str:
         f"red_delta={assessment.get('red_candidate_delta', 'n/a')}, "
         f"manual_delta={assessment.get('manual_review_delta', 'n/a')}"
     )
+
+
+def _promotion_review_harvest_region_stdout(result: dict[str, object]) -> str:
+    summary = result.get("reviewable_region_summary")
+    if not isinstance(summary, dict):
+        return (
+            "regions_applied=0, regions_promoted=0, "
+            "regions_harvestable=0, regions_pending=0"
+        )
+    return (
+        "regions_applied="
+        f"{_stdout_int(summary.get('applied_reviewed_region_count'))}, "
+        "regions_promoted="
+        f"{_stdout_int(summary.get('applied_review_promoted_region_count'))}, "
+        "regions_harvestable="
+        f"{_stdout_int(summary.get('harvestable_reviewed_region_count'))}, "
+        "regions_pending="
+        f"{_stdout_int(summary.get('pending_region_count'))}"
+    )
+
+
+def _stdout_int(value: object) -> int:
+    return int(value) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _resolved_compare_git_snapshots_config(

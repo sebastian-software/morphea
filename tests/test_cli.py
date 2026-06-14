@@ -962,6 +962,8 @@ class CliTests(unittest.TestCase):
                 main(["promotion-review-harvest", "--config", str(config)])
 
             self.assertIn("harvestable=1", stdout.getvalue())
+            self.assertIn("regions_applied=1", stdout.getvalue())
+            self.assertIn("regions_promoted=1", stdout.getvalue())
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["harvestable_case_count"], 1)
             self.assertEqual(
@@ -1776,6 +1778,7 @@ class CliTests(unittest.TestCase):
                 )
 
             self.assertIn("pending=1", stdout.getvalue())
+            self.assertIn("regions_pending=1", stdout.getvalue())
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["newly_applied_decision_count"], 0)
             self.assertEqual(result["applied_case_count"], 0)

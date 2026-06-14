@@ -467,9 +467,11 @@ clearly show which reviewer evidence is still missing before they can be
 applied. The same prep report now summarizes ready terminal-template counts,
 ready case counts, and missing evidence fields before listing the individual
 rows, plus reviewable-region coverage across applied, review-promoted,
-harvestable, and still-pending region ids. It also prints evidence-flag hints
-for missing reviewer fields and gate-ok reviewed regions, keeping the selected
-command executable while showing the exact case-scoped flags to add.
+harvestable, and still-pending region ids; the CLI stdout summary prints the
+same region coverage next to applied/pending/harvestable case counts. It also
+prints evidence-flag hints for missing reviewer fields and gate-ok reviewed
+regions, keeping the selected command executable while showing the exact
+case-scoped flags to add.
 
 Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
 `correction_notes`, `corrected_artifacts`, and `reviewed_region_ids` to the

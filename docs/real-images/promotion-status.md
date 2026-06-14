@@ -356,7 +356,9 @@ flags beside accepted/corrected choice commands. It also writes a
 `reviewable_region_summary` with applied reviewed-region counts,
 review-promoted region counts, harvestable reviewed-region counts, pending
 region counts, and applied decision counts, making region-evidence progress
-visible before the next self-learning harvest.
+visible before the next self-learning harvest. The `promotion-review-harvest`
+stdout summary now prints the same applied/promoted/harvestable/pending region
+counts beside the case counts.
 Reviewer choices and evidence can also be stored in a portable
 `decision_plan` overlay with `decision_choices` and `decision_overrides`, then
 merged into a fresh generated harvest config without committing run-local
