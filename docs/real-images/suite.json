@@ -326,9 +326,10 @@
           "mostly_white_background"
         ],
         "current_quality_label": "red",
-        "current_status": "checked_failed_promotion_gates",
+        "quality_label_review_policy": "manual_review_pending",
+        "current_status": "checked_semantic_pass_manual_review_pending",
         "current_issues": [
-          "fragmentation"
+          "manual_review_pending"
         ],
         "visual_audit_status": "contact_sheet_available",
         "visual_thresholds": {
@@ -407,7 +408,8 @@
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
           "2026-06-14 neutral composite anchor deduplication reduced the radio-control region from two duplicate stroke-circle anchors to one topology-compatible stroke-circle anchor.",
-          "Still red under v10+ rules because the current quality label is red and editability review still rejects shape identity, fragmentation, and provenance components."
+          "2026-06-14 text-like fallback grouping classifies the sparse black glyph fragment group as structured review evidence: shape identity, fragmentation, and provenance components no longer fail.",
+          "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure."
         ]
       },
       "recommended_config": {

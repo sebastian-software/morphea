@@ -308,7 +308,10 @@
           },
           "provenance_confidence": {
             "fallback_path_ratio": 0.209677,
-            "score": 0.790323
+            "raw_fallback_path_ratio": 0.209677,
+            "score": 0.790323,
+            "structured_text_fallback_count": 0,
+            "unstructured_generic_path_count": 13
           },
           "raster_fidelity": {
             "observed": true,
@@ -319,8 +322,12 @@
           "shape_identity_confidence": {
             "generic_path_count": 13,
             "generic_path_ratio": 0.209677,
+            "recognized_shape_count": 49,
             "score": 0.790323,
-            "simple_shape_count": 49
+            "simple_shape_count": 49,
+            "structured_text_fallback_count": 0,
+            "unstructured_generic_path_count": 13,
+            "unstructured_generic_path_ratio": 0.209677
           },
           "stroke_width_stability": {
             "count": 25,
@@ -351,12 +358,14 @@
         "shape_count": 62,
         "simple_shape_count": 49,
         "simple_shape_ratio": 0.790323,
+        "structured_text_fallback_count": 0,
         "unstructured_fragment_counts": {
           "#002554": 8,
           "#b67f13": 2,
           "#f6f0eb": 3
         },
-        "unstructured_fragmentation_penalty": 0.16129
+        "unstructured_fragmentation_penalty": 0.16129,
+        "unstructured_generic_path_count": 13
       },
       "ok": true,
       "promotion": {
@@ -953,7 +962,10 @@
           },
           "provenance_confidence": {
             "fallback_path_ratio": 0.209677,
-            "score": 0.790323
+            "raw_fallback_path_ratio": 0.209677,
+            "score": 0.790323,
+            "structured_text_fallback_count": 0,
+            "unstructured_generic_path_count": 13
           },
           "raster_fidelity": {
             "observed": true,
@@ -964,8 +976,12 @@
           "shape_identity_confidence": {
             "generic_path_count": 13,
             "generic_path_ratio": 0.209677,
+            "recognized_shape_count": 49,
             "score": 0.790323,
-            "simple_shape_count": 49
+            "simple_shape_count": 49,
+            "structured_text_fallback_count": 0,
+            "unstructured_generic_path_count": 13,
+            "unstructured_generic_path_ratio": 0.209677
           },
           "stroke_width_stability": {
             "count": 25,
@@ -996,12 +1012,14 @@
         "shape_count": 62,
         "simple_shape_count": 49,
         "simple_shape_ratio": 0.790323,
+        "structured_text_fallback_count": 0,
         "unstructured_fragment_counts": {
           "#002554": 8,
           "#b67f13": 2,
           "#f6f0eb": 3
         },
-        "unstructured_fragmentation_penalty": 0.16129
+        "unstructured_fragmentation_penalty": 0.16129,
+        "unstructured_generic_path_count": 13
       },
       "ok": true,
       "promotion": {
@@ -1489,43 +1507,23 @@
       "editability_review": {
         "accepted": false,
         "component_scores": {
-          "fragmentation": 0.113043,
+          "fragmentation": 1.0,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 1.0,
           "node_economy": 0.822464,
           "parameter_economy": 0.385326,
-          "provenance_confidence": 0.547826,
+          "provenance_confidence": 1.0,
           "raster_fidelity": 0.944073,
-          "shape_identity_confidence": 0.547826,
+          "shape_identity_confidence": 1.0,
           "stroke_width_stability": 0.6569,
           "topology_consistency": 1.0
         },
-        "decision": "rejected",
-        "failed_components": [
-          {
-            "id": "shape_identity_confidence",
-            "reason": "below_threshold",
-            "score": 0.547826,
-            "threshold": 0.65
-          },
-          {
-            "id": "fragmentation",
-            "reason": "below_threshold",
-            "score": 0.113043,
-            "threshold": 0.25
-          },
-          {
-            "id": "provenance_confidence",
-            "reason": "below_threshold",
-            "score": 0.547826,
-            "threshold": 0.65
-          }
-        ],
+        "decision": "manual_review",
+        "failed_components": [],
         "gate_blocked_components": [],
-        "promotion_decision": "rejected",
+        "promotion_decision": "deferred",
         "reasons": [
-          "component_threshold_failures",
-          "promotion_decision_rejected"
+          "promotion_decision_deferred"
         ],
         "regressed_components": [],
         "regression_delta_status": "not_configured",
@@ -1577,7 +1575,8 @@
         "parallel_stroke_group": 1,
         "primitive_anchor_reservation": 1,
         "primitive_contact_pair": 20,
-        "same_color_fragment_group": 2
+        "same_color_fragment_group": 2,
+        "text_like_fragment_group": 1
       },
       "id": "ui-radio-acceptance-screenshot",
       "layer_anchor_counts": {
@@ -1653,11 +1652,11 @@
           },
           "fragmentation": {
             "fragmentation_penalty": 0.491304,
-            "score": 0.113043,
-            "unstructured_fragmentation_penalty": 0.443478
+            "score": 1.0,
+            "unstructured_fragmentation_penalty": 0.0
           },
           "grouping_quality": {
-            "group_count": 24,
+            "group_count": 25,
             "score": 1.0
           },
           "line_curve_smoothness": {
@@ -1749,8 +1748,11 @@
             ]
           },
           "provenance_confidence": {
-            "fallback_path_ratio": 0.452174,
-            "score": 0.547826
+            "fallback_path_ratio": 0.0,
+            "raw_fallback_path_ratio": 0.452174,
+            "score": 1.0,
+            "structured_text_fallback_count": 52,
+            "unstructured_generic_path_count": 0
           },
           "raster_fidelity": {
             "observed": true,
@@ -1761,8 +1763,12 @@
           "shape_identity_confidence": {
             "generic_path_count": 52,
             "generic_path_ratio": 0.452174,
-            "score": 0.547826,
-            "simple_shape_count": 63
+            "recognized_shape_count": 115,
+            "score": 1.0,
+            "simple_shape_count": 63,
+            "structured_text_fallback_count": 52,
+            "unstructured_generic_path_count": 0,
+            "unstructured_generic_path_ratio": 0.0
           },
           "stroke_width_stability": {
             "count": 63,
@@ -1779,7 +1785,7 @@
         },
         "fragmentation_penalty": 0.491304,
         "generic_path_count": 52,
-        "group_count": 24,
+        "group_count": 25,
         "negative_mask_candidate_count": 20,
         "node_count": 490,
         "parameter_count": 1131,
@@ -1793,18 +1799,18 @@
         "shape_count": 115,
         "simple_shape_count": 63,
         "simple_shape_ratio": 0.547826,
-        "unstructured_fragment_counts": {
-          "#000000": 52
-        },
-        "unstructured_fragmentation_penalty": 0.443478
+        "structured_text_fallback_count": 52,
+        "unstructured_fragment_counts": {},
+        "unstructured_fragmentation_penalty": 0.0,
+        "unstructured_generic_path_count": 0
       },
       "ok": true,
       "promotion": {
         "current_issues": [
-          "fragmentation"
+          "manual_review_pending"
         ],
         "current_quality_label": "red",
-        "current_status": "checked_failed_promotion_gates",
+        "current_status": "checked_semantic_pass_manual_review_pending",
         "expected_promotion_families": [
           "ui_control_stroke_circle",
           "text_like_fragments",
@@ -1845,6 +1851,7 @@
           }
         ],
         "licensing_status": "local_research_only",
+        "quality_label_review_policy": "manual_review_pending",
         "region_gates": [
           {
             "bounds": [
@@ -1875,7 +1882,8 @@
         "review_notes": [
           "2026-06-13 curated-check passed current semantic expectations.",
           "2026-06-14 neutral composite anchor deduplication reduced the radio-control region from two duplicate stroke-circle anchors to one topology-compatible stroke-circle anchor.",
-          "Still red under v10+ rules because the current quality label is red and editability review still rejects shape identity, fragmentation, and provenance components."
+          "2026-06-14 text-like fallback grouping classifies the sparse black glyph fragment group as structured review evidence: shape identity, fragmentation, and provenance components no longer fail.",
+          "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure."
         ],
         "source_provenance": "local UI screenshot from the user's Desktop; source image is not checked in",
         "stress_family": "ui_screenshot_text_and_controls",
@@ -1924,12 +1932,15 @@
           "severity": "yellow"
         },
         {
-          "evidence": "red",
+          "evidence": {
+            "current_quality_label": "red",
+            "review_policy": "manual_review_pending"
+          },
           "gate_type": "review_safety",
           "id": "current_quality_label",
           "ok": false,
-          "reason": "current quality label is red",
-          "severity": "red"
+          "reason": "current quality label is red; manual review pending",
+          "severity": "yellow"
         },
         {
           "evidence": {
@@ -2116,10 +2127,10 @@
         }
       ],
       "promotion_summary": {
-        "decision": "rejected",
+        "decision": "deferred",
         "failed_gate_count": 1,
-        "red_gate_count": 1,
-        "yellow_gate_count": 0
+        "red_gate_count": 0,
+        "yellow_gate_count": 1
       },
       "review_decision": {
         "allowed_decisions": [
@@ -2132,37 +2143,18 @@
         "corrected_artifacts": [],
         "correction_notes": "",
         "decision": "pending",
-        "failed_components": [
-          {
-            "id": "shape_identity_confidence",
-            "reason": "below_threshold",
-            "score": 0.547826,
-            "threshold": 0.65
-          },
-          {
-            "id": "fragmentation",
-            "reason": "below_threshold",
-            "score": 0.113043,
-            "threshold": 0.25
-          },
-          {
-            "id": "provenance_confidence",
-            "reason": "below_threshold",
-            "score": 0.547826,
-            "threshold": 0.65
-          }
-        ],
+        "failed_components": [],
         "failed_gates": [
           {
             "gate_type": "review_safety",
             "id": "current_quality_label",
-            "reason": "current quality label is red",
-            "severity": "red"
+            "reason": "current quality label is red; manual review pending",
+            "severity": "yellow"
           }
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "fragmentation"
+          "manual_review_pending"
         ],
         "reason": "",
         "regressed_components": [],
@@ -2170,11 +2162,11 @@
         "schema_version": 1,
         "source_decisions": {
           "editability_accepted": false,
-          "editability_decision": "rejected",
-          "promotion_decision": "rejected",
+          "editability_decision": "manual_review",
+          "promotion_decision": "deferred",
           "regression_delta_status": "not_configured"
         },
-        "suggested_decision": "rejected"
+        "suggested_decision": "deferred"
       },
       "source_exists": true,
       "status": "checked"

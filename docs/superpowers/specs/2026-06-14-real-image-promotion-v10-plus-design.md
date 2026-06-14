@@ -37,8 +37,10 @@ and quality-label review-policy refinements:
 - `chatgpt-image-2026-06-11`: deferred for manual review via
   `quality_label_review_policy: manual_review_pending`; editability review has
   no failed components after parameter economy rose to 0.268145.
-- `ui-radio-acceptance-screenshot`: current quality label plus editability
-  review failures for shape identity, fragmentation, and provenance.
+- `ui-radio-acceptance-screenshot`: deferred for manual review via
+  `quality_label_review_policy: manual_review_pending`; text-like fallback
+  grouping removes the prior shape identity, fragmentation, and provenance
+  component failures.
 
 The next roadmap must preserve the current semantic-green baseline while moving
 from "the detector found plausible anchors" to "the promoted SVG is trustworthy
@@ -198,6 +200,11 @@ Exit criteria:
   variants opt into `quality_label_review_policy: manual_review_pending`, which
   keeps their red quality label visible but moves the promotion decision to
   `deferred` instead of `rejected`.
+- UI screenshot text fallback handling is now explicit: the sparse black glyph
+  fragments form a `text_like_fragment_group`, so their bounded cubic fallbacks
+  remain visible for review without counting as unstructured v10 fallback debt.
+  This moves the UI screenshot to manual-review pending rather than detector
+  rejection.
 
 ### RP10.2: Region Truth Schema
 
@@ -386,13 +393,14 @@ Recommended target order after the structural-layer, UI-topology, Terminaro
 region-coverage, transparent-raster flattening, organic fallback node-budget,
 and quality-label review-policy refinements:
 
-1. Address `ui-radio-acceptance-screenshot` shape identity, provenance, and
-   text-fragmentation debt.
-2. Decide whether `ui-radio-acceptance-screenshot` should stay red for
-   editability component failures or move to yellow pending manual review.
-3. Build a reviewer-facing packet for the two deferred generated-illustration
-   cases so a human can apply `accepted`, `corrected`, `rejected`, or
-   `deferred` decisions without reading raw JSON.
+1. Build a reviewer-facing packet for all three deferred real-image cases so a
+   human can apply `accepted`, `corrected`, `rejected`, or `deferred` decisions
+   without reading raw JSON.
+2. Decide whether applied `accepted`/`corrected` reviews should update
+   `current_quality_label` in suite metadata, or remain sidecar-only applied
+   review evidence.
+3. Add a follow-up guard that keeps text-like fallback grouping from masking
+   non-text organic fallback debt in future UI screenshots.
 
 Reasoning:
 
@@ -403,8 +411,10 @@ Reasoning:
   the intentionally red quality label, and editability review has no failed
   components. It follows the same manual-review-pending policy as the
   transparent source.
-- The UI radio case now has a topology-compatible radio region, but text-heavy
-  fragmentation keeps editability review below the v10 green bar.
+- The UI radio case now has a topology-compatible radio region, and text-heavy
+  fallback debt is identified as structured text-like fragments rather than
+  unstructured fallback debt. It now follows the same manual-review-pending
+  policy as the generated-illustration cases.
 
 Acceptance commands for the packet:
 
@@ -434,8 +444,9 @@ These are the planning questions to answer before starting RP10.1:
 - Should `current_quality_label` remain manually red until explicit applied
   review, or should applied `accepted`/`corrected` reviews update the suite
   label in a follow-up commit?
-- Which UI screenshot issue should be attacked first: text-fragmentation
-  grouping, shape-identity confidence, or provenance/fallback-path ratio?
+- What minimum reviewer packet is enough for the three deferred cases: current
+  contact sheets plus `review-decision.json`, or a curated gallery that puts all
+  deferred cases in one scan?
 - Do we want region truth annotations inside `docs/real-images/suite.json`, or
   in per-case sidecar files to keep the suite compact?
 - What is the minimum visible artifact that convinces us a region is truly

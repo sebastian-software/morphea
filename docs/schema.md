@@ -79,6 +79,8 @@ Scene metrics:
 - `reserved_simple_shape_area`
 - `reserved_simple_shape_area_ratio`
 - `generic_path_count`
+- `structured_text_fallback_count`
+- `unstructured_generic_path_count`
 - `cutout_anchor_count`
 - `cutout_overlay_count`
 - `negative_mask_candidate_count`
@@ -148,14 +150,19 @@ Source mask fields:
 Group fields:
 
 - `kind`: for example `perspective_grid`, `parallel_stroke_group`,
-  `same_color_fragment_group`, or `primitive_anchor_reservation`
+  `same_color_fragment_group`, `text_like_fragment_group`, or
+  `primitive_anchor_reservation`
 - `anchor_indexes`
 - `metrics`
-- `color`: present for `same_color_fragment_group`
+- `color`: present for `same_color_fragment_group` and
+  `text_like_fragment_group`
 - `merge_plan`: present for `same_color_fragment_group`; records the
   recommended action, `auto_merge_allowed`, decision reason, target kind,
   combined bounds, per-fragment bounds, and bounds fill ratio for later
   merge/review steps
+- `fallback_anchor_indexes`: present for `text_like_fragment_group`; identifies
+  bounded glyph-like `cubic_path` fallbacks that remain review-visible but are
+  not counted as unstructured v10 fallback debt
 - `row_count`: present for `perspective_grid`
 - `column_count`: present for `perspective_grid`
 
@@ -1279,10 +1286,10 @@ set or forcing downstream exporters to understand new primitive kinds.
 Primitive classifier feature extraction also includes lightweight scene-group
 context when a manifest anchor belongs to `groups`. The numeric features record
 the group count plus membership flags for `perspective_grid`,
-`parallel_stroke_group`, `same_color_fragment_group`, and
-`primitive_anchor_reservation`. This lets synthetic and reviewed pseudo-label
-training preserve simple-shape and grid context without changing primitive
-labels.
+`parallel_stroke_group`, `same_color_fragment_group`,
+`text_like_fragment_group`, and `primitive_anchor_reservation`. This lets
+synthetic and reviewed pseudo-label training preserve simple-shape, text-like
+fragment, and grid context without changing primitive labels.
 
 ## Primitive Classifier Model v1
 

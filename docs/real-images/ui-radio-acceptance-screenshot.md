@@ -41,11 +41,19 @@ keeps the pipeline honest about tiny simple controls and text-heavy screenshots.
 
 ## Known Current Behavior
 
-Text remains fragmented and carries a high fragmentation penalty. That is
-acceptable for this milestone; the case exists to keep runtime bounded and to
-make the simple circular control visible in regression snapshots. The radio
-ring is recovered through neutral composite circle detection because its
-individual gray antialias fragments are too small to survive per-color
+Text remains fragmented at the raw anchor layer, but the sparse black glyph
+fragments are now exposed as a `text_like_fragment_group`. The group keeps the
+bounded fallback paths review-visible while removing them from unstructured v10
+fallback debt, so shape identity, fragmentation, and provenance components no
+longer fail solely because the screenshot contains text.
+
+The radio ring is recovered through neutral composite circle detection because
+its individual gray antialias fragments are too small to survive per-color
 component filtering. Neutral composite anchors are deduplicated against
-per-color primitive anchors, so the radio-control region now selects one
-topology-compatible `stroke_circle` instead of duplicate stroke-circle anchors.
+per-color primitive anchors, so the radio-control region selects one
+topology-compatible `stroke_circle`.
+
+The case remains manually review-gated: `quality_label_review_policy:
+manual_review_pending` keeps the red quality label visible and produces a
+deferred promotion decision until a reviewer applies an accepted, corrected,
+rejected, or deferred decision.

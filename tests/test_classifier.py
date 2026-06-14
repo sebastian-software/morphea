@@ -87,13 +87,18 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 "parameter_count": 8,
                 "group_context": [
                     {"kind": "perspective_grid"},
+                    {"kind": "text_like_fragment_group"},
                     {"kind": "primitive_anchor_reservation"},
                 ],
             }
         )
 
-        self.assertEqual(features[FEATURE_NAMES.index("group_count")], 2.0)
+        self.assertEqual(features[FEATURE_NAMES.index("group_count")], 3.0)
         self.assertEqual(features[FEATURE_NAMES.index("in_perspective_grid")], 1.0)
+        self.assertEqual(
+            features[FEATURE_NAMES.index("in_text_like_fragment_group")],
+            1.0,
+        )
         self.assertEqual(
             features[FEATURE_NAMES.index("in_primitive_anchor_reservation")],
             1.0,

@@ -41,6 +41,7 @@ FEATURE_NAMES = (
     "in_perspective_grid",
     "in_parallel_stroke_group",
     "in_same_color_fragment_group",
+    "in_text_like_fragment_group",
     "in_primitive_anchor_reservation",
 )
 
@@ -48,6 +49,7 @@ GROUP_FEATURE_KINDS = (
     "perspective_grid",
     "parallel_stroke_group",
     "same_color_fragment_group",
+    "text_like_fragment_group",
     "primitive_anchor_reservation",
 )
 

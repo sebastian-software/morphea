@@ -5,6 +5,7 @@ from morphea.anchors import (
     AnchorCandidate,
     AnchorKind,
     CircleAnchor,
+    PathAnchor,
     Point,
     QuadAnchor,
     StrokeAnchor,
@@ -625,6 +626,51 @@ class SceneExportTests(unittest.TestCase):
                 "score"
             ],
             0.25,
+        )
+
+    def test_v10_components_treat_sparse_text_like_fallbacks_as_structured(self):
+        text_fragments = tuple(
+            AnchorCandidate(
+                kind=AnchorKind.CUBIC_PATH,
+                raster_error=0.0,
+                node_count=3,
+                parameter_count=6,
+                color="#000000",
+                path=PathAnchor(
+                    points=(
+                        Point(index * 10, 0),
+                        Point(index * 10 + 2, 0),
+                        Point(index * 10 + 1, 8),
+                    )
+                ),
+            )
+            for index in range(20)
+        )
+
+        groups = scene_groups_to_manifest(text_fragments)
+        metrics = scene_metrics_to_manifest(text_fragments, groups=groups)
+        text_groups = [
+            group
+            for group in groups
+            if group["kind"] == "text_like_fragment_group"
+        ]
+
+        self.assertEqual(len(text_groups), 1)
+        self.assertEqual(text_groups[0]["metrics"]["fallback_path_count"], 20)
+        self.assertEqual(metrics["structured_text_fallback_count"], 20)
+        self.assertEqual(metrics["unstructured_generic_path_count"], 0)
+        self.assertEqual(metrics["unstructured_fragmentation_penalty"], 0.0)
+        v10 = metrics["editability_v10_components"]
+        self.assertEqual(v10["shape_identity_confidence"]["score"], 1.0)
+        self.assertEqual(
+            v10["shape_identity_confidence"]["structured_text_fallback_count"],
+            20,
+        )
+        self.assertEqual(v10["fragmentation"]["score"], 1.0)
+        self.assertEqual(v10["provenance_confidence"]["score"], 1.0)
+        self.assertEqual(
+            v10["provenance_confidence"]["raw_fallback_path_ratio"],
+            1.0,
         )
 
     def test_same_color_adjacent_fragments_get_merge_plan(self):

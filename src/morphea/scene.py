@@ -722,6 +722,7 @@ def scene_groups_to_manifest(
             }
         )
 
+    groups.extend(_text_like_fragment_groups(anchors, groups))
     groups.extend(_primitive_contact_groups(anchors))
     groups.extend(_occluded_fragment_groups(anchors, groups))
 
@@ -975,6 +976,83 @@ def _same_color_merge_plan(
     }
 
 
+def _text_like_fragment_groups(
+    anchors: tuple[AnchorCandidate, ...],
+    groups: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    text_groups: list[dict[str, object]] = []
+    for group in groups:
+        if not _is_text_like_fragment_group(group):
+            continue
+        anchor_indexes = [
+            int(index)
+            for index in group.get("anchor_indexes", [])
+            if isinstance(index, int) and 0 <= index < len(anchors)
+        ]
+        fallback_indexes = [
+            index
+            for index in anchor_indexes
+            if anchors[index].kind == AnchorKind.CUBIC_PATH
+        ]
+        if not fallback_indexes:
+            continue
+        metrics = group.get("metrics")
+        metrics = metrics if isinstance(metrics, dict) else {}
+        text_groups.append(
+            {
+                "kind": "text_like_fragment_group",
+                "id": f"text-{str(group.get('id', 'fragments'))}",
+                "color": group.get("color"),
+                "anchor_indexes": anchor_indexes,
+                "fallback_anchor_indexes": fallback_indexes,
+                "metrics": {
+                    "fragment_count": len(anchor_indexes),
+                    "fallback_path_count": len(fallback_indexes),
+                    "bounds_fill_ratio": metrics.get("bounds_fill_ratio"),
+                    "combined_bounds_area": metrics.get("combined_bounds_area"),
+                },
+                "source_group_id": group.get("id"),
+            }
+        )
+    return text_groups
+
+
+def _is_text_like_fragment_group(group: dict[str, object]) -> bool:
+    if group.get("kind") != "same_color_fragment_group":
+        return False
+    metrics = group.get("metrics")
+    merge_plan = group.get("merge_plan")
+    if not isinstance(metrics, dict) or not isinstance(merge_plan, dict):
+        return False
+    bounds = merge_plan.get("bounds")
+    if (
+        not isinstance(bounds, list)
+        or len(bounds) != 4
+        or not all(isinstance(value, (int, float)) for value in bounds)
+    ):
+        return False
+    fragment_count = metrics.get("fragment_count")
+    generic_path_count = metrics.get("generic_path_count")
+    bounds_fill_ratio = metrics.get("bounds_fill_ratio")
+    if (
+        not isinstance(fragment_count, int)
+        or not isinstance(generic_path_count, int)
+        or not isinstance(bounds_fill_ratio, (int, float))
+    ):
+        return False
+    min_x, min_y, max_x, max_y = (float(value) for value in bounds)
+    width = max_x - min_x
+    height = max_y - min_y
+    if height <= 0.0:
+        return False
+    return (
+        fragment_count >= 20
+        and generic_path_count >= 8
+        and float(bounds_fill_ratio) <= 0.25
+        and width / height >= 4.0
+    )
+
+
 def _merged_rect_fragment_candidate(
     fragments: tuple[AnchorCandidate, ...],
 ) -> AnchorCandidate | None:
@@ -1097,13 +1175,26 @@ def scene_metrics_to_manifest(
         if anchor_count
         else 1.0
     )
+    structured_text_fallback_indexes = _structured_text_fallback_anchor_indexes(
+        anchors,
+        groups or [],
+    )
+    structured_text_fallback_count = len(structured_text_fallback_indexes)
+    unstructured_generic_path_count = max(
+        generic_path_count - structured_text_fallback_count,
+        0,
+    )
     fragmentation_penalty = _fragmentation_penalty(anchors)
-    unstructured_fragmentation_penalty = _unstructured_fragmentation_penalty(anchors)
+    unstructured_fragmentation_penalty = _unstructured_fragmentation_penalty(
+        anchors,
+        structured_fragment_indexes=structured_text_fallback_indexes,
+    )
     unstructured_fragment_counts = _color_fragment_counts(
         tuple(
             anchor
-            for anchor in anchors
+            for index, anchor in enumerate(anchors)
             if _is_unstructured_fragment_anchor(anchor)
+            and index not in structured_text_fallback_indexes
         )
     )
     anchor_quality_errors = [
@@ -1149,6 +1240,8 @@ def scene_metrics_to_manifest(
             6,
         ),
         "generic_path_count": generic_path_count,
+        "structured_text_fallback_count": structured_text_fallback_count,
+        "unstructured_generic_path_count": unstructured_generic_path_count,
         "cutout_anchor_count": cutout_count,
         "cutout_overlay_count": sum(
             1 for anchor in anchors if _cutout_strategy(anchor) == "overlay_stroke"
@@ -1212,6 +1305,8 @@ def scene_metrics_to_manifest(
             parameter_count=parameter_count,
             simple_shape_count=simple_shape_count,
             generic_path_count=generic_path_count,
+            structured_text_fallback_count=structured_text_fallback_count,
+            unstructured_generic_path_count=unstructured_generic_path_count,
             fragmentation_penalty=fragmentation_penalty,
             unstructured_fragmentation_penalty=unstructured_fragmentation_penalty,
             diagnostic_penalty=diagnostic_penalty,
@@ -1280,6 +1375,8 @@ def _editability_v10_components(
     parameter_count: int,
     simple_shape_count: int,
     generic_path_count: int,
+    structured_text_fallback_count: int,
+    unstructured_generic_path_count: int,
     fragmentation_penalty: float,
     unstructured_fragmentation_penalty: float,
     diagnostic_penalty: float,
@@ -1289,13 +1386,31 @@ def _editability_v10_components(
     average_nodes = node_count / anchor_count if anchor_count else 0.0
     average_parameters = parameter_count / anchor_count if anchor_count else 0.0
     simple_shape_ratio = simple_shape_count / anchor_count if anchor_count else 1.0
+    recognized_shape_count = simple_shape_count + structured_text_fallback_count
+    shape_identity_score = (
+        recognized_shape_count / anchor_count
+        if anchor_count
+        else 1.0
+    )
     generic_path_ratio = generic_path_count / anchor_count if anchor_count else 0.0
+    unstructured_generic_path_ratio = (
+        unstructured_generic_path_count / anchor_count
+        if anchor_count
+        else 0.0
+    )
     return {
         "shape_identity_confidence": {
-            "score": round(simple_shape_ratio, 6),
+            "score": round(shape_identity_score, 6),
             "simple_shape_count": simple_shape_count,
             "generic_path_count": generic_path_count,
             "generic_path_ratio": round(generic_path_ratio, 6),
+            "structured_text_fallback_count": structured_text_fallback_count,
+            "recognized_shape_count": recognized_shape_count,
+            "unstructured_generic_path_count": unstructured_generic_path_count,
+            "unstructured_generic_path_ratio": round(
+                unstructured_generic_path_ratio,
+                6,
+            ),
         },
         "parameter_economy": _parameter_economy_component(
             anchors=anchors,
@@ -1337,8 +1452,11 @@ def _editability_v10_components(
             "reason": "run-level raster metrics unavailable",
         },
         "provenance_confidence": {
-            "score": round(1.0 - generic_path_ratio, 6),
-            "fallback_path_ratio": round(generic_path_ratio, 6),
+            "score": round(1.0 - unstructured_generic_path_ratio, 6),
+            "fallback_path_ratio": round(unstructured_generic_path_ratio, 6),
+            "raw_fallback_path_ratio": round(generic_path_ratio, 6),
+            "structured_text_fallback_count": structured_text_fallback_count,
+            "unstructured_generic_path_count": unstructured_generic_path_count,
         },
         "classifier_prior_agreement": _metric_component(
             quality_summary,
@@ -1579,14 +1697,18 @@ def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
 
 def _unstructured_fragmentation_penalty(
     anchors: tuple[AnchorCandidate, ...],
+    *,
+    structured_fragment_indexes: set[int] | None = None,
 ) -> float:
     if not anchors:
         return 0.0
+    structured = structured_fragment_indexes or set()
     fragment_counts = _color_fragment_counts(
         tuple(
             anchor
-            for anchor in anchors
+            for index, anchor in enumerate(anchors)
             if _is_unstructured_fragment_anchor(anchor)
+            and index not in structured
         )
     )
     excess_fragments = sum(max(0, count - 1) for count in fragment_counts.values())
@@ -1595,6 +1717,27 @@ def _unstructured_fragmentation_penalty(
 
 def _is_unstructured_fragment_anchor(anchor: AnchorCandidate) -> bool:
     return anchor.kind == AnchorKind.CUBIC_PATH
+
+
+def _structured_text_fallback_anchor_indexes(
+    anchors: tuple[AnchorCandidate, ...],
+    groups: list[dict[str, object]],
+) -> set[int]:
+    indexes: set[int] = set()
+    for group in groups:
+        if (
+            not isinstance(group, dict)
+            or group.get("kind") != "text_like_fragment_group"
+        ):
+            continue
+        for index in group.get("fallback_anchor_indexes", []):
+            if (
+                isinstance(index, int)
+                and 0 <= index < len(anchors)
+                and anchors[index].kind == AnchorKind.CUBIC_PATH
+            ):
+                indexes.add(index)
+    return indexes
 
 
 def _reserved_bounds_area(anchors: tuple[AnchorCandidate, ...]) -> float:
