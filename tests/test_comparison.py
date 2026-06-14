@@ -309,8 +309,27 @@ class SnapshotComparisonTests(unittest.TestCase):
             -2.0,
         )
         self.assertEqual(
+            comparison["source_delta_assessment"]["promotion_delta_basis"],
+            "downstream_status_counts_proxy",
+        )
+        self.assertFalse(
+            comparison["source_delta_assessment"]["uses_region_promotion_labels"],
+        )
+        self.assertEqual(
             comparison["source_delta_assessment"]["risk_signals"],
             [],
+        )
+        self.assertIn(
+            {
+                "group": "promotion_proxy_counts",
+                "key": "green_promotion",
+                "source_group": "downstream_status_counts",
+                "source_key": "accepted",
+                "before": 0.0,
+                "after": 2.0,
+                "delta": 2.0,
+            },
+            comparison["promotion_proxy_deltas"],
         )
         self.assertIn(
             "green_promotion_increase",
@@ -320,10 +339,20 @@ class SnapshotComparisonTests(unittest.TestCase):
         markdown = render_segment_manifest_comparison_markdown(comparison)
         self.assertIn("## Source Assessment", markdown)
         self.assertIn("- Verdict: `improved`", markdown)
+        self.assertIn(
+            "- Promotion delta basis: `downstream_status_counts_proxy`",
+            markdown,
+        )
+        self.assertIn("- Uses region promotion labels: `false`", markdown)
         self.assertIn("## Source Summaries", markdown)
         self.assertIn(
             "| `after` | `mlx_sam` | `json_adapter_available` | "
             "`json_proposals` | 3 | `accepted: 2, rejected: 1` |",
+            markdown,
+        )
+        self.assertIn("## Promotion Proxy Deltas", markdown)
+        self.assertIn(
+            "| `green_promotion` | `accepted` | 0 | 2 | 2 |",
             markdown,
         )
         self.assertIn("## Source Deltas", markdown)

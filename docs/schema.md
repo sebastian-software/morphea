@@ -1704,10 +1704,15 @@ Top-level fields:
 - `downstream_status_deltas`: filtered source deltas for
   `downstream_status_counts`; these are proposal-level promotion proxies, not
   ground-truth labels
+- `promotion_proxy_deltas`: explicit proxy view that maps downstream
+  `accepted`, `rejected`, and `pending` counts to green-promotion,
+  red-candidate, and manual-review deltas until segment manifests carry
+  region-level promotion labels
 - `source_delta_assessment`: heuristic side-by-side assessment with
   `green_promotion_delta`, `red_candidate_delta`, `manual_review_delta`,
-  `proposal_count_delta`, `positive_signals`, `risk_signals`, and a `verdict`
-  of `improved`, `mixed`, `noise`, `unchanged`, or `needs_review`
+  `proposal_count_delta`, `promotion_delta_basis`,
+  `uses_region_promotion_labels`, `positive_signals`, `risk_signals`, and a
+  `verdict` of `improved`, `mixed`, `noise`, `unchanged`, or `needs_review`
 - `before_proposal_count`
 - `after_proposal_count`
 - `proposal_count_delta`
@@ -1728,9 +1733,9 @@ Top-level fields:
   numeric group metrics for shared proposal group ids
 
 `morphea compare-segments --markdown comparison.md` writes a scan-friendly
-Markdown summary with Source Assessment, Source Summaries, and Source Deltas
-tables for comparing flat-color and MLX/SAM proposal outputs or for comparing
-gated and ungated segment configs.
+Markdown summary with Source Assessment, Source Summaries, Promotion Proxy
+Deltas, and Source Deltas tables for comparing flat-color and MLX/SAM proposal
+outputs or for comparing gated and ungated segment configs.
 
 ## Segment Comparison Config v1
 

@@ -352,6 +352,9 @@ Exit criteria:
   classical and MLX/SAM outputs can be judged before defaulting either source;
 - source comparisons include an assessment verdict for improved, mixed, noise,
   unchanged, or needs-review outcomes based on promotion-proxy deltas;
+- comparison reports now expose those promotion-proxy deltas explicitly and
+  mark the current basis as downstream-status proxy counts, not region-level
+  promotion labels;
 - MLX/SAM is judged by green promotion increase and red false-positive
   decrease, not by mask aesthetics alone;
 - the system remains usable without cloud APIs.

@@ -159,6 +159,7 @@ def render_segment_manifest_comparison(
         before_source_summary,
         after_source_summary,
     )
+    promotion_proxy_deltas = _segment_promotion_proxy_deltas(source_deltas)
     downstream_status_deltas = [
         delta
         for delta in source_deltas
@@ -192,6 +193,7 @@ def render_segment_manifest_comparison(
         "after_source": _backend_source(after_data),
         "source_summaries": [before_source_summary, after_source_summary],
         "source_deltas": source_deltas,
+        "promotion_proxy_deltas": promotion_proxy_deltas,
         "downstream_status_deltas": downstream_status_deltas,
         "source_delta_assessment": source_delta_assessment,
         "before_proposal_count": int(before_data.get("proposal_count", 0)),
@@ -260,6 +262,10 @@ def render_segment_manifest_comparison_markdown(
                     "- Proposal count delta: "
                     f"`{_fmt(assessment.get('proposal_count_delta'))}`"
                 ),
+                "- Promotion delta basis: "
+                f"{_code_cell(assessment.get('promotion_delta_basis'))}",
+                "- Uses region promotion labels: "
+                f"`{str(assessment.get('uses_region_promotion_labels', False)).lower()}`",
                 f"- Positive signals: {_signal_cell(assessment.get('positive_signals'))}",
                 f"- Risk signals: {_signal_cell(assessment.get('risk_signals'))}",
             ]
@@ -296,6 +302,29 @@ def render_segment_manifest_comparison_markdown(
             )
     else:
         lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+
+    lines.extend(
+        [
+            "",
+            "## Promotion Proxy Deltas",
+            "",
+            "| Proxy | Downstream status | Before | After | Delta |",
+            "| --- | --- | ---: | ---: | ---: |",
+        ]
+    )
+    proxy_deltas = _list_value(comparison.get("promotion_proxy_deltas"))
+    if proxy_deltas:
+        for delta in proxy_deltas:
+            lines.append(
+                "| "
+                f"`{delta.get('key')}` | "
+                f"`{delta.get('source_key')}` | "
+                f"{_fmt(delta.get('before'))} | "
+                f"{_fmt(delta.get('after'))} | "
+                f"{_fmt(delta.get('delta'))} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [
@@ -926,6 +955,50 @@ def _segment_source_deltas(
     return _summary_count_deltas(before_counts, after_counts)
 
 
+def _segment_promotion_proxy_deltas(
+    source_deltas: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        _segment_promotion_proxy_delta(
+            source_deltas,
+            key="green_promotion",
+            downstream_status="accepted",
+        ),
+        _segment_promotion_proxy_delta(
+            source_deltas,
+            key="red_candidate",
+            downstream_status="rejected",
+        ),
+        _segment_promotion_proxy_delta(
+            source_deltas,
+            key="manual_review",
+            downstream_status="pending",
+        ),
+    ]
+
+
+def _segment_promotion_proxy_delta(
+    source_deltas: list[dict[str, Any]],
+    *,
+    key: str,
+    downstream_status: str,
+) -> dict[str, Any]:
+    source = _segment_delta_record(
+        source_deltas,
+        group="downstream_status_counts",
+        key=downstream_status,
+    )
+    return {
+        "group": "promotion_proxy_counts",
+        "key": key,
+        "source_group": "downstream_status_counts",
+        "source_key": downstream_status,
+        "before": source.get("before", 0.0),
+        "after": source.get("after", 0.0),
+        "delta": source.get("delta", 0.0),
+    }
+
+
 def _segment_source_delta_assessment(
     source_deltas: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -988,6 +1061,8 @@ def _segment_source_delta_assessment(
         "red_candidate_delta": red_delta,
         "manual_review_delta": manual_delta,
         "proposal_count_delta": proposal_delta,
+        "promotion_delta_basis": "downstream_status_counts_proxy",
+        "uses_region_promotion_labels": False,
         "positive_signals": positive_signals,
         "risk_signals": risk_signals,
     }
@@ -999,10 +1074,21 @@ def _segment_delta_value(
     group: str,
     key: str,
 ) -> float:
+    return _number_or_zero(
+        _segment_delta_record(deltas, group=group, key=key).get("delta")
+    )
+
+
+def _segment_delta_record(
+    deltas: list[dict[str, Any]],
+    *,
+    group: str,
+    key: str,
+) -> dict[str, Any]:
     for delta in deltas:
         if delta.get("group") == group and delta.get("key") == key:
-            return _number_or_zero(delta.get("delta"))
-    return 0.0
+            return delta
+    return {}
 
 
 def _segment_delta_groups(summary: dict[str, Any]) -> dict[str, Any]:

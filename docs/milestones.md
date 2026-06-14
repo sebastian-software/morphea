@@ -629,11 +629,13 @@ Implemented so far:
   decisions, and added/removed/changed proposal groups such as
   `proposal_tile_grid`.
 - segment comparison Markdown reports include Source Summaries and Source
-  Deltas tables so classical and MLX/SAM proposal runs can be reviewed side by
-  side without opening the raw JSON.
+  Deltas tables plus explicit Promotion Proxy Deltas, so classical and MLX/SAM
+  proposal runs can be reviewed side by side without opening the raw JSON.
 - segment comparisons include a source delta assessment that labels side-by-side
   runs as improved, mixed, noise, unchanged, or needing review from green
-  promotion, red candidate, manual-review, and proposal-count deltas.
+  promotion, red candidate, manual-review, and proposal-count deltas while
+  recording that the current basis is downstream-status proxy counts rather
+  than region-level promotion labels.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
