@@ -17,6 +17,7 @@ from morphea.segmenters import (
     MLX_SAM_RUNTIME_INSTALL_ACTION,
     MlxSamSegmenter,
     SegmentProposal,
+    _sam_prompt_points,
     gate_segment_proposals,
     mlx_sam_runtime_status,
     proposals_to_manifest,
@@ -289,6 +290,7 @@ class SegmenterTests(unittest.TestCase):
             self.assertTrue(status["backend_available"])
             self.assertEqual(status["adapter"], "mlx_sam_grid_points")
             self.assertEqual(status["max_component_area"], 12000)
+            self.assertEqual(status["prompt_strategy"], "grid_points")
             self.assertTrue(status["sam_package_available"])
             self.assertEqual(
                 status["model_sidecar_path"],
@@ -302,6 +304,36 @@ class SegmenterTests(unittest.TestCase):
             self.assertIsNone(
                 status["capabilities"]["live_sam_model_adapter"]["next_action"]
             )
+
+    def test_mlx_sam_runtime_status_reports_prompt_strategy(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam.safetensors"
+            model_path.write_text("placeholder", encoding="utf-8")
+
+            with (
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=True),
+                patch(
+                    "morphea.segmenters.is_mlx_sam_package_available",
+                    return_value=True,
+                ),
+            ):
+                status = mlx_sam_runtime_status(
+                    MlxSamSegmenter(
+                        model_path=str(model_path),
+                        prompt_strategy="flat_color_centers",
+                        prompt_min_area=4,
+                        prompt_color_tolerance=18,
+                        prompt_max_size=256,
+                        prompt_max_colors=10,
+                    )
+                )
+
+            self.assertEqual(status["adapter"], "mlx_sam_flat_color_centers")
+            self.assertEqual(status["prompt_strategy"], "flat_color_centers")
+            self.assertEqual(status["prompt_min_area"], 4)
+            self.assertEqual(status["prompt_color_tolerance"], 18)
+            self.assertEqual(status["prompt_max_size"], 256)
+            self.assertEqual(status["prompt_max_colors"], 10)
 
     def test_mlx_sam_runtime_status_reports_checkpoint_sidecar(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -490,6 +522,21 @@ class SegmenterTests(unittest.TestCase):
             self.assertEqual(proposals[0].area, 8)
             self.assertEqual(proposals[1].bounds, (20, 10, 22, 11))
             self.assertEqual(proposals[1].area, 4)
+
+    def test_mlx_sam_flat_color_center_prompts_use_segment_candidates(self):
+        image_path = _write_two_color_image()
+        points = _sam_prompt_points(
+            20,
+            12,
+            MlxSamSegmenter(
+                prompt_strategy="flat_color_centers",
+                prompt_min_area=4,
+                max_masks=2,
+            ),
+            image_path,
+        )
+
+        self.assertEqual(set(points), {(4.0, 4.0), (14.0, 4.0)})
 
     def test_mlx_sam_json_adapter_honors_timeout(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -814,6 +861,7 @@ class SegmenterTests(unittest.TestCase):
                         "segmenter": "mlx_sam",
                         "mlx_model_path": str(model_path),
                         "max_component_area": 10,
+                        "mlx_prompt_strategy": "flat_color_centers",
                         "geometry_gate": True,
                         "require_reserved_anchor": True,
                     }
@@ -827,6 +875,10 @@ class SegmenterTests(unittest.TestCase):
 
             manifest = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(manifest["config"]["max_component_area"], 10)
+            self.assertEqual(
+                manifest["config"]["mlx_prompt_strategy"],
+                "flat_color_centers",
+            )
             self.assertEqual(manifest["summary"]["status_counts"]["deferred"], 1)
             self.assertEqual(
                 manifest["summary"]["downstream_status_counts"]["rejected"],
@@ -948,6 +1000,7 @@ class SegmenterTests(unittest.TestCase):
                         "mlx_score_threshold": 0.7,
                         "mlx_max_masks": 16,
                         "mlx_timeout_seconds": 2.5,
+                        "mlx_prompt_strategy": "flat_color_centers",
                     }
                 ),
                 encoding="utf-8",
@@ -979,10 +1032,22 @@ class SegmenterTests(unittest.TestCase):
         compare_config = json.loads(
             (config_dir / "compare-segments.json").read_text(encoding="utf-8")
         )
+        guided_config = json.loads(
+            (config_dir / "mlx-sam-flat-color-centers-segment.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        guided_compare_config = json.loads(
+            (config_dir / "compare-flat-color-centers.json").read_text(
+                encoding="utf-8"
+            )
+        )
 
         self.assertEqual(flat_config["segmenter"], "flat_color")
         self.assertEqual(mlx_config["segmenter"], "mlx_sam")
+        self.assertEqual(guided_config["segmenter"], "mlx_sam")
         self.assertEqual(flat_config["input"], mlx_config["input"])
+        self.assertEqual(flat_config["input"], guided_config["input"])
         self.assertEqual(
             flat_config["input"],
             "assets/curated/terminaro-opaque-table-grid.png",
@@ -991,12 +1056,21 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(mlx_config["mlx_max_masks"], 4)
         self.assertEqual(mlx_config["mlx_score_threshold"], 0.01)
         self.assertEqual(mlx_config["max_component_area"], 12000)
+        self.assertEqual(guided_config["mlx_max_masks"], 16)
+        self.assertEqual(guided_config["mlx_prompt_strategy"], "flat_color_centers")
+        self.assertEqual(guided_config["max_component_area"], 12000)
         self.assertEqual(
             mlx_config["mlx_model_path"],
             status_config["mlx_sam_model_path"],
         )
+        self.assertEqual(
+            guided_config["mlx_model_path"],
+            status_config["mlx_sam_model_path"],
+        )
         self.assertEqual(compare_config["before"], flat_config["output"])
         self.assertEqual(compare_config["after"], mlx_config["output"])
+        self.assertEqual(guided_compare_config["before"], flat_config["output"])
+        self.assertEqual(guided_compare_config["after"], guided_config["output"])
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "flat-color-segments.json"

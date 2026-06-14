@@ -1,0 +1,19 @@
+{
+  "color_tolerance": 18,
+  "geometry_gate": true,
+  "input": "assets/curated/terminaro-opaque-table-grid.png",
+  "markdown": "/tmp/morphea-mlx-sam-smoke/mlx-sam-flat-color-centers-segments.md",
+  "max_anchor_quality_error": 1.0,
+  "max_colors": 10,
+  "max_component_area": 12000,
+  "max_size": 256,
+  "min_area": 12,
+  "mlx_max_masks": 16,
+  "mlx_model_path": "checkpoints/sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors",
+  "mlx_prompt_strategy": "flat_color_centers",
+  "mlx_score_threshold": 0.01,
+  "mlx_timeout_seconds": 90,
+  "output": "/tmp/morphea-mlx-sam-smoke/mlx-sam-flat-color-centers-segments.json",
+  "require_reserved_anchor": true,
+  "segmenter": "mlx_sam"
+}

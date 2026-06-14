@@ -974,8 +974,8 @@ Proposal group fields:
 `not_configured`, `model_missing`, `mlx_sam_package_missing`, and
 `adapter_pending`; it also records `package_available`,
 `sam_package_available`, `model_configured`, `model_exists`,
-`model_sidecar_path`, `model_sidecar_exists`, adapter name, runtime knobs, and
-per-capability status for `json_proposal_adapter` and
+`model_sidecar_path`, `model_sidecar_exists`, adapter name, runtime knobs,
+`prompt_strategy`, and per-capability status for `json_proposal_adapter` and
 `live_sam_model_adapter`. The sidecar fields are diagnostic only: quantized
 MLX/SAM checkpoints normally need the adjacent `.safetensors.json` file, while
 unquantized checkpoints may not. The JSON adapter is a local bridge for
@@ -993,9 +993,10 @@ checked-in or generated proposal payloads shaped as:
 JSON adapter proposals use the same proposal schema and downstream geometry
 gate as live SAM proposals. When `mlx-sam` is installed in a compatible Python
 environment and `mlx_model_path` points at a `.safetensors` checkpoint, the
-`mlx_sam_grid_points` adapter prompts the model with bounded grid points,
-converts positive masks to proposal components, and then uses the same geometry
-gate. Other non-JSON SAM model paths remain `adapter_pending`.
+live adapter prompts the model with either bounded grid points or
+Flat-Color-guided proposal centers, converts positive masks to proposal
+components, and then uses the same geometry gate. Other non-JSON SAM model
+paths remain `adapter_pending`.
 
 ## Runtime Status Report v1
 
@@ -1058,6 +1059,11 @@ Supported fields:
 - `mlx_score_threshold`
 - `mlx_max_masks`
 - `mlx_timeout_seconds`
+- `mlx_prompt_strategy`: `grid_points` by default, or
+  `flat_color_centers` to prompt SAM at centers of Flat-Color proposals that
+  pass the reserved-anchor geometry gate. The guided strategy uses the same
+  `min_area`, `color_tolerance`, `max_size`, `max_colors`, and
+  `max_component_area` config values as the segment run.
 - `geometry_gate`: default `false`; when true, pending proposals are accepted
   or rejected before serialization using primitive anchor geometry metrics
 - `max_anchor_quality_error`: nullable upper bound for gate acceptance,

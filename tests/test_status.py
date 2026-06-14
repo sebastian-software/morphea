@@ -215,6 +215,7 @@ class RuntimeStatusTests(unittest.TestCase):
                         "model_exists": True,
                         "model_sidecar_path": "checkpoints/sam.safetensors.json",
                         "model_sidecar_exists": False,
+                        "prompt_strategy": "grid_points",
                     },
                 },
                 "classifiers": {},
@@ -247,6 +248,10 @@ class RuntimeStatusTests(unittest.TestCase):
         self.assertIn("`flat_color`", markdown)
         self.assertIn("## Backend Diagnostics", markdown)
         self.assertIn("| segmenter | `mlx_sam` | `adapter` | `mlx_sam_grid_points` |", markdown)
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `prompt_strategy` | `grid_points` |",
+            markdown,
+        )
         self.assertIn(
             "| segmenter | `mlx_sam` | `model_sidecar_exists` | `false` |",
             markdown,

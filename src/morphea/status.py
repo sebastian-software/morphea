@@ -29,6 +29,7 @@ BACKEND_DIAGNOSTIC_FIELDS = (
     "model_sidecar_exists",
     "package_available",
     "sam_package_available",
+    "prompt_strategy",
 )
 
 

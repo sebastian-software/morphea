@@ -158,6 +158,7 @@ SEGMENT_CONFIG_DEFAULTS = {
     "mlx_score_threshold": 0.0,
     "mlx_max_masks": None,
     "mlx_timeout_seconds": None,
+    "mlx_prompt_strategy": "grid_points",
     "geometry_gate": False,
     "max_anchor_quality_error": 1.0,
     "require_reserved_anchor": False,
@@ -520,6 +521,10 @@ def main(argv: list[str] | None = None) -> None:
     segment.add_argument("--mlx-score-threshold", type=float)
     segment.add_argument("--mlx-max-masks", type=int)
     segment.add_argument("--mlx-timeout-seconds", type=float)
+    segment.add_argument(
+        "--mlx-prompt-strategy",
+        choices=("grid_points", "flat_color_centers"),
+    )
     segment.add_argument(
         "--geometry-gate",
         dest="geometry_gate",
@@ -3769,6 +3774,19 @@ def _segmenter_from_config(
             max_component_area=(
                 int(config["max_component_area"])
                 if config.get("max_component_area") is not None
+                else None
+            ),
+            prompt_strategy=str(config["mlx_prompt_strategy"]),
+            prompt_min_area=int(config["min_area"]),
+            prompt_color_tolerance=float(config["color_tolerance"]),
+            prompt_max_size=(
+                int(config["max_size"])
+                if config.get("max_size") is not None
+                else None
+            ),
+            prompt_max_colors=(
+                int(config["max_colors"])
+                if config.get("max_colors") is not None
                 else None
             ),
         )

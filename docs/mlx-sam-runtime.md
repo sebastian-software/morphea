@@ -90,6 +90,21 @@ mkdir -p /tmp/morphea-mlx-sam-smoke
   --config docs/real-images/mlx-sam-smoke/compare-segments.json
 ```
 
+To test the Flat-Color-guided prompt strategy, run the optional guided config:
+
+```sh
+.venv-mlx-sam/bin/python -m morphea.cli segment \
+  --config docs/real-images/mlx-sam-smoke/mlx-sam-flat-color-centers-segment.json
+
+.venv/bin/python -m morphea.cli compare-segments \
+  --config docs/real-images/mlx-sam-smoke/compare-flat-color-centers.json
+```
+
+The current guided smoke produces 16 MLX/SAM proposals and 16 spatial matches
+against the Flat-Color baseline, but still reports `verdict=noise` with
+`green_delta=-20.0`. Treat it as better prompt-placement evidence, not as a
+promotion-quality pass.
+
 The equivalent expanded commands are:
 
 ```sh

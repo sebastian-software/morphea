@@ -122,6 +122,11 @@ class MlxSamSegmenter:
     max_masks: int | None = None
     timeout_seconds: float | None = None
     max_component_area: int | None = None
+    prompt_strategy: str = "grid_points"
+    prompt_min_area: int = 8
+    prompt_color_tolerance: float = 0.0
+    prompt_max_size: int | None = None
+    prompt_max_colors: int | None = None
     source: str = "mlx_sam"
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
@@ -138,6 +143,7 @@ class MlxSamSegmenter:
             details.append(f"max_masks={self.max_masks}")
         if self.timeout_seconds is not None:
             details.append(f"timeout_seconds={self.timeout_seconds}")
+        details.append(f"prompt_strategy={self.prompt_strategy}")
         suffix = f" ({', '.join(details)})" if details else ""
         msg = f"MLX SAM segmenter is not installed/configured yet{suffix}"
         raise RuntimeError(msg)
@@ -228,7 +234,7 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         "adapter": (
             "json_proposals"
             if json_adapter_available
-            else "mlx_sam_grid_points"
+            else f"mlx_sam_{segmenter.prompt_strategy}"
             if status == "mlx_sam_package_available"
             else None
         ),
@@ -236,6 +242,11 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         "max_masks": segmenter.max_masks,
         "timeout_seconds": segmenter.timeout_seconds,
         "max_component_area": segmenter.max_component_area,
+        "prompt_strategy": segmenter.prompt_strategy,
+        "prompt_min_area": segmenter.prompt_min_area,
+        "prompt_color_tolerance": segmenter.prompt_color_tolerance,
+        "prompt_max_size": segmenter.prompt_max_size,
+        "prompt_max_colors": segmenter.prompt_max_colors,
         "capabilities": _mlx_sam_capabilities(
             package_available=package_available,
             sam_package_available=sam_package_available,
@@ -587,7 +598,10 @@ def _mlx_sam_package_proposals(
             precompute_image_features=True,
             feature_batch_size=1,
         )
-        for obj_id, point in enumerate(_sam_grid_points(width, height, segmenter), 1):
+        for obj_id, point in enumerate(
+            _sam_prompt_points(width, height, segmenter, source_path),
+            1,
+        ):
             if (
                 segmenter.timeout_seconds is not None
                 and perf_counter() - started > segmenter.timeout_seconds
@@ -621,12 +635,25 @@ def _mlx_sam_package_proposals(
     return tuple(proposals)
 
 
+def _sam_prompt_points(
+    width: int,
+    height: int,
+    segmenter: MlxSamSegmenter,
+    image_path: str | Path,
+) -> list[tuple[float, float]]:
+    if segmenter.prompt_strategy == "grid_points":
+        return _sam_grid_points(width, height, segmenter)
+    if segmenter.prompt_strategy == "flat_color_centers":
+        return _sam_flat_color_center_points(segmenter, image_path)
+    raise ValueError(f"unsupported MLX/SAM prompt strategy: {segmenter.prompt_strategy}")
+
+
 def _sam_grid_points(
     width: int,
     height: int,
     segmenter: MlxSamSegmenter,
 ) -> list[tuple[float, float]]:
-    target_count = max(1, min(int(segmenter.max_masks or 9), 64))
+    target_count = _sam_prompt_target_count(segmenter)
     columns = max(1, ceil(target_count ** 0.5))
     rows = max(1, ceil(target_count / columns))
     points: list[tuple[float, float]] = []
@@ -641,6 +668,39 @@ def _sam_grid_points(
                 )
             )
     return points
+
+
+def _sam_flat_color_center_points(
+    segmenter: MlxSamSegmenter,
+    image_path: str | Path,
+) -> list[tuple[float, float]]:
+    flat_segmenter = FlatColorSegmenter(
+        min_area=segmenter.prompt_min_area,
+        color_tolerance=segmenter.prompt_color_tolerance,
+        max_size=segmenter.prompt_max_size,
+        max_colors=segmenter.prompt_max_colors,
+        max_component_area=segmenter.max_component_area,
+    )
+    gated = gate_segment_proposals(
+        flat_segmenter.propose(image_path),
+        max_anchor_quality_error=1.0,
+        require_reserved_anchor=True,
+    )
+    candidates = [
+        proposal
+        for proposal in gated
+        if proposal.downstream_status == "accepted"
+    ]
+    candidates = sorted(candidates, key=lambda proposal: (-proposal.area, proposal.id))
+    points: list[tuple[float, float]] = []
+    for proposal in candidates[:_sam_prompt_target_count(segmenter)]:
+        left, top, right, bottom = proposal.bounds
+        points.append(((left + right) / 2.0, (top + bottom) / 2.0))
+    return points
+
+
+def _sam_prompt_target_count(segmenter: MlxSamSegmenter) -> int:
+    return max(1, min(int(segmenter.max_masks or 9), 64))
 
 
 def _sam_mask_confidence(mask: object) -> float:

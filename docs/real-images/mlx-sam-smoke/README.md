@@ -28,6 +28,16 @@ mkdir -p /tmp/morphea-mlx-sam-smoke
   --config docs/real-images/mlx-sam-smoke/compare-segments.json
 ```
 
+Run the optional Flat-Color-guided prompt smoke:
+
+```sh
+.venv-mlx-sam/bin/python -m morphea.cli segment \
+  --config docs/real-images/mlx-sam-smoke/mlx-sam-flat-color-centers-segment.json
+
+.venv/bin/python -m morphea.cli compare-segments \
+  --config docs/real-images/mlx-sam-smoke/compare-flat-color-centers.json
+```
+
 Current expected signal on `assets/curated/terminaro-opaque-table-grid.png`:
 Flat-Color produces 41 proposals with 29 geometry-gate accepted proposals; the
 tiny 4-prompt MLX/SAM run produces 4 proposals, all accepted. The comparison
@@ -37,3 +47,9 @@ useful overlap evidence but not enough to call the source improved. Treat this
 as runtime evidence and a prompt/config baseline. The MLX/SAM config includes
 `max_component_area: 12000` so oversized AI masks are deferred before geometry
 gating rather than being promoted as coarse primitive anchors.
+
+The optional `flat_color_centers` smoke is a prompt-strategy experiment. It is
+expected to improve overlap evidence relative to blind grid prompting. The
+current local run produces 16 proposals and `spatial_matches=16`, but the
+comparison verdict remains `noise` with `green_delta=-20.0`; this is better
+evidence for prompt placement, not yet a promotable quality improvement.

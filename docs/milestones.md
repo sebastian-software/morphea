@@ -686,6 +686,11 @@ Implemented so far:
   environment and `mlx_model_path` points at a `.safetensors` checkpoint,
   `MlxSamSegmenter` can run bounded grid-point prompts and convert positive
   live SAM masks into the same proposal schema and geometry gate.
+- MLX/SAM segment configs can choose `mlx_prompt_strategy=grid_points` or
+  `flat_color_centers`; the guided strategy prompts SAM at centers of
+  Flat-Color proposals that already pass the reserved-anchor geometry gate, so
+  prompt experiments are repeatable without making Flat-Color the final source
+  of truth.
 - the first local live-SAM smoke used the 4-bit tiny SAM2.1 MLX checkpoint
   `sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors` on
   `assets/curated/terminaro-opaque-table-grid.png`; it produced 4 MLX/SAM
@@ -1265,6 +1270,8 @@ Implemented so far:
   AI masks from bypassing the same deferral path used by Flat-Color components
 - segment configs include future MLX model/runtime knobs without requiring the
   MLX backend to be installed
+- segment configs include `mlx_prompt_strategy` so grid and Flat-Color-guided
+  live SAM prompt runs can be compared through the same proposal schema
 - vectorize scoring weights for raster error, quality error, complexity, and
   simple-shape bonus
 - vectorize anchor threshold config for circle/ring, stroke, quad, rect, and
