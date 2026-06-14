@@ -444,6 +444,7 @@ def _training_component_row(
             "trained": False,
             "parameter_count": 0,
             "loss_epochs": 0,
+            "training_example_count": 0,
             "uses_raster_tokens": uses_raster_tokens,
             "inference_priority": inference_priority,
         }
@@ -454,6 +455,9 @@ def _training_component_row(
         resolved_parameter_count = 0
     loss_history = component.get("loss_history", [])
     loss_epochs = len(loss_history) if isinstance(loss_history, list) else 0
+    trained_examples = component.get("trained_examples", 0)
+    if not isinstance(trained_examples, int):
+        trained_examples = 0
     row: dict[str, object] = {
         "name": name,
         "weight_format": component.get("weight_format"),
@@ -462,6 +466,7 @@ def _training_component_row(
         "trained": resolved_parameter_count > 0 and loss_epochs > 0,
         "parameter_count": resolved_parameter_count,
         "loss_epochs": loss_epochs,
+        "training_example_count": trained_examples,
         "uses_raster_tokens": uses_raster_tokens,
         "inference_priority": inference_priority,
     }
@@ -584,6 +589,7 @@ def _train_feature_head(
         "architecture": "normalized_feature_softmax_head",
         "transformer_status": "pending_raster_crop_encoder",
         "parameter_count": len(labels) * (feature_count + 1),
+        "trained_examples": len(rows),
         "epochs": config.epochs,
         "class_count": len(labels),
         "feature_count": len(FEATURE_NAMES),
@@ -626,6 +632,7 @@ def _train_raster_token_mixer(
                 "embedding_names": embedding_names,
             },
             "parameter_count": 0,
+            "trained_examples": 0,
             "weights": [],
             "bias": [],
             "normalization": {"mean": [], "scale": []},
@@ -650,6 +657,7 @@ def _train_raster_token_mixer(
             "score": "foreground_weighted_spatial_rgba",
         },
         "parameter_count": len(labels) * (len(embedding_names) + 1),
+        "trained_examples": len(rows),
         "labels": list(labels),
         "normalization": {
             "mean": list(means),
@@ -696,6 +704,7 @@ def _train_feature_raster_fusion(
                 "heads": config.num_heads,
             },
             "parameter_count": 0,
+            "trained_examples": 0,
             "weights": [],
             "bias": [],
             "normalization": {"mean": [], "scale": []},
@@ -724,6 +733,7 @@ def _train_feature_raster_fusion(
             "heads": config.num_heads,
         },
         "parameter_count": len(labels) * (len(input_names) + 1),
+        "trained_examples": len(rows),
         "normalization": {
             "mean": list(means),
             "scale": list(scales),
@@ -869,6 +879,7 @@ def _train_end_to_end_token_transformer(
             "trained_examples": len(rows),
         },
         "training_status": "end_to_end_attention_trained",
+        "trained_examples": len(rows),
         "parameter_count": len(labels) * (config.hidden_dim + 1)
         + config.hidden_dim * (token_input_count + 1)
         + max(1, config.num_layers) * config.hidden_dim * 5,
@@ -1064,6 +1075,7 @@ def _train_token_transformer(
             "encoder": _token_transformer_encoder_config(config),
             "projection_calibration": projection,
             "parameter_count": 0,
+            "trained_examples": 0,
             "weights": [],
             "bias": [],
             "normalization": {"mean": [], "scale": []},
@@ -1089,6 +1101,7 @@ def _train_token_transformer(
         "projection_calibration": projection,
         "parameter_count": len(labels) * (config.hidden_dim + 1)
         + config.hidden_dim * 2,
+        "trained_examples": len(rows),
         "normalization": {
             "mean": list(means),
             "scale": list(scales),

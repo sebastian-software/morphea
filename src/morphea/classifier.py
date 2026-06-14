@@ -685,8 +685,8 @@ def _training_component_summary_markdown(summary: dict[str, object]) -> list[str
         f"- Trainable components: `{_fmt_number(summary.get('trainable_component_count'))}`",
         f"- MLX autograd components: `{_fmt_number(summary.get('mlx_autograd_component_count'))}`",
         "",
-        "| Priority | Component | Runtime | Parameters | Loss epochs | Raster tokens |",
-        "| ---: | --- | --- | ---: | ---: | --- |",
+        "| Priority | Component | Runtime | Training examples | Parameters | Loss epochs | Raster tokens |",
+        "| ---: | --- | --- | ---: | ---: | ---: | --- |",
     ]
     components = summary.get("components", [])
     if isinstance(components, list):
@@ -698,6 +698,7 @@ def _training_component_summary_markdown(summary: dict[str, object]) -> list[str
                 f"{_fmt_number(component.get('inference_priority'))} | "
                 f"`{component.get('name', 'unknown')}` | "
                 f"`{component.get('training_runtime', 'unknown')}` | "
+                f"{_fmt_number(component.get('training_example_count'))} | "
                 f"{_fmt_number(component.get('parameter_count'))} | "
                 f"{_fmt_number(component.get('loss_epochs'))} | "
                 f"`{bool(component.get('uses_raster_tokens'))}` |"

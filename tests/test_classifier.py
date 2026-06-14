@@ -698,8 +698,16 @@ class PrimitiveClassifierTests(unittest.TestCase):
                 model["mlx_training"]["feature_head_parameter_count"],
             )
             self.assertEqual(
+                components["feature_head"]["training_example_count"],
+                model["train_examples"],
+            )
+            self.assertEqual(
                 components["token_transformer"]["training_runtime"],
                 "python_serialized",
+            )
+            self.assertEqual(
+                components["token_transformer"]["training_example_count"],
+                model["train_examples"],
             )
             self.assertTrue(components["feature_raster_fusion"]["uses_raster_tokens"])
 
@@ -1418,6 +1426,7 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertIn("- Direct raster tokens: `True`", markdown)
             self.assertIn("- Ranking raster tokens: `True`", markdown)
             self.assertIn("## MLX Training Components", markdown)
+            self.assertIn("Training examples", markdown)
             self.assertIn("`token_transformer`", markdown)
 
     def test_eval_classifier_cli_accepts_config_file(self):

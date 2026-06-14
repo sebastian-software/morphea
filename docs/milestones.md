@@ -975,6 +975,10 @@ Implemented so far:
   `self-learning-cycle.json` and Markdown, including inference order,
   parameter counts, loss epochs, raster-token usage, and MLX-autograd component
   count.
+- MLX retraining reports now separate semantic base/pseudo examples from
+  raster-capable base/pseudo examples, so reviewed pseudo labels without source
+  images are visible as feature-path learning rather than implied raster-token
+  training.
 
 Remaining:
 

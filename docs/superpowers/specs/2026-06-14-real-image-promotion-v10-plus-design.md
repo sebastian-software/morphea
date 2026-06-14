@@ -512,7 +512,10 @@ Current implementation:
   either the default centroid backend or the local
   `mlx_transformer_primitive_classifier` backend (`backend: mlx`). The MLX path
   still depends on reviewed pseudo-labels and the same acceptance gates; it is
-  an own primitive-classifier model path, not SAM fine-tuning. Training gate
+  an own primitive-classifier model path, not SAM fine-tuning. MLX cycle
+  reports expose component coverage and split semantic pseudo-label training
+  from raster-capable image-backed training, so feature-only reviewed labels
+  are not confused with raster-token learning. Training gate
   artifacts now include worst/best metric
   contributors, so rejected self-learning cycles can identify the metric,
   split, and label behind the gate decision. Training comparison artifacts now

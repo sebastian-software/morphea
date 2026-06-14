@@ -600,9 +600,12 @@ and suite-family acceptance discipline as the centroid path, and supports
 Its model artifact now records a component summary with inference order,
 parameter counts, loss epochs, raster-token usage, and whether a component used
 MLX autograd, and accepted self-learning cycle reports copy that summary into
-`self-learning-cycle.json` and Markdown. This is the first own-model training
-path in the reviewed loop; it is separate from MLX/SAM segmentation inference
-and does not train SAM itself.
+`self-learning-cycle.json` and Markdown. The same reports now separate semantic
+base/pseudo training examples from raster-capable base/pseudo examples, so
+reviewers can see when reviewed pseudo-labels improve only the feature path
+versus raster-token components. This is the first own-model training path in
+the reviewed loop; it is separate from MLX/SAM segmentation inference and does
+not train SAM itself.
 
 Exit criteria:
 

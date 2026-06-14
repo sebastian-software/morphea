@@ -2356,6 +2356,7 @@ class SelfLearningTests(unittest.TestCase):
                 )
 
             summary = result["model"]["training_component_summary"]
+            source_summary = result["model"]["training_source_summary"]
             self.assertEqual(summary["component_count"], 4)
             self.assertEqual(summary["trainable_component_count"], 4)
             self.assertEqual(summary["mlx_autograd_component_count"], 0)
@@ -2363,6 +2364,18 @@ class SelfLearningTests(unittest.TestCase):
                 summary["inference_order_with_crop_tokens"][0],
                 "token_transformer",
             )
+            components = {
+                component["name"]: component
+                for component in summary["components"]
+            }
+            self.assertEqual(components["feature_head"]["training_example_count"], 31)
+            self.assertEqual(
+                components["token_transformer"]["training_example_count"],
+                30,
+            )
+            self.assertEqual(source_summary["semantic_pseudo_train_examples"], 1)
+            self.assertEqual(source_summary["raster_pseudo_train_examples"], 0)
+            self.assertFalse(source_summary["pseudo_labels_train_raster_components"])
             cycle_report = json.loads(
                 (output_dir / "self-learning-cycle.json").read_text(
                     encoding="utf-8"
@@ -2372,11 +2385,24 @@ class SelfLearningTests(unittest.TestCase):
                 cycle_report["model"]["training_component_summary"],
                 summary,
             )
+            self.assertEqual(
+                cycle_report["model"]["training_source_summary"],
+                source_summary,
+            )
             markdown = (output_dir / "self-learning-cycle.md").read_text(
                 encoding="utf-8"
             )
             self.assertIn("- MLX trainable components: 4", markdown)
             self.assertIn("- MLX autograd components: 0", markdown)
+            self.assertIn(
+                "- MLX semantic source examples: base=30, pseudo=1",
+                markdown,
+            )
+            self.assertIn(
+                "- MLX raster source examples: base=30, pseudo=0",
+                markdown,
+            )
+            self.assertIn("- Pseudo labels train raster components: `False`", markdown)
             self.assertIn("`token_transformer`", markdown)
 
     def test_self_learning_cycle_validates_accepted_model_on_lucide_suite(self):
@@ -3817,6 +3843,12 @@ class SelfLearningTests(unittest.TestCase):
                 model["source_datasets"]["pseudo_dataset"],
                 str(pseudo_dir / "dataset.json"),
             )
+            source_summary = model["training_source_summary"]
+            self.assertEqual(source_summary["semantic_base_train_examples"], 30)
+            self.assertEqual(source_summary["semantic_pseudo_train_examples"], 1)
+            self.assertEqual(source_summary["raster_base_train_examples"], 30)
+            self.assertEqual(source_summary["raster_pseudo_train_examples"], 0)
+            self.assertFalse(source_summary["pseudo_labels_train_raster_components"])
             self.assertIn("token_transformer", model["mlx_training"])
 
     def test_retrain_cli_accepts_config_file(self):

@@ -14,6 +14,7 @@ from morphea.classifier import (
     evaluate_classifier_ranking,
     examples_from_dataset,
     feature_importance_from_centroids,
+    raster_examples_from_dataset,
 )
 from morphea.curated import check_curated_suite
 from morphea.lucide_quality import check_lucide_suite
@@ -1132,6 +1133,9 @@ def _self_learning_model_summary(
     component_summary = _model_training_component_summary(model)
     if component_summary is not None:
         summary["training_component_summary"] = component_summary
+    source_summary = model.get("training_source_summary")
+    if isinstance(source_summary, dict):
+        summary["training_source_summary"] = source_summary
     return summary
 
 
@@ -1795,6 +1799,9 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         component_summary = model.get("training_component_summary")
         if isinstance(component_summary, dict):
             lines.extend(_model_component_summary_markdown(component_summary))
+        source_summary = model.get("training_source_summary")
+        if isinstance(source_summary, dict):
+            lines.extend(_model_training_source_markdown(source_summary))
     if reviewed_summary or isinstance(pseudo_dataset.get("samples"), list):
         provenance_counts = _counts_from_object(
             reviewed_summary.get("provenance_field_counts")
@@ -2141,6 +2148,7 @@ def retrain_mlx_classifier(
     augmented_dataset = output_path.with_name(
         f"{output_path.stem}-augmented-dataset.json"
     )
+    training_config = config or MlxClassifierTrainingConfig()
     baseline_train = examples_from_dataset(base_dataset, splits=("train",))
     pseudo_train = examples_from_dataset(pseudo_dataset, splits=("train",))
     _write_augmented_retraining_dataset(
@@ -2152,7 +2160,14 @@ def retrain_mlx_classifier(
     model = train_mlx_transformer_classifier(
         augmented_dataset,
         output=output_path,
-        config=config,
+        config=training_config,
+    )
+    source_summary = _mlx_training_source_summary(
+        base_dataset=base_dataset,
+        pseudo_dataset=pseudo_dataset,
+        crop_size=training_config.crop_size,
+        base_train_count=len(baseline_train),
+        pseudo_train_count=len(pseudo_train),
     )
     model["source_datasets"] = {
         "base_dataset": str(base_dataset),
@@ -2164,6 +2179,7 @@ def retrain_mlx_classifier(
         "base_train_examples": len(baseline_train),
         "pseudo_train_examples": len(pseudo_train),
     }
+    model["training_source_summary"] = source_summary
     model["retraining_backend"] = "mlx"
     output_path.write_text(
         json.dumps(model, indent=2, sort_keys=True),
@@ -2179,6 +2195,36 @@ def retrain_mlx_classifier(
         )
 
     return model
+
+
+def _mlx_training_source_summary(
+    *,
+    base_dataset: str | Path,
+    pseudo_dataset: str | Path,
+    crop_size: int,
+    base_train_count: int,
+    pseudo_train_count: int,
+) -> dict[str, object]:
+    base_raster = raster_examples_from_dataset(
+        base_dataset,
+        crop_size=crop_size,
+        splits=("train",),
+    )
+    pseudo_raster = raster_examples_from_dataset(
+        pseudo_dataset,
+        crop_size=crop_size,
+        splits=("train",),
+    )
+    return {
+        "crop_size": crop_size,
+        "semantic_train_examples": base_train_count + pseudo_train_count,
+        "semantic_base_train_examples": base_train_count,
+        "semantic_pseudo_train_examples": pseudo_train_count,
+        "raster_train_examples": len(base_raster) + len(pseudo_raster),
+        "raster_base_train_examples": len(base_raster),
+        "raster_pseudo_train_examples": len(pseudo_raster),
+        "pseudo_labels_train_raster_components": bool(pseudo_raster),
+    }
 
 
 def _write_augmented_retraining_dataset(
@@ -2743,8 +2789,8 @@ def _model_component_summary_markdown(summary: dict[str, object]) -> list[str]:
         f"- MLX trainable components: {_fmt_metric(summary.get('trainable_component_count'))}",
         f"- MLX autograd components: {_fmt_metric(summary.get('mlx_autograd_component_count'))}",
         "",
-        "| Priority | Component | Runtime | Parameters | Loss epochs | Raster tokens |",
-        "| ---: | --- | --- | ---: | ---: | --- |",
+        "| Priority | Component | Runtime | Training examples | Parameters | Loss epochs | Raster tokens |",
+        "| ---: | --- | --- | ---: | ---: | ---: | --- |",
     ]
     components = summary.get("components", [])
     if isinstance(components, list):
@@ -2756,11 +2802,29 @@ def _model_component_summary_markdown(summary: dict[str, object]) -> list[str]:
                 f"{_fmt_metric(component.get('inference_priority'))} | "
                 f"`{component.get('name', 'unknown')}` | "
                 f"`{component.get('training_runtime', 'unknown')}` | "
+                f"{_fmt_metric(component.get('training_example_count'))} | "
                 f"{_fmt_metric(component.get('parameter_count'))} | "
                 f"{_fmt_metric(component.get('loss_epochs'))} | "
                 f"`{bool(component.get('uses_raster_tokens'))}` |"
             )
     return lines
+
+
+def _model_training_source_markdown(summary: dict[str, object]) -> list[str]:
+    return [
+        "",
+        (
+            "- MLX semantic source examples: "
+            f"base={_fmt_metric(summary.get('semantic_base_train_examples'))}, "
+            f"pseudo={_fmt_metric(summary.get('semantic_pseudo_train_examples'))}"
+        ),
+        (
+            "- MLX raster source examples: "
+            f"base={_fmt_metric(summary.get('raster_base_train_examples'))}, "
+            f"pseudo={_fmt_metric(summary.get('raster_pseudo_train_examples'))}"
+        ),
+        f"- Pseudo labels train raster components: `{bool(summary.get('pseudo_labels_train_raster_components'))}`",
+    ]
 
 
 def _counts_from_object(value: object) -> dict[str, int]:

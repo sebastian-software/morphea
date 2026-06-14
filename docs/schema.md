@@ -1671,10 +1671,11 @@ loss history over the pooled encoder embedding. `projection_calibration`
 records either identity parameters after learned token projection or
 training-derived per-dimension scale and bias values for fallback
 token-transformer projection paths, plus strategy and training example count.
-`component_summary` records the trained components, parameter counts, loss
-epochs, training runtime (`python_manual_sgd`, `python_serialized`, or
-`mlx_autograd`), raster-token usage, and crop-token inference order. This makes
-own-model artifacts auditable without reopening every nested weight block.
+`component_summary` records the trained components, per-component training
+example counts, parameter counts, loss epochs, training runtime
+(`python_manual_sgd`, `python_serialized`, or `mlx_autograd`), raster-token
+usage, and crop-token inference order. This makes own-model artifacts auditable
+without reopening every nested weight block.
 The fallback centroids keep the artifact usable as a deterministic
 `--classifier-model` prior when MLX is not installed.
 When `mlx_training.weight_format` is `mlx_feature_head_v1`, classifier loading
@@ -1703,6 +1704,10 @@ When `self-learn` accepts an MLX retraining run, the cycle's compact `model`
 summary copies the same `training_component_summary` into
 `self-learning-cycle.json` and renders it in Markdown, so reviewers can inspect
 component coverage without opening the full weight artifact.
+`training_source_summary` records semantic versus raster-capable train examples
+from base and pseudo datasets, including whether pseudo labels train raster
+components. This distinguishes feature-only reviewed pseudo-label learning from
+image-backed raster-component learning.
 
 ## Classifier Evaluation Report v1
 
