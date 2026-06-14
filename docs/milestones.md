@@ -957,6 +957,11 @@ Implemented so far:
   evaluates the generic model against a rendered target corpus and reports
   unknown expected targets explicitly, making future vocabulary expansion
   visible before model artifacts are accepted
+- `morphea eval-raster-targets --min-target-accuracy ...
+  --min-exact-match-accuracy ... --max-unknown-expected-targets ...` writes an
+  optional acceptance gate with accept/manual-review/reject decisions, so
+  raster-target model artifacts can be blocked before they become promotion
+  evidence
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle

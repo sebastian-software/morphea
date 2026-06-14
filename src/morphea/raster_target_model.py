@@ -261,9 +261,23 @@ def evaluate_raster_target_model(
     markdown: str | Path | None = None,
     splits: tuple[str, ...] | None = None,
     target_label_key: str | None = None,
+    min_target_accuracy: float | None = None,
+    min_exact_match_accuracy: float | None = None,
+    max_unknown_expected_targets: int | None = None,
 ) -> dict[str, Any]:
     """Evaluate a stored raster-target model against a target corpus."""
 
+    min_target_accuracy = _validated_optional_accuracy_gate(
+        min_target_accuracy,
+        "min_target_accuracy",
+    )
+    min_exact_match_accuracy = _validated_optional_accuracy_gate(
+        min_exact_match_accuracy,
+        "min_exact_match_accuracy",
+    )
+    max_unknown_expected_targets = _validated_optional_unknown_target_gate(
+        max_unknown_expected_targets,
+    )
     model_path = Path(model_json)
     model = json.loads(model_path.read_text(encoding="utf-8"))
     if model.get("model_type") != RASTER_TARGET_MODEL_TYPE:
@@ -307,6 +321,14 @@ def evaluate_raster_target_model(
         "feature_extraction": model.get("feature_extraction", {}),
         "evaluation": evaluation,
     }
+    gate = _raster_target_evaluation_gate(
+        evaluation,
+        min_target_accuracy=min_target_accuracy,
+        min_exact_match_accuracy=min_exact_match_accuracy,
+        max_unknown_expected_targets=max_unknown_expected_targets,
+    )
+    if gate is not None:
+        report["gate"] = gate
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -429,6 +451,45 @@ def render_raster_target_evaluation_markdown(report: dict[str, Any]) -> str:
                 f"{_fmt_value(item.get('exact_match_accuracy'))} | "
                 f"{_fmt_value(item.get('unknown_expected_target_count'))} |"
             )
+    gate = report.get("gate")
+    if isinstance(gate, dict):
+        lines.extend(
+            [
+                "",
+                "## Gate",
+                "",
+                f"- Decision: `{gate.get('decision', 'n/a')}`",
+                f"- Accepted: `{gate.get('accepted', False)}`",
+                f"- Reasons: {_fmt_reason_list(gate.get('reasons', []))}",
+                "",
+                "| Gate | Value |",
+                "| --- | ---: |",
+            ]
+        )
+        gates = gate.get("gates", {})
+        if isinstance(gates, dict):
+            for name, value in sorted(gates.items()):
+                lines.append(f"| `{name}` | {_fmt_value(value)} |")
+        split_results = gate.get("split_results", {})
+        if isinstance(split_results, dict) and split_results:
+            lines.extend(
+                [
+                    "",
+                    "### Split Gate Results",
+                    "",
+                    "| Split | Decision | Reasons |",
+                    "| --- | --- | --- |",
+                ]
+            )
+            for split, result in sorted(split_results.items()):
+                if not isinstance(result, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{split}` | "
+                    f"`{result.get('decision', 'n/a')}` | "
+                    f"{_fmt_reason_list(result.get('reasons', []))} |"
+                )
     failures = _evaluation_failures(evaluation)
     if failures:
         lines.extend(
@@ -450,6 +511,142 @@ def render_raster_target_evaluation_markdown(report: dict[str, Any]) -> str:
                 f"{_fmt_targets(failure.get('unknown_expected_targets'))} |"
             )
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _validated_optional_accuracy_gate(
+    value: float | None,
+    name: str,
+) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        msg = f"raster target evaluation {name} must be a number between 0 and 1"
+        raise ValueError(msg)
+    normalized = float(value)
+    if normalized < 0.0 or normalized > 1.0:
+        msg = f"raster target evaluation {name} must be between 0 and 1"
+        raise ValueError(msg)
+    return normalized
+
+
+def _validated_optional_unknown_target_gate(value: int | None) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        msg = (
+            "raster target evaluation max_unknown_expected_targets "
+            "must be a non-negative integer"
+        )
+        raise ValueError(msg)
+    if value < 0:
+        msg = (
+            "raster target evaluation max_unknown_expected_targets "
+            "must be non-negative"
+        )
+        raise ValueError(msg)
+    return value
+
+
+def _raster_target_evaluation_gate(
+    evaluation: dict[str, Any],
+    *,
+    min_target_accuracy: float | None,
+    min_exact_match_accuracy: float | None,
+    max_unknown_expected_targets: int | None,
+) -> dict[str, Any] | None:
+    gates = {
+        key: value
+        for key, value in {
+            "min_target_accuracy": min_target_accuracy,
+            "min_exact_match_accuracy": min_exact_match_accuracy,
+            "max_unknown_expected_targets": max_unknown_expected_targets,
+        }.items()
+        if value is not None
+    }
+    if not gates:
+        return None
+
+    reject = False
+    manual_review = False
+    reasons: list[str] = []
+    split_results: dict[str, dict[str, Any]] = {}
+    for split, split_report in sorted(evaluation.items()):
+        if not isinstance(split_report, dict):
+            split_report = {}
+        split_reject = False
+        split_manual_review = False
+        split_reasons: list[str] = []
+        if min_target_accuracy is not None:
+            target_accuracy = split_report.get("target_accuracy")
+            if not isinstance(target_accuracy, (int, float)):
+                split_manual_review = True
+                _append_unique_reason(split_reasons, "target_accuracy_missing")
+            elif float(target_accuracy) < min_target_accuracy:
+                split_reject = True
+                _append_unique_reason(split_reasons, "target_accuracy_below_min")
+        if min_exact_match_accuracy is not None:
+            exact_match_accuracy = split_report.get("exact_match_accuracy")
+            if not isinstance(exact_match_accuracy, (int, float)):
+                split_manual_review = True
+                _append_unique_reason(split_reasons, "exact_match_accuracy_missing")
+            elif float(exact_match_accuracy) < min_exact_match_accuracy:
+                split_reject = True
+                _append_unique_reason(split_reasons, "exact_match_accuracy_below_min")
+        if max_unknown_expected_targets is not None:
+            unknown_count = split_report.get("unknown_expected_target_count")
+            if not isinstance(unknown_count, int):
+                split_manual_review = True
+                _append_unique_reason(
+                    split_reasons,
+                    "unknown_expected_targets_missing",
+                )
+            elif unknown_count > max_unknown_expected_targets:
+                split_reject = True
+                _append_unique_reason(
+                    split_reasons,
+                    "unknown_expected_targets_above_max",
+                )
+        if split_reject:
+            split_decision = "reject"
+            reject = True
+        elif split_manual_review:
+            split_decision = "manual_review"
+            manual_review = True
+        else:
+            split_decision = "accept"
+        for reason in split_reasons:
+            _append_unique_reason(reasons, reason)
+        split_results[str(split)] = {
+            "decision": split_decision,
+            "accepted": split_decision == "accept",
+            "reasons": split_reasons,
+            "metrics": {
+                "target_accuracy": split_report.get("target_accuracy"),
+                "exact_match_accuracy": split_report.get("exact_match_accuracy"),
+                "unknown_expected_target_count": split_report.get(
+                    "unknown_expected_target_count"
+                ),
+            },
+        }
+
+    if reject:
+        decision = "reject"
+    elif manual_review:
+        decision = "manual_review"
+    else:
+        decision = "accept"
+    return {
+        "decision": decision,
+        "accepted": decision == "accept",
+        "reasons": reasons,
+        "gates": gates,
+        "split_results": split_results,
+    }
+
+
+def _append_unique_reason(reasons: list[str], reason: str) -> None:
+    if reason not in reasons:
+        reasons.append(reason)
 
 
 def _corpus_examples(
@@ -928,6 +1125,12 @@ def _evaluation_failures(evaluation: object) -> list[dict[str, Any]]:
 
 
 def _fmt_targets(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    return ", ".join(f"`{item}`" for item in value)
+
+
+def _fmt_reason_list(value: object) -> str:
     if not isinstance(value, list) or not value:
         return "n/a"
     return ", ".join(f"`{item}`" for item in value)

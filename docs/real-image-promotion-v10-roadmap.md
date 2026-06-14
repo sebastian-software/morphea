@@ -251,7 +251,9 @@ Exit criteria:
 - `morphea eval-raster-targets` can evaluate that generic model against a
   rendered target corpus and surface unknown expected targets, so future
   Lucide, icon, UI, or real-image target vocabularies fail visibly instead of
-  disappearing into aggregate metrics.
+  disappearing into aggregate metrics. Optional evaluation gates now turn those
+  metrics into explicit accept/manual-review/reject decisions before a model
+  artifact can be treated as promotion evidence.
 - Real-image suite status is summarized with green/yellow/red labels.
 - Existing snapshot and run artifact commands remain documented.
 - No document claims that aggregate pass/fail equals visual quality.

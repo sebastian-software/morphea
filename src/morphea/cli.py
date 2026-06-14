@@ -146,6 +146,9 @@ EVAL_RASTER_TARGETS_CONFIG_KEYS = {
     "markdown",
     "splits",
     "target_label_key",
+    "min_target_accuracy",
+    "min_exact_match_accuracy",
+    "max_unknown_expected_targets",
 }
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
@@ -691,6 +694,9 @@ def main(argv: list[str] | None = None) -> None:
         help="Corpus splits to evaluate. Defaults to all splits in the corpus.",
     )
     eval_raster_targets.add_argument("--target-label-key")
+    eval_raster_targets.add_argument("--min-target-accuracy", type=float)
+    eval_raster_targets.add_argument("--min-exact-match-accuracy", type=float)
+    eval_raster_targets.add_argument("--max-unknown-expected-targets", type=int)
     eval_raster_targets.add_argument("--config", type=Path)
 
     harvest = subcommands.add_parser(
@@ -1564,10 +1570,21 @@ def main(argv: list[str] | None = None) -> None:
             markdown=eval_config.get("markdown"),
             splits=eval_config.get("splits"),
             target_label_key=eval_config.get("target_label_key"),
+            min_target_accuracy=eval_config.get("min_target_accuracy"),
+            min_exact_match_accuracy=eval_config.get("min_exact_match_accuracy"),
+            max_unknown_expected_targets=eval_config.get(
+                "max_unknown_expected_targets"
+            ),
+        )
+        gate = report.get("gate")
+        gate_suffix = (
+            f" (gate={gate['decision']})"
+            if isinstance(gate, dict) and "decision" in gate
+            else ""
         )
         print(
             f"evaluated {report['model_type']} on "
-            f"{len(report['splits'])} corpus splits"
+            f"{len(report['splits'])} corpus splits{gate_suffix}"
         )
         return
 
@@ -2469,6 +2486,14 @@ def _resolved_eval_raster_targets_config(
         config["splits"] = list(args.splits)
     if args.target_label_key is not None:
         config["target_label_key"] = args.target_label_key
+    for key in (
+        "min_target_accuracy",
+        "min_exact_match_accuracy",
+        "max_unknown_expected_targets",
+    ):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
     _require_config_paths(
         config,
         ("model", "corpus", "output"),
@@ -2493,6 +2518,9 @@ def _resolved_eval_raster_targets_config(
             if config.get("target_label_key") is not None
             else None
         ),
+        "min_target_accuracy": config.get("min_target_accuracy"),
+        "min_exact_match_accuracy": config.get("min_exact_match_accuracy"),
+        "max_unknown_expected_targets": config.get("max_unknown_expected_targets"),
     }
 
 

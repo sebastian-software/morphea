@@ -174,6 +174,9 @@ class LucideModelTests(unittest.TestCase):
                 output=report_path,
                 markdown=markdown,
                 splits=("train",),
+                min_target_accuracy=1.0,
+                min_exact_match_accuracy=1.0,
+                max_unknown_expected_targets=0,
             )
 
             self.assertEqual(report["model_type"], RASTER_TARGET_MODEL_TYPE)
@@ -183,12 +186,19 @@ class LucideModelTests(unittest.TestCase):
                 report["evaluation"]["train"]["exact_match_accuracy"],
                 1.0,
             )
+            self.assertEqual(report["gate"]["decision"], "accept")
+            self.assertTrue(report["gate"]["accepted"])
+            self.assertEqual(report["gate"]["reasons"], [])
+            self.assertEqual(
+                report["gate"]["split_results"]["train"]["decision"],
+                "accept",
+            )
             saved = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(saved["model_type"], RASTER_TARGET_MODEL_TYPE)
-            self.assertIn(
-                "# Morphea Raster Target Evaluation",
-                markdown.read_text(encoding="utf-8"),
-            )
+            markdown_text = markdown.read_text(encoding="utf-8")
+            self.assertIn("# Morphea Raster Target Evaluation", markdown_text)
+            self.assertIn("## Gate", markdown_text)
+            self.assertIn("`accept`", markdown_text)
 
     def test_eval_raster_targets_cli_writes_report_with_unknown_targets(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -197,6 +207,12 @@ class LucideModelTests(unittest.TestCase):
             model_path = root / "model.json"
             eval_corpus = _write_unknown_target_eval_corpus(root)
             report_path = root / "eval.json"
+            markdown = root / "eval.md"
+            config_path = root / "eval-config.json"
+            config_path.write_text(
+                json.dumps({"max_unknown_expected_targets": 99}),
+                encoding="utf-8",
+            )
 
             with patch(
                 "morphea.raster_target_model.raster_target_runtime_status",
@@ -214,7 +230,8 @@ class LucideModelTests(unittest.TestCase):
                     config=LucideTargetTrainingConfig(allow_unavailable=True),
                 )
 
-            with redirect_stdout(StringIO()):
+            stdout = StringIO()
+            with redirect_stdout(stdout):
                 main(
                     [
                         "eval-raster-targets",
@@ -222,8 +239,14 @@ class LucideModelTests(unittest.TestCase):
                         str(eval_corpus),
                         "-o",
                         str(report_path),
+                        "--markdown",
+                        str(markdown),
                         "--splits",
                         "val",
+                        "--config",
+                        str(config_path),
+                        "--max-unknown-expected-targets",
+                        "0",
                     ]
                 )
 
@@ -233,6 +256,18 @@ class LucideModelTests(unittest.TestCase):
             self.assertEqual(split["unknown_expected_target_count"], 1)
             self.assertEqual(split["unknown_expected_targets"], {"stroke_rect": 1})
             self.assertFalse(split["predictions"][0]["ok"])
+            self.assertEqual(report["gate"]["decision"], "reject")
+            self.assertFalse(report["gate"]["accepted"])
+            self.assertEqual(
+                report["gate"]["reasons"],
+                ["unknown_expected_targets_above_max"],
+            )
+            self.assertEqual(
+                report["gate"]["split_results"]["val"]["decision"],
+                "reject",
+            )
+            self.assertIn("(gate=reject)", stdout.getvalue())
+            self.assertIn("unknown_expected_targets_above_max", markdown.read_text())
 
 
 def _write_lucide_target_corpus(root: Path) -> Path:

@@ -482,8 +482,24 @@ Each split report includes `example_count`, `target_accuracy`,
 `exact_match_accuracy`, per-target accuracy, `unknown_expected_targets`, and
 per-example predictions. Unknown expected targets are counted explicitly so a
 new corpus vocabulary cannot look green merely because the model never learned
-that target. `--markdown report.md` writes the same split table plus a compact
-failure table.
+that target.
+
+When any raster-target evaluation gate is configured, the report also includes
+`gate` with `decision` (`accept`, `manual_review`, or `reject`), `accepted`,
+machine-readable `reasons`, active `gates`, and per-split `split_results`.
+Supported gates are `--min-target-accuracy`,
+`--min-exact-match-accuracy`, and `--max-unknown-expected-targets`.
+Accuracy gates must be in `[0, 1]`; unknown-target limits must be
+non-negative integers. Below-threshold metrics and unknown-target excesses
+reject the gate. Missing metrics produce `manual_review` rather than a false
+accept. `--markdown report.md` writes the same split table, gate summary, split
+gate table, and compact failure table.
+
+`morphea eval-raster-targets --config eval.json` accepts the same path and gate
+fields as the CLI: `model`, `corpus`, `output`, optional `markdown`, optional
+`splits`, optional `target_label_key`, optional `min_target_accuracy`, optional
+`min_exact_match_accuracy`, and optional `max_unknown_expected_targets`. CLI
+arguments override config values.
 
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates
