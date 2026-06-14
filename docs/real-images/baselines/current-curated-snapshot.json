@@ -1233,9 +1233,11 @@
             ],
             "forbidden_count": 0,
             "forbidden_kinds": [],
+            "forbidden_topology_descriptors": [],
             "matching_count": 5,
             "min_anchor_coverage": 0.8,
             "min_iou": 0.0,
+            "required_topology_descriptors": [],
             "selected_anchors": [
               {
                 "anchor_coverage": 1.0,
@@ -2030,9 +2032,11 @@
             "forbidden_kinds": [
               "cubic_path"
             ],
+            "forbidden_topology_descriptors": [],
             "matching_count": 1,
             "min_anchor_coverage": null,
             "min_iou": 0.25,
+            "required_topology_descriptors": [],
             "selected_anchors": [
               {
                 "anchor_coverage": 1.0,

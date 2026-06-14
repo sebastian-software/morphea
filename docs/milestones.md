@@ -1019,6 +1019,8 @@ Implemented so far:
   actual matching counts, topology evidence including descriptor labels and
   nested-contour counts, per-region layer-depth evidence, selected-anchor kind
   profiles, and candidate rejection counts.
+- source-region topology gates can require or forbid descriptor labels such as
+  `single_component`, `multi_component`, or `nested_contours`.
 - checked promotion runs include Candidate Rejections in `promotion-review.md`,
   so shape/topology reject reasons are reviewable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown

@@ -1531,6 +1531,20 @@ class CuratedSuiteTests(unittest.TestCase):
             _region_topology_failures({"min_nested_contours": 4}, summary),
             ["nested_contour_count 3 < 4"],
         )
+        self.assertEqual(
+            _region_topology_failures(
+                {"required_topology_descriptors": ["closed"]},
+                summary,
+            ),
+            ["missing topology descriptor: closed"],
+        )
+        self.assertEqual(
+            _region_topology_failures(
+                {"forbidden_topology_descriptors": ["multi_component"]},
+                summary,
+            ),
+            ["forbidden topology descriptor: multi_component"],
+        )
 
     def test_structure_threshold_can_ignore_non_structural_layer_roles(self):
         gate = _structure_threshold_promotion_gate(
@@ -1914,6 +1928,45 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "max_closed_anchors"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_region_topology_descriptor(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["region_gates"] = [
+                {
+                    "id": "bad-topology-descriptor",
+                    "gate_type": "topology",
+                    "bounds": [0, 0, 10, 10],
+                    "expected_kinds": ["circle"],
+                    "required_topology_descriptors": ["roundish"],
+                }
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "unsupported descriptor"):
                 load_curated_suite(suite_path)
 
     def test_load_curated_suite_rejects_invalid_region_anchor_coverage(self):

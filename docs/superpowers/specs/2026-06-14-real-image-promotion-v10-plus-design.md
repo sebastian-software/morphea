@@ -299,6 +299,9 @@ hole counts plus cutout anchors, with optional `min_nested_contours` and
 `max_nested_contours` region-gate limits.
 Topology summaries also emit `topology_descriptors`, a compact label list for
 closed/open state, component count, holes, cutouts, and nested contours.
+Region gates can require or forbid these labels with
+`required_topology_descriptors` and `forbidden_topology_descriptors`, allowing
+single-control regions to reject multi-component or nested candidates directly.
 
 Exit criteria:
 

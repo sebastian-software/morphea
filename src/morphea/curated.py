@@ -82,6 +82,17 @@ PROMOTION_REGION_TOPOLOGY_LIMITS = {
     "max_nested_contours",
     "max_disconnected_components",
 }
+PROMOTION_REGION_TOPOLOGY_DESCRIPTORS = {
+    "empty",
+    "closed",
+    "open",
+    "mixed_open_closed",
+    "single_component",
+    "multi_component",
+    "holes",
+    "cutouts",
+    "nested_contours",
+}
 PROMOTION_VISUAL_THRESHOLD_KEYS = {
     "max_raster_l1_error",
     "max_raster_edge_error",
@@ -1134,6 +1145,16 @@ def _region_promotion_gates(
             for item in gate.get("forbidden_kinds", [])
             if isinstance(item, str)
         ]
+        required_topology_descriptors = [
+            str(item)
+            for item in gate.get("required_topology_descriptors", [])
+            if isinstance(item, str)
+        ]
+        forbidden_topology_descriptors = [
+            str(item)
+            for item in gate.get("forbidden_topology_descriptors", [])
+            if isinstance(item, str)
+        ]
         min_anchor_coverage_value = gate.get("min_anchor_coverage")
         min_anchor_coverage = (
             float(min_anchor_coverage_value)
@@ -1205,6 +1226,8 @@ def _region_promotion_gates(
                     "min_anchor_coverage": min_anchor_coverage,
                     "expected_kinds": expected_kinds,
                     "forbidden_kinds": forbidden_kinds,
+                    "required_topology_descriptors": required_topology_descriptors,
+                    "forbidden_topology_descriptors": forbidden_topology_descriptors,
                     "matching_count": len(matching),
                     "selected_count": len(selected),
                     "forbidden_count": len(forbidden),
@@ -1698,6 +1721,18 @@ def _region_topology_failures(
             failures.append(f"{summary_key} {actual} < {expected}")
         if operator == "<=" and actual > expected:
             failures.append(f"{summary_key} {actual} > {expected}")
+    descriptors = summary.get("topology_descriptors")
+    descriptor_set = set(descriptors) if isinstance(descriptors, list) else set()
+    required = gate.get("required_topology_descriptors")
+    if isinstance(required, list):
+        for descriptor in required:
+            if isinstance(descriptor, str) and descriptor not in descriptor_set:
+                failures.append(f"missing topology descriptor: {descriptor}")
+    forbidden = gate.get("forbidden_topology_descriptors")
+    if isinstance(forbidden, list):
+        for descriptor in forbidden:
+            if isinstance(descriptor, str) and descriptor in descriptor_set:
+                failures.append(f"forbidden topology descriptor: {descriptor}")
     return failures
 
 
@@ -3811,6 +3846,16 @@ def _fmt_region_expected(evidence: dict[str, object]) -> str:
     forbidden = _fmt_markdown_list(evidence.get("forbidden_kinds"))
     if forbidden != "n/a":
         parts.append(f"forbidden={forbidden}")
+    required_descriptors = _fmt_markdown_list(
+        evidence.get("required_topology_descriptors")
+    )
+    if required_descriptors != "n/a":
+        parts.append(f"requires={required_descriptors}")
+    forbidden_descriptors = _fmt_markdown_list(
+        evidence.get("forbidden_topology_descriptors")
+    )
+    if forbidden_descriptors != "n/a":
+        parts.append(f"forbids={forbidden_descriptors}")
     min_iou = evidence.get("min_iou")
     if isinstance(min_iou, (int, float)):
         parts.append(f"min_iou={_fmt_markdown_value(min_iou)}")
@@ -4222,6 +4267,18 @@ def _validate_promotion_region_gates(case_id: str, gates: Any) -> None:
                 "must be >= min_count"
             )
         _validate_region_topology_limits(case_id, gate_id, gate)
+        _validate_region_topology_descriptor_list(
+            case_id,
+            gate_id,
+            gate,
+            "required_topology_descriptors",
+        )
+        _validate_region_topology_descriptor_list(
+            case_id,
+            gate_id,
+            gate,
+            "forbidden_topology_descriptors",
+        )
         description = gate.get("description")
         if description is not None and (
             not isinstance(description, str) or not description
@@ -4247,6 +4304,34 @@ def _validate_region_kind_list(
         raise ValueError(
             f"case {case_id} promotion region gate {gate_id} {key} "
             "must be a string array"
+        )
+
+
+def _validate_region_topology_descriptor_list(
+    case_id: str,
+    gate_id: str,
+    gate: dict[str, Any],
+    key: str,
+) -> None:
+    values = gate.get(key, [])
+    if values is None:
+        return
+    if not isinstance(values, list) or not all(
+        isinstance(item, str) and item for item in values
+    ):
+        raise ValueError(
+            f"case {case_id} promotion region gate {gate_id} {key} "
+            "must be a string array"
+        )
+    invalid = [
+        item for item in values if item not in PROMOTION_REGION_TOPOLOGY_DESCRIPTORS
+    ]
+    if invalid:
+        allowed = ", ".join(sorted(PROMOTION_REGION_TOPOLOGY_DESCRIPTORS))
+        raise ValueError(
+            f"case {case_id} promotion region gate {gate_id} {key} "
+            f"contains unsupported descriptor {invalid[0]}; "
+            f"must be one of: {allowed}"
         )
 
 
