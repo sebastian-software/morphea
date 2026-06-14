@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from morphea.cli import main
 from morphea.curated import (
+    _structure_threshold_promotion_gate,
     check_curated_suite,
     load_curated_suite,
     render_curated_markdown,
@@ -1094,6 +1095,45 @@ class CuratedSuiteTests(unittest.TestCase):
                 result["cases"][0]["editability_review"]["reasons"],
             )
 
+    def test_structure_threshold_can_ignore_non_structural_layer_roles(self):
+        gate = _structure_threshold_promotion_gate(
+            {
+                "status": "checked",
+                "layer_count": 4,
+                "layer_anchor_counts": {
+                    "cutout_overlays": 12,
+                    "filled_primitives": 21,
+                    "generic_paths": 13,
+                    "strokes": 16,
+                },
+                "metrics": {"fragmentation_penalty": 0.4},
+            },
+            {
+                "stress_family": "generated_illustration",
+                "structure_thresholds": {
+                    "max_fragmentation_penalty": 0.6,
+                    "max_structural_layer_count": 3,
+                    "non_structural_layer_roles": ["cutout_overlays"],
+                    "severity": "red",
+                    "description": "Cutout overlays should not count as core layer depth.",
+                },
+            },
+        )
+
+        self.assertIsNotNone(gate)
+        self.assertTrue(gate["ok"])
+        self.assertEqual(
+            gate["evidence"]["actual"],
+            {
+                "fragmentation_penalty": 0.4,
+                "structural_layer_count": 3,
+            },
+        )
+        self.assertEqual(
+            gate["evidence"]["non_structural_layer_roles"],
+            ["cutout_overlays"],
+        )
+
     def test_group_promotion_gates_check_group_membership(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             source = Path(temp_dir) / "input.png"
@@ -1432,6 +1472,40 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "max_layer_count"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_non_structural_layer_roles(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("green")
+            metadata["structure_thresholds"] = {
+                "max_structural_layer_count": 3,
+                "non_structural_layer_roles": ["cutout_overlays", ""],
+            }
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "non_structural_layer_roles"):
                 load_curated_suite(suite_path)
 
     def test_render_curated_snapshot_sorts_cases_and_expectations(self):

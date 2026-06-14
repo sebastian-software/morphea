@@ -419,8 +419,12 @@ Promotion metadata fields:
   Thresholds are evaluated as a derived `visual_fidelity_thresholds` promotion
   gate after the checked run has written raster metrics into the report.
 - `structure_thresholds`: optional fragmentation/layer-depth thresholds. The
-  object includes `max_fragmentation_penalty` and/or `max_layer_count`, optional
-  `severity`, and optional `description`. Thresholds are evaluated as a derived
+  object includes `max_fragmentation_penalty`, `max_layer_count`, and/or
+  `max_structural_layer_count`, optional `non_structural_layer_roles`, optional
+  `severity`, and optional `description`. `max_layer_count` checks raw manifest
+  layer count. `max_structural_layer_count` checks an effective layer count
+  after excluding explicitly configured non-structural roles such as
+  `cutout_overlays`. Thresholds are evaluated as a derived
   `fragmentation_layer_thresholds` promotion gate.
 - `hard_gates`: optional array of explicit promotion gates. Each gate includes
   `id`, `gate_type`, `expectation_ids`, optional `severity`, and optional

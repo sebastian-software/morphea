@@ -82,6 +82,7 @@ PROMOTION_VISUAL_THRESHOLD_KEYS = {
 PROMOTION_STRUCTURE_THRESHOLD_KEYS = {
     "max_fragmentation_penalty",
     "max_layer_count",
+    "max_structural_layer_count",
 }
 EDITABILITY_REVIEW_THRESHOLDS = {
     "shape_identity_confidence": 0.65,
@@ -1193,6 +1194,32 @@ def _structure_threshold_promotion_gate(
         elif actual_layer_count > max_layer_count:
             failures.append(f"layer_count {actual_layer_count} > {max_layer_count}")
 
+    max_structural_layer_count = thresholds.get("max_structural_layer_count")
+    non_structural_layer_roles = _non_structural_layer_roles(thresholds)
+    if isinstance(max_structural_layer_count, int):
+        actual_layer_count = case.get("layer_count")
+        structural_layer_count = (
+            _structural_layer_count(
+                actual_layer_count,
+                case.get("layer_anchor_counts"),
+                non_structural_layer_roles,
+            )
+            if isinstance(actual_layer_count, int)
+            else None
+        )
+        actuals["structural_layer_count"] = structural_layer_count
+        limits["max_structural_layer_count"] = max_structural_layer_count
+        if not isinstance(actual_layer_count, int):
+            failures.append("structural_layer_count missing")
+        elif (
+            isinstance(structural_layer_count, int)
+            and structural_layer_count > max_structural_layer_count
+        ):
+            failures.append(
+                "structural_layer_count "
+                f"{structural_layer_count} > {max_structural_layer_count}"
+            )
+
     ok = checked and not failures and bool(limits)
     if not checked:
         reason = f"case status is {case.get('status', 'unknown')}"
@@ -1212,10 +1239,36 @@ def _structure_threshold_promotion_gate(
             "actual": actuals,
             "thresholds": limits,
             "layer_anchor_counts": case.get("layer_anchor_counts", {}),
+            "non_structural_layer_roles": list(non_structural_layer_roles),
             "failures": failures,
             "description": thresholds.get("description"),
         },
     )
+
+
+def _non_structural_layer_roles(thresholds: dict[str, Any]) -> tuple[str, ...]:
+    roles = thresholds.get("non_structural_layer_roles")
+    if not isinstance(roles, list):
+        return ()
+    return tuple(str(role) for role in roles)
+
+
+def _structural_layer_count(
+    layer_count: int,
+    layer_anchor_counts: object,
+    non_structural_layer_roles: tuple[str, ...],
+) -> int:
+    if not isinstance(layer_anchor_counts, dict):
+        return layer_count
+    present_roles = {
+        str(role)
+        for role, count in layer_anchor_counts.items()
+        if isinstance(count, int) and count > 0
+    }
+    if not present_roles:
+        return layer_count
+    structural_roles = present_roles - set(non_structural_layer_roles)
+    return len(structural_roles)
 
 
 def _group_promotion_gates(
@@ -3432,6 +3485,23 @@ def _validate_promotion_structure_thresholds(case_id: str, value: Any) -> None:
                 f"case {case_id} promotion structure_thresholds "
                 "max_layer_count must be a non-negative integer"
             )
+    structural_layer_count = value.get("max_structural_layer_count")
+    if structural_layer_count is not None:
+        configured = True
+        if not isinstance(structural_layer_count, int) or structural_layer_count < 0:
+            raise ValueError(
+                f"case {case_id} promotion structure_thresholds "
+                "max_structural_layer_count must be a non-negative integer"
+            )
+    non_structural_roles = value.get("non_structural_layer_roles")
+    if non_structural_roles is not None and (
+        not isinstance(non_structural_roles, list)
+        or not all(isinstance(item, str) and item for item in non_structural_roles)
+    ):
+        raise ValueError(
+            f"case {case_id} promotion structure_thresholds "
+            "non_structural_layer_roles must be a string array"
+        )
     if not configured:
         allowed = ", ".join(sorted(PROMOTION_STRUCTURE_THRESHOLD_KEYS))
         raise ValueError(
