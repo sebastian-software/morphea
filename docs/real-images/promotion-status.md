@@ -371,7 +371,9 @@ self-learning training gate, and keep applied-review provenance visible in the
 cycle report, while deferred real-image cases stay out of the dataset. The
 checked-in replay remains conservative about model acceptance: the five
 accepted Terminaro region labels are consumed, then the gate rejects the update
-on `comparison_status_regressed` instead of writing a model.
+on `comparison_status_regressed` instead of writing a model. The current worst
+contributors are ranking-evaluation classifier accuracy and accuracy
+improvement on validation/test splits at -0.0666667.
 
 `morphea self-learn` now separates retraining from model acceptance. A model can
 be written after the training comparison gate accepts, but the cycle's
@@ -383,7 +385,10 @@ pseudo-label dataset.
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training
 gate summary, so a primitive-family regression can block model acceptance even
-when an aggregate split metric improves.
+when an aggregate split metric improves. Training gate JSON and Markdown now
+also surface the worst and best contributing metric deltas, making
+`comparison_status_regressed` rejects inspectable without opening the full
+comparison report.
 
 Self-learning cycle reports now expose `suite_family_validation`: primitive
 label-family deltas, curated real-image family summaries, and optional Lucide

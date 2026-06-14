@@ -643,6 +643,7 @@ def gate_training_comparison(
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
         summary = {}
+    metric_delta_summary = _training_gate_metric_delta_summary(report)
     reasons: list[str] = []
     reject = False
     manual_review = False
@@ -702,6 +703,7 @@ def gate_training_comparison(
             "allow_unchanged": allow_unchanged,
         },
         "summary": summary,
+        "metric_delta_summary": metric_delta_summary,
     }
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -752,6 +754,20 @@ def render_training_gate_markdown(result: dict[str, object]) -> str:
             ", ".join(f"`{reason}`" for reason in reasons) if reasons else "n/a",
         ]
     )
+    metric_delta_rows = _training_gate_metric_delta_markdown_rows(
+        result.get("metric_delta_summary")
+    )
+    if metric_delta_rows:
+        lines.extend(
+            [
+                "",
+                "## Metric Contributors",
+                "",
+                "| Direction | Metric | Split | Label | Delta |",
+                "| --- | --- | --- | --- | ---: |",
+            ]
+        )
+        lines.extend(metric_delta_rows)
     return "\n".join(lines) + "\n"
 
 
@@ -759,6 +775,69 @@ def _fmt_gate_value(value: object) -> str:
     if isinstance(value, bool):
         return str(value).lower()
     return _fmt_metric(value)
+
+
+def _training_gate_metric_delta_summary(
+    report: dict[str, object],
+    *,
+    limit: int = 5,
+) -> dict[str, object]:
+    delta = report.get("delta", {})
+    if not isinstance(delta, dict):
+        return {"worst": [], "best": []}
+    rows = _comparison_metric_delta_rows(delta)
+    if not rows:
+        return {"worst": [], "best": []}
+    worst = sorted(
+        rows,
+        key=lambda item: (
+            float(item.get("delta", 0.0)),
+            str(item.get("metric", "")),
+            str(item.get("split", "")),
+            str(item.get("label", "")),
+        ),
+    )
+    best = sorted(
+        rows,
+        key=lambda item: (
+            -float(item.get("delta", 0.0)),
+            str(item.get("metric", "")),
+            str(item.get("split", "")),
+            str(item.get("label", "")),
+        ),
+    )
+    return {
+        "worst": worst[:limit],
+        "best": best[:limit],
+    }
+
+
+def _training_gate_metric_delta_markdown_rows(value: object) -> list[str]:
+    if not isinstance(value, dict):
+        return []
+    rows = []
+    for direction in ("worst", "best"):
+        items = value.get(direction, [])
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            rows.append(
+                "| "
+                f"`{direction}` | "
+                f"`{_metric_delta_cell(item.get('metric'))}` | "
+                f"`{_metric_delta_cell(item.get('split'))}` | "
+                f"`{_metric_delta_cell(item.get('label'))}` | "
+                f"{_fmt_metric(item.get('delta'))} |"
+            )
+    return rows
+
+
+def _metric_delta_cell(value: object) -> str:
+    if isinstance(value, str) and value:
+        return value
+    return "n/a"
 
 
 def run_self_learning_cycle(
@@ -2827,32 +2906,61 @@ def _training_comparison_summary(delta: dict[str, object]) -> dict[str, object]:
 
 
 def _comparison_metric_deltas(delta: dict[str, object]) -> list[float]:
-    values: list[float] = []
+    return [
+        float(row["delta"])
+        for row in _comparison_metric_delta_rows(delta)
+        if isinstance(row.get("delta"), (int, float))
+    ]
+
+
+def _comparison_metric_delta_rows(delta: dict[str, object]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
     evaluation = delta.get("evaluation", {})
     if isinstance(evaluation, dict):
-        for value in evaluation.values():
+        for split, value in sorted(evaluation.items()):
             if isinstance(value, (int, float)):
-                values.append(float(value))
+                rows.append(
+                    {
+                        "metric": "evaluation.accuracy",
+                        "split": str(split),
+                        "label": None,
+                        "delta": float(value),
+                    }
+                )
     ranking = delta.get("ranking_evaluation", {})
     if isinstance(ranking, dict):
-        for split_data in ranking.values():
+        for split, split_data in sorted(ranking.items()):
             if not isinstance(split_data, dict):
                 continue
-            for value in split_data.values():
+            for metric, value in sorted(split_data.items()):
                 if isinstance(value, (int, float)):
-                    values.append(float(value))
+                    rows.append(
+                        {
+                            "metric": f"ranking_evaluation.{metric}",
+                            "split": str(split),
+                            "label": None,
+                            "delta": float(value),
+                        }
+                    )
     labels = delta.get("label_accuracy", {})
     if isinstance(labels, dict):
-        for split_data in labels.values():
+        for split, split_data in sorted(labels.items()):
             if not isinstance(split_data, dict):
                 continue
-            for label_data in split_data.values():
+            for label, label_data in sorted(split_data.items()):
                 if not isinstance(label_data, dict):
                     continue
                 value = label_data.get("accuracy_delta")
                 if isinstance(value, (int, float)):
-                    values.append(float(value))
-    return values
+                    rows.append(
+                        {
+                            "metric": "label_accuracy",
+                            "split": str(split),
+                            "label": str(label),
+                            "delta": float(value),
+                        }
+                    )
+    return rows
 
 
 def _feature_importance_delta(

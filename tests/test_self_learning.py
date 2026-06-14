@@ -1916,6 +1916,79 @@ class SelfLearningTests(unittest.TestCase):
             self.assertIn("comparison_status_regressed", result["reasons"])
             self.assertIn("worst_accuracy_delta_below_tolerance", result["reasons"])
 
+    def test_training_gate_summarizes_metric_contributors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            comparison = Path(temp_dir) / "compare.json"
+            output = Path(temp_dir) / "gate.json"
+            markdown = Path(temp_dir) / "gate.md"
+            comparison.write_text(
+                json.dumps(
+                    {
+                        "summary": {
+                            "status": "mixed",
+                            "train_examples_delta": 2,
+                            "best_accuracy_delta": 0.2,
+                            "worst_accuracy_delta": -0.3,
+                        },
+                        "delta": {
+                            "evaluation": {"val": -0.1, "test": 0.0},
+                            "ranking_evaluation": {
+                                "val": {
+                                    "classifier_accuracy": 0.2,
+                                    "accuracy_improvement": 0.05,
+                                }
+                            },
+                            "label_accuracy": {
+                                "test": {
+                                    "circle": {
+                                        "baseline_accuracy": 1.0,
+                                        "augmented_accuracy": 0.7,
+                                        "accuracy_delta": -0.3,
+                                    },
+                                    "quad": {
+                                        "baseline_accuracy": 0.5,
+                                        "augmented_accuracy": 0.5,
+                                        "accuracy_delta": 0.0,
+                                    },
+                                }
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = gate_training_comparison(
+                comparison=comparison,
+                output=output,
+                markdown=markdown,
+                max_worst_accuracy_drop=1.0,
+            )
+
+            self.assertEqual(
+                result["metric_delta_summary"]["worst"][0],
+                {
+                    "metric": "label_accuracy",
+                    "split": "test",
+                    "label": "circle",
+                    "delta": -0.3,
+                },
+            )
+            self.assertEqual(
+                result["metric_delta_summary"]["best"][0]["metric"],
+                "ranking_evaluation.classifier_accuracy",
+            )
+            gate_markdown = markdown.read_text(encoding="utf-8")
+            self.assertIn("## Metric Contributors", gate_markdown)
+            self.assertIn(
+                "| `worst` | `label_accuracy` | `test` | `circle` | -0.3 |",
+                gate_markdown,
+            )
+            self.assertIn(
+                "| `best` | `ranking_evaluation.classifier_accuracy` | `val` | `n/a` | 0.2 |",
+                gate_markdown,
+            )
+
     def test_training_gate_marks_mixed_comparison_for_review(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             comparison = Path(temp_dir) / "compare.json"

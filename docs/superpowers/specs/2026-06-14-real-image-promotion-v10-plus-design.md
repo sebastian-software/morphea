@@ -482,7 +482,9 @@ Current implementation:
   deferred evidence stays excluded. The current checked-in replay keeps model
   acceptance conservative: five accepted Terminaro region labels are carried
   into the cycle, but the training gate rejects the update when the comparison
-  status regresses.
+  status regresses. Training gate artifacts now include worst/best metric
+  contributors, so rejected self-learning cycles can identify the metric,
+  split, and label behind the gate decision.
 
 Exit criteria:
 
