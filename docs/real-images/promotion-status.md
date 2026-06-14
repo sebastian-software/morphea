@@ -148,8 +148,12 @@ Markdown, and snapshot paths under the output root. It also writes a starter
 `decision_overrides`, and stable follow-up paths for review-to-harvest
 preparation. That starter config lists
 available terminal decision templates per queued case without applying any of
-them automatically. The resulting curated report also includes the generated
-harvest command in JSON and Markdown.
+them automatically. After writing that starter config, the review packet and
+gallery also expose template-backed `decision_choice_commands` and
+evidence-flag hints, so reviewers can select a terminal outcome through
+`promotion-review-harvest --decision-choice` without editing JSON. The
+resulting curated report also includes the generated harvest command in JSON
+and Markdown.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may

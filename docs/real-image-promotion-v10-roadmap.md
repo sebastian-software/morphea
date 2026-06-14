@@ -389,7 +389,11 @@ step. The final curated report JSON and Markdown now surface that generated
 harvest command directly, so reviewers can continue without inspecting the
 starter config by hand. The starter config also lists each queued case's
 accepted/corrected/rejected/deferred terminal templates while keeping
-`decisions` empty until a reviewer explicitly selects one.
+`decisions` empty until a reviewer explicitly selects one. Once that starter
+config exists, the review packet and gallery also expose per-case
+`decision_choice_commands` plus evidence-flag hints, so the first reviewer
+surface contains the no-JSON-edit `promotion-review-harvest --decision-choice`
+path directly.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal
@@ -404,7 +408,8 @@ be run from an edited terminal template without reconstructing paths manually.
 Curated output roots also write `review-gallery.html`, so those artifacts can
 be scanned visually from one local page before a terminal decision is applied.
 Queued gallery cards render the same per-decision apply commands as the review
-packet, keeping the visual review path out of raw JSON.
+packet, plus the template-backed harvest-choice commands from
+`promotion-review-run`, keeping the visual review path out of raw JSON.
 `morphea promotion-apply-review` consumes edited terminal decision records,
 rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests. Terminal records require

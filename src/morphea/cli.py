@@ -14,7 +14,11 @@ from morphea.comparison import (
     compare_snapshots,
     generate_git_curated_snapshot,
 )
-from morphea.curated import check_curated_suite, render_curated_markdown
+from morphea.curated import (
+    check_curated_suite,
+    render_curated_markdown,
+    write_review_packet_followup_artifacts,
+)
 from morphea.dataset import generate_synthetic_dataset
 from morphea.eval import write_eval_summary
 from morphea.images import scene_from_flat_color_image
@@ -1793,6 +1797,11 @@ def main(argv: list[str] | None = None) -> None:
         ] = str(review_harvest_config_path)
         result["next_commands"] = _promotion_review_run_next_commands(
             review_harvest_config_path
+        )
+        write_review_packet_followup_artifacts(
+            review_run_config["output_dir"],
+            result,
+            review_harvest_config=review_harvest_config_path,
         )
         _write_json_file(review_run_config["output"], result)
         review_run_config["markdown"].parent.mkdir(parents=True, exist_ok=True)

@@ -2680,6 +2680,55 @@ class CuratedSuiteTests(unittest.TestCase):
                 "simple-circle"
             ].values():
                 self.assertTrue(Path(template_path).exists())
+            review_packet = json.loads(
+                (output_dir / "review-packet.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                review_packet["review_harvest_config"],
+                str(review_harvest_config),
+            )
+            self.assertIn(
+                "promotion-review-harvest --config",
+                review_packet["review_harvest_command"],
+            )
+            packet_case = review_packet["cases"][0]
+            self.assertIn(
+                "--decision-choice simple-circle=deferred",
+                packet_case["decision_choice_commands"]["deferred"],
+            )
+            self.assertIn(
+                str(review_harvest_config),
+                packet_case["decision_choice_commands"]["deferred"],
+            )
+            self.assertEqual(
+                packet_case["decision_choice_evidence_flags"]["deferred"],
+                [
+                    "--reviewer simple-circle=REVIEWER",
+                    "--reason simple-circle=REASON",
+                ],
+            )
+            self.assertEqual(
+                packet_case["decision_choice_evidence_flags"]["corrected"],
+                [
+                    "--reviewer simple-circle=REVIEWER",
+                    "--reason simple-circle=REASON",
+                    "--correction-notes simple-circle=NOTES",
+                    "--corrected-artifact simple-circle=PATH",
+                ],
+            )
+            review_packet_markdown = (
+                output_dir / "review-packet.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("Review harvest config: `", review_packet_markdown)
+            self.assertIn("### Harvest Choice Commands", review_packet_markdown)
+            self.assertIn(
+                "--decision-choice simple-circle=deferred",
+                review_packet_markdown,
+            )
+            self.assertIn(
+                "Evidence flags: `--reviewer simple-circle=REVIEWER`",
+                review_packet_markdown,
+            )
             self.assertEqual(harvest_config_data["run_root"], str(output_dir))
             self.assertEqual(
                 harvest_config_data["curated_report"],
@@ -2693,7 +2742,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 encoding="utf-8"
             )
             self.assertIn("Apply commands", gallery)
+            self.assertIn("Harvest choice commands", gallery)
             self.assertIn("promotion-apply-review", gallery)
+            self.assertIn("--decision-choice simple-circle=deferred", gallery)
+            self.assertIn("Evidence flags:", gallery)
             with redirect_stdout(StringIO()) as harvest_stdout:
                 main(
                     [

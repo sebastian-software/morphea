@@ -1194,7 +1194,10 @@ Implemented so far:
   report-level harvest follow-up command. The starter config also lists the
   terminal decision templates available for each queued review case while
   keeping `decisions` and `decision_overrides` empty until explicit reviewer
-  selection and evidence entry.
+  selection and evidence entry. The review packet and gallery also surface
+  per-case `decision_choice_commands` and evidence-flag hints after the starter
+  config is written, so reviewers can choose a terminal outcome through
+  `promotion-review-harvest --decision-choice` without editing JSON.
 - `morphea segment --config segment.json` for repeatable input/output,
   report, and segment proposal runs
 - `morphea segment --markdown proposals.md` for scan-friendly segment proposal

@@ -2687,6 +2687,104 @@ def _write_review_packet_artifacts(
     }
 
 
+def write_review_packet_followup_artifacts(
+    output_dir: str | Path,
+    report: dict[str, Any],
+    *,
+    review_harvest_config: str | Path,
+) -> dict[str, str]:
+    """Rewrite review packet artifacts with review-to-harvest follow-up commands."""
+
+    root = Path(output_dir)
+    packet_path = root / "review-packet.json"
+    markdown_path = root / "review-packet.md"
+    gallery_path = root / "review-gallery.html"
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+    if not isinstance(packet, dict):
+        raise ValueError("review packet must be a JSON object")
+    _add_review_packet_followup_commands(
+        packet,
+        review_harvest_config=review_harvest_config,
+    )
+    packet_path.write_text(
+        json.dumps(packet, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        _render_review_packet_markdown(packet),
+        encoding="utf-8",
+    )
+    gallery_path.write_text(
+        render_review_gallery_html(report, packet, html_path=gallery_path),
+        encoding="utf-8",
+    )
+    return {
+        "review_packet": str(packet_path),
+        "review_packet_markdown": str(markdown_path),
+        "review_gallery": str(gallery_path),
+    }
+
+
+def _add_review_packet_followup_commands(
+    packet: dict[str, object],
+    *,
+    review_harvest_config: str | Path,
+) -> None:
+    config = str(review_harvest_config)
+    packet["review_harvest_config"] = config
+    packet["review_harvest_command"] = _review_packet_harvest_command(config)
+    cases = packet.get("cases", [])
+    if not isinstance(cases, list):
+        return
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        case_id = case.get("case_id")
+        artifacts = case.get("artifacts", {})
+        artifacts = artifacts if isinstance(artifacts, dict) else {}
+        templates = artifacts.get("review_templates")
+        if not isinstance(case_id, str) or not isinstance(templates, dict):
+            continue
+        commands: dict[str, str] = {}
+        evidence_flags: dict[str, list[str]] = {}
+        for decision in PROMOTION_REVIEW_DECISIONS:
+            if not isinstance(templates.get(decision), str):
+                continue
+            commands[decision] = (
+                f"{_review_packet_harvest_command(config)} "
+                f"--decision-choice {shlex.quote(f'{case_id}={decision}')}"
+            )
+            evidence_flags[decision] = _review_packet_decision_choice_flags(
+                case_id,
+                decision,
+            )
+        if commands:
+            case["decision_choice_commands"] = commands
+            case["decision_choice_evidence_flags"] = evidence_flags
+
+
+def _review_packet_harvest_command(config: str) -> str:
+    return (
+        "PYTHONPATH=src python3 -m morphea.cli promotion-review-harvest "
+        f"--config {shlex.quote(config)}"
+    )
+
+
+def _review_packet_decision_choice_flags(case_id: str, decision: str) -> list[str]:
+    flags = [
+        f"--reviewer {shlex.quote(f'{case_id}=REVIEWER')}",
+        f"--reason {shlex.quote(f'{case_id}=REASON')}",
+    ]
+    if decision == "corrected":
+        flags.extend(
+            [
+                f"--correction-notes {shlex.quote(f'{case_id}=NOTES')}",
+                f"--corrected-artifact {shlex.quote(f'{case_id}=PATH')}",
+            ]
+        )
+    return flags
+
+
 def _review_packet(report: dict[str, Any]) -> dict[str, object]:
     cases = [
         _review_packet_case(case)
@@ -2865,12 +2963,20 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
         f"- Deferred: {_fmt_markdown_value(packet.get('deferred_count'))}",
         f"- Rejected: {_fmt_markdown_value(packet.get('rejected_count'))}",
         f"- Manual review: {_fmt_markdown_value(packet.get('manual_review_count'))}",
-        "",
-        "## Issue Groups",
-        "",
-        "| Issue | Cases |",
-        "| --- | --- |",
     ]
+    if isinstance(packet.get("review_harvest_config"), str):
+        lines.append(f"- Review harvest config: `{packet['review_harvest_config']}`")
+    if isinstance(packet.get("review_harvest_command"), str):
+        lines.append(f"- Review harvest command: `{packet['review_harvest_command']}`")
+    lines.extend(
+        [
+            "",
+            "## Issue Groups",
+            "",
+            "| Issue | Cases |",
+            "| --- | --- |",
+        ]
+    )
     lines.extend(_review_packet_group_rows(packet.get("issue_groups")))
     lines.extend(
         [
@@ -2963,6 +3069,38 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
                         "```sh",
                         command,
                         "```",
+                        "",
+                    ]
+                )
+        choice_commands = case.get("decision_choice_commands")
+        if isinstance(choice_commands, dict) and choice_commands:
+            flags_by_decision = case.get("decision_choice_evidence_flags")
+            flags_by_decision = (
+                flags_by_decision if isinstance(flags_by_decision, dict) else {}
+            )
+            lines.extend(
+                [
+                    "",
+                    "### Harvest Choice Commands",
+                    "",
+                    "Append reviewer evidence flags before running the selected command:",
+                    "",
+                ]
+            )
+            for decision in PROMOTION_REVIEW_DECISIONS:
+                command = choice_commands.get(decision)
+                if not isinstance(command, str) or not command:
+                    continue
+                flags = flags_by_decision.get(decision)
+                lines.extend(
+                    [
+                        f"#### {decision}",
+                        "",
+                        "```sh",
+                        command,
+                        "```",
+                        "",
+                        f"- Evidence flags: {_fmt_markdown_list(flags)}",
                         "",
                     ]
                 )

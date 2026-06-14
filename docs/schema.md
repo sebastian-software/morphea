@@ -406,6 +406,10 @@ the output root by default, and emits the same per-case artifacts,
 writes `promotion-review-harvest.json`, a starter config with empty
 `decisions`, empty `decision_overrides`, per-case `decision_templates` for
 reviewer selection, and stable paths for `promotion-review-harvest --config`.
+After the starter config exists, `promotion-review-run` rewrites the review
+packet and gallery with per-case `decision_choice_commands`, so the first
+review packet shows the explicit `promotion-review-harvest --decision-choice`
+path as well as the template-edit apply path.
 The final `curated-report.json`
 and `curated-report.md` also include `next_commands`, starting with the exact
 harvest command for the generated starter config.
@@ -612,16 +616,20 @@ The curated output root also includes suite-level review packet artifacts:
   required for corrected decisions (`correction_notes`, `corrected_artifacts`).
   Cases with a manifest and terminal templates also carry `review_commands`,
   copy/paste `promotion-apply-review` commands for each terminal decision.
+  Review packets produced by `promotion-review-run` also carry
+  `review_harvest_config`, `review_harvest_command`, and per-case
+  `decision_choice_commands` plus `decision_choice_evidence_flags`, exposing
+  the no-JSON-edit reviewer path directly from the initial packet.
 - `review-packet.md`: scan-friendly Markdown summary of the same queue, with
   links/paths to contact sheets, promotion reviews, editability reviews, and
   `review-decision.json` files plus accepted/corrected/rejected/deferred
   template paths, the same terminal/corrected review requirements, and
-  per-decision apply commands
+  per-decision apply and harvest-choice commands
 - `review-gallery.html`: local static gallery for promotion cases in the suite
   run. It shows quality label, promotion/editability decisions, issue tags,
   failed gate/component ids, the contact sheet image, review artifact links,
-  terminal decision-template links, and review-packet apply commands without
-  requiring raw JSON inspection.
+  terminal decision-template links, review-packet apply commands, and
+  harvest-choice commands without requiring raw JSON inspection.
 
 When `curated-check --markdown` is used, the suite Markdown report includes a
 Corpus Ledger table before the promotion-gate details. The ledger surfaces each

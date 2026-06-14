@@ -504,6 +504,10 @@ Current implementation:
   `decisions`, empty `decision_overrides`, per-case terminal decision template
   paths, and stable follow-up paths, then surfaces the generated
   `promotion-review-harvest --config` command in report JSON and Markdown.
+- After the starter config exists, `promotion-review-run` rewrites
+  `review-packet.json`, `review-packet.md`, and `review-gallery.html` with
+  per-case `decision_choice_commands` and reviewer evidence-flag hints, so the
+  initial reviewer surface contains the no-JSON-edit harvest path directly.
 - `curated-check --run --output-dir --markdown --snapshot` remains the lower
   level suite-run entry point for explicit artifact paths.
 - `promotion-review-harvest` is the review-to-harvest bridge: it applies only

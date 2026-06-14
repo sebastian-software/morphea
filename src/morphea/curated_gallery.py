@@ -437,6 +437,7 @@ def _render_review_gallery_case_card(
         html_path=html_path,
     )
     review_commands = _review_gallery_review_commands(packet_case)
+    choice_commands = _review_gallery_decision_choice_commands(packet_case)
     queue_badge = '<span class="queue-badge">review queue</span>' if queued else ""
     return f"""      <article class="case-card {quality_class}">
         <div class="case-visual">{contact_sheet}</div>
@@ -458,6 +459,7 @@ def _render_review_gallery_case_card(
           <div class="link-row">{links}</div>
           <div class="template-row">{template_links}</div>
           {review_commands}
+          {choice_commands}
         </div>
       </article>"""
 
@@ -603,6 +605,48 @@ def _review_gallery_review_commands(packet_case: object) -> str:
         + "\n".join(rows)
         + "\n            </dl></details>"
     )
+
+
+def _review_gallery_decision_choice_commands(packet_case: object) -> str:
+    if not isinstance(packet_case, dict):
+        return ""
+    commands = packet_case.get("decision_choice_commands")
+    if not isinstance(commands, dict) or not commands:
+        return ""
+    flags_by_decision = packet_case.get("decision_choice_evidence_flags")
+    flags_by_decision = (
+        flags_by_decision if isinstance(flags_by_decision, dict) else {}
+    )
+    rows: list[str] = []
+    for decision in PROMOTION_REVIEW_DECISIONS:
+        command = commands.get(decision)
+        if not isinstance(command, str) or not command:
+            continue
+        flags = flags_by_decision.get(decision)
+        flag_line = _review_gallery_flag_line(flags)
+        rows.append(
+            "              "
+            f"<div><dt>{_html(decision)}</dt>"
+            f"<dd><code>{_html(command)}</code>{flag_line}</dd></div>"
+        )
+    if not rows:
+        return ""
+    return (
+        '<details class="command-panel">'
+        "<summary>Harvest choice commands</summary>"
+        "<dl>\n"
+        + "\n".join(rows)
+        + "\n            </dl></details>"
+    )
+
+
+def _review_gallery_flag_line(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return ""
+    flags = " ".join(str(flag) for flag in value if isinstance(flag, str) and flag)
+    if not flags:
+        return ""
+    return f'<p class="muted">Evidence flags: <code>{_html(flags)}</code></p>'
 
 
 def _review_gallery_uri(value: str, *, html_path: Path) -> str:
