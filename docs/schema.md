@@ -543,11 +543,13 @@ directory includes the standard vectorize artifacts plus:
   semantic output
 - `promotion-export.json`: promoted/fallback anchor-index partition,
   fallback-only/rejected/deferred anchor-index partitions, anchor-state counts,
-  region-state counts, region state records, and promoted/fallback SVG paths
+  region-state counts, region state records, promotion-gate records, and
+  promoted/fallback SVG paths
 - `promotion-regions.json`: region-state review data with selected anchor ids,
   selected anchor indexes, gate status, state, and rejection/defer reason
-- `promotion-review.md`: scan-friendly Markdown review of anchor state counts
-  and promoted, deferred, and rejected regions
+- `promotion-review.md`: scan-friendly Markdown review of anchor state counts,
+  promoted/deferred/rejected regions, and candidate rejections from region-gate
+  evidence
 - `editability-review.md`: scan-friendly Markdown review of accepted-output
   decision, component thresholds, gate-blocked components, issue tags, and
   regression deltas

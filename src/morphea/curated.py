@@ -2335,6 +2335,7 @@ def _write_promotion_export_artifacts(
         },
         "region_state_counts": _promotion_region_state_counts(promotion_regions),
         "regions": promotion_regions if isinstance(promotion_regions, list) else [],
+        "gates": case_result.get("promotion_gates", []),
         "promoted_svg": str(promoted_svg_path),
         "fallback_svg": str(fallback_svg_path),
         "source_manifest_anchor_count": len(manifest.get("anchors", [])),
@@ -2766,7 +2767,56 @@ def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str
             f"{_fmt_markdown_value(region.get('selected_anchor_count'))} | "
             f"{region.get('reason', 'n/a')} |"
         )
+    rejection_rows = _promotion_review_candidate_rejection_rows(
+        export_manifest.get("gates"),
+    )
+    lines.extend(
+        [
+            "",
+            "## Candidate Rejections",
+            "",
+            "| Region | Anchor | Kind | Reasons | Topology failures |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
+    if rejection_rows:
+        lines.extend(rejection_rows)
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _promotion_review_candidate_rejection_rows(gates: object) -> list[str]:
+    if not isinstance(gates, list):
+        return []
+    rows: list[str] = []
+    for gate in gates:
+        if not isinstance(gate, dict):
+            continue
+        evidence = gate.get("evidence")
+        if not isinstance(evidence, dict):
+            continue
+        rejections = evidence.get("candidate_rejections")
+        if not isinstance(rejections, list):
+            continue
+        for rejection in rejections:
+            if not isinstance(rejection, dict):
+                continue
+            rows.append(
+                "| "
+                f"`{gate.get('id', 'n/a')}` | "
+                f"{_fmt_markdown_code_value(rejection.get('id'))} | "
+                f"{_fmt_markdown_code_value(rejection.get('kind'))} | "
+                f"{_fmt_markdown_list(rejection.get('reasons'))} | "
+                f"{_fmt_markdown_list(rejection.get('topology_failures'))} |"
+            )
+    return rows
+
+
+def _fmt_markdown_code_value(value: object) -> str:
+    if value is None or value == "":
+        return "n/a"
+    return f"`{value}`"
 
 
 def _render_editability_review_markdown(case_result: dict[str, Any]) -> str:

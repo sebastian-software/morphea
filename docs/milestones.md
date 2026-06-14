@@ -1018,6 +1018,8 @@ Implemented so far:
   source-region gates, with stable region ids, state, bounds, expected kinds,
   actual matching counts, topology evidence, per-region layer-depth evidence,
   selected-anchor kind profiles, and candidate rejection counts.
+- checked promotion runs include Candidate Rejections in `promotion-review.md`,
+  so shape/topology reject reasons are reviewable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

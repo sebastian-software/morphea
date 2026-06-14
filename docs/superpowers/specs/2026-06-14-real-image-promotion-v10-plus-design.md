@@ -291,6 +291,9 @@ for selected anchors that failed the region contract. Rejections preserve anchor
 id, kind, geometry overlap, reasons (`kind_mismatch`, `forbidden_kind`,
 `topology_failure`), and topology failures, while the Region Truth table exposes
 the rejected candidate count next to matching/selected/forbidden counts.
+Promotion export manifests preserve the gate records, and `promotion-review.md`
+renders a Candidate Rejections table so reviewers do not have to inspect raw
+JSON for rejected shape/topology candidates.
 
 Exit criteria:
 

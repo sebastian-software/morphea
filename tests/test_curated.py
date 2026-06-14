@@ -247,6 +247,8 @@ class CuratedSuiteTests(unittest.TestCase):
                 output_dir / "simple-circle" / "promotion-review.md"
             ).read_text(encoding="utf-8")
             self.assertIn("| `circle-region` | `promoted` |", promotion_review)
+            self.assertIn("## Candidate Rejections", promotion_review)
+            self.assertIn("| n/a | n/a | n/a | n/a | n/a |", promotion_review)
             editability_review = (
                 output_dir / "simple-circle" / "editability-review.md"
             ).read_text(encoding="utf-8")
@@ -738,6 +740,12 @@ class CuratedSuiteTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
             self.assertIn(
                 "- Anchor states: `promoted`=1, `rejected`=1",
+                promotion_review,
+            )
+            self.assertIn("## Candidate Rejections", promotion_review)
+            self.assertIn(
+                "| `right-circle-topology` | `anchor-0000` | `circle` | "
+                "`topology_failure` | `closed_anchor_count 1 > 0` |",
                 promotion_review,
             )
             editability_review = (

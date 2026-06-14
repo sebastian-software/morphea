@@ -366,9 +366,10 @@ Review artifacts should show:
 - issue tags.
 
 Current implementation evidence: checked promotion runs write
-`promotion-review.md` for anchor and region state, `contact-sheet.png` for
-visual comparison, and `editability-review.md` for accepted-output decision,
-threshold status, gate-blocked components, issue tags, and regression deltas.
+`promotion-review.md` for anchor state, region state, and candidate rejection
+reasons, `contact-sheet.png` for visual comparison, and `editability-review.md`
+for accepted-output decision, threshold status, gate-blocked components, issue
+tags, and regression deltas.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal
