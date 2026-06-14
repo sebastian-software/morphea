@@ -971,6 +971,10 @@ Implemented so far:
 - reviewed-label MLX retraining now uses the same end-to-end token projection
   and attention-parameter training path as `morphea train-mlx` for image-backed
   examples.
+- accepted MLX self-learning cycles copy the trained component summary into
+  `self-learning-cycle.json` and Markdown, including inference order,
+  parameter counts, loss epochs, raster-token usage, and MLX-autograd component
+  count.
 
 Remaining:
 

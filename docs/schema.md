@@ -1413,7 +1413,8 @@ Top-level fields:
 - `pseudo_dataset`: pseudo-label train example count and split counts
 - `comparison_summary`: copied training comparison summary
 - `gate`: copied gate decision, accepted flag, and reasons
-- `model`: compact model summary when retraining was accepted
+- `model`: compact model summary when retraining was accepted; MLX retraining
+  includes the `training_component_summary` copied from `model.json`
 - `curated_validation`: optional fixed-suite validation summary when
   `curated_suite` is configured
 - `lucide_validation`: optional Lucide benchmark validation summary when
@@ -1698,6 +1699,10 @@ adds `source_datasets`, `augmentation`, `retraining_backend`, and the generated
 `augmented_dataset` index path. Reviewed pseudo-label samples may omit source
 images; they still contribute feature examples, while raster-token training
 uses image-backed samples only.
+When `self-learn` accepts an MLX retraining run, the cycle's compact `model`
+summary copies the same `training_component_summary` into
+`self-learning-cycle.json` and renders it in Markdown, so reviewers can inspect
+component coverage without opening the full weight artifact.
 
 ## Classifier Evaluation Report v1
 

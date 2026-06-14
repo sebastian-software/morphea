@@ -1095,14 +1095,7 @@ def run_self_learning_cycle(
         },
         "acceptance_gate": acceptance_gate,
         "model": (
-            {
-                "model_type": model["model_type"],
-                "train_examples": model["train_examples"],
-                "retraining_backend": model.get("retraining_backend", backend),
-                "status": model.get("status", "trained"),
-                "training_implementation": model.get("training_implementation"),
-                "augmentation": model["augmentation"],
-            }
+            _self_learning_model_summary(model, backend)
             if model is not None
             else None
         ),
@@ -1122,6 +1115,36 @@ def run_self_learning_cycle(
         encoding="utf-8",
     )
     return result
+
+
+def _self_learning_model_summary(
+    model: dict[str, object],
+    backend: str,
+) -> dict[str, object]:
+    summary = {
+        "model_type": model["model_type"],
+        "train_examples": model["train_examples"],
+        "retraining_backend": model.get("retraining_backend", backend),
+        "status": model.get("status", "trained"),
+        "training_implementation": model.get("training_implementation"),
+        "augmentation": model["augmentation"],
+    }
+    component_summary = _model_training_component_summary(model)
+    if component_summary is not None:
+        summary["training_component_summary"] = component_summary
+    return summary
+
+
+def _model_training_component_summary(
+    model: dict[str, object],
+) -> dict[str, object] | None:
+    training = model.get("mlx_training")
+    if not isinstance(training, dict):
+        return None
+    component_summary = training.get("component_summary")
+    if isinstance(component_summary, dict):
+        return component_summary
+    return None
 
 
 def _curated_validation_summary(
@@ -1769,6 +1792,9 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 f"- Train examples: {_fmt_metric(model.get('train_examples'))}",
             ]
         )
+        component_summary = model.get("training_component_summary")
+        if isinstance(component_summary, dict):
+            lines.extend(_model_component_summary_markdown(component_summary))
     if reviewed_summary or isinstance(pseudo_dataset.get("samples"), list):
         provenance_counts = _counts_from_object(
             reviewed_summary.get("provenance_field_counts")
@@ -2709,6 +2735,32 @@ def _format_issue_counts(issue_counts: dict[str, int]) -> str:
     return "`" + ", ".join(
         f"{issue}: {count}" for issue, count in sorted(issue_counts.items())
     ) + "`"
+
+
+def _model_component_summary_markdown(summary: dict[str, object]) -> list[str]:
+    lines = [
+        f"- MLX total parameters: {_fmt_metric(summary.get('total_parameter_count'))}",
+        f"- MLX trainable components: {_fmt_metric(summary.get('trainable_component_count'))}",
+        f"- MLX autograd components: {_fmt_metric(summary.get('mlx_autograd_component_count'))}",
+        "",
+        "| Priority | Component | Runtime | Parameters | Loss epochs | Raster tokens |",
+        "| ---: | --- | --- | ---: | ---: | --- |",
+    ]
+    components = summary.get("components", [])
+    if isinstance(components, list):
+        for component in components:
+            if not isinstance(component, dict):
+                continue
+            lines.append(
+                "| "
+                f"{_fmt_metric(component.get('inference_priority'))} | "
+                f"`{component.get('name', 'unknown')}` | "
+                f"`{component.get('training_runtime', 'unknown')}` | "
+                f"{_fmt_metric(component.get('parameter_count'))} | "
+                f"{_fmt_metric(component.get('loss_epochs'))} | "
+                f"`{bool(component.get('uses_raster_tokens'))}` |"
+            )
+    return lines
 
 
 def _counts_from_object(value: object) -> dict[str, int]:

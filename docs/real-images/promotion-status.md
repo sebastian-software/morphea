@@ -415,8 +415,9 @@ for reproducible fallback artifacts when the MLX runtime is missing. MLX
 runtime status now distinguishes `mlx.core` importability from end-to-end
 autograd support, and model artifacts record a component summary with inference
 order, parameter counts, loss epochs, raster-token usage, and MLX-autograd
-participation; this is own classifier training, not MLX/SAM segmentation
-fine-tuning.
+participation. Accepted self-learning cycle reports copy that same summary into
+`self-learning-cycle.json` and Markdown; this is own classifier training, not
+MLX/SAM segmentation fine-tuning.
 
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training

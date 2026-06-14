@@ -2303,6 +2303,82 @@ class SelfLearningTests(unittest.TestCase):
             self.assertIn("## Model", markdown)
             self.assertIn("- Retraining backend: `mlx`", markdown)
 
+    def test_self_learning_cycle_summarizes_mlx_training_components(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=113,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            mlx_module = types.ModuleType("mlx")
+            mlx_core = types.ModuleType("mlx.core")
+            mlx_core.__version__ = "test-mlx"
+            mlx_module.core = mlx_core
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
+                patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    backend="mlx",
+                    mlx_config=MlxClassifierTrainingConfig(
+                        epochs=1,
+                        crop_size=6,
+                    ),
+                )
+
+            summary = result["model"]["training_component_summary"]
+            self.assertEqual(summary["component_count"], 4)
+            self.assertEqual(summary["trainable_component_count"], 4)
+            self.assertEqual(summary["mlx_autograd_component_count"], 0)
+            self.assertEqual(
+                summary["inference_order_with_crop_tokens"][0],
+                "token_transformer",
+            )
+            cycle_report = json.loads(
+                (output_dir / "self-learning-cycle.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                cycle_report["model"]["training_component_summary"],
+                summary,
+            )
+            markdown = (output_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("- MLX trainable components: 4", markdown)
+            self.assertIn("- MLX autograd components: 0", markdown)
+            self.assertIn("`token_transformer`", markdown)
+
     def test_self_learning_cycle_validates_accepted_model_on_lucide_suite(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
