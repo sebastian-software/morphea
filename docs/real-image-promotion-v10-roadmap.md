@@ -356,6 +356,14 @@ Exit criteria:
   mark the current basis. When segment manifests carry `promotion_regions`, the
   assessment uses true promotion-region state counts; otherwise it falls back
   to downstream-status proxy counts;
+- segment manifests serialize proposal bounds in source-image coordinates even
+  when classical segmentation uses `max_size` analysis resizing, so classical
+  and MLX/SAM proposal comparisons share one coordinate space;
+- comparison reports include spatial proposal matches, spatial match summaries,
+  mean/min/max IoU, and downstream/anchor transition counts, so candidate
+  overlap can be reviewed even when source id spaces differ;
+- checked-in MLX/SAM smoke configs compare Flat-Color, `grid_points`, and
+  `flat_color_centers` prompt strategies with repeatable `/tmp` outputs;
 - MLX/SAM is judged by green promotion increase and red false-positive
   decrease, not by mask aesthetics alone;
 - the system remains usable without cloud APIs.

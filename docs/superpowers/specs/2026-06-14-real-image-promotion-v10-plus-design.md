@@ -423,16 +423,24 @@ Current implementation:
   otherwise it records downstream-status proxy counts as the basis. CLI stdout
   now prints the same source-level counts and verdict rather than only the
   shared proposal-id count, which is usually zero across classical and MLX/SAM
-  sources. Runtime status now also records whether the adjacent
-  `.safetensors.json` sidecar exists for configured MLX/SAM checkpoints, so
-  quantized-checkpoint setup is inspectable before a run; the same fields are
-  visible in the default status Markdown Backend Diagnostics table. The first
-  local tiny 4-bit SAM2.1 MLX smoke on
-  `assets/curated/terminaro-opaque-table-grid.png` now proves live
+  sources. Flat-Color segment manifests now scale proposal bounds back to
+  source-image coordinates after `max_size` analysis resizing, and
+  `compare-segments` adds greedy spatial proposal matches plus mean/min/max IoU
+  and downstream/anchor transition counts, so classical and MLX/SAM runs can be
+  compared even when their proposal ids differ. Runtime status now also records
+  whether the adjacent `.safetensors.json` sidecar exists for configured
+  MLX/SAM checkpoints, so quantized-checkpoint setup is inspectable before a
+  run; the same fields are visible in the default status Markdown Backend
+  Diagnostics table. The first local tiny 4-bit SAM2.1 MLX smoke on
+  `assets/curated/terminaro-opaque-table-grid.png` proves live
   `mlx_sam_grid_points` execution and comparison artifact generation: 4 MLX/SAM
   proposals passed the geometry gate, but the source assessment was `noise`
   because the green promotion proxy count dropped from 29 to 4 versus the
-  Flat-Color baseline.
+  Flat-Color baseline. A repeatable `flat_color_centers` prompt-strategy smoke
+  now produces 16 MLX/SAM proposals and 16 spatial matches against the
+  Flat-Color baseline, but remains `noise`; the direct
+  `grid_points -> flat_color_centers` comparison is `mixed`, with accepted
+  proposals increasing while rejected candidates also increase.
 
 Exit criteria:
 
