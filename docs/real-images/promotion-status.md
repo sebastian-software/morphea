@@ -125,6 +125,9 @@ top-level `review_decision` record.
 `promotion-export.json` records promoted, fallback-only, rejected, and deferred
 anchor-index partitions plus anchor-state counts, so failed semantic candidates
 remain explicit even when `fallback.svg` contains all non-promoted anchors.
+It also records structured `missing_from_promoted` rows with state, anchor
+indexes, region ids, and region reasons, matching the Markdown export table
+without requiring Markdown parsing.
 The `morphea promotion-export` command can regenerate promoted/fallback SVGs
 from any promotion-annotated manifest, outside curated sidecar generation.
 The curated output root also writes `review-packet.json` and

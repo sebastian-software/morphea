@@ -2602,6 +2602,9 @@ def _write_promotion_export_artifacts(
             "promotion_regions_attribute": "data-promotion-regions",
         },
     }
+    export_manifest["missing_from_promoted"] = _promotion_export_missing_records(
+        export_manifest,
+    )
     promotion_export_path.write_text(
         json.dumps(export_manifest, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -3356,6 +3359,72 @@ def _promotion_export_summary(
         summary[f"{state}_anchor_count"] = len(state_indexes.get(state, []))
         summary[f"{state}_region_count"] = int(region_counts.get(state, 0))
     return summary
+
+
+def _promotion_export_missing_records(
+    export_manifest: dict[str, object],
+) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    regions = export_manifest.get("regions")
+    for state, key in (
+        ("fallback", "fallback_only_anchor_indexes"),
+        ("rejected", "rejected_anchor_indexes"),
+        ("deferred", "deferred_anchor_indexes"),
+    ):
+        anchors = _int_list(export_manifest.get(key))
+        state_regions = _promotion_regions_for_state(regions, state)
+        if not anchors and not state_regions:
+            continue
+        records.append(
+            {
+                "state": state,
+                "anchor_indexes": anchors,
+                "anchor_count": len(anchors),
+                "region_ids": _promotion_region_ids(state_regions),
+                "region_count": len(state_regions),
+                "reasons": _promotion_region_reasons(state_regions),
+            }
+        )
+    return records
+
+
+def _promotion_regions_for_state(
+    value: object,
+    state: str,
+) -> list[dict[str, object]]:
+    regions = value if isinstance(value, list) else []
+    return [
+        region
+        for region in regions
+        if isinstance(region, dict) and region.get("state") == state
+    ]
+
+
+def _promotion_region_ids(regions: list[dict[str, object]]) -> list[str]:
+    return [
+        str(region.get("id"))
+        for region in regions
+        if isinstance(region.get("id"), str) and region.get("id")
+    ]
+
+
+def _promotion_region_reasons(regions: list[dict[str, object]]) -> list[str]:
+    reasons = []
+    for region in regions:
+        reason = (
+            region.get("reason")
+            or region.get("rejection_reason")
+            or region.get("deferred_reason")
+            or "n/a"
+        )
+        reasons.append(str(reason))
+    return reasons
+
+
+def _int_list(value: object) -> list[int]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, int)]
 
 
 def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str:

@@ -641,6 +641,10 @@ Export policy:
 - `promotion-export --markdown` writes a scan-friendly export report that shows
   promoted/fallback/rejected/deferred counts and region reasons for items
   missing from the promoted SVG.
+- `promotion-export.json` and curated `promotion-export.json` sidecars now
+  include structured `missing_from_promoted` records with state, anchor indexes,
+  region ids, and reasons, so debug omissions are inspectable without parsing
+  Markdown.
 
 Exit criteria:
 

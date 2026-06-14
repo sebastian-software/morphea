@@ -146,6 +146,27 @@ class CliTests(unittest.TestCase):
                 {"fallback": 1, "promoted": 1, "rejected": 1},
             )
             self.assertEqual(
+                result["missing_from_promoted"],
+                [
+                    {
+                        "state": "fallback",
+                        "anchor_indexes": [1],
+                        "anchor_count": 1,
+                        "region_ids": [],
+                        "region_count": 0,
+                        "reasons": [],
+                    },
+                    {
+                        "state": "rejected",
+                        "anchor_indexes": [2],
+                        "anchor_count": 1,
+                        "region_ids": ["failed-region"],
+                        "region_count": 1,
+                        "reasons": ["failed topology gate"],
+                    },
+                ],
+            )
+            self.assertEqual(
                 result["export_summary"],
                 {
                     "deferred_anchor_count": 0,

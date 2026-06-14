@@ -228,6 +228,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(promotion_export["promoted_anchor_indexes"], [0])
             self.assertEqual(promotion_export["fallback_anchor_indexes"], [])
             self.assertEqual(promotion_export["fallback_only_anchor_indexes"], [])
+            self.assertEqual(promotion_export["missing_from_promoted"], [])
             self.assertEqual(promotion_export["rejected_anchor_indexes"], [])
             self.assertEqual(
                 promotion_export["anchor_state_counts"],
@@ -847,6 +848,23 @@ class CuratedSuiteTests(unittest.TestCase):
                     "rejected_anchor_count": 1,
                     "rejected_region_count": 1,
                 },
+            )
+            self.assertEqual(
+                promotion_export["missing_from_promoted"],
+                [
+                    {
+                        "state": "rejected",
+                        "anchor_indexes": promotion_export[
+                            "rejected_anchor_indexes"
+                        ],
+                        "anchor_count": 1,
+                        "region_ids": ["right-circle-topology"],
+                        "region_count": 1,
+                        "reasons": [
+                            "topology constraints failed: closed_anchor_count 1 > 0"
+                        ],
+                    }
+                ],
             )
             promoted_svg = (output_dir / "two-circles" / "promoted.svg").read_text(
                 encoding="utf-8"

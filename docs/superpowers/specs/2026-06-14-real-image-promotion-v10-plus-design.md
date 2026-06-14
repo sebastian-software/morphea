@@ -467,7 +467,9 @@ Current implementation:
   carrying anchor id, anchor index, promotion state, source promotion region
   ids, and applied review-decision metadata when present. It can also write a
   Markdown export report with promoted/fallback/rejected/deferred counts and
-  missing-from-promoted rows that surface region reasons.
+  missing-from-promoted rows that surface region reasons. The JSON summary now
+  carries the same `missing_from_promoted` records with state, anchor indexes,
+  region ids, and reasons, and curated sidecars write the same field.
 - curated promotion run sidecars now apply the same stable metadata wrappers to
   `promoted.svg` and `fallback.svg` while preserving the configured cut-out
   export strategy.

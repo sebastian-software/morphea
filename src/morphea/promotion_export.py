@@ -72,6 +72,7 @@ def write_promotion_svg_exports(
         "promoted_svg": str(promoted_path),
         "fallback_svg": str(fallback_path),
     }
+    result["missing_from_promoted"] = _promotion_export_missing_records(result)
     if output is not None:
         output_path = Path(output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -624,6 +625,30 @@ def _promotion_export_summary(
 
 def _promotion_export_missing_rows(result: dict[str, object]) -> list[str]:
     rows: list[str] = []
+    for record in _promotion_export_missing_records(result):
+        state = record.get("state")
+        anchors = _int_list(record.get("anchor_indexes"))
+        region_ids = _string_list(record.get("region_ids"))
+        reasons = _string_list(record.get("reasons"))
+        if not anchors and not region_ids:
+            continue
+        rows.append(
+            "| "
+            f"`{state}` | "
+            f"{_fmt_markdown_indexes(anchors)} | "
+            f"{_fmt_markdown_string_values(region_ids)} | "
+            f"{_fmt_markdown_text_values(reasons)} |"
+        )
+    return rows
+
+
+def _promotion_export_missing_records(
+    result: dict[str, object],
+) -> list[dict[str, object]]:
+    existing = result.get("missing_from_promoted")
+    if isinstance(existing, list):
+        return [item for item in existing if isinstance(item, dict)]
+    records: list[dict[str, object]] = []
     for state, key in (
         ("fallback", "fallback_only_anchor_indexes"),
         ("rejected", "rejected_anchor_indexes"),
@@ -633,14 +658,17 @@ def _promotion_export_missing_rows(result: dict[str, object]) -> list[str]:
         regions = _regions_for_state(result.get("regions"), state)
         if not anchors and not regions:
             continue
-        rows.append(
-            "| "
-            f"`{state}` | "
-            f"{_fmt_markdown_indexes(anchors)} | "
-            f"{_fmt_markdown_region_ids(regions)} | "
-            f"{_fmt_markdown_region_reasons(regions)} |"
+        records.append(
+            {
+                "state": state,
+                "anchor_indexes": anchors,
+                "anchor_count": len(anchors),
+                "region_ids": _region_ids(regions),
+                "region_count": len(regions),
+                "reasons": _region_reasons(regions),
+            }
         )
-    return rows
+    return records
 
 
 def _regions_for_state(value: object, state: str) -> list[dict[str, object]]:
@@ -672,18 +700,15 @@ def _fmt_markdown_indexes(values: list[int]) -> str:
     return ", ".join(f"`{value}`" for value in values)
 
 
-def _fmt_markdown_region_ids(regions: list[dict[str, object]]) -> str:
-    ids = [
+def _region_ids(regions: list[dict[str, object]]) -> list[str]:
+    return [
         str(region.get("id"))
         for region in regions
         if isinstance(region.get("id"), str) and region.get("id")
     ]
-    if not ids:
-        return "`none`"
-    return ", ".join(f"`{region_id}`" for region_id in ids)
 
 
-def _fmt_markdown_region_reasons(regions: list[dict[str, object]]) -> str:
+def _region_reasons(regions: list[dict[str, object]]) -> list[str]:
     reasons = []
     for region in regions:
         reason = (
@@ -693,9 +718,19 @@ def _fmt_markdown_region_reasons(regions: list[dict[str, object]]) -> str:
             or "n/a"
         )
         reasons.append(str(reason))
-    if not reasons:
+    return reasons
+
+
+def _fmt_markdown_string_values(values: list[str]) -> str:
+    if not values:
+        return "`none`"
+    return ", ".join(f"`{value}`" for value in values)
+
+
+def _fmt_markdown_text_values(values: list[str]) -> str:
+    if not values:
         return "`n/a`"
-    return "; ".join(reason.replace("|", "\\|") for reason in reasons)
+    return "; ".join(value.replace("|", "\\|") for value in values)
 
 
 def _promotion_region_ids_by_anchor_index(
