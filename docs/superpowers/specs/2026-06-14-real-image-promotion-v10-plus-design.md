@@ -475,7 +475,9 @@ Current implementation:
   dataset samples carry review item id, review reason, issue tags, applied
   decision, applied case id, and source review-decision path. `self-learn`
   Markdown reports summarize reviewed-label issue counts and provenance-field
-  coverage.
+  coverage. The current region-scoped plan has a CLI regression through
+  review, apply-review, and merge-labels, proving accepted reviewed region
+  anchors can become train examples while deferred evidence remains excluded.
 
 Exit criteria:
 

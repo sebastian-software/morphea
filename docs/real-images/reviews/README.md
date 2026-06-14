@@ -30,10 +30,25 @@ PYTHONPATH=src python3 -m morphea.cli promotion-review-harvest \
 
 PYTHONPATH=src python3 -m morphea.cli harvest-curated \
   --config /tmp/morphea-real-image-review-run/harvest-curated.json
+
+PYTHONPATH=src python3 -m morphea.cli review \
+  /tmp/morphea-real-image-review-run/harvested-pseudo-labels.json \
+  -o /tmp/morphea-real-image-review-run/review.json \
+  --accept-applied-reviews
+
+PYTHONPATH=src python3 -m morphea.cli apply-review \
+  /tmp/morphea-real-image-review-run/review.json \
+  -o /tmp/morphea-real-image-review-run/reviewed.json
+
+PYTHONPATH=src python3 -m morphea.cli merge-labels \
+  /tmp/morphea-real-image-review-run/reviewed.json \
+  -o /tmp/morphea-real-image-review-run/reviewed-dataset
 ```
 
 The region-scoped plan accepts only the Terminaro
 `gold-circle-region-shape-class` region via `reviewed_region_ids`. The opaque
 generated illustration and UI radio screenshot remain explicitly deferred. This
 plan produces trusted pseudo-label candidates only for the reviewed Terminaro
-gold-circle anchors and does not update suite `current_quality_label` metadata.
+gold-circle anchors, converts those candidates into accepted reviewed labels,
+and writes a reviewed-label dataset without updating suite
+`current_quality_label` metadata.

@@ -364,7 +364,10 @@ become rejected items, and issue tags survive into reviewed-label artifacts.
 `morphea merge-labels` now preserves `review` and `review_decision_applied`
 provenance in accepted pseudo-label training manifests and records
 `review_issues` plus `applied_review_decision` in dataset samples. Rejected and
-deferred review items remain outside the trainable dataset.
+deferred review items remain outside the trainable dataset. The region-scoped
+plan path is covered through merge-labels: accepted Terminaro region anchors
+become reviewed train examples, while deferred real-image cases stay out of the
+dataset.
 
 `morphea self-learn` now separates retraining from model acceptance. A model can
 be written after the training comparison gate accepts, but the cycle's

@@ -491,7 +491,9 @@ reviews into the existing review/apply-review loop while preserving issue tags.
 accepted pseudo-label manifests, and dataset samples carry review item id,
 review reason, issue tags, applied decision, applied case id, and source
 review-decision path while excluding rejected/deferred review items from
-trainable datasets.
+trainable datasets. The current region-scoped plan is now covered through this
+path by a CLI regression: accepted Terminaro region anchors become reviewed
+train examples, while deferred real-image cases remain outside the dataset.
 `morphea self-learn` separates retraining from acceptance: acceptance requires
 the training comparison gate plus passing curated validation when configured,
 and cycle summaries expose reviewed-label issue and applied-decision counts.

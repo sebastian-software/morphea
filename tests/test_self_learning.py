@@ -266,6 +266,105 @@ class SelfLearningTests(unittest.TestCase):
                 "deferred",
             )
 
+    def test_region_review_plan_merges_reviewed_training_dataset(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_reviewed_region_suite(root)
+            review_root = root / "review-run"
+            decision_plan = root / "region-plan.json"
+            decision_plan.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "decision_choices": {"circle-case": "accepted"},
+                        "decision_overrides": {
+                            "circle-case": {
+                                "reviewer": "qa",
+                                "reason": "accepted reviewed circle region",
+                                "reviewed_region_ids": ["circle-region"],
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            review_queue = root / "review.json"
+            reviewed = root / "reviewed.json"
+            dataset_dir = root / "dataset"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "promotion-review-run",
+                        str(suite),
+                        "--output-dir",
+                        str(review_root),
+                    ]
+                )
+                main(
+                    [
+                        "promotion-review-harvest",
+                        "--config",
+                        str(review_root / "promotion-review-harvest.json"),
+                        "--decision-plan",
+                        str(decision_plan),
+                    ]
+                )
+                main(
+                    [
+                        "harvest-curated",
+                        "--config",
+                        str(review_root / "harvest-curated.json"),
+                    ]
+                )
+                main(
+                    [
+                        "review",
+                        str(review_root / "harvested-pseudo-labels.json"),
+                        "-o",
+                        str(review_queue),
+                        "--accept-applied-reviews",
+                    ]
+                )
+                main(["apply-review", str(review_queue), "-o", str(reviewed)])
+                main(["merge-labels", str(reviewed), "-o", str(dataset_dir)])
+
+            harvest = json.loads(
+                (review_root / "harvested-pseudo-labels.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(harvest["pseudo_label_count"], 1)
+            review = json.loads(review_queue.read_text(encoding="utf-8"))
+            self.assertEqual(review["auto_accepted_applied_review_count"], 1)
+            self.assertEqual(review["items"][0]["decision"], "accept")
+            reviewed_data = json.loads(reviewed.read_text(encoding="utf-8"))
+            self.assertEqual(reviewed_data["accepted_count"], 1)
+            self.assertEqual(reviewed_data["rejected_count"], 0)
+            dataset = json.loads(
+                (dataset_dir / "dataset.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(dataset["count"], 1)
+            self.assertEqual(
+                dataset["samples"][0]["applied_review_decision"],
+                "accepted",
+            )
+            self.assertEqual(
+                dataset["samples"][0]["applied_review_case_id"],
+                "circle-case",
+            )
+            pseudo_manifest = json.loads(
+                (dataset_dir / "train" / "pseudo-00000.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                pseudo_manifest["review_decision_applied"][
+                    "review_promoted_region_ids"
+                ],
+                ["circle-region"],
+            )
+
     def test_promotion_review_harvest_config_keeps_deferred_out_of_harvest(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -469,7 +469,9 @@ Implemented so far:
   provenance in accepted pseudo-label manifests and carries review item id,
   review reason, applied review decision/case/source path, and issue tags in
   dataset samples while keeping rejected/deferred review items out of trainable
-  datasets.
+  datasets. The current region-scoped review plan is covered through this path:
+  accepted reviewed region anchors become train examples, while deferred
+  real-image evidence remains excluded.
 - `morphea self-learn` separates retraining from acceptance: model acceptance
   now requires an accepted training comparison gate and, when configured,
   passing curated validation, with reviewed-label issue counts and
