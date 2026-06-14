@@ -370,7 +370,10 @@ Deliverables:
   `review-decision.json`. Packet cases also surface `review_requirements` so
   reviewer/reason and corrected-decision evidence requirements are visible
   before a terminal template is opened, plus per-decision `review_commands` so
-  edited terminal templates can be applied without manual path reconstruction;
+  edited terminal templates can be applied without manual path reconstruction.
+  Review packets now also carry and render failed-gate details (`id`, type,
+  severity, reason), so yellow visual-fidelity or review-safety debt is visible
+  from the packet without opening raw JSON;
 - reviewer decision templates for accepted, corrected, rejected, and deferred.
   Current slice: checked promotion runs write terminal JSON templates under
   `review-templates/`, and suite-level review packets link those paths per

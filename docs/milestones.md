@@ -429,6 +429,9 @@ Implemented so far:
 - suite-level `review-packet.json` / `review-packet.md` carry the same
   `review_requirements`, so reviewers can see terminal and corrected decision
   requirements without opening individual templates first.
+- suite-level review-packet cases also carry failed-gate details with gate id,
+  type, severity, and reason, and `review-packet.md` renders the same details
+  per case so reviewers can see why a case is queued without opening raw JSON.
 - queued review-packet cases carry per-decision `review_commands`, so
   reviewers can apply an edited terminal template without hand-assembling the
   manifest, applied-review JSON, or applied-review Markdown paths.

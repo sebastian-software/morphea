@@ -608,9 +608,10 @@ directory includes the standard vectorize artifacts plus:
 The curated output root also includes suite-level review packet artifacts:
 
 - `review-packet.json`: machine-readable queue of deferred/rejected cases that
-  need a reviewer decision, with issue tags, failed gate/component ids,
-  suggested decision, paths to per-case review artifacts, and paths to terminal
-  reviewer decision templates. Each queued case also carries
+  need a reviewer decision, with issue tags, failed gate/component ids, failed
+  gate details (`id`, `gate_type`, `severity`, and `reason`), suggested
+  decision, paths to per-case review artifacts, and paths to terminal reviewer
+  decision templates. Each queued case also carries
   `quality_label_policy` and `review_requirements`, which names fields required
   for all terminal decisions (`reviewer`, `reason`) and the extra fields
   required for corrected decisions (`correction_notes`, `corrected_artifacts`).
@@ -621,10 +622,11 @@ The curated output root also includes suite-level review packet artifacts:
   `decision_choice_commands` plus `decision_choice_evidence_flags`, exposing
   the no-JSON-edit reviewer path directly from the initial packet.
 - `review-packet.md`: scan-friendly Markdown summary of the same queue, with
-  links/paths to contact sheets, promotion reviews, editability reviews, and
-  `review-decision.json` files plus accepted/corrected/rejected/deferred
-  template paths, the same terminal/corrected review requirements, and
-  per-decision apply and harvest-choice commands
+  links/paths to contact sheets, promotion reviews, editability reviews,
+  failed-gate detail tables, and `review-decision.json` files plus
+  accepted/corrected/rejected/deferred template paths, the same
+  terminal/corrected review requirements, and per-decision apply and
+  harvest-choice commands
 - `review-gallery.html`: local static gallery for promotion cases in the suite
   run. It shows quality label, promotion/editability decisions, issue tags,
   failed gate/component ids, the contact sheet image, review artifact links,

@@ -600,6 +600,19 @@ class CuratedSuiteTests(unittest.TestCase):
                 "deferred",
             )
             self.assertEqual(
+                review_packet["cases"][0]["failed_gate_details"],
+                [
+                    {
+                        "gate_type": "review_safety",
+                        "id": "current_quality_label",
+                        "reason": (
+                            "current quality label is red; manual review pending"
+                        ),
+                        "severity": "yellow",
+                    }
+                ],
+            )
+            self.assertEqual(
                 review_packet["cases"][0]["quality_label_policy"]["mode"],
                 "sidecar_only",
             )
@@ -667,6 +680,12 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn("- Review decision: `", review_packet_markdown)
             self.assertIn("- Decision templates: accepted=`", review_packet_markdown)
+            self.assertIn("### Failed Gate Details", review_packet_markdown)
+            self.assertIn(
+                "| `current_quality_label` | `review_safety` | `yellow` | "
+                "current quality label is red; manual review pending |",
+                review_packet_markdown,
+            )
             self.assertIn("### Apply Commands", review_packet_markdown)
             self.assertIn(
                 "Edit the chosen terminal template first, then run:",

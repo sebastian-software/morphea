@@ -2866,6 +2866,9 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         "red_gate_count": summary.get("red_gate_count", 0),
         "yellow_gate_count": summary.get("yellow_gate_count", 0),
         "failed_gate_ids": _failed_gate_ids(case.get("promotion_gates")),
+        "failed_gate_details": _review_decision_failed_gates(
+            case.get("promotion_gates")
+        ),
         "editability_decision": review.get("decision", "n/a"),
         "editability_accepted": bool(review.get("accepted", False)),
         "failed_component_ids": _failed_component_ids(
@@ -3047,6 +3050,27 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
             ]
             if template_parts:
                 lines.append(f"- Decision templates: {', '.join(template_parts)}")
+        failed_gate_details = case.get("failed_gate_details")
+        if isinstance(failed_gate_details, list) and failed_gate_details:
+            lines.extend(
+                [
+                    "",
+                    "### Failed Gate Details",
+                    "",
+                    "| Gate | Type | Severity | Reason |",
+                    "| --- | --- | --- | --- |",
+                ]
+            )
+            for gate in failed_gate_details:
+                if not isinstance(gate, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"{_fmt_markdown_code_value(gate.get('id'))} | "
+                    f"{_fmt_markdown_code_value(gate.get('gate_type'))} | "
+                    f"{_fmt_markdown_code_value(gate.get('severity'))} | "
+                    f"{_fmt_markdown_table_text(gate.get('reason'))} |"
+                )
         commands = case.get("review_commands")
         if isinstance(commands, dict) and commands:
             lines.extend(
@@ -3126,6 +3150,12 @@ def _review_packet_group_rows(value: object) -> list[str]:
         )
         rows.append(f"| `{key}` | {case_text} |")
     return rows
+
+
+def _fmt_markdown_table_text(value: object) -> str:
+    if value is None or value == "":
+        return "n/a"
+    return str(value).replace("\n", " ").replace("|", "\\|")
 
 
 def _promotion_anchor_state_indexes(
