@@ -1206,6 +1206,7 @@ def scene_metrics_to_manifest(
             "clipped_score": round(editability_score, 6),
         },
         "editability_v10_components": _editability_v10_components(
+            anchors=anchors,
             anchor_count=anchor_count,
             node_count=node_count,
             parameter_count=parameter_count,
@@ -1273,6 +1274,7 @@ def refresh_raster_editability_component(metrics: dict[str, object]) -> None:
 
 def _editability_v10_components(
     *,
+    anchors: tuple[AnchorCandidate, ...],
     anchor_count: int,
     node_count: int,
     parameter_count: int,
@@ -1295,11 +1297,11 @@ def _editability_v10_components(
             "generic_path_count": generic_path_count,
             "generic_path_ratio": round(generic_path_ratio, 6),
         },
-        "parameter_economy": {
-            "score": _economy_score(average_parameters, budget=16.0),
-            "average_parameter_count": round(average_parameters, 6),
-            "parameter_count": parameter_count,
-        },
+        "parameter_economy": _parameter_economy_component(
+            anchors=anchors,
+            parameter_count=parameter_count,
+            average_parameters=average_parameters,
+        ),
         "node_economy": {
             "score": _economy_score(average_nodes, budget=24.0),
             "average_node_count": round(average_nodes, 6),
@@ -1366,6 +1368,55 @@ def _metric_component(
         "mean": round(float(values.get("mean", 0.0)), 6),
         "count": int(values.get("count", 0)),
     }
+
+
+def _parameter_economy_component(
+    *,
+    anchors: tuple[AnchorCandidate, ...],
+    parameter_count: int,
+    average_parameters: float,
+) -> dict[str, object]:
+    budget = 16.0
+    parameter_counts = [anchor.parameter_count for anchor in anchors]
+    return {
+        "score": _economy_score(average_parameters, budget=budget),
+        "average_parameter_count": round(average_parameters, 6),
+        "parameter_count": parameter_count,
+        "budget": budget,
+        "max_parameter_count": max(parameter_counts) if parameter_counts else 0,
+        "over_budget_anchor_count": sum(
+            1 for count in parameter_counts if count > budget
+        ),
+        "top_contributors": _top_parameter_contributors(anchors),
+    }
+
+
+def _top_parameter_contributors(
+    anchors: tuple[AnchorCandidate, ...],
+    *,
+    limit: int = 5,
+) -> list[dict[str, object]]:
+    ranked = sorted(
+        enumerate(anchors),
+        key=lambda item: item[1].parameter_count,
+        reverse=True,
+    )
+    contributors: list[dict[str, object]] = []
+    for index, anchor in ranked[:limit]:
+        contributors.append(
+            {
+                "anchor_index": index,
+                "kind": str(anchor.kind),
+                "color": anchor.color,
+                "parameter_count": anchor.parameter_count,
+                "node_count": anchor.node_count,
+                "bounds": [
+                    round(value, 6)
+                    for value in _anchor_bounds(anchor)
+                ],
+            }
+        )
+    return contributors
 
 
 def _raster_fidelity_component(metrics: dict[str, object]) -> dict[str, object]:

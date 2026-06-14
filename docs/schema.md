@@ -95,6 +95,10 @@ Scene metrics:
   contract, including shape identity, parameter economy, node economy, stroke
   width stability, line/curve smoothness, topology consistency, grouping,
   fragmentation, raster fidelity, provenance, and classifier-prior agreement.
+  The parameter economy component includes `budget`, `max_parameter_count`,
+  `over_budget_anchor_count`, and `top_contributors` evidence so reviewers can
+  identify the shapes that dominate the score before changing detectors or
+  thresholds.
   The v10 fragmentation component scores `unstructured_fragmentation_penalty`
   so expected repeated primitives such as table cells, circles, and cutout
   strokes do not count as review-blocking fragmentation, while the raw

@@ -241,8 +241,78 @@
           },
           "parameter_economy": {
             "average_parameter_count": 12.548387,
+            "budget": 16.0,
+            "max_parameter_count": 148,
+            "over_budget_anchor_count": 12,
             "parameter_count": 778,
-            "score": 0.215726
+            "score": 0.215726,
+            "top_contributors": [
+              {
+                "anchor_index": 0,
+                "bounds": [
+                  141.938068,
+                  218.815942,
+                  540.90696,
+                  955.195312
+                ],
+                "color": "#002554",
+                "kind": "cubic_path",
+                "node_count": 74,
+                "parameter_count": 148
+              },
+              {
+                "anchor_index": 9,
+                "bounds": [
+                  720.070312,
+                  289.007812,
+                  1068.33712,
+                  627.0
+                ],
+                "color": "#002554",
+                "kind": "cubic_path",
+                "node_count": 34,
+                "parameter_count": 68
+              },
+              {
+                "anchor_index": 8,
+                "bounds": [
+                  720.704444,
+                  627.0,
+                  1131.539062,
+                  906.210938
+                ],
+                "color": "#002554",
+                "kind": "cubic_path",
+                "node_count": 32,
+                "parameter_count": 64
+              },
+              {
+                "anchor_index": 17,
+                "bounds": [
+                  818.588393,
+                  238.12355,
+                  998.731919,
+                  358.669419
+                ],
+                "color": "#002554",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              },
+              {
+                "anchor_index": 18,
+                "bounds": [
+                  131.718865,
+                  567.679802,
+                  269.95301,
+                  625.089729
+                ],
+                "color": "#002554",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              }
+            ]
           },
           "provenance_confidence": {
             "fallback_path_ratio": 0.209677,
@@ -825,8 +895,78 @@
           },
           "parameter_economy": {
             "average_parameter_count": 12.548387,
+            "budget": 16.0,
+            "max_parameter_count": 148,
+            "over_budget_anchor_count": 12,
             "parameter_count": 778,
-            "score": 0.215726
+            "score": 0.215726,
+            "top_contributors": [
+              {
+                "anchor_index": 0,
+                "bounds": [
+                  141.938068,
+                  218.815942,
+                  540.90696,
+                  955.195312
+                ],
+                "color": "#002554",
+                "kind": "cubic_path",
+                "node_count": 74,
+                "parameter_count": 148
+              },
+              {
+                "anchor_index": 9,
+                "bounds": [
+                  720.070312,
+                  289.007812,
+                  1068.33712,
+                  627.0
+                ],
+                "color": "#002554",
+                "kind": "cubic_path",
+                "node_count": 34,
+                "parameter_count": 68
+              },
+              {
+                "anchor_index": 8,
+                "bounds": [
+                  720.704444,
+                  627.0,
+                  1131.539062,
+                  906.210938
+                ],
+                "color": "#002554",
+                "kind": "cubic_path",
+                "node_count": 32,
+                "parameter_count": 64
+              },
+              {
+                "anchor_index": 17,
+                "bounds": [
+                  818.588393,
+                  238.12355,
+                  998.731919,
+                  358.669419
+                ],
+                "color": "#002554",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              },
+              {
+                "anchor_index": 18,
+                "bounds": [
+                  131.718865,
+                  567.679802,
+                  269.95301,
+                  625.089729
+                ],
+                "color": "#002554",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              }
+            ]
           },
           "provenance_confidence": {
             "fallback_path_ratio": 0.209677,
@@ -1553,8 +1693,78 @@
           },
           "parameter_economy": {
             "average_parameter_count": 9.834783,
+            "budget": 16.0,
+            "max_parameter_count": 19,
+            "over_budget_anchor_count": 21,
             "parameter_count": 1131,
-            "score": 0.385326
+            "score": 0.385326,
+            "top_contributors": [
+              {
+                "anchor_index": 1,
+                "bounds": [
+                  547.659696,
+                  67.197196,
+                  558.091432,
+                  89.344471
+                ],
+                "color": "#000000",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              },
+              {
+                "anchor_index": 2,
+                "bounds": [
+                  490.811864,
+                  67.095718,
+                  501.020081,
+                  89.445949
+                ],
+                "color": "#000000",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              },
+              {
+                "anchor_index": 4,
+                "bounds": [
+                  613.809118,
+                  63.655472,
+                  623.221264,
+                  92.886195
+                ],
+                "color": "#000000",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              },
+              {
+                "anchor_index": 5,
+                "bounds": [
+                  192.147521,
+                  62.398563,
+                  204.134809,
+                  82.101437
+                ],
+                "color": "#000000",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              },
+              {
+                "anchor_index": 6,
+                "bounds": [
+                  777.718337,
+                  62.443337,
+                  789.128277,
+                  82.056663
+                ],
+                "color": "#000000",
+                "kind": "stroke_path",
+                "node_count": 7,
+                "parameter_count": 19
+              }
+            ]
           },
           "provenance_confidence": {
             "fallback_path_ratio": 0.452174,

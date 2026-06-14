@@ -882,6 +882,17 @@ class SceneExportTests(unittest.TestCase):
         v10 = metrics["editability_v10_components"]
         self.assertEqual(v10["shape_identity_confidence"]["score"], 1.0)
         self.assertEqual(v10["parameter_economy"]["parameter_count"], 8)
+        self.assertEqual(v10["parameter_economy"]["budget"], 16.0)
+        self.assertEqual(v10["parameter_economy"]["max_parameter_count"], 5)
+        self.assertEqual(v10["parameter_economy"]["over_budget_anchor_count"], 0)
+        self.assertEqual(
+            v10["parameter_economy"]["top_contributors"][0]["anchor_index"],
+            1,
+        )
+        self.assertEqual(
+            v10["parameter_economy"]["top_contributors"][0]["kind"],
+            "stroke_polyline",
+        )
         self.assertEqual(v10["node_economy"]["node_count"], 3)
         self.assertEqual(v10["stroke_width_stability"]["score"], 0.6)
         self.assertEqual(v10["line_curve_smoothness"]["score"], 0.8)
