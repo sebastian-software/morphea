@@ -59,7 +59,7 @@ python -m pip install -e .
 Optional MLX classifier runtime:
 
 ```sh
-uv pip install -e '.[mlx]'
+uv pip install --python .venv/bin/python -e '.[mlx]'
 ```
 
 Optional live MLX/SAM adapter runtime, which currently needs a Python 3.14+
@@ -69,6 +69,10 @@ environment for the `mlx-sam` package:
 uv venv .venv-mlx-sam --python 3.14
 uv pip install --python .venv-mlx-sam/bin/python -e '.[mlx,sam]'
 ```
+
+See [docs/mlx-sam-runtime.md](docs/mlx-sam-runtime.md) for runtime status
+checks, checkpoint handling, and the difference between a package-installed
+SAM adapter and a proven real-image SAM segmentation run.
 
 Run the test suite:
 

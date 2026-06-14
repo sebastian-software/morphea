@@ -1,4 +1,9 @@
 .DS_Store
 .venv/
+.venv-*/
 __pycache__/
 *.pyc
+
+# Local model runtimes and downloaded checkpoints are machine-specific.
+/checkpoints/
+/models/
