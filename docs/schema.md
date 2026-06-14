@@ -682,6 +682,16 @@ manifest and its top-level `promotion` object. The applied summary includes
 `updates_current_quality_label: false`, so accepted/corrected reviews remain
 promotion evidence until suite metadata is deliberately edited.
 
+`morphea promotion-review-harvest review-packet.json -o review-harvest.json
+--harvest-config harvest-curated.json --decision case-id=terminal-decision.json`
+is the suite-level bridge from review packets to harvest preparation. It
+applies only explicitly supplied terminal decision files, writes
+`applied-review.json` / `applied-review.md` beside the case manifest via the
+same `promotion-apply-review` rules, summarizes applied, harvestable, and
+pending cases, and writes a `harvest-curated --config` file with
+`require_applied_review: true`. Cases without an applied review remain pending
+in the prep report rather than becoming implicit training candidates.
+
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
 can become pseudo-label candidates. Missing, invalid, `rejected`, and

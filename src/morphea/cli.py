@@ -27,6 +27,7 @@ from morphea.promotion_export import (
     apply_promotion_review_decision,
     write_promotion_svg_exports,
 )
+from morphea.promotion_review_workflow import prepare_promotion_review_harvest
 from morphea.primitive_baseline import (
     compare_to_baseline,
     load_baseline,
@@ -998,6 +999,30 @@ def main(argv: list[str] | None = None) -> None:
     promotion_apply_review.add_argument("--markdown", type=Path)
     promotion_apply_review.add_argument("--manifest", type=Path)
 
+    promotion_review_harvest = subcommands.add_parser(
+        "promotion-review-harvest",
+        help=(
+            "Apply selected promotion review decisions and write a "
+            "harvest-curated config."
+        ),
+    )
+    promotion_review_harvest.add_argument("review_packet", type=Path)
+    promotion_review_harvest.add_argument("-o", "--output", type=Path, required=True)
+    promotion_review_harvest.add_argument("--markdown", type=Path)
+    promotion_review_harvest.add_argument("--harvest-config", type=Path)
+    promotion_review_harvest.add_argument(
+        "--decision",
+        action="append",
+        default=[],
+        help="Terminal review decision as CASE_ID=path/to/decision.json.",
+    )
+    promotion_review_harvest.add_argument("--suite", type=Path)
+    promotion_review_harvest.add_argument("--run-root", type=Path)
+    promotion_review_harvest.add_argument("--harvest-output", type=Path)
+    promotion_review_harvest.add_argument("--curated-report", type=Path)
+    promotion_review_harvest.add_argument("--snapshot", type=Path)
+    promotion_review_harvest.add_argument("--harvest-markdown", type=Path)
+
     sweep = subcommands.add_parser(
         "sweep",
         help="Run a config-driven vectorize sweep.",
@@ -1246,6 +1271,28 @@ def main(argv: list[str] | None = None) -> None:
         print(
             "applied promotion review "
             f"(case={result.get('case_id')}, decision={result['decision']})"
+        )
+        return
+
+    if args.command == "promotion-review-harvest":
+        result = prepare_promotion_review_harvest(
+            review_packet=args.review_packet,
+            output=args.output,
+            markdown=args.markdown,
+            harvest_config=args.harvest_config,
+            decisions=_promotion_review_decision_args(args.decision),
+            suite=args.suite,
+            run_root=args.run_root,
+            harvest_output=args.harvest_output,
+            curated_report=args.curated_report,
+            snapshot=args.snapshot,
+            harvest_markdown=args.harvest_markdown,
+        )
+        print(
+            "prepared promotion review harvest "
+            f"(applied={result['newly_applied_decision_count']}, "
+            f"pending={result['pending_case_count']}, "
+            f"harvestable={result['harvestable_case_count']})"
         )
         return
 
@@ -1669,6 +1716,18 @@ def _resolved_vectorize_config(args: argparse.Namespace) -> dict[str, object]:
         if value is not None:
             config[key] = str(value) if key == "classifier_model" else value
     return config
+
+
+def _promotion_review_decision_args(values: list[str]) -> dict[str, Path]:
+    decisions: dict[str, Path] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError("promotion review decision args must be CASE_ID=path")
+        case_id, path = value.split("=", 1)
+        if not case_id or not path:
+            raise ValueError("promotion review decision args must be CASE_ID=path")
+        decisions[case_id] = Path(path)
+    return decisions
 
 
 def _resolved_vectorize_artifact_config(

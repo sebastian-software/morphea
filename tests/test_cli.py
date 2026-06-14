@@ -276,6 +276,138 @@ class CliTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 main(["promotion-apply-review", str(review_decision)])
 
+    def test_promotion_review_harvest_cli_applies_decision_and_writes_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            case_dir = run_root / "real-case"
+            case_dir.mkdir(parents=True)
+            manifest = case_dir / "manifest.json"
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(manifest)},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            terminal_decision = root / "accepted.json"
+            terminal_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "accepted",
+                        "suggested_decision": "deferred",
+                        "reviewer": "qa",
+                        "reason": "reviewed current deferred evidence",
+                        "issue_tags": ["manual_review_pending"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "review-harvest.json"
+            markdown = root / "review-harvest.md"
+            harvest_config = root / "harvest-curated.json"
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        str(review_packet),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--harvest-config",
+                        str(harvest_config),
+                        "--run-root",
+                        str(run_root),
+                        "--decision",
+                        f"real-case={terminal_decision}",
+                    ]
+                )
+
+            self.assertIn("applied=1", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["newly_applied_decision_count"], 1)
+            self.assertEqual(result["applied_case_count"], 1)
+            self.assertEqual(result["harvestable_case_count"], 1)
+            self.assertEqual(result["pending_case_count"], 0)
+            manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["decision"],
+                "accepted",
+            )
+            self.assertEqual(
+                manifest_data["promotion"]["review_decision_applied"]["decision"],
+                "accepted",
+            )
+            config = json.loads(harvest_config.read_text(encoding="utf-8"))
+            self.assertEqual(config["suite"], str(suite))
+            self.assertEqual(config["run_root"], str(run_root))
+            self.assertTrue(config["require_applied_review"])
+            self.assertIn(
+                "harvest-curated --config",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_promotion_review_harvest_cli_reports_pending_packet_cases(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            manifest = root / "runs" / "real-case" / "manifest.json"
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(manifest)},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "review-harvest.json"
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(["promotion-review-harvest", str(review_packet), "-o", str(output)])
+
+            self.assertIn("pending=1", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["newly_applied_decision_count"], 0)
+            self.assertEqual(result["applied_case_count"], 0)
+            self.assertEqual(result["harvestable_case_count"], 0)
+            self.assertEqual(result["pending_case_count"], 1)
+            self.assertEqual(result["pending_cases"][0]["case_id"], "real-case")
+
     def test_status_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "status.json"

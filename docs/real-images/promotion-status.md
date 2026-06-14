@@ -264,6 +264,13 @@ into the run manifest and its `promotion` object. Applied summaries include
 the same sidecar-only quality-label policy, so accepted/corrected decisions
 are harvestable evidence rather than automatic suite-label updates.
 
+`morphea promotion-review-harvest` now turns a suite-level
+`review-packet.json` into a reproducible harvest-prep report. It applies only
+explicit `case-id=terminal-decision.json` inputs, writes the per-case applied
+review summary beside the manifest, reports which packet cases are applied,
+harvestable, or still pending, and can write a `harvest-curated --config` file
+with `require_applied_review: true`.
+
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
 can become candidates; missing, invalid, `rejected`, or `deferred` applied
@@ -348,5 +355,8 @@ v10-fragmentation, and parameter-economy thresholds are also green. The UI radio
 topology, shape identity, fragmentation, and provenance thresholds are now
 mechanically green after text-like fallback grouping. All three real-image
 cases defer to manual review instead of being rejected as detector failures.
-The next narrow promotion-quality target is a reviewer-facing packet and
-applied-review path for these deferred cases.
+The next narrow promotion-quality target is to run these deferred cases through
+explicit reviewer decisions, then use `promotion-review-harvest` and the
+generated `harvest-curated --config` path to prove that accepted/corrected
+sidecar evidence can move forward while rejected/deferred evidence stays out
+of training.

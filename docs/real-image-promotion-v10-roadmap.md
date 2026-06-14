@@ -389,6 +389,11 @@ persist `review_decision_applied` into run manifests. Pending, terminal, and
 applied review records carry `quality_label_policy.mode: sidecar_only`, so
 accepted/corrected reviews become auditable evidence without implicitly
 rewriting suite `current_quality_label`.
+`morphea promotion-review-harvest` applies explicitly selected terminal
+decision files from a suite `review-packet.json`, writes per-case applied
+review summaries beside manifests, reports applied/harvestable/pending packet
+cases, and can emit a ready `harvest-curated --config` file with
+`require_applied_review: true`.
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied

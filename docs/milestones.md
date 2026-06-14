@@ -1045,6 +1045,11 @@ Implemented so far:
 - checked promotion runs write `region-overlay.png` and include the same
   red/yellow/green source-region outlines as a Contact Sheet panel, making the
   failed or deferred region visually inspectable without opening raw JSON.
+- `morphea promotion-review-harvest` consumes a suite-level
+  `review-packet.json`, applies only explicit terminal review decisions,
+  persists `review_decision_applied` beside case manifests, reports applied,
+  harvestable, and pending cases, and can write a `harvest-curated --config`
+  file with `require_applied_review: true`.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:
@@ -1190,6 +1195,9 @@ Implemented so far:
   checking out the current working tree
 - `morphea snapshot-git-ref --config snapshot-git-ref.json` for repeatable
   isolated git snapshot generation
+- `morphea promotion-review-harvest review-packet.json -o review-harvest.json`
+  for repeatable review-to-harvest preparation after terminal promotion review
+  decisions have been selected
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

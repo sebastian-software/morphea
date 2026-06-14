@@ -484,6 +484,17 @@ Deliverables:
 - stable local artifact conventions;
 - documentation that separates green demos from red/yellow research evidence.
 
+Current implementation:
+
+- `curated-check --run --output-dir --markdown --snapshot` is the suite-run
+  entry point that writes per-case artifacts plus suite-level
+  `review-packet.json`, `review-packet.md`, and `review-gallery.html`.
+- `promotion-review-harvest` is the review-to-harvest bridge: it applies only
+  explicit terminal decision files from a review packet, persists
+  `review_decision_applied` through the existing apply-review rules, reports
+  applied/harvestable/pending packet cases, and writes a `harvest-curated`
+  config with `require_applied_review: true`.
+
 Exit criteria:
 
 - a new real-image case can be added, audited, reviewed, and carried through
