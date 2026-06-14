@@ -105,6 +105,9 @@ Scene metrics:
   so expected repeated primitives such as table cells, circles, and cutout
   strokes do not count as review-blocking fragmentation, while the raw
   `fragmentation_penalty` remains available for aggregate diagnostics.
+  Text-like grouping only marks small glyph-sized cubic paths as structured;
+  larger same-color organic fallback paths remain in
+  `unstructured_generic_path_count` and `unstructured_fragmentation_penalty`.
   Components may include `observed`, source metrics, and gate-capping fields:
   `gate_blocked`, `failed_gates`, and `uncapped_score`.
 - `anchor_quality_error_mean`
@@ -163,6 +166,9 @@ Group fields:
 - `fallback_anchor_indexes`: present for `text_like_fragment_group`; identifies
   bounded glyph-like `cubic_path` fallbacks that remain review-visible but are
   not counted as unstructured v10 fallback debt
+- `candidate_fallback_path_count` and `excluded_fallback_path_count`: present
+  in `text_like_fragment_group.metrics`; show how many same-color cubic paths
+  were considered and how many were left as non-text fallback debt
 - `row_count`: present for `perspective_grid`
 - `column_count`: present for `perspective_grid`
 

@@ -27,6 +27,8 @@ from morphea.masks import BinaryMask
 
 
 SCENE_MANIFEST_SCHEMA_VERSION = 1
+TEXT_LIKE_FALLBACK_MAX_BOUNDS_AREA = 384.0
+TEXT_LIKE_FALLBACK_MAX_SPAN = 32.0
 
 
 @dataclass(frozen=True)
@@ -989,10 +991,15 @@ def _text_like_fragment_groups(
             for index in group.get("anchor_indexes", [])
             if isinstance(index, int) and 0 <= index < len(anchors)
         ]
-        fallback_indexes = [
+        candidate_fallback_indexes = [
             index
             for index in anchor_indexes
             if anchors[index].kind == AnchorKind.CUBIC_PATH
+        ]
+        fallback_indexes = [
+            index
+            for index in candidate_fallback_indexes
+            if _is_text_like_fallback_anchor(anchors[index])
         ]
         if not fallback_indexes:
             continue
@@ -1008,6 +1015,12 @@ def _text_like_fragment_groups(
                 "metrics": {
                     "fragment_count": len(anchor_indexes),
                     "fallback_path_count": len(fallback_indexes),
+                    "candidate_fallback_path_count": len(
+                        candidate_fallback_indexes
+                    ),
+                    "excluded_fallback_path_count": (
+                        len(candidate_fallback_indexes) - len(fallback_indexes)
+                    ),
                     "bounds_fill_ratio": metrics.get("bounds_fill_ratio"),
                     "combined_bounds_area": metrics.get("combined_bounds_area"),
                 },
@@ -1015,6 +1028,20 @@ def _text_like_fragment_groups(
             }
         )
     return text_groups
+
+
+def _is_text_like_fallback_anchor(anchor: AnchorCandidate) -> bool:
+    if anchor.kind != AnchorKind.CUBIC_PATH:
+        return False
+    min_x, min_y, max_x, max_y = _anchor_bounds(anchor)
+    width = max_x - min_x
+    height = max_y - min_y
+    if width <= 0.0 or height <= 0.0:
+        return False
+    return (
+        max(width, height) <= TEXT_LIKE_FALLBACK_MAX_SPAN
+        and width * height <= TEXT_LIKE_FALLBACK_MAX_BOUNDS_AREA
+    )
 
 
 def _is_text_like_fragment_group(group: dict[str, object]) -> bool:

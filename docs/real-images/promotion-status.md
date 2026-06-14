@@ -206,12 +206,14 @@ Promotion gates now cap matching v10 components instead of being averaged away.
 For example, the current UI screenshot keeps `raster_fidelity=0.944073` and now
 keeps `topology_consistency=1.0` after duplicate radio anchors are deduplicated,
 and its sparse black glyph fallbacks are now counted as structured
-`text_like_fragment_group` evidence instead of unstructured fallback debt. The
-current Terminaro run no longer caps shape identity after the gold-circle
-region gate moved to 5/5 matched `circle` anchors, and no longer caps raster
-fidelity after transparent-source metrics were flattened against the white
-preview background. Its v10 fragmentation score now ignores expected structured
-primitives and cutout strokes, while still reporting the raw
+`text_like_fragment_group` evidence instead of unstructured fallback debt. That
+grouping is guarded at the anchor level: only small glyph-sized cubic paths are
+structured, while larger same-color organic fallback paths remain unstructured
+fallback debt. The current Terminaro run no longer caps shape identity after
+the gold-circle region gate moved to 5/5 matched `circle` anchors, and no
+longer caps raster fidelity after transparent-source metrics were flattened
+against the white preview background. Its v10 fragmentation score now ignores
+expected structured primitives and cutout strokes, while still reporting the raw
 `fragmentation_penalty` for aggregate diagnostics.
 
 Curated promotion reports now also include `editability_review`, which turns

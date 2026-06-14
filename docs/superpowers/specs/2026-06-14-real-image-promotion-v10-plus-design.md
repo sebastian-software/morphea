@@ -417,7 +417,11 @@ and quality-label review-policy refinements:
    `updates_current_quality_label: false`; suite labels remain manual metadata
    until the suite file is explicitly edited.
 3. Add a follow-up guard that keeps text-like fallback grouping from masking
-   non-text organic fallback debt in future UI screenshots.
+   non-text organic fallback debt in future UI screenshots. Current guard:
+   `text_like_fragment_group` only marks small glyph-sized cubic paths as
+   structured; larger same-color organic fallback paths stay in
+   `unstructured_generic_path_count` and
+   `unstructured_fragmentation_penalty`.
 
 Reasoning:
 

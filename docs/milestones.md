@@ -395,6 +395,9 @@ Implemented so far:
 - curated promotion gates cap matching v10 components with `gate_blocked`,
   `failed_gates`, and `uncapped_score`, so red topology, shape-class, grouping,
   visual-fidelity, provenance, or fragmentation gates cannot be averaged away.
+- text-like fallback grouping only treats small glyph-sized cubic paths as
+  structured text evidence; larger same-color organic fallback paths remain in
+  unstructured fallback and fragmentation debt.
 - curated reports derive `editability_review`, so accepted-output status is
   tied to component thresholds instead of raster fidelity alone.
 - editability review can record `regression_deltas` and
