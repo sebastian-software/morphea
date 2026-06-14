@@ -373,7 +373,10 @@ checked-in replay remains conservative about model acceptance: the five
 accepted Terminaro region labels are consumed, then the gate rejects the update
 on `comparison_status_regressed` instead of writing a model. The current worst
 contributors are ranking-evaluation classifier accuracy and accuracy
-improvement on validation/test splits at -0.0666667.
+improvement on validation/test splits at -0.0666667. Decision-level comparison
+shows the concrete regression: in both validation and test ranking sets, item 2
+changes from a correct `stroke_circle` classifier decision to `circle` after
+adding the five circle pseudo-labels.
 
 `morphea self-learn` now separates retraining from model acceptance. A model can
 be written after the training comparison gate accepts, but the cycle's
@@ -388,7 +391,10 @@ gate summary, so a primitive-family regression can block model acceptance even
 when an aggregate split metric improves. Training gate JSON and Markdown now
 also surface the worst and best contributing metric deltas, making
 `comparison_status_regressed` rejects inspectable without opening the full
-comparison report.
+comparison report. Training comparison JSON and Markdown now include a Ranking
+Decision Delta table that lists per-split classifier decision changes with
+outcome, index, true label, heuristic label, baseline classifier, and augmented
+classifier.
 
 Self-learning cycle reports now expose `suite_family_validation`: primitive
 label-family deltas, curated real-image family summaries, and optional Lucide

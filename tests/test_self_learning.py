@@ -1728,6 +1728,28 @@ class SelfLearningTests(unittest.TestCase):
                             }
                         }
                     },
+                    "ranking_decisions": {
+                        "val": {
+                            "baseline_count": 1,
+                            "augmented_count": 1,
+                            "compared_count": 1,
+                            "changed_count": 1,
+                            "regression_count": 1,
+                            "improvement_count": 0,
+                            "items": [
+                                {
+                                    "index": 0,
+                                    "label": "stroke_circle",
+                                    "heuristic": "circle",
+                                    "baseline_classifier": "stroke_circle",
+                                    "augmented_classifier": "circle",
+                                    "baseline_correct": True,
+                                    "augmented_correct": False,
+                                    "outcome": "regression",
+                                }
+                            ],
+                        }
+                    },
                     "feature_importance": [
                         {
                             "feature": "group_count",
@@ -1745,6 +1767,12 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("| `val` | 0.5 | 0.6 | 0.1 |", markdown)
         self.assertIn("## Label Accuracy Delta", markdown)
         self.assertIn("| `val` | `circle` | 0.5 | 1 | 0.5 |", markdown)
+        self.assertIn("## Ranking Decision Delta", markdown)
+        self.assertIn(
+            "| `val` | `regression` | 0 | `stroke_circle` | `circle` | "
+            "`stroke_circle` | `circle` |",
+            markdown,
+        )
         self.assertIn("## Feature Importance Delta", markdown)
         self.assertIn("| `group_count` | 0 | 1 | 1 |", markdown)
 
@@ -1786,6 +1814,9 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(result["delta"]["train_examples"], 1)
             self.assertEqual(result["summary"]["train_examples_delta"], 1)
             self.assertIn("best_accuracy_delta", result["summary"])
+            self.assertIn("ranking_decisions", result["delta"])
+            self.assertIn("val", result["delta"]["ranking_decisions"])
+            self.assertIn("changed_count", result["delta"]["ranking_decisions"]["val"])
 
     def test_compare_training_cli_writes_markdown_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:

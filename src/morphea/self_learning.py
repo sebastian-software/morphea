@@ -2753,6 +2753,20 @@ def render_training_comparison_markdown(report: dict[str, object]) -> str:
                     f"{_fmt_metric(item.get('augmented_accuracy'))} | "
                     f"{_fmt_metric(item.get('accuracy_delta'))} |"
                 )
+    ranking_decisions = delta.get("ranking_decisions", {})
+    if isinstance(ranking_decisions, dict):
+        rows = _ranking_decision_markdown_rows(ranking_decisions)
+        if rows:
+            lines.extend(
+                [
+                    "",
+                    "## Ranking Decision Delta",
+                    "",
+                    "| Split | Outcome | Index | Label | Heuristic | Baseline | Augmented |",
+                    "| --- | --- | ---: | --- | --- | --- | --- |",
+                ]
+            )
+            lines.extend(rows)
     importance_delta = delta.get("feature_importance", {})
     if isinstance(importance_delta, list) and importance_delta:
         lines.extend(
@@ -2819,6 +2833,31 @@ def _fmt_metric(value: object) -> str:
     return str(value)
 
 
+def _ranking_decision_markdown_rows(value: dict[str, object]) -> list[str]:
+    rows = []
+    for split in ("val", "test"):
+        split_data = value.get(split, {})
+        if not isinstance(split_data, dict):
+            continue
+        items = split_data.get("items", [])
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            rows.append(
+                "| "
+                f"`{split}` | "
+                f"`{_metric_delta_cell(item.get('outcome'))}` | "
+                f"{_fmt_metric(item.get('index'))} | "
+                f"`{_metric_delta_cell(item.get('label'))}` | "
+                f"`{_metric_delta_cell(item.get('heuristic'))}` | "
+                f"`{_metric_delta_cell(item.get('baseline_classifier'))}` | "
+                f"`{_metric_delta_cell(item.get('augmented_classifier'))}` |"
+            )
+    return rows
+
+
 def _training_comparison_delta(
     baseline: dict[str, object],
     augmented: dict[str, object],
@@ -2875,6 +2914,7 @@ def _training_comparison_delta(
             )
             for split in ("val", "test")
         },
+        "ranking_decisions": _ranking_decision_delta(baseline, augmented),
         "feature_importance": _feature_importance_delta(baseline, augmented),
     }
 
@@ -2961,6 +3001,106 @@ def _comparison_metric_delta_rows(delta: dict[str, object]) -> list[dict[str, ob
                         }
                     )
     return rows
+
+
+def _ranking_decision_delta(
+    baseline: dict[str, object],
+    augmented: dict[str, object],
+) -> dict[str, object]:
+    return {
+        split: _ranking_decision_split_delta(
+            _ranking_decisions(
+                _split_object_metric(
+                    baseline,
+                    "ranking_evaluation",
+                    split,
+                    "decisions",
+                )
+            ),
+            _ranking_decisions(
+                _split_object_metric(
+                    augmented,
+                    "ranking_evaluation",
+                    split,
+                    "decisions",
+                )
+            ),
+        )
+        for split in ("val", "test")
+    }
+
+
+def _ranking_decision_split_delta(
+    baseline: list[dict[str, object]],
+    augmented: list[dict[str, object]],
+) -> dict[str, object]:
+    items = []
+    regression_count = 0
+    improvement_count = 0
+    changed_count = 0
+    compared_count = min(len(baseline), len(augmented))
+    for index, (base_item, augmented_item) in enumerate(
+        zip(baseline, augmented, strict=False)
+    ):
+        label = _decision_value(augmented_item, "label") or _decision_value(
+            base_item,
+            "label",
+        )
+        baseline_classifier = _decision_value(base_item, "classifier")
+        augmented_classifier = _decision_value(augmented_item, "classifier")
+        baseline_correct = bool(label and baseline_classifier == label)
+        augmented_correct = bool(label and augmented_classifier == label)
+        changed = baseline_classifier != augmented_classifier
+        if not changed and baseline_correct == augmented_correct:
+            continue
+        if baseline_correct and not augmented_correct:
+            outcome = "regression"
+            regression_count += 1
+        elif not baseline_correct and augmented_correct:
+            outcome = "improvement"
+            improvement_count += 1
+        else:
+            outcome = "changed"
+        if changed:
+            changed_count += 1
+        heuristic = _decision_value(augmented_item, "heuristic") or _decision_value(
+            base_item,
+            "heuristic",
+        )
+        items.append(
+            {
+                "index": index,
+                "label": label,
+                "heuristic": heuristic,
+                "baseline_classifier": baseline_classifier,
+                "augmented_classifier": augmented_classifier,
+                "baseline_correct": baseline_correct,
+                "augmented_correct": augmented_correct,
+                "outcome": outcome,
+            }
+        )
+    return {
+        "baseline_count": len(baseline),
+        "augmented_count": len(augmented),
+        "compared_count": compared_count,
+        "changed_count": changed_count,
+        "regression_count": regression_count,
+        "improvement_count": improvement_count,
+        "items": items,
+    }
+
+
+def _ranking_decisions(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _decision_value(item: dict[str, object], key: str) -> str | None:
+    value = item.get(key)
+    if isinstance(value, str) and value:
+        return value
+    return None
 
 
 def _feature_importance_delta(

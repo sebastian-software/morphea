@@ -484,7 +484,9 @@ Current implementation:
   into the cycle, but the training gate rejects the update when the comparison
   status regresses. Training gate artifacts now include worst/best metric
   contributors, so rejected self-learning cycles can identify the metric,
-  split, and label behind the gate decision.
+  split, and label behind the gate decision. Training comparison artifacts now
+  also include ranking-decision deltas, so a reviewer can inspect which
+  classifier choices changed between the baseline and augmented model.
 
 Exit criteria:
 
