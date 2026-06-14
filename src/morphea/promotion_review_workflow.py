@@ -52,6 +52,9 @@ def prepare_promotion_review_harvest(
         base_dir,
         override_map,
     )
+    template_readiness_summary = _decision_template_readiness_summary(
+        template_readiness,
+    )
     choice_command_map = _decision_choice_commands(review_config, template_map)
     choice_evidence_flags = _decision_choice_evidence_flags(
         choice_command_map,
@@ -150,6 +153,7 @@ def prepare_promotion_review_harvest(
         "decision_templates": template_map,
         "decision_overrides": override_map,
         "decision_template_readiness": template_readiness,
+        "decision_template_readiness_summary": template_readiness_summary,
         "decision_choice_commands": choice_command_map,
         "decision_choice_evidence_flags": choice_evidence_flags,
         "harvest_config": harvest_cfg,
@@ -179,6 +183,7 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         f"- Applied cases: {_fmt_value(result.get('applied_case_count'))}",
         f"- Harvestable cases: {_fmt_value(result.get('harvestable_case_count'))}",
         f"- Pending cases: {_fmt_value(result.get('pending_case_count'))}",
+        f"- Ready terminal templates: {_fmt_readiness_summary(result.get('decision_template_readiness_summary'))}",
         "",
         "## Newly Applied",
         "",
@@ -416,6 +421,41 @@ def _decision_template_readiness(
         if case_readiness:
             readiness[case_id] = case_readiness
     return readiness
+
+
+def _decision_template_readiness_summary(
+    readiness: dict[str, dict[str, dict[str, object]]],
+) -> dict[str, object]:
+    template_count = 0
+    ready_template_count = 0
+    missing_field_counts: dict[str, int] = {}
+    ready_case_ids = set()
+    cases_with_templates = set()
+    for case_id, decisions in readiness.items():
+        cases_with_templates.add(case_id)
+        for item in decisions.values():
+            if not isinstance(item, dict):
+                continue
+            template_count += 1
+            if item.get("ready") is True:
+                ready_template_count += 1
+                ready_case_ids.add(case_id)
+            missing = item.get("missing_fields")
+            if isinstance(missing, list):
+                for field in missing:
+                    if isinstance(field, str) and field:
+                        missing_field_counts[field] = (
+                            missing_field_counts.get(field, 0) + 1
+                        )
+    return {
+        "case_count": len(cases_with_templates),
+        "ready_case_count": len(ready_case_ids),
+        "needs_evidence_case_count": len(cases_with_templates - ready_case_ids),
+        "template_count": template_count,
+        "ready_template_count": ready_template_count,
+        "needs_evidence_template_count": template_count - ready_template_count,
+        "missing_field_counts": dict(sorted(missing_field_counts.items())),
+    }
 
 
 def _terminal_template_readiness(
@@ -730,6 +770,32 @@ def _fmt_review_overrides(value: object) -> str:
     if not isinstance(value, list):
         return "n/a"
     parts = [f"`{item}`" for item in value if isinstance(item, str) and item]
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_readiness_summary(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    ready = _fmt_value(value.get("ready_template_count"))
+    total = _fmt_value(value.get("template_count"))
+    ready_cases = _fmt_value(value.get("ready_case_count"))
+    cases = _fmt_value(value.get("case_count"))
+    missing = value.get("missing_field_counts")
+    missing_label = _fmt_field_counts(missing)
+    return (
+        f"`{ready}/{total}` templates, `{ready_cases}/{cases}` cases; "
+        f"missing={missing_label}"
+    )
+
+
+def _fmt_field_counts(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return "n/a"
+    parts = [
+        f"`{key}`={count}"
+        for key, count in sorted(value.items())
+        if isinstance(key, str) and isinstance(count, int)
+    ]
     return ", ".join(parts) if parts else "n/a"
 
 

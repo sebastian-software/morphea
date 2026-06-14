@@ -1238,10 +1238,10 @@ Implemented so far:
   with case-scoped CLI flags such as `--reviewer case=name`,
   `--reason case=reason`, `--correction-notes case=notes`, and
   `--corrected-artifact case=path`; harvest prep Markdown shows those
-  evidence-flag hints beside decision-choice commands when reviewer evidence is
-  missing, pending rows preserve review-artifact links from the packet, and
-  applied rows show reviewer, reason, source decision path, and applied
-  review-artifact links.
+  evidence-flag hints and aggregate readiness counts beside decision-choice
+  commands when reviewer evidence is missing, pending rows preserve
+  review-artifact links from the packet, and applied rows show reviewer,
+  reason, source decision path, and applied review-artifact links.
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

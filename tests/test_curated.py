@@ -2727,6 +2727,23 @@ class CuratedSuiteTests(unittest.TestCase):
                 review_harvest["decision_templates"],
                 harvest_config_data["decision_templates"],
             )
+            self.assertEqual(
+                review_harvest["decision_template_readiness_summary"],
+                {
+                    "case_count": 1,
+                    "missing_field_counts": {
+                        "corrected_artifacts": 1,
+                        "correction_notes": 1,
+                        "reason": 4,
+                        "reviewer": 4,
+                    },
+                    "needs_evidence_case_count": 1,
+                    "needs_evidence_template_count": 4,
+                    "ready_case_count": 0,
+                    "ready_template_count": 0,
+                    "template_count": 4,
+                },
+            )
             accepted_readiness = review_harvest["pending_cases"][0][
                 "decision_template_readiness"
             ]["accepted"]
@@ -2781,6 +2798,12 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn("Decision templates", review_harvest_markdown)
             self.assertIn("Review artifacts", review_harvest_markdown)
+            self.assertIn(
+                "Ready terminal templates: `0/4` templates",
+                review_harvest_markdown,
+            )
+            self.assertIn("`reviewer`=4", review_harvest_markdown)
+            self.assertIn("`reason`=4", review_harvest_markdown)
             self.assertIn("contact_sheet", review_harvest_markdown)
             self.assertIn("promotion_review", review_harvest_markdown)
             self.assertIn("editability_review", review_harvest_markdown)

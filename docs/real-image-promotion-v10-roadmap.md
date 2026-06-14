@@ -425,8 +425,8 @@ cases, and can emit a ready `harvest-curated --config` file with
 source decision path, and applied review-artifact links, keeping harvestable
 evidence auditable after a terminal decision has already been applied. Pending
 packet cases now include terminal decision-template paths in JSON and Markdown,
-keeping reviewer choice visible
-without turning templates into implicit decisions. `decision_choices` and
+keeping reviewer choice visible without turning templates into implicit
+decisions. `decision_choices` and
 `--decision-choice case=accepted` let a reviewer turn a visible terminal option
 into the underlying template path explicitly; direct `--decision case=path`
 remains the final override. Config-driven prep reports also emit
@@ -436,9 +436,11 @@ review-artifact links for contact sheets, promotion reviews, editability
 reviews, pending decision records, and promotion exports. The report marks
 template readiness next to those commands, so unedited generated templates
 clearly show which reviewer evidence is still missing before they can be
-applied. It also prints evidence-flag hints for missing reviewer fields,
-keeping the selected command executable while showing the exact case-scoped
-flags to add.
+applied. The same prep report now summarizes ready terminal-template counts,
+ready case counts, and missing evidence fields before listing the individual
+rows. It also prints evidence-flag hints for missing reviewer fields, keeping
+the selected command executable while showing the exact case-scoped flags to
+add.
 
 Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
 `correction_notes`, and `corrected_artifacts` to the selected terminal

@@ -316,10 +316,12 @@ prep reports now include `decision_choice_commands` for pending cases, so each
 visible terminal template has a copy/paste command that reruns the same config
 with the selected choice. Pending rows preserve review-artifact links for
 contact sheets, promotion reviews, editability reviews, pending decision
-records, and promotion exports. The same report marks template readiness;
-generated terminal templates remain `needs edit` until required `reviewer` and
-`reason` fields, plus corrected-evidence fields when relevant, are filled or
-supplied through config-level `decision_overrides`. The report now also prints
+records, and promotion exports. The same report marks template readiness and
+summarizes ready terminal-template counts, ready case counts, and missing
+evidence fields; generated terminal templates remain `needs edit` until
+required `reviewer` and `reason` fields, plus corrected-evidence fields when
+relevant, are filled or supplied through config-level `decision_overrides`.
+The report now also prints
 evidence-flag hints beside each decision-choice command, so reviewers can avoid
 editing the config by appending case-scoped `--reviewer`, `--reason`,
 `--correction-notes`, and `--corrected-artifact` flags to the selected

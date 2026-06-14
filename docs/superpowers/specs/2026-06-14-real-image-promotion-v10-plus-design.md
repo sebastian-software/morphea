@@ -535,6 +535,9 @@ Current implementation:
 - Harvest prep reports render evidence-flag hints beside decision-choice
   commands when templates are missing reviewer fields, making the no-JSON-edit
   path visible without turning placeholder values into executable defaults.
+- Harvest prep reports summarize terminal-template readiness as aggregate
+  ready-template, ready-case, and missing-field counts before the per-case
+  tables.
 - Harvest prep pending rows preserve review-artifact links from the packet, so
   reviewers can reach contact sheets, promotion reviews, editability reviews,
   pending decisions, and promotion exports from the same report that contains

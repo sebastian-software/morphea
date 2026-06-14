@@ -723,9 +723,9 @@ pending cases, and writes a `harvest-curated --config` file with
 `require_applied_review: true`. Applied case rows include reviewer, reason,
 source decision path, and applied review-artifact links, so harvestable cases
 remain auditable from the prep report. Cases without an applied review remain
-pending in the prep report rather than becoming implicit training candidates. Pending
-cases carry available terminal `decision_templates` in JSON and Markdown when
-the review packet or config exposes them, so reviewers can see the
+pending in the prep report rather than becoming implicit training candidates.
+Pending cases carry available terminal `decision_templates` in JSON and
+Markdown when the review packet or config exposes them, so reviewers can see the
 accepted/corrected/rejected/deferred choices without applying them
 automatically. Pending cases also preserve packet `review_artifacts` links for
 contact sheets, promotion reviews, editability reviews, pending decision
@@ -749,7 +749,10 @@ one copy/paste command per available terminal template, shaped like
 prep report also carries `decision_template_readiness`, marking whether each
 terminal template already has required reviewer evidence; generated templates
 normally report missing `reviewer` and `reason` until edited or until
-case-scoped `decision_overrides` supply the same evidence. It also carries
+case-scoped `decision_overrides` supply the same evidence. The
+`decision_template_readiness_summary` block aggregates ready templates, ready
+cases, and missing-field counts so reviewers can see remaining evidence debt
+without scanning every row. It also carries
 `decision_choice_evidence_flags`, a non-executing hint map of reviewer-evidence
 flags to add to a selected decision-choice command. Markdown renders those
 flags beside each command with a reminder to replace placeholders before
