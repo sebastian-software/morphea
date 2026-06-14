@@ -1023,12 +1023,15 @@ report is intentionally diagnostic: missing MLX/SAM/DiffVG integrations are
 reported explicitly instead of being treated as partial success.
 Markdown status reports include a Backend Diagnostics table when status entries
 carry runtime detail fields such as `adapter`, `model_path`, `model_exists`,
-`model_sidecar_path`, `model_sidecar_exists`, `package_available`, or
-`sam_package_available`, plus classifier-specific fields such as
-`training_implementation`. The MLX classifier status also exposes
-`core_available`, `backend_version`, `autograd_available`, and
-`missing_autograd_symbols`, so reports distinguish importable MLX packages from
-usable `mlx.core` training primitives.
+`model_configured`, `model_sidecar_path`, `model_sidecar_exists`,
+`package_available`, `sam_package_available`, MLX/SAM runtime knobs such as
+`score_threshold`, `max_masks`, `timeout_seconds`, `max_component_area`, and
+prompt fields such as `prompt_strategy`, `prompt_min_area`,
+`prompt_color_tolerance`, `prompt_max_size`, and `prompt_max_colors`.
+Classifier-specific diagnostics include `training_implementation`,
+`core_available`, `backend_version`, `autograd_available`, `autograd_reason`,
+and `missing_autograd_symbols`, so reports distinguish importable MLX packages
+from usable `mlx.core` training primitives.
 
 Optional status entries may expose a `capabilities` object. Each capability
 records `available`, `status`, optional `reason`, and optional `next_action`.

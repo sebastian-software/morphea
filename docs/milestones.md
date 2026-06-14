@@ -716,6 +716,9 @@ Implemented so far:
 - `morphea status` now carries `next_action` hints through backend and
   capability rows, including concrete `uv` setup commands for MLX/MLX-SAM,
   checkpoint configuration, missing model paths, and JSON proposal payloads.
+- runtime status Markdown now exposes MLX/SAM model configuration, thresholds,
+  prompt settings, and MLX classifier core/autograd diagnostics in the Backend
+  Diagnostics table so local runtime state can be audited from stdout.
 
 ## M7: Primitive Classifier Training
 

@@ -214,9 +214,18 @@ class RuntimeStatusTests(unittest.TestCase):
                         "adapter": "mlx_sam_grid_points",
                         "model_path": "checkpoints/sam.safetensors",
                         "model_exists": True,
+                        "model_configured": True,
                         "model_sidecar_path": "checkpoints/sam.safetensors.json",
                         "model_sidecar_exists": False,
+                        "score_threshold": 0.01,
+                        "max_masks": 4,
+                        "timeout_seconds": 45,
+                        "max_component_area": 12000,
                         "prompt_strategy": "grid_points",
+                        "prompt_min_area": 4,
+                        "prompt_color_tolerance": 18,
+                        "prompt_max_size": 256,
+                        "prompt_max_colors": 10,
                     },
                 },
                 "classifiers": {
@@ -224,6 +233,10 @@ class RuntimeStatusTests(unittest.TestCase):
                         "backend_available": True,
                         "status": "available",
                         "reason": None,
+                        "core_available": True,
+                        "backend_version": "test-mlx",
+                        "autograd_available": True,
+                        "missing_autograd_symbols": [],
                         "training_implementation": MLX_TRAINING_IMPLEMENTATION,
                     }
                 },
@@ -262,6 +275,42 @@ class RuntimeStatusTests(unittest.TestCase):
         )
         self.assertIn(
             "| segmenter | `mlx_sam` | `model_sidecar_exists` | `false` |",
+            markdown,
+        )
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `model_configured` | `true` |",
+            markdown,
+        )
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `score_threshold` | `0.01` |",
+            markdown,
+        )
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `max_masks` | `4` |",
+            markdown,
+        )
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `timeout_seconds` | `45` |",
+            markdown,
+        )
+        self.assertIn(
+            "| segmenter | `mlx_sam` | `prompt_max_colors` | `10` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `mlx` | `core_available` | `true` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `mlx` | `backend_version` | `test-mlx` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `mlx` | `autograd_available` | `true` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `mlx` | `missing_autograd_symbols` | `[]` |",
             markdown,
         )
         self.assertIn(
