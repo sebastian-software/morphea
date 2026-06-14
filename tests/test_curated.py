@@ -699,6 +699,11 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("review queue", review_gallery)
             self.assertIn("manual_review_pending", review_gallery)
             self.assertIn("current_quality_label", review_gallery)
+            self.assertIn("review_safety/yellow", review_gallery)
+            self.assertIn(
+                "current quality label is red; manual review pending",
+                review_gallery,
+            )
             self.assertIn("simple-circle/contact-sheet.png", review_gallery)
             self.assertIn(
                 "simple-circle/review-templates/deferred.json",

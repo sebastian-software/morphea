@@ -247,6 +247,16 @@ dd {
   color: var(--muted);
 }
 
+.gate-detail-list {
+  margin: 6px 0 10px;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.gate-detail-list li {
+  margin: 4px 0;
+}
+
 code {
   display: inline-block;
   margin: 2px 3px 2px 0;
@@ -415,6 +425,7 @@ def _render_review_gallery_case_card(
     quality = str(promotion.get("current_quality_label", "n/a"))
     quality_class = _review_gallery_quality_class(quality)
     failed_gates = _failed_gate_ids(case.get("promotion_gates"))
+    failed_gate_details = _review_gallery_failed_gate_details(case, packet_case)
     failed_components = _failed_component_ids(review.get("failed_components"))
     contact_sheet = _review_gallery_image(
         artifacts.get("contact_sheet"),
@@ -455,6 +466,7 @@ def _render_review_gallery_case_card(
           </dl>
           <p class="tag-line"><strong>Issues</strong> {_html_list(_promotion_issue_tags(promotion))}</p>
           <p class="tag-line"><strong>Failed gates</strong> {_html_list(failed_gates)}</p>
+          {failed_gate_details}
           <p class="tag-line"><strong>Failed components</strong> {_html_list(failed_components)}</p>
           <div class="link-row">{links}</div>
           <div class="template-row">{template_links}</div>
@@ -521,6 +533,52 @@ def _failed_gate_ids(value: object) -> list[str]:
         for gate in value
         if isinstance(gate, dict) and not gate.get("ok", False)
     ]
+
+
+def _review_gallery_failed_gate_details(
+    case: dict[str, Any],
+    packet_case: dict[str, object] | None,
+) -> str:
+    details: object = None
+    if isinstance(packet_case, dict):
+        details = packet_case.get("failed_gate_details")
+    if not isinstance(details, list):
+        details = _failed_gate_details(case.get("promotion_gates"))
+    items = [item for item in details if isinstance(item, dict)]
+    if not items:
+        return ""
+    rows = []
+    for item in items:
+        gate_id = _html(str(item.get("id", "n/a")))
+        gate_type = _html(str(item.get("gate_type", "n/a")))
+        severity = _html(str(item.get("severity", "n/a")))
+        reason = _html(str(item.get("reason", "n/a")))
+        rows.append(
+            "<li>"
+            f"<code>{gate_id}</code> "
+            f"<span class=\"muted\">{gate_type}/{severity}</span> "
+            f"{reason}"
+            "</li>"
+        )
+    return '<ul class="gate-detail-list">' + "".join(rows) + "</ul>"
+
+
+def _failed_gate_details(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    details = []
+    for gate in value:
+        if not isinstance(gate, dict) or gate.get("ok", False):
+            continue
+        details.append(
+            {
+                "id": gate.get("id", "n/a"),
+                "gate_type": gate.get("gate_type", "n/a"),
+                "severity": gate.get("severity", "red"),
+                "reason": gate.get("reason", "n/a"),
+            }
+        )
+    return details
 
 
 def _failed_component_ids(value: object) -> list[str]:

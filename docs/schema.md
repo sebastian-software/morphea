@@ -629,9 +629,10 @@ The curated output root also includes suite-level review packet artifacts:
   harvest-choice commands
 - `review-gallery.html`: local static gallery for promotion cases in the suite
   run. It shows quality label, promotion/editability decisions, issue tags,
-  failed gate/component ids, the contact sheet image, review artifact links,
-  terminal decision-template links, review-packet apply commands, and
-  harvest-choice commands without requiring raw JSON inspection.
+  failed gate/component ids, failed-gate reason summaries, the contact sheet
+  image, review artifact links, terminal decision-template links, review-packet
+  apply commands, and harvest-choice commands without requiring raw JSON
+  inspection.
 
 When `curated-check --markdown` is used, the suite Markdown report includes a
 Corpus Ledger table before the promotion-gate details. The ledger surfaces each
