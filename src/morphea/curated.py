@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+from math import ceil, floor
 from pathlib import Path
 import re
 from typing import Any
@@ -12,6 +13,7 @@ from PIL import Image, ImageDraw
 
 from morphea.curated_gallery import render_review_gallery_html
 from morphea.images import scene_from_flat_color_image
+from morphea.rendering import raster_fidelity_metrics
 from morphea.review_policy import promotion_quality_label_policy
 from morphea.runs import VectorizeRun, write_vectorize_run
 from morphea.scene import SvgStyle, anchors_to_svg
@@ -339,8 +341,8 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 "",
                 "## Region Truth",
                 "",
-                "| Case | Region | State | Gate | Bounds | Expected | Actual | Layers | Topology |",
-                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+                "| Case | Region | State | Gate | Bounds | Expected | Actual | Layers | Topology | Visual |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         lines.extend(region_rows)
@@ -644,6 +646,7 @@ def _check_curated_case(
     scene = scene_from_flat_color_image(source, **config)
     manifest = scene.to_manifest()
     expectation_results = _check_expectations(case.get("expectations", []), manifest)
+    region_visuals: dict[str, object] | None = None
     result.update(
         {
             "status": "checked",
@@ -692,8 +695,17 @@ def _check_curated_case(
             metrics = manifest.get("metrics", {})
             if isinstance(metrics, dict):
                 result["metrics"] = dict(sorted(metrics.items()))
+        if isinstance(result.get("promotion"), dict):
+            region_visuals = _region_visual_context_from_run(
+                vectorize_run,
+                background=str(config.get("background", "#ffffff")),
+            )
     if isinstance(result.get("promotion"), dict):
-        result["promotion_gates"] = _promotion_gate_results(result, manifest=manifest)
+        result["promotion_gates"] = _promotion_gate_results(
+            result,
+            manifest=manifest,
+            region_visuals=region_visuals,
+        )
         _apply_promotion_gate_editability_components(
             result.get("metrics"),
             result["promotion_gates"],
@@ -962,6 +974,7 @@ def _promotion_gate_results(
     case: dict[str, Any],
     *,
     manifest: dict[str, Any] | None = None,
+    region_visuals: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
     failed_expectations = [
         str(expectation.get("id", "n/a"))
@@ -1049,7 +1062,14 @@ def _promotion_gate_results(
     ]
     if isinstance(promotion, dict):
         gates.extend(_configured_promotion_gates(case, promotion))
-        gates.extend(_region_promotion_gates(case, promotion, manifest=manifest))
+        gates.extend(
+            _region_promotion_gates(
+                case,
+                promotion,
+                manifest=manifest,
+                region_visuals=region_visuals,
+            )
+        )
         gates.extend(_group_promotion_gates(case, promotion, manifest=manifest))
         structure_gate = _structure_threshold_promotion_gate(case, promotion)
         if structure_gate is not None:
@@ -1123,6 +1143,7 @@ def _region_promotion_gates(
     promotion: dict[str, Any],
     *,
     manifest: dict[str, Any] | None = None,
+    region_visuals: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
     configured = promotion.get("region_gates", [])
     if not isinstance(configured, list) or not configured:
@@ -1233,6 +1254,7 @@ def _region_promotion_gates(
                     "forbidden_count": len(forbidden),
                     "topology_summary": topology_summary,
                     "topology_failures": topology_failures,
+                    "visual_delta": _region_visual_delta(region_visuals, bounds),
                     "candidate_rejections": candidate_rejections,
                     "selected_anchors": _region_gate_anchor_evidence(
                         selected,
@@ -1243,6 +1265,68 @@ def _region_promotion_gates(
             )
         )
     return gates
+
+
+def _region_visual_context_from_run(
+    run: VectorizeRun,
+    *,
+    background: str,
+) -> dict[str, object]:
+    with Image.open(run.input_path) as source_image:
+        source = _flatten_visual_audit_source(
+            source_image.convert("RGBA"),
+            background,
+        )
+    svg_text = run.svg_path.read_text(encoding="utf-8")
+    rendered = rasterized_svg_image(svg_text, background=background).convert("RGBA")
+    return {
+        "source": source,
+        "rendered": rendered,
+        "background": background,
+    }
+
+
+def _region_visual_delta(
+    region_visuals: dict[str, object] | None,
+    bounds: tuple[float, float, float, float] | None,
+) -> dict[str, object] | None:
+    if bounds is None or not isinstance(region_visuals, dict):
+        return None
+    source = region_visuals.get("source")
+    rendered = region_visuals.get("rendered")
+    if not isinstance(source, Image.Image) or not isinstance(rendered, Image.Image):
+        return None
+    if rendered.size != source.size:
+        rendered = rendered.resize(source.size, Image.Resampling.NEAREST)
+    crop_box = _region_visual_crop_box(bounds, source.size)
+    if crop_box is None:
+        return None
+    source_crop = source.crop(crop_box)
+    rendered_crop = rendered.crop(crop_box)
+    metrics = raster_fidelity_metrics(source=source_crop, rendered=rendered_crop)
+    return {
+        "bounds": list(crop_box),
+        "width": crop_box[2] - crop_box[0],
+        "height": crop_box[3] - crop_box[1],
+        "raster_l1_error": metrics["raster_l1_error"],
+        "raster_edge_error": metrics["raster_edge_error"],
+        "raster_alpha_error": metrics["raster_alpha_error"],
+        "raster_size_match": metrics["raster_size_match"],
+    }
+
+
+def _region_visual_crop_box(
+    bounds: tuple[float, float, float, float],
+    size: tuple[int, int],
+) -> tuple[int, int, int, int] | None:
+    width, height = size
+    left = max(0, min(width, floor(bounds[0])))
+    top = max(0, min(height, floor(bounds[1])))
+    right = max(0, min(width, ceil(bounds[2])))
+    bottom = max(0, min(height, ceil(bounds[3])))
+    if right <= left or bottom <= top:
+        return None
+    return (left, top, right, bottom)
 
 
 def _visual_threshold_promotion_gate(
@@ -2196,6 +2280,13 @@ def _promotion_region_results(
                 else "missing gate result"
             ),
         }
+        if isinstance(gate, dict):
+            evidence = gate.get("evidence")
+            if isinstance(evidence, dict) and isinstance(
+                evidence.get("visual_delta"),
+                dict,
+            ):
+                region_result["visual_delta"] = evidence["visual_delta"]
         region_result.update(
             _promotion_region_layer_summary(
                 selected_indexes,
@@ -2831,11 +2922,11 @@ def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str
         f"- Anchor states: {_fmt_markdown_counts(export_manifest.get('anchor_state_counts'))}",
         f"- Region states: {_fmt_markdown_counts(export_manifest.get('region_state_counts'))}",
         "",
-        "| Region | State | Gate | Selected anchors | Reason |",
-        "| --- | --- | --- | ---: | --- |",
+        "| Region | State | Gate | Selected anchors | Visual delta | Reason |",
+        "| --- | --- | --- | ---: | --- | --- |",
     ]
     if not regions:
-        lines.append("| n/a | `deferred` | n/a | 0 | no promotion regions |")
+        lines.append("| n/a | `deferred` | n/a | 0 | n/a | no promotion regions |")
     for region in regions:
         if not isinstance(region, dict):
             continue
@@ -2845,6 +2936,7 @@ def _render_promotion_review_markdown(export_manifest: dict[str, object]) -> str
             f"`{region.get('state', 'n/a')}` | "
             f"`{region.get('gate_id', 'n/a')}` | "
             f"{_fmt_markdown_value(region.get('selected_anchor_count'))} | "
+            f"{_fmt_region_visual(region)} | "
             f"{region.get('reason', 'n/a')} |"
         )
     rejection_rows = _promotion_review_candidate_rejection_rows(
@@ -3826,7 +3918,8 @@ def _region_truth_rows(cases: object) -> list[str]:
                 f"{_fmt_region_expected(evidence)} | "
                 f"{_fmt_region_actual(evidence)} | "
                 f"{_fmt_region_layers(region)} | "
-                f"{_fmt_region_topology(evidence)} |"
+                f"{_fmt_region_topology(evidence)} | "
+                f"{_fmt_region_visual(evidence)} |"
             )
     return rows
 
@@ -3910,6 +4003,23 @@ def _fmt_region_topology(evidence: dict[str, object]) -> str:
         f"descriptors={_fmt_markdown_list(summary.get('topology_descriptors'))}, "
         f"failures={failure_text}"
     )
+
+
+def _fmt_region_visual(evidence: dict[str, object]) -> str:
+    visual = evidence.get("visual_delta")
+    if not isinstance(visual, dict):
+        return "n/a"
+    parts = []
+    if "raster_l1_error" in visual:
+        parts.append(f"l1={_fmt_markdown_value(visual.get('raster_l1_error'))}")
+    if "raster_edge_error" in visual:
+        parts.append(f"edge={_fmt_markdown_value(visual.get('raster_edge_error'))}")
+    if "raster_alpha_error" in visual:
+        parts.append(f"alpha={_fmt_markdown_value(visual.get('raster_alpha_error'))}")
+    bounds = _fmt_region_bounds(visual.get("bounds"))
+    if bounds != "n/a":
+        parts.append(f"crop={bounds}")
+    return ", ".join(parts) if parts else "n/a"
 
 
 def _fmt_editability_components(value: object) -> str:

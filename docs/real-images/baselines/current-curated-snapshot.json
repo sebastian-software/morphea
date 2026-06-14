@@ -1355,6 +1355,20 @@
                 "closed",
                 "multi_component"
               ]
+            },
+            "visual_delta": {
+              "bounds": [
+                220,
+                480,
+                1005,
+                700
+              ],
+              "height": 220,
+              "raster_alpha_error": 0.0,
+              "raster_edge_error": 0.020363,
+              "raster_l1_error": 0.063157,
+              "raster_size_match": true,
+              "width": 785
             }
           },
           "gate_type": "shape_class",
@@ -1496,7 +1510,21 @@
           "structural_layer_count": 1,
           "structural_layer_roles": [
             "filled_primitives"
-          ]
+          ],
+          "visual_delta": {
+            "bounds": [
+              220,
+              480,
+              1005,
+              700
+            ],
+            "height": 220,
+            "raster_alpha_error": 0.0,
+            "raster_edge_error": 0.020363,
+            "raster_l1_error": 0.063157,
+            "raster_size_match": true,
+            "width": 785
+          }
         }
       ],
       "promotion_summary": {
@@ -2108,6 +2136,20 @@
                 "closed",
                 "single_component"
               ]
+            },
+            "visual_delta": {
+              "bounds": [
+                176,
+                150,
+                200,
+                174
+              ],
+              "height": 24,
+              "raster_alpha_error": 0.0,
+              "raster_edge_error": 0.164361,
+              "raster_l1_error": 0.21523,
+              "raster_size_match": true,
+              "width": 24
             }
           },
           "gate_type": "topology",
@@ -2233,7 +2275,21 @@
           "structural_layer_count": 1,
           "structural_layer_roles": [
             "strokes"
-          ]
+          ],
+          "visual_delta": {
+            "bounds": [
+              176,
+              150,
+              200,
+              174
+            ],
+            "height": 24,
+            "raster_alpha_error": 0.0,
+            "raster_edge_error": 0.164361,
+            "raster_l1_error": 0.21523,
+            "raster_size_match": true,
+            "width": 24
+          }
         }
       ],
       "promotion_summary": {

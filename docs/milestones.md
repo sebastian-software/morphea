@@ -1018,7 +1018,8 @@ Implemented so far:
   source-region gates, with stable region ids, state, bounds, expected kinds,
   actual matching counts, topology evidence including descriptor labels and
   nested-contour counts, per-region layer-depth evidence, selected-anchor kind
-  profiles, and candidate rejection counts.
+  profiles, candidate rejection counts, and source-vs-exported-SVG
+  `visual_delta` metrics when the case was checked with run artifacts.
 - source-region topology gates can require or forbid descriptor labels such as
   `single_component`, `multi_component`, or `nested_contours`.
 - the UI radio-control source region uses descriptor gates to require one
@@ -1033,6 +1034,10 @@ Implemented so far:
   `= 0`, with regressions labeled `forbidden_matches`.
 - checked promotion runs include Candidate Rejections in `promotion-review.md`,
   so shape/topology reject reasons are reviewable without opening raw JSON.
+- checked promotion runs include region-level visual deltas in
+  `promotion_regions`, manifests, exports, Region Truth, and
+  `promotion-review.md`, so visual drift can be inspected at the same source
+  region as the semantic gate.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

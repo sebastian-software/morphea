@@ -249,6 +249,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 output_dir / "simple-circle" / "promotion-review.md"
             ).read_text(encoding="utf-8")
             self.assertIn("| `circle-region` | `promoted` |", promotion_review)
+            self.assertIn("Visual delta", promotion_review)
             self.assertIn("## Candidate Rejections", promotion_review)
             self.assertIn("| n/a | n/a | n/a | n/a | n/a |", promotion_review)
             editability_review = (
@@ -288,6 +289,10 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 manifest["promotion"]["regions"][0]["state"],
                 "promoted",
+            )
+            self.assertIn(
+                "visual_delta",
+                manifest["promotion"]["regions"][0],
             )
             self.assertEqual(
                 manifest["anchors"][0]["promotion_state"],
@@ -370,6 +375,14 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 gate_by_id["visual_fidelity_thresholds"]["evidence"]["family"],
                 "test_fixture",
+            )
+            region_visual = gate_by_id["circle-region"]["evidence"]["visual_delta"]
+            self.assertEqual(region_visual["bounds"], [4, 4, 18, 18])
+            self.assertIn("raster_l1_error", region_visual)
+            self.assertIn("raster_edge_error", region_visual)
+            self.assertEqual(
+                report["cases"][0]["promotion_regions"][0]["visual_delta"],
+                region_visual,
             )
             self.assertEqual(
                 report["cases"][0]["promotion"]["current_quality_label"],
@@ -1496,14 +1509,18 @@ class CuratedSuiteTests(unittest.TestCase):
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, nested=0, "
-                "descriptors=`closed`, `single_component`, failures=n/a |",
+                "descriptors=`closed`, `single_component`, failures=n/a | "
+                "n/a |",
                 markdown,
             )
             self.assertIn(
                 "| `single-circle` | `empty-region` | `rejected` | "
                 "`shape_class` | `0,0,4,4` | kinds=`circle`, "
                 "min_iou=0.1 | matching=0, selected=0, forbidden=0, rejected=0 | "
-                "layers=0, structural=0, roles=`none`, kinds=`none` |",
+                "layers=0, structural=0, roles=`none`, kinds=`none` | "
+                "closed=0, open=0, holes=0, cutouts=0, nested=0, "
+                "descriptors=`empty`, failures=n/a | "
+                "n/a |",
                 markdown,
             )
             self.assertIn(
@@ -1514,7 +1531,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, nested=0, "
                 "descriptors=`closed`, `single_component`, "
-                "failures=`closed_anchor_count 1 > 0` |",
+                "failures=`closed_anchor_count 1 > 0` | n/a |",
                 markdown,
             )
 

@@ -496,10 +496,14 @@ also includes
 with anchor id, kind, bounds, overlap metrics, reject reasons such as
 `kind_mismatch`, `forbidden_kind`, or `topology_failure`, and topology failures
 when applicable.
+When a checked case is run with `--output-dir`, region-gate evidence also
+includes `visual_delta`: a source-vs-exported-SVG crop comparison for the
+region bounds, with crop `bounds`, `width`, `height`, `raster_l1_error`,
+`raster_edge_error`, `raster_alpha_error`, and `raster_size_match`.
 `curated-check --markdown` includes a Region Truth table for these gates,
 showing the stable region/gate id, promotion state, bounds, expected and
 forbidden kinds, matching/selected/forbidden/rejected counts, and topology
-summary.
+summary plus the compact region visual delta when available.
 - `group_gates`: optional array of manifest-group promotion gates. Each gate
   includes `id`, `gate_type` (`grouping` or `fragmentation`),
   `expected_group_kinds`, optional `min_count`, optional `max_count`, optional
@@ -620,7 +624,9 @@ case reports also include:
   `selected_anchor_kind_counts`, `selected_simple_anchor_count`,
   `selected_stroke_anchor_count`, and `selected_generic_path_anchor_count` so
   region-level fragmentation and fallback shape mix can be reviewed without
-  scanning every anchor.
+  scanning every anchor. When available, `visual_delta` is copied from the
+  corresponding region-gate evidence so promotion exports and review Markdown
+  can show the same region-level raster delta.
 - `editability_review`: accepted-output review decision with `decision`
   (`accepted`, `manual_review`, or `rejected`), `accepted`, component
   `thresholds`, `component_scores`, `failed_components`,

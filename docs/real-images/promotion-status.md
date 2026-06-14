@@ -89,6 +89,10 @@ disconnected component counts.
 Cases may define per-family `visual_thresholds`, which produce a
 `visual_fidelity_thresholds` gate from run raster metrics after structural hard
 gates are available.
+Checked runs with output artifacts also attach per-region `visual_delta`
+evidence to source-region gates and `promotion_regions`. These source-vs-SVG
+crop metrics are shown in Region Truth and `promotion-review.md`, tying visual
+drift back to the same region that owns the semantic contract.
 
 Cases may define `group_gates`, such as `table-grid-group-consistency` and
 `text-parallel-stroke-grouping`, to require group kind and member-count evidence
