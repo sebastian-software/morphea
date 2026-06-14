@@ -727,7 +727,10 @@ arguments override same-case entries in the config `decisions` object. The
 shortcut `--decision-choice case=accepted` resolves an explicit terminal choice
 through the available `decision_templates`; config `decision_choices` use the
 same mechanism and remain overrideable by CLI choices or direct `--decision`
-paths.
+paths. When the prep run itself is driven by `--config`, pending cases also
+carry `decision_choice_commands` in JSON and Markdown, one copy/paste
+`promotion-review-harvest --config ... --decision-choice case=decision` command
+per available terminal template.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

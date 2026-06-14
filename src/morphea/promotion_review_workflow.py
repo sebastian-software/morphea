@@ -26,6 +26,7 @@ def prepare_promotion_review_harvest(
     output: str | Path,
     markdown: str | Path | None = None,
     harvest_config: str | Path | None = None,
+    review_config: str | Path | None = None,
     decisions: dict[str, str | Path] | None = None,
     decision_templates: dict[str, dict[str, str | Path]] | None = None,
     suite: str | Path | None = None,
@@ -44,6 +45,7 @@ def prepare_promotion_review_harvest(
     cases_by_id = _cases_by_id(cases)
     decision_map = decisions or {}
     template_map = _decision_template_map(cases, decision_templates)
+    choice_command_map = _decision_choice_commands(review_config, template_map)
     unknown_cases = sorted(set(decision_map) - set(cases_by_id))
     if unknown_cases:
         raise ValueError(
@@ -85,6 +87,7 @@ def prepare_promotion_review_harvest(
         base_dir=base_dir,
         run_root=run_root_path,
         decision_templates=template_map,
+        decision_choice_commands=choice_command_map,
     )
     harvest_cfg = _harvest_curated_config(
         packet=packet,
@@ -102,6 +105,7 @@ def prepare_promotion_review_harvest(
     result = {
         "schema_version": 1,
         "review_packet": str(packet_path),
+        "review_config": str(review_config) if review_config else None,
         "suite": harvest_cfg.get("suite"),
         "run_root": harvest_cfg.get("run_root"),
         "case_count": len(cases),
@@ -117,6 +121,7 @@ def prepare_promotion_review_harvest(
         "pending_case_count": len(pending_cases),
         "pending_cases": pending_cases,
         "decision_templates": template_map,
+        "decision_choice_commands": choice_command_map,
         "harvest_config": harvest_cfg,
         "harvest_config_path": str(harvest_config) if harvest_config else None,
         "next_commands": _next_commands(harvest_config),
@@ -215,6 +220,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
     else:
         lines.append("| n/a | n/a | n/a | n/a | n/a |")
 
+    _append_decision_choice_commands(lines, result.get("decision_choice_commands"))
+
     config_path = result.get("harvest_config_path")
     commands = result.get("next_commands", [])
     if isinstance(config_path, str) and config_path:
@@ -263,6 +270,7 @@ def _packet_review_status(
     base_dir: Path,
     run_root: Path,
     decision_templates: dict[str, dict[str, str]],
+    decision_choice_commands: dict[str, dict[str, str]],
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     applied_cases: list[dict[str, object]] = []
     pending_cases: list[dict[str, object]] = []
@@ -296,10 +304,37 @@ def _packet_review_status(
                     ),
                     "review_decision": case.get("review_decision_state", "n/a"),
                     "decision_templates": decision_templates.get(case_id, {}),
+                    "decision_choice_commands": decision_choice_commands.get(
+                        case_id,
+                        {},
+                    ),
                     "manifest": str(manifest_path) if manifest_path else None,
                 }
             )
     return applied_cases, pending_cases
+
+
+def _decision_choice_commands(
+    review_config: str | Path | None,
+    decision_templates: dict[str, dict[str, str]],
+) -> dict[str, dict[str, str]]:
+    if review_config is None:
+        return {}
+    config_arg = shlex.quote(str(review_config))
+    commands: dict[str, dict[str, str]] = {}
+    for case_id, templates in sorted(decision_templates.items()):
+        case_commands = {
+            decision: (
+                "PYTHONPATH=src python3 -m morphea.cli "
+                f"promotion-review-harvest --config {config_arg} "
+                f"--decision-choice {shlex.quote(f'{case_id}={decision}')}"
+            )
+            for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS
+            if isinstance(templates.get(decision), str) and templates[decision]
+        }
+        if case_commands:
+            commands[case_id] = case_commands
+    return commands
 
 
 def _decision_template_map(
@@ -455,6 +490,31 @@ def _fmt_decision_templates(value: object) -> str:
         if isinstance(value.get(decision), str) and value[decision]
     ]
     return ", ".join(parts) if parts else "n/a"
+
+
+def _append_decision_choice_commands(
+    lines: list[str],
+    value: object,
+) -> None:
+    if not isinstance(value, dict) or not value:
+        return
+    block = ["", "## Decision Choice Commands", ""]
+    for case_id in sorted(value):
+        commands = value.get(case_id)
+        if not isinstance(case_id, str) or not isinstance(commands, dict):
+            continue
+        command_items = [
+            (decision, commands.get(decision))
+            for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS
+            if isinstance(commands.get(decision), str) and commands.get(decision)
+        ]
+        if not command_items:
+            continue
+        block.extend([f"### {case_id}", ""])
+        for decision, command in command_items:
+            block.extend([f"- `{decision}`", "```sh", str(command), "```", ""])
+    if len(block) > 3:
+        lines.extend(block)
 
 
 def _write_json(path: Path, data: Any) -> None:

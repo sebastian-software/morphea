@@ -305,7 +305,10 @@ bridge repeatable; config decisions can be overridden case-by-case with
 explicit `--decision case-id=path` arguments. Reviewers can also use
 `decision_choices` in config or `--decision-choice case-id=accepted` on the CLI
 to resolve a named terminal choice through the visible template paths, while
-direct `--decision` paths remain the most explicit override.
+direct `--decision` paths remain the most explicit override. Config-driven
+prep reports now include `decision_choice_commands` for pending cases, so each
+visible terminal template has a copy/paste command that reruns the same config
+with the selected choice.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

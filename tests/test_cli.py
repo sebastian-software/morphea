@@ -773,9 +773,11 @@ class CliTests(unittest.TestCase):
                 templates,
             )
             self.assertEqual(result["decision_templates"]["real-case"], templates)
+            self.assertEqual(result["decision_choice_commands"], {})
             rendered = markdown.read_text(encoding="utf-8")
             self.assertIn("Decision templates", rendered)
             self.assertIn(templates["accepted"], rendered)
+            self.assertNotIn("Decision Choice Commands", rendered)
 
     def test_status_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:

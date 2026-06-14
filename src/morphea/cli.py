@@ -1340,6 +1340,7 @@ def main(argv: list[str] | None = None) -> None:
             output=review_harvest_config["output"],
             markdown=review_harvest_config.get("markdown"),
             harvest_config=review_harvest_config.get("harvest_config"),
+            review_config=review_harvest_config.get("review_config"),
             decisions=review_harvest_config.get("decisions"),
             decision_templates=review_harvest_config.get("decision_templates"),
             suite=review_harvest_config.get("suite"),
@@ -1859,6 +1860,8 @@ def _resolved_promotion_review_harvest_config(
     args: argparse.Namespace,
 ) -> dict[str, object]:
     config = _load_promotion_review_harvest_config(args.config)
+    if args.config is not None:
+        config["review_config"] = args.config
     for key in (
         "review_packet",
         "output",

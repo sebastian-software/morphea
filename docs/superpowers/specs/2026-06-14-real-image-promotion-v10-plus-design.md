@@ -518,7 +518,9 @@ Current implementation:
   its JSON/Markdown report now include terminal decision-template paths when
   available, but those templates remain guidance until a reviewer adds a
   `decisions` entry, passes `--decision`, or uses an explicit template-backed
-  `decision_choices` / `--decision-choice` selection.
+  `decision_choices` / `--decision-choice` selection. When run from config, the
+  prep report also renders copy/paste `decision_choice_commands` for pending
+  cases.
 
 Exit criteria:
 

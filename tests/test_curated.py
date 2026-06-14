@@ -2716,11 +2716,31 @@ class CuratedSuiteTests(unittest.TestCase):
                 review_harvest["decision_templates"],
                 harvest_config_data["decision_templates"],
             )
+            expected_choice_command = (
+                "PYTHONPATH=src python3 -m morphea.cli "
+                "promotion-review-harvest --config "
+                f"{review_harvest_config} "
+                "--decision-choice simple-circle=accepted"
+            )
+            self.assertEqual(
+                review_harvest["pending_cases"][0]["decision_choice_commands"][
+                    "accepted"
+                ],
+                expected_choice_command,
+            )
+            self.assertEqual(
+                review_harvest["decision_choice_commands"]["simple-circle"][
+                    "accepted"
+                ],
+                expected_choice_command,
+            )
             self.assertTrue((output_dir / "review-harvest.md").exists())
             review_harvest_markdown = (output_dir / "review-harvest.md").read_text(
                 encoding="utf-8"
             )
             self.assertIn("Decision templates", review_harvest_markdown)
+            self.assertIn("## Decision Choice Commands", review_harvest_markdown)
+            self.assertIn(expected_choice_command, review_harvest_markdown)
             self.assertIn("accepted", review_harvest_markdown)
             self.assertTrue((output_dir / "harvest-curated.json").exists())
 

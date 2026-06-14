@@ -1229,7 +1229,8 @@ Implemented so far:
   decisions have been selected
 - `morphea promotion-review-harvest --config promotion-review-harvest.json` for
   repeatable review-to-harvest preparation with case-id decision maps,
-  template-backed `decision_choices`, and per-case CLI overrides
+  template-backed `decision_choices`, copy/paste decision-choice commands for
+  pending cases, and per-case CLI overrides
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs

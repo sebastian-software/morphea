@@ -423,7 +423,9 @@ decision-template paths in JSON and Markdown, keeping reviewer choice visible
 without turning templates into implicit decisions. `decision_choices` and
 `--decision-choice case=accepted` let a reviewer turn a visible terminal option
 into the underlying template path explicitly; direct `--decision case=path`
-remains the final override.
+remains the final override. Config-driven prep reports also emit
+`decision_choice_commands` for pending cases, making those explicit selections
+copy/pasteable from the same Markdown report.
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied
