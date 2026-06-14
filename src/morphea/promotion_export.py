@@ -9,6 +9,8 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
+from morphea.review_policy import promotion_quality_label_policy
+
 
 PROMOTION_REVIEW_DECISIONS = {"accepted", "corrected", "rejected", "deferred"}
 
@@ -113,6 +115,7 @@ def apply_promotion_review_decision(
             data.get("gate_blocked_components"),
         ),
         "regressed_components": _object_list(data.get("regressed_components")),
+        "quality_label_policy": promotion_quality_label_policy(),
     }
     if manifest is not None:
         manifest_path = Path(manifest)
@@ -156,6 +159,9 @@ def render_promotion_review_decision_markdown(result: dict[str, object]) -> str:
         f"- Matches suggestion: `{str(result.get('matches_suggestion', False)).lower()}`",
         f"- Accepted for promotion: `{str(result.get('accepted_for_promotion', False)).lower()}`",
         f"- Issue tags: {_format_review_values(result.get('issue_tags'))}",
+        f"- Quality label policy: `{_review_policy_mode(result.get('quality_label_policy'))}`",
+        "- Updates `current_quality_label`: "
+        f"`{str(_review_policy_updates_label(result.get('quality_label_policy'))).lower()}`",
         "",
         "## Evidence",
         "",
@@ -165,6 +171,20 @@ def render_promotion_review_decision_markdown(result: dict[str, object]) -> str:
         f"- Regressed components: {_format_review_records(result.get('regressed_components'))}",
     ]
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _review_policy_mode(value: object) -> str:
+    if isinstance(value, dict):
+        mode = value.get("mode")
+        if isinstance(mode, str) and mode:
+            return mode
+    return "n/a"
+
+
+def _review_policy_updates_label(value: object) -> bool:
+    if isinstance(value, dict):
+        return bool(value.get("updates_current_quality_label", False))
+    return False
 
 
 def manifest_to_svg(

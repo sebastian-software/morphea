@@ -187,6 +187,10 @@ class CliTests(unittest.TestCase):
                 result["failed_gates"][0]["id"],
                 "radio-control-region-topology",
             )
+            self.assertEqual(result["quality_label_policy"]["mode"], "sidecar_only")
+            self.assertFalse(
+                result["quality_label_policy"]["updates_current_quality_label"]
+            )
             manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
             self.assertEqual(
                 manifest_data["review_decision_applied"]["decision"],
@@ -200,8 +204,21 @@ class CliTests(unittest.TestCase):
                 manifest_data["promotion"]["review_decision_applied"]["decision"],
                 "corrected",
             )
+            self.assertFalse(
+                manifest_data["promotion"]["review_decision_applied"][
+                    "quality_label_policy"
+                ]["updates_current_quality_label"]
+            )
             self.assertIn(
                 "- Accepted for promotion: `true`",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "- Quality label policy: `sidecar_only`",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "- Updates `current_quality_label`: `false`",
                 markdown.read_text(encoding="utf-8"),
             )
 

@@ -531,12 +531,14 @@ directory includes the standard vectorize artifacts plus:
 - `review-decision.json`: machine-editable review decision record with
   `decision: pending`, allowed terminal decisions (`accepted`, `corrected`,
   `rejected`, `deferred`), suggested decision, issue tags, failed gates,
-  failed/gate-blocked components, and regression evidence
+  failed/gate-blocked components, regression evidence, and
+  `quality_label_policy`
 - `review-templates/{accepted,corrected,rejected,deferred}.json`: terminal
   reviewer decision templates derived from the pending decision record. Each
   template preserves the same gate/component evidence, sets one terminal
   decision, and marks whether the template accepts promotion, matches the
-  suggested decision, or requires correction notes/artifacts.
+  suggested decision, or requires correction notes/artifacts. Templates also
+  preserve `quality_label_policy`.
 - `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
@@ -546,7 +548,8 @@ The curated output root also includes suite-level review packet artifacts:
 - `review-packet.json`: machine-readable queue of deferred/rejected cases that
   need a reviewer decision, with issue tags, failed gate/component ids,
   suggested decision, paths to per-case review artifacts, and paths to terminal
-  reviewer decision templates
+  reviewer decision templates. Each queued case also carries
+  `quality_label_policy`.
 - `review-packet.md`: scan-friendly Markdown summary of the same queue, with
   links/paths to contact sheets, promotion reviews, editability reviews, and
   `review-decision.json` files plus accepted/corrected/rejected/deferred
@@ -578,7 +581,8 @@ case reports also include:
 - `review_decision`: machine-editable reviewer decision record with a pending
   `decision`, suggested accepted/corrected/rejected/deferred outcome, issue
   tags, failed gates, component failures, gate-blocked components, and
-  regression evidence
+  regression evidence. Its `quality_label_policy.mode` is `sidecar_only`:
+  applied reviews do not update `current_quality_label` automatically.
 
 For checked cases with `--output-dir`, the run `manifest.json` also includes a
 top-level `promotion` object with summary, gates, regions, and promotion export
@@ -599,7 +603,10 @@ state partition as curated run sidecars.
 --markdown applied-review.md --manifest manifest.json` consumes an edited
 terminal review decision, rejects still-pending decisions, writes an applied
 review summary, and can persist `review_decision_applied` back into the run
-manifest and its top-level `promotion` object.
+manifest and its top-level `promotion` object. The applied summary includes
+`quality_label_policy` with `mode: sidecar_only` and
+`updates_current_quality_label: false`, so accepted/corrected reviews remain
+promotion evidence until suite metadata is deliberately edited.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

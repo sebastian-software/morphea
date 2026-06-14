@@ -368,7 +368,10 @@ Curated output roots also write `review-gallery.html`, so those artifacts can
 be scanned visually from one local page before a terminal decision is applied.
 `morphea promotion-apply-review` consumes edited terminal decision records,
 rejects pending records, writes applied JSON/Markdown summaries, and can
-persist `review_decision_applied` into run manifests.
+persist `review_decision_applied` into run manifests. Pending, terminal, and
+applied review records carry `quality_label_policy.mode: sidecar_only`, so
+accepted/corrected reviews become auditable evidence without implicitly
+rewriting suite `current_quality_label`.
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied

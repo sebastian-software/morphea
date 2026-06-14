@@ -411,6 +411,10 @@ Implemented so far:
   `review-templates/{accepted,corrected,rejected,deferred}.json`, so reviewers
   can start from terminal decision templates that preserve the same evidence
   and indicate whether correction artifacts are required.
+- pending, terminal, and applied promotion review records carry a
+  `quality_label_policy` block with `mode: sidecar_only`, making
+  `current_quality_label` a manual suite-metadata field rather than something
+  accepted/corrected applied reviews update implicitly.
 - curated output roots write `review-gallery.html`, a local static review
   gallery with contact sheets, quality labels, promotion/editability decisions,
   failed gates/components, artifact links, and terminal decision-template

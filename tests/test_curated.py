@@ -251,6 +251,15 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(review_decision["decision"], "pending")
             self.assertEqual(review_decision["suggested_decision"], "accepted")
             self.assertEqual(
+                review_decision["quality_label_policy"]["mode"],
+                "sidecar_only",
+            )
+            self.assertFalse(
+                review_decision["quality_label_policy"][
+                    "updates_current_quality_label"
+                ]
+            )
+            self.assertEqual(
                 review_decision["allowed_decisions"],
                 ["accepted", "corrected", "rejected", "deferred"],
             )
@@ -480,6 +489,15 @@ class CuratedSuiteTests(unittest.TestCase):
                 accepted_template["allowed_decisions"],
                 ["accepted", "corrected", "rejected", "deferred"],
             )
+            self.assertEqual(
+                accepted_template["quality_label_policy"]["mode"],
+                "sidecar_only",
+            )
+            self.assertFalse(
+                accepted_template["quality_label_policy"][
+                    "updates_current_quality_label"
+                ]
+            )
             self.assertTrue(
                 accepted_template["template_guidance"]["accepted_for_promotion"]
             )
@@ -530,6 +548,15 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 review_packet["cases"][0]["suggested_review_decision"],
                 "deferred",
+            )
+            self.assertEqual(
+                review_packet["cases"][0]["quality_label_policy"]["mode"],
+                "sidecar_only",
+            )
+            self.assertFalse(
+                review_packet["cases"][0]["quality_label_policy"][
+                    "updates_current_quality_label"
+                ]
             )
             self.assertIn(
                 "review_decision",

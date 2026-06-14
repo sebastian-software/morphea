@@ -412,7 +412,10 @@ and quality-label review-policy refinements:
    applying a decision.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
-   review evidence.
+   review evidence. Current policy is sidecar-only: pending decisions,
+   terminal templates, and applied summaries carry `quality_label_policy` with
+   `updates_current_quality_label: false`; suite labels remain manual metadata
+   until the suite file is explicitly edited.
 3. Add a follow-up guard that keeps text-like fallback grouping from masking
    non-text organic fallback debt in future UI screenshots.
 
@@ -457,7 +460,8 @@ These are the planning questions to answer before starting RP10.1:
 
 - Should `current_quality_label` remain manually red until explicit applied
   review, or should applied `accepted`/`corrected` reviews update the suite
-  label in a follow-up commit?
+  label in a follow-up commit? Answer: applied reviews remain sidecar-only
+  evidence and do not update suite metadata automatically.
 - What minimum reviewer packet is enough for the three deferred cases: current
   contact sheets plus `review-decision.json`, or a curated gallery that puts all
   deferred cases in one scan?

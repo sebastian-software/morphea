@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 
 from morphea.curated_gallery import render_review_gallery_html
 from morphea.images import scene_from_flat_color_image
+from morphea.review_policy import promotion_quality_label_policy
 from morphea.runs import VectorizeRun, write_vectorize_run
 from morphea.scene import SvgStyle, anchors_to_svg
 from morphea.svg_raster import rasterized_svg_image
@@ -2269,6 +2270,7 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         ),
         "suggested_review_decision": decision.get("suggested_decision", "n/a"),
         "review_decision_state": decision.get("decision", "n/a"),
+        "quality_label_policy": decision.get("quality_label_policy", {}),
         "artifacts": artifact_paths,
     }
 
@@ -2742,6 +2744,7 @@ def _promotion_review_decision_record(case_result: dict[str, Any]) -> dict[str, 
         "regressed_components": _review_decision_list(
             review.get("regressed_components"),
         ),
+        "quality_label_policy": promotion_quality_label_policy(),
     }
 
 

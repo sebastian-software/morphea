@@ -644,6 +644,13 @@
         "issue_tags": [
           "manual_review_pending"
         ],
+        "quality_label_policy": {
+          "mode": "sidecar_only",
+          "reason": "Applied promotion reviews are persisted as sidecar/run evidence; suite current_quality_label remains manual metadata until the suite file is explicitly edited.",
+          "review_evidence_field": "review_decision_applied",
+          "suite_label_update": "manual",
+          "updates_current_quality_label": false
+        },
         "reason": "",
         "regressed_components": [],
         "reviewer": "",
@@ -1471,6 +1478,13 @@
         "issue_tags": [
           "manual_review_pending"
         ],
+        "quality_label_policy": {
+          "mode": "sidecar_only",
+          "reason": "Applied promotion reviews are persisted as sidecar/run evidence; suite current_quality_label remains manual metadata until the suite file is explicitly edited.",
+          "review_evidence_field": "review_decision_applied",
+          "suite_label_update": "manual",
+          "updates_current_quality_label": false
+        },
         "reason": "",
         "regressed_components": [],
         "reviewer": "",
@@ -2156,6 +2170,13 @@
         "issue_tags": [
           "manual_review_pending"
         ],
+        "quality_label_policy": {
+          "mode": "sidecar_only",
+          "reason": "Applied promotion reviews are persisted as sidecar/run evidence; suite current_quality_label remains manual metadata until the suite file is explicitly edited.",
+          "review_evidence_field": "review_decision_applied",
+          "suite_label_update": "manual",
+          "updates_current_quality_label": false
+        },
         "reason": "",
         "regressed_components": [],
         "reviewer": "",

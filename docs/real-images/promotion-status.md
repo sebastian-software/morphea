@@ -156,6 +156,9 @@ decision and the gate/component evidence a reviewer needs to edit it.
 The companion terminal templates set each allowed outcome explicitly and mark
 whether that template accepts promotion, matches the suggestion, or requires
 corrected artifacts.
+Pending decisions and templates also carry `quality_label_policy:
+sidecar_only`; applied reviews do not mutate `current_quality_label`, which
+remains deliberate suite metadata.
 
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
@@ -244,7 +247,9 @@ rejected, or deferred outcome without stripping pending state manually.
 `morphea promotion-apply-review` consumes an edited terminal
 `review-decision.json`, rejects still-pending decisions, writes an applied
 review summary JSON/Markdown, and can persist `review_decision_applied` back
-into the run manifest and its `promotion` object.
+into the run manifest and its `promotion` object. Applied summaries include
+the same sidecar-only quality-label policy, so accepted/corrected decisions
+are harvestable evidence rather than automatic suite-label updates.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
