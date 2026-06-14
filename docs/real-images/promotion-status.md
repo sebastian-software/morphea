@@ -337,6 +337,13 @@ editing the config by appending case-scoped `--reviewer`, `--reason`,
 `--correction-notes`, `--corrected-artifact`, and `--reviewed-region` flags to
 the selected `promotion-review-harvest --config ... --decision-choice ...`
 command.
+The initial review packet now derives `reviewable_regions` from gate-ok
+promotion regions and renders them in JSON/Markdown with region ids, gate
+types, states, selected-anchor counts, and reasons. For accepted/corrected
+harvest choices, the packet-level evidence hints include the matching
+`--reviewed-region case=region-id` flags, so a reviewer can start a
+region-scoped applied decision from the first packet without opening raw
+promotion-region JSON.
 Reviewer choices and evidence can also be stored in a portable
 `decision_plan` overlay with `decision_choices` and `decision_overrides`, then
 merged into a fresh generated harvest config without committing run-local

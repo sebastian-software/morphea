@@ -619,6 +619,9 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 review_packet["cases"][0]["review_requirements"],
                 {
+                    "optional_for_region_scoped_acceptance": [
+                        "reviewed_region_ids"
+                    ],
                     "required_for_corrected_decisions": [
                         "correction_notes",
                         "corrected_artifacts",
@@ -626,6 +629,17 @@ class CuratedSuiteTests(unittest.TestCase):
                     "required_for_terminal_decisions": ["reviewer", "reason"],
                 },
             )
+            self.assertEqual(
+                review_packet["cases"][0]["reviewable_region_ids"],
+                ["circle-region"],
+            )
+            reviewable_region = review_packet["cases"][0]["reviewable_regions"][0]
+            self.assertEqual(reviewable_region["id"], "circle-region")
+            self.assertEqual(reviewable_region["state"], "deferred")
+            self.assertEqual(reviewable_region["gate_id"], "circle-region")
+            self.assertEqual(reviewable_region["gate_type"], "shape_class")
+            self.assertEqual(reviewable_region["selected_anchor_count"], 1)
+            self.assertEqual(reviewable_region["selected_anchor_indexes"], [0])
             self.assertFalse(
                 review_packet["cases"][0]["quality_label_policy"][
                     "updates_current_quality_label"
@@ -675,7 +689,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("| `simple-circle` | `deferred` |", review_packet_markdown)
             self.assertIn(
                 "- Review requirements: terminal=`reviewer`, `reason`, "
-                "corrected=`correction_notes`, `corrected_artifacts`",
+                "corrected=`correction_notes`, `corrected_artifacts`, "
+                "region-scoped=`reviewed_region_ids`",
                 review_packet_markdown,
             )
             self.assertIn("- Review decision: `", review_packet_markdown)
@@ -684,6 +699,12 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn(
                 "| `current_quality_label` | `review_safety` | `yellow` | "
                 "current quality label is red; manual review pending |",
+                review_packet_markdown,
+            )
+            self.assertIn("### Reviewable Regions", review_packet_markdown)
+            self.assertIn(
+                "| `circle-region` | `deferred` | `circle-region` | "
+                "`shape_class` | 1 |",
                 review_packet_markdown,
             )
             self.assertIn("### Apply Commands", review_packet_markdown)
@@ -2757,8 +2778,17 @@ class CuratedSuiteTests(unittest.TestCase):
                 [
                     "--reviewer simple-circle=REVIEWER",
                     "--reason simple-circle=REASON",
+                    "--reviewed-region simple-circle=circle-region",
                     "--correction-notes simple-circle=NOTES",
                     "--corrected-artifact simple-circle=PATH",
+                ],
+            )
+            self.assertEqual(
+                packet_case["decision_choice_evidence_flags"]["accepted"],
+                [
+                    "--reviewer simple-circle=REVIEWER",
+                    "--reason simple-circle=REASON",
+                    "--reviewed-region simple-circle=circle-region",
                 ],
             )
             review_packet_markdown = (
@@ -2772,6 +2802,10 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn(
                 "Evidence flags: `--reviewer simple-circle=REVIEWER`",
+                review_packet_markdown,
+            )
+            self.assertIn(
+                "`--reviewed-region simple-circle=circle-region`",
                 review_packet_markdown,
             )
             self.assertEqual(harvest_config_data["run_root"], str(output_dir))

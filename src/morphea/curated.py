@@ -2769,6 +2769,7 @@ def _add_review_packet_followup_commands(
             evidence_flags[decision] = _review_packet_decision_choice_flags(
                 case_id,
                 decision,
+                reviewable_region_ids=case.get("reviewable_region_ids"),
             )
         if commands:
             case["decision_choice_commands"] = commands
@@ -2782,11 +2783,19 @@ def _review_packet_harvest_command(config: str) -> str:
     )
 
 
-def _review_packet_decision_choice_flags(case_id: str, decision: str) -> list[str]:
+def _review_packet_decision_choice_flags(
+    case_id: str,
+    decision: str,
+    *,
+    reviewable_region_ids: object = (),
+) -> list[str]:
     flags = [
         f"--reviewer {shlex.quote(f'{case_id}=REVIEWER')}",
         f"--reason {shlex.quote(f'{case_id}=REASON')}",
     ]
+    if decision in {"accepted", "corrected"}:
+        for region_id in _reviewable_region_ids(reviewable_region_ids):
+            flags.append(f"--reviewed-region {shlex.quote(f'{case_id}={region_id}')}")
     if decision == "corrected":
         flags.extend(
             [
@@ -2867,6 +2876,9 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         if template_paths:
             artifact_paths["review_templates"] = dict(sorted(template_paths.items()))
     review_commands = _review_packet_review_commands(artifact_paths)
+    reviewable_regions = _reviewable_region_summaries(
+        case.get("promotion_regions")
+    )
     return {
         "case_id": case.get("id"),
         "status": case.get("status"),
@@ -2890,6 +2902,12 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         "review_decision_state": decision.get("decision", "n/a"),
         "review_requirements": _review_packet_requirements(),
         "quality_label_policy": decision.get("quality_label_policy", {}),
+        "reviewable_regions": reviewable_regions,
+        "reviewable_region_ids": [
+            region["id"]
+            for region in reviewable_regions
+            if isinstance(region.get("id"), str)
+        ],
         "artifacts": artifact_paths,
         "review_commands": review_commands,
     }
@@ -2898,11 +2916,63 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
 def _review_packet_requirements() -> dict[str, list[str]]:
     return {
         "required_for_terminal_decisions": ["reviewer", "reason"],
+        "optional_for_region_scoped_acceptance": ["reviewed_region_ids"],
         "required_for_corrected_decisions": [
             "correction_notes",
             "corrected_artifacts",
         ],
     }
+
+
+def _reviewable_region_summaries(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    regions: list[dict[str, object]] = []
+    for region in value:
+        if not isinstance(region, dict):
+            continue
+        region_id = region.get("id")
+        selected_indexes = _reviewable_region_anchor_indexes(region)
+        if not isinstance(region_id, str) or not region_id:
+            continue
+        if region.get("gate_ok") is not True or not selected_indexes:
+            continue
+        summary: dict[str, object] = {
+            "id": region_id,
+            "state": region.get("state", "n/a"),
+            "gate_id": region.get("gate_id", region_id),
+            "gate_type": region.get("gate_type", "n/a"),
+            "selected_anchor_count": len(selected_indexes),
+            "selected_anchor_indexes": selected_indexes,
+        }
+        reason = region.get("reason")
+        if isinstance(reason, str) and reason:
+            summary["reason"] = reason
+        regions.append(summary)
+    return sorted(regions, key=lambda item: str(item.get("id", "")))
+
+
+def _reviewable_region_anchor_indexes(region: dict[str, object]) -> list[int]:
+    indexes = region.get("selected_anchor_indexes")
+    if not isinstance(indexes, list):
+        return []
+    return sorted(
+        {
+            index
+            for index in indexes
+            if isinstance(index, int) and not isinstance(index, bool) and index >= 0
+        }
+    )
+
+
+def _reviewable_region_ids(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    ids: list[str] = []
+    for item in value:
+        if isinstance(item, str) and item and item not in ids:
+            ids.append(item)
+    return ids
 
 
 def _review_packet_review_commands(
@@ -3041,7 +3111,8 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
         lines.append(
             "- Review requirements: "
             f"terminal={_fmt_review_requirement_list(case.get('review_requirements'), 'required_for_terminal_decisions')}, "
-            f"corrected={_fmt_review_requirement_list(case.get('review_requirements'), 'required_for_corrected_decisions')}"
+            f"corrected={_fmt_review_requirement_list(case.get('review_requirements'), 'required_for_corrected_decisions')}, "
+            f"region-scoped={_fmt_review_requirement_list(case.get('review_requirements'), 'optional_for_region_scoped_acceptance')}"
         )
         artifacts = case.get("artifacts", {})
         artifacts = artifacts if isinstance(artifacts, dict) else {}
@@ -3082,6 +3153,29 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
                     f"{_fmt_markdown_code_value(gate.get('gate_type'))} | "
                     f"{_fmt_markdown_code_value(gate.get('severity'))} | "
                     f"{_fmt_markdown_table_text(gate.get('reason'))} |"
+                )
+        reviewable_regions = case.get("reviewable_regions")
+        if isinstance(reviewable_regions, list) and reviewable_regions:
+            lines.extend(
+                [
+                    "",
+                    "### Reviewable Regions",
+                    "",
+                    "| Region | State | Gate | Type | Anchors | Reason |",
+                    "| --- | --- | --- | --- | --- | --- |",
+                ]
+            )
+            for region in reviewable_regions:
+                if not isinstance(region, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"{_fmt_markdown_code_value(region.get('id'))} | "
+                    f"{_fmt_markdown_code_value(region.get('state'))} | "
+                    f"{_fmt_markdown_code_value(region.get('gate_id'))} | "
+                    f"{_fmt_markdown_code_value(region.get('gate_type'))} | "
+                    f"{_fmt_markdown_value(region.get('selected_anchor_count'))} | "
+                    f"{_fmt_markdown_table_text(region.get('reason'))} |"
                 )
         commands = case.get("review_commands")
         if isinstance(commands, dict) and commands:
