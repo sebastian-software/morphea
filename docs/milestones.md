@@ -1014,6 +1014,9 @@ Implemented so far:
   suite reports with a Corpus Ledger for quality labels, stress families,
   expected promotion families, issue tags, licensing status, plus case status,
   failed expectations, key metrics, and artifact directories.
+- the same Markdown report includes a Region Truth table for configured
+  source-region gates, with stable region ids, state, bounds, expected kinds,
+  actual matching counts, and topology evidence.
 - second documented curated case:
   `chatgpt-image-2026-06-11`, covering the opaque white-background version of
   the Greek-figures/table illustration.

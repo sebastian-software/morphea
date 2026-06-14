@@ -300,6 +300,18 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             f"{_fmt_promotion_quality(case.get('promotion'))} | "
             f"{_fmt_failed_gates(case.get('promotion_gates'))} |"
         )
+    region_rows = _region_truth_rows(cases)
+    if region_rows:
+        lines.extend(
+            [
+                "",
+                "## Region Truth",
+                "",
+                "| Case | Region | State | Gate | Bounds | Expected | Actual | Topology |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        lines.extend(region_rows)
     lines.extend(
         [
             "",
@@ -3482,6 +3494,87 @@ def _fmt_promotion_regions(value: object) -> str:
     return ", ".join(
         f"`{state}`={_fmt_markdown_value(counts[state])}"
         for state in sorted(counts)
+    )
+
+
+def _region_truth_rows(cases: object) -> list[str]:
+    if not isinstance(cases, list):
+        return []
+    rows = []
+    for case in _promotion_sorted_cases(cases):
+        if not isinstance(case, dict):
+            continue
+        regions = {
+            str(region.get("id")): region
+            for region in case.get("promotion_regions", [])
+            if isinstance(region, dict)
+        }
+        for gate in case.get("promotion_gates", []):
+            if not isinstance(gate, dict):
+                continue
+            evidence = gate.get("evidence")
+            if not isinstance(evidence, dict) or "bounds" not in evidence:
+                continue
+            gate_id = str(gate.get("id", "n/a"))
+            region = regions.get(gate_id, {})
+            rows.append(
+                "| "
+                f"`{case.get('id', 'n/a')}` | "
+                f"`{gate_id}` | "
+                f"`{region.get('state', 'n/a')}` | "
+                f"`{gate.get('gate_type', 'n/a')}` | "
+                f"{_fmt_region_bounds(evidence.get('bounds'))} | "
+                f"{_fmt_region_expected(evidence)} | "
+                f"{_fmt_region_actual(evidence)} | "
+                f"{_fmt_region_topology(evidence)} |"
+            )
+    return rows
+
+
+def _fmt_region_bounds(value: object) -> str:
+    bounds = _parse_float_bounds(value)
+    if bounds is None:
+        return "n/a"
+    return "`" + ",".join(_fmt_markdown_value(item) for item in bounds) + "`"
+
+
+def _fmt_region_expected(evidence: dict[str, object]) -> str:
+    parts = []
+    expected = _fmt_markdown_list(evidence.get("expected_kinds"))
+    if expected != "n/a":
+        parts.append(f"kinds={expected}")
+    forbidden = _fmt_markdown_list(evidence.get("forbidden_kinds"))
+    if forbidden != "n/a":
+        parts.append(f"forbidden={forbidden}")
+    min_iou = evidence.get("min_iou")
+    if isinstance(min_iou, (int, float)):
+        parts.append(f"min_iou={_fmt_markdown_value(min_iou)}")
+    coverage = evidence.get("min_anchor_coverage")
+    if isinstance(coverage, (int, float)):
+        parts.append(f"min_coverage={_fmt_markdown_value(coverage)}")
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_region_actual(evidence: dict[str, object]) -> str:
+    return (
+        f"matching={_fmt_markdown_value(evidence.get('matching_count'))}, "
+        f"selected={_fmt_markdown_value(evidence.get('selected_count'))}, "
+        f"forbidden={_fmt_markdown_value(evidence.get('forbidden_count'))}"
+    )
+
+
+def _fmt_region_topology(evidence: dict[str, object]) -> str:
+    summary = evidence.get("topology_summary")
+    if not isinstance(summary, dict):
+        return "n/a"
+    failures = evidence.get("topology_failures")
+    failure_text = _fmt_markdown_list(failures)
+    return (
+        f"closed={_fmt_markdown_value(summary.get('closed_anchor_count'))}, "
+        f"open={_fmt_markdown_value(summary.get('open_anchor_count'))}, "
+        f"holes={_fmt_markdown_value(summary.get('hole_count'))}, "
+        f"cutouts={_fmt_markdown_value(summary.get('cutout_count'))}, "
+        f"failures={failure_text}"
     )
 
 

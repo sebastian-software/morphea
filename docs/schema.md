@@ -483,6 +483,9 @@ Region gate topology limits are optional non-negative integer fields:
 `max_disconnected_components`. Region-gate evidence includes
 `topology_summary` with selected-anchor, closed/open, hole, cutout, disconnected
 component, and kind-count summaries.
+`curated-check --markdown` includes a Region Truth table for these gates,
+showing the stable region/gate id, promotion state, bounds, expected and
+forbidden kinds, matching/selected/forbidden counts, and topology summary.
 - `group_gates`: optional array of manifest-group promotion gates. Each gate
   includes `id`, `gate_type` (`grouping` or `fragmentation`),
   `expected_group_kinds`, optional `min_count`, optional `max_count`, optional

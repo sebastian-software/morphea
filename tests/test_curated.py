@@ -1397,6 +1397,29 @@ class CuratedSuiteTests(unittest.TestCase):
                 "gate_blocked_components",
                 result["cases"][0]["editability_review"]["reasons"],
             )
+            markdown = render_curated_markdown(result)
+            self.assertIn("## Region Truth", markdown)
+            self.assertIn(
+                "| `single-circle` | `circle-region` | `promoted` | "
+                "`shape_class` | `4,4,18,18` | kinds=`circle`, "
+                "min_iou=0.3 | matching=1, selected=1, forbidden=0 | "
+                "closed=1, open=0, holes=0, cutouts=0, failures=n/a |",
+                markdown,
+            )
+            self.assertIn(
+                "| `single-circle` | `empty-region` | `rejected` | "
+                "`shape_class` | `0,0,4,4` | kinds=`circle`, "
+                "min_iou=0.1 | matching=0, selected=0, forbidden=0 |",
+                markdown,
+            )
+            self.assertIn(
+                "| `single-circle` | `circle-topology` | `rejected` | "
+                "`topology` | `4,4,18,18` | kinds=`circle`, min_iou=0.3 | "
+                "matching=1, selected=1, forbidden=0 | "
+                "closed=1, open=0, holes=0, cutouts=0, "
+                "failures=`closed_anchor_count 1 > 0` |",
+                markdown,
+            )
 
     def test_structure_threshold_can_ignore_non_structural_layer_roles(self):
         gate = _structure_threshold_promotion_gate(

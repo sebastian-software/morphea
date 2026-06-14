@@ -209,6 +209,7 @@ Every report should include:
 - case-level red/yellow/green status;
 - stress family, expected promotion families, issue tags, and licensing status;
 - region-level promotion decisions;
+- region-level expected-vs-actual truth for configured source-region gates;
 - failed hard gates;
 - score component breakdowns;
 - reference/render/diff contact sheet links;

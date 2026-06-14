@@ -227,6 +227,11 @@ Deliverables:
 - region-level expected/actual tables in Markdown reports;
 - compact JSON schema docs for region truth.
 
+Current report slice: `curated-check --markdown` now writes a Region Truth table
+for configured source-region gates, listing stable region/gate ids, promotion
+state, bounds, expected kinds, actual matching/selected/forbidden counts, and
+topology summaries.
+
 Exit criteria:
 
 - every real-image red gate references a stable region id;
