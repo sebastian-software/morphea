@@ -246,6 +246,76 @@ def train_raster_target_model(
     return model
 
 
+def evaluate_raster_target_model(
+    model_json: str | Path,
+    corpus_json: str | Path,
+    *,
+    output: str | Path,
+    markdown: str | Path | None = None,
+    splits: tuple[str, ...] | None = None,
+    target_label_key: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate a stored raster-target model against a target corpus."""
+
+    model_path = Path(model_json)
+    model = json.loads(model_path.read_text(encoding="utf-8"))
+    if model.get("model_type") != RASTER_TARGET_MODEL_TYPE:
+        msg = "raster target evaluation requires a raster_target_classifier model"
+        raise ValueError(msg)
+    target_names = [
+        str(target)
+        for target in model.get("target_names", [])
+        if isinstance(target, str) and target
+    ]
+    if not target_names:
+        msg = "raster target model contains no target_names"
+        raise ValueError(msg)
+
+    corpus_path = Path(corpus_json)
+    corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+    label_key = target_label_key or str(
+        model.get("target_label_key", "anchor_kind_targets")
+    )
+    examples = _corpus_examples(
+        corpus,
+        grid_size=_grid_size_from_model(model),
+        target_label_key=label_key,
+    )
+    selected_splits = tuple(splits) if splits is not None else _available_splits(examples)
+    evaluation = _raster_target_model_evaluation(
+        examples,
+        target_names,
+        model,
+        splits=selected_splits,
+    )
+    report = {
+        "schema_version": 1,
+        "model": str(model_path),
+        "corpus": str(corpus_path),
+        "model_type": model.get("model_type"),
+        "training_implementation": model.get("training_implementation"),
+        "target_label_key": label_key,
+        "target_names": target_names,
+        "splits": list(selected_splits),
+        "feature_extraction": model.get("feature_extraction", {}),
+        "evaluation": evaluation,
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_raster_target_evaluation_markdown(report),
+            encoding="utf-8",
+        )
+    return report
+
+
 def render_raster_target_model_markdown(model: dict[str, Any]) -> str:
     """Render a compact training report for the raster target model."""
 
@@ -317,6 +387,60 @@ def render_raster_target_model_markdown(model: dict[str, Any]) -> str:
                 f"{_fmt_value(item.get('example_count'))} | "
                 f"{_fmt_value(item.get('target_accuracy'))} | "
                 f"{_fmt_value(item.get('exact_match_accuracy'))} |"
+            )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_raster_target_evaluation_markdown(report: dict[str, Any]) -> str:
+    """Render a scan-friendly raster-target evaluation report."""
+
+    lines = [
+        "# Morphea Raster Target Evaluation",
+        "",
+        f"- Model: `{report.get('model', 'n/a')}`",
+        f"- Corpus: `{report.get('corpus', 'n/a')}`",
+        f"- Model type: `{report.get('model_type', 'n/a')}`",
+        f"- Training implementation: `{report.get('training_implementation', 'n/a')}`",
+        f"- Target label key: `{report.get('target_label_key', 'n/a')}`",
+        f"- Targets: {_fmt_value(len(report.get('target_names', [])))}",
+        "",
+        "## Splits",
+        "",
+        "| Split | Examples | Target accuracy | Exact match | Unknown expected |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    evaluation = report.get("evaluation", {})
+    if isinstance(evaluation, dict):
+        for split, item in sorted(evaluation.items()):
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{split}` | "
+                f"{_fmt_value(item.get('example_count'))} | "
+                f"{_fmt_value(item.get('target_accuracy'))} | "
+                f"{_fmt_value(item.get('exact_match_accuracy'))} | "
+                f"{_fmt_value(item.get('unknown_expected_target_count'))} |"
+            )
+    failures = _evaluation_failures(evaluation)
+    if failures:
+        lines.extend(
+            [
+                "",
+                "## Failures",
+                "",
+                "| Split | Example | Expected | Predicted | Unknown expected |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+        )
+        for failure in failures:
+            lines.append(
+                "| "
+                f"`{failure['split']}` | "
+                f"`{failure['id']}` | "
+                f"{_fmt_targets(failure.get('expected'))} | "
+                f"{_fmt_targets(failure.get('predicted'))} | "
+                f"{_fmt_targets(failure.get('unknown_expected_targets'))} |"
             )
     return "\n".join(lines).rstrip() + "\n"
 
@@ -688,15 +812,16 @@ def _raster_target_model_evaluation(
     examples: list[dict[str, Any]],
     target_names: list[str],
     model: dict[str, Any],
+    splits: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
-    splits = sorted({example["split"] for example in examples})
+    eval_splits = splits if splits is not None else _available_splits(examples)
     return {
         split: _evaluate_split(
             [example for example in examples if example["split"] == split],
             target_names,
             model,
         )
-        for split in splits
+        for split in eval_splits
     }
 
 
@@ -708,6 +833,8 @@ def _evaluate_split(
     total_targets = len(examples) * len(target_names)
     correct_targets = 0
     exact_matches = 0
+    target_set = set(target_names)
+    unknown_expected_counts: dict[str, int] = {}
     per_target = {
         target: {"examples": 0, "correct": 0}
         for target in target_names
@@ -716,11 +843,15 @@ def _evaluate_split(
     for example in examples:
         predicted = _predict_targets(example["features"], target_names, model)
         expected = set(example["target_labels"])
+        unknown_expected = sorted(expected - target_set)
+        for target in unknown_expected:
+            unknown_expected_counts[target] = unknown_expected_counts.get(target, 0) + 1
         predictions.append(
             {
                 "id": example["id"],
                 "expected": sorted(expected),
                 "predicted": sorted(predicted),
+                "unknown_expected_targets": unknown_expected,
                 "ok": predicted == expected,
             }
         )
@@ -753,8 +884,46 @@ def _evaluate_split(
             }
             for target, item in sorted(per_target.items())
         },
+        "unknown_expected_target_count": sum(unknown_expected_counts.values()),
+        "unknown_expected_targets": dict(sorted(unknown_expected_counts.items())),
         "predictions": predictions,
     }
+
+
+def _available_splits(examples: list[dict[str, Any]]) -> tuple[str, ...]:
+    return tuple(sorted({example["split"] for example in examples}))
+
+
+def _grid_size_from_model(model: dict[str, Any]) -> int:
+    feature_extraction = model.get("feature_extraction", {})
+    if isinstance(feature_extraction, dict):
+        grid_size = feature_extraction.get("grid_size")
+        if isinstance(grid_size, int) and grid_size > 0:
+            return grid_size
+    return RASTER_TARGET_DEFAULT_GRID_SIZE
+
+
+def _evaluation_failures(evaluation: object) -> list[dict[str, Any]]:
+    if not isinstance(evaluation, dict):
+        return []
+    failures = []
+    for split, split_report in sorted(evaluation.items()):
+        if not isinstance(split_report, dict):
+            continue
+        predictions = split_report.get("predictions", [])
+        if not isinstance(predictions, list):
+            continue
+        for prediction in predictions:
+            if not isinstance(prediction, dict) or prediction.get("ok", False):
+                continue
+            failures.append({"split": str(split), **prediction})
+    return failures
+
+
+def _fmt_targets(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    return ", ".join(f"`{item}`" for item in value)
 
 
 def _predict_targets(

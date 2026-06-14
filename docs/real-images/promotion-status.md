@@ -74,6 +74,9 @@ the artifact contains an `mlx_multilabel_raster_target_head`; the centroid
 path is retained only as an explicit unavailable-runtime fallback. The current
 default head is a small 12x12-raster-feature MLP and reaches 1.0 train
 exact-match accuracy on the checked-in 24-case Lucide corpus smoke.
+`morphea eval-raster-targets` evaluates the stored generic model against any
+rendered target corpus and records unknown expected targets explicitly, so new
+shape vocabulary cannot be hidden by aggregate target accuracy.
 
 ## Visual Artifact Posture
 

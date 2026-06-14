@@ -953,6 +953,10 @@ Implemented so far:
   artifact while keeping Lucide as a corpus adapter rather than a classifier
   name; the default 12x12-raster-feature MLP reaches 1.0 train exact-match
   accuracy on the checked-in 24-case Lucide corpus smoke
+- `morphea eval-raster-targets model.json corpus.json -o report.json`
+  evaluates the generic model against a rendered target corpus and reports
+  unknown expected targets explicitly, making future vocabulary expansion
+  visible before model artifacts are accepted
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle

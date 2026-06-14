@@ -17,6 +17,7 @@ from morphea.raster_target_model import (
     RASTER_TARGET_FALLBACK_TRAINING_IMPLEMENTATION,
     RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION,
     RASTER_TARGET_MODEL_TYPE,
+    evaluate_raster_target_model,
     raster_target_runtime_status,
 )
 
@@ -143,6 +144,96 @@ class LucideModelTests(unittest.TestCase):
                 1.0,
             )
 
+    def test_evaluate_raster_target_model_writes_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            corpus = _write_lucide_target_corpus(root)
+            model_path = root / "model.json"
+            report_path = root / "eval.json"
+            markdown = root / "eval.md"
+
+            with patch(
+                "morphea.raster_target_model.raster_target_runtime_status",
+                return_value={
+                    "backend": "mlx",
+                    "backend_available": False,
+                    "status": "not_installed",
+                    "reason": "test unavailable",
+                    "next_action": "install",
+                },
+            ):
+                train_lucide_target_model(
+                    corpus,
+                    output=model_path,
+                    config=LucideTargetTrainingConfig(allow_unavailable=True),
+                )
+
+            report = evaluate_raster_target_model(
+                model_path,
+                corpus,
+                output=report_path,
+                markdown=markdown,
+                splits=("train",),
+            )
+
+            self.assertEqual(report["model_type"], RASTER_TARGET_MODEL_TYPE)
+            self.assertEqual(report["target_label_key"], "anchor_kind_targets")
+            self.assertEqual(report["splits"], ["train"])
+            self.assertEqual(
+                report["evaluation"]["train"]["exact_match_accuracy"],
+                1.0,
+            )
+            saved = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["model_type"], RASTER_TARGET_MODEL_TYPE)
+            self.assertIn(
+                "# Morphea Raster Target Evaluation",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_eval_raster_targets_cli_writes_report_with_unknown_targets(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            corpus = _write_lucide_target_corpus(root)
+            model_path = root / "model.json"
+            eval_corpus = _write_unknown_target_eval_corpus(root)
+            report_path = root / "eval.json"
+
+            with patch(
+                "morphea.raster_target_model.raster_target_runtime_status",
+                return_value={
+                    "backend": "mlx",
+                    "backend_available": False,
+                    "status": "not_installed",
+                    "reason": "test unavailable",
+                    "next_action": "install",
+                },
+            ):
+                train_lucide_target_model(
+                    corpus,
+                    output=model_path,
+                    config=LucideTargetTrainingConfig(allow_unavailable=True),
+                )
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "eval-raster-targets",
+                        str(model_path),
+                        str(eval_corpus),
+                        "-o",
+                        str(report_path),
+                        "--splits",
+                        "val",
+                    ]
+                )
+
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            split = report["evaluation"]["val"]
+            self.assertEqual(split["example_count"], 1)
+            self.assertEqual(split["unknown_expected_target_count"], 1)
+            self.assertEqual(split["unknown_expected_targets"], {"stroke_rect": 1})
+            self.assertFalse(split["predictions"][0]["ok"])
+
 
 def _write_lucide_target_corpus(root: Path) -> Path:
     output_dir = root / "corpus"
@@ -190,6 +281,39 @@ def _write_lucide_target_corpus(root: Path) -> Path:
     return corpus
 
 
+def _write_unknown_target_eval_corpus(root: Path) -> Path:
+    output_dir = root / "eval-corpus"
+    rect_dir = output_dir / "rect"
+    rect_dir.mkdir(parents=True)
+    _write_rect_png(rect_dir / "input.png")
+    corpus = root / "eval-corpus.json"
+    corpus.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "source": "lucide_suite",
+                "source_package": "lucide-static",
+                "source_version": "test",
+                "output_dir": str(output_dir),
+                "examples": [
+                    {
+                        "id": "rect",
+                        "split": "val",
+                        "family": "stroked_rect_ui_glyphs",
+                        "status": "rendered",
+                        "input_png": str(rect_dir / "input.png"),
+                        "labels": {
+                            "anchor_kind_targets": {"stroke_rect": 1},
+                        },
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return corpus
+
+
 def _write_line_png(path: Path) -> None:
     image = Image.new("RGBA", (64, 64), "white")
     draw = ImageDraw.Draw(image)
@@ -201,6 +325,13 @@ def _write_circle_png(path: Path) -> None:
     image = Image.new("RGBA", (64, 64), "white")
     draw = ImageDraw.Draw(image)
     draw.ellipse((16, 16, 48, 48), outline="black", width=5)
+    image.save(path)
+
+
+def _write_rect_png(path: Path) -> None:
+    image = Image.new("RGBA", (64, 64), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((16, 16, 48, 48), outline="black", width=5)
     image.save(path)
 
 

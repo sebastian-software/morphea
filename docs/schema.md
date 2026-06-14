@@ -471,6 +471,20 @@ intentionally write a
 `centroid_raster_target_baseline` fallback artifact for reproducible planning
 and CI environments.
 
+`morphea eval-raster-targets model.json corpus.json -o report.json` evaluates
+a stored `raster_target_classifier` against any rendered target corpus that
+uses the same `input_png` and labels structure as the Lucide corpus. The
+command is generic: it reads the model's `target_label_key` and raster grid
+size unless overridden by CLI/config, then writes `schema_version`, `model`,
+`corpus`, `model_type`, `training_implementation`, `target_label_key`,
+`target_names`, `splits`, `feature_extraction`, and per-split `evaluation`.
+Each split report includes `example_count`, `target_accuracy`,
+`exact_match_accuracy`, per-target accuracy, `unknown_expected_targets`, and
+per-example predictions. Unknown expected targets are counted explicitly so a
+new corpus vocabulary cannot look green merely because the model never learned
+that target. `--markdown report.md` writes the same split table plus a compact
+failure table.
+
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates
 the metadata and copies it into JSON reports, Markdown reports, and deterministic

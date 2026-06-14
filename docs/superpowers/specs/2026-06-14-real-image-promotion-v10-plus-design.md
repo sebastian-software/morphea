@@ -326,7 +326,10 @@ artifact trains an `mlx_multilabel_raster_target_head`, with the older centroid
 path kept only as an explicit unavailable-runtime fallback. The default head is
 a small 12x12-raster-feature MLP (`epochs: 300`, `hidden_dim: 32`) and the
 current CLI smoke reaches 1.0 train exact-match accuracy on the checked-in
-24-case Lucide corpus.
+24-case Lucide corpus. `morphea eval-raster-targets` evaluates stored generic
+models against rendered target corpora and reports unknown expected targets, so
+new vocabulary must become explicit gate evidence instead of being hidden by
+aggregate accuracy.
 
 Exit criteria:
 

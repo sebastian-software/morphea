@@ -31,6 +31,7 @@ from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
 )
+from morphea.raster_target_model import evaluate_raster_target_model
 from morphea.profiling import profile_curated_suite, profile_vectorize
 from morphea.promotion_export import (
     apply_promotion_review_decision,
@@ -138,6 +139,14 @@ EVAL_CONFIG_KEYS = {"run_root", "output", "markdown"}
 PROFILE_CONFIG_KEYS = set(VECTORIZE_DEFAULT_CONFIG) | {"input", "output", "repeats"}
 PROFILE_CURATED_CONFIG_KEYS = {"suite", "output", "markdown", "repeats"}
 EVAL_CLASSIFIER_CONFIG_KEYS = {"model", "dataset", "output", "markdown", "splits"}
+EVAL_RASTER_TARGETS_CONFIG_KEYS = {
+    "model",
+    "corpus",
+    "output",
+    "markdown",
+    "splits",
+    "target_label_key",
+}
 TRAIN_MLX_CONFIG_KEYS = {
     "dataset",
     "output",
@@ -666,6 +675,23 @@ def main(argv: list[str] | None = None) -> None:
         help="Dataset splits to evaluate. Defaults to val test.",
     )
     eval_classifier.add_argument("--config", type=Path)
+
+    eval_raster_targets = subcommands.add_parser(
+        "eval-raster-targets",
+        help="Evaluate a raster-target model against a target corpus.",
+    )
+    eval_raster_targets.add_argument("model", type=Path, nargs="?")
+    eval_raster_targets.add_argument("corpus", type=Path, nargs="?")
+    eval_raster_targets.add_argument("-o", "--output", type=Path)
+    eval_raster_targets.add_argument("--markdown", type=Path)
+    eval_raster_targets.add_argument(
+        "--splits",
+        nargs="+",
+        default=None,
+        help="Corpus splits to evaluate. Defaults to all splits in the corpus.",
+    )
+    eval_raster_targets.add_argument("--target-label-key")
+    eval_raster_targets.add_argument("--config", type=Path)
 
     harvest = subcommands.add_parser(
         "harvest",
@@ -1526,6 +1552,22 @@ def main(argv: list[str] | None = None) -> None:
         print(
             f"evaluated {report['model_type']} on "
             f"{len(report['splits'])} dataset splits"
+        )
+        return
+
+    if args.command == "eval-raster-targets":
+        eval_config = _resolved_eval_raster_targets_config(args)
+        report = evaluate_raster_target_model(
+            eval_config["model"],
+            eval_config["corpus"],
+            output=eval_config["output"],
+            markdown=eval_config.get("markdown"),
+            splits=eval_config.get("splits"),
+            target_label_key=eval_config.get("target_label_key"),
+        )
+        print(
+            f"evaluated {report['model_type']} on "
+            f"{len(report['splits'])} corpus splits"
         )
         return
 
@@ -2408,6 +2450,49 @@ def _resolved_eval_classifier_config(args: argparse.Namespace) -> dict[str, obje
             Path(config["markdown"]) if config.get("markdown") is not None else None
         ),
         "splits": _normalized_splits(config.get("splits", ["val", "test"])),
+    }
+
+
+def _resolved_eval_raster_targets_config(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    config = _load_eval_raster_targets_config(args.config)
+    if args.model is not None:
+        config["model"] = args.model
+    if args.corpus is not None:
+        config["corpus"] = args.corpus
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    if args.splits is not None:
+        config["splits"] = list(args.splits)
+    if args.target_label_key is not None:
+        config["target_label_key"] = args.target_label_key
+    _require_config_paths(
+        config,
+        ("model", "corpus", "output"),
+        "eval-raster-targets",
+    )
+    return {
+        "model": Path(str(config["model"])),
+        "corpus": Path(str(config["corpus"])),
+        "output": Path(str(config["output"])),
+        "markdown": (
+            Path(str(config["markdown"]))
+            if config.get("markdown") is not None
+            else None
+        ),
+        "splits": (
+            tuple(_normalized_splits(config["splits"], "eval-raster-targets"))
+            if config.get("splits") is not None
+            else None
+        ),
+        "target_label_key": (
+            str(config["target_label_key"])
+            if config.get("target_label_key") is not None
+            else None
+        ),
     }
 
 
@@ -3535,13 +3620,38 @@ def _load_eval_classifier_config(path: Path | None) -> dict[str, object]:
     return config
 
 
-def _normalized_splits(value: object) -> list[str]:
+def _load_eval_raster_targets_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("eval-raster-targets config must be a JSON object")
+    unknown = sorted(set(loaded) - EVAL_RASTER_TARGETS_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported eval-raster-targets config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("model", "corpus", "output", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    if "splits" in config and config["splits"] is not None:
+        config["splits"] = _normalized_splits(
+            config["splits"],
+            "eval-raster-targets",
+        )
+    return config
+
+
+def _normalized_splits(
+    value: object,
+    command: str = "eval-classifier",
+) -> list[str]:
     if not isinstance(value, list) or not value:
-        raise ValueError("eval-classifier splits must be a non-empty array")
+        raise ValueError(f"{command} splits must be a non-empty array")
     splits = []
     for split in value:
         if not isinstance(split, str) or not split:
-            raise ValueError("eval-classifier splits must contain strings")
+            raise ValueError(f"{command} splits must contain strings")
         splits.append(split)
     return splits
 

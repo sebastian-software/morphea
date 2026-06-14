@@ -248,6 +248,10 @@ Exit criteria:
   only evaluation reports while keeping Lucide as a corpus adapter. The default
   12x12-raster-feature MLP reaches 1.0 train exact-match accuracy on the
   checked-in 24-case Lucide corpus smoke.
+- `morphea eval-raster-targets` can evaluate that generic model against a
+  rendered target corpus and surface unknown expected targets, so future
+  Lucide, icon, UI, or real-image target vocabularies fail visibly instead of
+  disappearing into aggregate metrics.
 - Real-image suite status is summarized with green/yellow/red labels.
 - Existing snapshot and run artifact commands remain documented.
 - No document claims that aggregate pass/fail equals visual quality.
