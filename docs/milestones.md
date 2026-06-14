@@ -1014,6 +1014,9 @@ Implemented so far:
 - `morphea curated-check suite.json -o report.json` for suite validation.
 - `morphea curated-check --config curated-check.json` for repeatable real-image
   suite validation inputs.
+- `morphea promotion-review-run suite.json --output-dir review-run` for the
+  review-oriented one-command suite run that writes default JSON, Markdown,
+  snapshot, review packet, and gallery artifacts.
 - optional `--run` mode using each case's bounded `recommended_config`.
 - per-case `output.svg`, `debug.svg`, `manifest.json`, `config.json`,
   `report.md`, `report.html`, and `preview.png` artifacts via `--output-dir`.
@@ -1180,6 +1183,9 @@ Implemented so far:
   package status
 - `morphea curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
+- `morphea promotion-review-run suite.json --output-dir review-run` for a
+  review-ready curated run with default report, Markdown, snapshot, packet, and
+  gallery artifacts
 - `morphea segment --config segment.json` for repeatable input/output,
   report, and segment proposal runs
 - `morphea segment --markdown proposals.md` for scan-friendly segment proposal

@@ -2588,6 +2588,71 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue(snapshot.exists())
             self.assertIn("# Morphēa Curated Check", markdown.read_text(encoding="utf-8"))
 
+    def test_promotion_review_run_cli_writes_default_review_artifacts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "circle.png"
+            suite_path = root / "suite.json"
+            output_dir = root / "review-run"
+            image = Image.new("RGB", (24, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            image.save(source)
+            promotion = _promotion_metadata("red")
+            promotion["quality_label_review_policy"] = "manual_review_pending"
+            promotion["current_issues"] = ["manual_review_pending"]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": str(source),
+                                "promotion": promotion,
+                                "recommended_config": {
+                                    "min_area": 8,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-run",
+                        str(suite_path),
+                        "--output-dir",
+                        str(output_dir),
+                    ]
+                )
+
+            self.assertIn("prepared promotion review run", stdout.getvalue())
+            report = json.loads(
+                (output_dir / "curated-report.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(report["run"])
+            self.assertEqual(report["case_count"], 1)
+            self.assertTrue((output_dir / "curated-report.md").exists())
+            self.assertTrue((output_dir / "curated-snapshot.json").exists())
+            self.assertTrue((output_dir / "review-packet.json").exists())
+            gallery = (output_dir / "review-gallery.html").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("Apply commands", gallery)
+            self.assertIn("promotion-apply-review", gallery)
+
 
 class CuratedAssetsSuiteTests(unittest.TestCase):
     def test_checked_in_curated_suite_passes_with_run(self):

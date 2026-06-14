@@ -495,9 +495,13 @@ Deliverables:
 
 Current implementation:
 
-- `curated-check --run --output-dir --markdown --snapshot` is the suite-run
-  entry point that writes per-case artifacts plus suite-level
+- `promotion-review-run suite.json --output-dir review-run` is the
+  review-oriented suite-run entry point. It implies `run=True`, derives default
+  `curated-report.json`, `curated-report.md`, and `curated-snapshot.json`
+  paths under the output root, and writes per-case artifacts plus suite-level
   `review-packet.json`, `review-packet.md`, and `review-gallery.html`.
+- `curated-check --run --output-dir --markdown --snapshot` remains the lower
+  level suite-run entry point for explicit artifact paths.
 - `promotion-review-harvest` is the review-to-harvest bridge: it applies only
   explicit terminal decision files from a review packet, persists
   `review_decision_applied` through the existing apply-review rules, reports

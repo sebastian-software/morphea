@@ -379,6 +379,10 @@ Current implementation evidence: checked promotion runs write
 reasons, `contact-sheet.png` for visual comparison, and `editability-review.md`
 for accepted-output decision, threshold status, gate-blocked components, issue
 tags, and regression deltas.
+`morphea promotion-review-run suite.json --output-dir review-run` now provides
+the review-oriented one-command entry point for that flow: it runs the suite,
+derives default JSON, Markdown, and snapshot paths under the output root, and
+writes the review packet and gallery artifacts.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal

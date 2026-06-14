@@ -398,6 +398,12 @@ directories when `--output-dir` is used.
 arguments override matching config values, and `run` must be a boolean when
 provided in JSON.
 
+`morphea promotion-review-run suite.json --output-dir review-run` is a
+review-oriented wrapper around `curated-check`: it runs the suite, writes
+`curated-report.json`, `curated-report.md`, and `curated-snapshot.json` under
+the output root by default, and emits the same per-case artifacts,
+`review-packet.json`, `review-packet.md`, and `review-gallery.html`.
+
 Curated suite expectations support four mutually exclusive check types:
 `kind` with `min_count` and optional `max_count`, `kinds` with a non-empty array
 of accepted anchor kinds plus `min_count` and optional `max_count`, `group_kind`

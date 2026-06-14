@@ -979,6 +979,33 @@ def main(argv: list[str] | None = None) -> None:
     curated_check.add_argument("--markdown", type=Path)
     curated_check.add_argument("--config", type=Path)
 
+    promotion_review_run = subcommands.add_parser(
+        "promotion-review-run",
+        help=(
+            "Run a curated promotion suite and write review artifacts under "
+            "one output root."
+        ),
+    )
+    promotion_review_run.add_argument("suite", type=Path, nargs="?")
+    promotion_review_run.add_argument("-o", "--output", type=Path)
+    promotion_review_run.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory for per-case artifacts and suite-level review files.",
+    )
+    promotion_review_run.add_argument(
+        "--snapshot",
+        type=Path,
+        help="Write a deterministic regression snapshot JSON.",
+    )
+    promotion_review_run.add_argument(
+        "--baseline-snapshot",
+        type=Path,
+        help="Compare editability review components against a previous snapshot.",
+    )
+    promotion_review_run.add_argument("--markdown", type=Path)
+    promotion_review_run.add_argument("--config", type=Path)
+
     lucide_check = subcommands.add_parser(
         "lucide-check",
         help="Validate the curated Lucide icon benchmark suite.",
@@ -1678,6 +1705,24 @@ def main(argv: list[str] | None = None) -> None:
             markdown=curated_config.get("markdown"),
         )
         print(f"checked {result['case_count']} curated cases")
+        return
+
+    if args.command == "promotion-review-run":
+        review_run_config = _resolved_promotion_review_run_config(args)
+        result = check_curated_suite(
+            review_run_config["suite"],
+            output=review_run_config["output"],
+            output_dir=review_run_config["output_dir"],
+            run=True,
+            snapshot=review_run_config["snapshot"],
+            baseline_snapshot=review_run_config.get("baseline_snapshot"),
+            markdown=review_run_config["markdown"],
+        )
+        print(
+            "prepared promotion review run "
+            f"({result['case_count']} curated cases, "
+            f"output_dir={review_run_config['output_dir']})"
+        )
         return
 
     if args.command == "lucide-check":
@@ -2653,6 +2698,41 @@ def _resolved_curated_check_config(args: argparse.Namespace) -> dict[str, object
         if config.get(key) is not None:
             config[key] = Path(str(config[key]))
     config["run"] = bool(config.get("run", False))
+    return config
+
+
+def _resolved_promotion_review_run_config(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    config = _load_curated_check_config(args.config)
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.output is not None:
+        config["output"] = args.output
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.snapshot is not None:
+        config["snapshot"] = args.snapshot
+    if args.baseline_snapshot is not None:
+        config["baseline_snapshot"] = args.baseline_snapshot
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("suite", "output_dir"), "promotion-review-run")
+    output_dir = Path(str(config["output_dir"]))
+    config["suite"] = Path(str(config["suite"]))
+    config["output_dir"] = output_dir
+    config["output"] = Path(
+        str(config.get("output") or output_dir / "curated-report.json")
+    )
+    config["markdown"] = Path(
+        str(config.get("markdown") or output_dir / "curated-report.md")
+    )
+    config["snapshot"] = Path(
+        str(config.get("snapshot") or output_dir / "curated-snapshot.json")
+    )
+    if config.get("baseline_snapshot") is not None:
+        config["baseline_snapshot"] = Path(str(config["baseline_snapshot"]))
+    config["run"] = True
     return config
 
 
