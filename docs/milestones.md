@@ -1436,7 +1436,7 @@ Remaining:
 
 ## M12: Primitive Fidelity Harness
 
-Status: implemented for the current fixed-fixture baseline.
+Status: implemented for the current fixed-fixture and seeded-variant baseline.
 
 Purpose: make the simplest shapes the primary quality gate before homepage or
 curated-image polish.
@@ -1453,6 +1453,13 @@ Implemented so far:
   simple quad.
 - The report records pass/fail status, selected primitive kind, raster L1/edge
   errors, bounding-box IoU, geometry bounds, and concrete failure reasons.
+- `primitive-check --variant-count N --variant-seed S` appends deterministic
+  seeded variants for simple square, rectangle, circle, stroke, and quad
+  families without changing the default fixed-fixture run or checked-in
+  baseline discipline.
+- primitive quality reports include `variant_summary` and per-case
+  `variant_source`, so seeded variant coverage is visible separately from
+  hand-authored fixed fixtures.
 
 Acceptance evidence:
 
@@ -1461,7 +1468,8 @@ Acceptance evidence:
 
 Remaining:
 
-- add randomized variants only after the fixed basic cases remain stable.
+- expand seeded variants into additional primitive families only after the
+  simple-family opt-in run remains stable.
 
 ## M13: Ground-Truth Primitive Specs
 

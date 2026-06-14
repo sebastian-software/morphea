@@ -8,6 +8,7 @@ from dataclasses import dataclass, field, replace
 from fnmatch import fnmatch
 from math import atan2, ceil, cos, degrees, hypot, pi, radians, sin
 from pathlib import Path
+from random import Random
 from statistics import mean
 from typing import Any, Callable, Iterable
 
@@ -85,6 +86,7 @@ class PrimitiveSpec:
     background: str = "#ffffff"
     color: str = "#003366"
     color_tolerance: float = 0.0
+    variant_source: str = "fixed"
     expected_primitives: tuple[ExpectedPrimitive, ...] = ()
     expected_groups: tuple[dict[str, Any], ...] = ()
     compare_cutout_exports: bool = False
@@ -1604,6 +1606,96 @@ def primitive_specs() -> tuple[PrimitiveSpec, ...]:
         )
     )
     return tuple(specs)
+
+
+RANDOM_VARIANT_FAMILIES = (
+    "filled_square",
+    "filled_rectangle",
+    "filled_circle",
+    "horizontal_stroke",
+    "vertical_stroke",
+    "simple_quad",
+)
+
+
+def primitive_variant_specs(
+    *,
+    count: int,
+    seed: int = 1,
+) -> tuple[PrimitiveSpec, ...]:
+    """Generate deterministic extra primitive fixtures for broader smoke runs."""
+
+    if count < 0:
+        raise ValueError("primitive variant count must be >= 0")
+    if count == 0:
+        return ()
+    rng = Random(seed)
+    specs: list[PrimitiveSpec] = []
+    for index in range(count):
+        family = RANDOM_VARIANT_FAMILIES[index % len(RANDOM_VARIANT_FAMILIES)]
+        specs.append(_random_variant_spec(family, seed, index, rng))
+    return tuple(specs)
+
+
+def _random_variant_spec(
+    family: str,
+    seed: int,
+    index: int,
+    rng: Random,
+) -> PrimitiveSpec:
+    seed_label = str(seed).replace("-", "neg")
+    case_id = f"variant_{family}_{seed_label}_{index:04d}"
+    variant = f"seed_{seed_label}_{index:04d}"
+    if family == "filled_square":
+        size = rng.randint(12, 34)
+        x0 = rng.randint(4, 60 - size)
+        y0 = rng.randint(4, 60 - size)
+        spec = _square_spec(case_id, variant, (x0, y0, x0 + size, y0 + size))
+    elif family == "filled_rectangle":
+        width = rng.randint(18, 46)
+        height = rng.randint(10, 32)
+        if abs(width - height) < 6:
+            width = min(width + 8, 52)
+        x0 = rng.randint(4, 60 - width)
+        y0 = rng.randint(4, 60 - height)
+        spec = _rectangle_spec(case_id, variant, (x0, y0, x0 + width, y0 + height))
+    elif family == "filled_circle":
+        diameter = rng.randint(18, 36)
+        x0 = rng.randint(4, 60 - diameter)
+        y0 = rng.randint(4, 60 - diameter)
+        spec = _circle_spec(case_id, variant, (x0, y0, x0 + diameter, y0 + diameter))
+    elif family == "horizontal_stroke":
+        width = rng.randint(1, 7)
+        y = rng.randint(10, 54)
+        x0 = rng.randint(4, 18)
+        x1 = rng.randint(46, 60)
+        spec = _horizontal_stroke_spec(case_id, variant, (x0, y, x1, y), width)
+    elif family == "vertical_stroke":
+        width = rng.randint(1, 7)
+        x = rng.randint(10, 54)
+        y0 = rng.randint(4, 18)
+        y1 = rng.randint(46, 60)
+        spec = _vertical_stroke_spec(case_id, variant, (x, y0, x, y1), width)
+    elif family == "simple_quad":
+        top_y = rng.randint(8, 20)
+        bottom_y = rng.randint(40, 56)
+        top_left = rng.randint(10, 24)
+        top_right = rng.randint(42, 56)
+        bottom_left = max(4, top_left - rng.randint(4, 12))
+        bottom_right = min(60, top_right + rng.randint(2, 10))
+        spec = _quad_spec(
+            case_id,
+            variant,
+            (
+                (top_left, top_y),
+                (top_right, top_y + rng.randint(-2, 2)),
+                (bottom_right, bottom_y),
+                (bottom_left, bottom_y + rng.randint(-2, 2)),
+            ),
+        )
+    else:
+        raise ValueError(f"unsupported primitive variant family: {family}")
+    return replace(spec, variant_source="seeded")
 
 
 def _square_spec(
@@ -3332,13 +3424,19 @@ def check_primitive_quality(
     filter_pattern: str | None = None,
     refine: bool = False,
     refinement_iterations: int = 1,
+    variant_count: int = 0,
+    variant_seed: int = 1,
 ) -> dict[str, Any]:
     requested_cases = tuple(cases)
+    variant_count = int(variant_count)
+    variant_seed = int(variant_seed)
     output_root = Path(output_dir) if output_dir is not None else None
     if output_root is not None:
         output_root.mkdir(parents=True, exist_ok=True)
+    base_specs = primitive_specs()
+    seeded_specs = primitive_variant_specs(count=variant_count, seed=variant_seed)
     specs = _selected_specs(
-        primitive_specs(),
+        base_specs + seeded_specs,
         requested_cases=requested_cases,
         filter_pattern=filter_pattern,
     )
@@ -3358,6 +3456,7 @@ def check_primitive_quality(
 
     failed = [case for case in case_results if not case["ok"]]
     family_summaries = _family_summaries(case_results)
+    variant_summary = _variant_summary(case_results)
     anchor_kind_counts = _aggregated_anchor_kind_counts(case_results)
     return {
         "schema_version": 1,
@@ -3367,6 +3466,7 @@ def check_primitive_quality(
         "ok": bool(case_results) and not failed,
         "selected_case_ids": [case["id"] for case in case_results],
         "family_summaries": family_summaries,
+        "variant_summary": variant_summary,
         "anchor_kind_counts": anchor_kind_counts,
         "curve_anchor_kind_counts": {
             kind: anchor_kind_counts.get(kind, 0)
@@ -3378,6 +3478,8 @@ def check_primitive_quality(
             "filter": filter_pattern,
             "refine": refine,
             "refinement_iterations": refinement_iterations,
+            "variant_count": variant_count,
+            "variant_seed": variant_seed,
         },
         "cases": case_results,
     }
@@ -3392,6 +3494,8 @@ def write_primitive_quality_report(
     filter_pattern: str | None = None,
     refine: bool = False,
     refinement_iterations: int = 1,
+    variant_count: int = 0,
+    variant_seed: int = 1,
 ) -> dict[str, Any]:
     report = check_primitive_quality(
         output_dir=output_dir,
@@ -3399,6 +3503,8 @@ def write_primitive_quality_report(
         filter_pattern=filter_pattern,
         refine=refine,
         refinement_iterations=refinement_iterations,
+        variant_count=variant_count,
+        variant_seed=variant_seed,
     )
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -3421,6 +3527,7 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
         f"- Passed: {report.get('passed_count', 0)}",
         f"- Failed: {report.get('failed_count', 0)}",
         f"- OK: `{str(report.get('ok', False)).lower()}`",
+        f"- Variant cases: {report.get('variant_summary', {}).get('seeded', 0)}",
         "",
         "| Family | Cases | Passed | Failed |",
         "| --- | ---: | ---: | ---: |",
@@ -3519,6 +3626,14 @@ def _family_summaries(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return summaries
+
+
+def _variant_summary(cases: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for case in cases:
+        source = str(case.get("variant_source", "fixed"))
+        counts[source] = counts.get(source, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _run_case(
@@ -4039,6 +4154,7 @@ def _case_result(
         "id": spec.id,
         "family": _spec_family(spec),
         "variant": spec.variant,
+        "variant_source": spec.variant_source,
         "ok": not failure_details,
         "expected_kinds": list(spec.expected_kinds),
         "actual_kind": anchor.get("kind") if anchor is not None else None,

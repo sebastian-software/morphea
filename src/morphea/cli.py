@@ -291,6 +291,8 @@ PRIMITIVE_CHECK_CONFIG_KEYS = {
     "filter",
     "refine",
     "refinement_iterations",
+    "variant_count",
+    "variant_seed",
 }
 HARVEST_DEFAULT_CONFIG = {
     "run_root": None,
@@ -983,6 +985,18 @@ def main(argv: list[str] | None = None) -> None:
         help="Run the local structure-preserving refinement gate for selected cases.",
     )
     primitive_check.add_argument("--refinement-iterations", type=int, default=None)
+    primitive_check.add_argument(
+        "--variant-count",
+        type=int,
+        default=None,
+        help="Append this many deterministic seeded primitive variants.",
+    )
+    primitive_check.add_argument(
+        "--variant-seed",
+        type=int,
+        default=None,
+        help="Seed for deterministic primitive variants; defaults to 1.",
+    )
     primitive_check.add_argument(
         "--baseline",
         nargs="?",
@@ -1896,6 +1910,8 @@ def main(argv: list[str] | None = None) -> None:
             refinement_iterations=int(
                 primitive_config.get("refinement_iterations", 1)
             ),
+            variant_count=int(primitive_config.get("variant_count", 0)),
+            variant_seed=int(primitive_config.get("variant_seed", 1)),
         )
         print(
             "checked "
@@ -1905,7 +1921,9 @@ def main(argv: list[str] | None = None) -> None:
         if not result["ok"]:
             raise SystemExit(1)
         selection_active = bool(
-            primitive_config.get("case") or primitive_config.get("filter")
+            primitive_config.get("case")
+            or primitive_config.get("filter")
+            or primitive_config.get("variant_count")
         )
         if args.update_baseline is not None:
             if selection_active:
@@ -3114,6 +3132,10 @@ def _resolved_primitive_check_config(args: argparse.Namespace) -> dict[str, obje
         config["refine"] = args.refine
     if args.refinement_iterations is not None:
         config["refinement_iterations"] = args.refinement_iterations
+    if args.variant_count is not None:
+        config["variant_count"] = args.variant_count
+    if args.variant_seed is not None:
+        config["variant_seed"] = args.variant_seed
     _require_config_paths(config, ("output",), "primitive-check")
     for key in ("output", "output_dir", "markdown"):
         if config.get(key) is not None:
@@ -3124,6 +3146,12 @@ def _resolved_primitive_check_config(args: argparse.Namespace) -> dict[str, obje
         config["case"] = []
     if config.get("refinement_iterations") is None:
         config["refinement_iterations"] = 1
+    if config.get("variant_count") is None:
+        config["variant_count"] = 0
+    if config.get("variant_seed") is None:
+        config["variant_seed"] = 1
+    config["variant_count"] = int(config["variant_count"])
+    config["variant_seed"] = int(config["variant_seed"])
     return config
 
 

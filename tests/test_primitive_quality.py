@@ -11,6 +11,7 @@ from PIL import Image
 from morphea.cli import main
 from morphea.primitive_quality import (
     check_primitive_quality,
+    primitive_variant_specs,
     primitive_specs,
     render_primitive_quality_markdown,
 )
@@ -31,6 +32,8 @@ class PrimitiveQualityTests(unittest.TestCase):
                     "filter": None,
                     "refine": False,
                     "refinement_iterations": 1,
+                    "variant_count": 0,
+                    "variant_seed": 1,
                 },
             )
             actual_kinds = {
@@ -47,6 +50,7 @@ class PrimitiveQualityTests(unittest.TestCase):
                 case_dir = root / case["id"]
                 self.assertIn("family", case)
                 self.assertIn("variant", case)
+                self.assertIn("variant_source", case)
                 self.assertIn("geometry_diff", case)
                 self.assertIn("failure_categories", case)
                 self.assertIn("failure_details", case)
@@ -54,6 +58,51 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertTrue((case_dir / "output.svg").exists())
                 self.assertTrue((case_dir / "manifest.json").exists())
                 self.assertTrue((case_dir / "preview.png").exists())
+
+    def test_primitive_quality_harness_adds_seeded_variants(self):
+        report = check_primitive_quality(
+            variant_count=6,
+            variant_seed=11,
+            filter_pattern="variant_*",
+        )
+
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["case_count"], 6)
+        self.assertEqual(report["failed_count"], 0)
+        self.assertEqual(
+            report["selected_case_ids"],
+            [
+                "variant_filled_square_11_0000",
+                "variant_filled_rectangle_11_0001",
+                "variant_filled_circle_11_0002",
+                "variant_horizontal_stroke_11_0003",
+                "variant_vertical_stroke_11_0004",
+                "variant_simple_quad_11_0005",
+            ],
+        )
+        self.assertEqual(report["variant_summary"], {"seeded": 6})
+        self.assertEqual(report["selection"]["variant_count"], 6)
+        self.assertEqual(report["selection"]["variant_seed"], 11)
+        self.assertEqual(
+            {case["variant_source"] for case in report["cases"]},
+            {"seeded"},
+        )
+
+    def test_primitive_variant_specs_are_seed_stable(self):
+        first = primitive_variant_specs(count=4, seed=7)
+        second = primitive_variant_specs(count=4, seed=7)
+        different = primitive_variant_specs(count=4, seed=8)
+
+        self.assertEqual([spec.id for spec in first], [spec.id for spec in second])
+        self.assertEqual(
+            [spec.geometry for spec in first],
+            [spec.geometry for spec in second],
+        )
+        self.assertNotEqual(
+            [spec.geometry for spec in first],
+            [spec.geometry for spec in different],
+        )
+        self.assertEqual({spec.variant_source for spec in first}, {"seeded"})
 
     def test_primitive_quality_report_counts_anchor_kinds(self):
         report = check_primitive_quality(
@@ -403,6 +452,8 @@ class PrimitiveQualityTests(unittest.TestCase):
                 "filter": None,
                 "refine": False,
                 "refinement_iterations": 1,
+                "variant_count": 0,
+                "variant_seed": 1,
             },
         )
 
@@ -789,6 +840,62 @@ class PrimitiveQualityTests(unittest.TestCase):
             self.assertEqual(report["case_count"], 1)
             self.assertEqual(report["selection"]["cases"], ["filled_square"])
             self.assertTrue(markdown.exists())
+
+    def test_primitive_check_cli_accepts_seeded_variants(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "primitive-report.json"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "primitive-check",
+                        "-o",
+                        str(output),
+                        "--variant-count",
+                        "3",
+                        "--variant-seed",
+                        "13",
+                        "--filter",
+                        "variant_*",
+                    ]
+                )
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertTrue(report["ok"])
+            self.assertEqual(report["case_count"], 3)
+            self.assertEqual(report["variant_summary"], {"seeded": 3})
+            self.assertEqual(report["selection"]["variant_count"], 3)
+            self.assertEqual(report["selection"]["variant_seed"], 13)
+
+    def test_primitive_check_config_accepts_seeded_variants(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            output = root / "primitive-report.json"
+            config = root / "primitive-check.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "output": str(output),
+                        "filter": "variant_*",
+                        "variant_count": 2,
+                        "variant_seed": 5,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()):
+                main(["primitive-check", "--config", str(config)])
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                report["selected_case_ids"],
+                [
+                    "variant_filled_square_5_0000",
+                    "variant_filled_rectangle_5_0001",
+                ],
+            )
+            self.assertEqual(report["selection"]["variant_count"], 2)
 
 
 def _svg_rects(path: Path) -> list[dict[str, float]]:

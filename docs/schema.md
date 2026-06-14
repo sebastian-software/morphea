@@ -263,14 +263,20 @@ Top-level fields:
 - `ok`
 - `selected_case_ids`: ids selected by `--case`/`--filter`
 - `family_summaries`: pass/fail counts grouped by fixture family
-- `selection`: requested case ids and filter pattern
-- `cases`: fixed primitive fixture results
+- `variant_summary`: selected case counts by `variant_source`, currently
+  `fixed` and opt-in deterministic `seeded`
+- `selection`: requested case ids, filter pattern, refinement settings, and
+  seeded variant settings
+- `cases`: fixed primitive fixture results plus any explicitly requested
+  seeded variant results
 
 Each case records:
 
 - `id`
 - `family`
 - `variant`
+- `variant_source`: `fixed` for built-in hand-authored fixtures or `seeded`
+  for opt-in deterministic variant fixtures
 - `expected_kinds`
 - `actual_kind`
 - `anchor_count`
@@ -299,7 +305,9 @@ Each case records:
 The built-in fixture set covers filled square, filled rectangle, filled circle,
 horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a
 simple quad. These cases are intentionally boring and should stay stricter than
-the curated real-image suite.
+the curated real-image suite. `primitive-check --variant-count N` appends
+seeded variants for simple square, rectangle, circle, stroke, and quad families
+without changing the default full fixed-fixture run.
 
 ## Primitive Gallery Site v1
 
@@ -334,6 +342,9 @@ Supported fields:
   primitive cases
 - `refinement_iterations`: optional local refinement iteration count; defaults
   to `1`
+- `variant_count`: optional count of deterministic seeded variant fixtures to
+  append; defaults to `0`
+- `variant_seed`: optional integer seed for generated variants; defaults to `1`
 
 CLI arguments override values loaded from the config file.
 
