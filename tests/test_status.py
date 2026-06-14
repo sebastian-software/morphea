@@ -131,6 +131,61 @@ class RuntimeStatusTests(unittest.TestCase):
                 result["blocked_capabilities"],
             )
 
+    def test_collect_runtime_status_treats_mlx_sam_package_adapter_as_available(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_path = root / "sam.safetensors"
+            model_path.write_text("placeholder", encoding="utf-8")
+
+            with (
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=True),
+                patch(
+                    "morphea.segmenters.is_mlx_sam_package_available",
+                    return_value=True,
+                ),
+                patch(
+                    "morphea.status.mlx_classifier_runtime_status",
+                    return_value={
+                        "backend": "mlx",
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                    },
+                ),
+                patch(
+                    "morphea.status.available_refinement_backends",
+                    return_value={
+                        "local": ["local_metric"],
+                        "optional": [],
+                        "details": {
+                            "local_metric": {
+                                "backend_available": True,
+                                "status": "available",
+                                "reason": None,
+                            },
+                        },
+                    },
+                ),
+            ):
+                result = collect_runtime_status(mlx_sam_model_path=model_path)
+
+            mlx_sam = result["segmenters"]["mlx_sam"]
+            self.assertEqual(mlx_sam["status"], "mlx_sam_package_available")
+            self.assertTrue(mlx_sam["backend_available"])
+            self.assertEqual(mlx_sam["adapter"], "mlx_sam_grid_points")
+            self.assertEqual(result["blocked_backends"], [])
+            self.assertNotIn(
+                {
+                    "area": "segmenter",
+                    "backend": "mlx_sam",
+                    "capability": "live_sam_model_adapter",
+                    "status": "available",
+                    "available": True,
+                    "reason": None,
+                },
+                result["blocked_capabilities"],
+            )
+
     def test_runtime_status_markdown_summarizes_backends(self):
         markdown = render_runtime_status_markdown(
             {

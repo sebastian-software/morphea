@@ -665,7 +665,10 @@ Implemented so far:
   `MlxSamSegmenter` can run bounded grid-point prompts and convert positive
   live SAM masks into the same proposal schema and geometry gate.
 - `morphea segment --segmenter mlx_sam` exposes the explicit not-configured path
-  until the local MLX/SAM runtime is installed
+  until the local MLX/SAM runtime is installed and a checkpoint is configured.
+- `morphea status` treats the `mlx_sam_package_available` adapter state as an
+  available backend state, so a configured MLX/SAM package adapter is not
+  reported as blocked merely because its status name is adapter-specific.
 
 ## M7: Primitive Classifier Training
 
@@ -1191,9 +1194,9 @@ Implemented so far:
   availability/blockers
 - `morphea status --config status.json` for repeatable runtime/backend
   availability checks
-- `morphea status` reports blocked backend capabilities such as the live MLX SAM
-  adapter and end-to-end MLX attention training separately from installed
-  package status
+- `morphea status` reports blocked backend capabilities such as missing MLX SAM
+  checkpoints or optional end-to-end MLX training pieces separately from
+  installed package status
 - `morphea curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
 - `morphea promotion-review-run suite.json --output-dir review-run` for a

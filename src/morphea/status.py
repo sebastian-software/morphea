@@ -15,7 +15,12 @@ from morphea.segmenters import (
 )
 
 
-AVAILABLE_STATUSES = {"available", "json_adapter_available", "trained"}
+AVAILABLE_STATUSES = {
+    "available",
+    "json_adapter_available",
+    "mlx_sam_package_available",
+    "trained",
+}
 
 
 def collect_runtime_status(
