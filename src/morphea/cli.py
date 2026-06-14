@@ -2598,6 +2598,8 @@ def _resolved_compare_segments_config(args: argparse.Namespace) -> dict[str, Pat
 def _compare_segments_stdout_summary(result: dict[str, object]) -> str:
     assessment = result.get("source_delta_assessment")
     assessment = assessment if isinstance(assessment, dict) else {}
+    spatial_summary = result.get("spatial_match_summary")
+    spatial_summary = spatial_summary if isinstance(spatial_summary, dict) else {}
     return (
         "compared segment sources "
         f"{result.get('before_source', 'n/a')} -> {result.get('after_source', 'n/a')}: "
@@ -2606,6 +2608,7 @@ def _compare_segments_stdout_summary(result: dict[str, object]) -> str:
         f"(delta {result.get('proposal_count_delta', 0)}), "
         f"shared={result.get('shared_proposal_count', 0)}, "
         f"spatial_matches={result.get('spatial_match_count', 0)}, "
+        f"spatial_mean_iou={spatial_summary.get('mean_bbox_iou', 'n/a')}, "
         f"verdict={assessment.get('verdict', 'n/a')}, "
         f"green_delta={assessment.get('green_promotion_delta', 'n/a')}, "
         f"red_delta={assessment.get('red_candidate_delta', 'n/a')}, "

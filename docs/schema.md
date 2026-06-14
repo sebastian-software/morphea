@@ -1884,6 +1884,8 @@ Top-level fields:
 - `spatial_match_count`: number of greedy one-to-one proposal matches with
   bbox IoU at or above `spatial_match_min_iou`
 - `spatial_match_min_iou`: current spatial matching threshold, default `0.5`
+- `spatial_match_summary`: count, mean/min/max bbox IoU, downstream transition
+  counts, and anchor-kind transition counts for spatial matches
 - `spatial_matches`: matched before/after proposal ids, bounds, bbox IoU,
   downstream status, and anchor kind
 - `added_ids`
@@ -1903,12 +1905,13 @@ Top-level fields:
 
 `morphea compare-segments --markdown comparison.md` writes a scan-friendly
 Markdown summary with Source Assessment, Source Summaries, Promotion Proxy
-Deltas, Source Deltas, and Spatial Proposal Matches tables for comparing
-flat-color and MLX/SAM proposal outputs or for comparing gated and ungated
-segment configs. The CLI stdout summarizes the same source-level evidence with
-before/after sources, proposal counts, shared proposal count, spatial match
-count, verdict, and green/red/manual-review deltas, so side-by-side runs with
-different proposal id spaces do not look like empty comparisons.
+Deltas, Source Deltas, Spatial Match Summary, and Spatial Proposal Matches
+tables for comparing flat-color and MLX/SAM proposal outputs or for comparing
+gated and ungated segment configs. The CLI stdout summarizes the same
+source-level evidence with before/after sources, proposal counts, shared
+proposal count, spatial match count, mean spatial IoU, verdict, and
+green/red/manual-review deltas, so side-by-side runs with different proposal id
+spaces do not look like empty comparisons.
 
 ## Segment Comparison Config v1
 

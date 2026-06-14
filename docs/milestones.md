@@ -661,6 +661,9 @@ Implemented so far:
 - segment comparisons also report greedy spatial proposal matches by bbox IoU,
   so Flat-Color and MLX/SAM runs can show overlapping regions even when their
   proposal ids never intersect.
+- segment comparisons summarize spatial matches with mean/min/max IoU and
+  downstream/anchor transition counts, making prompt-strategy runs comparable
+  without opening every raw match row.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

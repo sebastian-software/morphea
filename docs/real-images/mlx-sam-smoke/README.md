@@ -43,13 +43,15 @@ Flat-Color produces 41 proposals with 29 geometry-gate accepted proposals; the
 tiny 4-prompt MLX/SAM run produces 4 proposals, all accepted. The comparison
 verdict is `noise`, not `improved`, because the green promotion proxy drops
 from 29 to 4. The comparison currently reports `spatial_matches=3`, which is
-useful overlap evidence but not enough to call the source improved. Treat this
-as runtime evidence and a prompt/config baseline. The MLX/SAM config includes
+useful overlap evidence but not enough to call the source improved; the current
+mean spatial IoU for those matches is `0.953309`. Treat this as runtime
+evidence and a prompt/config baseline. The MLX/SAM config includes
 `max_component_area: 12000` so oversized AI masks are deferred before geometry
 gating rather than being promoted as coarse primitive anchors.
 
 The optional `flat_color_centers` smoke is a prompt-strategy experiment. It is
 expected to improve overlap evidence relative to blind grid prompting. The
-current local run produces 16 proposals and `spatial_matches=16`, but the
-comparison verdict remains `noise` with `green_delta=-20.0`; this is better
-evidence for prompt placement, not yet a promotable quality improvement.
+current local run produces 16 proposals, `spatial_matches=16`, and mean
+spatial IoU `0.902292`, but the comparison verdict remains `noise` with
+`green_delta=-20.0` and 7 accepted-to-rejected spatial transitions; this is
+better evidence for prompt placement, not yet a promotable quality improvement.

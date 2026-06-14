@@ -234,11 +234,25 @@ class SnapshotComparisonTests(unittest.TestCase):
         self.assertEqual(comparison["shared_proposal_count"], 0)
         self.assertEqual(comparison["spatial_match_count"], 1)
         self.assertEqual(comparison["spatial_match_min_iou"], 0.5)
+        self.assertEqual(comparison["spatial_match_summary"]["count"], 1)
+        self.assertGreater(
+            comparison["spatial_match_summary"]["mean_bbox_iou"],
+            0.7,
+        )
+        self.assertEqual(
+            comparison["spatial_match_summary"]["downstream_transition_counts"],
+            {"accepted -> accepted": 1},
+        )
+        self.assertEqual(
+            comparison["spatial_match_summary"]["anchor_transition_counts"],
+            {"rect -> rect": 1},
+        )
         match = comparison["spatial_matches"][0]
         self.assertEqual(match["before_id"], "flat_color-0000")
         self.assertEqual(match["after_id"], "mlx_sam-0000")
         self.assertGreater(match["bbox_iou"], 0.7)
         markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn("Spatial Match Summary", markdown)
         self.assertIn("Spatial Proposal Matches", markdown)
         self.assertIn("`flat_color-0000`", markdown)
         self.assertIn("`mlx_sam-0000`", markdown)
@@ -617,6 +631,7 @@ class SnapshotComparisonTests(unittest.TestCase):
             )
             self.assertIn("proposals 1 -> 1 (delta 0)", rendered_stdout)
             self.assertIn("shared=1", rendered_stdout)
+            self.assertIn("spatial_mean_iou=", rendered_stdout)
             self.assertIn("verdict=improved", rendered_stdout)
             self.assertIn("green_delta=1.0", rendered_stdout)
             self.assertIn("manual_delta=-1.0", rendered_stdout)

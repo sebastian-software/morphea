@@ -101,9 +101,9 @@ To test the Flat-Color-guided prompt strategy, run the optional guided config:
 ```
 
 The current guided smoke produces 16 MLX/SAM proposals and 16 spatial matches
-against the Flat-Color baseline, but still reports `verdict=noise` with
-`green_delta=-20.0`. Treat it as better prompt-placement evidence, not as a
-promotion-quality pass.
+against the Flat-Color baseline with mean spatial IoU `0.902292`, but still
+reports `verdict=noise` with `green_delta=-20.0`. Treat it as better
+prompt-placement evidence, not as a promotion-quality pass.
 
 The equivalent expanded commands are:
 
@@ -160,7 +160,8 @@ as runtime evidence and a prompt/config baseline, not as quality evidence.
 With source-coordinate proposal bounds, the comparison currently reports
 `spatial_matches=3`: two accepted Flat-Color regions match accepted MLX/SAM
 regions, while one rejected Flat-Color region overlaps an accepted MLX/SAM
-region and remains review evidence rather than a promotion claim.
+region and remains review evidence rather than a promotion claim. The current
+mean spatial IoU for those three matches is `0.953309`.
 The MLX/SAM config carries `max_component_area: 12000`, so larger prompt
 sweeps cannot turn huge image-spanning masks into accepted primitive anchors
 just because they fit a coarse circle or rounded rectangle.

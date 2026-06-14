@@ -186,6 +186,7 @@ def render_segment_manifest_comparison(
         if changes:
             group_changes.append({"id": group_id, "changes": changes})
     spatial_matches = _spatial_proposal_matches(before_proposals, after_proposals)
+    spatial_match_summary = _spatial_match_summary(spatial_matches)
 
     return {
         "schema_version": 1,
@@ -205,6 +206,7 @@ def render_segment_manifest_comparison(
         "shared_proposal_count": len(shared_ids),
         "spatial_match_count": len(spatial_matches),
         "spatial_match_min_iou": SEGMENT_SPATIAL_MATCH_MIN_IOU,
+        "spatial_match_summary": spatial_match_summary,
         "spatial_matches": spatial_matches,
         "added_ids": sorted(set(after_proposals) - set(before_proposals)),
         "removed_ids": sorted(set(before_proposals) - set(after_proposals)),
@@ -227,6 +229,7 @@ def render_segment_manifest_comparison(
 def render_segment_manifest_comparison_markdown(
     comparison: dict[str, Any],
 ) -> str:
+    spatial_summary = _dict_value(comparison.get("spatial_match_summary"))
     lines = [
         "# Morphēa Segment Manifest Comparison",
         "",
@@ -238,6 +241,8 @@ def render_segment_manifest_comparison_markdown(
         f"- Proposal count delta: `{comparison.get('proposal_count_delta', 0)}`",
         f"- Shared proposals: `{comparison.get('shared_proposal_count', 0)}`",
         f"- Spatial matches: `{comparison.get('spatial_match_count', 0)}`",
+        "- Spatial mean IoU: "
+        f"`{_fmt(spatial_summary.get('mean_bbox_iou'))}`",
         f"- Added: {_id_list(comparison.get('added_ids', []))}",
         f"- Removed: {_id_list(comparison.get('removed_ids', []))}",
         f"- Shared groups: `{comparison.get('shared_group_count', 0)}`",
@@ -398,6 +403,23 @@ def render_segment_manifest_comparison_markdown(
             )
     if change_count == 0:
         lines.append("| n/a | n/a | n/a | n/a |")
+
+    lines.extend(["", "## Spatial Match Summary", ""])
+    lines.extend(
+        [
+            "| Matches | Mean IoU | Min IoU | Max IoU | Downstream transitions | Anchor transitions |",
+            "| ---: | ---: | ---: | ---: | --- | --- |",
+            (
+                "| "
+                f"{_fmt(spatial_summary.get('count'))} | "
+                f"{_fmt(spatial_summary.get('mean_bbox_iou'))} | "
+                f"{_fmt(spatial_summary.get('min_bbox_iou'))} | "
+                f"{_fmt(spatial_summary.get('max_bbox_iou'))} | "
+                f"{_count_cell(spatial_summary.get('downstream_transition_counts'))} | "
+                f"{_count_cell(spatial_summary.get('anchor_transition_counts'))} |"
+            ),
+        ]
+    )
 
     lines.extend(["", "## Spatial Proposal Matches", ""])
     lines.extend(
@@ -903,6 +925,46 @@ def _spatial_proposal_matches(
         used_before.add(before_id)
         used_after.add(after_id)
     return matches
+
+
+def _spatial_match_summary(matches: list[dict[str, Any]]) -> dict[str, Any]:
+    ious = [float(match.get("bbox_iou", 0.0)) for match in matches]
+    return {
+        "count": len(matches),
+        "mean_bbox_iou": (
+            round(sum(ious) / len(ious), 6)
+            if ious
+            else None
+        ),
+        "min_bbox_iou": round(min(ious), 6) if ious else None,
+        "max_bbox_iou": round(max(ious), 6) if ious else None,
+        "downstream_transition_counts": _value_counts(
+            _match_transition(
+                match.get("before_downstream_status"),
+                match.get("after_downstream_status"),
+            )
+            for match in matches
+        ),
+        "anchor_transition_counts": _value_counts(
+            _match_transition(
+                match.get("before_anchor_kind"),
+                match.get("after_anchor_kind"),
+            )
+            for match in matches
+        ),
+    }
+
+
+def _match_transition(before: Any, after: Any) -> str:
+    return f"{before or 'n/a'} -> {after or 'n/a'}"
+
+
+def _value_counts(values: object) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _proposal_bounds(
