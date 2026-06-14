@@ -1567,6 +1567,14 @@ Top-level fields:
   resolved regression counts
 - `suite_family_baseline_snapshot`: optional snapshot-write status when
   `suite_family_baseline_output` is configured
+- `reviewed_label_loop_audit`: machine-readable RIP7 contract with
+  `schema_version`, `ok`, suite-level `checks`, aggregate coverage counts,
+  reviewed-label counts, pseudo-dataset sample counts, blocking acceptance
+  reasons, applied-review decision counts, and provenance-field counts. The
+  checks cover accepted-only pseudo datasets, pseudo manifest artifacts,
+  provenance summary records, training gate records, acceptance-gate consistency,
+  model-acceptance discipline, suite-family validation records, baseline update
+  review evidence, and MLX raster pseudo-label minimums.
 
 `morphea self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label

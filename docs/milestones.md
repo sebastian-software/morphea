@@ -1014,6 +1014,11 @@ Implemented so far:
 - MLX self-learning can require `min_mlx_raster_pseudo_examples`, blocking
   acceptance with `mlx_raster_pseudo_examples_below_min` when reviewed pseudo
   labels have not actually trained raster-token components.
+- self-learning cycle reports include `reviewed_label_loop_audit`, a
+  machine-readable RIP7 block for accepted-only pseudo datasets, pseudo manifest
+  artifacts, provenance summaries, training/acceptance gates, model-acceptance
+  discipline, suite-family validation, baseline review evidence, and MLX raster
+  pseudo-label minimums.
 
 Remaining:
 

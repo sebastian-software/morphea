@@ -36,6 +36,16 @@ HARVEST_FILTER_DEFAULTS = {
     "max_anchor_quality_error": 1.0,
     "require_applied_review": False,
 }
+SELF_LEARNING_GATE_DECISIONS = {"accept", "manual_review", "reject"}
+SELF_LEARNING_FAMILY_VALIDATION_SUITES = ("primitive", "real_image", "lucide")
+SELF_LEARNING_BASELINE_SNAPSHOT_STATUSES = {
+    "not_configured",
+    "skipped_not_accepted",
+    "skipped_missing_review_evidence",
+    "skipped_existing_output_requires_matching_baseline",
+    "skipped_coverage_regression",
+    "written",
+}
 
 
 def harvest_pseudo_labels(
@@ -1125,6 +1135,7 @@ def run_self_learning_cycle(
         "suite_family_baseline_comparison": suite_family_baseline_comparison,
         "suite_family_baseline_snapshot": suite_family_baseline_snapshot,
     }
+    result["reviewed_label_loop_audit"] = _reviewed_label_loop_audit(result)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text(
         render_self_learning_cycle_markdown(result),
@@ -1885,6 +1896,350 @@ def _model_training_source_summary(
     return {}
 
 
+def _reviewed_label_loop_audit(result: dict[str, object]) -> dict[str, object]:
+    reviewed = _json_object_from_path(result.get("reviewed_labels"))
+    dataset_path = _cycle_artifact_path(result, "pseudo_dataset")
+    dataset = _json_object_from_path(dataset_path)
+    comparison = _json_object_from_path(_cycle_artifact_path(result, "comparison"))
+    gate_artifact = _json_object_from_path(_cycle_artifact_path(result, "gate"))
+    accepted_labels = _object_list(reviewed.get("accepted") if reviewed else None)
+    rejected_labels = _object_list(reviewed.get("rejected") if reviewed else None)
+    pending_labels = _object_list(reviewed.get("pending") if reviewed else None)
+    samples = _object_list(dataset.get("samples") if dataset else None)
+    checks = {
+        "reviewed_label_source": reviewed is not None
+        and isinstance(reviewed.get("accepted"), list),
+        "accepted_label_only_dataset": _accepted_label_only_dataset(
+            reviewed,
+            dataset,
+        ),
+        "pseudo_manifest_artifacts": _pseudo_manifest_artifacts_ok(
+            dataset,
+            dataset_path,
+        ),
+        "provenance_summary_records": _provenance_summary_records_ok(
+            result,
+            dataset,
+        ),
+        "training_gate_records": _training_gate_records_ok(
+            result,
+            comparison,
+            gate_artifact,
+        ),
+        "acceptance_gate_records": _acceptance_gate_records_ok(result),
+        "model_acceptance_contract": _model_acceptance_contract_ok(result),
+        "suite_family_validation_records": _suite_family_validation_records_ok(result),
+        "baseline_review_records": _baseline_review_records_ok(result),
+        "mlx_raster_pseudo_gate": _mlx_raster_pseudo_gate_ok(result),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    reviewed_summary = {}
+    pseudo_dataset = result.get("pseudo_dataset")
+    if isinstance(pseudo_dataset, dict):
+        summary = pseudo_dataset.get("reviewed_label_summary")
+        if isinstance(summary, dict):
+            reviewed_summary = summary
+    acceptance_gate = result.get("acceptance_gate")
+    acceptance_gate = acceptance_gate if isinstance(acceptance_gate, dict) else {}
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "accepted_label_count": len(accepted_labels),
+            "rejected_label_count": len(rejected_labels),
+            "pending_label_count": len(pending_labels),
+            "pseudo_dataset_sample_count": len(samples),
+            "training_backend": result.get("training_backend", "centroid"),
+            "training_gate_decision": _dict_field(result.get("gate"), "decision"),
+            "cycle_accepted": result.get("accepted", False),
+            "blocking_acceptance_reasons": acceptance_gate.get(
+                "blocking_reasons",
+                [],
+            ),
+            "applied_review_decision_counts": reviewed_summary.get(
+                "applied_review_decision_counts",
+                {},
+            ),
+            "provenance_field_counts": reviewed_summary.get(
+                "provenance_field_counts",
+                {},
+            ),
+        },
+    }
+
+
+def _accepted_label_only_dataset(
+    reviewed: dict[str, object] | None,
+    dataset: dict[str, object] | None,
+) -> bool:
+    if not isinstance(reviewed, dict) or not isinstance(dataset, dict):
+        return False
+    accepted = _object_list(reviewed.get("accepted"))
+    samples = _object_list(dataset.get("samples"))
+    splits = dataset.get("splits")
+    if dataset.get("count") != len(samples):
+        return False
+    if not isinstance(splits, dict) or splits.get("train") != len(samples):
+        return False
+    if _int_value(splits.get("val")) != 0 or _int_value(splits.get("test")) != 0:
+        return False
+    if len(samples) != len(accepted):
+        return False
+    if any(sample.get("split") != "train" for sample in samples):
+        return False
+    return str(dataset.get("source_reviewed_labels", "")) != ""
+
+
+def _pseudo_manifest_artifacts_ok(
+    dataset: dict[str, object] | None,
+    dataset_path: Path | None,
+) -> bool:
+    if not isinstance(dataset, dict) or dataset_path is None:
+        return False
+    samples = _object_list(dataset.get("samples"))
+    base_dir = dataset_path.parent
+    for sample in samples:
+        manifest = sample.get("manifest")
+        if not isinstance(manifest, str) or not manifest:
+            return False
+        manifest_path = base_dir / manifest
+        if not manifest_path.exists():
+            return False
+        manifest_data = _json_object_from_path(manifest_path)
+        if not isinstance(manifest_data, dict):
+            return False
+        if manifest_data.get("schema_version") != 1:
+            return False
+        if manifest_data.get("anchor_count") != 1:
+            return False
+        if not isinstance(manifest_data.get("anchors"), list):
+            return False
+    return True
+
+
+def _provenance_summary_records_ok(
+    result: dict[str, object],
+    dataset: dict[str, object] | None,
+) -> bool:
+    pseudo_dataset = result.get("pseudo_dataset")
+    if not isinstance(pseudo_dataset, dict) or not isinstance(dataset, dict):
+        return False
+    summary = pseudo_dataset.get("reviewed_label_summary")
+    dataset_summary = dataset.get("reviewed_label_summary")
+    if not isinstance(summary, dict) or not isinstance(dataset_summary, dict):
+        return False
+    if summary.get("sample_count") != pseudo_dataset.get("count"):
+        return False
+    if dataset_summary.get("sample_count") != dataset.get("count"):
+        return False
+    return isinstance(summary.get("provenance_field_counts"), dict) and isinstance(
+        summary.get("applied_review_decision_counts"),
+        dict,
+    )
+
+
+def _training_gate_records_ok(
+    result: dict[str, object],
+    comparison: dict[str, object] | None,
+    gate_artifact: dict[str, object] | None,
+) -> bool:
+    gate = result.get("gate")
+    comparison_summary = result.get("comparison_summary")
+    artifacts = result.get("artifacts")
+    if not isinstance(gate, dict) or not isinstance(comparison_summary, dict):
+        return False
+    if gate.get("decision") not in SELF_LEARNING_GATE_DECISIONS:
+        return False
+    if not isinstance(gate.get("accepted"), bool):
+        return False
+    if not isinstance(gate.get("reasons"), list):
+        return False
+    if not isinstance(comparison, dict) or not isinstance(gate_artifact, dict):
+        return False
+    if not isinstance(artifacts, dict):
+        return False
+    for key in ("comparison_markdown", "gate_markdown"):
+        path = _path_from_value(artifacts.get(key))
+        if path is None or not path.exists():
+            return False
+    return comparison_summary.get("status") in {
+        "improved",
+        "unchanged",
+        "mixed",
+        "regressed",
+        "insufficient",
+    }
+
+
+def _acceptance_gate_records_ok(result: dict[str, object]) -> bool:
+    acceptance_gate = result.get("acceptance_gate")
+    if not isinstance(acceptance_gate, dict):
+        return False
+    if not isinstance(result.get("accepted"), bool):
+        return False
+    if acceptance_gate.get("accepted") is not result.get("accepted"):
+        return False
+    reasons = acceptance_gate.get("reasons")
+    blocking = acceptance_gate.get("blocking_reasons")
+    if not isinstance(reasons, list) or not isinstance(blocking, list):
+        return False
+    return bool(blocking) is (result.get("accepted") is False)
+
+
+def _model_acceptance_contract_ok(result: dict[str, object]) -> bool:
+    gate = result.get("gate")
+    gate = gate if isinstance(gate, dict) else {}
+    model = result.get("model")
+    artifacts = result.get("artifacts")
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    model_path = _path_from_value(artifacts.get("model"))
+    gate_accepted = gate.get("accepted") is True
+    cycle_accepted = result.get("accepted") is True
+    if cycle_accepted:
+        return (
+            gate_accepted
+            and isinstance(model, dict)
+            and result.get("status") == "retrained"
+            and model_path is not None
+            and model_path.exists()
+        )
+    if not gate_accepted:
+        return result.get("status") == "skipped_retrain" and model is None
+    return isinstance(model, dict) and result.get("status") == "retrained"
+
+
+def _suite_family_validation_records_ok(result: dict[str, object]) -> bool:
+    validation = result.get("suite_family_validation")
+    if not isinstance(validation, dict):
+        return False
+    for suite_name in SELF_LEARNING_FAMILY_VALIDATION_SUITES:
+        suite = validation.get(suite_name)
+        if not isinstance(suite, dict):
+            return False
+        if not isinstance(suite.get("status"), str):
+            return False
+        if suite.get("ok") is not None and not isinstance(suite.get("ok"), bool):
+            return False
+        families = suite.get("families")
+        if not isinstance(families, list):
+            return False
+        for family in families:
+            if not isinstance(family, dict):
+                return False
+            if not isinstance(family.get("family"), str):
+                return False
+            if not isinstance(family.get("outcome"), str):
+                return False
+    comparison = result.get("suite_family_baseline_comparison")
+    if comparison is None:
+        return True
+    if not isinstance(comparison, dict):
+        return False
+    if comparison.get("status") != "checked":
+        return False
+    if not isinstance(comparison.get("ok"), bool):
+        return False
+    return isinstance(comparison.get("comparisons"), list)
+
+
+def _baseline_review_records_ok(result: dict[str, object]) -> bool:
+    snapshot = result.get("suite_family_baseline_snapshot")
+    if not isinstance(snapshot, dict):
+        return False
+    status = snapshot.get("status")
+    if status not in SELF_LEARNING_BASELINE_SNAPSHOT_STATUSES:
+        return False
+    if status == "written":
+        output = _path_from_value(snapshot.get("output"))
+        if output is None or not output.exists():
+            return False
+        review = snapshot.get("review")
+        if not isinstance(review, dict):
+            return False
+        if not _non_empty_string(review.get("reviewer")):
+            return False
+        if not _non_empty_string(review.get("reason")):
+            return False
+        return _non_empty_string(snapshot.get("changelog"))
+    if status == "skipped_missing_review_evidence":
+        return isinstance(snapshot.get("missing_review_fields"), list)
+    if status == "skipped_coverage_regression":
+        return isinstance(snapshot.get("coverage_regressions"), list)
+    return True
+
+
+def _mlx_raster_pseudo_gate_ok(result: dict[str, object]) -> bool:
+    if result.get("training_backend") != "mlx":
+        return True
+    acceptance_gate = result.get("acceptance_gate")
+    acceptance_gate = acceptance_gate if isinstance(acceptance_gate, dict) else {}
+    configured_min = result.get("min_mlx_raster_pseudo_examples")
+    if acceptance_gate.get("min_mlx_raster_pseudo_examples") != configured_min:
+        return False
+    if not isinstance(configured_min, int) or configured_min <= 0:
+        return True
+    model = result.get("model")
+    source_summary = _model_training_source_summary(
+        model if isinstance(model, dict) else None
+    )
+    raster_count = source_summary.get("raster_pseudo_train_examples")
+    if isinstance(raster_count, int) and raster_count >= configured_min:
+        return True
+    blocking = acceptance_gate.get("blocking_reasons")
+    return (
+        isinstance(blocking, list)
+        and "mlx_raster_pseudo_examples_below_min" in blocking
+    )
+
+
+def _cycle_artifact_path(result: dict[str, object], key: str) -> Path | None:
+    artifacts = result.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return None
+    return _path_from_value(artifacts.get(key))
+
+
+def _json_object_from_path(value: object) -> dict[str, object] | None:
+    path = _path_from_value(value)
+    if path is None or not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _path_from_value(value: object) -> Path | None:
+    if isinstance(value, Path):
+        return value
+    if isinstance(value, str) and value:
+        return Path(value)
+    return None
+
+
+def _object_list(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _dict_field(value: object, key: str) -> object:
+    return value.get(key) if isinstance(value, dict) else None
+
+
+def _non_empty_string(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _int_value(value: object) -> int:
+    return int(value) if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
 def _blocking_acceptance_reasons(reasons: list[str]) -> list[str]:
     non_blocking = {
         "curated_validation_known_baseline_debt",
@@ -1928,6 +2283,30 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         f"- Best accuracy delta: {_fmt_metric(comparison.get('best_accuracy_delta'))}",
         f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
     ]
+    audit = result.get("reviewed_label_loop_audit")
+    if isinstance(audit, dict):
+        audit_summary = audit.get("summary", {})
+        audit_summary = audit_summary if isinstance(audit_summary, dict) else {}
+        lines.extend(
+            [
+                "",
+                "## RIP7 Reviewed Label Loop Audit",
+                "",
+                f"- Status: `{'pass' if audit.get('ok', False) else 'fail'}`",
+                f"- Covered checks: {_fmt_metric(audit_summary.get('covered_check_count'))} / {_fmt_metric(audit_summary.get('required_check_count'))}",
+                f"- Missing checks: {_format_reason_list(audit_summary.get('missing_checks'))}",
+                f"- Accepted labels: {_fmt_metric(audit_summary.get('accepted_label_count'))}",
+                f"- Pseudo dataset samples: {_fmt_metric(audit_summary.get('pseudo_dataset_sample_count'))}",
+                f"- Blocking acceptance reasons: {_format_reason_list(audit_summary.get('blocking_acceptance_reasons'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        checks = audit.get("checks", {})
+        if isinstance(checks, dict):
+            for name, covered in sorted(checks.items()):
+                lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
     model = result.get("model")
     if isinstance(model, dict):
         lines.extend(

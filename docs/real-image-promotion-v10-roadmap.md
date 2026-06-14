@@ -682,6 +682,14 @@ reviewed image-backed raster pseudo examples with
 `min_mlx_raster_pseudo_examples`, blocking acceptance with
 `mlx_raster_pseudo_examples_below_min` when the MLX model only learned from
 semantic pseudo labels.
+Current machine-readable evidence: `morphea self-learn` reports now include
+`reviewed_label_loop_audit` for RIP7 coverage. The audit checks that the
+trainable pseudo dataset is derived only from accepted reviewed labels, sample
+manifests exist, provenance summary records match the generated dataset, training
+gate and acceptance-gate records are consistent, model acceptance cannot bypass a
+rejected gate, suite-family validation/baseline records are present, baseline
+updates require review evidence, and MLX raster pseudo-label minimums are either
+met or explicitly block acceptance.
 
 Exit criteria:
 

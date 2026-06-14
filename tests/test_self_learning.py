@@ -28,6 +28,7 @@ from morphea.self_learning import (
     render_training_gate_markdown,
     render_training_comparison_markdown,
     run_self_learning_cycle,
+    _reviewed_label_loop_audit,
     retrain_centroid_classifier,
     retrain_mlx_classifier,
 )
@@ -2225,12 +2226,169 @@ class SelfLearningTests(unittest.TestCase):
             self.assertTrue((output_dir / "gate.md").exists())
             self.assertTrue((output_dir / "self-learning-cycle.json").exists())
             self.assertTrue((output_dir / "self-learning-cycle.md").exists())
+            self.assertTrue(result["reviewed_label_loop_audit"]["ok"])
+            self.assertEqual(
+                result["reviewed_label_loop_audit"]["summary"]["missing_checks"],
+                [],
+            )
+            self.assertEqual(
+                result["reviewed_label_loop_audit"]["summary"][
+                    "accepted_label_count"
+                ],
+                1,
+            )
+            self.assertEqual(
+                result["reviewed_label_loop_audit"]["summary"][
+                    "pseudo_dataset_sample_count"
+                ],
+                1,
+            )
+            cycle_report = json.loads(
+                (output_dir / "self-learning-cycle.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(cycle_report["reviewed_label_loop_audit"]["ok"])
+            self.assertIn(
+                "## RIP7 Reviewed Label Loop Audit",
+                (output_dir / "self-learning-cycle.md").read_text(encoding="utf-8"),
+            )
             if result["gate"]["accepted"]:
                 self.assertEqual(result["status"], "retrained")
                 self.assertTrue((output_dir / "model.json").exists())
             else:
                 self.assertEqual(result["status"], "skipped_retrain")
                 self.assertFalse((output_dir / "model.json").exists())
+
+    def test_reviewed_label_loop_audit_rejects_bypassed_training_gate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            reviewed = root / "reviewed.json"
+            dataset_dir = root / "pseudo-dataset"
+            train_dir = dataset_dir / "train"
+            train_dir.mkdir(parents=True)
+            reviewed.write_text(
+                json.dumps(
+                    {
+                        "accepted": [
+                            {
+                                "kind": "circle",
+                                "anchor": {"kind": "circle"},
+                            }
+                        ],
+                        "rejected": [],
+                        "pending": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (train_dir / "pseudo-00000.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "anchor_count": 1,
+                        "anchors": [{"kind": "circle"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            dataset = {
+                "count": 1,
+                "splits": {"train": 1, "val": 0, "test": 0},
+                "samples": [
+                    {
+                        "id": "pseudo-00000",
+                        "split": "train",
+                        "manifest": "train/pseudo-00000.json",
+                    }
+                ],
+                "reviewed_label_summary": {
+                    "sample_count": 1,
+                    "applied_review_decision_counts": {},
+                    "provenance_field_counts": {},
+                },
+                "source_reviewed_labels": str(reviewed),
+            }
+            (dataset_dir / "dataset.json").write_text(
+                json.dumps(dataset),
+                encoding="utf-8",
+            )
+            comparison = root / "comparison.json"
+            comparison.write_text(json.dumps({"schema_version": 1}), encoding="utf-8")
+            comparison_markdown = root / "comparison.md"
+            comparison_markdown.write_text("# comparison\n", encoding="utf-8")
+            gate = root / "gate.json"
+            gate.write_text(json.dumps({"decision": "reject"}), encoding="utf-8")
+            gate_markdown = root / "gate.md"
+            gate_markdown.write_text("# gate\n", encoding="utf-8")
+
+            audit = _reviewed_label_loop_audit(
+                {
+                    "status": "skipped_retrain",
+                    "accepted": True,
+                    "reviewed_labels": str(reviewed),
+                    "training_backend": "centroid",
+                    "min_mlx_raster_pseudo_examples": 0,
+                    "artifacts": {
+                        "pseudo_dataset": str(dataset_dir / "dataset.json"),
+                        "comparison": str(comparison),
+                        "comparison_markdown": str(comparison_markdown),
+                        "gate": str(gate),
+                        "gate_markdown": str(gate_markdown),
+                        "model": None,
+                    },
+                    "pseudo_dataset": {
+                        "count": 1,
+                        "splits": {"train": 1, "val": 0, "test": 0},
+                        "reviewed_label_summary": dataset[
+                            "reviewed_label_summary"
+                        ],
+                    },
+                    "comparison_summary": {
+                        "status": "regressed",
+                        "best_accuracy_delta": -0.1,
+                        "worst_accuracy_delta": -0.2,
+                    },
+                    "gate": {
+                        "decision": "reject",
+                        "accepted": False,
+                        "reasons": ["comparison_status_regressed"],
+                    },
+                    "acceptance_gate": {
+                        "accepted": True,
+                        "reasons": [],
+                        "blocking_reasons": [],
+                        "min_mlx_raster_pseudo_examples": 0,
+                    },
+                    "model": None,
+                    "suite_family_validation": {
+                        "primitive": {
+                            "status": "regressed",
+                            "ok": False,
+                            "families": [],
+                        },
+                        "real_image": {
+                            "status": "not_configured",
+                            "ok": None,
+                            "families": [],
+                        },
+                        "lucide": {
+                            "status": "not_configured",
+                            "ok": None,
+                            "families": [],
+                        },
+                    },
+                    "suite_family_baseline_comparison": None,
+                    "suite_family_baseline_snapshot": {
+                        "status": "not_configured",
+                        "output": None,
+                    },
+                }
+            )
+
+            self.assertFalse(audit["ok"])
+            self.assertIn(
+                "model_acceptance_contract",
+                audit["summary"]["missing_checks"],
+            )
 
     def test_self_learning_cycle_validates_accepted_model_on_curated_suite(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -3851,6 +4009,23 @@ class SelfLearningTests(unittest.TestCase):
                     "reasons": ["training_gate_not_accepted"],
                     "blocking_reasons": ["training_gate_not_accepted"],
                 },
+                "reviewed_label_loop_audit": {
+                    "ok": False,
+                    "checks": {
+                        "accepted_label_only_dataset": True,
+                        "model_acceptance_contract": False,
+                    },
+                    "summary": {
+                        "covered_check_count": 1,
+                        "required_check_count": 2,
+                        "missing_checks": ["model_acceptance_contract"],
+                        "accepted_label_count": 2,
+                        "pseudo_dataset_sample_count": 2,
+                        "blocking_acceptance_reasons": [
+                            "training_gate_not_accepted"
+                        ],
+                    },
+                },
                 "artifacts": {
                     "comparison": "comparison.json",
                     "gate": "gate.json",
@@ -3940,6 +4115,9 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("- Accepted: `False`", markdown)
         self.assertIn("`training_gate_not_accepted`", markdown)
         self.assertIn("- Blocking acceptance reasons: `training_gate_not_accepted`", markdown)
+        self.assertIn("## RIP7 Reviewed Label Loop Audit", markdown)
+        self.assertIn("- Status: `fail`", markdown)
+        self.assertIn("| `model_acceptance_contract` | `false` |", markdown)
         self.assertIn("- Applied review decisions: `accepted: 1`", markdown)
         self.assertIn("## Reviewed Labels", markdown)
         self.assertIn("- Issue counts: `fragmentation: 1`", markdown)

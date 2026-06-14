@@ -519,6 +519,13 @@ cycles can now set `min_mlx_raster_pseudo_examples` to require those reviewed
 image-backed pseudo labels before acceptance; otherwise the cycle is rejected
 with `mlx_raster_pseudo_examples_below_min`.
 
+Current machine-readable evidence: `self-learning-cycle.json` now carries
+`reviewed_label_loop_audit`, a RIP7 contract for accepted-only pseudo datasets,
+pseudo manifest artifacts, reviewed-label provenance summaries, training gate
+records, acceptance-gate consistency, model-acceptance discipline, suite-family
+validation/baseline records, baseline update review evidence, and MLX raster
+pseudo-label minimums.
+
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training
 gate summary, so a primitive-family regression can block model acceptance even
