@@ -419,6 +419,96 @@ class CliTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_promotion_review_harvest_cli_resolves_decision_choice(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            case_dir = run_root / "real-case"
+            case_dir.mkdir(parents=True)
+            manifest = case_dir / "manifest.json"
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                encoding="utf-8",
+            )
+            accepted_decision = root / "accepted.json"
+            accepted_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "accepted",
+                        "reviewer": "qa",
+                        "reason": "accepted by choice",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rejected_decision = root / "rejected.json"
+            rejected_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "rejected",
+                        "reviewer": "qa",
+                        "reason": "not selected",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {
+                                    "manifest": str(manifest),
+                                    "review_templates": {
+                                        "accepted": str(accepted_decision),
+                                        "rejected": str(rejected_decision),
+                                    },
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "review-harvest.json"
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        str(review_packet),
+                        "-o",
+                        str(output),
+                        "--run-root",
+                        str(run_root),
+                        "--decision-choice",
+                        "real-case=accepted",
+                    ]
+                )
+
+            self.assertIn("harvestable=1", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                result["newly_applied_decisions"][0]["decision"],
+                "accepted",
+            )
+            manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["source_review_decision"],
+                str(accepted_decision),
+            )
+
     def test_promotion_review_harvest_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -518,6 +608,105 @@ class CliTests(unittest.TestCase):
                 json.loads(harvest_config.read_text(encoding="utf-8"))[
                     "require_applied_review"
                 ]
+            )
+
+    def test_promotion_review_harvest_cli_resolves_config_decision_choice(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            case_dir = run_root / "real-case"
+            case_dir.mkdir(parents=True)
+            manifest = case_dir / "manifest.json"
+            manifest.write_text(
+                json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(manifest)},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            deferred_decision = root / "deferred.json"
+            deferred_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "deferred",
+                        "reviewer": "qa",
+                        "reason": "defer from config choice",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            accepted_decision = root / "accepted.json"
+            accepted_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "accepted",
+                        "reviewer": "qa",
+                        "reason": "accepted override choice",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "configured-review-harvest.json"
+            config = root / "promotion-review-harvest.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "review_packet": str(review_packet),
+                        "output": str(output),
+                        "run_root": str(run_root),
+                        "decision_choices": {"real-case": "deferred"},
+                        "decision_templates": {
+                            "real-case": {
+                                "accepted": str(accepted_decision),
+                                "deferred": str(deferred_decision),
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        "--config",
+                        str(config),
+                        "--decision-choice",
+                        "real-case=accepted",
+                    ]
+                )
+
+            self.assertIn("harvestable=1", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                result["newly_applied_decisions"][0]["decision"],
+                "accepted",
+            )
+            manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["source_review_decision"],
+                str(accepted_decision),
             )
 
     def test_promotion_review_harvest_cli_reports_pending_packet_cases(self):

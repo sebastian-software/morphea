@@ -723,7 +723,11 @@ accepted/corrected/rejected/deferred choices without applying them
 automatically. The same inputs can be loaded from
 `morphea promotion-review-harvest --config promotion-review-harvest.json`;
 CLI arguments override config values, and individual `--decision case=path`
-arguments override same-case entries in the config `decisions` object.
+arguments override same-case entries in the config `decisions` object. The
+shortcut `--decision-choice case=accepted` resolves an explicit terminal choice
+through the available `decision_templates`; config `decision_choices` use the
+same mechanism and remain overrideable by CLI choices or direct `--decision`
+paths.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
@@ -1079,11 +1083,15 @@ Supported fields:
 - `harvest_config`: optional generated `harvest-curated` config path
 - `decisions`: object mapping case ids to terminal
   `review-decision.json` paths
+- `decision_choices`: optional object mapping case ids to terminal decision
+  names (`accepted`, `corrected`, `rejected`, or `deferred`). Choices are
+  resolved through `decision_templates` or the review packet's template paths;
+  they are explicit reviewer selections, not automatic defaults.
 - `decision_templates`: optional review-run metadata mapping case ids to
   available terminal decision template paths. This field is accepted in config
   files for reviewer convenience but is not applied automatically; reviewers
-  still select terminal decisions by populating `decisions` or passing
-  `--decision`.
+  still select terminal decisions by populating `decisions`, using
+  `decision_choices`, or passing `--decision` / `--decision-choice`.
 - `suite`: optional suite override for the generated harvest config
 - `run_root`: optional run-root override for manifest lookup and generated
   harvest config

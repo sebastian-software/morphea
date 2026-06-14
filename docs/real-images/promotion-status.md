@@ -302,7 +302,10 @@ deferred applied review remains visible as `applied_review_not_accepted` and is
 excluded from training candidates.
 `morphea promotion-review-harvest --config` makes the same review-to-harvest
 bridge repeatable; config decisions can be overridden case-by-case with
-explicit `--decision case-id=path` arguments.
+explicit `--decision case-id=path` arguments. Reviewers can also use
+`decision_choices` in config or `--decision-choice case-id=accepted` on the CLI
+to resolve a named terminal choice through the visible template paths, while
+direct `--decision` paths remain the most explicit override.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

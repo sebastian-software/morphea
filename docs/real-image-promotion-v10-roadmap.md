@@ -420,7 +420,10 @@ review summaries beside manifests, reports applied/harvestable/pending packet
 cases, and can emit a ready `harvest-curated --config` file with
 `require_applied_review: true`. Pending packet cases now include terminal
 decision-template paths in JSON and Markdown, keeping reviewer choice visible
-without turning templates into implicit decisions.
+without turning templates into implicit decisions. `decision_choices` and
+`--decision-choice case=accepted` let a reviewer turn a visible terminal option
+into the underlying template path explicitly; direct `--decision case=path`
+remains the final override.
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied

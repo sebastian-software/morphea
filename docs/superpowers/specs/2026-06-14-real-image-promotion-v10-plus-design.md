@@ -517,7 +517,8 @@ Current implementation:
   case-id decision map and explicit per-case CLI overrides. Pending cases in
   its JSON/Markdown report now include terminal decision-template paths when
   available, but those templates remain guidance until a reviewer adds a
-  `decisions` entry or passes `--decision`.
+  `decisions` entry, passes `--decision`, or uses an explicit template-backed
+  `decision_choices` / `--decision-choice` selection.
 
 Exit criteria:
 

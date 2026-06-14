@@ -293,6 +293,7 @@ PROMOTION_REVIEW_HARVEST_CONFIG_KEYS = {
     "markdown",
     "harvest_config",
     "decisions",
+    "decision_choices",
     "decision_templates",
     "suite",
     "run_root",
@@ -310,6 +311,12 @@ CURATED_CHECK_CONFIG_KEYS = {
     "baseline_snapshot",
     "markdown",
 }
+PROMOTION_REVIEW_TERMINAL_DECISIONS = (
+    "accepted",
+    "corrected",
+    "rejected",
+    "deferred",
+)
 LUCIDE_CHECK_CONFIG_KEYS = {
     "suite",
     "output",
@@ -1057,6 +1064,15 @@ def main(argv: list[str] | None = None) -> None:
         action="append",
         default=[],
         help="Terminal review decision as CASE_ID=path/to/decision.json.",
+    )
+    promotion_review_harvest.add_argument(
+        "--decision-choice",
+        action="append",
+        default=[],
+        help=(
+            "Terminal review choice as CASE_ID=accepted|corrected|rejected|deferred; "
+            "resolved through review decision templates."
+        ),
     )
     promotion_review_harvest.add_argument("--suite", type=Path)
     promotion_review_harvest.add_argument("--run-root", type=Path)
@@ -1817,6 +1833,28 @@ def _promotion_review_decision_args(values: list[str]) -> dict[str, Path]:
     return decisions
 
 
+def _promotion_review_decision_choice_args(values: list[str]) -> dict[str, str]:
+    choices: dict[str, str] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError(
+                "promotion review decision choices must be CASE_ID=decision"
+            )
+        case_id, decision = value.split("=", 1)
+        if not case_id or not decision:
+            raise ValueError(
+                "promotion review decision choices must be CASE_ID=decision"
+            )
+        if decision not in PROMOTION_REVIEW_TERMINAL_DECISIONS:
+            allowed = ", ".join(PROMOTION_REVIEW_TERMINAL_DECISIONS)
+            raise ValueError(
+                "promotion review decision choices must use one of: "
+                f"{allowed}"
+            )
+        choices[case_id] = decision
+    return choices
+
+
 def _resolved_promotion_review_harvest_config(
     args: argparse.Namespace,
 ) -> dict[str, object]:
@@ -1836,17 +1874,24 @@ def _resolved_promotion_review_harvest_config(
         value = getattr(args, key, None)
         if value is not None:
             config[key] = value
-    decisions = dict(config.get("decisions", {}))
-    decisions.update(_promotion_review_decision_args(args.decision))
-    if decisions:
-        config["decisions"] = decisions
-    else:
-        config["decisions"] = {}
     _require_config_paths(
         config,
         ("review_packet", "output"),
         "promotion-review-harvest",
     )
+    config_choices = dict(config.get("decision_choices", {}))
+    cli_choices = _promotion_review_decision_choice_args(args.decision_choice)
+    decisions: dict[str, Path] = {}
+    decisions.update(
+        _promotion_review_decisions_from_choices(config, config_choices)
+    )
+    decisions.update(dict(config.get("decisions", {})))
+    decisions.update(_promotion_review_decisions_from_choices(config, cli_choices))
+    decisions.update(_promotion_review_decision_args(args.decision))
+    if decisions:
+        config["decisions"] = decisions
+    else:
+        config["decisions"] = {}
     return config
 
 
@@ -2804,7 +2849,7 @@ def _promotion_review_run_decision_templates(
             continue
         decision_templates = {
             decision: path
-            for decision in ("accepted", "corrected", "rejected", "deferred")
+            for decision in PROMOTION_REVIEW_TERMINAL_DECISIONS
             if isinstance((path := templates.get(decision)), str) and path
         }
         if decision_templates:
@@ -3169,6 +3214,10 @@ def _load_promotion_review_harvest_config(
         config["decisions"] = _promotion_review_decisions_from_config(
             config["decisions"],
         )
+    if "decision_choices" in config:
+        config["decision_choices"] = _promotion_review_decision_choices_from_config(
+            config["decision_choices"],
+        )
     if "decision_templates" in config:
         config["decision_templates"] = (
             _promotion_review_decision_templates_from_config(
@@ -3197,6 +3246,30 @@ def _promotion_review_decisions_from_config(value: object) -> dict[str, Path]:
     return decisions
 
 
+def _promotion_review_decision_choices_from_config(value: object) -> dict[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("promotion-review-harvest decision_choices must be an object")
+    choices: dict[str, str] = {}
+    for case_id, decision in value.items():
+        if not isinstance(case_id, str) or not case_id:
+            raise ValueError(
+                "promotion-review-harvest decision_choices must use non-empty case ids"
+            )
+        if (
+            not isinstance(decision, str)
+            or decision not in PROMOTION_REVIEW_TERMINAL_DECISIONS
+        ):
+            allowed = ", ".join(PROMOTION_REVIEW_TERMINAL_DECISIONS)
+            raise ValueError(
+                "promotion-review-harvest decision_choices must use one of: "
+                f"{allowed}"
+            )
+        choices[case_id] = decision
+    return choices
+
+
 def _promotion_review_decision_templates_from_config(
     value: object,
 ) -> dict[str, dict[str, str]]:
@@ -3215,7 +3288,7 @@ def _promotion_review_decision_templates_from_config(
                 "promotion-review-harvest decision_templates must map case ids to objects"
             )
         terminal_templates: dict[str, str] = {}
-        for decision in ("accepted", "corrected", "rejected", "deferred"):
+        for decision in PROMOTION_REVIEW_TERMINAL_DECISIONS:
             path = templates.get(decision)
             if path is None:
                 continue
@@ -3227,6 +3300,53 @@ def _promotion_review_decision_templates_from_config(
         if terminal_templates:
             templates_by_case[case_id] = terminal_templates
     return templates_by_case
+
+
+def _promotion_review_decisions_from_choices(
+    config: dict[str, object],
+    choices: dict[str, str],
+) -> dict[str, Path]:
+    if not choices:
+        return {}
+    templates = _promotion_review_harvest_template_map(config)
+    decisions: dict[str, Path] = {}
+    for case_id, decision in choices.items():
+        case_templates = templates.get(case_id)
+        if not case_templates:
+            raise ValueError(
+                "promotion review decision choice has no templates for case: "
+                f"{case_id}"
+            )
+        template_path = case_templates.get(decision)
+        if not template_path:
+            raise ValueError(
+                "promotion review decision choice has no "
+                f"{decision} template for case: {case_id}"
+            )
+        decisions[case_id] = Path(template_path)
+    return decisions
+
+
+def _promotion_review_harvest_template_map(
+    config: dict[str, object],
+) -> dict[str, dict[str, str]]:
+    templates: dict[str, dict[str, str]] = {}
+    packet_path = config.get("review_packet")
+    if packet_path is not None:
+        templates.update(_promotion_review_run_decision_templates(packet_path))
+    configured = config.get("decision_templates")
+    if isinstance(configured, dict):
+        for case_id, case_templates in configured.items():
+            if not isinstance(case_id, str) or not isinstance(case_templates, dict):
+                continue
+            terminal_templates = {
+                decision: path
+                for decision in PROMOTION_REVIEW_TERMINAL_DECISIONS
+                if isinstance((path := case_templates.get(decision)), str) and path
+            }
+            if terminal_templates:
+                templates[case_id] = terminal_templates
+    return templates
 
 
 def _load_training_gate_config(path: Path) -> dict[str, object]:
