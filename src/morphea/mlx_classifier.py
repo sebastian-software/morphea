@@ -31,6 +31,23 @@ from morphea.token_transformer import (
 
 MLX_MODEL_TYPE = "mlx_transformer_primitive_classifier"
 MLX_CLASSIFIER_INSTALL_ACTION = "Install the MLX extra with uv: uv pip install -e '.[mlx]'"
+MLX_CLASSIFIER_UPGRADE_ACTION = "Upgrade the MLX extra with uv: uv pip install -U -e '.[mlx]'"
+MLX_AUTOGRAD_SYMBOLS = (
+    "arange",
+    "argmax",
+    "array",
+    "concatenate",
+    "eval",
+    "logsumexp",
+    "matmul",
+    "mean",
+    "ones",
+    "softmax",
+    "tanh",
+    "transpose",
+    "value_and_grad",
+    "zeros",
+)
 
 
 @dataclass(frozen=True)
@@ -49,33 +66,104 @@ def is_mlx_available() -> bool:
 
 
 def mlx_classifier_runtime_status() -> dict[str, object]:
-    available = is_mlx_available()
-    next_action = None if available else MLX_CLASSIFIER_INSTALL_ACTION
+    package_available = is_mlx_available()
+    core = _mlx_core_runtime_status(package_available)
+    available = bool(core["core_available"])
+    autograd_available = bool(core["autograd_available"])
+    reason = None if available else core["reason"]
+    next_action = None if available else core["next_action"]
+    status = (
+        "available"
+        if available
+        else "not_installed" if not package_available else "core_unavailable"
+    )
     return {
         "backend": "mlx",
         "backend_available": available,
-        "status": "available" if available else "not_installed",
-        "reason": (
-            None
-            if available
-            else "MLX primitive classifier runtime is not installed"
-        ),
+        "status": status,
+        "reason": reason,
         "training_implementation": (
             "mlx_feature_head" if available else "centroid_fallback"
         ),
         "next_action": next_action,
-        "capabilities": _mlx_classifier_capabilities(available),
+        "package_available": package_available,
+        "core_available": available,
+        "backend_version": core.get("backend_version"),
+        "autograd_available": autograd_available,
+        "autograd_reason": core.get("autograd_reason"),
+        "missing_autograd_symbols": core.get("missing_autograd_symbols", []),
+        "capabilities": _mlx_classifier_capabilities(
+            available=available,
+            status=status,
+            reason=reason,
+            next_action=next_action,
+            autograd_available=autograd_available,
+            autograd_reason=core.get("autograd_reason"),
+        ),
     }
 
 
-def _mlx_classifier_capabilities(available: bool) -> dict[str, dict[str, object]]:
-    runtime_status = "available" if available else "not_installed"
+def _mlx_core_runtime_status(package_available: bool) -> dict[str, object]:
+    if not package_available:
+        return {
+            "core_available": False,
+            "autograd_available": False,
+            "reason": "MLX primitive classifier runtime is not installed",
+            "next_action": MLX_CLASSIFIER_INSTALL_ACTION,
+            "autograd_reason": "MLX primitive classifier runtime is not installed",
+            "missing_autograd_symbols": list(MLX_AUTOGRAD_SYMBOLS),
+        }
+    try:
+        import mlx.core as mx  # type: ignore[import-not-found]
+    except Exception as exc:  # pragma: no cover - exact import failures vary.
+        return {
+            "core_available": False,
+            "autograd_available": False,
+            "reason": f"MLX core could not be imported: {exc}",
+            "next_action": MLX_CLASSIFIER_UPGRADE_ACTION,
+            "autograd_reason": f"MLX core could not be imported: {exc}",
+            "missing_autograd_symbols": list(MLX_AUTOGRAD_SYMBOLS),
+        }
+
+    missing = _missing_mlx_autograd_symbols(mx)
+    return {
+        "core_available": True,
+        "autograd_available": not missing,
+        "reason": None,
+        "next_action": None,
+        "backend_version": getattr(mx, "__version__", "unknown"),
+        "autograd_reason": (
+            None
+            if not missing
+            else "MLX core is missing autograd primitives: " + ", ".join(missing)
+        ),
+        "missing_autograd_symbols": missing,
+    }
+
+
+def _mlx_classifier_capabilities(
+    *,
+    available: bool,
+    status: str,
+    reason: object,
+    next_action: object,
+    autograd_available: bool,
+    autograd_reason: object,
+) -> dict[str, dict[str, object]]:
+    runtime_status = "available" if available else status
     runtime_reason = (
         None
         if available
-        else "MLX primitive classifier runtime is not installed"
+        else reason
     )
-    next_action = None if available else MLX_CLASSIFIER_INSTALL_ACTION
+    autograd_status = (
+        "available"
+        if autograd_available
+        else status if not available else "autograd_unavailable"
+    )
+    autograd_next_action = None if autograd_available else (
+        next_action if not available else MLX_CLASSIFIER_UPGRADE_ACTION
+    )
     return {
         "feature_head_training": {
             "available": available,
@@ -96,16 +184,16 @@ def _mlx_classifier_capabilities(available: bool) -> dict[str, dict[str, object]
             "next_action": next_action,
         },
         "end_to_end_token_projection_training": {
-            "available": available,
-            "status": runtime_status,
-            "reason": runtime_reason,
-            "next_action": next_action,
+            "available": autograd_available,
+            "status": autograd_status,
+            "reason": None if autograd_available else autograd_reason,
+            "next_action": autograd_next_action,
         },
         "end_to_end_attention_training": {
-            "available": available,
-            "status": runtime_status,
-            "reason": runtime_reason,
-            "next_action": next_action,
+            "available": autograd_available,
+            "status": autograd_status,
+            "reason": None if autograd_available else autograd_reason,
+            "next_action": autograd_next_action,
         },
     }
 
@@ -281,25 +369,146 @@ def _train_mlx_weights(
     )
     head["backend_version"] = getattr(mx, "__version__", "unknown")
     head["backend_array_api"] = "mlx.core"
+    head["component_summary"] = _mlx_training_component_summary(head)
     return head
 
 
+def _mlx_training_component_summary(training: dict[str, Any]) -> dict[str, Any]:
+    components = [
+        _training_component_row(
+            "token_transformer",
+            training.get("token_transformer"),
+            training_runtime=_token_transformer_training_runtime(
+                training.get("token_transformer")
+            ),
+            inference_priority=1,
+            uses_raster_tokens=True,
+        ),
+        _training_component_row(
+            "feature_raster_fusion",
+            training.get("feature_raster_fusion"),
+            training_runtime="python_manual_sgd",
+            inference_priority=2,
+            uses_raster_tokens=True,
+        ),
+        _training_component_row(
+            "raster_token_mixer",
+            training.get("raster_token_mixer"),
+            training_runtime="python_manual_sgd",
+            inference_priority=3,
+            uses_raster_tokens=True,
+        ),
+        _training_component_row(
+            "feature_head",
+            training,
+            training_runtime="python_manual_sgd",
+            inference_priority=4,
+            uses_raster_tokens=False,
+            parameter_count=training.get("feature_head_parameter_count"),
+        ),
+    ]
+    return {
+        "schema_version": 1,
+        "component_count": len(components),
+        "trainable_component_count": sum(
+            1 for component in components if component["trained"]
+        ),
+        "mlx_autograd_component_count": sum(
+            1
+            for component in components
+            if component["training_runtime"] == "mlx_autograd"
+        ),
+        "total_parameter_count": int(training.get("parameter_count", 0)),
+        "inference_order_with_crop_tokens": [
+            str(component["name"]) for component in components
+        ],
+        "components": components,
+    }
+
+
+def _training_component_row(
+    name: str,
+    component: object,
+    *,
+    training_runtime: str,
+    inference_priority: int,
+    uses_raster_tokens: bool,
+    parameter_count: object | None = None,
+) -> dict[str, object]:
+    if not isinstance(component, dict):
+        return {
+            "name": name,
+            "weight_format": None,
+            "training_runtime": training_runtime,
+            "optimizer": None,
+            "trained": False,
+            "parameter_count": 0,
+            "loss_epochs": 0,
+            "uses_raster_tokens": uses_raster_tokens,
+            "inference_priority": inference_priority,
+        }
+    resolved_parameter_count = parameter_count
+    if not isinstance(resolved_parameter_count, int):
+        resolved_parameter_count = component.get("parameter_count", 0)
+    if not isinstance(resolved_parameter_count, int):
+        resolved_parameter_count = 0
+    loss_history = component.get("loss_history", [])
+    loss_epochs = len(loss_history) if isinstance(loss_history, list) else 0
+    row: dict[str, object] = {
+        "name": name,
+        "weight_format": component.get("weight_format"),
+        "training_runtime": training_runtime,
+        "optimizer": _component_optimizer(component),
+        "trained": resolved_parameter_count > 0 and loss_epochs > 0,
+        "parameter_count": resolved_parameter_count,
+        "loss_epochs": loss_epochs,
+        "uses_raster_tokens": uses_raster_tokens,
+        "inference_priority": inference_priority,
+    }
+    training_status = component.get("training_status")
+    if isinstance(training_status, str):
+        row["training_status"] = training_status
+    return row
+
+
+def _component_optimizer(component: dict[str, Any]) -> str:
+    optimizer = component.get("optimizer")
+    if isinstance(optimizer, str) and optimizer:
+        return optimizer
+    token_projection = component.get("token_projection")
+    if isinstance(token_projection, dict):
+        projection_optimizer = token_projection.get("optimizer")
+        if isinstance(projection_optimizer, str) and projection_optimizer:
+            return projection_optimizer
+    attention = component.get("attention_parameters")
+    if isinstance(attention, dict):
+        attention_optimizer = attention.get("optimizer")
+        if isinstance(attention_optimizer, str) and attention_optimizer:
+            return attention_optimizer
+    return "manual_sgd"
+
+
+def _token_transformer_training_runtime(component: object) -> str:
+    if not isinstance(component, dict):
+        return "missing"
+    if (
+        isinstance(component.get("token_projection"), dict)
+        and isinstance(component.get("attention_parameters"), dict)
+    ):
+        return "mlx_autograd"
+    return "python_serialized"
+
+
 def _supports_mlx_autograd(mx: Any) -> bool:
-    return all(
-        hasattr(mx, name)
-        for name in (
-            "array",
-            "concatenate",
-            "eval",
-            "exp",
-            "log",
-            "matmul",
-            "mean",
-            "softmax",
-            "tanh",
-            "value_and_grad",
-        )
-    )
+    return not _missing_mlx_autograd_symbols(mx)
+
+
+def _missing_mlx_autograd_symbols(mx: Any) -> list[str]:
+    return [
+        name
+        for name in MLX_AUTOGRAD_SYMBOLS
+        if not hasattr(mx, name)
+    ]
 
 
 def _train_feature_head(

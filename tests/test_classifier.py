@@ -35,7 +35,9 @@ from morphea.dataset import generate_synthetic_dataset
 from morphea.anchors import AnchorCandidate, AnchorKind, CircleAnchor, Point
 from morphea.masks import BinaryMask, connected_components
 from morphea.mlx_classifier import (
+    MLX_AUTOGRAD_SYMBOLS,
     MLX_CLASSIFIER_INSTALL_ACTION,
+    MLX_CLASSIFIER_UPGRADE_ACTION,
     MLX_MODEL_TYPE,
     MlxClassifierTrainingConfig,
     mlx_classifier_runtime_status,
@@ -444,8 +446,29 @@ class PrimitiveClassifierTests(unittest.TestCase):
     def test_mlx_classifier_runtime_status_reports_package_state(self):
         with patch("morphea.mlx_classifier.is_mlx_available", return_value=False):
             unavailable = mlx_classifier_runtime_status()
-        with patch("morphea.mlx_classifier.is_mlx_available", return_value=True):
+        mlx_module = types.ModuleType("mlx")
+        mlx_core = types.ModuleType("mlx.core")
+        mlx_core.__version__ = "test-mlx"
+        for symbol in MLX_AUTOGRAD_SYMBOLS:
+            setattr(mlx_core, symbol, object())
+        mlx_module.core = mlx_core
+        with (
+            patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
+            patch.dict(sys.modules, {"mlx": mlx_module, "mlx.core": mlx_core}),
+        ):
             available = mlx_classifier_runtime_status()
+        missing_autograd_core = types.ModuleType("mlx.core")
+        missing_autograd_core.__version__ = "test-mlx"
+        missing_autograd_module = types.ModuleType("mlx")
+        missing_autograd_module.core = missing_autograd_core
+        with (
+            patch("morphea.mlx_classifier.is_mlx_available", return_value=True),
+            patch.dict(
+                sys.modules,
+                {"mlx": missing_autograd_module, "mlx.core": missing_autograd_core},
+            ),
+        ):
+            partial = mlx_classifier_runtime_status()
 
         self.assertEqual(unavailable["status"], "not_installed")
         self.assertFalse(unavailable["backend_available"])
@@ -476,6 +499,23 @@ class PrimitiveClassifierTests(unittest.TestCase):
         )
         self.assertTrue(
             available["capabilities"]["end_to_end_attention_training"]["available"]
+        )
+        self.assertTrue(available["autograd_available"])
+        self.assertEqual(available["missing_autograd_symbols"], [])
+        self.assertEqual(partial["status"], "available")
+        self.assertTrue(partial["backend_available"])
+        self.assertFalse(partial["autograd_available"])
+        self.assertIn("value_and_grad", partial["missing_autograd_symbols"])
+        self.assertEqual(
+            partial["capabilities"]["end_to_end_attention_training"]["status"],
+            "autograd_unavailable",
+        )
+        self.assertFalse(
+            partial["capabilities"]["end_to_end_attention_training"]["available"]
+        )
+        self.assertEqual(
+            partial["capabilities"]["end_to_end_attention_training"]["next_action"],
+            MLX_CLASSIFIER_UPGRADE_ACTION,
         )
 
     def test_train_mlx_can_write_unavailable_fallback_artifact(self):
@@ -641,6 +681,27 @@ class PrimitiveClassifierTests(unittest.TestCase):
             )
             self.assertEqual(len(transformer["loss_history"]), 1)
             self.assertGreater(transformer["parameter_count"], 0)
+            summary = model["mlx_training"]["component_summary"]
+            self.assertEqual(summary["component_count"], 4)
+            self.assertEqual(summary["trainable_component_count"], 4)
+            self.assertEqual(summary["mlx_autograd_component_count"], 0)
+            self.assertEqual(
+                summary["inference_order_with_crop_tokens"][0],
+                "token_transformer",
+            )
+            components = {
+                component["name"]: component
+                for component in summary["components"]
+            }
+            self.assertEqual(
+                components["feature_head"]["parameter_count"],
+                model["mlx_training"]["feature_head_parameter_count"],
+            )
+            self.assertEqual(
+                components["token_transformer"]["training_runtime"],
+                "python_serialized",
+            )
+            self.assertTrue(components["feature_raster_fusion"]["uses_raster_tokens"])
 
     def test_load_classifier_model_uses_mlx_feature_head_predictor(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1335,6 +1396,16 @@ class PrimitiveClassifierTests(unittest.TestCase):
             self.assertTrue(report["uses_raster_tokens"])
             self.assertTrue(report["ranking_uses_raster_tokens"])
             self.assertEqual(report["classifier_backend"], "mlx_feature_head")
+            self.assertEqual(
+                report["training_component_summary"]["component_count"],
+                4,
+            )
+            self.assertEqual(
+                report["training_component_summary"][
+                    "inference_order_with_crop_tokens"
+                ][0],
+                "token_transformer",
+            )
             self.assertIn("val", report["evaluation"])
             self.assertTrue(report["ranking_evaluation"]["val"]["uses_raster_tokens"])
             self.assertTrue(
@@ -1346,6 +1417,8 @@ class PrimitiveClassifierTests(unittest.TestCase):
             markdown = markdown_path.read_text(encoding="utf-8")
             self.assertIn("- Direct raster tokens: `True`", markdown)
             self.assertIn("- Ranking raster tokens: `True`", markdown)
+            self.assertIn("## MLX Training Components", markdown)
+            self.assertIn("`token_transformer`", markdown)
 
     def test_eval_classifier_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:

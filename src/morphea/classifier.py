@@ -540,6 +540,7 @@ def evaluate_classifier_model(
         "ranking_uses_raster_tokens": use_raster_eval,
         "feature_names": model.get("feature_names", list(FEATURE_NAMES)),
         "feature_importance": model.get("feature_importance", []),
+        "training_component_summary": _model_training_component_summary(model),
         "classes": model.get("classes", _classifier_labels(classifier)),
         "splits": list(splits),
         "evaluation": {
@@ -660,6 +661,9 @@ def render_classifier_evaluation_markdown(report: dict[str, object]) -> str:
                 f"{_fmt_number(item.get('max'))} |"
             )
         lines.append("")
+    component_summary = report.get("training_component_summary")
+    if isinstance(component_summary, dict):
+        lines.extend(_training_component_summary_markdown(component_summary))
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -671,6 +675,45 @@ def _fmt_number(value: object) -> str:
     if isinstance(value, float):
         return f"{value:.6g}"
     return "n/a"
+
+
+def _training_component_summary_markdown(summary: dict[str, object]) -> list[str]:
+    lines = [
+        "## MLX Training Components",
+        "",
+        f"- Total parameters: `{_fmt_number(summary.get('total_parameter_count'))}`",
+        f"- Trainable components: `{_fmt_number(summary.get('trainable_component_count'))}`",
+        f"- MLX autograd components: `{_fmt_number(summary.get('mlx_autograd_component_count'))}`",
+        "",
+        "| Priority | Component | Runtime | Parameters | Loss epochs | Raster tokens |",
+        "| ---: | --- | --- | ---: | ---: | --- |",
+    ]
+    components = summary.get("components", [])
+    if isinstance(components, list):
+        for component in components:
+            if not isinstance(component, dict):
+                continue
+            lines.append(
+                "| "
+                f"{_fmt_number(component.get('inference_priority'))} | "
+                f"`{component.get('name', 'unknown')}` | "
+                f"`{component.get('training_runtime', 'unknown')}` | "
+                f"{_fmt_number(component.get('parameter_count'))} | "
+                f"{_fmt_number(component.get('loss_epochs'))} | "
+                f"`{bool(component.get('uses_raster_tokens'))}` |"
+            )
+    lines.append("")
+    return lines
+
+
+def _model_training_component_summary(model: dict[str, object]) -> dict[str, object] | None:
+    training = model.get("mlx_training")
+    if not isinstance(training, dict):
+        return None
+    summary = training.get("component_summary")
+    if isinstance(summary, dict):
+        return summary
+    return None
 
 
 def centroids_from_examples(

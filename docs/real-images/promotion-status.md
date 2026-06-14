@@ -411,8 +411,12 @@ The cycle can now write its accepted model with `backend: centroid` or
 `mlx_transformer_primitive_classifier` from the same reviewed pseudo-label
 dataset and keeps the comparison gate, curated/Lucide validation, and
 suite-family acceptance checks unchanged. `allow_unavailable` remains available
-for reproducible fallback artifacts when the MLX runtime is missing; this is
-own classifier training, not MLX/SAM segmentation fine-tuning.
+for reproducible fallback artifacts when the MLX runtime is missing. MLX
+runtime status now distinguishes `mlx.core` importability from end-to-end
+autograd support, and model artifacts record a component summary with inference
+order, parameter counts, loss epochs, raster-token usage, and MLX-autograd
+participation; this is own classifier training, not MLX/SAM segmentation
+fine-tuning.
 
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training

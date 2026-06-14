@@ -597,8 +597,11 @@ uses the existing local `mlx_transformer_primitive_classifier` retraining
 artifact over reviewed pseudo-label datasets, carries the same training gate
 and suite-family acceptance discipline as the centroid path, and supports
 `allow_unavailable` for reproducible fallback artifacts when MLX is absent.
-This is the first own-model training path in the reviewed loop; it is separate
-from MLX/SAM segmentation inference and does not train SAM itself.
+Its model artifact now records a component summary with inference order,
+parameter counts, loss epochs, raster-token usage, and whether a component used
+MLX autograd. This is the first own-model training path in the reviewed loop;
+it is separate from MLX/SAM segmentation inference and does not train SAM
+itself.
 
 Exit criteria:
 
