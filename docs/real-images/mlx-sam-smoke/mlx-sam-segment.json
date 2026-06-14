@@ -1,0 +1,13 @@
+{
+  "geometry_gate": true,
+  "input": "assets/curated/terminaro-opaque-table-grid.png",
+  "markdown": "/tmp/morphea-mlx-sam-smoke/mlx-sam-segments.md",
+  "max_anchor_quality_error": 1.0,
+  "mlx_max_masks": 4,
+  "mlx_model_path": "checkpoints/sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors",
+  "mlx_score_threshold": 0.01,
+  "mlx_timeout_seconds": 45,
+  "output": "/tmp/morphea-mlx-sam-smoke/mlx-sam-segments.json",
+  "require_reserved_anchor": true,
+  "segmenter": "mlx_sam"
+}

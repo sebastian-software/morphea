@@ -687,6 +687,10 @@ Implemented so far:
   Flat-Color baseline with `compare-segments`. The comparison was intentionally
   recorded as a runtime proof rather than a quality claim: green promotion
   proxy count dropped from 29 to 4 and the source assessment was `noise`.
+- checked-in smoke configs under `docs/real-images/mlx-sam-smoke/` replay the
+  same status, Flat-Color segment, MLX/SAM segment, and segment-comparison
+  steps while keeping checkpoint weights and generated `/tmp` outputs out of
+  git.
 - `morphea segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed and a checkpoint is configured.
 - `morphea status` treats the `mlx_sam_package_available` adapter state as an
@@ -1244,6 +1248,9 @@ Implemented so far:
   comparing segment proposal outputs across configs or backends
 - `morphea compare-segments --config compare-segments.json` for repeatable
   segment proposal comparisons
+- checked-in `docs/real-images/mlx-sam-smoke/*.json` configs replay the
+  current MLX/SAM runtime smoke against a Flat-Color baseline without
+  committing local checkpoints or generated smoke reports
 - segment configs include component splitting and `max_component_area`
 - segment configs include future MLX model/runtime knobs without requiring the
   MLX backend to be installed

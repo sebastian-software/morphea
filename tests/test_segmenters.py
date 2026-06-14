@@ -892,6 +892,67 @@ class SegmenterTests(unittest.TestCase):
                     ]
                 )
 
+    def test_checked_in_mlx_sam_smoke_configs_are_repeatable(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        config_dir = repo_root / "docs" / "real-images" / "mlx-sam-smoke"
+        status_config = json.loads(
+            (config_dir / "status.json").read_text(encoding="utf-8")
+        )
+        flat_config_path = config_dir / "flat-color-segment.json"
+        flat_config = json.loads(flat_config_path.read_text(encoding="utf-8"))
+        mlx_config = json.loads(
+            (config_dir / "mlx-sam-segment.json").read_text(encoding="utf-8")
+        )
+        compare_config = json.loads(
+            (config_dir / "compare-segments.json").read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(flat_config["segmenter"], "flat_color")
+        self.assertEqual(mlx_config["segmenter"], "mlx_sam")
+        self.assertEqual(flat_config["input"], mlx_config["input"])
+        self.assertEqual(
+            flat_config["input"],
+            "assets/curated/terminaro-opaque-table-grid.png",
+        )
+        self.assertTrue((repo_root / flat_config["input"]).exists())
+        self.assertEqual(mlx_config["mlx_max_masks"], 4)
+        self.assertEqual(mlx_config["mlx_score_threshold"], 0.01)
+        self.assertEqual(
+            mlx_config["mlx_model_path"],
+            status_config["mlx_sam_model_path"],
+        )
+        self.assertEqual(compare_config["before"], flat_config["output"])
+        self.assertEqual(compare_config["after"], mlx_config["output"])
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "flat-color-segments.json"
+            markdown = Path(temp_dir) / "flat-color-segments.md"
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "segment",
+                        "--config",
+                        str(flat_config_path),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                    ]
+                )
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertIn("wrote 41 segment proposals", stdout.getvalue())
+            self.assertEqual(manifest["proposal_count"], 41)
+            self.assertEqual(manifest["config"]["segmenter"], "flat_color")
+            self.assertTrue(manifest["config"]["geometry_gate"])
+            self.assertTrue(manifest["config"]["require_reserved_anchor"])
+            self.assertEqual(
+                manifest["summary"]["downstream_status_counts"]["accepted"],
+                29,
+            )
+            self.assertTrue(markdown.exists())
+
 
 def _write_two_color_image() -> Path:
     temp_dir = tempfile.TemporaryDirectory()

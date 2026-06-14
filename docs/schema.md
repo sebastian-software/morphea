@@ -1064,6 +1064,12 @@ Supported fields:
 
 CLI arguments override values loaded from the config file.
 
+The checked-in configs under `docs/real-images/mlx-sam-smoke/` are the current
+repeatability fixture for the live MLX/SAM smoke. They use repo-relative input
+and checkpoint paths, write generated artifacts to `/tmp/morphea-mlx-sam-smoke`,
+and should remain runtime evidence until comparison reports show an improved
+promotion signal.
+
 ## Pseudo-Label Harvest v1
 
 Written by `morphea harvest`. `morphea harvest --markdown harvest.md` writes a

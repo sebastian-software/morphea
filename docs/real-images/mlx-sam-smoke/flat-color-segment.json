@@ -1,0 +1,15 @@
+{
+  "color_tolerance": 18,
+  "geometry_gate": true,
+  "input": "assets/curated/terminaro-opaque-table-grid.png",
+  "markdown": "/tmp/morphea-mlx-sam-smoke/flat-color-segments.md",
+  "max_anchor_quality_error": 1.0,
+  "max_colors": 10,
+  "max_component_area": 12000,
+  "max_size": 256,
+  "min_area": 12,
+  "output": "/tmp/morphea-mlx-sam-smoke/flat-color-segments.json",
+  "require_reserved_anchor": true,
+  "segmenter": "flat_color",
+  "split_components": true
+}

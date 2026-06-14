@@ -71,7 +71,26 @@ for filename in (
 PY
 ```
 
-Then run Flat-Color and MLX/SAM side by side:
+Then run the checked-in smoke configs. They write reports under `/tmp` so the
+repo stays clean:
+
+```sh
+mkdir -p /tmp/morphea-mlx-sam-smoke
+
+.venv-mlx-sam/bin/python -m morphea.cli status \
+  --config docs/real-images/mlx-sam-smoke/status.json
+
+.venv/bin/python -m morphea.cli segment \
+  --config docs/real-images/mlx-sam-smoke/flat-color-segment.json
+
+.venv-mlx-sam/bin/python -m morphea.cli segment \
+  --config docs/real-images/mlx-sam-smoke/mlx-sam-segment.json
+
+.venv/bin/python -m morphea.cli compare-segments \
+  --config docs/real-images/mlx-sam-smoke/compare-segments.json
+```
+
+The equivalent expanded commands are:
 
 ```sh
 .venv/bin/python -m morphea.cli segment assets/curated/terminaro-opaque-table-grid.png \

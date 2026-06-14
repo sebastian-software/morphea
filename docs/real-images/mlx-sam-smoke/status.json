@@ -1,0 +1,5 @@
+{
+  "markdown": "/tmp/morphea-mlx-sam-smoke/status.md",
+  "mlx_sam_model_path": "checkpoints/sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors",
+  "output": "/tmp/morphea-mlx-sam-smoke/status.json"
+}
