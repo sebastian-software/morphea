@@ -134,6 +134,9 @@ pending review-decision paths, and terminal decision-template paths.
 Queued cases also carry `review_requirements`, so the packet itself names the
 reviewer/reason fields required for every terminal decision and the correction
 notes/artifacts required for `corrected`.
+They also carry per-decision `review_commands`, so a reviewer can edit the
+chosen terminal template and apply it without reconstructing manifest, output,
+or Markdown paths by hand.
 It also writes `review-gallery.html`, a local static gallery that shows each
 promotion case's contact sheet, quality label, promotion/editability decision,
 failed gates/components, review links, and terminal decision-template links.

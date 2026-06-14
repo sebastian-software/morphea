@@ -427,6 +427,9 @@ Implemented so far:
 - suite-level `review-packet.json` / `review-packet.md` carry the same
   `review_requirements`, so reviewers can see terminal and corrected decision
   requirements without opening individual templates first.
+- queued review-packet cases carry per-decision `review_commands`, so
+  reviewers can apply an edited terminal template without hand-assembling the
+  manifest, applied-review JSON, or applied-review Markdown paths.
 - pending, terminal, and applied promotion review records carry a
   `quality_label_policy` block with `mode: sidecar_only`, making
   `current_quality_label` a manual suite-metadata field rather than something

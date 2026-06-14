@@ -612,6 +612,27 @@ class CuratedSuiteTests(unittest.TestCase):
                 review_packet["cases"][0]["artifacts"]["review_templates"],
                 review_templates,
             )
+            review_commands = review_packet["cases"][0]["review_commands"]
+            self.assertEqual(
+                sorted(review_commands),
+                ["accepted", "corrected", "deferred", "rejected"],
+            )
+            self.assertIn(
+                "promotion-apply-review",
+                review_commands["deferred"],
+            )
+            self.assertIn(
+                review_templates["deferred"],
+                review_commands["deferred"],
+            )
+            self.assertIn(
+                "simple-circle/manifest.json",
+                review_commands["deferred"],
+            )
+            self.assertIn(
+                "simple-circle/applied-review.json",
+                review_commands["deferred"],
+            )
             review_packet_markdown = (
                 output_dir / "review-packet.md"
             ).read_text(encoding="utf-8")
@@ -632,6 +653,12 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn("- Review decision: `", review_packet_markdown)
             self.assertIn("- Decision templates: accepted=`", review_packet_markdown)
+            self.assertIn("### Apply Commands", review_packet_markdown)
+            self.assertIn(
+                "Edit the chosen terminal template first, then run:",
+                review_packet_markdown,
+            )
+            self.assertIn("promotion-apply-review", review_packet_markdown)
             review_gallery = (output_dir / "review-gallery.html").read_text(
                 encoding="utf-8"
             )

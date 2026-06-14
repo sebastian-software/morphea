@@ -596,10 +596,13 @@ The curated output root also includes suite-level review packet artifacts:
   `quality_label_policy` and `review_requirements`, which names fields required
   for all terminal decisions (`reviewer`, `reason`) and the extra fields
   required for corrected decisions (`correction_notes`, `corrected_artifacts`).
+  Cases with a manifest and terminal templates also carry `review_commands`,
+  copy/paste `promotion-apply-review` commands for each terminal decision.
 - `review-packet.md`: scan-friendly Markdown summary of the same queue, with
   links/paths to contact sheets, promotion reviews, editability reviews, and
   `review-decision.json` files plus accepted/corrected/rejected/deferred
-  template paths and the same terminal/corrected review requirements
+  template paths, the same terminal/corrected review requirements, and
+  per-decision apply commands
 - `review-gallery.html`: local static gallery for promotion cases in the suite
   run. It shows quality label, promotion/editability decisions, issue tags,
   failed gate/component ids, the contact sheet image, review artifact links,

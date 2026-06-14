@@ -7,6 +7,7 @@ import json
 from math import ceil, floor
 from pathlib import Path
 import re
+import shlex
 from typing import Any
 
 from PIL import Image, ImageDraw
@@ -2723,6 +2724,7 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         }
         if template_paths:
             artifact_paths["review_templates"] = dict(sorted(template_paths.items()))
+    review_commands = _review_packet_review_commands(artifact_paths)
     return {
         "case_id": case.get("id"),
         "status": case.get("status"),
@@ -2744,6 +2746,7 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         "review_requirements": _review_packet_requirements(),
         "quality_label_policy": decision.get("quality_label_policy", {}),
         "artifacts": artifact_paths,
+        "review_commands": review_commands,
     }
 
 
@@ -2755,6 +2758,30 @@ def _review_packet_requirements() -> dict[str, list[str]]:
             "corrected_artifacts",
         ],
     }
+
+
+def _review_packet_review_commands(
+    artifacts: dict[str, object],
+) -> dict[str, str]:
+    manifest = artifacts.get("manifest")
+    templates = artifacts.get("review_templates")
+    if not isinstance(manifest, str) or not isinstance(templates, dict):
+        return {}
+    output = str(Path(manifest).with_name("applied-review.json"))
+    markdown = str(Path(manifest).with_name("applied-review.md"))
+    commands: dict[str, str] = {}
+    for decision in PROMOTION_REVIEW_DECISIONS:
+        template = templates.get(decision)
+        if not isinstance(template, str) or not template:
+            continue
+        commands[decision] = (
+            "PYTHONPATH=src python3 -m morphea.cli promotion-apply-review "
+            f"{shlex.quote(template)} "
+            f"--manifest {shlex.quote(manifest)} "
+            f"-o {shlex.quote(output)} "
+            f"--markdown {shlex.quote(markdown)}"
+        )
+    return commands
 
 
 def _failed_gate_ids(value: object) -> list[str]:
@@ -2882,6 +2909,31 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
             ]
             if template_parts:
                 lines.append(f"- Decision templates: {', '.join(template_parts)}")
+        commands = case.get("review_commands")
+        if isinstance(commands, dict) and commands:
+            lines.extend(
+                [
+                    "",
+                    "### Apply Commands",
+                    "",
+                    "Edit the chosen terminal template first, then run:",
+                    "",
+                ]
+            )
+            for decision in PROMOTION_REVIEW_DECISIONS:
+                command = commands.get(decision)
+                if not isinstance(command, str) or not command:
+                    continue
+                lines.extend(
+                    [
+                        f"#### {decision}",
+                        "",
+                        "```sh",
+                        command,
+                        "```",
+                        "",
+                    ]
+                )
     return "\n".join(lines).rstrip() + "\n"
 
 
