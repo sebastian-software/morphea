@@ -1,0 +1,6 @@
+{
+  "after": "/tmp/morphea-mlx-sam-smoke/mlx-sam-flat-color-centers-segments.json",
+  "before": "/tmp/morphea-mlx-sam-smoke/mlx-sam-segments.json",
+  "markdown": "/tmp/morphea-mlx-sam-smoke/prompt-strategy-comparison.md",
+  "output": "/tmp/morphea-mlx-sam-smoke/prompt-strategy-comparison.json"
+}

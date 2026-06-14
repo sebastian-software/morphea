@@ -36,6 +36,9 @@ Run the optional Flat-Color-guided prompt smoke:
 
 .venv/bin/python -m morphea.cli compare-segments \
   --config docs/real-images/mlx-sam-smoke/compare-flat-color-centers.json
+
+.venv/bin/python -m morphea.cli compare-segments \
+  --config docs/real-images/mlx-sam-smoke/compare-prompt-strategies.json
 ```
 
 Current expected signal on `assets/curated/terminaro-opaque-table-grid.png`:
@@ -55,3 +58,8 @@ current local run produces 16 proposals, `spatial_matches=16`, and mean
 spatial IoU `0.902292`, but the comparison verdict remains `noise` with
 `green_delta=-20.0` and 7 accepted-to-rejected spatial transitions; this is
 better evidence for prompt placement, not yet a promotable quality improvement.
+
+The direct `grid_points` -> `flat_color_centers` prompt comparison currently
+reports `verdict=mixed`: accepted proposals rise by 5, but rejected candidates
+also rise by 7. Use that comparison to guide prompt work; do not use the guided
+strategy as a default quality claim.

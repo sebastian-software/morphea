@@ -1042,6 +1042,11 @@ class SegmenterTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        prompt_compare_config = json.loads(
+            (config_dir / "compare-prompt-strategies.json").read_text(
+                encoding="utf-8"
+            )
+        )
 
         self.assertEqual(flat_config["segmenter"], "flat_color")
         self.assertEqual(mlx_config["segmenter"], "mlx_sam")
@@ -1071,6 +1076,8 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(compare_config["after"], mlx_config["output"])
         self.assertEqual(guided_compare_config["before"], flat_config["output"])
         self.assertEqual(guided_compare_config["after"], guided_config["output"])
+        self.assertEqual(prompt_compare_config["before"], mlx_config["output"])
+        self.assertEqual(prompt_compare_config["after"], guided_config["output"])
 
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir) / "flat-color-segments.json"

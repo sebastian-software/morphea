@@ -1268,6 +1268,9 @@ Implemented so far:
 - checked-in `docs/real-images/mlx-sam-smoke/*.json` configs replay the
   current MLX/SAM runtime smoke against a Flat-Color baseline without
   committing local checkpoints or generated smoke reports
+- checked-in MLX/SAM smoke configs also compare `grid_points` directly against
+  `flat_color_centers`, so prompt-strategy work has a repeatable mixed-signal
+  baseline rather than relying on ad hoc `/tmp` commands.
 - segment configs include component splitting and `max_component_area`
 - MLX/SAM adapter proposals respect `max_component_area`, preventing oversized
   AI masks from bypassing the same deferral path used by Flat-Color components
