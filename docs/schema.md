@@ -85,6 +85,8 @@ Scene metrics:
 - `group_count`
 - `simple_shape_ratio`
 - `fragmentation_penalty`
+- `unstructured_fragmentation_penalty`
+- `unstructured_fragment_counts`
 - `editability_components`: formula-level component breakdown for
   `editability_score`, currently including `simple_shape_ratio`,
   `fragmentation_penalty`, `diagnostic_penalty`, `generic_path_penalty`,
@@ -93,6 +95,10 @@ Scene metrics:
   contract, including shape identity, parameter economy, node economy, stroke
   width stability, line/curve smoothness, topology consistency, grouping,
   fragmentation, raster fidelity, provenance, and classifier-prior agreement.
+  The v10 fragmentation component scores `unstructured_fragmentation_penalty`
+  so expected repeated primitives such as table cells, circles, and cutout
+  strokes do not count as review-blocking fragmentation, while the raw
+  `fragmentation_penalty` remains available for aggregate diagnostics.
   Components may include `observed`, source metrics, and gate-capping fields:
   `gate_blocked`, `failed_gates`, and `uncapped_score`.
 - `anchor_quality_error_mean`

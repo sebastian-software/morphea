@@ -1098,6 +1098,14 @@ def scene_metrics_to_manifest(
         else 1.0
     )
     fragmentation_penalty = _fragmentation_penalty(anchors)
+    unstructured_fragmentation_penalty = _unstructured_fragmentation_penalty(anchors)
+    unstructured_fragment_counts = _color_fragment_counts(
+        tuple(
+            anchor
+            for anchor in anchors
+            if _is_unstructured_fragment_anchor(anchor)
+        )
+    )
     anchor_quality_errors = [
         quality_metric_error(anchor.metrics)
         for anchor in anchors
@@ -1151,6 +1159,10 @@ def scene_metrics_to_manifest(
         "group_count": len(groups or []),
         "simple_shape_ratio": round(simple_shape_ratio, 6),
         "fragmentation_penalty": round(fragmentation_penalty, 6),
+        "unstructured_fragmentation_penalty": round(
+            unstructured_fragmentation_penalty,
+            6,
+        ),
         "anchor_quality_error_mean": round(
             mean(anchor_quality_errors) if anchor_quality_errors else 0.0,
             6,
@@ -1200,12 +1212,14 @@ def scene_metrics_to_manifest(
             simple_shape_count=simple_shape_count,
             generic_path_count=generic_path_count,
             fragmentation_penalty=fragmentation_penalty,
+            unstructured_fragmentation_penalty=unstructured_fragmentation_penalty,
             diagnostic_penalty=diagnostic_penalty,
             quality_summary=_anchor_quality_metric_summary(anchors),
             group_count=len(groups or []),
         ),
         "editability_score": round(editability_score, 6),
         "color_fragment_counts": _color_fragment_counts(anchors),
+        "unstructured_fragment_counts": unstructured_fragment_counts,
     }
 
 
@@ -1265,6 +1279,7 @@ def _editability_v10_components(
     simple_shape_count: int,
     generic_path_count: int,
     fragmentation_penalty: float,
+    unstructured_fragmentation_penalty: float,
     diagnostic_penalty: float,
     quality_summary: dict[str, dict[str, float | int]],
     group_count: int,
@@ -1307,8 +1322,12 @@ def _editability_v10_components(
             "group_count": group_count,
         },
         "fragmentation": {
-            "score": _error_score(fragmentation_penalty, scale=0.5),
+            "score": _error_score(unstructured_fragmentation_penalty, scale=0.5),
             "fragmentation_penalty": round(fragmentation_penalty, 6),
+            "unstructured_fragmentation_penalty": round(
+                unstructured_fragmentation_penalty,
+                6,
+            ),
         },
         "raster_fidelity": {
             "score": None,
@@ -1505,6 +1524,26 @@ def _fragmentation_penalty(anchors: tuple[AnchorCandidate, ...]) -> float:
         for count in _color_fragment_counts(anchors).values()
     )
     return min(excess_fragments / max(len(anchors), 1) * 0.5, 0.5)
+
+
+def _unstructured_fragmentation_penalty(
+    anchors: tuple[AnchorCandidate, ...],
+) -> float:
+    if not anchors:
+        return 0.0
+    fragment_counts = _color_fragment_counts(
+        tuple(
+            anchor
+            for anchor in anchors
+            if _is_unstructured_fragment_anchor(anchor)
+        )
+    )
+    excess_fragments = sum(max(0, count - 1) for count in fragment_counts.values())
+    return min(excess_fragments / max(len(anchors), 1), 0.5)
+
+
+def _is_unstructured_fragment_anchor(anchor: AnchorCandidate) -> bool:
+    return anchor.kind == AnchorKind.CUBIC_PATH
 
 
 def _reserved_bounds_area(anchors: tuple[AnchorCandidate, ...]) -> float:

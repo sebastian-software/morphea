@@ -546,6 +546,12 @@ class SceneExportTests(unittest.TestCase):
             clean_metrics["editability_score"],
             fragmented_metrics["editability_score"],
         )
+        self.assertGreater(
+            fragmented_metrics["editability_v10_components"]["fragmentation"][
+                "unstructured_fragmentation_penalty"
+            ],
+            0.0,
+        )
         self.assertEqual(fragment_groups[0]["kind"], "same_color_fragment_group")
         self.assertEqual(fragment_groups[0]["color"], "#dd2222")
         self.assertEqual(fragment_groups[0]["anchor_indexes"], [0, 1])
@@ -564,6 +570,62 @@ class SceneExportTests(unittest.TestCase):
             "compound_shape",
         )
         self.assertIn("bounds_fill_ratio", fragment_groups[0]["metrics"])
+
+    def test_v10_fragmentation_ignores_structured_same_color_primitives(self):
+        structured = (
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                color="#dd2222",
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.CIRCLE,
+                raster_error=0.0,
+                node_count=1,
+                parameter_count=3,
+                color="#dd2222",
+            ),
+        )
+        fallback = (
+            AnchorCandidate(
+                kind=AnchorKind.CUBIC_PATH,
+                raster_error=0.0,
+                node_count=8,
+                parameter_count=12,
+                color="#dd2222",
+            ),
+            AnchorCandidate(
+                kind=AnchorKind.CUBIC_PATH,
+                raster_error=0.0,
+                node_count=8,
+                parameter_count=12,
+                color="#dd2222",
+            ),
+        )
+
+        structured_metrics = scene_metrics_to_manifest(structured)
+        fallback_metrics = scene_metrics_to_manifest(fallback)
+
+        self.assertGreater(structured_metrics["fragmentation_penalty"], 0.0)
+        self.assertEqual(structured_metrics["unstructured_fragmentation_penalty"], 0.0)
+        self.assertEqual(
+            structured_metrics["editability_v10_components"]["fragmentation"][
+                "score"
+            ],
+            1.0,
+        )
+        self.assertGreater(
+            fallback_metrics["unstructured_fragmentation_penalty"],
+            0.0,
+        )
+        self.assertLess(
+            fallback_metrics["editability_v10_components"]["fragmentation"][
+                "score"
+            ],
+            0.25,
+        )
 
     def test_same_color_adjacent_fragments_get_merge_plan(self):
         fragments = (

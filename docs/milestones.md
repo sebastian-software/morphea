@@ -375,10 +375,11 @@ Implemented so far:
 - `curated-check --baseline-snapshot`, which compares editability-review
   component scores against a previous curated snapshot
 - `fragmentation_penalty`
+- `unstructured_fragmentation_penalty`
 - run-directory raster fidelity metrics: `raster_l1_error`,
   `raster_alpha_error`, `raster_edge_error`, and `raster_size_match`
-- node, parameter, simple-shape, generic-path, cut-out, and color-fragment
-  counts
+- node, parameter, simple-shape, generic-path, cut-out, color-fragment, and
+  unstructured-fragment counts
 - aggregate anchor-quality summaries expose mean/max quality error and
   per-metric counts/means/maxima for primitive fit metrics such as circle
   roundness, line smoothness, stroke-width variance, and quad/grid errors.

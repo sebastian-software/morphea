@@ -143,8 +143,11 @@ Secondary anchors:
     region matching.
   - transparent-source raster metrics now flatten against the white preview
     background, so the visual L1 gate passes at 0.056356 < 0.18.
+  - v10 fragmentation now scores unstructured fallback fragments instead of all
+    same-color primitives, so expected table cells, circles, and cutout strokes
+    no longer block review.
   - v10 promotion still fails on the current red quality label and editability
-    review components for parameter economy and fragmentation.
+    review component for parameter economy.
   - white line gaps in hair/clothing need curved cut-out detection, not only
     horizontal/vertical gaps.
 - Reporting:

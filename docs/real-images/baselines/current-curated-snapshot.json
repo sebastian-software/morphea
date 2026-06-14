@@ -25,7 +25,7 @@
       "editability_review": {
         "accepted": false,
         "component_scores": {
-          "fragmentation": 0.064516,
+          "fragmentation": 0.677419,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 0.754417,
           "node_economy": 0.758065,
@@ -42,12 +42,6 @@
             "id": "parameter_economy",
             "reason": "below_threshold",
             "score": 0.215726,
-            "threshold": 0.25
-          },
-          {
-            "id": "fragmentation",
-            "reason": "below_threshold",
-            "score": 0.064516,
             "threshold": 0.25
           }
         ],
@@ -225,7 +219,8 @@
           },
           "fragmentation": {
             "fragmentation_penalty": 0.467742,
-            "score": 0.064516
+            "score": 0.677419,
+            "unstructured_fragmentation_penalty": 0.16129
           },
           "grouping_quality": {
             "group_count": 95,
@@ -293,12 +288,18 @@
         "reserved_simple_shape_count": 49,
         "shape_count": 62,
         "simple_shape_count": 49,
-        "simple_shape_ratio": 0.790323
+        "simple_shape_ratio": 0.790323,
+        "unstructured_fragment_counts": {
+          "#002554": 8,
+          "#b67f13": 2,
+          "#f6f0eb": 3
+        },
+        "unstructured_fragmentation_penalty": 0.16129
       },
       "ok": true,
       "promotion": {
         "current_issues": [
-          "fragmentation"
+          "parameter_economy"
         ],
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
@@ -356,7 +357,7 @@
           "2026-06-14 missing local source was replaced by a checked-in opaque fixture derived from the transparent Terminaro image.",
           "Semantic expectations pass with 5 circle anchors, 14 table quads, one perspective-grid group, and editable strokes counted across stroke polylines, stroke paths, and arcs.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
-          "v10 promotion remains red because the current quality label is still red and editability review still rejects parameter economy and fragmentation components."
+          "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review. v10 promotion remains red because the current quality label is still red and editability review still rejects parameter economy."
         ],
         "source_provenance": "checked-in opaque RGB fixture derived from the local transparent Terminaro image",
         "stress_family": "generated_illustration_opaque_table_grid",
@@ -559,12 +560,6 @@
             "reason": "below_threshold",
             "score": 0.215726,
             "threshold": 0.25
-          },
-          {
-            "id": "fragmentation",
-            "reason": "below_threshold",
-            "score": 0.064516,
-            "threshold": 0.25
           }
         ],
         "failed_gates": [
@@ -577,7 +572,7 @@
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "fragmentation"
+          "parameter_economy"
         ],
         "reason": "",
         "regressed_components": [],
@@ -618,7 +613,7 @@
       "editability_review": {
         "accepted": false,
         "component_scores": {
-          "fragmentation": 0.064516,
+          "fragmentation": 0.677419,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 0.754417,
           "node_economy": 0.758065,
@@ -635,12 +630,6 @@
             "id": "parameter_economy",
             "reason": "below_threshold",
             "score": 0.215726,
-            "threshold": 0.25
-          },
-          {
-            "id": "fragmentation",
-            "reason": "below_threshold",
-            "score": 0.064516,
             "threshold": 0.25
           }
         ],
@@ -814,7 +803,8 @@
           },
           "fragmentation": {
             "fragmentation_penalty": 0.467742,
-            "score": 0.064516
+            "score": 0.677419,
+            "unstructured_fragmentation_penalty": 0.16129
           },
           "grouping_quality": {
             "group_count": 95,
@@ -882,12 +872,18 @@
         "reserved_simple_shape_count": 49,
         "shape_count": 62,
         "simple_shape_count": 49,
-        "simple_shape_ratio": 0.790323
+        "simple_shape_ratio": 0.790323,
+        "unstructured_fragment_counts": {
+          "#002554": 8,
+          "#b67f13": 2,
+          "#f6f0eb": 3
+        },
+        "unstructured_fragmentation_penalty": 0.16129
       },
       "ok": true,
       "promotion": {
         "current_issues": [
-          "fragmentation"
+          "parameter_economy"
         ],
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
@@ -968,7 +964,8 @@
           "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
           "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI.",
-          "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.056356 < 0.18. v10 promotion remains red because the current quality label is still red and editability review rejects parameter economy and fragmentation."
+          "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.056356 < 0.18.",
+          "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review. v10 promotion remains red because the current quality label is still red and editability review rejects parameter economy."
         ],
         "source_provenance": "local generated image from the user's Desktop; source image is not checked in",
         "stress_family": "generated_illustration_table_grid",
@@ -1320,12 +1317,6 @@
             "reason": "below_threshold",
             "score": 0.215726,
             "threshold": 0.25
-          },
-          {
-            "id": "fragmentation",
-            "reason": "below_threshold",
-            "score": 0.064516,
-            "threshold": 0.25
           }
         ],
         "failed_gates": [
@@ -1338,7 +1329,7 @@
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "fragmentation"
+          "parameter_economy"
         ],
         "reason": "",
         "regressed_components": [],
@@ -1376,7 +1367,7 @@
       "editability_review": {
         "accepted": false,
         "component_scores": {
-          "fragmentation": 0.017391,
+          "fragmentation": 0.113043,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 1.0,
           "node_economy": 0.822464,
@@ -1398,7 +1389,7 @@
           {
             "id": "fragmentation",
             "reason": "below_threshold",
-            "score": 0.017391,
+            "score": 0.113043,
             "threshold": 0.25
           },
           {
@@ -1540,7 +1531,8 @@
           },
           "fragmentation": {
             "fragmentation_penalty": 0.491304,
-            "score": 0.017391
+            "score": 0.113043,
+            "unstructured_fragmentation_penalty": 0.443478
           },
           "grouping_quality": {
             "group_count": 24,
@@ -1608,7 +1600,11 @@
         "reserved_simple_shape_count": 63,
         "shape_count": 115,
         "simple_shape_count": 63,
-        "simple_shape_ratio": 0.547826
+        "simple_shape_ratio": 0.547826,
+        "unstructured_fragment_counts": {
+          "#000000": 52
+        },
+        "unstructured_fragmentation_penalty": 0.443478
       },
       "ok": true,
       "promotion": {
@@ -1954,7 +1950,7 @@
           {
             "id": "fragmentation",
             "reason": "below_threshold",
-            "score": 0.017391,
+            "score": 0.113043,
             "threshold": 0.25
           },
           {

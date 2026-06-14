@@ -62,9 +62,11 @@ Result:
 - The structure gate now treats `cutout_overlays` as review-visible
   non-structural layers: raw `layer_count` remains 4, while
   `structural_layer_count=3` satisfies the threshold.
+- v10 fragmentation now scores unstructured fallback fragments instead of all
+  same-color primitives, so expected table cells, circles, and cutout strokes
+  no longer block review.
 - v10 promotion remains red because the current quality label is still red and
-  editability review still rejects parameter economy and fragmentation
-  components.
+  editability review still rejects parameter economy.
 
 ## Expected Semantic Anchors
 
