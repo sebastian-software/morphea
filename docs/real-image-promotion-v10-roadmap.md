@@ -457,14 +457,15 @@ remains the final override. Config-driven prep reports also emit
 `decision_choice_commands` for pending cases, making those explicit selections
 copy/pasteable from the same Markdown report. Pending case rows also carry
 review-artifact links for contact sheets, promotion reviews, editability
-reviews, pending decision records, and promotion exports. The report marks
+reviews, pending decision records, promotion exports, and the same
+`reviewable_regions` exposed by the initial packet. The report marks
 template readiness next to those commands, so unedited generated templates
 clearly show which reviewer evidence is still missing before they can be
 applied. The same prep report now summarizes ready terminal-template counts,
 ready case counts, and missing evidence fields before listing the individual
-rows. It also prints evidence-flag hints for missing reviewer fields, keeping
-the selected command executable while showing the exact case-scoped flags to
-add.
+rows. It also prints evidence-flag hints for missing reviewer fields and
+gate-ok reviewed regions, keeping the selected command executable while
+showing the exact case-scoped flags to add.
 
 Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
 `correction_notes`, `corrected_artifacts`, and `reviewed_region_ids` to the

@@ -326,11 +326,12 @@ prep reports now include `decision_choice_commands` for pending cases, so each
 visible terminal template has a copy/paste command that reruns the same config
 with the selected choice. Pending rows preserve review-artifact links for
 contact sheets, promotion reviews, editability reviews, pending decision
-records, and promotion exports. The same report marks template readiness and
-summarizes ready terminal-template counts, ready case counts, and missing
-evidence fields; generated terminal templates remain `needs edit` until
-required `reviewer` and `reason` fields, plus corrected-evidence fields when
-relevant, are filled or supplied through config-level `decision_overrides`.
+records, promotion exports, and reviewable-region summaries from the initial
+packet. The same report marks template readiness and summarizes ready
+terminal-template counts, ready case counts, and missing evidence fields;
+generated terminal templates remain `needs edit` until required `reviewer` and
+`reason` fields, plus corrected-evidence fields when relevant, are filled or
+supplied through config-level `decision_overrides`.
 The report now also prints
 evidence-flag hints beside each decision-choice command, so reviewers can avoid
 editing the config by appending case-scoped `--reviewer`, `--reason`,
@@ -343,7 +344,9 @@ types, states, selected-anchor counts, and reasons. For accepted/corrected
 harvest choices, the packet-level evidence hints include the matching
 `--reviewed-region case=region-id` flags, so a reviewer can start a
 region-scoped applied decision from the first packet without opening raw
-promotion-region JSON.
+promotion-region JSON. The follow-up harvest-prep JSON/Markdown preserves
+those region summaries and repeats the reviewed-region flags beside
+accepted/corrected choice commands.
 Reviewer choices and evidence can also be stored in a portable
 `decision_plan` overlay with `decision_choices` and `decision_overrides`, then
 merged into a fresh generated harvest config without committing run-local

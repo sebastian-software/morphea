@@ -1700,6 +1700,17 @@ class CliTests(unittest.TestCase):
                                         "reason": "raster_l1_error 0.21 > 0.12",
                                     }
                                 ],
+                                "reviewable_regions": [
+                                    {
+                                        "id": "radio-control-region-topology",
+                                        "state": "deferred",
+                                        "gate_id": "radio-control-region-topology",
+                                        "gate_type": "topology",
+                                        "selected_anchor_count": 1,
+                                        "selected_anchor_indexes": [0],
+                                        "reason": "matching anchors in region: 1",
+                                    }
+                                ],
                                 "artifacts": {
                                     "manifest": str(manifest),
                                     "review_templates": templates,
@@ -1745,6 +1756,16 @@ class CliTests(unittest.TestCase):
                 templates,
             )
             self.assertEqual(
+                result["pending_cases"][0]["reviewable_region_ids"],
+                ["radio-control-region-topology"],
+            )
+            self.assertEqual(
+                result["pending_cases"][0]["reviewable_regions"][0][
+                    "selected_anchor_count"
+                ],
+                1,
+            )
+            self.assertEqual(
                 result["pending_cases"][0]["decision_template_readiness"][
                     "accepted"
                 ]["missing_fields"],
@@ -1755,6 +1776,8 @@ class CliTests(unittest.TestCase):
             rendered = markdown.read_text(encoding="utf-8")
             self.assertIn("Decision templates", rendered)
             self.assertIn("## Pending Gate Details", rendered)
+            self.assertIn("## Pending Reviewable Regions", rendered)
+            self.assertIn("radio-control-region-topology", rendered)
             self.assertIn("region-visual-fidelity", rendered)
             self.assertIn("raster_l1_error 0.21 > 0.12", rendered)
             self.assertIn(templates["accepted"], rendered)

@@ -59,6 +59,7 @@ def prepare_promotion_review_harvest(
     choice_evidence_flags = _decision_choice_evidence_flags(
         choice_command_map,
         template_readiness,
+        reviewable_region_ids_by_case=_reviewable_region_ids_by_case(cases),
     )
     unknown_cases = sorted(set(decision_map) - set(cases_by_id))
     if unknown_cases:
@@ -284,6 +285,7 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
 
     _append_pending_gate_details(lines, pending)
+    _append_pending_reviewable_regions(lines, pending)
 
     _append_decision_choice_commands(
         lines,
@@ -421,6 +423,8 @@ def _packet_review_status(
                     "decision_choice_evidence_flags": (
                         decision_choice_evidence_flags.get(case_id, {})
                     ),
+                    "reviewable_regions": _case_reviewable_regions(case),
+                    "reviewable_region_ids": _case_reviewable_region_ids(case),
                     "manifest": str(manifest_path) if manifest_path else None,
                 }
             )
@@ -485,6 +489,73 @@ def _case_review_artifacts(case: dict[str, object]) -> dict[str, str]:
         )
         if isinstance((value := artifacts.get(key)), str) and value
     }
+
+
+def _case_reviewable_regions(case: dict[str, object]) -> list[dict[str, object]]:
+    regions = case.get("reviewable_regions")
+    if not isinstance(regions, list):
+        return []
+    normalized: list[dict[str, object]] = []
+    for region in regions:
+        if not isinstance(region, dict):
+            continue
+        region_id = _string_value(region.get("id"))
+        if not region_id:
+            continue
+        raw_indexes = region.get("selected_anchor_indexes", [])
+        raw_indexes = raw_indexes if isinstance(raw_indexes, list) else []
+        selected_indexes = [
+            index
+            for index in raw_indexes
+            if isinstance(index, int) and not isinstance(index, bool) and index >= 0
+        ]
+        selected_anchor_count = region.get("selected_anchor_count")
+        if not isinstance(selected_anchor_count, int) or isinstance(
+            selected_anchor_count,
+            bool,
+        ):
+            selected_anchor_count = len(selected_indexes)
+        normalized.append(
+            {
+                "id": region_id,
+                "state": _string_value(region.get("state")) or "n/a",
+                "gate_id": _string_value(region.get("gate_id")) or region_id,
+                "gate_type": _string_value(region.get("gate_type")) or "n/a",
+                "selected_anchor_count": selected_anchor_count,
+                "selected_anchor_indexes": sorted(set(selected_indexes)),
+                "reason": _string_value(region.get("reason")) or "n/a",
+            }
+        )
+    return sorted(normalized, key=lambda item: item["id"])
+
+
+def _case_reviewable_region_ids(case: dict[str, object]) -> list[str]:
+    ids = [
+        region["id"]
+        for region in _case_reviewable_regions(case)
+        if isinstance(region.get("id"), str) and region["id"]
+    ]
+    if ids:
+        return ids
+    return [
+        item
+        for item in _string_list(case.get("reviewable_region_ids"))
+        if item
+    ]
+
+
+def _reviewable_region_ids_by_case(
+    cases: list[dict[str, object]],
+) -> dict[str, list[str]]:
+    by_case: dict[str, list[str]] = {}
+    for case in cases:
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str) or not case_id:
+            continue
+        region_ids = _case_reviewable_region_ids(case)
+        if region_ids:
+            by_case[case_id] = region_ids
+    return by_case
 
 
 def _object_dict(value: object) -> dict[str, object]:
@@ -667,8 +738,11 @@ def _decision_choice_commands(
 def _decision_choice_evidence_flags(
     commands: dict[str, dict[str, str]],
     readiness: dict[str, dict[str, dict[str, object]]],
+    *,
+    reviewable_region_ids_by_case: dict[str, list[str]] | None = None,
 ) -> dict[str, dict[str, list[str]]]:
     flags: dict[str, dict[str, list[str]]] = {}
+    region_ids_by_case = reviewable_region_ids_by_case or {}
     for case_id, case_commands in sorted(commands.items()):
         if not isinstance(case_commands, dict):
             continue
@@ -679,9 +753,15 @@ def _decision_choice_evidence_flags(
                 continue
             decision_readiness = case_readiness.get(decision, {})
             missing = decision_readiness.get("missing_fields")
-            if not isinstance(missing, list):
-                continue
+            missing = missing if isinstance(missing, list) else []
             decision_flags = _evidence_flags_for_missing_fields(case_id, missing)
+            if decision in HARVESTABLE_PROMOTION_DECISIONS:
+                decision_flags.extend(
+                    _reviewed_region_flags(
+                        case_id,
+                        region_ids_by_case.get(case_id, []),
+                    )
+                )
             if decision_flags:
                 case_flags[decision] = decision_flags
         if case_flags:
@@ -703,6 +783,14 @@ def _evidence_flags_for_missing_fields(
         if field in missing_fields:
             flags.append(f"{option} {shlex.quote(f'{case_id}={placeholder}')}")
     return flags
+
+
+def _reviewed_region_flags(case_id: str, region_ids: list[str]) -> list[str]:
+    return [
+        f"--reviewed-region {shlex.quote(f'{case_id}={region_id}')}"
+        for region_id in region_ids
+        if isinstance(region_id, str) and region_id
+    ]
 
 
 def _fmt_value_list(value: object) -> str:
@@ -993,6 +1081,44 @@ def _append_pending_gate_details(lines: list[str], value: object) -> None:
             f"{_fmt_table_code(gate.get('gate_type'))} | "
             f"{_fmt_table_code(gate.get('severity'))} | "
             f"{_fmt_table_text(gate.get('reason'))} |"
+        )
+
+
+def _append_pending_reviewable_regions(lines: list[str], value: object) -> None:
+    if not isinstance(value, list) or not value:
+        return
+    rows: list[tuple[str, dict[str, object]]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        case_id = item.get("case_id")
+        regions = item.get("reviewable_regions")
+        if not isinstance(case_id, str) or not isinstance(regions, list):
+            continue
+        for region in regions:
+            if isinstance(region, dict):
+                rows.append((case_id, region))
+    if not rows:
+        return
+    lines.extend(
+        [
+            "",
+            "## Pending Reviewable Regions",
+            "",
+            "| Case | Region | State | Gate | Type | Anchors | Reason |",
+            "| --- | --- | --- | --- | --- | ---: | --- |",
+        ]
+    )
+    for case_id, region in rows:
+        lines.append(
+            "| "
+            f"{_fmt_table_code(case_id)} | "
+            f"{_fmt_table_code(region.get('id'))} | "
+            f"{_fmt_table_code(region.get('state'))} | "
+            f"{_fmt_table_code(region.get('gate_id'))} | "
+            f"{_fmt_table_code(region.get('gate_type'))} | "
+            f"{_fmt_value(region.get('selected_anchor_count'))} | "
+            f"{_fmt_table_text(region.get('reason'))} |"
         )
 
 

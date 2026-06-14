@@ -568,7 +568,10 @@ Current implementation:
   `decisions` entry, passes `--decision`, or uses an explicit template-backed
   `decision_choices` / `--decision-choice` selection. When run from config, the
   prep report also renders copy/paste `decision_choice_commands` for pending
-  cases with template-readiness labels for missing reviewer evidence.
+  cases with template-readiness labels for missing reviewer evidence. Pending
+  harvest-prep rows preserve packet `reviewable_regions` and render a
+  dedicated reviewable-region table, and accepted/corrected choice hints repeat
+  `--reviewed-region case=region-id` flags next to reviewer/reason hints.
 - `promotion-apply-review` can apply a terminal template with explicit CLI
   reviewer evidence overrides (`--reviewer`, `--reason`, and corrected-evidence
   flags, plus `--reviewed-region` for explicit region evidence), so reviewers

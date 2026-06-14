@@ -2918,6 +2918,7 @@ class CuratedSuiteTests(unittest.TestCase):
             expected_evidence_flags = [
                 "--reviewer 'simple-circle=<reviewer>'",
                 "--reason 'simple-circle=<reason>'",
+                "--reviewed-region simple-circle=circle-region",
             ]
             self.assertEqual(
                 review_harvest["pending_cases"][0][
@@ -2937,6 +2938,8 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn("Decision templates", review_harvest_markdown)
             self.assertIn("Review artifacts", review_harvest_markdown)
+            self.assertIn("## Pending Reviewable Regions", review_harvest_markdown)
+            self.assertIn("`circle-region`", review_harvest_markdown)
             self.assertIn(
                 "Ready terminal templates: `0/4` templates",
                 review_harvest_markdown,
@@ -2957,6 +2960,10 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn(
                 "--reason 'simple-circle=<reason>'",
+                review_harvest_markdown,
+            )
+            self.assertIn(
+                "--reviewed-region simple-circle=circle-region",
                 review_harvest_markdown,
             )
             self.assertIn(expected_choice_command, review_harvest_markdown)
