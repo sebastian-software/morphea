@@ -325,6 +325,13 @@ Deliverables:
 - side-by-side region proposal reports;
 - per-source promotion deltas.
 
+Current implementation:
+
+- `compare-segments` now reports source summaries and source deltas for
+  proposal count, downstream status, decision reasons, anchor kinds, reserved
+  anchors, and proposal groups. The downstream status rows are treated as
+  promotion proxies until region-level promotion labels exist.
+
 Exit criteria:
 
 - MLX/SAM can be run on selected cases without becoming a hard dependency;

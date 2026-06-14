@@ -1552,6 +1552,14 @@ Top-level fields:
 - `after`
 - `before_source`
 - `after_source`
+- `source_summaries`: before/after source summaries with backend status,
+  optional backend adapter, proposal count, status counts, downstream status
+  counts, anchor-kind counts, reserved-anchor count, and proposal-group counts
+- `source_deltas`: count deltas derived from `source_summaries`, useful for
+  flat-color vs MLX/SAM side-by-side review
+- `downstream_status_deltas`: filtered source deltas for
+  `downstream_status_counts`; these are proposal-level promotion proxies, not
+  ground-truth labels
 - `before_proposal_count`
 - `after_proposal_count`
 - `proposal_count_delta`
@@ -1572,8 +1580,8 @@ Top-level fields:
   numeric group metrics for shared proposal group ids
 
 `morphea compare-segments --markdown comparison.md` writes a scan-friendly
-Markdown summary for comparing flat-color and future MLX proposal outputs or
-for comparing gated and ungated segment configs.
+Markdown summary with a Source Deltas table for comparing flat-color and
+MLX/SAM proposal outputs or for comparing gated and ungated segment configs.
 
 ## Segment Comparison Config v1
 

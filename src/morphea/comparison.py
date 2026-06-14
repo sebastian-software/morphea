@@ -129,6 +129,12 @@ def render_segment_manifest_comparison(
     after_proposals = _index_by_id(_list_value(after_data.get("proposals")))
     before_groups = _index_by_id(_list_value(before_data.get("proposal_groups")))
     after_groups = _index_by_id(_list_value(after_data.get("proposal_groups")))
+    before_source_summary = _segment_source_summary(before_data, side="before")
+    after_source_summary = _segment_source_summary(after_data, side="after")
+    source_deltas = _segment_source_deltas(
+        before_source_summary,
+        after_source_summary,
+    )
     shared_ids = sorted(set(before_proposals) & set(after_proposals))
     proposal_changes = []
     for proposal_id in shared_ids:
@@ -154,6 +160,13 @@ def render_segment_manifest_comparison(
         "after": after,
         "before_source": _backend_source(before_data),
         "after_source": _backend_source(after_data),
+        "source_summaries": [before_source_summary, after_source_summary],
+        "source_deltas": source_deltas,
+        "downstream_status_deltas": [
+            delta
+            for delta in source_deltas
+            if delta.get("group") == "downstream_status_counts"
+        ],
         "before_proposal_count": int(before_data.get("proposal_count", 0)),
         "after_proposal_count": int(after_data.get("proposal_count", 0)),
         "proposal_count_delta": int(after_data.get("proposal_count", 0))
@@ -196,11 +209,33 @@ def render_segment_manifest_comparison_markdown(
         f"- Added groups: {_id_list(comparison.get('added_group_ids', []))}",
         f"- Removed groups: {_id_list(comparison.get('removed_group_ids', []))}",
         "",
-        "## Summary Deltas",
+        "## Source Deltas",
         "",
         "| Group | Key | Before | After | Delta |",
         "| --- | --- | ---: | ---: | ---: |",
     ]
+    source_deltas = _list_value(comparison.get("source_deltas"))
+    if source_deltas:
+        for delta in source_deltas:
+            lines.append(
+                "| "
+                f"`{delta.get('group')}` | `{delta.get('key')}` | "
+                f"{_fmt(delta.get('before'))} | "
+                f"{_fmt(delta.get('after'))} | "
+                f"{_fmt(delta.get('delta'))} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+
+    lines.extend(
+        [
+            "",
+            "## Summary Deltas",
+            "",
+            "| Group | Key | Before | After | Delta |",
+            "| --- | --- | ---: | ---: | ---: |",
+        ]
+    )
     summary_deltas = _list_value(comparison.get("summary_deltas"))
     if summary_deltas:
         for delta in summary_deltas:
@@ -561,6 +596,111 @@ def _proposal_group_changes(
             }
         )
     return changes
+
+
+def _segment_source_summary(
+    data: dict[str, Any],
+    *,
+    side: str,
+) -> dict[str, Any]:
+    summary = _dict_value(data.get("summary"))
+    proposals = _list_value(data.get("proposals"))
+    backend = _dict_value(data.get("backend"))
+    return {
+        "side": side,
+        "source": _backend_source(data),
+        "backend_status": backend.get("status", "unknown"),
+        "backend_adapter": backend.get("adapter"),
+        "proposal_count": int(data.get("proposal_count", len(proposals))),
+        "status_counts": _segment_count_group(
+            summary,
+            proposals,
+            group="status_counts",
+            field="status",
+        ),
+        "downstream_status_counts": _segment_count_group(
+            summary,
+            proposals,
+            group="downstream_status_counts",
+            field="downstream_status",
+        ),
+        "downstream_decision_reason_counts": _segment_count_group(
+            summary,
+            proposals,
+            group="downstream_decision_reason_counts",
+            field="downstream_decision_reason",
+            include_missing=False,
+        ),
+        "anchor_kind_counts": _segment_count_group(
+            summary,
+            proposals,
+            group="anchor_kind_counts",
+            field="anchor_kind",
+            include_missing=False,
+        ),
+        "reserved_anchor_count": int(
+            _number_or_zero(
+                summary.get(
+                    "reserved_anchor_count",
+                    sum(1 for proposal in proposals if proposal.get("anchor_reserved")),
+                )
+            )
+        ),
+        "proposal_group_counts": _dict_value(summary.get("proposal_group_counts")),
+    }
+
+
+def _segment_source_deltas(
+    before: dict[str, Any],
+    after: dict[str, Any],
+) -> list[dict[str, Any]]:
+    before_counts = _segment_delta_groups(before)
+    after_counts = _segment_delta_groups(after)
+    return _summary_count_deltas(before_counts, after_counts)
+
+
+def _segment_delta_groups(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "proposal_count": summary.get("proposal_count", 0),
+        "status_counts": _dict_value(summary.get("status_counts")),
+        "downstream_status_counts": _dict_value(
+            summary.get("downstream_status_counts")
+        ),
+        "downstream_decision_reason_counts": _dict_value(
+            summary.get("downstream_decision_reason_counts")
+        ),
+        "anchor_kind_counts": _dict_value(summary.get("anchor_kind_counts")),
+        "reserved_anchor_count": summary.get("reserved_anchor_count", 0),
+        "proposal_group_counts": _dict_value(summary.get("proposal_group_counts")),
+    }
+
+
+def _segment_count_group(
+    summary: dict[str, Any],
+    proposals: list[Any],
+    *,
+    group: str,
+    field: str,
+    include_missing: bool = True,
+) -> dict[str, int]:
+    summary_counts = summary.get(group)
+    if isinstance(summary_counts, dict):
+        return {
+            str(key): int(value)
+            for key, value in sorted(summary_counts.items())
+            if _is_number(value)
+        }
+
+    counts: dict[str, int] = {}
+    for proposal in proposals:
+        if not isinstance(proposal, dict):
+            continue
+        value = proposal.get(field)
+        if value is None and not include_missing:
+            continue
+        key = str(value if value is not None else "unknown")
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _index_by_id(items: list[Any]) -> dict[str, dict[str, Any]]:

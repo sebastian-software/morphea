@@ -595,9 +595,10 @@ Implemented so far:
   a proposal passed or failed the geometry gate.
 - `morphea compare-segments before.json after.json -o comparison.json` compares
   segment proposal manifests from different configs or segmenter backends,
-  including summary-count deltas, config differences, added/removed proposals,
-  changed downstream/anchor decisions, and added/removed/changed proposal
-  groups such as `proposal_tile_grid`.
+  including per-source proposal/downstream status deltas, summary-count deltas,
+  config differences, added/removed proposals, changed downstream/anchor
+  decisions, and added/removed/changed proposal groups such as
+  `proposal_tile_grid`.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

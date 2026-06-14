@@ -336,6 +336,8 @@ Exit criteria:
 
 - the pipeline can run classical and MLX/SAM segmentation side by side;
 - segment provenance records which source produced each candidate;
+- `compare-segments` reports per-source proposal/downstream status deltas so
+  classical and MLX/SAM outputs can be judged before defaulting either source;
 - MLX/SAM is judged by green promotion increase and red false-positive
   decrease, not by mask aesthetics alone;
 - the system remains usable without cloud APIs.

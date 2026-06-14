@@ -14,6 +14,7 @@ from morphea.comparison import (
     compare_snapshots,
     generate_git_curated_snapshot,
     render_segment_manifest_comparison,
+    render_segment_manifest_comparison_markdown,
     render_snapshot_comparison,
     render_snapshot_comparison_markdown,
 )
@@ -182,6 +183,123 @@ class SnapshotComparisonTests(unittest.TestCase):
             },
             group_changes,
         )
+
+    def test_render_segment_manifest_comparison_reports_source_deltas(self):
+        comparison = render_segment_manifest_comparison(
+            _segment_manifest(
+                source="flat_color",
+                summary={
+                    "downstream_status_counts": {"pending": 2, "rejected": 1},
+                    "anchor_kind_counts": {"rect": 1, "unknown": 2},
+                    "reserved_anchor_count": 1,
+                },
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                    },
+                    {
+                        "id": "flat_color-0001",
+                        "source": "flat_color",
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                    },
+                    {
+                        "id": "flat_color-0002",
+                        "source": "flat_color",
+                        "status": "deferred",
+                        "downstream_status": "rejected",
+                    },
+                ],
+            ),
+            _segment_manifest(
+                source="mlx_sam",
+                backend={
+                    "status": "json_adapter_available",
+                    "adapter": "json_proposals",
+                },
+                summary={
+                    "downstream_status_counts": {"accepted": 2, "rejected": 1},
+                    "anchor_kind_counts": {"rect": 2, "unknown": 1},
+                    "reserved_anchor_count": 2,
+                },
+                proposals=[
+                    {
+                        "id": "mlx_sam-0000",
+                        "source": "mlx_sam",
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                    },
+                    {
+                        "id": "mlx_sam-0001",
+                        "source": "mlx_sam",
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "rect",
+                        "anchor_reserved": True,
+                    },
+                    {
+                        "id": "mlx_sam-0002",
+                        "source": "mlx_sam",
+                        "status": "proposed",
+                        "downstream_status": "rejected",
+                    },
+                ],
+            ),
+            before="flat-color.json",
+            after="mlx-sam.json",
+        )
+
+        self.assertEqual(comparison["before_source"], "flat_color")
+        self.assertEqual(comparison["after_source"], "mlx_sam")
+        self.assertEqual(
+            comparison["source_summaries"][1]["backend_status"],
+            "json_adapter_available",
+        )
+        self.assertEqual(
+            comparison["source_summaries"][1]["backend_adapter"],
+            "json_proposals",
+        )
+        self.assertIn(
+            {
+                "group": "downstream_status_counts",
+                "key": "accepted",
+                "before": 0.0,
+                "after": 2.0,
+                "delta": 2.0,
+            },
+            comparison["downstream_status_deltas"],
+        )
+        self.assertIn(
+            {
+                "group": "downstream_status_counts",
+                "key": "pending",
+                "before": 2.0,
+                "after": 0.0,
+                "delta": -2.0,
+            },
+            comparison["downstream_status_deltas"],
+        )
+        self.assertIn(
+            {
+                "group": "reserved_anchor_count",
+                "key": "value",
+                "before": 1.0,
+                "after": 2.0,
+                "delta": 1.0,
+            },
+            comparison["source_deltas"],
+        )
+
+        markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn("## Source Deltas", markdown)
+        self.assertIn("`downstream_status_counts` | `accepted`", markdown)
 
     def test_compare_segment_manifests_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -945,11 +1063,14 @@ class SnapshotComparisonTests(unittest.TestCase):
 
 def _segment_manifest(
     *,
+    source="flat_color",
+    backend=None,
     config=None,
     summary=None,
     proposals=None,
     proposal_groups=None,
 ):
+    backend = backend or {}
     config = config or {}
     summary = summary or {}
     proposals = proposals or []
@@ -957,8 +1078,8 @@ def _segment_manifest(
     return {
         "schema_version": 1,
         "input": "input.png",
-        "config": {"segmenter": "flat_color", "geometry_gate": False, **config},
-        "backend": {"source": "flat_color", "status": "available"},
+        "config": {"segmenter": source, "geometry_gate": False, **config},
+        "backend": {"source": source, "status": "available", **backend},
         "proposal_count": len(proposals),
         "summary": summary,
         "proposal_groups": proposal_groups,
