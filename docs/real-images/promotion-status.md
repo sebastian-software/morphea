@@ -153,8 +153,10 @@ preparation. That starter config lists
 available terminal decision templates per queued case without applying any of
 them automatically. After writing that starter config, the review packet and
 gallery also expose template-backed `decision_choice_commands` and
-evidence-flag hints, so reviewers can select a terminal outcome through
-`promotion-review-harvest --decision-choice` without editing JSON. The
+evidence-flag hints, and the gallery header mirrors packet-level reviewable
+region counts for prepared region-scoped review. Reviewers can select a
+terminal outcome through `promotion-review-harvest --decision-choice` without
+editing JSON. The
 resulting curated report also includes the generated harvest command in JSON
 and Markdown.
 

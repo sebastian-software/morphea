@@ -354,6 +354,9 @@ def render_review_gallery_html(
     }
     label_counts = _review_gallery_label_counts(cases)
     decision_counts = _review_gallery_decision_counts(cases)
+    region_summary = _review_gallery_region_summary(
+        packet.get("reviewable_region_summary"),
+    )
     cards = "\n".join(
         _render_review_gallery_case_card(
             case,
@@ -394,6 +397,7 @@ def render_review_gallery_html(
       <span class="chip green">green {_html(str(label_counts.get("green", 0)))}</span>
       <span class="chip yellow">yellow {_html(str(label_counts.get("yellow", 0)))}</span>
       <span class="chip red">red {_html(str(label_counts.get("red", 0)))}</span>
+      {region_summary}
       <a class="text-link" href="review-packet.md">review packet</a>
       <a class="text-link" href="review-packet.json">review packet JSON</a>
     </section>
@@ -523,6 +527,50 @@ def _review_gallery_decision_counts(cases: list[dict[str, Any]]) -> dict[str, in
             decision = str(summary.get("decision", "n/a"))
             counts[decision] = counts.get(decision, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _review_gallery_region_summary(value: object) -> str:
+    if not isinstance(value, dict):
+        return ""
+    if (
+        _review_gallery_count(value.get("region_count")) == "0"
+        and not _review_gallery_count_map(value.get("state_counts"))
+        and not _review_gallery_count_map(value.get("gate_type_counts"))
+    ):
+        return ""
+    parts = [
+        ("reviewable regions", value.get("region_count")),
+        ("region cases", value.get("case_count")),
+        ("selected anchors", value.get("selected_anchor_count")),
+    ]
+    chips = [
+        f'<span class="chip">{_html(label)} {_html(_review_gallery_count(count))}</span>'
+        for label, count in parts
+    ]
+    state_counts = _review_gallery_count_map(value.get("state_counts"))
+    if state_counts:
+        chips.append(f'<span class="chip">region states {_html(state_counts)}</span>')
+    gate_counts = _review_gallery_count_map(value.get("gate_type_counts"))
+    if gate_counts:
+        chips.append(f'<span class="chip">region gates {_html(gate_counts)}</span>')
+    return "\n      ".join(chips)
+
+
+def _review_gallery_count(value: object) -> str:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    return "0"
+
+
+def _review_gallery_count_map(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return ""
+    parts = [
+        f"{key}={count}"
+        for key, count in sorted(value.items())
+        if isinstance(key, str) and isinstance(count, int) and not isinstance(count, bool)
+    ]
+    return ", ".join(parts)
 
 
 def _failed_gate_ids(value: object) -> list[str]:

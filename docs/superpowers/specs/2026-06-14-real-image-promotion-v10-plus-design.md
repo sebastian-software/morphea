@@ -557,6 +557,9 @@ Current implementation:
   `review-packet.json`, `review-packet.md`, and `review-gallery.html` with
   per-case `decision_choice_commands` and reviewer evidence-flag hints, so the
   initial reviewer surface contains the no-JSON-edit harvest path directly.
+  The gallery status strip also mirrors the packet-level reviewable region
+  summary, so visual review starts with the same prepared-region counts as the
+  JSON and Markdown packet.
   The packet also derives gate-ok `reviewable_regions` from promotion-region
   state and renders stable region ids, gate types, states, selected-anchor
   counts, and reasons, plus a packet-level summary of reviewable region cases,

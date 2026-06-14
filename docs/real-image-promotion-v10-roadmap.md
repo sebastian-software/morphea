@@ -399,9 +399,11 @@ starter config by hand. The starter config also lists each queued case's
 accepted/corrected/rejected/deferred terminal templates while keeping
 `decisions` empty until a reviewer explicitly selects one. Once that starter
 config exists, the review packet and gallery also expose per-case
-`decision_choice_commands` plus evidence-flag hints, so the first reviewer
-surface contains the no-JSON-edit `promotion-review-harvest --decision-choice`
-path directly.
+`decision_choice_commands` plus evidence-flag hints, and the gallery status
+strip mirrors packet-level reviewable region counts. The first reviewer surface
+therefore contains both the no-JSON-edit
+`promotion-review-harvest --decision-choice` path and a quick count of prepared
+region-scoped review evidence.
 Review packets now also list gate-ok `reviewable_regions` with stable region
 ids, gate types, states, reasons, and selected-anchor counts, plus a packet
 summary of reviewable region cases, total regions, selected anchors, states,

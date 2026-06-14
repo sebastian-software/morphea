@@ -737,6 +737,9 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("manual_review_pending", review_gallery)
             self.assertIn("current_quality_label", review_gallery)
             self.assertIn("review_safety/yellow", review_gallery)
+            self.assertIn("reviewable regions 1", review_gallery)
+            self.assertIn("region states deferred=1", review_gallery)
+            self.assertIn("region gates shape_class=1", review_gallery)
             self.assertIn(
                 "current quality label is red; manual review pending",
                 review_gallery,
@@ -2858,6 +2861,8 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("promotion-apply-review", gallery)
             self.assertIn("--decision-choice simple-circle=deferred", gallery)
             self.assertIn("Evidence flags:", gallery)
+            self.assertIn("reviewable regions 1", gallery)
+            self.assertIn("selected anchors 1", gallery)
             with redirect_stdout(StringIO()) as harvest_stdout:
                 main(
                     [
