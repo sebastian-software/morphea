@@ -273,6 +273,11 @@ class SegmenterTests(unittest.TestCase):
             self.assertTrue(status["backend_available"])
             self.assertEqual(status["adapter"], "mlx_sam_grid_points")
             self.assertTrue(status["sam_package_available"])
+            self.assertEqual(
+                status["model_sidecar_path"],
+                str(model_path) + ".json",
+            )
+            self.assertFalse(status["model_sidecar_exists"])
             self.assertIsNone(status["next_action"])
             self.assertTrue(
                 status["capabilities"]["live_sam_model_adapter"]["available"]
@@ -280,6 +285,28 @@ class SegmenterTests(unittest.TestCase):
             self.assertIsNone(
                 status["capabilities"]["live_sam_model_adapter"]["next_action"]
             )
+
+    def test_mlx_sam_runtime_status_reports_checkpoint_sidecar(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "sam.safetensors"
+            sidecar_path = Path(str(model_path) + ".json")
+            model_path.write_text("placeholder", encoding="utf-8")
+            sidecar_path.write_text("{}", encoding="utf-8")
+
+            with (
+                patch("morphea.segmenters.is_mlx_runtime_available", return_value=True),
+                patch(
+                    "morphea.segmenters.is_mlx_sam_package_available",
+                    return_value=True,
+                ),
+            ):
+                status = mlx_sam_runtime_status(
+                    MlxSamSegmenter(model_path=str(model_path))
+                )
+
+            self.assertEqual(status["status"], "mlx_sam_package_available")
+            self.assertEqual(status["model_sidecar_path"], str(sidecar_path))
+            self.assertTrue(status["model_sidecar_exists"])
 
     def test_mlx_sam_runtime_status_reports_missing_sam_package_action(self):
         with tempfile.TemporaryDirectory() as temp_dir:

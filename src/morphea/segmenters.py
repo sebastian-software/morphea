@@ -165,6 +165,16 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         if model_path is not None
         else False
     )
+    model_sidecar_path = (
+        Path(str(model_path) + ".json")
+        if model_path is not None and model_path.suffix.lower() == ".safetensors"
+        else None
+    )
+    model_sidecar_exists = (
+        model_sidecar_path.exists()
+        if model_sidecar_path is not None
+        else False
+    )
     json_adapter_available = (
         model_path is not None
         and model_exists
@@ -211,6 +221,10 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         "model_configured": model_configured,
         "model_exists": model_exists,
         "model_path": segmenter.model_path,
+        "model_sidecar_path": (
+            str(model_sidecar_path) if model_sidecar_path is not None else None
+        ),
+        "model_sidecar_exists": model_sidecar_exists,
         "adapter": (
             "json_proposals"
             if json_adapter_available

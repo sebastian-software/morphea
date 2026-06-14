@@ -971,10 +971,13 @@ Proposal group fields:
 `json_adapter_available`, `mlx_sam_package_available`, `not_installed`,
 `not_configured`, `model_missing`, `mlx_sam_package_missing`, and
 `adapter_pending`; it also records `package_available`,
-`sam_package_available`, `model_configured`, `model_exists`, adapter name,
-runtime knobs, and per-capability status for `json_proposal_adapter` and
-`live_sam_model_adapter`. The JSON adapter is a local bridge for checked-in or
-generated proposal payloads shaped as:
+`sam_package_available`, `model_configured`, `model_exists`,
+`model_sidecar_path`, `model_sidecar_exists`, adapter name, runtime knobs, and
+per-capability status for `json_proposal_adapter` and
+`live_sam_model_adapter`. The sidecar fields are diagnostic only: quantized
+MLX/SAM checkpoints normally need the adjacent `.safetensors.json` file, while
+unquantized checkpoints may not. The JSON adapter is a local bridge for
+checked-in or generated proposal payloads shaped as:
 
 - `proposals`: list of proposal objects
 - each proposal may contain `bounds` as `[left, top, right, bottom]` or `bbox`

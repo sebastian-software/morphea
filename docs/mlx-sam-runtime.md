@@ -41,7 +41,9 @@ Check the live SAM package runtime after configuring a local checkpoint:
 
 Without `--mlx-sam-model-path`, `mlx_sam` should remain `not_configured`. With
 a valid local `.safetensors` checkpoint in the Python 3.14 environment, it
-should report `mlx_sam_package_available`.
+should report `mlx_sam_package_available`. For quantized checkpoints, also
+check that `model_sidecar_exists` is `true`; that means the adjacent
+`.safetensors.json` quantization sidecar is present.
 
 ## Checkpoint Handling
 
@@ -52,7 +54,8 @@ checkpoint into `checkpoints/`, then pass that path to Morphēa.
 
 For a first smoke test, prefer a small or quantized SAM2.1 MLX checkpoint from
 the `mlx-sam` model family. The smallest local proof path used so far is the
-4-bit tiny checkpoint:
+4-bit tiny checkpoint. Download both the `.safetensors` file and its adjacent
+`.safetensors.json` sidecar:
 
 ```sh
 .venv-mlx-sam/bin/python - <<'PY'

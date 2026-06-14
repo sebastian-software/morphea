@@ -178,6 +178,11 @@ class RuntimeStatusTests(unittest.TestCase):
             self.assertEqual(mlx_sam["status"], "mlx_sam_package_available")
             self.assertTrue(mlx_sam["backend_available"])
             self.assertEqual(mlx_sam["adapter"], "mlx_sam_grid_points")
+            self.assertEqual(
+                mlx_sam["model_sidecar_path"],
+                str(model_path) + ".json",
+            )
+            self.assertFalse(mlx_sam["model_sidecar_exists"])
             self.assertEqual(result["blocked_backends"], [])
             self.assertNotIn(
                 {

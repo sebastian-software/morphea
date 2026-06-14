@@ -661,6 +661,9 @@ Implemented so far:
 - MLX SAM status reporting distinguishes missing MLX package, missing model
   configuration, missing model file, and adapter-pending states without
   allowing AI proposals to bypass the geometry pipeline.
+- MLX SAM status reports the adjacent `.safetensors.json` sidecar path and
+  existence as non-blocking diagnostics, making quantized checkpoint setup
+  inspectable without marking unquantized checkpoints unavailable.
 - MLX SAM status includes per-capability diagnostics for the JSON proposal
   adapter and the optional live SAM model adapter.
 - `MlxSamSegmenter` can consume local JSON proposal payloads through the same
