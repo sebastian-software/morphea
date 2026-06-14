@@ -424,6 +424,9 @@ Implemented so far:
   can start from terminal decision templates that preserve the same evidence
   and indicate that reviewer/reason evidence is required for every terminal
   decision, with correction notes and artifacts required for `corrected`.
+- suite-level `review-packet.json` / `review-packet.md` carry the same
+  `review_requirements`, so reviewers can see terminal and corrected decision
+  requirements without opening individual templates first.
 - pending, terminal, and applied promotion review records carry a
   `quality_label_policy` block with `mode: sidecar_only`, making
   `current_quality_label` a manual suite-metadata field rather than something

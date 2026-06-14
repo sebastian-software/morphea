@@ -367,7 +367,9 @@ Deliverables:
   runs with `--output-dir` write suite-level `review-packet.json` and
   `review-packet.md` that collect deferred/rejected cases and link their
   contact sheet, promotion review, editability review, and pending
-  `review-decision.json`;
+  `review-decision.json`. Packet cases also surface `review_requirements` so
+  reviewer/reason and corrected-decision evidence requirements are visible
+  before a terminal template is opened;
 - reviewer decision templates for accepted, corrected, rejected, and deferred.
   Current slice: checked promotion runs write terminal JSON templates under
   `review-templates/`, and suite-level review packets link those paths per

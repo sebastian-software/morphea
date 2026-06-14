@@ -2741,8 +2741,19 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         ),
         "suggested_review_decision": decision.get("suggested_decision", "n/a"),
         "review_decision_state": decision.get("decision", "n/a"),
+        "review_requirements": _review_packet_requirements(),
         "quality_label_policy": decision.get("quality_label_policy", {}),
         "artifacts": artifact_paths,
+    }
+
+
+def _review_packet_requirements() -> dict[str, list[str]]:
+    return {
+        "required_for_terminal_decisions": ["reviewer", "reason"],
+        "required_for_corrected_decisions": [
+            "correction_notes",
+            "corrected_artifacts",
+        ],
     }
 
 
@@ -2847,6 +2858,11 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
             f"editability=`{case.get('editability_decision', 'n/a')}`, "
             f"suggested=`{case.get('suggested_review_decision', 'n/a')}`"
         )
+        lines.append(
+            "- Review requirements: "
+            f"terminal={_fmt_review_requirement_list(case.get('review_requirements'), 'required_for_terminal_decisions')}, "
+            f"corrected={_fmt_review_requirement_list(case.get('review_requirements'), 'required_for_corrected_decisions')}"
+        )
         artifacts = case.get("artifacts", {})
         artifacts = artifacts if isinstance(artifacts, dict) else {}
         lines.extend(
@@ -2867,6 +2883,12 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
             if template_parts:
                 lines.append(f"- Decision templates: {', '.join(template_parts)}")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _fmt_review_requirement_list(value: object, key: str) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    return _fmt_markdown_list(value.get(key))
 
 
 def _review_packet_group_rows(value: object) -> list[str]:

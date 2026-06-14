@@ -589,6 +589,16 @@ class CuratedSuiteTests(unittest.TestCase):
                 review_packet["cases"][0]["quality_label_policy"]["mode"],
                 "sidecar_only",
             )
+            self.assertEqual(
+                review_packet["cases"][0]["review_requirements"],
+                {
+                    "required_for_corrected_decisions": [
+                        "correction_notes",
+                        "corrected_artifacts",
+                    ],
+                    "required_for_terminal_decisions": ["reviewer", "reason"],
+                },
+            )
             self.assertFalse(
                 review_packet["cases"][0]["quality_label_policy"][
                     "updates_current_quality_label"
@@ -615,6 +625,11 @@ class CuratedSuiteTests(unittest.TestCase):
                 review_packet_markdown,
             )
             self.assertIn("| `simple-circle` | `deferred` |", review_packet_markdown)
+            self.assertIn(
+                "- Review requirements: terminal=`reviewer`, `reason`, "
+                "corrected=`correction_notes`, `corrected_artifacts`",
+                review_packet_markdown,
+            )
             self.assertIn("- Review decision: `", review_packet_markdown)
             self.assertIn("- Decision templates: accepted=`", review_packet_markdown)
             review_gallery = (output_dir / "review-gallery.html").read_text(

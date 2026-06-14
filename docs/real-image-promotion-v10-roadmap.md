@@ -381,6 +381,9 @@ record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal
 accepted/corrected/rejected/deferred review templates that preserve the same
 evidence.
+Suite review packets also surface `review_requirements`, so terminal
+reviewer/reason requirements and corrected-decision evidence requirements are
+visible before opening individual templates.
 Curated output roots also write `review-gallery.html`, so those artifacts can
 be scanned visually from one local page before a terminal decision is applied.
 `morphea promotion-apply-review` consumes edited terminal decision records,
