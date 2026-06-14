@@ -341,11 +341,12 @@ error, alpha error, and size-match status. Region gates can also set
 `max_raster_l1_error` and `max_raster_edge_error`; failures are stored as
 `visual_failures` and participate in the gate result. `promotion_regions`,
 manifest promotion state, `promotion-export.json`, `promotion-review.md`, and
-the suite Region Truth table all carry the same region-level visual delta,
-thresholds, and failures, so reviewers can inspect visual drift at the region
-that the semantic gate is already discussing. The real gold-circle region now
-passes a red region visual gate, while the real radio-control crop records a
-yellow region visual-fidelity failure after its topology gate passes.
+the suite Region Truth and Promotion Gate Details tables all carry the same
+region-level visual delta, thresholds, failures, and failed-gate reason, so
+reviewers can inspect visual drift at the region that the semantic gate is
+already discussing. The real gold-circle region now passes a red region visual
+gate, while the real radio-control crop records a yellow region visual-fidelity
+failure after its topology gate passes.
 Contact sheets now include a region overlay panel, and checked run artifacts
 write `region-overlay.png`; failed red/yellow source-region gates are outlined
 directly on the source image while passing regions remain green.

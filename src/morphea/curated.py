@@ -354,6 +354,18 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
             f"{_fmt_promotion_quality(case.get('promotion'))} | "
             f"{_fmt_failed_gates(case.get('promotion_gates'))} |"
         )
+    gate_detail_rows = _promotion_gate_detail_rows(cases)
+    if gate_detail_rows:
+        lines.extend(
+            [
+                "",
+                "## Promotion Gate Details",
+                "",
+                "| Case | Gate | Type | Severity | Reason |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+        )
+        lines.extend(gate_detail_rows)
     region_rows = _region_truth_rows(cases)
     if region_rows:
         lines.extend(
@@ -3149,6 +3161,24 @@ def _review_packet_group_rows(value: object) -> list[str]:
             else "n/a"
         )
         rows.append(f"| `{key}` | {case_text} |")
+    return rows
+
+
+def _promotion_gate_detail_rows(cases: list[object]) -> list[str]:
+    rows: list[str] = []
+    for case in _promotion_sorted_cases(cases):
+        if not isinstance(case, dict):
+            continue
+        case_id = case.get("id", "n/a")
+        for gate in _review_decision_failed_gates(case.get("promotion_gates")):
+            rows.append(
+                "| "
+                f"`{case_id}` | "
+                f"{_fmt_markdown_code_value(gate.get('id'))} | "
+                f"{_fmt_markdown_code_value(gate.get('gate_type'))} | "
+                f"{_fmt_markdown_code_value(gate.get('severity'))} | "
+                f"{_fmt_markdown_table_text(gate.get('reason'))} |"
+            )
     return rows
 
 

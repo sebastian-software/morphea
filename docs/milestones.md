@@ -404,6 +404,9 @@ Implemented so far:
 - curated promotion gates cap matching v10 components with `gate_blocked`,
   `failed_gates`, and `uncapped_score`, so red topology, shape-class, grouping,
   visual-fidelity, provenance, or fragmentation gates cannot be averaged away.
+- curated Markdown reports render failed promotion-gate details with case id,
+  gate id, type, severity, and reason, so the main acceptance report explains
+  why red/yellow cases are deferred or rejected.
 - text-like fallback grouping only treats small glyph-sized cubic paths as
   structured text evidence; larger same-color organic fallback paths remain in
   unstructured fallback and fragmentation debt.

@@ -1131,6 +1131,17 @@ class CuratedSuiteTests(unittest.TestCase):
             "| `simple-circle` | `rejected` | `red` | `current_quality_label`, `circle-shape-class` |",
             markdown,
         )
+        self.assertIn("## Promotion Gate Details", markdown)
+        self.assertIn(
+            "| `simple-circle` | `current_quality_label` | `review_safety` | "
+            "`red` | current quality label is red |",
+            markdown,
+        )
+        self.assertIn(
+            "| `simple-circle` | `circle-shape-class` | `shape_class` | "
+            "`red` | failed expectations: circle-anchor |",
+            markdown,
+        )
         self.assertIn(
             "| `simple-circle` | `rejected` | `false` | "
             "`not_configured` | "
