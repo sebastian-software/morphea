@@ -142,6 +142,10 @@ MLX/SAM run produced 4 proposals and all 4 passed the geometry gate. The
 comparison verdict was `noise` because green promotion proxy count dropped from
 29 to 4, even though red rejected candidates dropped from 12 to 0. Treat this
 as runtime evidence and a prompt/config baseline, not as quality evidence.
+With source-coordinate proposal bounds, the comparison currently reports
+`spatial_matches=3`: two accepted Flat-Color regions match accepted MLX/SAM
+regions, while one rejected Flat-Color region overlaps an accepted MLX/SAM
+region and remains review evidence rather than a promotion claim.
 The MLX/SAM config carries `max_component_area: 12000`, so larger prompt
 sweeps cannot turn huge image-spanning masks into accepted primitive anchors
 just because they fit a coarse circle or rounded rectangle.

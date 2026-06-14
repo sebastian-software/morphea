@@ -658,6 +658,9 @@ Implemented so far:
   counts, shared proposal count, source verdict, and green/red/manual-review
   deltas instead of only reporting shared proposal ids, keeping MLX/SAM
   side-by-side smoke runs understandable when sources use different id spaces.
+- segment comparisons also report greedy spatial proposal matches by bbox IoU,
+  so Flat-Color and MLX/SAM runs can show overlapping regions even when their
+  proposal ids never intersect.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path

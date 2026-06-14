@@ -184,6 +184,65 @@ class SnapshotComparisonTests(unittest.TestCase):
             group_changes,
         )
 
+    def test_render_segment_manifest_comparison_reports_spatial_matches(self):
+        comparison = render_segment_manifest_comparison(
+            _segment_manifest(
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "bounds": [10, 10, 30, 30],
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "rect",
+                    },
+                    {
+                        "id": "flat_color-0001",
+                        "source": "flat_color",
+                        "bounds": [100, 100, 120, 120],
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "circle",
+                    },
+                ],
+            ),
+            _segment_manifest(
+                source="mlx_sam",
+                proposals=[
+                    {
+                        "id": "mlx_sam-0000",
+                        "source": "mlx_sam",
+                        "bounds": [12, 11, 31, 31],
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "rect",
+                    },
+                    {
+                        "id": "mlx_sam-0001",
+                        "source": "mlx_sam",
+                        "bounds": [200, 200, 220, 220],
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                        "anchor_kind": "quad",
+                    },
+                ],
+            ),
+            before="flat.json",
+            after="mlx.json",
+        )
+
+        self.assertEqual(comparison["shared_proposal_count"], 0)
+        self.assertEqual(comparison["spatial_match_count"], 1)
+        self.assertEqual(comparison["spatial_match_min_iou"], 0.5)
+        match = comparison["spatial_matches"][0]
+        self.assertEqual(match["before_id"], "flat_color-0000")
+        self.assertEqual(match["after_id"], "mlx_sam-0000")
+        self.assertGreater(match["bbox_iou"], 0.7)
+        markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn("Spatial Proposal Matches", markdown)
+        self.assertIn("`flat_color-0000`", markdown)
+        self.assertIn("`mlx_sam-0000`", markdown)
+
     def test_render_segment_manifest_comparison_reports_source_deltas(self):
         comparison = render_segment_manifest_comparison(
             _segment_manifest(

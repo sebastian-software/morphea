@@ -2600,6 +2600,7 @@ def _compare_segments_stdout_summary(result: dict[str, object]) -> str:
         f"{result.get('after_proposal_count', 0)} "
         f"(delta {result.get('proposal_count_delta', 0)}), "
         f"shared={result.get('shared_proposal_count', 0)}, "
+        f"spatial_matches={result.get('spatial_match_count', 0)}, "
         f"verdict={assessment.get('verdict', 'n/a')}, "
         f"green_delta={assessment.get('green_promotion_delta', 'n/a')}, "
         f"red_delta={assessment.get('red_candidate_delta', 'n/a')}, "

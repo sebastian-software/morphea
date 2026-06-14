@@ -32,7 +32,8 @@ Current expected signal on `assets/curated/terminaro-opaque-table-grid.png`:
 Flat-Color produces 41 proposals with 29 geometry-gate accepted proposals; the
 tiny 4-prompt MLX/SAM run produces 4 proposals, all accepted. The comparison
 verdict is `noise`, not `improved`, because the green promotion proxy drops
-from 29 to 4. Treat this as runtime evidence and a prompt/config baseline. The
-MLX/SAM config includes `max_component_area: 12000` so oversized AI masks are
-deferred before geometry gating rather than being promoted as coarse primitive
-anchors.
+from 29 to 4. The comparison currently reports `spatial_matches=3`, which is
+useful overlap evidence but not enough to call the source improved. Treat this
+as runtime evidence and a prompt/config baseline. The MLX/SAM config includes
+`max_component_area: 12000` so oversized AI masks are deferred before geometry
+gating rather than being promoted as coarse primitive anchors.

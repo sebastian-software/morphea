@@ -34,6 +34,7 @@ PROMOTION_REGION_DELTA_FIELDS = (
     "selected_stroke_anchor_count",
     "selected_generic_path_anchor_count",
 )
+SEGMENT_SPATIAL_MATCH_MIN_IOU = 0.5
 
 
 def compare_snapshots(
@@ -184,6 +185,7 @@ def render_segment_manifest_comparison(
         )
         if changes:
             group_changes.append({"id": group_id, "changes": changes})
+    spatial_matches = _spatial_proposal_matches(before_proposals, after_proposals)
 
     return {
         "schema_version": 1,
@@ -201,6 +203,9 @@ def render_segment_manifest_comparison(
         "proposal_count_delta": int(after_data.get("proposal_count", 0))
         - int(before_data.get("proposal_count", 0)),
         "shared_proposal_count": len(shared_ids),
+        "spatial_match_count": len(spatial_matches),
+        "spatial_match_min_iou": SEGMENT_SPATIAL_MATCH_MIN_IOU,
+        "spatial_matches": spatial_matches,
         "added_ids": sorted(set(after_proposals) - set(before_proposals)),
         "removed_ids": sorted(set(before_proposals) - set(after_proposals)),
         "shared_group_count": len(shared_group_ids),
@@ -232,6 +237,7 @@ def render_segment_manifest_comparison_markdown(
         f"`{comparison.get('after_source')}`",
         f"- Proposal count delta: `{comparison.get('proposal_count_delta', 0)}`",
         f"- Shared proposals: `{comparison.get('shared_proposal_count', 0)}`",
+        f"- Spatial matches: `{comparison.get('spatial_match_count', 0)}`",
         f"- Added: {_id_list(comparison.get('added_ids', []))}",
         f"- Removed: {_id_list(comparison.get('removed_ids', []))}",
         f"- Shared groups: `{comparison.get('shared_group_count', 0)}`",
@@ -392,6 +398,35 @@ def render_segment_manifest_comparison_markdown(
             )
     if change_count == 0:
         lines.append("| n/a | n/a | n/a | n/a |")
+
+    lines.extend(["", "## Spatial Proposal Matches", ""])
+    lines.extend(
+        [
+            "| Before | After | IoU | Downstream | Anchor |",
+            "| --- | --- | ---: | --- | --- |",
+        ]
+    )
+    spatial_matches = _list_value(comparison.get("spatial_matches"))
+    if spatial_matches:
+        for match in spatial_matches:
+            downstream_cell = _transition_cell(
+                match.get("before_downstream_status"),
+                match.get("after_downstream_status"),
+            )
+            anchor_cell = _transition_cell(
+                match.get("before_anchor_kind"),
+                match.get("after_anchor_kind"),
+            )
+            lines.append(
+                "| "
+                f"`{match.get('before_id')}` | "
+                f"`{match.get('after_id')}` | "
+                f"{_fmt(match.get('bbox_iou'))} | "
+                f"{downstream_cell} | "
+                f"{anchor_cell} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
 
     lines.extend(["", "## Proposal Group Changes", ""])
     lines.extend(
@@ -820,6 +855,93 @@ def _config_deltas(
             }
         )
     return deltas
+
+
+def _spatial_proposal_matches(
+    before_proposals: dict[str, dict[str, Any]],
+    after_proposals: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    candidates: list[tuple[float, str, str]] = []
+    for before_id, before_proposal in before_proposals.items():
+        before_bounds = _proposal_bounds(before_proposal)
+        if before_bounds is None:
+            continue
+        for after_id, after_proposal in after_proposals.items():
+            after_bounds = _proposal_bounds(after_proposal)
+            if after_bounds is None:
+                continue
+            bbox_iou = _bbox_iou(before_bounds, after_bounds)
+            if bbox_iou >= SEGMENT_SPATIAL_MATCH_MIN_IOU:
+                candidates.append((bbox_iou, before_id, after_id))
+
+    used_before: set[str] = set()
+    used_after: set[str] = set()
+    matches: list[dict[str, Any]] = []
+    for bbox_iou, before_id, after_id in sorted(
+        candidates,
+        key=lambda item: (-item[0], item[1], item[2]),
+    ):
+        if before_id in used_before or after_id in used_after:
+            continue
+        before_proposal = before_proposals[before_id]
+        after_proposal = after_proposals[after_id]
+        matches.append(
+            {
+                "before_id": before_id,
+                "after_id": after_id,
+                "bbox_iou": round(bbox_iou, 6),
+                "before_bounds": list(_proposal_bounds(before_proposal) or ()),
+                "after_bounds": list(_proposal_bounds(after_proposal) or ()),
+                "before_downstream_status": before_proposal.get(
+                    "downstream_status"
+                ),
+                "after_downstream_status": after_proposal.get("downstream_status"),
+                "before_anchor_kind": before_proposal.get("anchor_kind"),
+                "after_anchor_kind": after_proposal.get("anchor_kind"),
+            }
+        )
+        used_before.add(before_id)
+        used_after.add(after_id)
+    return matches
+
+
+def _proposal_bounds(
+    proposal: dict[str, Any],
+) -> tuple[int, int, int, int] | None:
+    bounds = proposal.get("bounds")
+    if not isinstance(bounds, list) or len(bounds) != 4:
+        return None
+    left, top, right, bottom = (int(float(value)) for value in bounds)
+    if right < left or bottom < top:
+        return None
+    return left, top, right, bottom
+
+
+def _bbox_iou(
+    before_bounds: tuple[int, int, int, int],
+    after_bounds: tuple[int, int, int, int],
+) -> float:
+    before_left, before_top, before_right, before_bottom = before_bounds
+    after_left, after_top, after_right, after_bottom = after_bounds
+    intersect_left = max(before_left, after_left)
+    intersect_top = max(before_top, after_top)
+    intersect_right = min(before_right, after_right)
+    intersect_bottom = min(before_bottom, after_bottom)
+    if intersect_right < intersect_left or intersect_bottom < intersect_top:
+        return 0.0
+    intersect_area = (intersect_right - intersect_left + 1) * (
+        intersect_bottom - intersect_top + 1
+    )
+    before_area = (before_right - before_left + 1) * (
+        before_bottom - before_top + 1
+    )
+    after_area = (after_right - after_left + 1) * (
+        after_bottom - after_top + 1
+    )
+    union_area = before_area + after_area - intersect_area
+    if union_area <= 0:
+        return 0.0
+    return intersect_area / union_area
 
 
 def _proposal_field_changes(
