@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 from typing import Any
@@ -2043,7 +2044,7 @@ def _write_promotion_export_artifacts(
     promotion_regions: object,
     case_result: dict[str, Any],
     cutout_strategy: str,
-) -> dict[str, str]:
+) -> dict[str, object]:
     promoted_svg_path = run_dir / "promoted.svg"
     fallback_svg_path = run_dir / "fallback.svg"
     promotion_export_path = run_dir / "promotion-export.json"
@@ -2051,6 +2052,7 @@ def _write_promotion_export_artifacts(
     promotion_review_path = run_dir / "promotion-review.md"
     editability_review_path = run_dir / "editability-review.md"
     review_decision_path = run_dir / "review-decision.json"
+    review_templates_dir = run_dir / "review-templates"
     anchor_count = len(scene.anchors)
     state_indexes = _promotion_anchor_state_indexes(
         promotion_regions,
@@ -2130,6 +2132,17 @@ def _write_promotion_export_artifacts(
         json.dumps(review_decision, indent=2, sort_keys=True),
         encoding="utf-8",
     )
+    review_templates_dir.mkdir(parents=True, exist_ok=True)
+    review_templates: dict[str, str] = {}
+    for decision, template in _promotion_review_decision_templates(
+        case_result,
+    ).items():
+        template_path = review_templates_dir / f"{decision}.json"
+        template_path.write_text(
+            json.dumps(template, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        review_templates[decision] = str(template_path)
     return {
         "promoted_svg": str(promoted_svg_path),
         "fallback_svg": str(fallback_svg_path),
@@ -2138,6 +2151,7 @@ def _write_promotion_export_artifacts(
         "promotion_review": str(promotion_review_path),
         "editability_review": str(editability_review_path),
         "review_decision": str(review_decision_path),
+        "review_templates": review_templates,
     }
 
 
@@ -2211,6 +2225,27 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
     decision = decision if isinstance(decision, dict) else {}
     artifacts = case.get("artifacts", {})
     artifacts = artifacts if isinstance(artifacts, dict) else {}
+    artifact_paths: dict[str, object] = {
+        key: artifacts[key]
+        for key in (
+            "contact_sheet",
+            "promotion_review",
+            "editability_review",
+            "review_decision",
+            "promotion_export",
+            "manifest",
+        )
+        if isinstance(artifacts.get(key), str)
+    }
+    templates = artifacts.get("review_templates")
+    if isinstance(templates, dict):
+        template_paths = {
+            decision: path
+            for decision, path in templates.items()
+            if isinstance(decision, str) and isinstance(path, str)
+        }
+        if template_paths:
+            artifact_paths["review_templates"] = dict(sorted(template_paths.items()))
     return {
         "case_id": case.get("id"),
         "status": case.get("status"),
@@ -2229,18 +2264,7 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
         ),
         "suggested_review_decision": decision.get("suggested_decision", "n/a"),
         "review_decision_state": decision.get("decision", "n/a"),
-        "artifacts": {
-            key: artifacts[key]
-            for key in (
-                "contact_sheet",
-                "promotion_review",
-                "editability_review",
-                "review_decision",
-                "promotion_export",
-                "manifest",
-            )
-            if isinstance(artifacts.get(key), str)
-        },
+        "artifacts": artifact_paths,
     }
 
 
@@ -2355,6 +2379,15 @@ def _render_review_packet_markdown(packet: dict[str, object]) -> str:
                 f"- Review decision: `{artifacts.get('review_decision', 'n/a')}`",
             ]
         )
+        templates = artifacts.get("review_templates")
+        if isinstance(templates, dict) and templates:
+            template_parts = [
+                f"{decision}=`{path}`"
+                for decision, path in sorted(templates.items())
+                if isinstance(decision, str) and isinstance(path, str)
+            ]
+            if template_parts:
+                lines.append(f"- Decision templates: {', '.join(template_parts)}")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -2707,6 +2740,35 @@ def _promotion_review_decision_record(case_result: dict[str, Any]) -> dict[str, 
     }
 
 
+def _promotion_review_decision_templates(
+    case_result: dict[str, Any],
+) -> dict[str, dict[str, object]]:
+    base = _promotion_review_decision_record(case_result)
+    templates: dict[str, dict[str, object]] = {}
+    for decision in PROMOTION_REVIEW_DECISIONS:
+        template = deepcopy(base)
+        template["decision"] = decision
+        template["template_guidance"] = _promotion_review_template_guidance(
+            decision,
+            suggested=base.get("suggested_decision"),
+        )
+        templates[decision] = template
+    return templates
+
+
+def _promotion_review_template_guidance(
+    decision: str,
+    *,
+    suggested: object,
+) -> dict[str, object]:
+    return {
+        "accepted_for_promotion": decision in {"accepted", "corrected"},
+        "matches_suggested_decision": decision == suggested,
+        "requires_correction_notes": decision == "corrected",
+        "requires_corrected_artifacts": decision == "corrected",
+    }
+
+
 def _suggested_promotion_review_decision(
     review: dict[str, object],
     summary: dict[str, object],
@@ -2774,24 +2836,32 @@ def _write_manifest_promotion_state(
     gates = gates if isinstance(gates, list) else []
     artifacts = case_result.get("artifacts", {})
     artifacts = artifacts if isinstance(artifacts, dict) else {}
+    promotion_artifacts: dict[str, object] = {
+        key: artifacts[key]
+        for key in (
+            "promoted_svg",
+            "fallback_svg",
+            "promotion_export",
+            "promotion_regions",
+            "promotion_review",
+            "editability_review",
+            "review_decision",
+        )
+        if key in artifacts
+    }
+    review_templates = artifacts.get("review_templates")
+    if isinstance(review_templates, dict):
+        promotion_artifacts["review_templates"] = {
+            str(decision): str(path)
+            for decision, path in sorted(review_templates.items())
+            if isinstance(decision, str) and isinstance(path, str)
+        }
     manifest["promotion"] = {
         "case_id": case_result.get("id"),
         "summary": case_result.get("promotion_summary", {}),
         "regions": regions,
         "gates": gates,
-        "artifacts": {
-            key: artifacts[key]
-            for key in (
-                "promoted_svg",
-                "fallback_svg",
-                "promotion_export",
-                "promotion_regions",
-                "promotion_review",
-                "editability_review",
-                "review_decision",
-            )
-            if key in artifacts
-        },
+        "artifacts": promotion_artifacts,
     }
     anchors = manifest.get("anchors", [])
     if isinstance(anchors, list):

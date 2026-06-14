@@ -106,7 +106,9 @@ component threshold failures, gate-blocked components, issue tags, and
 regression deltas in a dedicated review artifact. They also write
 `review-decision.json`, a machine-editable pending decision record with
 allowed accepted/corrected/rejected/deferred outcomes, suggested decision,
-issue tags, failed gates, component failures, and regression evidence.
+issue tags, failed gates, component failures, and regression evidence, plus
+`review-templates/{accepted,corrected,rejected,deferred}.json` terminal
+decision templates that preserve the same evidence.
 The run `manifest.json` also carries a top-level `promotion` object and
 per-anchor `promotion_state` / `promotion_regions` annotations, plus a
 top-level `review_decision` record.
@@ -118,7 +120,7 @@ from any promotion-annotated manifest, outside curated sidecar generation.
 The curated output root also writes `review-packet.json` and
 `review-packet.md`, which collect all deferred/rejected cases into one
 reviewer-facing queue with contact-sheet, promotion-review, editability-review,
-and pending review-decision paths.
+pending review-decision paths, and terminal decision-template paths.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may
@@ -148,6 +150,9 @@ The complementary `review-decision.json` sidecar starts with
 `decision: pending` and carries the allowed terminal decisions
 `accepted`, `corrected`, `rejected`, and `deferred`, plus the suggested
 decision and the gate/component evidence a reviewer needs to edit it.
+The companion terminal templates set each allowed outcome explicitly and mark
+whether that template accepts promotion, matches the suggestion, or requires
+corrected artifacts.
 
 Checked real-image cases can become green only when the hard gates pass, the
 source is available, review artifacts exist, and the case's current quality
@@ -229,6 +234,9 @@ record in reports, snapshots, and run manifests. This is the first RIP6
 machine-readable decision artifact: it is pending by default, carries the
 suggested accepted/corrected/rejected/deferred outcome, and preserves issue
 tags plus failed gate/component evidence for later application.
+Checked promotion runs also write the four terminal decision templates beside
+that pending record, so a reviewer can start from the accepted, corrected,
+rejected, or deferred outcome without stripping pending state manually.
 
 `morphea promotion-apply-review` consumes an edited terminal
 `review-decision.json`, rejects still-pending decisions, writes an applied

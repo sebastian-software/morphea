@@ -407,6 +407,10 @@ Implemented so far:
   pending machine-readable decision record with suggested
   accepted/corrected/rejected/deferred outcome, issue tags, failed gates,
   component failures, and regression evidence.
+- checked promotion runs write
+  `review-templates/{accepted,corrected,rejected,deferred}.json`, so reviewers
+  can start from terminal decision templates that preserve the same evidence
+  and indicate whether correction artifacts are required.
 - `morphea promotion-apply-review` validates edited promotion review decisions,
   rejects pending records, writes applied JSON/Markdown summaries, and can
   persist `review_decision_applied` into a run manifest.

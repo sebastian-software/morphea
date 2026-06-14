@@ -450,6 +450,53 @@ class CuratedSuiteTests(unittest.TestCase):
                 manifest["anchors"][0]["promotion_state"],
                 "deferred",
             )
+            review_templates = case["artifacts"]["review_templates"]
+            self.assertEqual(
+                sorted(review_templates),
+                ["accepted", "corrected", "deferred", "rejected"],
+            )
+            accepted_template = json.loads(
+                Path(review_templates["accepted"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(accepted_template["decision"], "accepted")
+            self.assertEqual(accepted_template["case_id"], "simple-circle")
+            self.assertEqual(
+                accepted_template["suggested_decision"],
+                "deferred",
+            )
+            self.assertEqual(
+                accepted_template["allowed_decisions"],
+                ["accepted", "corrected", "rejected", "deferred"],
+            )
+            self.assertTrue(
+                accepted_template["template_guidance"]["accepted_for_promotion"]
+            )
+            self.assertFalse(
+                accepted_template["template_guidance"][
+                    "matches_suggested_decision"
+                ]
+            )
+            corrected_template = json.loads(
+                Path(review_templates["corrected"]).read_text(encoding="utf-8")
+            )
+            self.assertTrue(
+                corrected_template["template_guidance"][
+                    "requires_corrected_artifacts"
+                ]
+            )
+            deferred_template = json.loads(
+                Path(review_templates["deferred"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(deferred_template["decision"], "deferred")
+            self.assertTrue(
+                deferred_template["template_guidance"][
+                    "matches_suggested_decision"
+                ]
+            )
+            self.assertEqual(
+                manifest["promotion"]["artifacts"]["review_templates"]["deferred"],
+                review_templates["deferred"],
+            )
             review_packet = json.loads(
                 (output_dir / "review-packet.json").read_text(encoding="utf-8")
             )
@@ -476,6 +523,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 "review_decision",
                 review_packet["cases"][0]["artifacts"],
             )
+            self.assertEqual(
+                review_packet["cases"][0]["artifacts"]["review_templates"],
+                review_templates,
+            )
             review_packet_markdown = (
                 output_dir / "review-packet.md"
             ).read_text(encoding="utf-8")
@@ -490,6 +541,7 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn("| `simple-circle` | `deferred` |", review_packet_markdown)
             self.assertIn("- Review decision: `", review_packet_markdown)
+            self.assertIn("- Decision templates: accepted=`", review_packet_markdown)
 
     def test_promotion_export_artifacts_partition_rejected_anchors(self):
         with tempfile.TemporaryDirectory() as temp_dir:

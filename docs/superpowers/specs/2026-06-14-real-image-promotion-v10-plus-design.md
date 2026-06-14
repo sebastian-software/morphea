@@ -296,7 +296,10 @@ Deliverables:
   `review-packet.md` that collect deferred/rejected cases and link their
   contact sheet, promotion review, editability review, and pending
   `review-decision.json`;
-- reviewer decision templates for accepted, corrected, rejected, and deferred;
+- reviewer decision templates for accepted, corrected, rejected, and deferred.
+  Current slice: checked promotion runs write terminal JSON templates under
+  `review-templates/`, and suite-level review packets link those paths per
+  case;
 - applied-review summaries that link back to region truth and promotion gates;
 - a small local gallery for current green/yellow/red examples.
 
@@ -399,7 +402,9 @@ and quality-label review-policy refinements:
 
 1. Build a reviewer-facing packet for all three deferred real-image cases so a
    human can apply `accepted`, `corrected`, `rejected`, or `deferred` decisions
-   without reading raw JSON.
+   without reading raw JSON. The packet now links contact sheets, promotion
+   reviews, editability reviews, pending review decisions, and terminal
+   decision templates for all four outcomes.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
    review evidence.

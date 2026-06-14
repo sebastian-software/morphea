@@ -361,7 +361,9 @@ visual comparison, and `editability-review.md` for accepted-output decision,
 threshold status, gate-blocked components, issue tags, and regression deltas.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
-gate/component evidence needed for review.
+gate/component evidence needed for review, plus terminal
+accepted/corrected/rejected/deferred review templates that preserve the same
+evidence.
 `morphea promotion-apply-review` consumes edited terminal decision records,
 rejects pending records, writes applied JSON/Markdown summaries, and can
 persist `review_decision_applied` into run manifests.

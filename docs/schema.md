@@ -532,6 +532,11 @@ directory includes the standard vectorize artifacts plus:
   `decision: pending`, allowed terminal decisions (`accepted`, `corrected`,
   `rejected`, `deferred`), suggested decision, issue tags, failed gates,
   failed/gate-blocked components, and regression evidence
+- `review-templates/{accepted,corrected,rejected,deferred}.json`: terminal
+  reviewer decision templates derived from the pending decision record. Each
+  template preserves the same gate/component evidence, sets one terminal
+  decision, and marks whether the template accepts promotion, matches the
+  suggested decision, or requires correction notes/artifacts.
 - `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
@@ -540,10 +545,12 @@ The curated output root also includes suite-level review packet artifacts:
 
 - `review-packet.json`: machine-readable queue of deferred/rejected cases that
   need a reviewer decision, with issue tags, failed gate/component ids,
-  suggested decision, and paths to per-case review artifacts
+  suggested decision, paths to per-case review artifacts, and paths to terminal
+  reviewer decision templates
 - `review-packet.md`: scan-friendly Markdown summary of the same queue, with
   links/paths to contact sheets, promotion reviews, editability reviews, and
-  `review-decision.json` files
+  `review-decision.json` files plus accepted/corrected/rejected/deferred
+  template paths
 
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
@@ -574,9 +581,9 @@ top-level `promotion` object with summary, gates, regions, and promotion export
 editability-review, and review-decision artifact paths. Anchors selected by
 promotion regions are annotated with `promotion_state` and
 `promotion_regions`; unselected anchors are marked `fallback`. The manifest
-also includes top-level `editability_review` and `review_decision`, so the
-accepted-output decision and the editable human-review decision record are
-preserved with the run artifact.
+also includes review-template paths plus top-level `editability_review` and
+`review_decision`, so the accepted-output decision and the editable
+human-review decision record are preserved with the run artifact.
 
 `morphea promotion-export manifest.json --promoted-svg promoted.svg
 --fallback-svg fallback.svg -o promotion-export.json` can regenerate the
