@@ -360,6 +360,14 @@ rejected, or deferred outcome without stripping pending state manually. Template
 guidance now marks reviewer and reason as required for every terminal decision,
 and marks correction notes/artifacts as required for `corrected`.
 
+Current machine-readable evidence: curated reports and snapshots now include
+`human_review_audit`, a RIP6 contract for pending review records, sidecar-only
+quality-label policy evidence, review-artifact links, terminal decision
+templates, template guidance/evidence, reviewable region records, and the
+suite-level review packet, Markdown packet, and gallery artifacts. Review-packet
+case artifact links now include `promotion_regions` alongside the manifest,
+promotion/export reviews, decision record, and terminal templates.
+
 ## RIP5 Progress
 
 `morphea compare-segments` now writes `segment_comparison_audit`, a

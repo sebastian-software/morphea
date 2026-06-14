@@ -12,6 +12,7 @@ from morphea.curated import (
     EDITABILITY_REVIEW_OBSERVED_THRESHOLDS,
     EDITABILITY_REVIEW_THRESHOLDS,
     _curated_editability_review_audit,
+    _curated_human_review_audit,
     _curated_promotion_pipeline_audit,
     _promotion_region_results,
     _region_topology_failures,
@@ -367,6 +368,28 @@ class CuratedSuiteTests(unittest.TestCase):
                 editability_audit["cases"][0]["missing"],
                 [],
             )
+            human_review_audit = report["human_review_audit"]
+            self.assertTrue(human_review_audit["ok"])
+            self.assertEqual(
+                human_review_audit["summary"]["missing_checks"],
+                [],
+            )
+            self.assertEqual(
+                human_review_audit["summary"]["covered_check_count"],
+                9,
+            )
+            self.assertEqual(
+                human_review_audit["summary"]["review_queue_case_count"],
+                0,
+            )
+            self.assertEqual(
+                human_review_audit["summary"]["terminal_template_count"],
+                4,
+            )
+            self.assertEqual(
+                human_review_audit["cases"][0]["missing"],
+                [],
+            )
             self.assertIn("review_gallery", report["artifacts"])
             self.assertIn("raster_l1_error", report["cases"][0]["metrics"])
             self.assertIn("raster_edge_error", report["cases"][0]["metrics"])
@@ -476,6 +499,7 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertTrue(snapshot_report["promotion_pipeline_audit"]["ok"])
             self.assertTrue(snapshot_report["editability_review_audit"]["ok"])
+            self.assertTrue(snapshot_report["human_review_audit"]["ok"])
             self.assertEqual(
                 snapshot_report["cases"][0]["editability_review"]["decision"],
                 "accepted",
@@ -533,6 +557,25 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("review_packet", result["artifacts"])
             self.assertIn("review_packet_markdown", result["artifacts"])
             self.assertIn("review_gallery", result["artifacts"])
+            human_review_audit = result["human_review_audit"]
+            self.assertTrue(human_review_audit["ok"])
+            self.assertEqual(
+                human_review_audit["summary"]["review_queue_case_count"],
+                1,
+            )
+            self.assertEqual(
+                human_review_audit["summary"]["reviewable_region_count"],
+                1,
+            )
+            self.assertEqual(
+                human_review_audit["summary"]["terminal_template_count"],
+                4,
+            )
+            self.assertEqual(
+                human_review_audit["suite_packet"]["summary"]["case_count"],
+                1,
+            )
+            self.assertEqual(human_review_audit["cases"][0]["missing"], [])
             case = result["cases"][0]
             self.assertTrue(case["ok"])
             self.assertEqual(case["promotion_summary"]["decision"], "deferred")
@@ -724,6 +767,10 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertIn(
                 "review_decision",
+                review_packet["cases"][0]["artifacts"],
+            )
+            self.assertIn(
+                "promotion_regions",
                 review_packet["cases"][0]["artifacts"],
             )
             self.assertEqual(
@@ -1695,6 +1742,85 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertEqual(
             audit["cases"][0]["missing"],
             ["gate_blocked_component_visibility"],
+        )
+
+    def test_curated_human_review_audit_marks_missing_templates(self):
+        suite_case = {
+            "id": "simple-circle",
+            "promotion": {
+                "region_gates": [
+                    {
+                        "id": "circle-region",
+                        "gate_type": "shape_class",
+                    }
+                ]
+            },
+        }
+        report_case = {
+            "id": "simple-circle",
+            "status": "checked",
+            "promotion": suite_case["promotion"],
+            "promotion_regions": [
+                {
+                    "id": "circle-region",
+                    "state": "deferred",
+                    "gate_id": "circle-region",
+                    "gate_type": "shape_class",
+                    "selected_anchor_ids": ["anchor-0000"],
+                    "selected_anchor_indexes": [0],
+                    "selected_anchor_count": 1,
+                    "reason": "manual review pending",
+                }
+            ],
+            "review_decision": {
+                "schema_version": 1,
+                "decision": "pending",
+                "allowed_decisions": [
+                    "accepted",
+                    "corrected",
+                    "rejected",
+                    "deferred",
+                ],
+                "suggested_decision": "deferred",
+                "failed_gates": [],
+                "review_artifacts": {},
+                "quality_label_policy": {
+                    "mode": "sidecar_only",
+                    "updates_current_quality_label": False,
+                    "suite_label_update": "manual",
+                    "review_evidence_field": "review_decision_applied",
+                },
+            },
+            "artifacts": {},
+        }
+
+        audit = _curated_human_review_audit(
+            [suite_case],
+            [report_case],
+            report_artifacts={},
+            artifact_required=True,
+            suite_artifacts_required=True,
+        )
+
+        self.assertFalse(audit["ok"])
+        self.assertEqual(
+            audit["summary"]["missing_checks"],
+            [
+                "case_review_coverage",
+                "review_artifact_links",
+                "review_template_records",
+                "review_template_evidence",
+                "suite_review_packet",
+                "suite_review_gallery",
+            ],
+        )
+        self.assertEqual(
+            audit["cases"][0]["missing"],
+            [
+                "review_artifact_links",
+                "review_template_record",
+                "review_template_evidence",
+            ],
         )
 
     def test_check_curated_suite_applies_config_overrides(self):

@@ -1154,6 +1154,10 @@ Implemented so far:
   review block for independent v10 component scores, threshold records,
   red-semantic-gate blocking visibility, regression-delta records,
   accepted-output contracts, editability sidecars, and manifest annotations.
+- curated reports include `human_review_audit`, a machine-readable RIP6 review
+  block for pending review-decision records, review-artifact links, terminal
+  decision templates, template evidence, sidecar-only quality-label policy,
+  reviewable region records, and suite-level review packet/gallery artifacts.
 - curated reports and deterministic snapshots include
   `pipeline_quality_label`, so current green/yellow/red pipeline state can be
   consumed without parsing Markdown.

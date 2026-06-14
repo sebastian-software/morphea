@@ -91,6 +91,16 @@ PROMOTION_PIPELINE_REVIEW_ARTIFACTS = (
     "editability_review",
     "review_decision",
 )
+HUMAN_REVIEW_PACKET_ARTIFACTS = (
+    "contact_sheet",
+    "manifest",
+    "promotion_export",
+    "promotion_regions",
+    "promotion_review",
+    "editability_review",
+    "review_decision",
+    "review_templates",
+)
 PROMOTION_REGION_TOPOLOGY_LIMITS = {
     "min_closed_anchors",
     "max_closed_anchors",
@@ -281,6 +291,13 @@ def check_curated_suite(
             suite_output_dir,
             report,
         )
+    report["human_review_audit"] = _curated_human_review_audit(
+        suite["cases"],
+        cases,
+        report_artifacts=report.get("artifacts"),
+        artifact_required=run and suite_output_dir is not None,
+        suite_artifacts_required=suite_output_dir is not None,
+    )
     if overrides:
         report["config_overrides"] = _json_config(overrides)
     if baseline_snapshot is not None:
@@ -551,6 +568,59 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
+            "## RIP6 Human Review Audit",
+            "",
+        ]
+    )
+    human_review_audit = report.get("human_review_audit")
+    if isinstance(human_review_audit, dict):
+        summary = human_review_audit.get("summary", {})
+        summary = summary if isinstance(summary, dict) else {}
+        human_status = "pass" if human_review_audit.get("ok", False) else "fail"
+        lines.extend(
+            [
+                f"- Status: `{human_status}`",
+                f"- Covered checks: {_fmt_markdown_value(summary.get('covered_check_count'))} / {_fmt_markdown_value(summary.get('required_check_count'))}",
+                f"- Missing checks: {_fmt_markdown_list(summary.get('missing_checks'))}",
+                f"- Promotion cases: {_fmt_markdown_value(summary.get('promotion_case_count'))}",
+                f"- Review queue cases: {_fmt_markdown_value(summary.get('review_queue_case_count'))}",
+                f"- Reviewable regions: {_fmt_markdown_value(summary.get('reviewable_region_count'))}",
+                f"- Terminal templates: {_fmt_markdown_value(summary.get('terminal_template_count'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        checks = human_review_audit.get("checks", {})
+        if isinstance(checks, dict):
+            for name, covered in sorted(checks.items()):
+                lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+        lines.extend(
+            [
+                "",
+                "| Case | Ready | Suggested | Reviewable regions | Templates | Missing |",
+                "| --- | --- | --- | ---: | ---: | --- |",
+            ]
+        )
+        audit_cases = human_review_audit.get("cases", [])
+        if isinstance(audit_cases, list):
+            for item in audit_cases:
+                if not isinstance(item, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{item.get('id', 'n/a')}` | "
+                    f"`{str(item.get('ok', False)).lower()}` | "
+                    f"`{item.get('suggested_decision', 'n/a')}` | "
+                    f"{_fmt_markdown_value(item.get('reviewable_region_count'))} | "
+                    f"{_fmt_markdown_value(item.get('terminal_template_count'))} | "
+                    f"{_fmt_markdown_list(item.get('missing'))} |"
+                )
+    else:
+        lines.extend(["- Status: `not_available`", ""])
+    lines.extend(
+        [
+            "",
             "## Corpus Ledger",
             "",
             "| Case | Quality | Pipeline | Current status | Stress family | Expected families | Issues | Licensing |",
@@ -790,6 +860,7 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
         "quality_gate_audit": report.get("quality_gate_audit"),
         "promotion_pipeline_audit": report.get("promotion_pipeline_audit"),
         "editability_review_audit": report.get("editability_review_audit"),
+        "human_review_audit": report.get("human_review_audit"),
         "cases": [
             _case_snapshot(case)
             for case in sorted(
@@ -1981,6 +2052,548 @@ def _case_has_manifest_editability_annotations(
     required_ids = set(EDITABILITY_REVIEW_THRESHOLDS)
     observed_ids = set(EDITABILITY_REVIEW_OBSERVED_THRESHOLDS)
     return required_ids.issubset(components) and observed_ids.issubset(components)
+
+
+def _curated_human_review_audit(
+    suite_cases: list[dict[str, Any]],
+    report_cases: list[dict[str, Any]],
+    *,
+    report_artifacts: object,
+    artifact_required: bool,
+    suite_artifacts_required: bool | None = None,
+) -> dict[str, Any]:
+    if suite_artifacts_required is None:
+        suite_artifacts_required = artifact_required
+    report_by_id = {
+        str(case.get("id")): case
+        for case in report_cases
+        if isinstance(case, dict) and isinstance(case.get("id"), str)
+    }
+    audited_cases = [
+        _curated_human_review_case_audit(
+            report_by_id.get(str(case.get("id")), {}),
+            artifact_required=artifact_required,
+        )
+        for case in suite_cases
+        if isinstance(case, dict) and isinstance(case.get("promotion"), dict)
+    ]
+    suite_packet = _human_review_suite_packet_audit(
+        report_artifacts,
+        required=suite_artifacts_required,
+    )
+    suite_gallery = _human_review_suite_gallery_audit(
+        report_artifacts,
+        required=suite_artifacts_required,
+    )
+    checks = {
+        "case_review_coverage": all(case["ok"] for case in audited_cases),
+        "review_decision_records": all(
+            _bool_case_check(case, "review_decision_record")
+            for case in audited_cases
+        ),
+        "review_artifact_links": all(
+            _bool_case_check(case, "review_artifact_links")
+            for case in audited_cases
+        ),
+        "review_template_records": all(
+            _bool_case_check(case, "review_template_record")
+            for case in audited_cases
+        ),
+        "review_template_evidence": all(
+            _bool_case_check(case, "review_template_evidence")
+            for case in audited_cases
+        ),
+        "quality_label_policy": all(
+            _bool_case_check(case, "quality_label_policy") for case in audited_cases
+        ),
+        "reviewable_region_records": all(
+            _bool_case_check(case, "reviewable_region_records")
+            for case in audited_cases
+        ),
+        "suite_review_packet": bool(suite_packet.get("ok", False)),
+        "suite_review_gallery": bool(suite_gallery.get("ok", False)),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    packet_summary = suite_packet.get("summary", {})
+    packet_summary = packet_summary if isinstance(packet_summary, dict) else {}
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "promotion_case_count": len(audited_cases),
+            "ready_case_count": sum(1 for case in audited_cases if case["ok"]),
+            "incomplete_case_count": sum(
+                1 for case in audited_cases if not case["ok"]
+            ),
+            "artifact_required": artifact_required,
+            "suite_artifacts_required": suite_artifacts_required,
+            "review_queue_case_count": _int_value(
+                packet_summary.get("case_count")
+            )
+            if packet_summary
+            else sum(
+                1
+                for case in report_cases
+                if isinstance(case, dict) and _case_needs_review_packet(case)
+            ),
+            "reviewable_region_count": sum(
+                _int_value(case.get("reviewable_region_count"))
+                for case in audited_cases
+            ),
+            "terminal_template_count": sum(
+                _int_value(case.get("terminal_template_count"))
+                for case in audited_cases
+            ),
+            "suite_packet_missing": suite_packet.get("missing", []),
+            "suite_gallery_missing": suite_gallery.get("missing", []),
+        },
+        "suite_packet": suite_packet,
+        "suite_gallery": suite_gallery,
+        "cases": audited_cases,
+    }
+
+
+def _curated_human_review_case_audit(
+    report_case: dict[str, Any],
+    *,
+    artifact_required: bool,
+) -> dict[str, Any]:
+    review = report_case.get("review_decision")
+    review = review if isinstance(review, dict) else {}
+    artifact_needed = artifact_required and report_case.get("status") == "checked"
+    reviewable_regions = _reviewable_region_summaries(
+        report_case.get("promotion_regions")
+    )
+    checks = {
+        "review_decision_record": _case_has_review_decision_record(report_case),
+        "review_artifact_links": _case_has_review_artifact_links(
+            report_case,
+            required=artifact_needed,
+        ),
+        "review_template_record": _case_has_terminal_review_templates(
+            report_case,
+            required=artifact_needed,
+        ),
+        "review_template_evidence": _case_has_terminal_review_template_evidence(
+            report_case,
+            required=artifact_needed,
+        ),
+        "quality_label_policy": _case_has_review_quality_label_policy(report_case),
+        "reviewable_region_records": _case_has_human_review_region_records(
+            report_case
+        ),
+    }
+    missing = [name for name, passed in checks.items() if not passed]
+    return {
+        "id": str(report_case.get("id", "n/a")),
+        "ok": not missing,
+        "missing": missing,
+        "checks": checks,
+        "status": report_case.get("status", "unknown"),
+        "decision": review.get("decision", "n/a"),
+        "suggested_decision": review.get("suggested_decision", "n/a"),
+        "reviewable_region_count": len(reviewable_regions),
+        "terminal_template_count": _case_review_template_count(report_case),
+        "artifact_required": artifact_needed,
+    }
+
+
+def _case_has_review_quality_label_policy(report_case: dict[str, Any]) -> bool:
+    review = report_case.get("review_decision")
+    if not isinstance(review, dict):
+        return False
+    return _review_quality_label_policy_record_ok(review.get("quality_label_policy"))
+
+
+def _review_quality_label_policy_record_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return (
+        value.get("mode") == "sidecar_only"
+        and value.get("updates_current_quality_label") is False
+        and _non_empty_string(value.get("review_evidence_field"))
+        and _non_empty_string(value.get("suite_label_update"))
+    )
+
+
+def _case_has_terminal_review_templates(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    templates = _case_review_templates(report_case)
+    return all(
+        _non_empty_string(templates.get(decision))
+        and Path(str(templates[decision])).exists()
+        for decision in PROMOTION_REVIEW_DECISIONS
+    )
+
+
+def _case_has_terminal_review_template_evidence(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    for decision in PROMOTION_REVIEW_DECISIONS:
+        template = _case_review_template_json(report_case, decision)
+        if not isinstance(template, dict):
+            return False
+        if not _terminal_review_template_evidence_ok(template, decision):
+            return False
+    return True
+
+
+def _terminal_review_template_evidence_ok(
+    template: dict[str, Any],
+    decision: str,
+) -> bool:
+    allowed = template.get("allowed_decisions")
+    guidance = template.get("template_guidance")
+    if not isinstance(allowed, list) or not isinstance(guidance, dict):
+        return False
+    if not set(PROMOTION_REVIEW_DECISIONS).issubset(set(allowed)):
+        return False
+    if not _review_quality_label_policy_record_ok(template.get("quality_label_policy")):
+        return False
+    if not _review_artifact_record_paths_exist(template.get("review_artifacts")):
+        return False
+    if template.get("schema_version") != 1:
+        return False
+    if template.get("decision") != decision:
+        return False
+    if template.get("suggested_decision") not in PROMOTION_REVIEW_DECISIONS:
+        return False
+    if not isinstance(template.get("reviewer"), str):
+        return False
+    if not isinstance(template.get("reason"), str):
+        return False
+    if not isinstance(template.get("corrected_artifacts"), list):
+        return False
+    if not isinstance(template.get("reviewed_region_ids"), list):
+        return False
+    if not isinstance(template.get("failed_gates"), list):
+        return False
+    return (
+        guidance.get("accepted_for_promotion") == (decision in {"accepted", "corrected"})
+        and guidance.get("requires_reviewer") is True
+        and guidance.get("requires_reason") is True
+        and guidance.get("requires_correction_notes") == (decision == "corrected")
+        and guidance.get("requires_corrected_artifacts") == (decision == "corrected")
+    )
+
+
+def _review_artifact_record_paths_exist(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return all(
+        _artifact_path_exists(value, key) for key in PROMOTION_PIPELINE_REVIEW_ARTIFACTS
+    )
+
+
+def _case_review_templates(report_case: dict[str, Any]) -> dict[str, str]:
+    artifacts = report_case.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return {}
+    templates = artifacts.get("review_templates")
+    if not isinstance(templates, dict):
+        return {}
+    return {
+        str(decision): str(path)
+        for decision, path in templates.items()
+        if isinstance(decision, str) and isinstance(path, str) and path
+    }
+
+
+def _case_review_template_count(report_case: dict[str, Any]) -> int:
+    templates = _case_review_templates(report_case)
+    return sum(1 for decision in PROMOTION_REVIEW_DECISIONS if decision in templates)
+
+
+def _case_review_template_json(
+    report_case: dict[str, Any],
+    decision: str,
+) -> dict[str, Any] | None:
+    templates = _case_review_templates(report_case)
+    path_value = templates.get(decision)
+    if not isinstance(path_value, str):
+        return None
+    try:
+        data = json.loads(Path(path_value).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _case_has_human_review_region_records(report_case: dict[str, Any]) -> bool:
+    promotion = report_case.get("promotion")
+    expected_region_gates = (
+        isinstance(promotion, dict)
+        and isinstance(promotion.get("region_gates"), list)
+        and bool(promotion.get("region_gates"))
+    )
+    regions = _case_promotion_regions(report_case)
+    if expected_region_gates and not regions:
+        return False
+    for region in regions:
+        if not _human_review_region_record_ok(region):
+            return False
+    return True
+
+
+def _human_review_region_record_ok(region: dict[str, Any]) -> bool:
+    if not _non_empty_string(region.get("id")):
+        return False
+    if region.get("state") not in PROMOTION_PIPELINE_REGION_STATES:
+        return False
+    if not _non_empty_string(region.get("gate_id")):
+        return False
+    if not _non_empty_string(region.get("gate_type")):
+        return False
+    if not isinstance(region.get("selected_anchor_ids"), list):
+        return False
+    if not isinstance(region.get("selected_anchor_indexes"), list):
+        return False
+    if not isinstance(region.get("selected_anchor_count"), int):
+        return False
+    return _non_empty_string(region.get("reason"))
+
+
+def _human_review_suite_packet_audit(
+    report_artifacts: object,
+    *,
+    required: bool,
+) -> dict[str, Any]:
+    missing: list[str] = []
+    packet_path = _report_artifact_path(report_artifacts, "review_packet")
+    packet: dict[str, Any] | None = None
+    if packet_path is None or not packet_path.exists():
+        if required:
+            missing.append("review_packet")
+    else:
+        packet = _report_artifact_json(report_artifacts, "review_packet")
+        if packet is None:
+            missing.append("review_packet_json")
+
+    packet_case_count = 0
+    reviewable_region_count = 0
+    if packet is not None:
+        packet_missing = _human_review_packet_missing(packet)
+        missing.extend(packet_missing)
+        cases = packet.get("cases")
+        if isinstance(cases, list):
+            packet_case_count = len(cases)
+        region_summary = packet.get("reviewable_region_summary")
+        if isinstance(region_summary, dict):
+            reviewable_region_count = _int_value(region_summary.get("region_count"))
+
+    markdown_path = _report_artifact_path(report_artifacts, "review_packet_markdown")
+    if markdown_path is None or not markdown_path.exists():
+        if required:
+            missing.append("review_packet_markdown")
+    else:
+        markdown = _report_artifact_text(report_artifacts, "review_packet_markdown")
+        if markdown is None:
+            missing.append("review_packet_markdown")
+        elif not _human_review_packet_markdown_ok(
+            markdown,
+            packet_case_count=packet_case_count,
+        ):
+            missing.append("review_packet_markdown_content")
+
+    return {
+        "ok": not missing,
+        "missing": missing,
+        "summary": {
+            "required": required,
+            "case_count": packet_case_count,
+            "reviewable_region_count": reviewable_region_count,
+            "packet_present": packet is not None,
+            "markdown_present": markdown_path is not None and markdown_path.exists(),
+        },
+    }
+
+
+def _human_review_packet_missing(packet: dict[str, Any]) -> list[str]:
+    missing: list[str] = []
+    if packet.get("schema_version") != 1:
+        missing.append("review_packet_schema")
+    cases = packet.get("cases")
+    if not isinstance(cases, list):
+        missing.append("review_packet_cases")
+        cases = []
+    if packet.get("case_count") != len(cases):
+        missing.append("review_packet_case_count")
+    if not isinstance(packet.get("reviewable_region_summary"), dict):
+        missing.append("reviewable_region_summary")
+    for count_key in ("deferred_count", "rejected_count", "manual_review_count"):
+        if not isinstance(packet.get(count_key), int):
+            missing.append(count_key)
+    if not isinstance(packet.get("issue_groups"), dict):
+        missing.append("issue_groups")
+    if not isinstance(packet.get("failed_gate_groups"), dict):
+        missing.append("failed_gate_groups")
+    if any(
+        not isinstance(case, dict) or not _human_review_packet_case_ok(case)
+        for case in cases
+    ):
+        missing.append("review_packet_case_records")
+    return missing
+
+
+def _human_review_packet_case_ok(case: dict[str, Any]) -> bool:
+    return (
+        _non_empty_string(case.get("case_id"))
+        and case.get("suggested_review_decision") in PROMOTION_REVIEW_DECISIONS
+        and case.get("review_decision_state") in {"pending", *PROMOTION_REVIEW_DECISIONS}
+        and _human_review_requirements_ok(case.get("review_requirements"))
+        and _review_quality_label_policy_record_ok(case.get("quality_label_policy"))
+        and isinstance(case.get("failed_gate_details"), list)
+        and _human_review_packet_case_artifacts_ok(case.get("artifacts"))
+        and _human_review_packet_review_commands_ok(case.get("review_commands"))
+        and _human_review_packet_reviewable_regions_ok(case)
+    )
+
+
+def _human_review_requirements_ok(value: object) -> bool:
+    return value == _review_packet_requirements()
+
+
+def _human_review_packet_case_artifacts_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for key in HUMAN_REVIEW_PACKET_ARTIFACTS:
+        if key == "review_templates":
+            templates = value.get(key)
+            if not isinstance(templates, dict):
+                return False
+            if any(
+                not _path_value_exists(templates.get(decision))
+                for decision in PROMOTION_REVIEW_DECISIONS
+            ):
+                return False
+            continue
+        if not _path_value_exists(value.get(key)):
+            return False
+    return True
+
+
+def _human_review_packet_review_commands_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for decision in PROMOTION_REVIEW_DECISIONS:
+        command = value.get(decision)
+        if not isinstance(command, str) or "promotion-apply-review" not in command:
+            return False
+    return True
+
+
+def _human_review_packet_reviewable_regions_ok(case: dict[str, Any]) -> bool:
+    ids = case.get("reviewable_region_ids")
+    regions = case.get("reviewable_regions")
+    if not isinstance(ids, list) or not isinstance(regions, list):
+        return False
+    if any(not isinstance(item, str) or not item for item in ids):
+        return False
+    region_ids: list[str] = []
+    for region in regions:
+        if not isinstance(region, dict):
+            return False
+        region_id = region.get("id")
+        if not isinstance(region_id, str) or not region_id:
+            return False
+        region_ids.append(region_id)
+        if region.get("state") not in PROMOTION_PIPELINE_REGION_STATES:
+            return False
+        if not _non_empty_string(region.get("gate_id")):
+            return False
+        if not _non_empty_string(region.get("gate_type")):
+            return False
+        if not isinstance(region.get("selected_anchor_count"), int):
+            return False
+        if not isinstance(region.get("selected_anchor_indexes"), list):
+            return False
+    return sorted(region_ids) == sorted(ids)
+
+
+def _human_review_packet_markdown_ok(
+    markdown: str,
+    *,
+    packet_case_count: int,
+) -> bool:
+    required = ["# Morphēa Review Packet", "Reviewable regions"]
+    if packet_case_count:
+        required.extend(["Review requirements", "### Apply Commands"])
+    return all(item in markdown for item in required)
+
+
+def _human_review_suite_gallery_audit(
+    report_artifacts: object,
+    *,
+    required: bool,
+) -> dict[str, Any]:
+    missing: list[str] = []
+    gallery_path = _report_artifact_path(report_artifacts, "review_gallery")
+    if gallery_path is None or not gallery_path.exists():
+        if required:
+            missing.append("review_gallery")
+    else:
+        gallery = _report_artifact_text(report_artifacts, "review_gallery")
+        if gallery is None:
+            missing.append("review_gallery")
+        elif not all(
+            item in gallery
+            for item in ("Morphēa review gallery", "Promotion review", "review-packet.md")
+        ):
+            missing.append("review_gallery_content")
+    return {
+        "ok": not missing,
+        "missing": missing,
+        "summary": {
+            "required": required,
+            "gallery_present": gallery_path is not None and gallery_path.exists(),
+        },
+    }
+
+
+def _report_artifact_path(report_artifacts: object, key: str) -> Path | None:
+    artifacts = report_artifacts if isinstance(report_artifacts, dict) else {}
+    return _artifact_path(artifacts, key)
+
+
+def _report_artifact_json(
+    report_artifacts: object,
+    key: str,
+) -> dict[str, Any] | None:
+    path = _report_artifact_path(report_artifacts, key)
+    if path is None:
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _report_artifact_text(report_artifacts: object, key: str) -> str | None:
+    path = _report_artifact_path(report_artifacts, key)
+    if path is None:
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def _path_value_exists(value: object) -> bool:
+    return isinstance(value, str) and bool(value) and Path(value).exists()
 
 
 def _curated_case_family(case: dict[str, Any]) -> str:
@@ -4272,6 +4885,7 @@ def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
             "editability_review",
             "review_decision",
             "promotion_export",
+            "promotion_regions",
             "manifest",
         )
         if isinstance(artifacts.get(key), str)

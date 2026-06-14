@@ -672,8 +672,8 @@ The curated output root also includes suite-level review packet artifacts:
 - `review-packet.json`: machine-readable queue of deferred/rejected cases that
   need a reviewer decision, with issue tags, failed gate/component ids, failed
   gate details (`id`, `gate_type`, `severity`, and `reason`), suggested
-  decision, paths to per-case review artifacts, and paths to terminal reviewer
-  decision templates. Each queued case also carries
+  decision, paths to per-case review artifacts including `promotion_regions`,
+  and paths to terminal reviewer decision templates. Each queued case also carries
   `quality_label_policy` and `review_requirements`, which names fields required
   for all terminal decisions (`reviewer`, `reason`) and the extra fields
   required for corrected decisions (`correction_notes`, `corrected_artifacts`).
@@ -752,6 +752,20 @@ contracts, editability-review sidecars, and editability annotations in manifests
 When `curated-check --run` also writes an `output_dir`, the sidecar/manifest
 checks require the referenced Markdown and JSON files to exist and expose the
 same threshold and component evidence.
+
+Curated reports also include top-level `human_review_audit` for the RIP6
+human-review contract. The audit records `schema_version`, `ok`, suite-level
+`checks`, aggregate coverage counts, review-queue counts, reviewable-region
+counts, terminal-template counts, suite packet/gallery summaries, and one row per
+promotion case. The checks cover pending review decision records, review-artifact
+links, terminal accepted/corrected/rejected/deferred template records, template
+guidance/evidence, sidecar-only quality-label policy evidence, reviewable region
+records, and suite-level `review-packet.json`, `review-packet.md`, and
+`review-gallery.html` artifacts. When `curated-check --run` writes an
+`output_dir`, the case-level checks require the referenced review files and
+templates to exist. When any output directory is written, the suite-level checks
+require the packet, packet Markdown, and gallery to exist and expose consistent
+review packet records.
 
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:

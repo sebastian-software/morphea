@@ -475,6 +475,15 @@ reviewer/reason requirements and corrected-decision evidence requirements are
 visible before opening individual templates.
 Queued cases also include per-decision `review_commands`, so the apply step can
 be run from an edited terminal template without reconstructing paths manually.
+Current machine-readable evidence: curated reports and snapshots include
+`human_review_audit` for RIP6 coverage. The audit requires pending review
+decision records, sidecar-only quality-label policy evidence, review-artifact
+links, terminal accepted/corrected/rejected/deferred template records, template
+guidance/evidence, reviewable region records, and suite-level
+`review-packet.json`, `review-packet.md`, and `review-gallery.html` artifacts
+when an output directory is written. Review-packet cases now also link
+`promotion_regions`, so region-scoped review evidence is reachable directly from
+the packet.
 Curated output roots also write `review-gallery.html`, so those artifacts can
 be scanned visually from one local page before a terminal decision is applied.
 Queued gallery cards render the same per-decision apply commands as the review
