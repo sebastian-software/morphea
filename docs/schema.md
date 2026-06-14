@@ -1059,7 +1059,7 @@ Top-level fields:
 
 - `schema_version`: currently `1`
 - `segmenters`: status for `flat_color` and `mlx_sam`
-- `classifiers`: status for `centroid` and `mlx`
+- `classifiers`: status for `centroid`, `mlx`, and `raster_target`
 - `refinement`: output of `available_refinement_backends()`
 - `blocked_backends`: normalized rows for unavailable or non-available
   backends
@@ -1079,8 +1079,9 @@ prompt fields such as `prompt_strategy`, `prompt_min_area`,
 `prompt_color_tolerance`, `prompt_max_size`, and `prompt_max_colors`.
 Classifier-specific diagnostics include `training_implementation`,
 `core_available`, `backend_version`, `autograd_available`, `autograd_reason`,
-and `missing_autograd_symbols`, so reports distinguish importable MLX packages
-from usable `mlx.core` training primitives.
+`missing_autograd_symbols`, and generic `missing_symbols`, so reports
+distinguish importable MLX packages from usable `mlx.core` training primitives
+for both primitive and raster-target model paths.
 
 Optional status entries may expose a `capabilities` object. Each capability
 records `available`, `status`, optional `reason`, and optional `next_action`.

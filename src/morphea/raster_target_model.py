@@ -77,6 +77,7 @@ def raster_target_runtime_status() -> dict[str, object]:
             "status": "not_installed",
             "reason": "MLX raster-target training runtime is not installed",
             "next_action": "Install the MLX extra with uv: uv pip install -e '.[mlx]'",
+            "training_implementation": RASTER_TARGET_FALLBACK_TRAINING_IMPLEMENTATION,
             "package_available": False,
             "core_available": False,
             "autograd_available": False,
@@ -91,6 +92,7 @@ def raster_target_runtime_status() -> dict[str, object]:
             "status": "core_unavailable",
             "reason": f"MLX core could not be imported: {exc}",
             "next_action": "Upgrade the MLX extra with uv: uv pip install -U -e '.[mlx]'",
+            "training_implementation": RASTER_TARGET_FALLBACK_TRAINING_IMPLEMENTATION,
             "package_available": True,
             "core_available": False,
             "autograd_available": False,
@@ -112,6 +114,11 @@ def raster_target_runtime_status() -> dict[str, object]:
             + ", ".join(missing)
         ),
         "next_action": None if available else "Upgrade the MLX extra with uv: uv pip install -U -e '.[mlx]'",
+        "training_implementation": (
+            RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION
+            if available
+            else RASTER_TARGET_FALLBACK_TRAINING_IMPLEMENTATION
+        ),
         "package_available": True,
         "core_available": True,
         "backend_version": getattr(mx, "__version__", "unknown"),

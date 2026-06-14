@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from morphea.mlx_classifier import MLX_TRAINING_IMPLEMENTATION
+from morphea.raster_target_model import RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION
 from morphea.segmenters import MLX_SAM_RUNTIME_INSTALL_ACTION
 from morphea.status import collect_runtime_status, render_runtime_status_markdown
 
@@ -23,6 +24,21 @@ class RuntimeStatusTests(unittest.TestCase):
                         "backend_available": False,
                         "status": "not_installed",
                         "reason": "missing",
+                    },
+                ),
+                patch(
+                    "morphea.status.raster_target_runtime_status",
+                    return_value={
+                        "backend": "mlx",
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                        "training_implementation": (
+                            RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION
+                        ),
+                        "core_available": True,
+                        "autograd_available": True,
+                        "missing_symbols": [],
                     },
                 ),
                 patch(
@@ -51,6 +67,10 @@ class RuntimeStatusTests(unittest.TestCase):
             self.assertEqual(result["schema_version"], 1)
             self.assertEqual(written["segmenters"]["flat_color"]["status"], "available")
             self.assertEqual(written["classifiers"]["mlx"]["status"], "not_installed")
+            self.assertEqual(
+                written["classifiers"]["raster_target"]["training_implementation"],
+                RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION,
+            )
             self.assertIn(
                 {
                     "area": "classifier",
@@ -90,6 +110,18 @@ class RuntimeStatusTests(unittest.TestCase):
                         "backend_available": True,
                         "status": "available",
                         "reason": None,
+                    },
+                ),
+                patch(
+                    "morphea.status.raster_target_runtime_status",
+                    return_value={
+                        "backend": "mlx",
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                        "training_implementation": (
+                            RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION
+                        ),
                     },
                 ),
                 patch(
@@ -156,6 +188,18 @@ class RuntimeStatusTests(unittest.TestCase):
                         "backend_available": True,
                         "status": "available",
                         "reason": None,
+                    },
+                ),
+                patch(
+                    "morphea.status.raster_target_runtime_status",
+                    return_value={
+                        "backend": "mlx",
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                        "training_implementation": (
+                            RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION
+                        ),
                     },
                 ),
                 patch(
@@ -238,6 +282,18 @@ class RuntimeStatusTests(unittest.TestCase):
                         "autograd_available": True,
                         "missing_autograd_symbols": [],
                         "training_implementation": MLX_TRAINING_IMPLEMENTATION,
+                    },
+                    "raster_target": {
+                        "backend_available": True,
+                        "status": "available",
+                        "reason": None,
+                        "core_available": True,
+                        "backend_version": "test-mlx",
+                        "autograd_available": True,
+                        "missing_symbols": [],
+                        "training_implementation": (
+                            RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION
+                        ),
                     }
                 },
                 "refinement": {"details": {}},
@@ -316,6 +372,15 @@ class RuntimeStatusTests(unittest.TestCase):
         self.assertIn(
             "| classifier | `mlx` | `training_implementation` | "
             f"`{MLX_TRAINING_IMPLEMENTATION}` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `raster_target` | `training_implementation` | "
+            f"`{RASTER_TARGET_MLX_TRAINING_IMPLEMENTATION}` |",
+            markdown,
+        )
+        self.assertIn(
+            "| classifier | `raster_target` | `missing_symbols` | `[]` |",
             markdown,
         )
         self.assertIn("segmenter/mlx_sam: not_configured", markdown)

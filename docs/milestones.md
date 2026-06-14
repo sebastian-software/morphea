@@ -1282,6 +1282,9 @@ Implemented so far:
 - `morphea status` reports blocked backend capabilities such as missing MLX SAM
   checkpoints or optional end-to-end MLX training pieces separately from
   installed package status
+- `morphea status` now reports the generic `raster_target` classifier runtime
+  beside the primitive `mlx` classifier, so the own-model Lucide/real-image
+  target path exposes MLX/autograd availability before training runs
 - `morphea curated-check --config curated-check.json` for repeatable curated
   real-image suite validation
 - `morphea promotion-review-run suite.json --output-dir review-run` for a

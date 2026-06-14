@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from morphea.mlx_classifier import mlx_classifier_runtime_status
+from morphea.raster_target_model import raster_target_runtime_status
 from morphea.refinement import available_refinement_backends
 from morphea.segmenters import (
     FlatColorSegmenter,
@@ -44,6 +45,7 @@ BACKEND_DIAGNOSTIC_FIELDS = (
     "autograd_available",
     "autograd_reason",
     "missing_autograd_symbols",
+    "missing_symbols",
     "training_implementation",
 )
 
@@ -74,6 +76,7 @@ def collect_runtime_status(
                 "training_implementation": "centroid_baseline",
             },
             "mlx": mlx_classifier_runtime_status(),
+            "raster_target": raster_target_runtime_status(),
         },
         "refinement": available_refinement_backends(),
     }
