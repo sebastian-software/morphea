@@ -51,6 +51,7 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertIn("family", case)
                 self.assertIn("variant", case)
                 self.assertIn("variant_source", case)
+                self.assertIn("topology", case)
                 self.assertIn("geometry_diff", case)
                 self.assertIn("failure_categories", case)
                 self.assertIn("failure_details", case)
@@ -276,6 +277,10 @@ class PrimitiveQualityTests(unittest.TestCase):
 
             self.assertTrue(report["ok"])
             for case in report["cases"]:
+                self.assertEqual(case["topology"]["expected_cutout_count"], 1)
+                self.assertEqual(case["topology"]["actual_cutout_count"], 1)
+                self.assertEqual(case["topology"]["expected_hole_count"], 0)
+                self.assertEqual(case["topology"]["actual_hole_count"], 0)
                 comparison = case["export_comparison"]
                 self.assertTrue(comparison["ok"])
                 self.assertEqual(comparison["cutout_anchor_count"], 1)
@@ -328,6 +333,41 @@ class PrimitiveQualityTests(unittest.TestCase):
                 self.assertIn(" C ", svg)
                 self.assertIn("Z", svg)
             self.assertEqual(report["curve_anchor_kind_counts"]["cubic_path"], 2)
+
+    def test_organic_holes_report_nested_path_topology(self):
+        report = check_primitive_quality(
+            cases=("organic_donut", "organic_double_hole"),
+        )
+
+        self.assertTrue(report["ok"])
+        topology_by_case = {
+            case["id"]: case["topology"]
+            for case in report["cases"]
+        }
+        self.assertEqual(
+            topology_by_case["organic_donut"],
+            {
+                "expected_hole_count": 1,
+                "actual_hole_count": 1,
+                "expected_cutout_count": 0,
+                "actual_cutout_count": 0,
+                "path_anchor_count": 1,
+                "cutout_anchor_indexes": [],
+                "hole_anchor_indexes": [0],
+            },
+        )
+        self.assertEqual(
+            topology_by_case["organic_double_hole"],
+            {
+                "expected_hole_count": 2,
+                "actual_hole_count": 2,
+                "expected_cutout_count": 0,
+                "actual_cutout_count": 0,
+                "path_anchor_count": 1,
+                "cutout_anchor_indexes": [],
+                "hole_anchor_indexes": [0],
+            },
+        )
 
     def test_curve_compositions_keep_groups_and_kinds(self):
         report = check_primitive_quality(
@@ -738,6 +778,12 @@ class PrimitiveQualityTests(unittest.TestCase):
                             "raster_edge_error": 0.1,
                         },
                         "geometry": {"bbox_iou": 0.4},
+                        "topology": {
+                            "expected_hole_count": 1,
+                            "actual_hole_count": 0,
+                            "expected_cutout_count": 0,
+                            "actual_cutout_count": 0,
+                        },
                         "failures": ["unexpected cubic_path fallback"],
                     }
                 ],
@@ -745,6 +791,16 @@ class PrimitiveQualityTests(unittest.TestCase):
         )
 
         self.assertIn("filled_square", markdown)
+        self.assertIn(
+            "| Case | OK | Actual | L1 | Edge | SVG L1 | SVG Edge | "
+            "IoU | Holes | Cutouts | Failures |",
+            markdown,
+        )
+        self.assertIn(
+            "| `filled_square` | `false` | `cubic_path` | 0.2 | 0.1 | "
+            "n/a | n/a | 0.4 | 0/1 | 0/0 |",
+            markdown,
+        )
         self.assertIn("unexpected cubic_path fallback", markdown)
 
     def test_primitive_check_cli_writes_report_markdown_and_artifacts(self):

@@ -284,6 +284,9 @@ Each case records:
   `raster_alpha_error`, and `raster_size_match`
 - `geometry`: expected bounds, actual bounds, and `bbox_iou`
 - `geometry_diff`: compact expected-vs-actual semantic geometry
+- `topology`: expected/actual even-odd hole counts, expected/actual cut-out
+  anchor counts, path-anchor counts, and anchor indexes that carry holes or
+  editable cut-out strokes
 - `matches`: order-independent expected-to-actual primitive matches
 - `unmatched_expected`: expected primitives that could not be matched
 - `unexpected_actual`: extra actual primitives left after matching

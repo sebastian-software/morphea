@@ -3543,14 +3543,15 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-        "| Case | OK | Actual | L1 | Edge | SVG L1 | SVG Edge | IoU | Failures |",
-        "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| Case | OK | Actual | L1 | Edge | SVG L1 | SVG Edge | IoU | Holes | Cutouts | Failures |",
+        "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
         ]
     )
     for case in report.get("cases", []):
         metrics = case.get("metrics", {})
         svg_metrics = case.get("svg_metrics") or {}
         geometry = case.get("geometry", {})
+        topology = case.get("topology", {})
         failures = case.get("failures", [])
         failure_categories = case.get("failure_categories", [])
         failure_text = "; ".join(failures) if failures else "n/a"
@@ -3566,9 +3567,19 @@ def render_primitive_quality_markdown(report: dict[str, Any]) -> str:
             f"{svg_metrics.get('svg_raster_l1_error', 'n/a')} | "
             f"{svg_metrics.get('svg_raster_edge_error', 'n/a')} | "
             f"{geometry.get('bbox_iou', 'n/a')} | "
+            f"{_topology_count_pair(topology, 'hole')} | "
+            f"{_topology_count_pair(topology, 'cutout')} | "
             f"{failure_text} |"
         )
     return "\n".join(lines) + "\n"
+
+
+def _topology_count_pair(value: object, name: str) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    expected = value.get(f"expected_{name}_count", "n/a")
+    actual = value.get(f"actual_{name}_count", "n/a")
+    return f"{actual}/{expected}"
 
 
 def _selected_specs(
@@ -4071,6 +4082,7 @@ def _evaluate_case(
         unmatched_expected=match_result["unmatched_expected"],
         unexpected_actual=match_result["unexpected_actual"],
         group_matches=group_result["matches"],
+        topology=_topology_summary(spec, anchors),
     )
 
 
@@ -4147,6 +4159,7 @@ def _case_result(
     unmatched_expected: list[dict[str, Any]],
     unexpected_actual: list[dict[str, Any]],
     group_matches: list[dict[str, Any]],
+    topology: dict[str, Any],
 ) -> dict[str, Any]:
     failures = [failure["message"] for failure in failure_details]
     categories = sorted({failure["category"] for failure in failure_details})
@@ -4180,10 +4193,58 @@ def _case_result(
         "unmatched_expected": unmatched_expected,
         "unexpected_actual": unexpected_actual,
         "group_matches": group_matches,
+        "topology": topology,
         "failures": failures,
         "failure_categories": categories,
         "failure_details": failure_details,
     }
+
+
+def _topology_summary(
+    spec: PrimitiveSpec,
+    anchors: list[dict[str, Any]],
+) -> dict[str, Any]:
+    expected_holes = sum(
+        int(expected.geometry.get("expected_holes", 0))
+        for expected in _expected_primitives(spec)
+    )
+    actual_holes = sum(_anchor_hole_count(anchor) for anchor in anchors)
+    expected_cutouts = sum(
+        1
+        for expected in _expected_primitives(spec)
+        if bool(expected.geometry.get("is_cutout"))
+    )
+    actual_cutouts = sum(1 for anchor in anchors if _anchor_is_cutout(anchor))
+    return {
+        "expected_hole_count": expected_holes,
+        "actual_hole_count": actual_holes,
+        "expected_cutout_count": expected_cutouts,
+        "actual_cutout_count": actual_cutouts,
+        "path_anchor_count": sum(
+            1 for anchor in anchors if isinstance(anchor.get("path"), dict)
+        ),
+        "cutout_anchor_indexes": [
+            index for index, anchor in enumerate(anchors) if _anchor_is_cutout(anchor)
+        ],
+        "hole_anchor_indexes": [
+            index
+            for index, anchor in enumerate(anchors)
+            if _anchor_hole_count(anchor) > 0
+        ],
+    }
+
+
+def _anchor_is_cutout(anchor: dict[str, Any]) -> bool:
+    stroke = anchor.get("stroke")
+    return isinstance(stroke, dict) and bool(stroke.get("is_cutout"))
+
+
+def _anchor_hole_count(anchor: dict[str, Any]) -> int:
+    path = anchor.get("path")
+    if not isinstance(path, dict):
+        return 0
+    holes = path.get("holes")
+    return len(holes) if isinstance(holes, list) else 0
 
 
 def _match_expected_primitives(

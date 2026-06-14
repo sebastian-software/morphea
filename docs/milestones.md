@@ -1496,7 +1496,7 @@ Remaining:
 
 ## M14: Geometry Contract Tests
 
-Status: implemented for the current primitive contract baseline.
+Status: implemented for the current primitive and topology contract baseline.
 
 Purpose: fail on wrong semantic geometry even when aggregate scene metrics look
 acceptable.
@@ -1509,11 +1509,17 @@ Implemented so far:
 - regression tests cover square, circle, stroke, ring, and CLI report behavior.
 - the ring/stroke regressions that produced oversized arc or curved-stroke
   candidates are now covered by focused detector tests.
+- nested organic fallback cases assert expected even-odd hole counts, and
+  primitive quality reports expose expected/actual hole topology plus the path
+  anchors that carry those holes.
+- cut-out fixture cases assert editable cut-out stroke counts separately from
+  closed path holes, and the Markdown/JSON reports show cut-out topology without
+  opening manifests.
 
 Remaining:
 
-- add contract cases for nested/cut-out primitives after the single-primitive
-  set stays stable.
+- add additional topology contracts only when new nested/cut-out regressions
+  appear.
 
 ## M15: Visual Round-Trip Gates
 
