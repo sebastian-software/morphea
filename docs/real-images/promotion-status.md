@@ -30,8 +30,8 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `parameter_economy` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; transparent-source raster metrics now flatten against the white preview background, so visual L1 is 0.056356 < 0.18 with alpha error 0; v10 fragmentation now scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419), so expected table cells and cutout strokes do not block review; v10 remains red because `current_quality_label` is red and editability review rejects parameter economy, with top contributors `anchor-0000`/`anchor-0009`/`anchor-0008` at 148/68/64 parameters |
-| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `parameter_economy` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.056356 < 0.18, `structural_layer_count` 3/3; v10 fragmentation now scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); v10 remains red because `current_quality_label` is red and editability review rejects parameter economy, with the same 148/68/64-parameter navy fallback contributors as the transparent source |
+| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `current_quality_label` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; transparent-source raster metrics flatten against the white preview background, so visual L1 is 0.057522 < 0.18 with alpha error 0; v10 fragmentation scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); organic fallback node-budget capping lifts `parameter_economy` to 0.268145 against the 0.25 threshold (`parameter_count` 726, top contributors 96/68/64), leaving no failed editability-review components; v10 remains red only because `current_quality_label` is red |
+| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `current_quality_label` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.057522 < 0.18, `structural_layer_count` 3/3; v10 fragmentation scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); organic fallback node-budget capping lifts `parameter_economy` to 0.268145 against the 0.25 threshold (`parameter_count` 726, top contributors 96/68/64), leaving no failed editability-review components; v10 remains red only because `current_quality_label` is red |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation` | visual L1 0.033861 < 0.08; radio topology gate now passes with 1 selected `stroke_circle` and `disconnected_component_count=1`; v10 remains red because `current_quality_label` is red and editability review rejects shape identity, fragmentation, and provenance |
 
 Current curated semantic result: 3 cases, 3 checked expectation passes, 0
@@ -305,8 +305,12 @@ baseline comparison path is covered outside helper-only unit tests.
 The next promotion-quality block should keep all real-image semantic
 expectations green while addressing the remaining review/editability failures
 that keep all three real-image cases red. The transparent Terminaro
-region-circle and raster-fidelity gates, the opaque generated-illustration
-structure and v10-fragmentation gates, and the UI radio topology gate are now
-mechanically green or deferred only because the containing case still has red
-review state. The next narrow detector-quality target is parameter economy for
-the generated-illustration family.
+region-circle, raster-fidelity, v10-fragmentation, and parameter-economy
+thresholds are now mechanically green; the opaque generated-illustration
+structure, v10-fragmentation, and parameter-economy thresholds are also green.
+Both generated-illustration cases remain red only because their current quality
+label is still red. The UI radio topology gate is mechanically green, but its
+editability review still fails shape identity, fragmentation, and provenance.
+The next narrow promotion-quality target is review-label policy for
+mechanically green generated-illustration cases, followed by the UI
+shape/provenance/fragmentation debt.

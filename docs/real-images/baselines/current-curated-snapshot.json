@@ -28,27 +28,19 @@
           "fragmentation": 0.677419,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 0.754417,
-          "node_economy": 0.758065,
-          "parameter_economy": 0.215726,
+          "node_economy": 0.775538,
+          "parameter_economy": 0.268145,
           "provenance_confidence": 0.790323,
-          "raster_fidelity": 0.928933,
+          "raster_fidelity": 0.927712,
           "shape_identity_confidence": 0.790323,
           "stroke_width_stability": 0.663784,
           "topology_consistency": 1.0
         },
         "decision": "rejected",
-        "failed_components": [
-          {
-            "id": "parameter_economy",
-            "reason": "below_threshold",
-            "score": 0.215726,
-            "threshold": 0.25
-          }
-        ],
+        "failed_components": [],
         "gate_blocked_components": [],
         "promotion_decision": "rejected",
         "reasons": [
-          "component_threshold_failures",
           "promotion_decision_rejected"
         ],
         "regressed_components": [],
@@ -186,8 +178,8 @@
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 3.01,
-          "semantic_anchor_score_mean": 0.369779,
+          "semantic_anchor_score_max": 2.135,
+          "semantic_anchor_score_mean": 0.347763,
           "semantic_anchor_score_min": -0.181276,
           "simple_shape_priority_bonus_mean": 0.207258,
           "simple_shape_priority_bonus_total": 12.85
@@ -235,30 +227,30 @@
             "score": 0.754417
           },
           "node_economy": {
-            "average_node_count": 5.806452,
-            "node_count": 360,
-            "score": 0.758065
+            "average_node_count": 5.387097,
+            "node_count": 334,
+            "score": 0.775538
           },
           "parameter_economy": {
-            "average_parameter_count": 12.548387,
+            "average_parameter_count": 11.709677,
             "budget": 16.0,
-            "max_parameter_count": 148,
+            "max_parameter_count": 96,
             "over_budget_anchor_count": 12,
-            "parameter_count": 778,
-            "score": 0.215726,
+            "parameter_count": 726,
+            "score": 0.268145,
             "top_contributors": [
               {
                 "anchor_index": 0,
                 "bounds": [
-                  141.938068,
-                  218.815942,
-                  540.90696,
+                  142.054688,
+                  221.348897,
+                  540.010324,
                   955.195312
                 ],
                 "color": "#002554",
                 "kind": "cubic_path",
-                "node_count": 74,
-                "parameter_count": 148
+                "node_count": 48,
+                "parameter_count": 96
               },
               {
                 "anchor_index": 9,
@@ -320,9 +312,9 @@
           },
           "raster_fidelity": {
             "observed": true,
-            "raster_edge_error": 0.014711,
-            "raster_l1_error": 0.056356,
-            "score": 0.928933
+            "raster_edge_error": 0.014766,
+            "raster_l1_error": 0.057522,
+            "score": 0.927712
           },
           "shape_identity_confidence": {
             "generic_path_count": 13,
@@ -347,11 +339,11 @@
         "generic_path_count": 13,
         "group_count": 95,
         "negative_mask_candidate_count": 12,
-        "node_count": 360,
-        "parameter_count": 778,
+        "node_count": 334,
+        "parameter_count": 726,
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.014711,
-        "raster_l1_error": 0.056356,
+        "raster_edge_error": 0.014766,
+        "raster_l1_error": 0.057522,
         "raster_size_match": true,
         "reserved_simple_shape_area": 1963399.167834,
         "reserved_simple_shape_area_ratio": 1.0,
@@ -369,7 +361,7 @@
       "ok": true,
       "promotion": {
         "current_issues": [
-          "parameter_economy"
+          "current_quality_label"
         ],
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
@@ -427,7 +419,8 @@
           "2026-06-14 missing local source was replaced by a checked-in opaque fixture derived from the transparent Terminaro image.",
           "Semantic expectations pass with 5 circle anchors, 14 table quads, one perspective-grid group, and editable strokes counted across stroke polylines, stroke paths, and arcs.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
-          "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review. v10 promotion remains red because the current quality label is still red and editability review still rejects parameter economy."
+          "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review.",
+          "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass; v10 promotion remains red only because the current quality label is still red."
         ],
         "source_provenance": "checked-in opaque RGB fixture derived from the local transparent Terminaro image",
         "stress_family": "generated_illustration_opaque_table_grid",
@@ -588,8 +581,8 @@
         {
           "evidence": {
             "actual": {
-              "raster_edge_error": 0.014711,
-              "raster_l1_error": 0.056356
+              "raster_edge_error": 0.014766,
+              "raster_l1_error": 0.057522
             },
             "description": "Generated illustration table-grid cases use the same visual threshold family as the local transparent variant.",
             "failures": [],
@@ -624,14 +617,7 @@
         "corrected_artifacts": [],
         "correction_notes": "",
         "decision": "pending",
-        "failed_components": [
-          {
-            "id": "parameter_economy",
-            "reason": "below_threshold",
-            "score": 0.215726,
-            "threshold": 0.25
-          }
-        ],
+        "failed_components": [],
         "failed_gates": [
           {
             "gate_type": "review_safety",
@@ -642,7 +628,7 @@
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "parameter_economy"
+          "current_quality_label"
         ],
         "reason": "",
         "regressed_components": [],
@@ -686,27 +672,19 @@
           "fragmentation": 0.677419,
           "grouping_quality": 1.0,
           "line_curve_smoothness": 0.754417,
-          "node_economy": 0.758065,
-          "parameter_economy": 0.215726,
+          "node_economy": 0.775538,
+          "parameter_economy": 0.268145,
           "provenance_confidence": 0.790323,
-          "raster_fidelity": 0.928933,
+          "raster_fidelity": 0.927712,
           "shape_identity_confidence": 0.790323,
           "stroke_width_stability": 0.663784,
           "topology_consistency": 1.0
         },
         "decision": "rejected",
-        "failed_components": [
-          {
-            "id": "parameter_economy",
-            "reason": "below_threshold",
-            "score": 0.215726,
-            "threshold": 0.25
-          }
-        ],
+        "failed_components": [],
         "gate_blocked_components": [],
         "promotion_decision": "rejected",
         "reasons": [
-          "component_threshold_failures",
           "promotion_decision_rejected"
         ],
         "regressed_components": [],
@@ -840,8 +818,8 @@
           }
         },
         "anchor_scoring_summary": {
-          "semantic_anchor_score_max": 3.01,
-          "semantic_anchor_score_mean": 0.369779,
+          "semantic_anchor_score_max": 2.135,
+          "semantic_anchor_score_mean": 0.347763,
           "semantic_anchor_score_min": -0.181276,
           "simple_shape_priority_bonus_mean": 0.207258,
           "simple_shape_priority_bonus_total": 12.85
@@ -889,30 +867,30 @@
             "score": 0.754417
           },
           "node_economy": {
-            "average_node_count": 5.806452,
-            "node_count": 360,
-            "score": 0.758065
+            "average_node_count": 5.387097,
+            "node_count": 334,
+            "score": 0.775538
           },
           "parameter_economy": {
-            "average_parameter_count": 12.548387,
+            "average_parameter_count": 11.709677,
             "budget": 16.0,
-            "max_parameter_count": 148,
+            "max_parameter_count": 96,
             "over_budget_anchor_count": 12,
-            "parameter_count": 778,
-            "score": 0.215726,
+            "parameter_count": 726,
+            "score": 0.268145,
             "top_contributors": [
               {
                 "anchor_index": 0,
                 "bounds": [
-                  141.938068,
-                  218.815942,
-                  540.90696,
+                  142.054688,
+                  221.348897,
+                  540.010324,
                   955.195312
                 ],
                 "color": "#002554",
                 "kind": "cubic_path",
-                "node_count": 74,
-                "parameter_count": 148
+                "node_count": 48,
+                "parameter_count": 96
               },
               {
                 "anchor_index": 9,
@@ -974,9 +952,9 @@
           },
           "raster_fidelity": {
             "observed": true,
-            "raster_edge_error": 0.014711,
-            "raster_l1_error": 0.056356,
-            "score": 0.928933
+            "raster_edge_error": 0.014766,
+            "raster_l1_error": 0.057522,
+            "score": 0.927712
           },
           "shape_identity_confidence": {
             "generic_path_count": 13,
@@ -1001,11 +979,11 @@
         "generic_path_count": 13,
         "group_count": 95,
         "negative_mask_candidate_count": 12,
-        "node_count": 360,
-        "parameter_count": 778,
+        "node_count": 334,
+        "parameter_count": 726,
         "raster_alpha_error": 0.0,
-        "raster_edge_error": 0.014711,
-        "raster_l1_error": 0.056356,
+        "raster_edge_error": 0.014766,
+        "raster_l1_error": 0.057522,
         "raster_size_match": true,
         "reserved_simple_shape_area": 1963399.167834,
         "reserved_simple_shape_area_ratio": 1.0,
@@ -1023,7 +1001,7 @@
       "ok": true,
       "promotion": {
         "current_issues": [
-          "parameter_economy"
+          "current_quality_label"
         ],
         "current_quality_label": "red",
         "current_status": "checked_semantic_pass_promotion_failed",
@@ -1104,8 +1082,9 @@
           "2026-06-14 curated-check passes current semantic expectations after preserving the large beige table palette: 5 circle anchors, 14 table quads, and one perspective-grid group.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
           "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI.",
-          "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.056356 < 0.18.",
-          "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review. v10 promotion remains red because the current quality label is still red and editability review rejects parameter economy."
+          "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.057522 < 0.18.",
+          "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review.",
+          "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass; v10 promotion remains red only because the current quality label is still red."
         ],
         "source_provenance": "local generated image from the user's Desktop; source image is not checked in",
         "stress_family": "generated_illustration_table_grid",
@@ -1380,8 +1359,8 @@
         {
           "evidence": {
             "actual": {
-              "raster_edge_error": 0.014711,
-              "raster_l1_error": 0.056356
+              "raster_edge_error": 0.014766,
+              "raster_l1_error": 0.057522
             },
             "description": "Generated illustration table-grid cases need tighter L1 fidelity after structural gates pass.",
             "failures": [],
@@ -1451,14 +1430,7 @@
         "corrected_artifacts": [],
         "correction_notes": "",
         "decision": "pending",
-        "failed_components": [
-          {
-            "id": "parameter_economy",
-            "reason": "below_threshold",
-            "score": 0.215726,
-            "threshold": 0.25
-          }
-        ],
+        "failed_components": [],
         "failed_gates": [
           {
             "gate_type": "review_safety",
@@ -1469,7 +1441,7 @@
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "parameter_economy"
+          "current_quality_label"
         ],
         "reason": "",
         "regressed_components": [],

@@ -142,12 +142,15 @@ Secondary anchors:
     three center dots as five editable `circle` anchors using anchor-coverage
     region matching.
   - transparent-source raster metrics now flatten against the white preview
-    background, so the visual L1 gate passes at 0.056356 < 0.18.
+    background, so the visual L1 gate passes at 0.057522 < 0.18.
   - v10 fragmentation now scores unstructured fallback fragments instead of all
     same-color primitives, so expected table cells, circles, and cutout strokes
     no longer block review.
-  - v10 promotion still fails on the current red quality label and editability
-    review component for parameter economy.
+  - organic fallback node-budget capping reduces generated-illustration
+    parameter debt to `parameter_economy=0.268145`, above the 0.25 review
+    threshold.
+  - v10 promotion still fails only on the current red quality label; editability
+    review has no failed components for this case.
   - white line gaps in hair/clothing need curved cut-out detection, not only
     horizontal/vertical gaps.
 - Reporting:

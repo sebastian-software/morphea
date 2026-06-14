@@ -54,7 +54,8 @@ Result:
   - 1 `stroke_circle`
 - Reported one `perspective_grid` group for the table quads.
 - Reported `simple_shape_ratio=0.790323`, `fragmentation_penalty=0.467742`,
-  `raster_l1_error=0.056356`, and `raster_edge_error=0.014711`.
+  `parameter_economy=0.268145`, `raster_l1_error=0.057522`, and
+  `raster_edge_error=0.014766`.
 - Diagnostics included:
   - `image_resized_for_analysis` from 1254 x 1254 to 256 x 256
   - `palette_quantized` with max 10 colors
@@ -65,8 +66,10 @@ Result:
 - v10 fragmentation now scores unstructured fallback fragments instead of all
   same-color primitives, so expected table cells, circles, and cutout strokes
   no longer block review.
-- v10 promotion remains red because the current quality label is still red and
-  editability review still rejects parameter economy.
+- Organic fallback node-budget capping reduces generated-illustration
+  parameter debt above the 0.25 review threshold.
+- v10 promotion remains red only because the current quality label is still
+  red; editability review has no failed components for this case.
 
 ## Expected Semantic Anchors
 

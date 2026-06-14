@@ -28,12 +28,13 @@ Known evidence:
   not semantic expectations, block trusted output.
 
 Current red gates after the structural-layer, UI-topology, Terminaro
-region-coverage, and transparent-raster flattening refinements:
+region-coverage, transparent-raster flattening, and organic fallback
+node-budget refinements:
 
-- `terminaro-tweaked`: current quality label plus editability review failures
-  for parameter economy.
-- `chatgpt-image-2026-06-11`: current quality label plus editability review
-  failures for parameter economy.
+- `terminaro-tweaked`: current quality label only; editability review has no
+  failed components after parameter economy rose to 0.268145.
+- `chatgpt-image-2026-06-11`: current quality label only; editability review
+  has no failed components after parameter economy rose to 0.268145.
 - `ui-radio-acceptance-screenshot`: current quality label plus editability
   review failures for shape identity, fragmentation, and provenance.
 
@@ -187,6 +188,11 @@ Exit criteria:
   topology-compatible region, not duplicate semantic components. This is
   currently met mechanically by neutral composite anchor deduplication; the
   region remains deferred until the case quality decision changes.
+- Generated-illustration parameter economy passes the review threshold after
+  organic fallback node-budget capping: both Terminaro variants now score
+  `parameter_economy=0.268145` against a required 0.25, with no failed
+  editability-review components. This leaves review-label policy, not detector
+  mechanics, as the blocker for those two cases.
 
 ### RP10.2: Region Truth Schema
 
@@ -372,23 +378,28 @@ Scope:
   fix is backed by command output.
 
 Recommended target order after the structural-layer, UI-topology, Terminaro
-region-coverage, and transparent-raster flattening refinements:
+region-coverage, transparent-raster flattening, and organic fallback
+node-budget refinements:
 
-1. Address `terminaro-tweaked` parameter-economy editability failure, then
-   decide whether the case can move from red to yellow/manual review.
-2. Decide whether `chatgpt-image-2026-06-11` should stay red for editability
-   component failures or move to yellow pending manual review.
+1. Define review-label policy for mechanically green generated-illustration
+   cases: decide whether `terminaro-tweaked` and
+   `chatgpt-image-2026-06-11` remain red until explicit review is applied, or
+   move to yellow/manual review when all mechanical gates and component
+   thresholds pass.
+2. Address `ui-radio-acceptance-screenshot` shape identity, provenance, and
+   text-fragmentation debt.
 3. Decide whether `ui-radio-acceptance-screenshot` should stay red for
    editability component failures or move to yellow pending manual review.
 
 Reasoning:
 
 - The transparent Terminaro case no longer fails region-circle matching, raster
-  fidelity, or v10 fragmentation, but it still carries parameter-economy debt,
-  so it remains the most valuable broad target.
+  fidelity, v10 fragmentation, or parameter economy. It should not become green
+  silently because its `current_quality_label` is still intentionally red.
 - The opaque generated illustration no longer has a mechanical red gate besides
-  the intentionally red quality label, but its editability review still rejects
-  parameter economy, so it should not be promoted silently.
+  the intentionally red quality label, and editability review has no failed
+  components. It now needs the same explicit review-label policy decision as
+  the transparent source.
 - The UI radio case now has a topology-compatible radio region, but text-heavy
   fragmentation keeps editability review below the v10 green bar.
 
@@ -417,8 +428,9 @@ suite-family comparison reports no new regressions.
 
 These are the planning questions to answer before starting RP10.1:
 
-- Should the next target be Terminaro editability economy or review-label policy
-  for mechanically green but editability-red cases?
+- Should the next target be review-label policy for mechanically green
+  generated-illustration cases, or detector work on the UI screenshot's
+  shape/provenance/fragmentation failures?
 - Should `current_quality_label` remain manually red until all gates pass, or
   should it be derived from gate state once a case becomes mechanically green?
 - Do we want region truth annotations inside `docs/real-images/suite.json`, or
