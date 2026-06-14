@@ -450,7 +450,10 @@ Implemented so far:
 - `morphea harvest --require-applied-review` gates pseudo-label harvesting on
   applied promotion review decisions, so only `accepted` and `corrected`
   applied decisions become candidates while missing, invalid, rejected, and
-  deferred decisions remain visible in `rejected_runs`.
+  deferred decisions remain visible in `rejected_runs`. Promotion-annotated
+  manifests also require at least one trusted `promotion_state: promoted`
+  anchor, and only promoted anchors from that run can become trainable
+  pseudo-labels.
 - `morphea harvest-curated --require-applied-review` preserves existing applied
   review decisions across fresh curated reruns, restores them into regenerated
   manifests and curated JSON reports, and harvests only accepted/corrected
@@ -1247,7 +1250,8 @@ Implemented so far:
   evidence-flag hints and aggregate readiness counts beside decision-choice
   commands when reviewer evidence is missing, pending rows preserve
   review-artifact links from the packet, and applied rows show reviewer,
-  reason, source decision path, and applied review-artifact links.
+  reason, source decision path, promoted-anchor count, harvest block reason,
+  and applied review-artifact links.
 - `docs/real-images/reviews/current-deferred-decision-plan.json` records the
   current explicit reviewer outcome for the three real-image cases as
   `deferred`, keeping them visible as review evidence while excluding them from

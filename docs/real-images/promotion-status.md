@@ -302,8 +302,9 @@ explicit `case-id=terminal-decision.json` inputs, writes the per-case applied
 review summary beside the manifest, reports which packet cases are applied,
 harvestable, or still pending, and can write a `harvest-curated --config` file
 with `require_applied_review: true`. Applied rows show reviewer, reason, source
-decision path, and applied review-artifact links before a case is treated as
-harvestable. Pending rows now carry available terminal
+decision path, promoted-anchor count, harvest block reason, and applied
+review-artifact links before a case is treated as harvestable. Pending rows now
+carry available terminal
 decision-template paths in JSON and Markdown, so a reviewer can choose a
 terminal accepted/corrected/rejected/deferred file without reading the packet
 JSON. The CLI regression fixture exercises the generated config end to end: an
@@ -337,8 +338,12 @@ template paths.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
-can become candidates; missing, invalid, `rejected`, or `deferred` applied
-decisions remain visible in `rejected_runs`.
+can become candidates. Promotion-annotated manifests must also expose at least
+one trusted `promotion_state: promoted` anchor, and only promoted anchors from
+that run are harvested. Fallback-only or deferred-only exports with
+accepted/corrected reviews remain visible as
+`applied_review_without_promoted_anchors` in `rejected_runs`. Missing, invalid,
+`rejected`, or `deferred` applied decisions remain visible in `rejected_runs`.
 
 `morphea harvest-curated --require-applied-review` preserves existing applied
 review decisions from the run root across the fresh curated rerun, restores

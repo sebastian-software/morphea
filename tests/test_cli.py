@@ -623,6 +623,97 @@ class CliTests(unittest.TestCase):
                 str(accepted_decision),
             )
 
+    def test_promotion_review_harvest_cli_blocks_fallback_only_accepted_review(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            case_dir = run_root / "real-case"
+            case_dir.mkdir(parents=True)
+            manifest = case_dir / "manifest.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "promotion": {"summary": {"decision": "deferred"}},
+                        "anchors": [
+                            {
+                                "kind": "circle",
+                                "color": "#dd2222",
+                                "promotion_state": "fallback",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(manifest)},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            accepted_decision = root / "accepted.json"
+            accepted_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "accepted",
+                        "reviewer": "qa",
+                        "reason": "accepted despite fallback-only export",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "review-harvest.json"
+            markdown = root / "review-harvest.md"
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        str(review_packet),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                        "--run-root",
+                        str(run_root),
+                        "--decision",
+                        f"real-case={accepted_decision}",
+                    ]
+                )
+
+            self.assertIn("harvestable=0", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["applied_case_count"], 1)
+            self.assertEqual(result["harvestable_case_count"], 0)
+            self.assertFalse(result["applied_cases"][0]["harvestable"])
+            self.assertEqual(
+                result["applied_cases"][0]["harvest_block_reason"],
+                "applied_review_without_promoted_anchors",
+            )
+            self.assertEqual(result["applied_cases"][0]["promoted_anchor_count"], 0)
+            self.assertEqual(
+                result["applied_cases"][0]["anchor_state_counts"],
+                {"fallback": 1},
+            )
+            rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn("applied_review_without_promoted_anchors", rendered)
+
     def test_promotion_review_harvest_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

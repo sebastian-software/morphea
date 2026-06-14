@@ -66,6 +66,23 @@ def harvest_pseudo_labels(
                 }
             )
             continue
+        promotion_state_counts = None
+        if require_applied_review and applied_review_status["ok"]:
+            promotion_state_counts = _promotion_anchor_state_counts(manifest)
+            if (
+                promotion_state_counts is not None
+                and promotion_state_counts.get("promoted", 0) <= 0
+            ):
+                rejected_runs.append(
+                    {
+                        "run": manifest_path.parent.name,
+                        "reason": "applied_review_without_promoted_anchors",
+                        "review_decision": applied_review_status["decision"],
+                        "promoted_anchor_count": 0,
+                        "anchor_state_counts": promotion_state_counts,
+                    }
+                )
+                continue
         diagnostics = [
             diagnostic
             for diagnostic in manifest.get("diagnostics", [])
@@ -127,6 +144,12 @@ def harvest_pseudo_labels(
             continue
 
         for index, anchor in enumerate(manifest.get("anchors", [])):
+            if (
+                require_applied_review
+                and promotion_state_counts is not None
+                and anchor.get("promotion_state") != "promoted"
+            ):
+                continue
             metrics = anchor.get("metrics", {})
             prior_error = float(metrics.get("classifier_prior_error", 0.0))
             if prior_error > max_classifier_prior_error:
@@ -353,6 +376,27 @@ def _applied_review_harvest_status(
     }
 
 
+def _promotion_anchor_state_counts(
+    manifest: dict[str, object],
+) -> dict[str, int] | None:
+    anchors = manifest.get("anchors")
+    if not isinstance(anchors, list):
+        return None
+    counts: dict[str, int] = {}
+    saw_promotion_state = False
+    for anchor in anchors:
+        if not isinstance(anchor, dict):
+            continue
+        state = anchor.get("promotion_state")
+        if not isinstance(state, str) or not state:
+            continue
+        saw_promotion_state = True
+        counts[state] = counts.get(state, 0) + 1
+    if not saw_promotion_state:
+        return None
+    return dict(sorted(counts.items()))
+
+
 def render_harvest_markdown(report: dict[str, object]) -> str:
     filters = report.get("filters", {})
     if not isinstance(filters, dict):
@@ -449,6 +493,7 @@ def _rejection_detail_for_markdown(rejected: dict[str, object]) -> str:
         "fragmentation_penalty",
         "raster_l1_error",
         "raster_edge_error",
+        "promoted_anchor_count",
     ):
         if key in rejected:
             return _fmt_metric(rejected[key])

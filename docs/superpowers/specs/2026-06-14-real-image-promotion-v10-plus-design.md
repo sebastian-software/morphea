@@ -468,7 +468,9 @@ Deliverables:
 Current implementation:
 
 - `harvest-curated --require-applied-review` preserves applied decisions across
-  reruns and harvests only accepted/corrected applied reviews. `merge-labels`
+  reruns and harvests only accepted/corrected applied reviews.
+  Promotion-annotated manifests must also expose at least one trusted promoted
+  anchor, and only promoted anchors from that run become pseudo-labels. `merge-labels`
   keeps review and applied-review provenance in pseudo-label manifests, and
   dataset samples carry review item id, review reason, issue tags, applied
   decision, applied case id, and source review-decision path. `self-learn`
@@ -513,8 +515,9 @@ Current implementation:
 - `promotion-review-harvest` is the review-to-harvest bridge: it applies only
   explicit terminal decision files from a review packet, persists
   `review_decision_applied` through the existing apply-review rules, reports
-  applied/harvestable/pending packet cases, and writes a `harvest-curated`
-  config with `require_applied_review: true`. The CLI regression path proves
+  applied/harvestable/pending packet cases with promoted-anchor counts and
+  harvest block reasons, and writes a `harvest-curated` config with
+  `require_applied_review: true`. The CLI regression path proves
   the generated config carries accepted applied reviews forward while keeping
   deferred applied reviews visible but out of pseudo-label harvesting.
   `promotion-review-harvest --config` makes the same bridge repeatable with a

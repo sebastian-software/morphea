@@ -427,8 +427,9 @@ decision files from a suite `review-packet.json`, writes per-case applied
 review summaries beside manifests, reports applied/harvestable/pending packet
 cases, and can emit a ready `harvest-curated --config` file with
 `require_applied_review: true`. Applied case rows include reviewer, reason,
-source decision path, and applied review-artifact links, keeping harvestable
-evidence auditable after a terminal decision has already been applied. Pending
+source decision path, promoted-anchor count, harvest block reason, and applied
+review-artifact links, keeping harvestable and blocked evidence auditable after
+a terminal decision has already been applied. Pending
 packet cases now include terminal decision-template paths in JSON and Markdown,
 keeping reviewer choice visible without turning templates into implicit
 decisions. `decision_choices` and
@@ -466,7 +467,11 @@ corrected-decision notes/artifacts) to a `promotion-review-harvest --config`
 command with `--decision-choice case=decision`.
 
 `morphea harvest --require-applied-review` can then gate pseudo-label
-harvesting so only accepted/corrected applied decisions become candidates.
+harvesting so only accepted/corrected applied decisions become candidates. For
+promotion-annotated manifests, harvesting now also requires at least one
+trusted `promotion_state: promoted` anchor and only harvests promoted anchors,
+preventing accepted review evidence over fallback-only output from becoming
+training data.
 `morphea harvest-curated --require-applied-review` preserves existing applied
 decisions across fresh curated reruns and restores them into regenerated
 manifests and curated JSON reports before harvesting.

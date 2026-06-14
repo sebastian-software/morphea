@@ -488,6 +488,105 @@ class SelfLearningTests(unittest.TestCase):
                 "applied_review_not_accepted",
             )
 
+    def test_harvest_rejects_applied_review_without_promoted_anchors(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "accepted-without-promotion",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review={
+                    "decision": "accepted",
+                    "issue_tags": ["manual_review_pending"],
+                },
+            )
+            manifest_path = root / "accepted-without-promotion" / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["anchors"][0]["promotion_state"] = "fallback"
+            manifest["promotion"] = {
+                "summary": {"decision": "deferred"},
+            }
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+            output = Path(temp_dir) / "pseudo.json"
+            markdown = Path(temp_dir) / "pseudo.md"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                markdown=markdown,
+                require_applied_review=True,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 0)
+            self.assertEqual(result["rejected_runs"][0]["run"], "accepted-without-promotion")
+            self.assertEqual(
+                result["rejected_runs"][0]["reason"],
+                "applied_review_without_promoted_anchors",
+            )
+            self.assertEqual(result["rejected_runs"][0]["review_decision"], "accepted")
+            self.assertEqual(result["rejected_runs"][0]["promoted_anchor_count"], 0)
+            self.assertEqual(
+                result["rejected_runs"][0]["anchor_state_counts"],
+                {"fallback": 1},
+            )
+            self.assertIn(
+                "| `accepted-without-promotion` | "
+                "`applied_review_without_promoted_anchors` | 0 |",
+                markdown.read_text(encoding="utf-8"),
+            )
+
+    def test_harvest_only_collects_promoted_anchors_after_applied_review(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "runs"
+            _write_manifest(
+                root,
+                "accepted-mixed-promotion",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review={
+                    "decision": "accepted",
+                    "issue_tags": [],
+                },
+            )
+            manifest_path = root / "accepted-mixed-promotion" / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["anchors"] = [
+                {
+                    "kind": "circle",
+                    "color": "#dd2222",
+                    "metrics": {"classifier_prior_error": 0.0},
+                    "promotion_state": "promoted",
+                },
+                {
+                    "kind": "circle",
+                    "color": "#003366",
+                    "metrics": {"classifier_prior_error": 0.0},
+                    "promotion_state": "fallback",
+                },
+            ]
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+            output = Path(temp_dir) / "pseudo.json"
+
+            result = harvest_pseudo_labels(
+                run_root=root,
+                output=output,
+                require_applied_review=True,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["pseudo_labels"][0]["anchor_index"], 0)
+            self.assertEqual(
+                result["pseudo_labels"][0]["anchor"]["promotion_state"],
+                "promoted",
+            )
+
     def test_harvest_cli_can_require_applied_review(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"

@@ -729,8 +729,9 @@ applies only explicitly supplied terminal decision files, writes
 same `promotion-apply-review` rules, summarizes applied, harvestable, and
 pending cases, and writes a `harvest-curated --config` file with
 `require_applied_review: true`. Applied case rows include reviewer, reason,
-source decision path, and applied review-artifact links, so harvestable cases
-remain auditable from the prep report. Cases without an applied review remain
+source decision path, promoted-anchor count, harvest block reason, and applied
+review-artifact links, so harvestable and blocked applied cases remain
+auditable from the prep report. Cases without an applied review remain
 pending in the prep report rather than becoming implicit training candidates.
 Pending cases carry available terminal `decision_templates` in JSON and
 Markdown when the review packet or config exposes them, so reviewers can see the
@@ -768,7 +769,12 @@ running.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
-can become pseudo-label candidates. Missing, invalid, `rejected`, and
+can become pseudo-label candidates. When a manifest carries promotion-state
+annotations, accepted/corrected reviews also require at least one
+`promotion_state: promoted` anchor, and only promoted anchors from that run are
+harvested. Accepted reviews over fallback-only or deferred-only promotion
+exports are rejected as
+`applied_review_without_promoted_anchors`. Missing, invalid, `rejected`, and
 `deferred` applied decisions remain visible in `rejected_runs`.
 
 `morphea harvest-curated --require-applied-review` preserves existing

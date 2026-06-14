@@ -146,7 +146,7 @@ def prepare_promotion_review_harvest(
         "harvestable_case_count": sum(
             1
             for case in applied_cases
-            if case.get("decision") in HARVESTABLE_PROMOTION_DECISIONS
+            if case.get("harvestable") is True
         ),
         "pending_case_count": len(pending_cases),
         "pending_cases": pending_cases,
@@ -212,8 +212,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
             "",
             "## Applied Case Status",
             "",
-            "| Case | Decision | Harvestable | Reviewer | Reason | Source decision | Review artifacts | Manifest |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| Case | Decision | Harvestable | Block reason | Promoted anchors | Reviewer | Reason | Source decision | Review artifacts | Manifest |",
+            "| --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- |",
         ]
     )
     applied_cases = result.get("applied_cases", [])
@@ -226,6 +226,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('decision', 'n/a')}` | "
                 f"`{str(item.get('harvestable', False)).lower()}` | "
+                f"{_fmt_table_code(item.get('harvest_block_reason'))} | "
+                f"{_fmt_value(item.get('promoted_anchor_count'))} | "
                 f"{_fmt_table_code(item.get('reviewer'))} | "
                 f"{_fmt_table_code(item.get('reason'))} | "
                 f"{_fmt_table_code(item.get('source_review_decision'))} | "
@@ -233,7 +235,7 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('manifest', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [
@@ -328,11 +330,27 @@ def _packet_review_status(
         applied = _manifest_applied_review(manifest_path)
         if applied:
             decision = str(applied.get("decision", "n/a"))
+            promotion_state_counts = _manifest_promotion_anchor_state_counts(
+                manifest_path
+            )
+            promoted_anchor_count = (
+                promotion_state_counts.get("promoted", 0)
+                if promotion_state_counts is not None
+                else None
+            )
+            harvest_block_reason = None
+            harvestable = decision in HARVESTABLE_PROMOTION_DECISIONS
+            if harvestable and promoted_anchor_count == 0:
+                harvestable = False
+                harvest_block_reason = "applied_review_without_promoted_anchors"
             applied_cases.append(
                 {
                     "case_id": case_id,
                     "decision": decision,
-                    "harvestable": decision in HARVESTABLE_PROMOTION_DECISIONS,
+                    "harvestable": harvestable,
+                    "harvest_block_reason": harvest_block_reason,
+                    "promoted_anchor_count": promoted_anchor_count,
+                    "anchor_state_counts": promotion_state_counts or {},
                     "accepted_for_promotion": bool(
                         applied.get("accepted_for_promotion", False)
                     ),
@@ -686,6 +704,30 @@ def _manifest_applied_review(path: Path | None) -> dict[str, object]:
         if isinstance(applied, dict):
             return applied
     return {}
+
+
+def _manifest_promotion_anchor_state_counts(path: Path | None) -> dict[str, int] | None:
+    if path is None or not path.exists():
+        return None
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        return None
+    anchors = manifest.get("anchors")
+    if not isinstance(anchors, list):
+        return None
+    counts: dict[str, int] = {}
+    saw_promotion_state = False
+    for anchor in anchors:
+        if not isinstance(anchor, dict):
+            continue
+        state = anchor.get("promotion_state")
+        if not isinstance(state, str) or not state:
+            continue
+        saw_promotion_state = True
+        counts[state] = counts.get(state, 0) + 1
+    if not saw_promotion_state:
+        return None
+    return dict(sorted(counts.items()))
 
 
 def _harvest_curated_config(
