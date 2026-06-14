@@ -2442,6 +2442,10 @@ def _ellipse_candidate(
     if min(width, height) < 9:
         return None
     aspect_error = abs(width - height) / max(width, height)
+    if max(width, height) <= 12 and aspect_error < 0.15:
+        # At downsampled real-image scale a one-pixel box difference often
+        # comes from raster quantization, not a deliberate oval.
+        return None
     if aspect_error < 0.1:
         # Circle territory for the aligned fit, but a tilted ellipse can
         # have a near-square box (45 degrees); the rotated fit rejects

@@ -143,6 +143,7 @@ def _flat_color_masks_result(
             background=inferred_background,
             max_colors=max_colors,
             min_separation=max(48.0, color_tolerance * 2),
+            background_tolerance=color_tolerance,
         )
         quantized_pixels = [
             _nearest_anchor(pixel, anchors, inferred_background)
@@ -239,6 +240,7 @@ def _dominant_palette_anchors(
     background: Rgb,
     max_colors: int,
     min_separation: float,
+    background_tolerance: float,
 ) -> list[Rgb]:
     # Generated artwork rarely repeats exact colors, so dominance is
     # aggregated over coarse 16-step color cells; each anchor is the most
@@ -251,12 +253,13 @@ def _dominant_palette_anchors(
         cell_counts[cell] += 1
         cell_colors.setdefault(cell, Counter())[color] += 1
     minimum_share = max(16, len(pixels) // 500)
+    large_blend_share = max(minimum_share * 4, len(pixels) // 200)
     anchors: list[Rgb] = []
     for cell, count in cell_counts.most_common():
         if count < minimum_share:
             break
         color = cell_colors[cell].most_common(1)[0][0]
-        if _color_distance(color, background) < min_separation:
+        if _color_distance(color, background) <= background_tolerance:
             continue
         if any(
             _color_distance(color, anchor) < min_separation
@@ -266,7 +269,9 @@ def _dominant_palette_anchors(
         # Anti-aliasing ramps sit on the straight RGB line between two real
         # colors; a candidate close to any anchor/background pair's segment
         # is a blend seam, not a brand color.
-        if _is_blend_of_existing(color, anchors, background):
+        if _is_blend_of_existing(color, anchors, background) and (
+            count < large_blend_share or _is_neutral_rgb(color)
+        ):
             continue
         anchors.append(color)
         if len(anchors) >= max_colors:
@@ -702,6 +707,11 @@ def _is_neutral_color(color: str) -> bool:
         blue = int(color[5:7], 16)
     except ValueError:
         return False
+    return _is_neutral_rgb((red, green, blue))
+
+
+def _is_neutral_rgb(color: Rgb) -> bool:
+    red, green, blue = color
     return max(red, green, blue) - min(red, green, blue) <= 8
 
 

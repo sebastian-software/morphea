@@ -806,6 +806,16 @@ class EllipseDetectionTests(unittest.TestCase):
         self.assertAlmostEqual(anchors[0].ellipse.rx, 22.5, delta=1.0)
         self.assertAlmostEqual(anchors[0].ellipse.ry, 12.5, delta=1.0)
 
+    def test_tiny_near_round_dot_stays_circle_after_downsample_quantization(self):
+        image = Image.new("RGB", (16, 16), "white")
+        ImageDraw.Draw(image).ellipse((3, 3, 11, 12), fill="black")
+        mask = _mask_from_non_white_pixels(image)
+
+        anchors = detect_primitive_anchors(mask, min_area=4)
+
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].kind, AnchorKind.CIRCLE)
+
 
 class CutoutDetectionTests(unittest.TestCase):
     def test_horizontal_gap_inside_component_becomes_cutout_stroke(self):

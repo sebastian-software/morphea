@@ -123,6 +123,44 @@ class FlatColorImageTests(unittest.TestCase):
 
         self.assertEqual(len(masks), 1)
 
+    def test_max_colors_preserves_large_near_background_blend_regions(self):
+        image_path = _write_near_background_table_cells_image()
+
+        masks = flat_color_masks_from_image(
+            image_path,
+            min_area=4,
+            color_tolerance=18,
+            max_colors=3,
+        )
+        scene = scene_from_flat_color_image(
+            image_path,
+            min_area=4,
+            color_tolerance=18,
+            max_colors=3,
+        )
+
+        self.assertIn("#f6f0eb", [mask.color for mask in masks])
+        self.assertEqual(
+            sum(
+                1
+                for anchor in scene.anchors
+                if anchor.kind == AnchorKind.QUAD and anchor.color == "#f6f0eb"
+            ),
+            2,
+        )
+
+    def test_max_colors_filters_neutral_antialias_blend_ramps(self):
+        image_path = _write_antialiased_neutral_line_image()
+
+        masks = flat_color_masks_from_image(
+            image_path,
+            min_area=4,
+            color_tolerance=18,
+            max_colors=4,
+        )
+
+        self.assertEqual([mask.color for mask in masks], ["#000000"])
+
     def test_antialiased_neutral_radio_ring_vectorizes_as_stroke_circle(self):
         image_path = _write_antialiased_radio_ring_image()
 
@@ -283,6 +321,32 @@ def _write_multi_red_circle_image() -> Path:
     draw = ImageDraw.Draw(image)
     draw.ellipse((3, 3, 14, 14), fill="#dd2222")
     draw.arc((3, 3, 14, 14), start=0, end=180, fill="#d91f1f", width=2)
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_near_background_table_cells_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "near-background-table-cells.png"
+    image = Image.new("RGB", (96, 64), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((6, 6, 24, 20), fill="#002554")
+    draw.ellipse((70, 6, 84, 20), fill="#b67f13")
+    draw.polygon(((18, 34), (40, 34), (44, 54), (10, 54)), fill="#f6f0eb")
+    draw.polygon(((52, 34), (74, 34), (86, 54), (48, 54)), fill="#f6f0eb")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_antialiased_neutral_line_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "antialiased-neutral-line.png"
+    high_res = Image.new("RGB", (384, 128), "white")
+    draw = ImageDraw.Draw(high_res)
+    draw.line((48, 64, 336, 64), fill="black", width=12)
+    image = high_res.resize((96, 32), Image.Resampling.LANCZOS)
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path
