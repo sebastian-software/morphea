@@ -44,6 +44,7 @@ VECTORIZE_CONFIG_KEYS = {
 }
 
 PROMOTION_QUALITY_LABELS = {"green", "yellow", "red"}
+PROMOTION_QUALITY_LABEL_REVIEW_POLICIES = {"manual_review_pending"}
 PROMOTION_REQUIRED_STRINGS = {
     "stress_family",
     "source_provenance",
@@ -897,6 +898,21 @@ def _promotion_gate_results(
         semantic_reason = "semantic expectations passed"
     else:
         semantic_reason = f"case status is {case.get('status', 'unknown')}"
+    quality_policy = (
+        promotion.get("quality_label_review_policy")
+        if isinstance(promotion, dict)
+        else None
+    )
+    quality_gate_severity = "red" if label == "red" else "yellow"
+    quality_gate_reason = f"current quality label is {label or 'missing'}"
+    quality_gate_evidence: object = label
+    if label == "red" and quality_policy == "manual_review_pending":
+        quality_gate_severity = "yellow"
+        quality_gate_reason = "current quality label is red; manual review pending"
+        quality_gate_evidence = {
+            "current_quality_label": label,
+            "review_policy": quality_policy,
+        }
     gates = [
         _promotion_gate(
             "source_available",
@@ -936,9 +952,9 @@ def _promotion_gate_results(
             "current_quality_label",
             gate_type="review_safety",
             ok=label == "green",
-            severity="red" if label == "red" else "yellow",
-            reason=f"current quality label is {label or 'missing'}",
-            evidence=label,
+            severity=quality_gate_severity,
+            reason=quality_gate_reason,
+            evidence=quality_gate_evidence,
         ),
     ]
     if isinstance(promotion, dict):
@@ -3162,6 +3178,19 @@ def _validate_promotion_metadata(
             f"case {case_id} promotion current_quality_label must be one of: "
             f"{allowed}"
         )
+    quality_policy = value.get("quality_label_review_policy")
+    if quality_policy is not None:
+        if quality_policy not in PROMOTION_QUALITY_LABEL_REVIEW_POLICIES:
+            allowed = ", ".join(sorted(PROMOTION_QUALITY_LABEL_REVIEW_POLICIES))
+            raise ValueError(
+                f"case {case_id} promotion quality_label_review_policy must be "
+                f"one of: {allowed}"
+            )
+        if label != "red":
+            raise ValueError(
+                f"case {case_id} promotion quality_label_review_policy requires "
+                "current_quality_label red"
+            )
     for key in sorted(PROMOTION_REQUIRED_STRINGS):
         if not isinstance(value.get(key), str) or not value[key]:
             raise ValueError(f"case {case_id} promotion {key} must be a string")

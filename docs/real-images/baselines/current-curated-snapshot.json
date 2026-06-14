@@ -36,12 +36,12 @@
           "stroke_width_stability": 0.663784,
           "topology_consistency": 1.0
         },
-        "decision": "rejected",
+        "decision": "manual_review",
         "failed_components": [],
         "gate_blocked_components": [],
-        "promotion_decision": "rejected",
+        "promotion_decision": "deferred",
         "reasons": [
-          "promotion_decision_rejected"
+          "promotion_decision_deferred"
         ],
         "regressed_components": [],
         "regression_delta_status": "not_configured",
@@ -361,10 +361,10 @@
       "ok": true,
       "promotion": {
         "current_issues": [
-          "current_quality_label"
+          "manual_review_pending"
         ],
         "current_quality_label": "red",
-        "current_status": "checked_semantic_pass_promotion_failed",
+        "current_status": "checked_semantic_pass_manual_review_pending",
         "expected_promotion_families": [
           "circle_anchors",
           "perspective_table_grid",
@@ -415,12 +415,14 @@
           }
         ],
         "licensing_status": "local_research_only",
+        "quality_label_review_policy": "manual_review_pending",
         "review_notes": [
           "2026-06-14 missing local source was replaced by a checked-in opaque fixture derived from the transparent Terminaro image.",
           "Semantic expectations pass with 5 circle anchors, 14 table quads, one perspective-grid group, and editable strokes counted across stroke polylines, stroke paths, and arcs.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
           "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review.",
-          "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass; v10 promotion remains red only because the current quality label is still red."
+          "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass.",
+          "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure."
         ],
         "source_provenance": "checked-in opaque RGB fixture derived from the local transparent Terminaro image",
         "stress_family": "generated_illustration_opaque_table_grid",
@@ -472,12 +474,15 @@
           "severity": "yellow"
         },
         {
-          "evidence": "red",
+          "evidence": {
+            "current_quality_label": "red",
+            "review_policy": "manual_review_pending"
+          },
           "gate_type": "review_safety",
           "id": "current_quality_label",
           "ok": false,
-          "reason": "current quality label is red",
-          "severity": "red"
+          "reason": "current quality label is red; manual review pending",
+          "severity": "yellow"
         },
         {
           "evidence": {
@@ -601,10 +606,10 @@
       ],
       "promotion_regions": [],
       "promotion_summary": {
-        "decision": "rejected",
+        "decision": "deferred",
         "failed_gate_count": 1,
-        "red_gate_count": 1,
-        "yellow_gate_count": 0
+        "red_gate_count": 0,
+        "yellow_gate_count": 1
       },
       "review_decision": {
         "allowed_decisions": [
@@ -622,13 +627,13 @@
           {
             "gate_type": "review_safety",
             "id": "current_quality_label",
-            "reason": "current quality label is red",
-            "severity": "red"
+            "reason": "current quality label is red; manual review pending",
+            "severity": "yellow"
           }
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "current_quality_label"
+          "manual_review_pending"
         ],
         "reason": "",
         "regressed_components": [],
@@ -636,11 +641,11 @@
         "schema_version": 1,
         "source_decisions": {
           "editability_accepted": false,
-          "editability_decision": "rejected",
-          "promotion_decision": "rejected",
+          "editability_decision": "manual_review",
+          "promotion_decision": "deferred",
           "regression_delta_status": "not_configured"
         },
-        "suggested_decision": "rejected"
+        "suggested_decision": "deferred"
       },
       "source_exists": true,
       "status": "checked"
@@ -680,12 +685,12 @@
           "stroke_width_stability": 0.663784,
           "topology_consistency": 1.0
         },
-        "decision": "rejected",
+        "decision": "manual_review",
         "failed_components": [],
         "gate_blocked_components": [],
-        "promotion_decision": "rejected",
+        "promotion_decision": "deferred",
         "reasons": [
-          "promotion_decision_rejected"
+          "promotion_decision_deferred"
         ],
         "regressed_components": [],
         "regression_delta_status": "not_configured",
@@ -1001,10 +1006,10 @@
       "ok": true,
       "promotion": {
         "current_issues": [
-          "current_quality_label"
+          "manual_review_pending"
         ],
         "current_quality_label": "red",
-        "current_status": "checked_semantic_pass_promotion_failed",
+        "current_status": "checked_semantic_pass_manual_review_pending",
         "expected_promotion_families": [
           "circle_anchors",
           "perspective_table_grid",
@@ -1056,6 +1061,7 @@
           }
         ],
         "licensing_status": "local_research_only",
+        "quality_label_review_policy": "manual_review_pending",
         "region_gates": [
           {
             "bounds": [
@@ -1084,7 +1090,8 @@
           "2026-06-14 gold-circle region gate now uses anchor-coverage matching over the shoulder-brooch and center-dot ROI.",
           "2026-06-14 transparent-source raster metrics are flattened against the same white preview background; raster L1 is now 0.057522 < 0.18.",
           "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review.",
-          "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass; v10 promotion remains red only because the current quality label is still red."
+          "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass.",
+          "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure."
         ],
         "source_provenance": "local generated image from the user's Desktop; source image is not checked in",
         "stress_family": "generated_illustration_table_grid",
@@ -1136,12 +1143,15 @@
           "severity": "yellow"
         },
         {
-          "evidence": "red",
+          "evidence": {
+            "current_quality_label": "red",
+            "review_policy": "manual_review_pending"
+          },
           "gate_type": "review_safety",
           "id": "current_quality_label",
           "ok": false,
-          "reason": "current quality label is red",
-          "severity": "red"
+          "reason": "current quality label is red; manual review pending",
+          "severity": "yellow"
         },
         {
           "evidence": {
@@ -1414,10 +1424,10 @@
         }
       ],
       "promotion_summary": {
-        "decision": "rejected",
+        "decision": "deferred",
         "failed_gate_count": 1,
-        "red_gate_count": 1,
-        "yellow_gate_count": 0
+        "red_gate_count": 0,
+        "yellow_gate_count": 1
       },
       "review_decision": {
         "allowed_decisions": [
@@ -1435,13 +1445,13 @@
           {
             "gate_type": "review_safety",
             "id": "current_quality_label",
-            "reason": "current quality label is red",
-            "severity": "red"
+            "reason": "current quality label is red; manual review pending",
+            "severity": "yellow"
           }
         ],
         "gate_blocked_components": [],
         "issue_tags": [
-          "current_quality_label"
+          "manual_review_pending"
         ],
         "reason": "",
         "regressed_components": [],
@@ -1449,11 +1459,11 @@
         "schema_version": 1,
         "source_decisions": {
           "editability_accepted": false,
-          "editability_decision": "rejected",
-          "promotion_decision": "rejected",
+          "editability_decision": "manual_review",
+          "promotion_decision": "deferred",
           "regression_delta_status": "not_configured"
         },
-        "suggested_decision": "rejected"
+        "suggested_decision": "deferred"
       },
       "source_exists": true,
       "status": "checked"

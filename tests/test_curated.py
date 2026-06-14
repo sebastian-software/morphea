@@ -375,6 +375,80 @@ class CuratedSuiteTests(unittest.TestCase):
                 "accepted",
             )
 
+    def test_quality_label_review_policy_defers_mechanically_green_case(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            source = Path(temp_dir) / "input.png"
+            suite_path = Path(temp_dir) / "suite.json"
+            output_dir = Path(temp_dir) / "artifacts"
+            image = Image.new("RGB", (24, 24), "white")
+            draw = ImageDraw.Draw(image)
+            draw.ellipse((5, 5, 17, 17), fill="#c08011")
+            image.save(source)
+            promotion = _promotion_metadata("red")
+            promotion["quality_label_review_policy"] = "manual_review_pending"
+            promotion["current_issues"] = ["manual_review_pending"]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": str(source),
+                                "promotion": promotion,
+                                "recommended_config": {
+                                    "min_area": 8,
+                                    "timeout_seconds": 5,
+                                },
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = check_curated_suite(
+                suite_path,
+                output_dir=output_dir,
+                run=True,
+            )
+
+            case = result["cases"][0]
+            self.assertTrue(case["ok"])
+            self.assertEqual(case["promotion_summary"]["decision"], "deferred")
+            self.assertEqual(case["promotion_summary"]["red_gate_count"], 0)
+            self.assertEqual(case["promotion_summary"]["yellow_gate_count"], 1)
+            self.assertEqual(case["editability_review"]["decision"], "manual_review")
+            self.assertEqual(case["editability_review"]["failed_components"], [])
+            self.assertEqual(case["review_decision"]["suggested_decision"], "deferred")
+            gate_by_id = {gate["id"]: gate for gate in case["promotion_gates"]}
+            self.assertFalse(gate_by_id["current_quality_label"]["ok"])
+            self.assertEqual(gate_by_id["current_quality_label"]["severity"], "yellow")
+            self.assertEqual(
+                gate_by_id["current_quality_label"]["reason"],
+                "current quality label is red; manual review pending",
+            )
+            manifest = json.loads(
+                (output_dir / "simple-circle" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(
+                manifest["promotion"]["regions"][0]["state"],
+                "deferred",
+            )
+            self.assertEqual(
+                manifest["anchors"][0]["promotion_state"],
+                "deferred",
+            )
+
     def test_promotion_export_artifacts_partition_rejected_anchors(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             source = Path(temp_dir) / "input.png"
@@ -1323,6 +1397,37 @@ class CuratedSuiteTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "current_quality_label"):
+                load_curated_suite(suite_path)
+
+    def test_load_curated_suite_rejects_invalid_quality_label_review_policy(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("red")
+            metadata["quality_label_review_policy"] = "auto_accept"
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "quality_label_review_policy"):
                 load_curated_suite(suite_path)
 
     def test_load_curated_suite_rejects_unknown_hard_gate_expectation(self):

@@ -30,8 +30,8 @@ PYTHONPATH=src python3 -m morphea.cli lucide-check assets/lucide/suite.json \
 
 | Case | Source | Pipeline Status | v10 Label | Primary Issues | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `terminaro-tweaked` | available local file | checked, expectations passed; promotion gates failed | red | `current_quality_label` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; transparent-source raster metrics flatten against the white preview background, so visual L1 is 0.057522 < 0.18 with alpha error 0; v10 fragmentation scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); organic fallback node-budget capping lifts `parameter_economy` to 0.268145 against the 0.25 threshold (`parameter_count` 726, top contributors 96/68/64), leaving no failed editability-review components; v10 remains red only because `current_quality_label` is red |
-| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion gates failed | red | `current_quality_label` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.057522 < 0.18, `structural_layer_count` 3/3; v10 fragmentation scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); organic fallback node-budget capping lifts `parameter_economy` to 0.268145 against the 0.25 threshold (`parameter_count` 726, top contributors 96/68/64), leaving no failed editability-review components; v10 remains red only because `current_quality_label` is red |
+| `terminaro-tweaked` | available local file | checked, expectations passed; promotion deferred for manual review | red | `manual_review_pending` | `gold-circle-anchors` 5/5, `table-perspective-quads` 14/8, grid group 1/1; gold-circle region gate passes with 5/5 `circle` anchors via `min_anchor_coverage=0.8`; transparent-source raster metrics flatten against the white preview background, so visual L1 is 0.057522 < 0.18 with alpha error 0; v10 fragmentation scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); organic fallback node-budget capping lifts `parameter_economy` to 0.268145 against the 0.25 threshold (`parameter_count` 726, top contributors 96/68/64), leaving no failed editability-review components; the opt-in `quality_label_review_policy` turns the remaining red quality label into a yellow `manual_review_pending` gate, so promotion summary is `deferred` and editability review is `manual_review` |
+| `chatgpt-image-2026-06-11` | checked-in opaque fixture | checked, expectations passed; promotion deferred for manual review | red | `manual_review_pending` | source restored via `assets/curated/terminaro-opaque-table-grid.png`; circles 5/5, table quads 14/12, editable strokes 27/12, visual L1 0.057522 < 0.18, `structural_layer_count` 3/3; v10 fragmentation scores unstructured fallback fragments only (`unstructured_fragmentation_penalty` 0.16129, score 0.677419); organic fallback node-budget capping lifts `parameter_economy` to 0.268145 against the 0.25 threshold (`parameter_count` 726, top contributors 96/68/64), leaving no failed editability-review components; the opt-in `quality_label_review_policy` turns the remaining red quality label into a yellow `manual_review_pending` gate, so promotion summary is `deferred` and editability review is `manual_review` |
 | `ui-radio-acceptance-screenshot` | available local file | checked, expectations passed; promotion gates failed | red | `fragmentation` | visual L1 0.033861 < 0.08; radio topology gate now passes with 1 selected `stroke_circle` and `disconnected_component_count=1`; v10 remains red because `current_quality_label` is red and editability review rejects shape identity, fragmentation, and provenance |
 
 Current curated semantic result: 3 cases, 3 checked expectation passes, 0
@@ -117,7 +117,10 @@ The `morphea promotion-export` command can regenerate promoted/fallback SVGs
 from any promotion-annotated manifest, outside curated sidecar generation.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
-failures produce `deferred`; all gates passing produces `promoted`.
+failures produce `deferred`; all gates passing produces `promoted`. A case may
+opt into `quality_label_review_policy: manual_review_pending` to keep a red
+quality label visible while treating that isolated review-safety gate as yellow
+manual-review evidence.
 
 The current contact sheet includes:
 
@@ -163,10 +166,10 @@ candidate.
 
 | Criterion | Status | Evidence |
 | --- | --- | --- |
-| Manifests expose region-level promotion state. | met | Checked run manifests include `promotion.regions`; `terminaro-tweaked` now records `gold-circle-region-shape-class` as `deferred` after its gate passes but the case remains red, and `ui-radio-acceptance-screenshot` records `radio-control-region-topology` as `deferred` after its gate passes but the case remains red. |
-| Fallback and rejected/deferred regions are visible in reports. | met | `/tmp/morphea-rp10-coverage-report.md` lists `Promotion regions: deferred=1` for `terminaro-tweaked` and `ui-radio-acceptance-screenshot` and shows the failed gate ids before aggregate metrics. |
+| Manifests expose region-level promotion state. | met | Checked run manifests include `promotion.regions`; `terminaro-tweaked` now records `gold-circle-region-shape-class` as `deferred` because the containing case is manual-review pending, and `ui-radio-acceptance-screenshot` records `radio-control-region-topology` as `deferred` while the containing case remains red. |
+| Fallback and rejected/deferred regions are visible in reports. | met | Current curated reports list deferred promotion regions for manual-review-pending or red containing cases and show the failed gate ids before aggregate metrics. |
 | Promoted SVG output can be filtered from debug/fallback output. | met | Checked run directories write `promoted.svg`, `fallback.svg`, and `promotion-export.json`; `morphea promotion-export` can regenerate the same partition from a promotion-annotated manifest. |
-| No failed semantic candidate disappears silently. | met | `promotion-export.json` records rejected/deferred anchor indexes and `anchor_state_counts`; current checked real-image manifests keep `terminaro-tweaked` and the UI radio region deferred until each containing case quality decision changes. |
+| No failed semantic candidate disappears silently. | met | `promotion-export.json` records rejected/deferred anchor indexes and `anchor_state_counts`; current checked real-image manifests keep manual-review-pending generated-illustration regions and the UI radio region deferred until each containing case quality decision changes. |
 
 ## RIP4 Progress
 
@@ -303,14 +306,12 @@ baseline comparison path is covered outside helper-only unit tests.
 ## Next Gate
 
 The next promotion-quality block should keep all real-image semantic
-expectations green while addressing the remaining review/editability failures
-that keep all three real-image cases red. The transparent Terminaro
-region-circle, raster-fidelity, v10-fragmentation, and parameter-economy
-thresholds are now mechanically green; the opaque generated-illustration
-structure, v10-fragmentation, and parameter-economy thresholds are also green.
-Both generated-illustration cases remain red only because their current quality
-label is still red. The UI radio topology gate is mechanically green, but its
-editability review still fails shape identity, fragmentation, and provenance.
-The next narrow promotion-quality target is review-label policy for
-mechanically green generated-illustration cases, followed by the UI
-shape/provenance/fragmentation debt.
+expectations green while addressing the remaining review/editability failures.
+The transparent Terminaro region-circle, raster-fidelity, v10-fragmentation,
+and parameter-economy thresholds are now mechanically green; the opaque
+generated-illustration structure, v10-fragmentation, and parameter-economy
+thresholds are also green. Both generated-illustration cases now defer to
+manual review instead of being rejected as detector failures. The UI radio
+topology gate is mechanically green, but its editability review still fails
+shape identity, fragmentation, and provenance. The next narrow detector-quality
+target is the UI shape/provenance/fragmentation debt.

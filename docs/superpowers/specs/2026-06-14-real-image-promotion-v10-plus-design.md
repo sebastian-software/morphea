@@ -27,14 +27,16 @@ Known evidence:
 - All three current real-image cases are still v10 red because promotion gates,
   not semantic expectations, block trusted output.
 
-Current red gates after the structural-layer, UI-topology, Terminaro
-region-coverage, transparent-raster flattening, and organic fallback
-node-budget refinements:
+Current promotion states after the structural-layer, UI-topology, Terminaro
+region-coverage, transparent-raster flattening, organic fallback node-budget,
+and quality-label review-policy refinements:
 
-- `terminaro-tweaked`: current quality label only; editability review has no
-  failed components after parameter economy rose to 0.268145.
-- `chatgpt-image-2026-06-11`: current quality label only; editability review
-  has no failed components after parameter economy rose to 0.268145.
+- `terminaro-tweaked`: deferred for manual review via
+  `quality_label_review_policy: manual_review_pending`; editability review has
+  no failed components after parameter economy rose to 0.268145.
+- `chatgpt-image-2026-06-11`: deferred for manual review via
+  `quality_label_review_policy: manual_review_pending`; editability review has
+  no failed components after parameter economy rose to 0.268145.
 - `ui-radio-acceptance-screenshot`: current quality label plus editability
   review failures for shape identity, fragmentation, and provenance.
 
@@ -191,8 +193,11 @@ Exit criteria:
 - Generated-illustration parameter economy passes the review threshold after
   organic fallback node-budget capping: both Terminaro variants now score
   `parameter_economy=0.268145` against a required 0.25, with no failed
-  editability-review components. This leaves review-label policy, not detector
-  mechanics, as the blocker for those two cases.
+  editability-review components.
+- Generated-illustration review-label policy is now explicit: both Terminaro
+  variants opt into `quality_label_review_policy: manual_review_pending`, which
+  keeps their red quality label visible but moves the promotion decision to
+  `deferred` instead of `rejected`.
 
 ### RP10.2: Region Truth Schema
 
@@ -378,28 +383,26 @@ Scope:
   fix is backed by command output.
 
 Recommended target order after the structural-layer, UI-topology, Terminaro
-region-coverage, transparent-raster flattening, and organic fallback
-node-budget refinements:
+region-coverage, transparent-raster flattening, organic fallback node-budget,
+and quality-label review-policy refinements:
 
-1. Define review-label policy for mechanically green generated-illustration
-   cases: decide whether `terminaro-tweaked` and
-   `chatgpt-image-2026-06-11` remain red until explicit review is applied, or
-   move to yellow/manual review when all mechanical gates and component
-   thresholds pass.
-2. Address `ui-radio-acceptance-screenshot` shape identity, provenance, and
+1. Address `ui-radio-acceptance-screenshot` shape identity, provenance, and
    text-fragmentation debt.
-3. Decide whether `ui-radio-acceptance-screenshot` should stay red for
+2. Decide whether `ui-radio-acceptance-screenshot` should stay red for
    editability component failures or move to yellow pending manual review.
+3. Build a reviewer-facing packet for the two deferred generated-illustration
+   cases so a human can apply `accepted`, `corrected`, `rejected`, or
+   `deferred` decisions without reading raw JSON.
 
 Reasoning:
 
 - The transparent Terminaro case no longer fails region-circle matching, raster
-  fidelity, v10 fragmentation, or parameter economy. It should not become green
-  silently because its `current_quality_label` is still intentionally red.
+  fidelity, v10 fragmentation, or parameter economy. It is now deferred for
+  explicit manual review instead of being silently promoted.
 - The opaque generated illustration no longer has a mechanical red gate besides
   the intentionally red quality label, and editability review has no failed
-  components. It now needs the same explicit review-label policy decision as
-  the transparent source.
+  components. It follows the same manual-review-pending policy as the
+  transparent source.
 - The UI radio case now has a topology-compatible radio region, but text-heavy
   fragmentation keeps editability review below the v10 green bar.
 
@@ -428,11 +431,11 @@ suite-family comparison reports no new regressions.
 
 These are the planning questions to answer before starting RP10.1:
 
-- Should the next target be review-label policy for mechanically green
-  generated-illustration cases, or detector work on the UI screenshot's
-  shape/provenance/fragmentation failures?
-- Should `current_quality_label` remain manually red until all gates pass, or
-  should it be derived from gate state once a case becomes mechanically green?
+- Should `current_quality_label` remain manually red until explicit applied
+  review, or should applied `accepted`/`corrected` reviews update the suite
+  label in a follow-up commit?
+- Which UI screenshot issue should be attacked first: text-fragmentation
+  grouping, shape-identity confidence, or provenance/fallback-path ratio?
 - Do we want region truth annotations inside `docs/real-images/suite.json`, or
   in per-case sidecar files to keep the suite compact?
 - What is the minimum visible artifact that convinces us a region is truly

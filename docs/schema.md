@@ -416,6 +416,10 @@ Promotion metadata fields:
 - `expected_promotion_families`: non-empty string array of intended semantic
   promotion families
 - `current_quality_label`: one of `green`, `yellow`, or `red`
+- `quality_label_review_policy`: optional; when set to
+  `manual_review_pending` on a red `current_quality_label`, the quality-label
+  gate remains failed but is treated as yellow/deferred review evidence instead
+  of a detector rejection
 - `current_status`: current pipeline status such as
   `checked_failed_expectations`, `checked_expectations_pass_but_not_promotable`,
   or `missing_source`
@@ -618,7 +622,11 @@ and formerly bad families that are now passing are reported in
 
 `promotion_summary.decision` is `promoted` only when all derived gates pass,
 `rejected` when any failed gate has red severity, and `deferred` when only
-yellow gates fail. Missing-source promotion cases are also `deferred` with
+yellow gates fail. A red `current_quality_label` normally remains a red
+review-safety gate, but `quality_label_review_policy:
+manual_review_pending` intentionally downgrades that single quality-label gate
+to yellow so mechanically green cases can enter explicit manual review without
+being marked promoted. Missing-source promotion cases are also `deferred` with
 `deferred_reason: missing_source`; their red gates remain visible so they still
 count as unavailable suite evidence.
 

@@ -149,7 +149,8 @@ Secondary anchors:
   - organic fallback node-budget capping reduces generated-illustration
     parameter debt to `parameter_economy=0.268145`, above the 0.25 review
     threshold.
-  - v10 promotion still fails only on the current red quality label; editability
+  - the opt-in quality-label review policy now treats the remaining red quality
+    label as `manual_review_pending`, so promotion is deferred and editability
     review has no failed components for this case.
   - white line gaps in hair/clothing need curved cut-out detection, not only
     horizontal/vertical gaps.

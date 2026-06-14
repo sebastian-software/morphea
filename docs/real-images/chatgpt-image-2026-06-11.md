@@ -68,8 +68,9 @@ Result:
   no longer block review.
 - Organic fallback node-budget capping reduces generated-illustration
   parameter debt above the 0.25 review threshold.
-- v10 promotion remains red only because the current quality label is still
-  red; editability review has no failed components for this case.
+- The opt-in quality-label review policy now treats the remaining red quality
+  label as `manual_review_pending`, so promotion is deferred and editability
+  review has no failed components for this case.
 
 ## Expected Semantic Anchors
 
