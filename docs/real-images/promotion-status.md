@@ -297,6 +297,12 @@ current components explain the existing aggregate score without changing gate
 decisions: `simple_shape_ratio`, `fragmentation_penalty`, `diagnostic_penalty`,
 `generic_path_penalty`, `unclipped_score`, and `clipped_score`.
 
+Current machine-readable evidence: `editability_review_audit` now checks the
+RIP4 contract directly. In checked runs with `--output-dir`, it requires
+independent v10 component scores, threshold records, regression-delta records,
+accepted-output contract checks, editability sidecars, manifest annotations, and
+gate-blocked component visibility for red semantic gates.
+
 The second RIP4 slice adds `editability_v10_components`, a review-level block
 with independent scores for shape identity, parameter economy, node economy,
 stroke width stability, line/curve smoothness, topology consistency, grouping,

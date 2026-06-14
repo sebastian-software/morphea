@@ -1145,6 +1145,10 @@ Implemented so far:
   failed-gate visibility, review-decision records, review artifact links,
   promoted/fallback SVG exports, promotion-export partitions, and manifest
   promotion annotations.
+- curated reports include `editability_review_audit`, a machine-readable RIP4
+  review block for independent v10 component scores, threshold records,
+  red-semantic-gate blocking visibility, regression-delta records,
+  accepted-output contracts, editability sidecars, and manifest annotations.
 - curated reports and deterministic snapshots include
   `pipeline_quality_label`, so current green/yellow/red pipeline state can be
   consumed without parsing Markdown.

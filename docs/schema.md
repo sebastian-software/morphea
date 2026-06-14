@@ -741,6 +741,18 @@ also writes an `output_dir`, the artifact checks require the referenced files to
 exist and the JSON export/manifest records to expose rejected, deferred,
 fallback, and promoted candidate partitions.
 
+Curated reports also include top-level `editability_review_audit` for the RIP4
+editability-review contract. The audit records `schema_version`, `ok`,
+suite-level `checks`, aggregate coverage counts, decision counts,
+regression-status counts, failed/gate-blocked component counts, and one row per
+promotion case. The checks cover accepted-output review records, required v10
+component scores, observed optional component records, threshold records,
+red semantic gate blocking visibility, regression-delta records, accepted-output
+contracts, editability-review sidecars, and editability annotations in manifests.
+When `curated-check --run` also writes an `output_dir`, the sidecar/manifest
+checks require the referenced Markdown and JSON files to exist and expose the
+same threshold and component evidence.
+
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 

@@ -374,6 +374,13 @@ Exit criteria:
 - score regressions can be compared across snapshots;
 - accepted outputs produce better human-editable SVG, not just lower error.
 
+Current implementation evidence: `curated-check` reports top-level
+`editability_review_audit` for RIP4 coverage. The audit requires independent v10
+component scores, required/observed threshold records, explicit regression-delta
+records, accepted-output contract checks, editability sidecars, manifest
+annotations, and gate-blocked component visibility for red semantic gates so a
+high aggregate score cannot hide a failed shape/topology contract.
+
 ### RIP5: MLX/SAM Segmentation Track
 
 Purpose: use local model segmentation only where it improves promotion

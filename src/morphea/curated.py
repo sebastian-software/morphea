@@ -164,6 +164,17 @@ EDITABILITY_REVIEW_OBSERVED_THRESHOLDS = {
     "classifier_prior_agreement": 0.75,
 }
 EDITABILITY_REVIEW_MAX_COMPONENT_REGRESSION = 0.05
+EDITABILITY_REVIEW_DECISIONS = {"accepted", "manual_review", "rejected"}
+EDITABILITY_REVIEW_REGRESSION_STATUSES = {
+    "not_configured",
+    "passed",
+    "failed",
+    "missing_baseline_case",
+    "missing_baseline_scores",
+    "missing_comparable_scores",
+}
+
+
 def load_curated_suite(path: str | Path) -> dict[str, Any]:
     """Load and lightly validate a curated real-image suite file."""
 
@@ -247,6 +258,11 @@ def check_curated_suite(
         cases,
         export_artifacts_required=run and suite_output_dir is not None,
     )
+    editability_review_audit = _curated_editability_review_audit(
+        suite["cases"],
+        cases,
+        artifact_required=run and suite_output_dir is not None,
+    )
     report = {
         "suite": str(suite_file),
         "version": suite["version"],
@@ -257,6 +273,7 @@ def check_curated_suite(
         "corpus_audit": corpus_audit,
         "quality_gate_audit": quality_gate_audit,
         "promotion_pipeline_audit": promotion_pipeline_audit,
+        "editability_review_audit": editability_review_audit,
         "cases": cases,
     }
     if suite_output_dir is not None:
@@ -477,6 +494,56 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                     f"`{str(item.get('ok', False)).lower()}` | "
                     f"`{item.get('decision', 'n/a')}` | "
                     f"{_fmt_markdown_value(item.get('region_count'))} | "
+                    f"{_fmt_markdown_list(item.get('missing'))} |"
+                )
+    else:
+        lines.extend(["- Status: `not_available`", ""])
+    lines.extend(
+        [
+            "",
+            "## RIP4 Editability Review Audit",
+            "",
+        ]
+    )
+    editability_audit = report.get("editability_review_audit")
+    if isinstance(editability_audit, dict):
+        summary = editability_audit.get("summary", {})
+        summary = summary if isinstance(summary, dict) else {}
+        editability_status = "pass" if editability_audit.get("ok", False) else "fail"
+        lines.extend(
+            [
+                f"- Status: `{editability_status}`",
+                f"- Covered checks: {_fmt_markdown_value(summary.get('covered_check_count'))} / {_fmt_markdown_value(summary.get('required_check_count'))}",
+                f"- Missing checks: {_fmt_markdown_list(summary.get('missing_checks'))}",
+                f"- Promotion cases: {_fmt_markdown_value(summary.get('promotion_case_count'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        checks = editability_audit.get("checks", {})
+        if isinstance(checks, dict):
+            for name, covered in sorted(checks.items()):
+                lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+        lines.extend(
+            [
+                "",
+                "| Case | Ready | Decision | Failed components | Gate-blocked | Missing |",
+                "| --- | --- | --- | ---: | ---: | --- |",
+            ]
+        )
+        audit_cases = editability_audit.get("cases", [])
+        if isinstance(audit_cases, list):
+            for item in audit_cases:
+                if not isinstance(item, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{item.get('id', 'n/a')}` | "
+                    f"`{str(item.get('ok', False)).lower()}` | "
+                    f"`{item.get('decision', 'n/a')}` | "
+                    f"{_fmt_markdown_value(item.get('failed_component_count'))} | "
+                    f"{_fmt_markdown_value(item.get('gate_blocked_component_count'))} | "
                     f"{_fmt_markdown_list(item.get('missing'))} |"
                 )
     else:
@@ -722,6 +789,7 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
         "corpus_audit": report.get("corpus_audit"),
         "quality_gate_audit": report.get("quality_gate_audit"),
         "promotion_pipeline_audit": report.get("promotion_pipeline_audit"),
+        "editability_review_audit": report.get("editability_review_audit"),
         "cases": [
             _case_snapshot(case)
             for case in sorted(
@@ -1541,6 +1609,378 @@ def _artifact_path(artifacts: dict[str, Any], key: str) -> Path | None:
     if not isinstance(value, str) or not value:
         return None
     return Path(value).expanduser()
+
+
+def _curated_editability_review_audit(
+    suite_cases: list[dict[str, Any]],
+    report_cases: list[dict[str, Any]],
+    *,
+    artifact_required: bool,
+) -> dict[str, Any]:
+    report_by_id = {
+        str(case.get("id")): case
+        for case in report_cases
+        if isinstance(case, dict) and isinstance(case.get("id"), str)
+    }
+    audited_cases = [
+        _curated_editability_review_case_audit(
+            report_by_id.get(str(case.get("id")), {}),
+            artifact_required=artifact_required,
+        )
+        for case in suite_cases
+        if isinstance(case, dict) and isinstance(case.get("promotion"), dict)
+    ]
+    checks = {
+        "case_editability_coverage": all(case["ok"] for case in audited_cases),
+        "editability_review_records": all(
+            _bool_case_check(case, "editability_review_record")
+            for case in audited_cases
+        ),
+        "required_component_scores": all(
+            _bool_case_check(case, "required_component_scores")
+            for case in audited_cases
+        ),
+        "observed_component_records": all(
+            _bool_case_check(case, "observed_component_records")
+            for case in audited_cases
+        ),
+        "threshold_records": all(
+            _bool_case_check(case, "threshold_records")
+            for case in audited_cases
+        ),
+        "gate_blocked_component_visibility": all(
+            _bool_case_check(case, "gate_blocked_component_visibility")
+            for case in audited_cases
+        ),
+        "regression_delta_records": all(
+            _bool_case_check(case, "regression_delta_records")
+            for case in audited_cases
+        ),
+        "accepted_output_contracts": all(
+            _bool_case_check(case, "accepted_output_contract")
+            for case in audited_cases
+        ),
+        "editability_sidecars": all(
+            _bool_case_check(case, "editability_sidecar")
+            for case in audited_cases
+        ),
+        "manifest_editability_annotations": all(
+            _bool_case_check(case, "manifest_editability_annotations")
+            for case in audited_cases
+        ),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "promotion_case_count": len(audited_cases),
+            "ready_case_count": sum(1 for case in audited_cases if case["ok"]),
+            "incomplete_case_count": sum(
+                1 for case in audited_cases if not case["ok"]
+            ),
+            "artifact_required": artifact_required,
+            "decision_counts": _counts(
+                case["decision"]
+                for case in audited_cases
+                if isinstance(case.get("decision"), str)
+            ),
+            "regression_delta_status_counts": _counts(
+                case["regression_delta_status"]
+                for case in audited_cases
+                if isinstance(case.get("regression_delta_status"), str)
+            ),
+            "failed_component_count": sum(
+                int(case.get("failed_component_count", 0))
+                for case in audited_cases
+            ),
+            "gate_blocked_component_count": sum(
+                int(case.get("gate_blocked_component_count", 0))
+                for case in audited_cases
+            ),
+            "required_component_ids": sorted(EDITABILITY_REVIEW_THRESHOLDS),
+            "observed_component_ids": sorted(EDITABILITY_REVIEW_OBSERVED_THRESHOLDS),
+        },
+        "cases": audited_cases,
+    }
+
+
+def _curated_editability_review_case_audit(
+    report_case: dict[str, Any],
+    *,
+    artifact_required: bool,
+) -> dict[str, Any]:
+    review = _case_editability_review(report_case)
+    components = _case_editability_components(report_case)
+    artifact_needed = artifact_required and report_case.get("status") == "checked"
+    checks = {
+        "editability_review_record": _case_has_editability_review_record(report_case),
+        "required_component_scores": _case_has_required_component_scores(report_case),
+        "observed_component_records": _case_has_observed_component_records(report_case),
+        "threshold_records": _case_has_editability_threshold_records(report_case),
+        "gate_blocked_component_visibility": (
+            _case_has_gate_blocked_component_visibility(report_case)
+        ),
+        "regression_delta_records": _case_has_regression_delta_records(report_case),
+        "accepted_output_contract": _case_has_accepted_output_contract(report_case),
+        "editability_sidecar": _case_has_editability_sidecar(
+            report_case,
+            required=artifact_needed,
+        ),
+        "manifest_editability_annotations": (
+            _case_has_manifest_editability_annotations(
+                report_case,
+                required=artifact_needed,
+            )
+        ),
+    }
+    missing = [name for name, passed in checks.items() if not passed]
+    return {
+        "id": str(report_case.get("id", "n/a")),
+        "ok": not missing,
+        "missing": missing,
+        "checks": checks,
+        "status": report_case.get("status", "unknown"),
+        "decision": review.get("decision", "n/a"),
+        "accepted": bool(review.get("accepted", False)),
+        "promotion_decision": review.get("promotion_decision", "n/a"),
+        "component_count": len(components),
+        "required_component_count": sum(
+            1 for key in EDITABILITY_REVIEW_THRESHOLDS if key in components
+        ),
+        "observed_component_count": sum(
+            1 for key in EDITABILITY_REVIEW_OBSERVED_THRESHOLDS if key in components
+        ),
+        "failed_component_count": len(
+            _failed_component_ids(review.get("failed_components"))
+        ),
+        "gate_blocked_component_count": len(
+            _failed_component_ids(review.get("gate_blocked_components"))
+        ),
+        "regression_delta_status": review.get("regression_delta_status", "n/a"),
+        "artifact_required": artifact_needed,
+    }
+
+
+def _case_editability_review(report_case: dict[str, Any]) -> dict[str, Any]:
+    review = report_case.get("editability_review")
+    return review if isinstance(review, dict) else {}
+
+
+def _case_editability_components(report_case: dict[str, Any]) -> dict[str, Any]:
+    metrics = report_case.get("metrics")
+    if not isinstance(metrics, dict):
+        return {}
+    components = metrics.get("editability_v10_components")
+    if not isinstance(components, dict):
+        return {}
+    return {
+        str(component_id): component
+        for component_id, component in components.items()
+        if isinstance(component, dict)
+    }
+
+
+def _case_has_editability_review_record(report_case: dict[str, Any]) -> bool:
+    review = _case_editability_review(report_case)
+    return (
+        review.get("decision") in EDITABILITY_REVIEW_DECISIONS
+        and isinstance(review.get("accepted"), bool)
+        and review.get("promotion_decision") in PROMOTION_PIPELINE_DECISIONS
+        and isinstance(review.get("component_scores"), dict)
+        and isinstance(review.get("failed_components"), list)
+        and isinstance(review.get("gate_blocked_components"), list)
+        and isinstance(review.get("reasons"), list)
+    )
+
+
+def _case_has_required_component_scores(report_case: dict[str, Any]) -> bool:
+    review = _case_editability_review(report_case)
+    component_scores = review.get("component_scores")
+    if not isinstance(component_scores, dict):
+        return False
+    components = _case_editability_components(report_case)
+    for component_id in EDITABILITY_REVIEW_THRESHOLDS:
+        component = components.get(component_id)
+        if not isinstance(component, dict):
+            return False
+        if not isinstance(component.get("score"), (int, float)):
+            return False
+        if not isinstance(component_scores.get(component_id), (int, float)):
+            return False
+    return True
+
+
+def _case_has_observed_component_records(report_case: dict[str, Any]) -> bool:
+    components = _case_editability_components(report_case)
+    for component_id in EDITABILITY_REVIEW_OBSERVED_THRESHOLDS:
+        component = components.get(component_id)
+        if not isinstance(component, dict):
+            return False
+        if not isinstance(component.get("score"), (int, float)):
+            return False
+        if not isinstance(component.get("observed"), bool):
+            return False
+    return True
+
+
+def _case_has_editability_threshold_records(report_case: dict[str, Any]) -> bool:
+    review = _case_editability_review(report_case)
+    thresholds = review.get("thresholds")
+    if not isinstance(thresholds, dict):
+        return False
+    return thresholds.get("required") == dict(
+        sorted(EDITABILITY_REVIEW_THRESHOLDS.items())
+    ) and thresholds.get("observed") == dict(
+        sorted(EDITABILITY_REVIEW_OBSERVED_THRESHOLDS.items())
+    )
+
+
+def _case_has_gate_blocked_component_visibility(report_case: dict[str, Any]) -> bool:
+    expected = _semantic_gate_blocked_components(report_case)
+    if not expected:
+        return True
+    review = _case_editability_review(report_case)
+    components = _case_editability_components(report_case)
+    review_gate_blocked = review.get("gate_blocked_components")
+    if not isinstance(review_gate_blocked, list):
+        return False
+    review_by_id = {
+        str(component.get("id")): component
+        for component in review_gate_blocked
+        if isinstance(component, dict) and isinstance(component.get("id"), str)
+    }
+    for component_id, failed_gate_ids in expected.items():
+        component = components.get(component_id)
+        if not isinstance(component, dict):
+            return False
+        if component.get("gate_blocked") is not True:
+            return False
+        if component.get("score") != 0.0:
+            return False
+        component_failed = component.get("failed_gates")
+        if not isinstance(component_failed, list):
+            return False
+        if any(gate_id not in component_failed for gate_id in failed_gate_ids):
+            return False
+        review_component = review_by_id.get(component_id)
+        if not isinstance(review_component, dict):
+            return False
+        review_failed = review_component.get("failed_gates")
+        if not isinstance(review_failed, list):
+            return False
+        if any(gate_id not in review_failed for gate_id in failed_gate_ids):
+            return False
+    return True
+
+
+def _semantic_gate_blocked_components(
+    report_case: dict[str, Any],
+) -> dict[str, list[str]]:
+    gate_mapping = {
+        "shape_class": "shape_identity_confidence",
+        "topology": "topology_consistency",
+        "grouping": "grouping_quality",
+        "fragmentation": "fragmentation",
+        "visual_fidelity": "raster_fidelity",
+        "provenance": "provenance_confidence",
+    }
+    gates = report_case.get("promotion_gates")
+    if not isinstance(gates, list):
+        return {}
+    blocked: dict[str, list[str]] = {}
+    for gate in gates:
+        if not isinstance(gate, dict):
+            continue
+        if gate.get("ok", False) or gate.get("severity") != "red":
+            continue
+        component_id = gate_mapping.get(str(gate.get("gate_type", "")))
+        gate_id = gate.get("id")
+        if component_id is None or not isinstance(gate_id, str):
+            continue
+        blocked.setdefault(component_id, []).append(gate_id)
+    return {key: sorted(value) for key, value in blocked.items()}
+
+
+def _case_has_regression_delta_records(report_case: dict[str, Any]) -> bool:
+    review = _case_editability_review(report_case)
+    status = review.get("regression_delta_status")
+    if status not in EDITABILITY_REVIEW_REGRESSION_STATUSES:
+        return False
+    deltas = review.get("regression_deltas")
+    regressed = review.get("regressed_components")
+    if not isinstance(deltas, list) or not isinstance(regressed, list):
+        return False
+    if status == "failed" and not regressed:
+        return False
+    return True
+
+
+def _case_has_accepted_output_contract(report_case: dict[str, Any]) -> bool:
+    review = _case_editability_review(report_case)
+    accepted = bool(review.get("accepted", False))
+    decision = review.get("decision")
+    promotion_decision = review.get("promotion_decision")
+    failed_components = review.get("failed_components")
+    gate_blocked = review.get("gate_blocked_components")
+    regression_status = review.get("regression_delta_status")
+    failure_present = bool(failed_components) or bool(gate_blocked)
+    regression_ok = regression_status in {"not_configured", "passed"}
+    should_accept = (
+        promotion_decision == "promoted"
+        and not failure_present
+        and regression_ok
+    )
+    if should_accept:
+        return decision == "accepted" and accepted
+    return decision in {"manual_review", "rejected"} and not accepted
+
+
+def _case_has_editability_sidecar(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    artifacts = report_case.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return False
+    path = _artifact_path(artifacts, "editability_review")
+    if path is None or not path.exists():
+        return False
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return "## Required Thresholds" in text and "## Gate-Blocked Components" in text
+
+
+def _case_has_manifest_editability_annotations(
+    report_case: dict[str, Any],
+    *,
+    required: bool,
+) -> bool:
+    if not required:
+        return True
+    manifest = _case_artifact_json(report_case, "manifest")
+    if not isinstance(manifest, dict):
+        return False
+    if not isinstance(manifest.get("editability_review"), dict):
+        return False
+    metrics = manifest.get("metrics")
+    if not isinstance(metrics, dict):
+        return False
+    components = metrics.get("editability_v10_components")
+    if not isinstance(components, dict):
+        return False
+    required_ids = set(EDITABILITY_REVIEW_THRESHOLDS)
+    observed_ids = set(EDITABILITY_REVIEW_OBSERVED_THRESHOLDS)
+    return required_ids.issubset(components) and observed_ids.issubset(components)
 
 
 def _curated_case_family(case: dict[str, Any]) -> str:

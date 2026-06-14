@@ -9,6 +9,9 @@ from PIL import Image, ImageDraw
 
 from morphea.cli import main
 from morphea.curated import (
+    EDITABILITY_REVIEW_OBSERVED_THRESHOLDS,
+    EDITABILITY_REVIEW_THRESHOLDS,
+    _curated_editability_review_audit,
     _curated_promotion_pipeline_audit,
     _promotion_region_results,
     _region_topology_failures,
@@ -342,6 +345,28 @@ class CuratedSuiteTests(unittest.TestCase):
                 pipeline_audit["cases"][0]["missing"],
                 [],
             )
+            editability_audit = report["editability_review_audit"]
+            self.assertTrue(editability_audit["ok"])
+            self.assertEqual(
+                editability_audit["summary"]["missing_checks"],
+                [],
+            )
+            self.assertEqual(
+                editability_audit["summary"]["covered_check_count"],
+                10,
+            )
+            self.assertEqual(
+                editability_audit["summary"]["decision_counts"],
+                {"accepted": 1},
+            )
+            self.assertEqual(
+                editability_audit["summary"]["regression_delta_status_counts"],
+                {"not_configured": 1},
+            )
+            self.assertEqual(
+                editability_audit["cases"][0]["missing"],
+                [],
+            )
             self.assertIn("review_gallery", report["artifacts"])
             self.assertIn("raster_l1_error", report["cases"][0]["metrics"])
             self.assertIn("raster_edge_error", report["cases"][0]["metrics"])
@@ -450,6 +475,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "promoted",
             )
             self.assertTrue(snapshot_report["promotion_pipeline_audit"]["ok"])
+            self.assertTrue(snapshot_report["editability_review_audit"]["ok"])
             self.assertEqual(
                 snapshot_report["cases"][0]["editability_review"]["decision"],
                 "accepted",
@@ -1224,6 +1250,8 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertIn("- Status: `not_available`", markdown)
         self.assertIn("## RIP3 Promotion Pipeline Audit", markdown)
         self.assertIn("- Status: `not_available`", markdown)
+        self.assertIn("## RIP4 Editability Review Audit", markdown)
+        self.assertIn("- Status: `not_available`", markdown)
         self.assertIn("## Corpus Ledger", markdown)
         self.assertIn(
             "| `simple-circle` | `red` | `red` | `checked` | `test_fixture` | "
@@ -1585,6 +1613,88 @@ class CuratedSuiteTests(unittest.TestCase):
                 "promotion_export_partition",
                 "manifest_region_annotations",
             ],
+        )
+
+    def test_curated_editability_review_audit_marks_hidden_red_semantic_gate(self):
+        component_scores = {
+            component_id: 1.0
+            for component_id in (
+                *EDITABILITY_REVIEW_THRESHOLDS,
+                *EDITABILITY_REVIEW_OBSERVED_THRESHOLDS,
+            )
+        }
+        components = {
+            component_id: {"score": 1.0}
+            for component_id in EDITABILITY_REVIEW_THRESHOLDS
+        }
+        components.update(
+            {
+                component_id: {"score": 1.0, "observed": False}
+                for component_id in EDITABILITY_REVIEW_OBSERVED_THRESHOLDS
+            }
+        )
+        suite_case = {
+            "id": "simple-circle",
+            "promotion": _promotion_metadata("green"),
+        }
+        report_case = {
+            "id": "simple-circle",
+            "status": "checked",
+            "promotion_summary": {
+                "decision": "rejected",
+                "failed_gate_count": 1,
+                "red_gate_count": 1,
+                "yellow_gate_count": 0,
+            },
+            "promotion_gates": [
+                {
+                    "id": "circle-shape-class",
+                    "gate_type": "shape_class",
+                    "ok": False,
+                    "severity": "red",
+                    "reason": "failed expectations: circle-anchor",
+                }
+            ],
+            "metrics": {
+                "editability_v10_components": components,
+            },
+            "editability_review": {
+                "decision": "rejected",
+                "accepted": False,
+                "promotion_decision": "rejected",
+                "thresholds": {
+                    "required": dict(sorted(EDITABILITY_REVIEW_THRESHOLDS.items())),
+                    "observed": dict(
+                        sorted(EDITABILITY_REVIEW_OBSERVED_THRESHOLDS.items())
+                    ),
+                },
+                "component_scores": component_scores,
+                "failed_components": [],
+                "gate_blocked_components": [],
+                "regression_delta_status": "not_configured",
+                "regression_deltas": [],
+                "regressed_components": [],
+                "reasons": ["promotion_decision_rejected"],
+            },
+        }
+
+        audit = _curated_editability_review_audit(
+            [suite_case],
+            [report_case],
+            artifact_required=False,
+        )
+
+        self.assertFalse(audit["ok"])
+        self.assertEqual(
+            audit["summary"]["missing_checks"],
+            [
+                "case_editability_coverage",
+                "gate_blocked_component_visibility",
+            ],
+        )
+        self.assertEqual(
+            audit["cases"][0]["missing"],
+            ["gate_blocked_component_visibility"],
         )
 
     def test_check_curated_suite_applies_config_overrides(self):
