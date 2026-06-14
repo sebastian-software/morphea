@@ -863,6 +863,9 @@ Implemented so far:
   retrained model against the curated Lucide benchmark with the same
   `classifier_model` override and reports the result beside primitive and
   real-image families
+- `morphea lucide-check --markdown report.md` writes a Quality Ledger that
+  separates semantic pass/fail from visual-review labels and keeps named yellow
+  Lucide calibration cases visible
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle

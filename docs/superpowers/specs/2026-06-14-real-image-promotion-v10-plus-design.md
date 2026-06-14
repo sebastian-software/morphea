@@ -22,6 +22,9 @@ Known evidence:
   passes, zero missing sources.
 - The Lucide benchmark is green under current semantic contracts: 24 checked
   cases, zero failed cases.
+- The Lucide report still carries visual-review labels: `lucide-check
+  --markdown` names five yellow calibration cases even while the semantic suite
+  remains 24/24.
 - Suite-family baseline debt is empty after the opaque generated-illustration
   fixture refresh.
 - All three current real-image cases are still v10 red because promotion gates,

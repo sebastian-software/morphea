@@ -105,6 +105,8 @@ class LucideQualityTests(unittest.TestCase):
             self.assertTrue(result["ok"])
             self.assertEqual(result["case_count"], 1)
             self.assertEqual(result["family_summary"]["simple_stroke_glyphs"]["passed_count"], 1)
+            self.assertEqual(result["quality_summary"]["green"], 1)
+            self.assertEqual(result["cases"][0]["quality_label"], "green")
             self.assertEqual(
                 result["cases"][0]["anchor_kind_counts"]["stroke_polyline"],
                 1,
@@ -119,6 +121,40 @@ class LucideQualityTests(unittest.TestCase):
             self.assertIn("svg_raster_l1_error", manifest["metrics"])
             self.assertIn("# Morphea Lucide Check", markdown.read_text())
             self.assertEqual(json.loads(output.read_text())["passed_count"], 1)
+
+    def test_lucide_quality_labels_require_review_notes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "render": {"size": 64},
+                        "cases": [
+                            {
+                                "id": "loose-icon",
+                                "family": "simple_stroke_glyphs",
+                                "source": "loose.svg",
+                                "quality_label": "yellow",
+                                "expectations": [
+                                    {
+                                        "id": "one-stroke",
+                                        "kind": "stroke_polyline",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "quality_label yellow requires review_notes",
+            ):
+                load_lucide_suite(suite)
 
     def test_lucide_cli_exits_nonzero_when_contract_fails(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -348,6 +384,8 @@ class LucideQualityTests(unittest.TestCase):
                         "family": "simple_stroke_glyphs",
                         "status": "checked",
                         "ok": False,
+                        "quality_label": "red",
+                        "review_notes": ["generic fallback path remains"],
                         "anchor_kind_counts": {"cubic_path": 1},
                         "metrics": {
                             "generic_path_count": 1,
@@ -372,6 +410,13 @@ class LucideQualityTests(unittest.TestCase):
         )
 
         self.assertIn("# Morphea Lucide Check", markdown)
+        self.assertIn("## Quality Ledger", markdown)
+        self.assertIn("- Red cases: `plus`", markdown)
+        self.assertIn(
+            "| `plus` | `simple_stroke_glyphs` | `red` | `false` | "
+            "`generic fallback path remains` |",
+            markdown,
+        )
         self.assertIn("| `plus` | `simple_stroke_glyphs` | `false` |", markdown)
         self.assertIn("`no-fallback-path`", markdown)
         self.assertIn(

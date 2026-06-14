@@ -415,6 +415,12 @@ Lucide suite `kind` expectations may also include `bounds` as
 source region. This keeps compound icons from satisfying unrelated expectations
 with the same global anchor kind; failed expectation rows report
 `failure_reason` plus shortfall/excess fields such as `missing_count`.
+Lucide suite cases may also carry optional visual-review metadata:
+`quality_label` (`green`, `yellow`, or `red`) and `review_notes`. Yellow or red
+labels require at least one review note. `morphea lucide-check` copies those
+fields into case reports, derives `quality_summary`, and the Markdown report
+writes a Quality Ledger that names yellow/red cases separately from semantic
+pass/fail status.
 
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates

@@ -82,6 +82,10 @@
       "id": "arrow-left-right",
       "family": "simple_stroke_glyphs",
       "source": "icons/arrow-left-right.svg",
+      "quality_label": "yellow",
+      "review_notes": [
+        "Passes current stroke expectations, but arrowhead and shaft geometry remains loose enough to require review before promotion-style claims."
+      ],
       "expectations": [
         {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
         {"id": "editable-strokes", "kind": "stroke_path", "min_count": 2},
@@ -145,6 +149,10 @@
       "id": "alarm-clock",
       "family": "circle_compound_strokes",
       "source": "icons/alarm-clock.svg",
+      "quality_label": "yellow",
+      "review_notes": [
+        "Passes current circle and stroke counts, but the compound bell and hand structure remains review-only calibration evidence."
+      ],
       "expectations": [
         {"id": "clock-circle", "kind": "stroke_circle", "min_count": 1},
         {"id": "clock-strokes", "kind": "stroke_polyline", "min_count": 4},
@@ -156,6 +164,10 @@
       "id": "badge-check",
       "family": "circle_compound_strokes",
       "source": "icons/badge-check.svg",
+      "quality_label": "green",
+      "review_notes": [
+        "Prior circle-substitute false positive is resolved by matching the scalloped badge outline as a bounded irregular stroke_path."
+      ],
       "expectations": [
         {
           "id": "editable-badge-outline",
@@ -190,6 +202,10 @@
       "id": "share-2",
       "family": "circle_compound_strokes",
       "source": "icons/share-2.svg",
+      "quality_label": "yellow",
+      "review_notes": [
+        "Passes node-circle and connector expectations, but compound graph layout remains visibly loose enough for review."
+      ],
       "expectations": [
         {"id": "node-circles", "kind": "stroke_circle", "min_count": 3},
         {"id": "connector-strokes", "kind": "stroke_polyline", "min_count": 2},
@@ -211,6 +227,10 @@
       "id": "image",
       "family": "stroked_rect_ui_glyphs",
       "source": "icons/image.svg",
+      "quality_label": "yellow",
+      "review_notes": [
+        "Passes current no-fallback and inner-circle checks, but the outer image-frame structure still needs visual review."
+      ],
       "expectations": [
         {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
         {"id": "inner-circle", "kind": "stroke_circle", "min_count": 1},
@@ -262,6 +282,10 @@
       "id": "move",
       "family": "stroked_rect_ui_glyphs",
       "source": "icons/move.svg",
+      "quality_label": "yellow",
+      "review_notes": [
+        "Passes current editable-stroke checks, but the four-way arrow topology remains review-only calibration evidence."
+      ],
       "expectations": [
         {"id": "editable-strokes", "kind": "stroke_path", "min_count": 4},
         {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},

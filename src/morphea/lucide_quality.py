@@ -44,6 +44,7 @@ LUCIDE_VECTORIZE_CONFIG_KEYS = {
     "rect_max_fill_error",
     "rounded_rect_max_fill_error",
 }
+LUCIDE_QUALITY_LABELS = {"green", "yellow", "red"}
 
 
 def load_lucide_suite(path: str | Path) -> dict[str, Any]:
@@ -80,6 +81,21 @@ def load_lucide_suite(path: str | Path) -> dict[str, Any]:
         source = case.get("source")
         if not isinstance(source, str) or not source:
             raise ValueError(f"case {case_id} must have a non-empty source")
+        quality_label = case.get("quality_label")
+        if quality_label is not None and quality_label not in LUCIDE_QUALITY_LABELS:
+            raise ValueError(
+                f"case {case_id} quality_label must be one of: "
+                f"{', '.join(sorted(LUCIDE_QUALITY_LABELS))}"
+            )
+        review_notes = case.get("review_notes", [])
+        if not isinstance(review_notes, list) or not all(
+            isinstance(item, str) and item for item in review_notes
+        ):
+            raise ValueError(f"case {case_id} review_notes must be a string array")
+        if quality_label in {"yellow", "red"} and not review_notes:
+            raise ValueError(
+                f"case {case_id} quality_label {quality_label} requires review_notes"
+            )
         expectations = case.get("expectations", [])
         if not isinstance(expectations, list):
             raise ValueError(f"case {case_id} expectations must be an array")
@@ -134,6 +150,7 @@ def check_lucide_suite(
         "failed_count": sum(1 for case in cases if not case.get("ok")),
         "ok": all(case["ok"] for case in cases),
         "family_summary": _family_summary(cases),
+        "quality_summary": _quality_summary(cases),
         "anchor_kind_counts": _aggregate_counts(
             case.get("anchor_kind_counts", {}) for case in cases
         ),
@@ -185,6 +202,28 @@ def render_lucide_markdown(report: dict[str, Any]) -> str:
                 f"{_fmt_value(summary.get('passed_count'))} | "
                 f"{_fmt_value(summary.get('failed_count'))} |"
             )
+
+    lines.extend(
+        [
+            "",
+            "## Quality Ledger",
+            "",
+            f"- Yellow cases: {_fmt_case_ids(_case_ids_for_label(cases, 'yellow'))}",
+            f"- Red cases: {_fmt_case_ids(_case_ids_for_label(cases, 'red'))}",
+            "",
+            "| Case | Family | Quality | OK | Review notes |",
+            "| --- | --- | --- | ---: | --- |",
+        ]
+    )
+    for case in cases:
+        lines.append(
+            "| "
+            f"`{case.get('id', 'n/a')}` | "
+            f"`{case.get('family', 'n/a')}` | "
+            f"`{case.get('quality_label', 'n/a')}` | "
+            f"`{str(case.get('ok', False)).lower()}` | "
+            f"{_fmt_markdown_list(case.get('review_notes'))} |"
+        )
 
     lines.extend(
         [
@@ -289,6 +328,8 @@ def _check_lucide_case(
         "source_exists": source.exists(),
         "status": "not_run",
         "ok": False,
+        "quality_label": _lucide_quality_label(case, ok=False),
+        "review_notes": _lucide_review_notes(case),
         "expectations": [],
     }
     if not source.exists():
@@ -343,6 +384,10 @@ def _check_lucide_case(
         {
             "status": "checked",
             "ok": all(item["ok"] for item in expectation_results),
+            "quality_label": _lucide_quality_label(
+                case,
+                ok=all(item["ok"] for item in expectation_results),
+            ),
             "config": _json_config(vectorize_config),
             "render": dict(render_config),
             "anchor_count": manifest["anchor_count"],
@@ -765,6 +810,24 @@ def _family_summary(cases: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
     return dict(sorted(summary.items()))
 
 
+def _quality_summary(cases: list[dict[str, Any]]) -> dict[str, int]:
+    return _counts(case.get("quality_label", "unknown") for case in cases)
+
+
+def _lucide_quality_label(case: dict[str, Any], *, ok: bool) -> str:
+    label = case.get("quality_label")
+    if isinstance(label, str) and label:
+        return label
+    return "green" if ok else "red"
+
+
+def _lucide_review_notes(case: dict[str, Any]) -> list[str]:
+    notes = case.get("review_notes", [])
+    if not isinstance(notes, list):
+        return []
+    return [item for item in notes if isinstance(item, str) and item]
+
+
 def _aggregate_counts(items: object) -> dict[str, int]:
     aggregate: dict[str, int] = {}
     for item in items:
@@ -796,6 +859,26 @@ def _fmt_counts(value: object) -> str:
     if not isinstance(value, dict) or not value:
         return "n/a"
     return ", ".join(f"`{key}`={_fmt_value(value[key])}" for key in sorted(value))
+
+
+def _fmt_markdown_list(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "n/a"
+    return ", ".join(f"`{item}`" for item in value)
+
+
+def _case_ids_for_label(cases: list[dict[str, Any]], label: str) -> list[str]:
+    return [
+        str(case.get("id", "n/a"))
+        for case in cases
+        if case.get("quality_label") == label
+    ]
+
+
+def _fmt_case_ids(values: list[str]) -> str:
+    if not values:
+        return "n/a"
+    return ", ".join(f"`{item}`" for item in sorted(values))
 
 
 def _fmt_value(value: object) -> str:

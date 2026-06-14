@@ -53,7 +53,9 @@ aggregate pass still allowed `badge-check` to be visually wrong: a scalloped
 badge was promoted as a round ring. That is a false positive, not a tolerable
 approximation. The current honest Lucide posture is now 24/24 after preserving
 `badge-check` as a closed irregular `stroke_path`, plus several yellow cases
-that are semantically plausible but visibly loose.
+that are semantically plausible but visibly loose. `lucide-check` reports now
+preserve optional `quality_label` and `review_notes` metadata and write a
+Quality Ledger that names the five yellow calibration cases directly.
 
 Future gates must catch this class of error. A benchmark may be useful while
 red. It is harmful when it calls red output green.
@@ -227,7 +229,8 @@ Exit criteria:
 - `docs/milestones.md` links to this roadmap as the forward-looking real-image
   track.
 - Lucide status is documented as 24/24, with the prior `badge-check` false
-  positive resolved and named yellow cases still visible.
+  positive resolved and named yellow cases still visible in generated
+  `lucide-check --markdown` reports.
 - Real-image suite status is summarized with green/yellow/red labels.
 - Existing snapshot and run artifact commands remain documented.
 - No document claims that aggregate pass/fail equals visual quality.
