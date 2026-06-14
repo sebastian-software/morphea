@@ -638,7 +638,12 @@ directory includes the standard vectorize artifacts plus:
 - `promotion-export.json`: promoted/fallback anchor-index partition,
   fallback-only/rejected/deferred anchor-index partitions, anchor-state counts,
   region-state counts, region state records, promotion-gate records, and
-  promoted/fallback SVG paths
+  promoted/fallback SVG paths. It also carries `promotion_export_audit`, a RIP9
+  trust-boundary contract that checks promoted/fallback partition coverage,
+  trusted SVG exclusion of non-promoted anchors, fallback SVG containment of
+  non-promoted anchors, stable SVG metadata wrappers, rejected/deferred
+  visibility, structured missing-from-promoted records, region reason records,
+  and summary-count consistency.
 - `promotion-regions.json`: region-state review data with selected anchor ids,
   selected anchor indexes, gate status, state, and rejection/defer reason
 - `promotion-review.md`: scan-friendly Markdown review of anchor state counts,
@@ -833,6 +838,10 @@ optional `data-promotion-regions`, and applied-review decision metadata when
 the manifest contains `review_decision_applied`. The optional Markdown report
 summarizes promoted/fallback/rejected/deferred anchor and region counts and
 lists fallback, rejected, and deferred items missing from the promoted SVG.
+The JSON output also includes `promotion_export_audit` with `schema_version`,
+`ok`, suite-level `checks`, aggregate coverage counts, missing checks, anchor
+partition counts, and missing-from-promoted record counts. The same audit is
+written by curated `promotion-export.json` sidecars.
 
 `morphea promotion-apply-review review-decision.json -o applied-review.json
 --markdown applied-review.md --manifest manifest.json` consumes an edited

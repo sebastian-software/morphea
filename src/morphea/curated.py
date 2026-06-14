@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw
 
 from morphea.curated_gallery import render_review_gallery_html
 from morphea.images import scene_from_flat_color_image
+from morphea.promotion_export import promotion_export_audit
 from morphea.rendering import raster_fidelity_metrics
 from morphea.review_policy import promotion_quality_label_policy
 from morphea.runs import VectorizeRun, write_vectorize_run
@@ -4622,6 +4623,9 @@ def _write_promotion_export_artifacts(
         },
     }
     export_manifest["missing_from_promoted"] = _promotion_export_missing_records(
+        export_manifest,
+    )
+    export_manifest["promotion_export_audit"] = promotion_export_audit(
         export_manifest,
     )
     promotion_export_path.write_text(

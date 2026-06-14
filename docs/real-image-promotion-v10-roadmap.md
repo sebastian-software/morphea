@@ -752,6 +752,15 @@ Export policy:
   region ids, and reasons, so debug omissions are inspectable without parsing
   Markdown.
 
+Current machine-readable evidence: explicit `promotion-export` runs and curated
+`promotion-export.json` sidecars include `promotion_export_audit`, a RIP9
+contract for trusted SVG export boundaries. The audit checks complete
+promoted/fallback anchor partitioning, trusted SVG exclusion of fallback,
+rejected, and deferred anchors, fallback SVG containment of non-promoted
+anchors, stable SVG metadata wrappers, rejected/deferred visibility,
+missing-from-promoted records, non-promoted region reasons, and summary-count
+consistency.
+
 Exit criteria:
 
 - users can inspect only trusted structure;

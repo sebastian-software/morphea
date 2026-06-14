@@ -243,6 +243,13 @@ class CuratedSuiteTests(unittest.TestCase):
                 promotion_export["export_summary"]["promoted_anchor_count"],
                 1,
             )
+            self.assertTrue(promotion_export["promotion_export_audit"]["ok"])
+            self.assertEqual(
+                promotion_export["promotion_export_audit"]["summary"][
+                    "missing_checks"
+                ],
+                [],
+            )
             promotion_regions = json.loads(
                 (output_dir / "simple-circle" / "promotion-regions.json").read_text(
                     encoding="utf-8"
@@ -996,6 +1003,12 @@ class CuratedSuiteTests(unittest.TestCase):
                         ],
                     }
                 ],
+            )
+            self.assertTrue(promotion_export["promotion_export_audit"]["ok"])
+            self.assertTrue(
+                promotion_export["promotion_export_audit"]["checks"][
+                    "rejected_deferred_visibility"
+                ]
             )
             promoted_svg = (output_dir / "two-circles" / "promoted.svg").read_text(
                 encoding="utf-8"

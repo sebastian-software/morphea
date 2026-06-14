@@ -1160,6 +1160,12 @@ Implemented so far:
   failed-gate visibility, review-decision records, review artifact links,
   promoted/fallback SVG exports, promotion-export partitions, and manifest
   promotion annotations.
+- promotion-export artifacts include `promotion_export_audit`, a
+  machine-readable RIP9 trust-boundary block for complete promoted/fallback
+  partitioning, trusted SVG exclusion of fallback/rejected/deferred anchors,
+  fallback SVG containment of non-promoted anchors, stable metadata wrappers,
+  rejected/deferred visibility, missing-from-promoted records, non-promoted
+  region reasons, and summary-count consistency.
 - curated reports include `editability_review_audit`, a machine-readable RIP4
   review block for independent v10 component scores, threshold records,
   red-semantic-gate blocking visibility, regression-delta records,

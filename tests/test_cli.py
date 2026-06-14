@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 from morphea.cli import main
 from morphea.dataset import generate_synthetic_dataset
 from morphea.classifier import train_centroid_classifier
+from morphea.promotion_export import promotion_export_audit
 
 
 class CliTests(unittest.TestCase):
@@ -179,14 +180,96 @@ class CliTests(unittest.TestCase):
                     "rejected_region_count": 1,
                 },
             )
+            self.assertTrue(result["promotion_export_audit"]["ok"])
+            self.assertEqual(
+                result["promotion_export_audit"]["summary"]["missing_checks"],
+                [],
+            )
+            self.assertTrue(
+                result["promotion_export_audit"]["checks"][
+                    "trusted_svg_partition"
+                ]
+            )
             self.assertEqual(result["regions"][1]["reason"], "failed topology gate")
             report = markdown.read_text(encoding="utf-8")
             self.assertIn("# Morphēa Promotion Export", report)
             self.assertIn("| `promoted` | 1 | 1 |", report)
+            self.assertIn("## RIP9 Promotion Export Audit", report)
+            self.assertIn("| `trusted_svg_partition` | `true` |", report)
             self.assertIn("| `fallback` | `1` | `none` | `n/a` |", report)
             self.assertIn(
                 "| `rejected` | `2` | `failed-region` | failed topology gate |",
                 report,
+            )
+
+    def test_promotion_export_audit_rejects_trusted_svg_leak(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            promoted_svg = root / "promoted.svg"
+            fallback_svg = root / "fallback.svg"
+            promoted_svg.write_text(
+                (
+                    '<svg><g data-morphea-anchor-id="anchor-0000" '
+                    'data-anchor-index="0" data-promotion-state="promoted"></g>'
+                    '<g data-morphea-anchor-id="anchor-0001" '
+                    'data-anchor-index="1" data-promotion-state="rejected"></g></svg>'
+                ),
+                encoding="utf-8",
+            )
+            fallback_svg.write_text(
+                (
+                    '<svg><g data-morphea-anchor-id="anchor-0001" '
+                    'data-anchor-index="1" data-promotion-state="rejected"></g></svg>'
+                ),
+                encoding="utf-8",
+            )
+
+            audit = promotion_export_audit(
+                {
+                    "anchor_count": 2,
+                    "promoted_anchor_indexes": [0],
+                    "fallback_anchor_indexes": [1],
+                    "fallback_only_anchor_indexes": [],
+                    "rejected_anchor_indexes": [1],
+                    "deferred_anchor_indexes": [],
+                    "anchor_state_counts": {"promoted": 1, "rejected": 1},
+                    "export_summary": {
+                        "promoted_anchor_count": 1,
+                        "promoted_region_count": 1,
+                        "fallback_anchor_count": 0,
+                        "fallback_region_count": 0,
+                        "rejected_anchor_count": 1,
+                        "rejected_region_count": 1,
+                        "deferred_anchor_count": 0,
+                        "deferred_region_count": 0,
+                    },
+                    "regions": [
+                        {
+                            "id": "failed-region",
+                            "state": "rejected",
+                            "selected_anchor_indexes": [1],
+                            "reason": "failed topology gate",
+                        }
+                    ],
+                    "missing_from_promoted": [
+                        {
+                            "state": "rejected",
+                            "anchor_indexes": [1],
+                            "anchor_count": 1,
+                            "region_ids": ["failed-region"],
+                            "region_count": 1,
+                            "reasons": ["failed topology gate"],
+                        }
+                    ],
+                    "promoted_svg": str(promoted_svg),
+                    "fallback_svg": str(fallback_svg),
+                }
+            )
+
+            self.assertFalse(audit["ok"])
+            self.assertIn(
+                "trusted_svg_partition",
+                audit["summary"]["missing_checks"],
             )
 
     def test_promotion_apply_review_cli_applies_terminal_decision(self):

@@ -73,6 +73,7 @@ def write_promotion_svg_exports(
         "fallback_svg": str(fallback_path),
     }
     result["missing_from_promoted"] = _promotion_export_missing_records(result)
+    result["promotion_export_audit"] = promotion_export_audit(result)
     if output is not None:
         output_path = Path(output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -111,6 +112,28 @@ def render_promotion_export_markdown(result: dict[str, object]) -> str:
             f"{_fmt_markdown_value(summary.get(f'{state}_anchor_count'))} | "
             f"{_fmt_markdown_value(summary.get(f'{state}_region_count'))} |"
         )
+    audit = _object_dict(result.get("promotion_export_audit"))
+    if audit:
+        audit_summary = _object_dict(audit.get("summary"))
+        lines.extend(
+            [
+                "",
+                "## RIP9 Promotion Export Audit",
+                "",
+                f"- Status: `{'pass' if audit.get('ok', False) else 'fail'}`",
+                (
+                    "- Covered checks: "
+                    f"{_fmt_markdown_value(audit_summary.get('covered_check_count'))} / "
+                    f"{_fmt_markdown_value(audit_summary.get('required_check_count'))}"
+                ),
+                f"- Missing checks: {_format_markdown_code_list(audit_summary.get('missing_checks'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        for name, covered in sorted(_object_dict(audit.get("checks")).items()):
+            lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
 
     lines.extend(
         [
@@ -511,6 +534,22 @@ def _object_dict(value: object) -> dict[str, object]:
     return value if isinstance(value, dict) else {}
 
 
+def _int_value(value: object) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def _path_from_value(value: object) -> Path | None:
+    if isinstance(value, Path):
+        return value
+    if isinstance(value, str) and value:
+        return Path(value)
+    return None
+
+
+def _non_empty_string(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
 def _format_review_values(value: object) -> str:
     items = []
     if isinstance(value, list):
@@ -519,6 +558,13 @@ def _format_review_values(value: object) -> str:
             for item in value
             if isinstance(item, (str, int)) and str(item)
         ]
+    if not items:
+        return "`none`"
+    return ", ".join(f"`{item}`" for item in items)
+
+
+def _format_markdown_code_list(value: object) -> str:
+    items = _string_list(value)
     if not items:
         return "`none`"
     return ", ".join(f"`{item}`" for item in items)
@@ -671,6 +717,247 @@ def _promotion_export_missing_records(
     return records
 
 
+def promotion_export_audit(result: dict[str, object]) -> dict[str, object]:
+    checks = {
+        "promoted_fallback_partition": _export_partition_ok(result),
+        "trusted_svg_partition": _trusted_svg_partition_ok(result),
+        "fallback_svg_partition": _fallback_svg_partition_ok(result),
+        "stable_svg_metadata": _stable_svg_metadata_ok(result),
+        "rejected_deferred_visibility": _rejected_deferred_visibility_ok(result),
+        "missing_from_promoted_records": _missing_from_promoted_records_ok(result),
+        "region_reason_records": _region_reason_records_ok(result),
+        "summary_count_consistency": _summary_count_consistency_ok(result),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for covered in checks.values() if covered),
+            "missing_checks": missing_checks,
+            "anchor_count": _int_value(result.get("anchor_count")),
+            "promoted_anchor_count": len(
+                _int_list(result.get("promoted_anchor_indexes"))
+            ),
+            "fallback_anchor_count": len(
+                _int_list(result.get("fallback_anchor_indexes"))
+            ),
+            "rejected_anchor_count": len(
+                _int_list(result.get("rejected_anchor_indexes"))
+            ),
+            "deferred_anchor_count": len(
+                _int_list(result.get("deferred_anchor_indexes"))
+            ),
+            "missing_from_promoted_count": len(
+                _object_list(result.get("missing_from_promoted"))
+            ),
+        },
+    }
+
+
+def _export_partition_ok(result: dict[str, object]) -> bool:
+    anchor_count = _int_value(result.get("anchor_count"))
+    promoted = _int_list(result.get("promoted_anchor_indexes"))
+    fallback = _int_list(result.get("fallback_anchor_indexes"))
+    if len(set(promoted)) != len(promoted) or len(set(fallback)) != len(fallback):
+        return False
+    if set(promoted).intersection(fallback):
+        return False
+    return sorted(promoted + fallback) == list(range(anchor_count))
+
+
+def _trusted_svg_partition_ok(result: dict[str, object]) -> bool:
+    promoted = _int_list(result.get("promoted_anchor_indexes"))
+    if not _path_exists(result.get("promoted_svg")):
+        return False
+    records = _svg_anchor_metadata_records(result.get("promoted_svg"))
+    if sorted(record["index"] for record in records) != sorted(promoted):
+        return False
+    return all(record.get("state") == "promoted" for record in records)
+
+
+def _fallback_svg_partition_ok(result: dict[str, object]) -> bool:
+    fallback = _int_list(result.get("fallback_anchor_indexes"))
+    if not _path_exists(result.get("fallback_svg")):
+        return False
+    records = _svg_anchor_metadata_records(result.get("fallback_svg"))
+    if sorted(record["index"] for record in records) != sorted(fallback):
+        return False
+    return all(
+        record.get("state") in {"fallback", "rejected", "deferred"}
+        for record in records
+    )
+
+
+def _stable_svg_metadata_ok(result: dict[str, object]) -> bool:
+    if not _path_exists(result.get("promoted_svg")):
+        return False
+    if not _path_exists(result.get("fallback_svg")):
+        return False
+    records = (
+        _svg_anchor_metadata_records(result.get("promoted_svg"))
+        + _svg_anchor_metadata_records(result.get("fallback_svg"))
+    )
+    if sorted(record["index"] for record in records) != list(
+        range(_int_value(result.get("anchor_count")))
+    ):
+        return False
+    return all(
+        record.get("has_anchor_id") is True
+        and record.get("state") in {"promoted", "fallback", "rejected", "deferred"}
+        for record in records
+    )
+
+
+def _rejected_deferred_visibility_ok(result: dict[str, object]) -> bool:
+    fallback = set(_int_list(result.get("fallback_anchor_indexes")))
+    counts = _object_dict(result.get("anchor_state_counts"))
+    missing_by_state = _missing_records_by_state(result)
+    for state, key in (
+        ("rejected", "rejected_anchor_indexes"),
+        ("deferred", "deferred_anchor_indexes"),
+    ):
+        indexes = _int_list(result.get(key))
+        if not indexes:
+            continue
+        if not set(indexes).issubset(fallback):
+            return False
+        if _int_value(counts.get(state)) != len(indexes):
+            return False
+        missing = missing_by_state.get(state)
+        if missing is None or sorted(_int_list(missing.get("anchor_indexes"))) != sorted(
+            indexes
+        ):
+            return False
+    return True
+
+
+def _missing_from_promoted_records_ok(result: dict[str, object]) -> bool:
+    records = _object_list(result.get("missing_from_promoted"))
+    by_state = _missing_records_by_state(result)
+    if len(by_state) != len(records):
+        return False
+    for record in records:
+        if not isinstance(record, dict):
+            return False
+        state = record.get("state")
+        if state not in {"fallback", "rejected", "deferred"}:
+            return False
+        anchors = _int_list(record.get("anchor_indexes"))
+        regions = _string_list(record.get("region_ids"))
+        reasons = _string_list(record.get("reasons"))
+        if record.get("anchor_count") != len(anchors):
+            return False
+        if record.get("region_count") != len(regions):
+            return False
+        if regions and len(reasons) != len(regions):
+            return False
+        expected_anchors = _int_list(result.get(f"{state}_anchor_indexes"))
+        if state == "fallback":
+            expected_anchors = _int_list(result.get("fallback_only_anchor_indexes"))
+        if sorted(anchors) != sorted(expected_anchors):
+            return False
+    for state in ("fallback", "rejected", "deferred"):
+        expected_anchors = _int_list(result.get(f"{state}_anchor_indexes"))
+        if state == "fallback":
+            expected_anchors = _int_list(result.get("fallback_only_anchor_indexes"))
+        expected_regions = _regions_for_state(result.get("regions"), state)
+        if (expected_anchors or expected_regions) and state not in by_state:
+            return False
+    return True
+
+
+def _region_reason_records_ok(result: dict[str, object]) -> bool:
+    for region in _object_list(result.get("regions")):
+        if not isinstance(region, dict):
+            return False
+        state = region.get("state")
+        if state not in {"promoted", "rejected", "deferred", "fallback"}:
+            return False
+        if not _non_empty_string(region.get("id")):
+            return False
+        selected = region.get("selected_anchor_indexes")
+        if selected is not None and not isinstance(selected, list):
+            return False
+        if state in {"rejected", "deferred"} and not _region_reason(region):
+            return False
+    return True
+
+
+def _summary_count_consistency_ok(result: dict[str, object]) -> bool:
+    summary = _object_dict(result.get("export_summary"))
+    counts = _object_dict(result.get("anchor_state_counts"))
+    for state in ("promoted", "fallback", "rejected", "deferred"):
+        indexes = _int_list(result.get(f"{state}_anchor_indexes"))
+        if state == "fallback":
+            indexes = _int_list(result.get("fallback_only_anchor_indexes"))
+        if _int_value(summary.get(f"{state}_anchor_count")) != len(indexes):
+            return False
+        state_count = _int_value(counts.get(state))
+        if indexes and state_count != len(indexes):
+            return False
+        if not indexes and state_count not in {0, len(indexes)}:
+            return False
+    return True
+
+
+def _missing_records_by_state(
+    result: dict[str, object],
+) -> dict[str, dict[str, object]]:
+    records: dict[str, dict[str, object]] = {}
+    for record in _object_list(result.get("missing_from_promoted")):
+        if isinstance(record, dict) and isinstance(record.get("state"), str):
+            records[str(record["state"])] = record
+    return records
+
+
+def _svg_anchor_metadata_records(value: object) -> list[dict[str, object]]:
+    path = _path_from_value(value)
+    if path is None or not path.exists():
+        return []
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    records: list[dict[str, object]] = []
+    for match in re.finditer(r"<g\b(?P<attrs>[^>]*)>", text):
+        attrs = match.group("attrs")
+        index = _int_from_string(_svg_attr(attrs, "data-anchor-index"))
+        if index is None:
+            continue
+        records.append(
+            {
+                "index": index,
+                "state": _svg_attr(attrs, "data-promotion-state"),
+                "has_anchor_id": _non_empty_string(
+                    _svg_attr(attrs, "data-morphea-anchor-id")
+                ),
+                "has_regions": _non_empty_string(
+                    _svg_attr(attrs, "data-promotion-regions")
+                ),
+            }
+        )
+    return records
+
+
+def _path_exists(value: object) -> bool:
+    path = _path_from_value(value)
+    return path is not None and path.exists()
+
+
+def _svg_attr(attrs: str, name: str) -> str:
+    match = re.search(rf'\s{re.escape(name)}="([^"]*)"', attrs)
+    return match.group(1) if match else ""
+
+
+def _int_from_string(value: str) -> int | None:
+    if not value.isdigit():
+        return None
+    return int(value)
+
+
 def _regions_for_state(value: object, state: str) -> list[dict[str, object]]:
     regions = value if isinstance(value, list) else []
     return [
@@ -711,14 +998,17 @@ def _region_ids(regions: list[dict[str, object]]) -> list[str]:
 def _region_reasons(regions: list[dict[str, object]]) -> list[str]:
     reasons = []
     for region in regions:
-        reason = (
-            region.get("reason")
-            or region.get("rejection_reason")
-            or region.get("deferred_reason")
-            or "n/a"
-        )
+        reason = _region_reason(region) or "n/a"
         reasons.append(str(reason))
     return reasons
+
+
+def _region_reason(region: dict[str, object]) -> str:
+    for key in ("reason", "rejection_reason", "deferred_reason"):
+        value = region.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
 
 def _fmt_markdown_string_values(values: list[str]) -> str:

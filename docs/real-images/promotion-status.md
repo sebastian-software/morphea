@@ -184,6 +184,11 @@ remain explicit even when `fallback.svg` contains all non-promoted anchors.
 It also records structured `missing_from_promoted` rows with state, anchor
 indexes, region ids, and region reasons, matching the Markdown export table
 without requiring Markdown parsing.
+The same JSON now carries `promotion_export_audit`, a RIP9 trust-boundary check
+for complete promoted/fallback partitioning, trusted SVG exclusion of
+non-promoted anchors, fallback SVG containment of non-promoted anchors, stable
+SVG metadata wrappers, rejected/deferred visibility, missing-from-promoted
+records, non-promoted region reasons, and summary-count consistency.
 The `morphea promotion-export` command can regenerate promoted/fallback SVGs
 from any promotion-annotated manifest, outside curated sidecar generation.
 The curated output root also writes `review-packet.json` and
