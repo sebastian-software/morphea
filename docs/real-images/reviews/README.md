@@ -61,11 +61,12 @@ PYTHONPATH=src python3 -m morphea.cli self-learn \
   --max-worst-accuracy-drop 1.0
 ```
 
-The region-scoped plan accepts only the Terminaro
-`gold-circle-region-shape-class` region via `reviewed_region_ids`. The opaque
-generated illustration and UI radio screenshot remain explicitly deferred. This
-plan produces trusted pseudo-label candidates only for the reviewed Terminaro
-gold-circle anchors, converts those candidates into accepted reviewed labels,
+The region-scoped plan accepts the transparent Terminaro and checked-in opaque
+generated-illustration gold-circle shape-class and visual-fidelity regions via
+`reviewed_region_ids`. The UI radio screenshot remains explicitly deferred.
+This plan produces trusted pseudo-label candidates only for the reviewed
+gold-circle anchors, currently 10 anchors across the two accepted generated
+illustration cases, converts those candidates into accepted reviewed labels,
 feeds those labels into a self-learning training gate, and writes a
 reviewed-label dataset without updating suite `current_quality_label` metadata.
 The self-learning cycle summary preserves applied-review decision counts and

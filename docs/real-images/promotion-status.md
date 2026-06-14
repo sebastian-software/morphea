@@ -625,8 +625,10 @@ a regression fixture, and `promotion-review-run` now puts the
 directly into the first review packet and gallery. The checked-in
 `docs/real-images/reviews/current-deferred-decision-plan.json` records the
 conservative explicit review outcome: all three cases remain `deferred`.
-`docs/real-images/reviews/current-region-decision-plan.json` records the first
-region-scoped accepted evidence: `terminaro-tweaked` accepts only
-`gold-circle-region-shape-class` via `reviewed_region_ids`, while the opaque
-generated illustration and UI radio case remain deferred. The next work is more
-accepted/corrected region evidence, not automatic whole-case promotion.
+`docs/real-images/reviews/current-region-decision-plan.json` now records two
+region-scoped accepted gold-circle cases: `terminaro-tweaked` and
+`chatgpt-image-2026-06-11` each accept the shape-class and visual-fidelity
+gold-circle regions via `reviewed_region_ids`, while the UI radio case remains
+deferred. A checked-in replay regression proves that this produces two
+harvestable cases and 10 trusted pseudo-label anchors without automatic
+whole-case promotion.

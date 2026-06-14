@@ -3615,6 +3615,88 @@ class CuratedAssetsSuiteTests(unittest.TestCase):
             ],
         )
 
+    def test_checked_in_region_decision_plan_replays_harvestable_evidence(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review_root = Path(temp_dir) / "review-run"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "promotion-review-run",
+                        "docs/real-images/suite.json",
+                        "--output-dir",
+                        str(review_root),
+                    ]
+                )
+                main(
+                    [
+                        "promotion-review-harvest",
+                        "--config",
+                        str(review_root / "promotion-review-harvest.json"),
+                        "--decision-plan",
+                        "docs/real-images/reviews/current-region-decision-plan.json",
+                    ]
+                )
+                main(
+                    [
+                        "harvest-curated",
+                        "--config",
+                        str(review_root / "harvest-curated.json"),
+                    ]
+                )
+
+            harvest_prep = json.loads(
+                (review_root / "review-harvest.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(harvest_prep["review_harvest_audit"]["ok"])
+            self.assertEqual(harvest_prep["harvestable_case_count"], 2)
+            self.assertEqual(
+                harvest_prep["reviewable_region_summary"][
+                    "applied_reviewed_region_count"
+                ],
+                4,
+            )
+            self.assertEqual(
+                harvest_prep["reviewable_region_summary"][
+                    "applied_review_promoted_region_count"
+                ],
+                4,
+            )
+            by_case = {
+                case["case_id"]: case
+                for case in harvest_prep["applied_cases"]
+            }
+            self.assertTrue(by_case["terminaro-tweaked"]["harvestable"])
+            self.assertTrue(by_case["chatgpt-image-2026-06-11"]["harvestable"])
+            self.assertFalse(
+                by_case["ui-radio-acceptance-screenshot"]["harvestable"]
+            )
+            self.assertEqual(
+                by_case["chatgpt-image-2026-06-11"][
+                    "review_promoted_region_ids"
+                ],
+                [
+                    "gold-circle-region-shape-class",
+                    "gold-circle-region-visual-fidelity",
+                ],
+            )
+
+            harvest = json.loads(
+                (review_root / "harvested-pseudo-labels.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(harvest["pseudo_label_count"], 10)
+            self.assertEqual(
+                sorted(
+                    {
+                        label["review_decision_applied"]["case_id"]
+                        for label in harvest["pseudo_labels"]
+                    }
+                ),
+                ["chatgpt-image-2026-06-11", "terminaro-tweaked"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

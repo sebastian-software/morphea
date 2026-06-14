@@ -1,18 +1,23 @@
 {
   "decision_choices": {
-    "chatgpt-image-2026-06-11": "deferred",
+    "chatgpt-image-2026-06-11": "accepted",
     "terminaro-tweaked": "accepted",
     "ui-radio-acceptance-screenshot": "deferred"
   },
   "decision_overrides": {
     "chatgpt-image-2026-06-11": {
-      "reason": "Deferred after region-scope review on 2026-06-14: the opaque generated illustration is mechanically useful but has no accepted trusted region decision yet; keep it visible as review evidence and out of harvestable training.",
+      "reason": "Accepted after region-scope review on 2026-06-14: the checked-in opaque gold-circle region has the same five gate-ok circle anchors and passing bounded visual region evidence as the transparent source; promote only those reviewed region anchors.",
+      "reviewed_region_ids": [
+        "gold-circle-region-shape-class",
+        "gold-circle-region-visual-fidelity"
+      ],
       "reviewer": "codex"
     },
     "terminaro-tweaked": {
-      "reason": "Accepted after region-scope review on 2026-06-14: the gold circle region is gate-ok, visually bounded, and suitable as trusted circle-anchor evidence; keep the wider case quality label manual and promote only the reviewed region anchors.",
+      "reason": "Accepted after region-scope review on 2026-06-14: both gold-circle region gates are green and bounded; promote only the reviewed gold-circle anchors while keeping the wider case quality label manual.",
       "reviewed_region_ids": [
-        "gold-circle-region-shape-class"
+        "gold-circle-region-shape-class",
+        "gold-circle-region-visual-fidelity"
       ],
       "reviewer": "codex"
     },

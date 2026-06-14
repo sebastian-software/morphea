@@ -522,12 +522,13 @@ Current implementation:
   merge-labels, and self-learn, proving accepted reviewed region anchors can
   become train examples, reach a retraining gate, and remain auditable while
   deferred evidence stays excluded. The current checked-in replay keeps model
-  acceptance conservative: five accepted Terminaro region labels are carried
-  into the cycle, but the training gate rejects the update when the comparison
-  status regresses. `self-learn` can now train the accepted cycle model with
-  either the default centroid backend or the local
-  `mlx_transformer_primitive_classifier` backend (`backend: mlx`). The MLX path
-  still depends on reviewed pseudo-labels and the same acceptance gates; it is
+  acceptance conservative: the current region plan carries 10 accepted
+  gold-circle region labels from the transparent and checked-in opaque
+  generated-illustration cases into the cycle, but the training gate can still
+  reject the update when the comparison status regresses. `self-learn` can now
+  train the accepted cycle model with either the default centroid backend or
+  the local `mlx_transformer_primitive_classifier` backend (`backend: mlx`).
+  The MLX path still depends on reviewed pseudo-labels and the same acceptance gates; it is
   an own primitive-classifier model path, not SAM fine-tuning. MLX cycle
   reports expose component coverage and split semantic pseudo-label training
   from raster-capable image-backed training, so feature-only reviewed labels
@@ -700,10 +701,10 @@ and quality-label review-policy refinements:
    `docs/real-images/reviews/current-deferred-decision-plan.json` applies
    explicit `deferred` decisions for all three cases. The current checked-in
    region-scoped plan at
-   `docs/real-images/reviews/current-region-decision-plan.json` accepts only
-   the Terminaro `gold-circle-region-shape-class` region via
-   `reviewed_region_ids`; the opaque generated illustration and UI radio case
-   remain deferred.
+   `docs/real-images/reviews/current-region-decision-plan.json` accepts the
+   transparent Terminaro and checked-in opaque generated-illustration
+   gold-circle shape-class and visual-fidelity regions via
+   `reviewed_region_ids`; the UI radio case remains deferred.
 2. Decide whether applied `accepted`/`corrected` reviews should update
    `current_quality_label` in suite metadata, or remain sidecar-only applied
    review evidence. Current policy is sidecar-only: pending decisions,
