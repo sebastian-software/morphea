@@ -262,6 +262,8 @@ Current region slice: promotion-region records now carry `layer_roles`,
 `structural_layer_count` derived from selected anchors. They reuse
 `promotion.structure_thresholds.non_structural_layer_roles`, so harmless
 overlay roles can be visible without inflating structural layer depth.
+They also carry `selected_anchor_kind_counts` and simple/stroke/generic-path
+anchor counts, making local fragmentation and shape mix visible per region.
 `curated-check --markdown` shows the same evidence in the Region Truth table.
 
 Exit criteria:

@@ -600,7 +600,11 @@ case reports also include:
   reason. Checked cases also include per-region layer evidence derived from the
   selected anchors: `layer_roles`, `layer_role_counts`, `region_layer_count`,
   `structural_layer_roles`, `structural_layer_count`, and
-  `non_structural_layer_roles`.
+  `non_structural_layer_roles`. They also include a selected-anchor profile with
+  `selected_anchor_kind_counts`, `selected_simple_anchor_count`,
+  `selected_stroke_anchor_count`, and `selected_generic_path_anchor_count` so
+  region-level fragmentation and fallback shape mix can be reviewed without
+  scanning every anchor.
 - `editability_review`: accepted-output review decision with `decision`
   (`accepted`, `manual_review`, or `rejected`), `accepted`, component
   `thresholds`, `component_scores`, `failed_components`,
@@ -1531,7 +1535,8 @@ explicit `promotion_region_deltas` for shared cases. Each delta includes
 `case_id`, `region_id`, `status` (`changed`, `added`, or `removed`), before/after
 state, before/after gate status, before/after selected anchor counts/indexes,
 before/after reasons, region layer-depth fields such as `region_layer_count`
-and `structural_layer_count`, and a field-level `changes` list. This avoids
+and `structural_layer_count`, selected-anchor profile fields such as
+`selected_anchor_kind_counts`, and a field-level `changes` list. This avoids
 relying on aggregate metric paths to identify which source-region contract
 changed.
 

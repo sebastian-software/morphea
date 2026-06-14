@@ -89,6 +89,25 @@ PROMOTION_STRUCTURE_THRESHOLD_KEYS = {
     "max_layer_count",
     "max_structural_layer_count",
 }
+SIMPLE_ANCHOR_KINDS = {
+    "circle",
+    "ellipse",
+    "rect",
+    "rounded_rect",
+    "quad",
+    "stroke_circle",
+    "stroke_ellipse",
+    "stroke_polyline",
+    "stroke_path",
+    "arc",
+}
+STROKE_ANCHOR_KINDS = {
+    "stroke_circle",
+    "stroke_ellipse",
+    "stroke_polyline",
+    "stroke_path",
+    "arc",
+}
 EDITABILITY_REVIEW_THRESHOLDS = {
     "shape_identity_confidence": 0.65,
     "parameter_economy": 0.25,
@@ -2066,6 +2085,12 @@ def _promotion_region_results(
                 non_structural_layer_roles=non_structural_roles,
             )
         )
+        region_result.update(
+            _promotion_region_anchor_profile(
+                selected_indexes,
+                manifest=manifest,
+            )
+        )
         regions.append(region_result)
     return regions
 
@@ -2122,6 +2147,40 @@ def _manifest_anchor_layers(manifest: dict[str, Any] | None) -> dict[int, str]:
                 if isinstance(index, int):
                     layer_by_index.setdefault(index, name)
     return layer_by_index
+
+
+def _promotion_region_anchor_profile(
+    selected_anchor_indexes: list[int],
+    *,
+    manifest: dict[str, Any] | None,
+) -> dict[str, object]:
+    anchors = manifest.get("anchors", []) if isinstance(manifest, dict) else []
+    if not isinstance(anchors, list):
+        anchors = []
+    kinds = []
+    for index in selected_anchor_indexes:
+        if index < 0 or index >= len(anchors):
+            continue
+        anchor = anchors[index]
+        if not isinstance(anchor, dict):
+            continue
+        kind = anchor.get("kind")
+        if isinstance(kind, str) and kind:
+            kinds.append(kind)
+    kind_counts = _counts(kinds)
+    simple_count = sum(
+        count for kind, count in kind_counts.items() if kind in SIMPLE_ANCHOR_KINDS
+    )
+    stroke_count = sum(
+        count for kind, count in kind_counts.items() if kind in STROKE_ANCHOR_KINDS
+    )
+    generic_path_count = int(kind_counts.get("cubic_path", 0))
+    return {
+        "selected_anchor_kind_counts": kind_counts,
+        "selected_simple_anchor_count": simple_count,
+        "selected_stroke_anchor_count": stroke_count,
+        "selected_generic_path_anchor_count": generic_path_count,
+    }
 
 
 def _promotion_region_state(
@@ -3642,10 +3701,14 @@ def _fmt_region_layers(region: object) -> str:
     roles = _fmt_markdown_list(region.get("layer_roles"))
     if roles == "n/a":
         roles = "`none`"
+    kinds = _fmt_markdown_counts(region.get("selected_anchor_kind_counts"))
+    if kinds == "n/a":
+        kinds = "`none`"
     return (
         f"layers={_fmt_markdown_value(region.get('region_layer_count'))}, "
         f"structural={_fmt_markdown_value(region.get('structural_layer_count'))}, "
-        f"roles={roles}"
+        f"roles={roles}, "
+        f"kinds={kinds}"
     )
 
 

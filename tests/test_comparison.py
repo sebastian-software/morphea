@@ -675,6 +675,10 @@ class SnapshotComparisonTests(unittest.TestCase):
             "layer_roles": ["cutout_overlays", "filled_primitives"],
             "structural_layer_count": 1,
             "structural_layer_roles": ["filled_primitives"],
+            "selected_anchor_kind_counts": {"circle": 1, "stroke_path": 1},
+            "selected_simple_anchor_count": 2,
+            "selected_stroke_anchor_count": 1,
+            "selected_generic_path_anchor_count": 0,
         }
         after_region = {
             "id": "gold-circle-region",
@@ -698,6 +702,10 @@ class SnapshotComparisonTests(unittest.TestCase):
             "layer_roles": ["filled_primitives"],
             "structural_layer_count": 1,
             "structural_layer_roles": ["filled_primitives"],
+            "selected_anchor_kind_counts": {"circle": 5},
+            "selected_simple_anchor_count": 5,
+            "selected_stroke_anchor_count": 0,
+            "selected_generic_path_anchor_count": 0,
         }
         comparison = render_snapshot_comparison(
             {
@@ -767,6 +775,14 @@ class SnapshotComparisonTests(unittest.TestCase):
                 "field": "layer_roles",
                 "before": ["cutout_overlays", "filled_primitives"],
                 "after": ["filled_primitives"],
+            },
+            changed["changes"],
+        )
+        self.assertIn(
+            {
+                "field": "selected_anchor_kind_counts",
+                "before": {"circle": 1, "stroke_path": 1},
+                "after": {"circle": 5},
             },
             changed["changes"],
         )

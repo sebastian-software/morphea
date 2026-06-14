@@ -1454,6 +1454,12 @@
             39,
             40
           ],
+          "selected_anchor_kind_counts": {
+            "circle": 5
+          },
+          "selected_generic_path_anchor_count": 0,
+          "selected_simple_anchor_count": 5,
+          "selected_stroke_anchor_count": 0,
           "severity": "red",
           "state": "deferred",
           "structural_layer_count": 1,
@@ -2158,6 +2164,12 @@
           "selected_anchor_indexes": [
             83
           ],
+          "selected_anchor_kind_counts": {
+            "stroke_circle": 1
+          },
+          "selected_generic_path_anchor_count": 0,
+          "selected_simple_anchor_count": 1,
+          "selected_stroke_anchor_count": 1,
           "severity": "red",
           "state": "deferred",
           "structural_layer_count": 1,

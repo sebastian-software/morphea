@@ -1364,6 +1364,18 @@ class CuratedSuiteTests(unittest.TestCase):
                 1,
             )
             self.assertEqual(
+                region_by_id["circle-region"]["selected_anchor_kind_counts"],
+                {"circle": 1},
+            )
+            self.assertEqual(
+                region_by_id["circle-region"]["selected_simple_anchor_count"],
+                1,
+            )
+            self.assertEqual(
+                region_by_id["circle-region"]["selected_generic_path_anchor_count"],
+                0,
+            )
+            self.assertEqual(
                 region_by_id["wide-circle-region"]["selected_anchor_indexes"],
                 [0],
             )
@@ -1417,7 +1429,8 @@ class CuratedSuiteTests(unittest.TestCase):
                 "| `single-circle` | `circle-region` | `promoted` | "
                 "`shape_class` | `4,4,18,18` | kinds=`circle`, "
                 "min_iou=0.3 | matching=1, selected=1, forbidden=0 | "
-                "layers=1, structural=1, roles=`filled_primitives` | "
+                "layers=1, structural=1, roles=`filled_primitives`, "
+                "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, failures=n/a |",
                 markdown,
             )
@@ -1425,14 +1438,15 @@ class CuratedSuiteTests(unittest.TestCase):
                 "| `single-circle` | `empty-region` | `rejected` | "
                 "`shape_class` | `0,0,4,4` | kinds=`circle`, "
                 "min_iou=0.1 | matching=0, selected=0, forbidden=0 | "
-                "layers=0, structural=0, roles=`none` |",
+                "layers=0, structural=0, roles=`none`, kinds=`none` |",
                 markdown,
             )
             self.assertIn(
                 "| `single-circle` | `circle-topology` | `rejected` | "
                 "`topology` | `4,4,18,18` | kinds=`circle`, min_iou=0.3 | "
                 "matching=1, selected=1, forbidden=0 | "
-                "layers=1, structural=1, roles=`filled_primitives` | "
+                "layers=1, structural=1, roles=`filled_primitives`, "
+                "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, "
                 "failures=`closed_anchor_count 1 > 0` |",
                 markdown,
@@ -1514,9 +1528,9 @@ class CuratedSuiteTests(unittest.TestCase):
             },
             manifest={
                 "anchors": [
-                    {"layer": "filled_primitives"},
+                    {"kind": "circle", "layer": "filled_primitives"},
                     {"layer": "strokes"},
-                    {"layer": "cutout_overlays"},
+                    {"kind": "stroke_path", "layer": "cutout_overlays"},
                 ],
                 "layers": [
                     {
@@ -1547,6 +1561,13 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertEqual(regions[0]["structural_layer_roles"], ["filled_primitives"])
         self.assertEqual(regions[0]["structural_layer_count"], 1)
         self.assertEqual(regions[0]["non_structural_layer_roles"], ["cutout_overlays"])
+        self.assertEqual(
+            regions[0]["selected_anchor_kind_counts"],
+            {"circle": 1, "stroke_path": 1},
+        )
+        self.assertEqual(regions[0]["selected_simple_anchor_count"], 2)
+        self.assertEqual(regions[0]["selected_stroke_anchor_count"], 1)
+        self.assertEqual(regions[0]["selected_generic_path_anchor_count"], 0)
 
     def test_group_promotion_gates_check_group_membership(self):
         with tempfile.TemporaryDirectory() as temp_dir:

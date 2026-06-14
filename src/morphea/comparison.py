@@ -29,6 +29,10 @@ PROMOTION_REGION_DELTA_FIELDS = (
     "layer_role_counts",
     "structural_layer_count",
     "structural_layer_roles",
+    "selected_anchor_kind_counts",
+    "selected_simple_anchor_count",
+    "selected_stroke_anchor_count",
+    "selected_generic_path_anchor_count",
 )
 
 
