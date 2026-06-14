@@ -146,6 +146,7 @@ The current contact sheet includes:
 - source/reference image;
 - manifest preview;
 - anchor overlay;
+- region overlay with red/yellow/green gate outlines;
 - exported SVG render;
 - red/blue visual diff;
 - promotion decision summary;

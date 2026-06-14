@@ -1042,6 +1042,9 @@ Implemented so far:
   `max_raster_edge_error`; the Terminaro gold-circle region now passes a red
   region visual-fidelity gate, while the UI radio-control crop carries a
   yellow region visual-fidelity failure after its topology contract passes.
+- checked promotion runs write `region-overlay.png` and include the same
+  red/yellow/green source-region outlines as a Contact Sheet panel, making the
+  failed or deferred region visually inspectable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

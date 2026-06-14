@@ -580,9 +580,12 @@ directory includes the standard vectorize artifacts plus:
   decision, and marks whether the template accepts promotion, matches the
   suggested decision, or requires correction notes/artifacts. Templates also
   preserve `quality_label_policy`.
-- `contact-sheet.png`: source, manifest preview, anchor overlay, SVG render,
-  diff, promotion decision, and failed-gate panels for cases with promotion
-  metadata
+- `region-overlay.png`: source image with configured source-region gates
+  highlighted by gate outcome; failed red gates use red outlines, failed yellow
+  gates use yellow outlines, and passing regions use green outlines
+- `contact-sheet.png`: source, manifest preview, anchor overlay, region
+  overlay, SVG render, diff, promotion decision, and failed-gate panels for
+  cases with promotion metadata
 
 The curated output root also includes suite-level review packet artifacts:
 

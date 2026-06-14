@@ -90,8 +90,8 @@ A real-image region is green only when all of these are true:
 - `editability_review.decision` is `accepted` or a human-applied `corrected`
   decision with preserved review evidence.
 - The promoted SVG can be exported independently from fallback/debug output.
-- A contact sheet shows source, preview, overlay, rendered SVG, diff, decision,
-  and failed-gate context.
+- A contact sheet shows source, preview, anchor overlay, region overlay,
+  rendered SVG, diff, decision, and failed-gate context.
 - Suite-family validation has no new primitive, Lucide, or real-image
   regressions.
 
@@ -346,6 +346,9 @@ thresholds, and failures, so reviewers can inspect visual drift at the region
 that the semantic gate is already discussing. The real gold-circle region now
 passes a red region visual gate, while the real radio-control crop records a
 yellow region visual-fidelity failure after its topology gate passes.
+Contact sheets now include a region overlay panel, and checked run artifacts
+write `region-overlay.png`; failed red/yellow source-region gates are outlined
+directly on the source image while passing regions remain green.
 
 Exit criteria:
 

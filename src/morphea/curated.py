@@ -3541,6 +3541,7 @@ def _write_visual_audit_artifacts(
     svg_render_path = run_dir / "svg-render.png"
     diff_path = run_dir / "diff.png"
     anchor_overlay_path = run_dir / "anchor-overlay.png"
+    region_overlay_path = run_dir / "region-overlay.png"
     contact_sheet_path = run_dir / "contact-sheet.png"
 
     render_background = "#ffffff"
@@ -3560,6 +3561,8 @@ def _write_visual_audit_artifacts(
     diff.save(diff_path)
     anchor_overlay = _anchor_overlay_image(source, manifest)
     anchor_overlay.save(anchor_overlay_path)
+    region_overlay = _region_overlay_image(source, promotion_gates)
+    region_overlay.save(region_overlay_path)
     panels = [
         ("source", source),
         ("preview", preview),
@@ -3573,6 +3576,10 @@ def _write_visual_audit_artifacts(
                 (
                     "promotion",
                     _promotion_summary_panel(promotion, promotion_summary),
+                ),
+                (
+                    "regions",
+                    region_overlay,
                 ),
                 (
                     "failed gates",
@@ -3592,6 +3599,7 @@ def _visual_audit_artifact_paths(run_dir: Path) -> dict[str, str]:
         "svg_render": str(run_dir / "svg-render.png"),
         "diff": str(run_dir / "diff.png"),
         "anchor_overlay": str(run_dir / "anchor-overlay.png"),
+        "region_overlay": str(run_dir / "region-overlay.png"),
         "contact_sheet": str(run_dir / "contact-sheet.png"),
     }
 
@@ -3670,6 +3678,65 @@ def _anchor_overlay_image(source: Image.Image, manifest: object) -> Image.Image:
     if len(anchors) > 240:
         draw.text((8, 8), f"showing 240/{len(anchors)} anchors", fill=(45, 45, 45, 220))
     return overlay.convert("RGB")
+
+
+def _region_overlay_image(source: Image.Image, promotion_gates: object) -> Image.Image:
+    base = source.convert("RGB")
+    softened = Image.blend(base, Image.new("RGB", base.size, "white"), 0.25)
+    overlay = softened.convert("RGBA")
+    draw = ImageDraw.Draw(overlay, "RGBA")
+    if not isinstance(promotion_gates, list):
+        draw.text((8, 8), "no region gates", fill=(50, 50, 50, 220))
+        return overlay.convert("RGB")
+    region_gates = [
+        gate
+        for gate in promotion_gates
+        if isinstance(gate, dict)
+        and isinstance(gate.get("evidence"), dict)
+        and _parse_overlay_bounds(gate["evidence"].get("bounds")) is not None
+    ]
+    if not region_gates:
+        draw.text((8, 8), "no region gates", fill=(50, 50, 50, 220))
+        return overlay.convert("RGB")
+    line_width = max(2, round(max(overlay.size) / 240))
+    for index, gate in enumerate(region_gates[:24]):
+        evidence = gate["evidence"]
+        if not isinstance(evidence, dict):
+            continue
+        bounds = _parse_overlay_bounds(evidence.get("bounds"))
+        if bounds is None:
+            continue
+        color = _region_overlay_color(gate)
+        fill = (color[0], color[1], color[2], 36)
+        draw.rectangle(bounds, fill=fill, outline=color, width=line_width)
+        label = _region_overlay_label(gate)
+        text_x = max(0, min(bounds[0], overlay.width - 80))
+        text_y = max(0, bounds[1] - 13)
+        if index < 12:
+            draw.text((text_x, text_y), label, fill=color)
+    if len(region_gates) > 24:
+        draw.text(
+            (8, 8),
+            f"showing 24/{len(region_gates)} regions",
+            fill=(45, 45, 45, 220),
+        )
+    return overlay.convert("RGB")
+
+
+def _region_overlay_color(gate: dict[str, object]) -> tuple[int, int, int, int]:
+    if gate.get("ok", False):
+        return (35, 130, 75, 255)
+    if gate.get("severity") == "yellow":
+        return (180, 120, 20, 255)
+    return (180, 45, 45, 255)
+
+
+def _region_overlay_label(gate: dict[str, object]) -> str:
+    severity = "ok" if gate.get("ok", False) else str(gate.get("severity", "red"))
+    gate_id = str(gate.get("id", "region"))
+    parts = gate_id.split("-")
+    short_id = "-".join(parts[-2:]) if len(parts) >= 2 else gate_id
+    return f"{severity}:{short_id}"
 
 
 def _anchor_overlay_bounds(anchor: dict[str, object]) -> tuple[int, int, int, int] | None:

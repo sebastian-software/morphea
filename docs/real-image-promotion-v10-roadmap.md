@@ -218,6 +218,7 @@ Every report should include:
 - failed hard gates;
 - score component breakdowns;
 - reference/render/diff contact sheet links;
+- region-overlay contact sheet links that outline source-region gate outcomes;
 - snapshot comparison when a baseline exists;
 - snapshot comparison rows that identify changed source-region ids;
 - missing-source or capability warnings.

@@ -192,6 +192,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "svg-render.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "diff.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "anchor-overlay.png").exists())
+            self.assertTrue((output_dir / "simple-circle" / "region-overlay.png").exists())
             self.assertTrue((output_dir / "simple-circle" / "promoted.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "fallback.svg").exists())
             self.assertTrue((output_dir / "simple-circle" / "promotion-export.json").exists())
@@ -203,7 +204,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "simple-circle" / "input" / "input.png").exists())
             self.assertTrue((output_dir / "review-gallery.html").exists())
             with Image.open(output_dir / "simple-circle" / "contact-sheet.png") as sheet:
-                self.assertEqual(sheet.size, (1636, 268))
+                self.assertEqual(sheet.size, (1868, 268))
             promoted_svg = (output_dir / "simple-circle" / "promoted.svg").read_text(
                 encoding="utf-8"
             )
@@ -321,6 +322,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn("raster_edge_error", report["cases"][0]["metrics"])
             self.assertIn("artifacts", report["cases"][0])
             self.assertIn("anchor_overlay", report["cases"][0]["artifacts"])
+            self.assertIn("region_overlay", report["cases"][0]["artifacts"])
             self.assertIn("contact_sheet", report["cases"][0]["artifacts"])
             self.assertIn("promoted_svg", report["cases"][0]["artifacts"])
             self.assertIn("fallback_svg", report["cases"][0]["artifacts"])
