@@ -349,7 +349,11 @@ harvest choices, the packet-level evidence hints include the matching
 region-scoped applied decision from the first packet without opening raw
 promotion-region JSON. The follow-up harvest-prep JSON/Markdown preserves
 those region summaries and repeats the reviewed-region flags beside
-accepted/corrected choice commands.
+accepted/corrected choice commands. It also writes a
+`reviewable_region_summary` with applied reviewed-region counts,
+review-promoted region counts, harvestable reviewed-region counts, pending
+region counts, and applied decision counts, making region-evidence progress
+visible before the next self-learning harvest.
 Reviewer choices and evidence can also be stored in a portable
 `decision_plan` overlay with `decision_choices` and `decision_overrides`, then
 merged into a fresh generated harvest config without committing run-local

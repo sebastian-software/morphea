@@ -163,6 +163,10 @@ def prepare_promotion_review_harvest(
         ),
         "pending_case_count": len(pending_cases),
         "pending_cases": pending_cases,
+        "reviewable_region_summary": _reviewable_region_summary(
+            applied_cases,
+            pending_cases,
+        ),
         "decision_templates": template_map,
         "decision_overrides": override_map,
         "decision_template_readiness": template_readiness,
@@ -196,6 +200,7 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         f"- Applied cases: {_fmt_value(result.get('applied_case_count'))}",
         f"- Harvestable cases: {_fmt_value(result.get('harvestable_case_count'))}",
         f"- Pending cases: {_fmt_value(result.get('pending_case_count'))}",
+        f"- Reviewable region coverage: {_fmt_region_summary(result.get('reviewable_region_summary'))}",
         f"- Ready terminal templates: {_fmt_readiness_summary(result.get('decision_template_readiness_summary'))}",
         "",
         "## Newly Applied",
@@ -311,6 +316,51 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         else:
             lines.append("n/a")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _reviewable_region_summary(
+    applied_cases: list[dict[str, object]],
+    pending_cases: list[dict[str, object]],
+) -> dict[str, object]:
+    pending_region_count = 0
+    pending_case_count = 0
+    for case in pending_cases:
+        region_ids = _string_list(case.get("reviewable_region_ids"))
+        if region_ids:
+            pending_case_count += 1
+            pending_region_count += len(region_ids)
+
+    applied_reviewed_region_count = 0
+    applied_review_promoted_region_count = 0
+    harvestable_reviewed_region_count = 0
+    applied_case_count = 0
+    decision_counts: dict[str, int] = {}
+    for case in applied_cases:
+        reviewed_region_ids = _string_list(case.get("reviewed_region_ids"))
+        promoted_region_ids = _string_list(case.get("review_promoted_region_ids"))
+        if reviewed_region_ids:
+            applied_case_count += 1
+            decision = _string_value(case.get("decision")) or "n/a"
+            decision_counts[decision] = (
+                decision_counts.get(decision, 0) + len(reviewed_region_ids)
+            )
+        applied_reviewed_region_count += len(reviewed_region_ids)
+        applied_review_promoted_region_count += len(promoted_region_ids)
+        if case.get("harvestable") is True:
+            harvestable_reviewed_region_count += len(reviewed_region_ids)
+
+    return {
+        "total_region_count": (
+            pending_region_count + applied_reviewed_region_count
+        ),
+        "pending_region_count": pending_region_count,
+        "pending_case_count": pending_case_count,
+        "applied_reviewed_region_count": applied_reviewed_region_count,
+        "applied_review_promoted_region_count": applied_review_promoted_region_count,
+        "applied_case_count": applied_case_count,
+        "harvestable_reviewed_region_count": harvestable_reviewed_region_count,
+        "applied_decision_counts": dict(sorted(decision_counts.items())),
+    }
 
 
 def _load_review_packet(path: Path) -> dict[str, object]:
@@ -1004,6 +1054,20 @@ def _fmt_readiness_summary(value: object) -> str:
     return (
         f"`{ready}/{total}` templates, `{ready_cases}/{cases}` cases; "
         f"missing={missing_label}"
+    )
+
+
+def _fmt_region_summary(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    decisions = _fmt_field_counts(value.get("applied_decision_counts"))
+    return (
+        f"`{_fmt_value(value.get('applied_reviewed_region_count'))}` applied, "
+        f"`{_fmt_value(value.get('applied_review_promoted_region_count'))}` promoted, "
+        f"`{_fmt_value(value.get('harvestable_reviewed_region_count'))}` harvestable, "
+        f"`{_fmt_value(value.get('pending_region_count'))}` pending, "
+        f"`{_fmt_value(value.get('total_region_count'))}` total; "
+        f"decisions={decisions}"
     )
 
 

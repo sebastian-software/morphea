@@ -583,7 +583,10 @@ Current implementation:
   cases with template-readiness labels for missing reviewer evidence. Pending
   harvest-prep rows preserve packet `reviewable_regions` and render a
   dedicated reviewable-region table, and accepted/corrected choice hints repeat
-  `--reviewed-region case=region-id` flags next to reviewer/reason hints.
+  `--reviewed-region case=region-id` flags next to reviewer/reason hints. The
+  same prep report now writes a `reviewable_region_summary` covering applied
+  reviewed-region ids, review-promoted region ids, harvestable reviewed-region
+  ids, pending region ids, and applied region decision counts.
 - `promotion-apply-review` can apply a terminal template with explicit CLI
   reviewer evidence overrides (`--reviewer`, `--reason`, and corrected-evidence
   flags, plus `--reviewed-region` for explicit region evidence), so reviewers

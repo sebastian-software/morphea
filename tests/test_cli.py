@@ -965,6 +965,19 @@ class CliTests(unittest.TestCase):
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["harvestable_case_count"], 1)
             self.assertEqual(
+                result["reviewable_region_summary"],
+                {
+                    "total_region_count": 1,
+                    "pending_region_count": 0,
+                    "pending_case_count": 0,
+                    "applied_reviewed_region_count": 1,
+                    "applied_review_promoted_region_count": 1,
+                    "applied_case_count": 1,
+                    "harvestable_reviewed_region_count": 1,
+                    "applied_decision_counts": {"accepted": 1},
+                },
+            )
+            self.assertEqual(
                 result["newly_applied_decisions"][0]["review_promoted_region_ids"],
                 ["circle-region"],
             )
@@ -989,6 +1002,11 @@ class CliTests(unittest.TestCase):
                 ["circle-region"],
             )
             rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn(
+                "- Reviewable region coverage: `1` applied, `1` promoted, "
+                "`1` harvestable, `0` pending, `1` total; decisions=`accepted`=1",
+                rendered,
+            )
             self.assertIn(
                 "| Case | Decision | Harvestable | Block reason | Promoted anchors | Reviewed regions | Review-promoted regions | Review-promoted anchors |",
                 rendered,
@@ -1763,6 +1781,19 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["applied_case_count"], 0)
             self.assertEqual(result["harvestable_case_count"], 0)
             self.assertEqual(result["pending_case_count"], 1)
+            self.assertEqual(
+                result["reviewable_region_summary"],
+                {
+                    "total_region_count": 1,
+                    "pending_region_count": 1,
+                    "pending_case_count": 1,
+                    "applied_reviewed_region_count": 0,
+                    "applied_review_promoted_region_count": 0,
+                    "applied_case_count": 0,
+                    "harvestable_reviewed_region_count": 0,
+                    "applied_decision_counts": {},
+                },
+            )
             self.assertEqual(result["pending_cases"][0]["case_id"], "real-case")
             self.assertEqual(
                 result["pending_cases"][0]["failed_gate_ids"],
@@ -1796,6 +1827,11 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["decision_choice_commands"], {})
             rendered = markdown.read_text(encoding="utf-8")
             self.assertIn("Decision templates", rendered)
+            self.assertIn(
+                "- Reviewable region coverage: `0` applied, `0` promoted, "
+                "`0` harvestable, `1` pending, `1` total; decisions=n/a",
+                rendered,
+            )
             self.assertIn("## Pending Gate Details", rendered)
             self.assertIn("## Pending Reviewable Regions", rendered)
             self.assertIn("radio-control-region-topology", rendered)
