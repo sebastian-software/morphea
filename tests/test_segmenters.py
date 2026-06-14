@@ -66,6 +66,19 @@ class SegmenterTests(unittest.TestCase):
         self.assertEqual(len(proposals), 1)
         self.assertEqual(proposals[0].color, "#003366")
 
+    def test_flat_color_segmenter_scales_bounds_from_analysis_size(self):
+        image_path = _write_scaled_segment_image()
+
+        proposals = FlatColorSegmenter(
+            background="#ffffff",
+            min_area=2,
+            max_size=20,
+        ).propose(image_path)
+
+        self.assertEqual(len(proposals), 1)
+        self.assertEqual(proposals[0].bounds, (10, 4, 29, 15))
+        self.assertEqual(proposals[0].area, 240)
+
     def test_flat_color_segmenter_marks_oversized_components_deferred(self):
         image_path = _write_same_color_component_image()
 
@@ -1045,6 +1058,17 @@ def _write_top_left_foreground_image() -> Path:
     image = Image.new("RGB", (18, 14), "#f6f6f6")
     draw = ImageDraw.Draw(image)
     draw.rectangle((0, 0, 8, 5), fill="#003366")
+    image.save(path)
+    _TEMP_DIRS.append(temp_dir)
+    return path
+
+
+def _write_scaled_segment_image() -> Path:
+    temp_dir = tempfile.TemporaryDirectory()
+    path = Path(temp_dir.name) / "scaled-segment.png"
+    image = Image.new("RGB", (40, 20), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((10, 4, 29, 15), fill="#dd2222")
     image.save(path)
     _TEMP_DIRS.append(temp_dir)
     return path

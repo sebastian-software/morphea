@@ -935,8 +935,10 @@ Proposal fields:
 - `source`: for example `flat_color` or `mlx_sam`
 - `confidence`
 - `color`
-- `bounds`
-- `area`
+- `bounds`: inclusive `[left, top, right, bottom]` in source-image
+  coordinates. Flat-Color segment runs that downsample with `max_size` scale
+  proposal bounds back to this coordinate space before serialization.
+- `area`: approximate proposal pixel area in the serialized coordinate space
 - `status`
 - `downstream_status`: `pending`, `accepted`, or `rejected`; initial flat-color
   proposals are `pending`, while deferred oversized proposals are `rejected`

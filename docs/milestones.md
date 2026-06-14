@@ -617,6 +617,9 @@ Implemented so far:
   flat-color and future MLX runs can be compared explicitly.
 - flat-color segment proposals split connected components by default and can
   mark oversized components as `deferred` via `max_component_area`
+- flat-color segment proposal bounds are scaled back to source-image
+  coordinates after `max_size` analysis resizing, keeping side-by-side
+  comparisons with MLX/SAM masks in the same coordinate space.
 - segment proposals include `downstream_status` and `rejection_reason` so
   geometry/review stages can distinguish pending proposals from rejected ones.
 - pending flat-color segment proposals include primitive `anchor_kind`,

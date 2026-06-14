@@ -7,14 +7,14 @@ import json
 import shutil
 import tempfile
 from dataclasses import dataclass, replace
-from math import ceil, exp
+from math import ceil, exp, floor
 from pathlib import Path
 from time import perf_counter
 from typing import Protocol
 
 from morphea.anchors import choose_best_anchor, quality_metric_error
 from morphea.detection import primitive_candidates_for_component
-from morphea.images import ColorMask, flat_color_masks_from_image
+from morphea.images import ColorMask, _flat_color_masks_result
 from morphea.masks import MaskComponent, connected_components
 
 
@@ -80,7 +80,7 @@ class FlatColorSegmenter:
     source: str = "flat_color"
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
-        masks = flat_color_masks_from_image(
+        mask_result = _flat_color_masks_result(
             image_path,
             background=self.background,
             min_area=self.min_area,
@@ -88,6 +88,7 @@ class FlatColorSegmenter:
             max_size=self.max_size,
             max_colors=self.max_colors,
         )
+        masks = mask_result.masks
         proposals: list[SegmentProposal] = []
         for color_mask in masks:
             if self.split_components:
@@ -95,24 +96,22 @@ class FlatColorSegmenter:
                     color_mask.mask,
                     min_area=self.min_area,
                 ):
-                    proposals.append(
-                        _proposal_from_component(
-                            len(proposals),
-                            self.source,
-                            color_mask.color,
-                            component,
-                            max_component_area=self.max_component_area,
-                        )
+                    proposal = _proposal_from_component(
+                        len(proposals),
+                        self.source,
+                        color_mask.color,
+                        component,
+                        max_component_area=self.max_component_area,
                     )
+                    proposals.append(_scale_segment_proposal(proposal, mask_result.scale))
                 continue
-            proposals.append(
-                _proposal_from_color_mask(
-                    len(proposals),
-                    self.source,
-                    color_mask,
-                    max_component_area=self.max_component_area,
-                )
+            proposal = _proposal_from_color_mask(
+                len(proposals),
+                self.source,
+                color_mask,
+                max_component_area=self.max_component_area,
             )
+            proposals.append(_scale_segment_proposal(proposal, mask_result.scale))
         return tuple(proposals)
 
 
@@ -807,6 +806,38 @@ def _proposal_from_adapter_component(
         downstream_status=downstream_status,
         rejection_reason=rejection_reason,
         **anchor_summary,
+    )
+
+
+def _scale_segment_proposal(
+    proposal: SegmentProposal,
+    analysis_scale: float,
+) -> SegmentProposal:
+    if analysis_scale == 1.0:
+        return proposal
+    factor = 1.0 / analysis_scale
+    return replace(
+        proposal,
+        bounds=_scale_bounds(proposal.bounds, factor),
+        area=max(1, round(proposal.area * factor * factor)),
+        reservation_bounds=(
+            _scale_bounds(proposal.reservation_bounds, factor)
+            if proposal.reservation_bounds is not None
+            else None
+        ),
+    )
+
+
+def _scale_bounds(
+    bounds: tuple[int, int, int, int],
+    factor: float,
+) -> tuple[int, int, int, int]:
+    left, top, right, bottom = bounds
+    return (
+        max(0, floor(left * factor)),
+        max(0, floor(top * factor)),
+        max(0, ceil((right + 1) * factor) - 1),
+        max(0, ceil((bottom + 1) * factor) - 1),
     )
 
 
