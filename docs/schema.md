@@ -719,6 +719,16 @@ contact-sheet artifact presence when `curated-check --run` also writes an
 `output_dir`. This audit does not change the suite pass/fail result; it makes
 RIP1 corpus-readiness explicit before detector tuning.
 
+Curated reports also include top-level `quality_gate_audit` for the RIP2 quality
+gate contract. The audit records `schema_version`, `ok`, suite-level `checks`,
+aggregate coverage counts, missing checks, gate-type counts, failed-gate
+severity counts, and one row per suite case. The checks cover bounded
+source-region gates, shape-class gates, topology gates, fragmentation/layer
+threshold gates, grouping gates, visual-fidelity thresholds, region visual
+fidelity gates, per-family visual thresholds, contact-sheet gate records, and
+per-case gate coverage. This audit measures gate coverage, not whether current
+promotion output is green.
+
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 

@@ -1136,6 +1136,10 @@ Implemented so far:
   block for source provenance, licensing, bounded config, human-readable intent,
   red/yellow/green labels, red/yellow issue tags, visual-audit status, and
   contact-sheet artifacts when a run writes an output directory.
+- curated reports include `quality_gate_audit`, a machine-readable RIP2 gate
+  coverage block for bounded region gates, shape-class gates, topology gates,
+  fragmentation/layer thresholds, grouping, visual fidelity, per-family visual
+  thresholds, contact-sheet gate records, and per-case gate coverage.
 - curated reports and deterministic snapshots include
   `pipeline_quality_label`, so current green/yellow/red pipeline state can be
   consumed without parsing Markdown.

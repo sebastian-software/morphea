@@ -311,6 +311,15 @@ Exit criteria:
 - Markdown reports show failed gates before aggregate metrics.
 - Contact sheets are first-class review artifacts, not optional debugging.
 
+Current implementation evidence: `curated-check` reports top-level
+`quality_gate_audit` for RIP2 gate coverage. The current checked-in suite smoke
+covers 10/10 required checks across bounded region gates, shape-class,
+topology, fragmentation/layer thresholds, grouping, visual fidelity,
+per-family thresholds, contact-sheet gate records, and per-case gate coverage.
+The checked-in opaque Terminaro fixture now carries bounded gold-circle shape
+and visual region gates so every current real-image case has region-level gate
+coverage.
+
 ### RIP3: Promotion Pipeline
 
 Purpose: make promotion an explicit pipeline stage instead of an implicit side

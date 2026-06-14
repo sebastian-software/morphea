@@ -10,10 +10,10 @@ Curated real images:
 
 ```sh
 PYTHONPATH=src python3 -m morphea.cli curated-check docs/real-images/suite.json \
-  -o /tmp/morphea-rip1-audit-run.json \
-  --output-dir /tmp/morphea-rip1-audit-runs \
-  --snapshot /tmp/morphea-rip1-audit-snapshot.json \
-  --markdown /tmp/morphea-rip1-audit-run.md \
+  -o /tmp/morphea-rip2-gate-audit-run.json \
+  --output-dir /tmp/morphea-rip2-gate-audit-runs \
+  --snapshot /tmp/morphea-rip2-gate-audit-snapshot.json \
+  --markdown /tmp/morphea-rip2-gate-audit-run.md \
   --run
 ```
 
@@ -115,7 +115,15 @@ Markdown, review-decision JSON, and report files.
 Curated reports now also write a top-level `corpus_audit` for the RIP1 corpus
 contract. The latest `curated-check --run --output-dir` smoke reports
 `corpus_audit.ok=true`, `ready_case_count=3`, `incomplete_case_count=0`, and
-three concrete `contact-sheet.png` artifacts under `/tmp/morphea-rip1-audit-runs`.
+three concrete `contact-sheet.png` artifacts under `/tmp/morphea-rip2-gate-audit-runs`.
+
+Curated reports now also write a top-level `quality_gate_audit` for the RIP2
+gate contract. The latest `curated-check --run --output-dir` smoke reports
+`quality_gate_audit.ok=true`, `covered_check_count=10`,
+`required_check_count=10`, and `incomplete_case_count=0`. The checked-in opaque
+Terminaro fixture now has bounded `gold-circle-region-shape-class` and
+`gold-circle-region-visual-fidelity` gates; both select five anchors and remain
+deferred only because the containing case is manual-review pending.
 
 Curated reports also include derived promotion gates:
 
@@ -253,6 +261,10 @@ with `deferred_reason: missing_source` rather than a rejected semantic
 candidate.
 
 ## RIP2 Exit Audit
+
+Current machine-readable evidence: `quality_gate_audit` passes 10/10 suite
+coverage checks in the latest checked run, with 3/3 gate-ready cases and no
+missing gate categories.
 
 | Criterion | Status | Evidence |
 | --- | --- | --- |

@@ -224,6 +224,7 @@ def check_curated_suite(
         cases,
         contact_sheet_artifacts_required=run and suite_output_dir is not None,
     )
+    quality_gate_audit = _curated_quality_gate_audit(suite["cases"], cases)
     report = {
         "suite": str(suite_file),
         "version": suite["version"],
@@ -232,6 +233,7 @@ def check_curated_suite(
         "ok": all(case["ok"] for case in cases),
         "family_summary": _curated_family_summary(cases),
         "corpus_audit": corpus_audit,
+        "quality_gate_audit": quality_gate_audit,
         "cases": cases,
     }
     if suite_output_dir is not None:
@@ -361,6 +363,52 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 "",
             ]
         )
+    lines.extend(
+        [
+            "",
+            "## RIP2 Quality Gate Audit",
+            "",
+        ]
+    )
+    gate_audit = report.get("quality_gate_audit")
+    if isinstance(gate_audit, dict):
+        summary = gate_audit.get("summary", {})
+        summary = summary if isinstance(summary, dict) else {}
+        gate_status = "pass" if gate_audit.get("ok", False) else "fail"
+        lines.extend(
+            [
+                f"- Status: `{gate_status}`",
+                f"- Covered checks: {_fmt_markdown_value(summary.get('covered_check_count'))} / {_fmt_markdown_value(summary.get('required_check_count'))}",
+                f"- Missing checks: {_fmt_markdown_list(summary.get('missing_checks'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        checks = gate_audit.get("checks", {})
+        if isinstance(checks, dict):
+            for name, covered in sorted(checks.items()):
+                lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+        lines.extend(
+            [
+                "",
+                "| Case | Ready | Missing |",
+                "| --- | --- | --- |",
+            ]
+        )
+        audit_cases = gate_audit.get("cases", [])
+        if isinstance(audit_cases, list):
+            for item in audit_cases:
+                if not isinstance(item, dict):
+                    continue
+                lines.append(
+                    "| "
+                    f"`{item.get('id', 'n/a')}` | "
+                    f"`{str(item.get('ok', False)).lower()}` | "
+                    f"{_fmt_markdown_list(item.get('missing'))} |"
+                )
+    else:
+        lines.extend(["- Status: `not_available`", ""])
     lines.extend(
         [
             "",
@@ -600,6 +648,7 @@ def render_curated_snapshot(report: dict[str, Any]) -> dict[str, Any]:
         "case_count": report.get("case_count", 0),
         "ok": report.get("ok", False),
         "corpus_audit": report.get("corpus_audit"),
+        "quality_gate_audit": report.get("quality_gate_audit"),
         "cases": [
             _case_snapshot(case)
             for case in sorted(
@@ -763,6 +812,275 @@ def _positive_number(value: object) -> bool:
         isinstance(value, (int, float))
         and not isinstance(value, bool)
         and value > 0
+    )
+
+
+def _curated_quality_gate_audit(
+    suite_cases: list[dict[str, Any]],
+    report_cases: list[dict[str, Any]],
+) -> dict[str, Any]:
+    report_by_id = {
+        str(case.get("id")): case
+        for case in report_cases
+        if isinstance(case, dict) and isinstance(case.get("id"), str)
+    }
+    audited_cases = [
+        _curated_quality_gate_case_audit(
+            case,
+            report_by_id.get(str(case.get("id")), {}),
+        )
+        for case in suite_cases
+        if isinstance(case, dict)
+    ]
+    checks = {
+        "case_gate_coverage": all(case["ok"] for case in audited_cases),
+        "bounded_region_gates": any(
+            _bool_case_check(case, "bounded_region_gates")
+            for case in audited_cases
+        ),
+        "region_visual_fidelity_gates": any(
+            _bool_case_check(case, "region_visual_fidelity_gates")
+            for case in audited_cases
+        ),
+        "shape_class_gates": all(
+            _bool_case_check(case, "shape_class_gates")
+            for case in audited_cases
+        ),
+        "topology_gates": all(
+            _bool_case_check(case, "topology_gates")
+            for case in audited_cases
+        ),
+        "fragmentation_layer_gates": all(
+            _bool_case_check(case, "fragmentation_layer_gates")
+            for case in audited_cases
+        ),
+        "grouping_gates": all(
+            _bool_case_check(case, "grouping_gates")
+            for case in audited_cases
+        ),
+        "visual_fidelity_thresholds": all(
+            _bool_case_check(case, "visual_fidelity_thresholds")
+            for case in audited_cases
+        ),
+        "per_family_visual_thresholds": all(
+            _bool_case_check(case, "per_family_visual_thresholds")
+            for case in audited_cases
+        ),
+        "contact_sheet_gate_records": all(
+            _bool_case_check(case, "contact_sheet_gate_record")
+            for case in audited_cases
+        ),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    gate_type_counts: dict[str, int] = {}
+    failed_gate_count = 0
+    red_failed_gate_count = 0
+    yellow_failed_gate_count = 0
+    for case in report_cases:
+        gates = case.get("promotion_gates") if isinstance(case, dict) else None
+        if not isinstance(gates, list):
+            continue
+        for gate in gates:
+            if not isinstance(gate, dict):
+                continue
+            gate_type = str(gate.get("gate_type", "unknown"))
+            gate_type_counts[gate_type] = gate_type_counts.get(gate_type, 0) + 1
+            if not gate.get("ok", False):
+                failed_gate_count += 1
+                if gate.get("severity") == "red":
+                    red_failed_gate_count += 1
+                elif gate.get("severity") == "yellow":
+                    yellow_failed_gate_count += 1
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "ready_case_count": sum(1 for case in audited_cases if case["ok"]),
+            "incomplete_case_count": sum(
+                1 for case in audited_cases if not case["ok"]
+            ),
+            "gate_type_counts": dict(sorted(gate_type_counts.items())),
+            "failed_gate_count": failed_gate_count,
+            "red_failed_gate_count": red_failed_gate_count,
+            "yellow_failed_gate_count": yellow_failed_gate_count,
+        },
+        "cases": audited_cases,
+    }
+
+
+def _curated_quality_gate_case_audit(
+    suite_case: dict[str, Any],
+    report_case: dict[str, Any],
+) -> dict[str, Any]:
+    case_id = str(suite_case.get("id", "n/a"))
+    promotion = suite_case.get("promotion", {})
+    promotion = promotion if isinstance(promotion, dict) else {}
+    checks = {
+        "shape_class_gates": _promotion_has_gate_type(promotion, "shape_class"),
+        "topology_gates": _promotion_has_gate_type(promotion, "topology"),
+        "bounded_region_gates": _promotion_has_bounded_region_gate(promotion),
+        "fragmentation_layer_gates": _promotion_has_structure_gate(promotion),
+        "grouping_gates": _promotion_has_group_gate(promotion),
+        "visual_fidelity_thresholds": _promotion_has_visual_threshold_gate(
+            promotion
+        ),
+        "region_visual_fidelity_gates": _promotion_has_region_visual_gate(
+            promotion
+        ),
+        "per_family_visual_thresholds": _promotion_has_per_family_visual_thresholds(
+            promotion
+        ),
+        "promotion_gate_records": _case_has_promotion_gate_records(report_case),
+        "contact_sheet_gate_record": _case_has_promotion_gate_id(
+            report_case,
+            "visual_contact_sheet",
+        ),
+    }
+    optional_case_checks = {"region_visual_fidelity_gates"}
+    missing = [
+        name
+        for name, passed in checks.items()
+        if not passed and name not in optional_case_checks
+    ]
+    return {
+        "id": case_id,
+        "ok": not missing,
+        "missing": missing,
+        "checks": checks,
+        "gate_type_counts": _case_gate_type_counts(report_case),
+        "failed_gate_ids": _failed_gate_ids(report_case.get("promotion_gates")),
+    }
+
+
+def _bool_case_check(case: dict[str, Any], name: str) -> bool:
+    checks = case.get("checks", {})
+    return isinstance(checks, dict) and bool(checks.get(name, False))
+
+
+def _promotion_has_gate_type(promotion: dict[str, Any], gate_type: str) -> bool:
+    return any(
+        isinstance(gate, dict) and gate.get("gate_type") == gate_type
+        for gate in _promotion_metadata_gate_items(promotion)
+    )
+
+
+def _promotion_has_bounded_region_gate(promotion: dict[str, Any]) -> bool:
+    for gate in _promotion_metadata_gate_list(promotion, "region_gates"):
+        if (
+            isinstance(gate, dict)
+            and _parse_float_bounds(gate.get("bounds")) is not None
+            and _non_empty_string_list(gate.get("expected_kinds"))
+        ):
+            return True
+    return False
+
+
+def _promotion_has_structure_gate(promotion: dict[str, Any]) -> bool:
+    thresholds = promotion.get("structure_thresholds")
+    if not isinstance(thresholds, dict):
+        return False
+    has_fragmentation = isinstance(
+        thresholds.get("max_fragmentation_penalty"),
+        (int, float),
+    )
+    has_layer_depth = any(
+        isinstance(thresholds.get(key), int)
+        for key in ("max_layer_count", "max_structural_layer_count")
+    )
+    return has_fragmentation and has_layer_depth
+
+
+def _promotion_has_group_gate(promotion: dict[str, Any]) -> bool:
+    return any(
+        isinstance(gate, dict)
+        and gate.get("gate_type") == "grouping"
+        and _non_empty_string_list(gate.get("expected_group_kinds"))
+        for gate in _promotion_metadata_gate_list(promotion, "group_gates")
+    )
+
+
+def _promotion_has_visual_threshold_gate(promotion: dict[str, Any]) -> bool:
+    return _promotion_has_visual_thresholds(promotion.get("visual_thresholds")) or any(
+        isinstance(gate, dict) and _promotion_has_visual_thresholds(gate)
+        for gate in _promotion_metadata_gate_list(promotion, "region_gates")
+    )
+
+
+def _promotion_has_region_visual_gate(promotion: dict[str, Any]) -> bool:
+    return any(
+        isinstance(gate, dict)
+        and gate.get("gate_type") == "visual_fidelity"
+        and _parse_float_bounds(gate.get("bounds")) is not None
+        and _promotion_has_visual_thresholds(gate)
+        for gate in _promotion_metadata_gate_list(promotion, "region_gates")
+    )
+
+
+def _promotion_has_per_family_visual_thresholds(
+    promotion: dict[str, Any],
+) -> bool:
+    thresholds = promotion.get("visual_thresholds")
+    return (
+        isinstance(thresholds, dict)
+        and _non_empty_string(thresholds.get("family"))
+        and _promotion_has_visual_thresholds(thresholds)
+    )
+
+
+def _promotion_has_visual_thresholds(value: object) -> bool:
+    return isinstance(value, dict) and any(
+        isinstance(value.get(key), (int, float))
+        for key in PROMOTION_VISUAL_THRESHOLD_KEYS
+    )
+
+
+def _promotion_metadata_gate_items(
+    promotion: dict[str, Any],
+) -> list[dict[str, Any]]:
+    gates: list[dict[str, Any]] = []
+    for key in ("hard_gates", "region_gates", "group_gates"):
+        gates.extend(_promotion_metadata_gate_list(promotion, key))
+    return gates
+
+
+def _promotion_metadata_gate_list(
+    promotion: dict[str, Any],
+    key: str,
+) -> list[dict[str, Any]]:
+    value = promotion.get(key)
+    if not isinstance(value, list):
+        return []
+    return [gate for gate in value if isinstance(gate, dict)]
+
+
+def _case_has_promotion_gate_records(report_case: dict[str, Any]) -> bool:
+    gates = report_case.get("promotion_gates")
+    return isinstance(gates, list) and bool(gates)
+
+
+def _case_has_promotion_gate_id(
+    report_case: dict[str, Any],
+    gate_id: str,
+) -> bool:
+    gates = report_case.get("promotion_gates")
+    return isinstance(gates, list) and any(
+        isinstance(gate, dict) and gate.get("id") == gate_id
+        for gate in gates
+    )
+
+
+def _case_gate_type_counts(report_case: dict[str, Any]) -> dict[str, int]:
+    gates = report_case.get("promotion_gates")
+    if not isinstance(gates, list):
+        return {}
+    return _counts(
+        gate.get("gate_type", "unknown")
+        for gate in gates
+        if isinstance(gate, dict)
     )
 
 

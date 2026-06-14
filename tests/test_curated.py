@@ -1196,6 +1196,8 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertIn("| `test_fixture` | 1 | 1 | 0 | 1 | 0 |", markdown)
         self.assertIn("## RIP1 Corpus Audit", markdown)
         self.assertIn("- Status: `not_available`", markdown)
+        self.assertIn("## RIP2 Quality Gate Audit", markdown)
+        self.assertIn("- Status: `not_available`", markdown)
         self.assertIn("## Corpus Ledger", markdown)
         self.assertIn(
             "| `simple-circle` | `red` | `red` | `checked` | `test_fixture` | "
@@ -1355,6 +1357,126 @@ class CuratedSuiteTests(unittest.TestCase):
                     "recommended_bounded_config",
                     "human_readable_intent",
                     "red_yellow_issue_tags",
+                ],
+            )
+
+    def test_curated_check_reports_rip2_quality_gate_audit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("red")
+            metadata["hard_gates"].append(
+                {
+                    "id": "circle-topology",
+                    "gate_type": "topology",
+                    "expectation_ids": ["circle-anchor"],
+                    "severity": "red",
+                }
+            )
+            metadata["region_gates"].append(
+                {
+                    "id": "circle-region-visual",
+                    "gate_type": "visual_fidelity",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "max_raster_l1_error": 1.0,
+                    "severity": "yellow",
+                }
+            )
+            metadata["group_gates"] = [
+                {
+                    "id": "circle-grouping",
+                    "gate_type": "grouping",
+                    "expected_group_kinds": ["primitive_anchor_reservation"],
+                    "min_count": 1,
+                    "min_member_count": 1,
+                    "severity": "yellow",
+                }
+            ]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = check_curated_suite(suite_path)
+
+            audit = report["quality_gate_audit"]
+            self.assertTrue(audit["ok"])
+            self.assertEqual(audit["summary"]["missing_checks"], [])
+            self.assertEqual(audit["summary"]["covered_check_count"], 10)
+            self.assertEqual(audit["cases"][0]["missing"], [])
+            self.assertTrue(audit["checks"]["region_visual_fidelity_gates"])
+
+    def test_curated_check_quality_gate_audit_marks_missing_gate_categories(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            suite_path = Path(temp_dir) / "suite.json"
+            metadata = _promotion_metadata("red")
+            del metadata["visual_thresholds"]
+            del metadata["structure_thresholds"]
+            suite_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "cases": [
+                            {
+                                "id": "simple-circle",
+                                "source": "/tmp/simple-circle.png",
+                                "promotion": metadata,
+                                "expectations": [
+                                    {
+                                        "id": "circle-anchor",
+                                        "kind": "circle",
+                                        "min_count": 1,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = check_curated_suite(suite_path)
+
+            audit = report["quality_gate_audit"]
+            self.assertFalse(audit["ok"])
+            self.assertEqual(
+                audit["summary"]["missing_checks"],
+                [
+                    "case_gate_coverage",
+                    "region_visual_fidelity_gates",
+                    "topology_gates",
+                    "fragmentation_layer_gates",
+                    "grouping_gates",
+                    "visual_fidelity_thresholds",
+                    "per_family_visual_thresholds",
+                ],
+            )
+            self.assertEqual(
+                audit["cases"][0]["missing"],
+                [
+                    "topology_gates",
+                    "fragmentation_layer_gates",
+                    "grouping_gates",
+                    "visual_fidelity_thresholds",
+                    "per_family_visual_thresholds",
                 ],
             )
 

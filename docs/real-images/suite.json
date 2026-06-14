@@ -265,6 +265,58 @@
             "description": "Clean line-like details should remain editable strokes."
           }
         ],
+        "region_gates": [
+          {
+            "id": "gold-circle-region-shape-class",
+            "gate_type": "shape_class",
+            "bounds": [
+              220,
+              480,
+              1005,
+              700
+            ],
+            "expected_kinds": [
+              "circle"
+            ],
+            "min_count": 5,
+            "min_iou": 0.0,
+            "min_anchor_coverage": 0.8,
+            "max_hole_count": 0,
+            "max_cutout_count": 0,
+            "required_topology_descriptors": [
+              "closed",
+              "multi_component"
+            ],
+            "forbidden_topology_descriptors": [
+              "single_component",
+              "holes",
+              "cutouts",
+              "nested_contours"
+            ],
+            "severity": "red",
+            "description": "The checked-in opaque fixture must preserve the same shoulder-brooch and center-dot circle region as the transparent source case."
+          },
+          {
+            "id": "gold-circle-region-visual-fidelity",
+            "gate_type": "visual_fidelity",
+            "bounds": [
+              220,
+              480,
+              1005,
+              700
+            ],
+            "expected_kinds": [
+              "circle"
+            ],
+            "min_count": 5,
+            "min_iou": 0.0,
+            "min_anchor_coverage": 0.8,
+            "max_raster_l1_error": 0.1,
+            "max_raster_edge_error": 0.025,
+            "severity": "red",
+            "description": "The checked-in opaque fixture's gold-circle source region should remain visually close after the five-circle semantic contract passes."
+          }
+        ],
         "group_gates": [
           {
             "id": "table-grid-group-consistency",
@@ -282,6 +334,7 @@
           "2026-06-14 missing local source was replaced by a checked-in opaque fixture derived from the transparent Terminaro image.",
           "Semantic expectations pass with 5 circle anchors, 14 table quads, one perspective-grid group, and editable strokes counted across stroke polylines, stroke paths, and arcs.",
           "2026-06-14 structure gate treats cutout overlays as review-visible non-structural layers: raw layer_count remains 4, structural_layer_count is 3/3.",
+          "2026-06-14 checked-in opaque fixture now carries the same bounded gold-circle shape and visual region gates as the transparent source case.",
           "2026-06-14 v10 fragmentation uses unstructured fallback fragments, so expected table cells, circles, and cutout strokes no longer block review.",
           "2026-06-14 organic fallback node-budget capping reduces generated-illustration parameter debt enough for editability review thresholds to pass.",
           "2026-06-14 quality-label review policy now defers this mechanically green case for manual review instead of rejecting it as a detector failure."
