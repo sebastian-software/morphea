@@ -143,7 +143,9 @@ failed gates/components, review links, terminal decision-template links, and
 per-decision apply commands for queued review cases.
 `morphea promotion-review-run suite.json --output-dir review-run` runs the same
 review-oriented artifact set through one command and derives default report,
-Markdown, and snapshot paths under the output root.
+Markdown, and snapshot paths under the output root. It also writes a starter
+`promotion-review-harvest.json` config with empty decisions and stable
+follow-up paths for review-to-harvest preparation.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may

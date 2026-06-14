@@ -1718,6 +1718,17 @@ def main(argv: list[str] | None = None) -> None:
             baseline_snapshot=review_run_config.get("baseline_snapshot"),
             markdown=review_run_config["markdown"],
         )
+        review_harvest_config = _promotion_review_run_harvest_config(
+            review_run_config,
+        )
+        review_harvest_config_path = (
+            review_run_config["output_dir"] / "promotion-review-harvest.json"
+        )
+        _write_json_file(review_harvest_config_path, review_harvest_config)
+        result.setdefault("artifacts", {})[
+            "promotion_review_harvest_config"
+        ] = str(review_harvest_config_path)
+        _write_json_file(review_run_config["output"], result)
         print(
             "prepared promotion review run "
             f"({result['case_count']} curated cases, "
@@ -2734,6 +2745,34 @@ def _resolved_promotion_review_run_config(
         config["baseline_snapshot"] = Path(str(config["baseline_snapshot"]))
     config["run"] = True
     return config
+
+
+def _promotion_review_run_harvest_config(
+    config: dict[str, object],
+) -> dict[str, object]:
+    output_dir = Path(str(config["output_dir"]))
+    return {
+        "review_packet": str(output_dir / "review-packet.json"),
+        "output": str(output_dir / "review-harvest.json"),
+        "markdown": str(output_dir / "review-harvest.md"),
+        "harvest_config": str(output_dir / "harvest-curated.json"),
+        "decisions": {},
+        "suite": str(config["suite"]),
+        "run_root": str(output_dir),
+        "harvest_output": str(output_dir / "harvested-pseudo-labels.json"),
+        "curated_report": str(config["output"]),
+        "snapshot": str(config["snapshot"]),
+        "harvest_markdown": str(output_dir / "harvested-pseudo-labels.md"),
+    }
+
+
+def _write_json_file(path: str | Path, data: object) -> None:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(data, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
 
 def _resolved_lucide_check_config(args: argparse.Namespace) -> dict[str, object]:

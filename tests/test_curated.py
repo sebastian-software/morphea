@@ -2647,11 +2647,48 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue((output_dir / "curated-report.md").exists())
             self.assertTrue((output_dir / "curated-snapshot.json").exists())
             self.assertTrue((output_dir / "review-packet.json").exists())
+            review_harvest_config = output_dir / "promotion-review-harvest.json"
+            self.assertEqual(
+                report["artifacts"]["promotion_review_harvest_config"],
+                str(review_harvest_config),
+            )
+            harvest_config_data = json.loads(
+                review_harvest_config.read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                harvest_config_data["review_packet"],
+                str(output_dir / "review-packet.json"),
+            )
+            self.assertEqual(harvest_config_data["decisions"], {})
+            self.assertEqual(harvest_config_data["run_root"], str(output_dir))
+            self.assertEqual(
+                harvest_config_data["curated_report"],
+                str(output_dir / "curated-report.json"),
+            )
+            self.assertEqual(
+                harvest_config_data["snapshot"],
+                str(output_dir / "curated-snapshot.json"),
+            )
             gallery = (output_dir / "review-gallery.html").read_text(
                 encoding="utf-8"
             )
             self.assertIn("Apply commands", gallery)
             self.assertIn("promotion-apply-review", gallery)
+            with redirect_stdout(StringIO()) as harvest_stdout:
+                main(
+                    [
+                        "promotion-review-harvest",
+                        "--config",
+                        str(review_harvest_config),
+                    ]
+                )
+            self.assertIn("pending=1", harvest_stdout.getvalue())
+            review_harvest = json.loads(
+                (output_dir / "review-harvest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(review_harvest["pending_case_count"], 1)
+            self.assertTrue((output_dir / "review-harvest.md").exists())
+            self.assertTrue((output_dir / "harvest-curated.json").exists())
 
 
 class CuratedAssetsSuiteTests(unittest.TestCase):
