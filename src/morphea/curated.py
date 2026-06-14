@@ -3305,6 +3305,8 @@ def _promotion_review_template_guidance(
     return {
         "accepted_for_promotion": decision in {"accepted", "corrected"},
         "matches_suggested_decision": decision == suggested,
+        "requires_reviewer": True,
+        "requires_reason": True,
         "requires_correction_notes": decision == "corrected",
         "requires_corrected_artifacts": decision == "corrected",
     }

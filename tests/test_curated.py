@@ -531,6 +531,12 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertTrue(
                 accepted_template["template_guidance"]["accepted_for_promotion"]
             )
+            self.assertTrue(
+                accepted_template["template_guidance"]["requires_reviewer"]
+            )
+            self.assertTrue(
+                accepted_template["template_guidance"]["requires_reason"]
+            )
             self.assertFalse(
                 accepted_template["template_guidance"][
                     "matches_suggested_decision"

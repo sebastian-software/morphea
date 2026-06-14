@@ -422,7 +422,8 @@ Implemented so far:
 - checked promotion runs write
   `review-templates/{accepted,corrected,rejected,deferred}.json`, so reviewers
   can start from terminal decision templates that preserve the same evidence
-  and indicate whether correction artifacts are required.
+  and indicate that reviewer/reason evidence is required for every terminal
+  decision, with correction notes and artifacts required for `corrected`.
 - pending, terminal, and applied promotion review records carry a
   `quality_label_policy` block with `mode: sidecar_only`, making
   `current_quality_label` a manual suite-metadata field rather than something

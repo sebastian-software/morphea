@@ -255,7 +255,9 @@ suggested accepted/corrected/rejected/deferred outcome, and preserves issue
 tags plus failed gate/component evidence for later application.
 Checked promotion runs also write the four terminal decision templates beside
 that pending record, so a reviewer can start from the accepted, corrected,
-rejected, or deferred outcome without stripping pending state manually.
+rejected, or deferred outcome without stripping pending state manually. Template
+guidance now marks reviewer and reason as required for every terminal decision,
+and marks correction notes/artifacts as required for `corrected`.
 
 `morphea promotion-apply-review` consumes an edited terminal
 `review-decision.json`, rejects still-pending decisions, requires reviewer and
