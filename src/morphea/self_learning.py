@@ -1500,6 +1500,7 @@ def _baseline_comparison_row(
         "passed_count",
         "failed_count",
         "missing_source_count",
+        "pipeline_quality_counts",
     ):
         if key in row:
             result[key] = row.get(key)
@@ -1555,17 +1556,21 @@ def _suite_validation_view(
         for family, summary in sorted(family_summary.items()):
             if not isinstance(summary, dict):
                 continue
-            families.append(
-                {
-                    "family": str(family),
-                    "case_count": summary.get("case_count"),
-                    "checked_count": summary.get("checked_count"),
-                    "passed_count": summary.get("passed_count"),
-                    "failed_count": summary.get("failed_count"),
-                    "missing_source_count": summary.get("missing_source_count"),
-                    "outcome": _suite_family_outcome(summary),
-                }
+            family_row = {
+                "family": str(family),
+                "case_count": summary.get("case_count"),
+                "checked_count": summary.get("checked_count"),
+                "passed_count": summary.get("passed_count"),
+                "failed_count": summary.get("failed_count"),
+                "missing_source_count": summary.get("missing_source_count"),
+                "outcome": _suite_family_outcome(summary),
+            }
+            pipeline_counts = _counts_from_object(
+                summary.get("pipeline_quality_counts")
             )
+            if pipeline_counts:
+                family_row["pipeline_quality_counts"] = pipeline_counts
+            families.append(family_row)
     return {
         "status": validation.get("status", "n/a"),
         "ok": validation.get("ok"),
@@ -1577,15 +1582,16 @@ def _suite_validation_view(
 def _family_summary_from_report(
     report: dict[str, object],
     cases: list[dict[str, object]],
-) -> dict[str, dict[str, int]]:
-    summary = report.get("family_summary", {})
-    if isinstance(summary, dict):
-        normalized: dict[str, dict[str, int]] = {}
+) -> dict[str, dict[str, object]]:
+    summary = report.get("family_summary")
+    if isinstance(summary, dict) and summary:
+        normalized: dict[str, dict[str, object]] = {}
+        has_pipeline_counts = False
         for family, item in summary.items():
             if not isinstance(item, dict):
                 continue
             case_count = _int_count(item.get("case_count"))
-            normalized[str(family)] = {
+            normalized_item: dict[str, object] = {
                 "case_count": case_count,
                 "checked_count": (
                     _int_count(item.get("checked_count"))
@@ -1596,14 +1602,23 @@ def _family_summary_from_report(
                 "failed_count": _int_count(item.get("failed_count")),
                 "missing_source_count": _int_count(item.get("missing_source_count")),
             }
+            pipeline_counts = _counts_from_object(
+                item.get("pipeline_quality_counts")
+            )
+            if pipeline_counts:
+                normalized_item["pipeline_quality_counts"] = pipeline_counts
+                has_pipeline_counts = True
+            normalized[str(family)] = normalized_item
+        if not has_pipeline_counts:
+            _attach_pipeline_quality_counts(normalized, cases)
         return dict(sorted(normalized.items()))
     return _family_summary_from_cases(cases)
 
 
 def _family_summary_from_cases(
     cases: list[dict[str, object]],
-) -> dict[str, dict[str, int]]:
-    summary: dict[str, dict[str, int]] = {}
+) -> dict[str, dict[str, object]]:
+    summary: dict[str, dict[str, object]] = {}
     for case in cases:
         family = _case_family(case)
         item = summary.setdefault(
@@ -1625,7 +1640,32 @@ def _family_summary_from_cases(
             item["failed_count"] += 1
         if case.get("status") == "missing_source":
             item["missing_source_count"] += 1
+    _attach_pipeline_quality_counts(summary, cases)
     return dict(sorted(summary.items()))
+
+
+def _attach_pipeline_quality_counts(
+    summary: dict[str, dict[str, object]],
+    cases: list[dict[str, object]],
+) -> None:
+    for case in cases:
+        label = case.get("pipeline_quality_label")
+        if not isinstance(label, str) or not label:
+            continue
+        item = summary.get(_case_family(case))
+        if not isinstance(item, dict):
+            continue
+        counts = item.setdefault("pipeline_quality_counts", {})
+        if not isinstance(counts, dict):
+            counts = {}
+            item["pipeline_quality_counts"] = counts
+        counts[label] = _int_count(counts.get(label)) + 1
+    for item in summary.values():
+        counts = _counts_from_object(item.get("pipeline_quality_counts"))
+        if counts:
+            item["pipeline_quality_counts"] = counts
+        else:
+            item.pop("pipeline_quality_counts", None)
 
 
 def _case_family(case: dict[str, object]) -> str:
@@ -2023,11 +2063,15 @@ def _suite_family_baseline_row(item: dict[str, object]) -> str:
 def _suite_family_baseline_evidence(item: dict[str, object]) -> str:
     if "accuracy_delta" in item:
         return f"delta={_fmt_metric(item.get('accuracy_delta'))}"
-    return (
+    evidence = (
         f"cases={_fmt_metric(item.get('case_count'))}, "
         f"failed={_fmt_metric(item.get('failed_count'))}, "
         f"missing={_fmt_metric(item.get('missing_source_count'))}"
     )
+    pipeline_counts = _pipeline_quality_counts_evidence(item)
+    if pipeline_counts:
+        evidence = f"{evidence}, pipeline={pipeline_counts}"
+    return evidence
 
 
 def _suite_family_validation_rows(
@@ -2072,12 +2116,26 @@ def _suite_family_evidence(family: dict[str, object]) -> str:
             f"augmented={_fmt_metric(family.get('augmented_accuracy'))}, "
             f"delta={_fmt_metric(family.get('accuracy_delta'))}"
         )
-    return (
+    evidence = (
         f"cases={_fmt_metric(family.get('case_count'))}, "
         f"checked={_fmt_metric(family.get('checked_count'))}, "
         f"passed={_fmt_metric(family.get('passed_count'))}, "
         f"failed={_fmt_metric(family.get('failed_count'))}, "
         f"missing={_fmt_metric(family.get('missing_source_count'))}"
+    )
+    pipeline_counts = _pipeline_quality_counts_evidence(family)
+    if pipeline_counts:
+        evidence = f"{evidence}, pipeline={pipeline_counts}"
+    return evidence
+
+
+def _pipeline_quality_counts_evidence(item: dict[str, object]) -> str:
+    counts = _counts_from_object(item.get("pipeline_quality_counts"))
+    if not counts:
+        return ""
+    return ", ".join(
+        f"{label}: {_fmt_metric(count)}"
+        for label, count in sorted(counts.items())
     )
 
 

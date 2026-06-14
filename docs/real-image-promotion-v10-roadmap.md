@@ -526,7 +526,10 @@ Self-learning cycle reports now expose normalized `suite_family_validation`
 across primitive label families, curated real-image family summaries, and
 optional Lucide family summaries. `morphea self-learn --lucide-suite` validates
 accepted models with the same `classifier_model` override and blocks acceptance
-on Lucide failures.
+on Lucide failures. Real-image family rows now preserve
+`pipeline_quality_counts` from curated pipeline labels, so baseline reviews can
+see how many cases are green, yellow, or red even when semantic expectations
+pass.
 `morphea self-learn --suite-family-baseline` compares the current normalized
 family view against a fixed baseline. It now reports every compared family as
 held, improved, new-family, known-debt, resolved-regression, new-regression, or

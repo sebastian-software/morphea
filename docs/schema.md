@@ -1435,7 +1435,11 @@ Top-level fields:
 - `lucide_validation`: optional Lucide benchmark validation summary when
   `lucide_suite` is configured
 - `suite_family_validation`: normalized primitive, real-image, and Lucide
-  family evidence used to inspect regressions before model acceptance
+  family evidence used to inspect regressions before model acceptance.
+  Real-image family rows can carry `pipeline_quality_counts`, a sorted count
+  map of current curated pipeline labels (`green`, `yellow`, `red`) so model
+  training and baseline reviews can distinguish semantic passes from
+  promotion-quality debt.
 - `suite_family_baseline_comparison`: optional comparison against a fixed
   `suite_family_validation` baseline with new regression, known-debt, and
   resolved regression counts

@@ -2303,6 +2303,111 @@ class SelfLearningTests(unittest.TestCase):
                 str(output_dir / "model.json"),
             )
 
+    def test_self_learning_cycle_counts_curated_pipeline_labels_by_family(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            curated_suite = root / "suite.json"
+            curated_suite.write_text(
+                json.dumps({"version": 1, "cases": []}),
+                encoding="utf-8",
+            )
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=101,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            def curated_with_pipeline_labels(*args, **kwargs):
+                return {
+                    "suite": str(curated_suite),
+                    "version": 1,
+                    "run": True,
+                    "case_count": 3,
+                    "ok": True,
+                    "cases": [
+                        {
+                            "id": "table-green",
+                            "family": "generated_table",
+                            "status": "checked",
+                            "ok": True,
+                            "pipeline_quality_label": "green",
+                        },
+                        {
+                            "id": "table-yellow",
+                            "family": "generated_table",
+                            "status": "checked",
+                            "ok": True,
+                            "pipeline_quality_label": "yellow",
+                        },
+                        {
+                            "id": "radio-red",
+                            "family": "ui_radio",
+                            "status": "checked",
+                            "ok": True,
+                            "pipeline_quality_label": "red",
+                        },
+                    ],
+                }
+
+            with (
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+                patch(
+                    "morphea.self_learning.check_curated_suite",
+                    curated_with_pipeline_labels,
+                ),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    curated_suite=curated_suite,
+                )
+
+            real_families = {
+                family["family"]: family
+                for family in result["suite_family_validation"]["real_image"][
+                    "families"
+                ]
+            }
+            self.assertEqual(
+                real_families["generated_table"]["pipeline_quality_counts"],
+                {"green": 1, "yellow": 1},
+            )
+            self.assertEqual(real_families["generated_table"]["case_count"], 2)
+            self.assertEqual(real_families["generated_table"]["passed_count"], 2)
+            self.assertEqual(
+                real_families["ui_radio"]["pipeline_quality_counts"],
+                {"red": 1},
+            )
+            self.assertEqual(
+                result["curated_validation"]["family_summary"]["generated_table"][
+                    "pipeline_quality_counts"
+                ],
+                {"green": 1, "yellow": 1},
+            )
+
     def test_self_learning_cycle_can_train_mlx_backend_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -3632,6 +3737,10 @@ class SelfLearningTests(unittest.TestCase):
                                 "passed_count": 2,
                                 "failed_count": 0,
                                 "missing_source_count": 0,
+                                "pipeline_quality_counts": {
+                                    "green": 1,
+                                    "yellow": 1,
+                                },
                                 "outcome": "passed",
                             }
                         ],
@@ -3661,14 +3770,15 @@ class SelfLearningTests(unittest.TestCase):
                     ],
                     "known_debt": [
                         {
-                            "suite": "lucide",
+                            "suite": "real_image",
                             "split": "",
-                            "family": "circle_compound_strokes",
+                            "family": "generated_table",
                             "baseline_outcome": "failed",
                             "current_outcome": "failed",
                             "case_count": 8,
                             "failed_count": 1,
                             "missing_source_count": 0,
+                            "pipeline_quality_counts": {"red": 1},
                         }
                     ],
                     "resolved_regressions": [],
@@ -3699,6 +3809,7 @@ class SelfLearningTests(unittest.TestCase):
             "| `real_image` | `checked` | `True` | `generated_table` |",
             markdown,
         )
+        self.assertIn("pipeline=green: 1, yellow: 1", markdown)
         self.assertIn(
             "| `lucide` | `not_configured` | `None` | n/a | n/a | n/a |",
             markdown,
@@ -3711,7 +3822,7 @@ class SelfLearningTests(unittest.TestCase):
             markdown,
         )
         self.assertIn(
-            "| `known_debt` | `lucide` | `n/a` | `circle_compound_strokes` | `failed` | `failed` | cases=8, failed=1, missing=0 |",
+            "| `known_debt` | `real_image` | `n/a` | `generated_table` | `failed` | `failed` | cases=8, failed=1, missing=0, pipeline=red: 1 |",
             markdown,
         )
         self.assertIn("## Suite Family Baseline Snapshot", markdown)

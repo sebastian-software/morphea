@@ -442,7 +442,10 @@ Self-learning cycle reports now expose `suite_family_validation`: primitive
 label-family deltas, curated real-image family summaries, and optional Lucide
 family summaries are rendered side by side. `--lucide-suite` is accepted by
 `morphea self-learn`; when configured, failed Lucide validation blocks model
-acceptance just like failed curated validation.
+acceptance just like failed curated validation. Real-image family rows also
+carry `pipeline_quality_counts` when curated cases expose current pipeline
+labels, so reviewed baselines can separate semantic green checks from
+yellow/red promotion-quality debt before that debt becomes trainable evidence.
 
 `morphea self-learn --suite-family-baseline baseline.json` compares the current
 normalized family view against a fixed baseline. Newly introduced primitive,

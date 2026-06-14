@@ -528,6 +528,10 @@ Current implementation:
   split, and label behind the gate decision. Training comparison artifacts now
   also include ranking-decision deltas, so a reviewer can inspect which
   classifier choices changed between the baseline and augmented model.
+  Suite-family validation now carries real-image `pipeline_quality_counts`
+  into cycle reports and baseline comparisons when curated cases expose
+  current pipeline labels, keeping yellow/red promotion-quality debt visible
+  before any accepted evidence is allowed into model training.
   Suite-family baseline comparisons now emit full per-family comparison rows
   and outcome counts, including held, improved, known-debt, resolved-regression,
   new-regression, and missing-current-family states. Missing current coverage
