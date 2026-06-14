@@ -1407,6 +1407,10 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(topology["closed_anchor_count"], 1)
             self.assertEqual(topology["open_anchor_count"], 0)
             self.assertEqual(topology["nested_contour_count"], 0)
+            self.assertEqual(
+                topology["topology_descriptors"],
+                ["closed", "single_component"],
+            )
             self.assertFalse(gate_by_id["empty-region"]["ok"])
             self.assertEqual(region_by_id["empty-region"]["state"], "rejected")
             self.assertIn(
@@ -1472,7 +1476,8 @@ class CuratedSuiteTests(unittest.TestCase):
                 "min_iou=0.3 | matching=1, selected=1, forbidden=0, rejected=0 | "
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
-                "closed=1, open=0, holes=0, cutouts=0, nested=0, failures=n/a |",
+                "closed=1, open=0, holes=0, cutouts=0, nested=0, "
+                "descriptors=`closed`, `single_component`, failures=n/a |",
                 markdown,
             )
             self.assertIn(
@@ -1489,6 +1494,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, nested=0, "
+                "descriptors=`closed`, `single_component`, "
                 "failures=`closed_anchor_count 1 > 0` |",
                 markdown,
             )
@@ -1507,6 +1513,16 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertEqual(summary["hole_count"], 2)
         self.assertEqual(summary["cutout_count"], 1)
         self.assertEqual(summary["nested_contour_count"], 3)
+        self.assertEqual(
+            summary["topology_descriptors"],
+            [
+                "mixed_open_closed",
+                "multi_component",
+                "holes",
+                "cutouts",
+                "nested_contours",
+            ],
+        )
         self.assertEqual(
             _region_topology_failures({"max_nested_contours": 2}, summary),
             ["nested_contour_count 3 > 2"],

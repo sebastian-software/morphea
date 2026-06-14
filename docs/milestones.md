@@ -1016,9 +1016,9 @@ Implemented so far:
   failed expectations, key metrics, and artifact directories.
 - the same Markdown report includes a Region Truth table for configured
   source-region gates, with stable region ids, state, bounds, expected kinds,
-  actual matching counts, topology evidence including nested-contour counts,
-  per-region layer-depth evidence, selected-anchor kind profiles, and candidate
-  rejection counts.
+  actual matching counts, topology evidence including descriptor labels and
+  nested-contour counts, per-region layer-depth evidence, selected-anchor kind
+  profiles, and candidate rejection counts.
 - checked promotion runs include Candidate Rejections in `promotion-review.md`,
   so shape/topology reject reasons are reviewable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown

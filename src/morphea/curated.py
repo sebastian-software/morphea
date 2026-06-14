@@ -1623,7 +1623,7 @@ def _region_topology_summary(
     nested_contour_count = sum(
         _anchor_nested_contour_count(anchor) for anchor in anchors
     )
-    return {
+    summary = {
         "selected_anchor_count": len(anchors),
         "disconnected_component_count": len(anchors),
         "kind_counts": kind_counts,
@@ -1633,6 +1633,38 @@ def _region_topology_summary(
         "cutout_count": cutout_count,
         "nested_contour_count": nested_contour_count,
     }
+    summary["topology_descriptors"] = _region_topology_descriptors(summary)
+    return summary
+
+
+def _region_topology_descriptors(summary: dict[str, object]) -> list[str]:
+    selected = summary.get("selected_anchor_count")
+    closed = summary.get("closed_anchor_count")
+    open_anchors = summary.get("open_anchor_count")
+    components = summary.get("disconnected_component_count")
+    holes = summary.get("hole_count")
+    cutouts = summary.get("cutout_count")
+    nested = summary.get("nested_contour_count")
+    descriptors: list[str] = []
+    if selected == 0:
+        descriptors.append("empty")
+    elif closed == selected:
+        descriptors.append("closed")
+    elif open_anchors == selected:
+        descriptors.append("open")
+    else:
+        descriptors.append("mixed_open_closed")
+    if isinstance(components, int) and components > 1:
+        descriptors.append("multi_component")
+    elif isinstance(components, int) and components == 1:
+        descriptors.append("single_component")
+    if isinstance(holes, int) and holes > 0:
+        descriptors.append("holes")
+    if isinstance(cutouts, int) and cutouts > 0:
+        descriptors.append("cutouts")
+    if isinstance(nested, int) and nested > 0:
+        descriptors.append("nested_contours")
+    return descriptors
 
 
 def _region_topology_failures(
@@ -3830,6 +3862,7 @@ def _fmt_region_topology(evidence: dict[str, object]) -> str:
         f"holes={_fmt_markdown_value(summary.get('hole_count'))}, "
         f"cutouts={_fmt_markdown_value(summary.get('cutout_count'))}, "
         f"nested={_fmt_markdown_value(summary.get('nested_contour_count'))}, "
+        f"descriptors={_fmt_markdown_list(summary.get('topology_descriptors'))}, "
         f"failures={failure_text}"
     )
 

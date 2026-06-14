@@ -485,7 +485,10 @@ Region gate topology limits are optional non-negative integer fields:
 per-region proxy derived from hole counts plus cutout anchors. Region-gate
 evidence includes
 `topology_summary` with selected-anchor, closed/open, hole, cutout, disconnected
-component, nested-contour, and kind-count summaries. Evidence also includes
+component, nested-contour, descriptor, and kind-count summaries.
+`topology_descriptors` is a compact label list such as `empty`, `closed`,
+`open`, `mixed_open_closed`, `single_component`, `multi_component`, `holes`,
+`cutouts`, or `nested_contours`. Evidence also includes
 `candidate_rejections` for selected anchors that were rejected by the gate,
 with anchor id, kind, bounds, overlap metrics, reject reasons such as
 `kind_mismatch`, `forbidden_kind`, or `topology_failure`, and topology failures

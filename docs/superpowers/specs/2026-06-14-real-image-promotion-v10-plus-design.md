@@ -297,6 +297,8 @@ JSON for rejected shape/topology candidates.
 Nested-contour evidence is now explicit as `nested_contour_count`, derived from
 hole counts plus cutout anchors, with optional `min_nested_contours` and
 `max_nested_contours` region-gate limits.
+Topology summaries also emit `topology_descriptors`, a compact label list for
+closed/open state, component count, holes, cutouts, and nested contours.
 
 Exit criteria:
 
