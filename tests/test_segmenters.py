@@ -266,12 +266,16 @@ class SegmenterTests(unittest.TestCase):
                 ),
             ):
                 status = mlx_sam_runtime_status(
-                    MlxSamSegmenter(model_path=str(model_path))
+                    MlxSamSegmenter(
+                        model_path=str(model_path),
+                        max_component_area=12000,
+                    )
                 )
 
             self.assertEqual(status["status"], "mlx_sam_package_available")
             self.assertTrue(status["backend_available"])
             self.assertEqual(status["adapter"], "mlx_sam_grid_points")
+            self.assertEqual(status["max_component_area"], 12000)
             self.assertTrue(status["sam_package_available"])
             self.assertEqual(
                 status["model_sidecar_path"],
@@ -769,6 +773,62 @@ class SegmenterTests(unittest.TestCase):
             )
             self.assertIn("json_adapter_available", markdown.read_text(encoding="utf-8"))
 
+    def test_segment_cli_applies_max_component_area_to_mlx_sam_adapter(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_two_color_image()
+            model_path = root / "sam-proposals.json"
+            output = root / "segments.json"
+            config = root / "segment-config.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "proposals": [
+                            {
+                                "bounds": [0, 0, 19, 11],
+                                "confidence": 0.92,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config.write_text(
+                json.dumps(
+                    {
+                        "input": str(image_path),
+                        "output": str(output),
+                        "segmenter": "mlx_sam",
+                        "mlx_model_path": str(model_path),
+                        "max_component_area": 10,
+                        "geometry_gate": True,
+                        "require_reserved_anchor": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
+                with redirect_stdout(StringIO()):
+                    main(["segment", "--config", str(config)])
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["config"]["max_component_area"], 10)
+            self.assertEqual(manifest["summary"]["status_counts"]["deferred"], 1)
+            self.assertEqual(
+                manifest["summary"]["downstream_status_counts"]["rejected"],
+                1,
+            )
+            proposal = manifest["proposals"][0]
+            self.assertEqual(proposal["status"], "deferred")
+            self.assertEqual(proposal["downstream_status"], "rejected")
+            self.assertEqual(
+                proposal["rejection_reason"],
+                "max_component_area_exceeded",
+            )
+            self.assertIsNone(proposal["anchor_kind"])
+            self.assertIsNone(proposal["downstream_decision_reason"])
+
     def test_segment_cli_serializes_cli_mlx_model_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -917,6 +977,7 @@ class SegmenterTests(unittest.TestCase):
         self.assertTrue((repo_root / flat_config["input"]).exists())
         self.assertEqual(mlx_config["mlx_max_masks"], 4)
         self.assertEqual(mlx_config["mlx_score_threshold"], 0.01)
+        self.assertEqual(mlx_config["max_component_area"], 12000)
         self.assertEqual(
             mlx_config["mlx_model_path"],
             status_config["mlx_sam_model_path"],

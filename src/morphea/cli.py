@@ -3765,6 +3765,11 @@ def _segmenter_from_config(
                 if config.get("mlx_timeout_seconds") is not None
                 else None
             ),
+            max_component_area=(
+                int(config["max_component_area"])
+                if config.get("max_component_area") is not None
+                else None
+            ),
         )
     raise ValueError(f"unsupported segmenter: {segmenter}")
 

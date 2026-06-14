@@ -113,6 +113,7 @@ The equivalent expanded commands are:
   --mlx-score-threshold 0.01 \
   --mlx-max-masks 4 \
   --mlx-timeout-seconds 45 \
+  --max-component-area 12000 \
   --geometry-gate \
   --require-reserved-anchor \
   -o /tmp/morphea-mlx-sam-smoke/mlx-sam-segments.json \
@@ -141,3 +142,6 @@ MLX/SAM run produced 4 proposals and all 4 passed the geometry gate. The
 comparison verdict was `noise` because green promotion proxy count dropped from
 29 to 4, even though red rejected candidates dropped from 12 to 0. Treat this
 as runtime evidence and a prompt/config baseline, not as quality evidence.
+The MLX/SAM config carries `max_component_area: 12000`, so larger prompt
+sweeps cannot turn huge image-spanning masks into accepted primitive anchors
+just because they fit a coarse circle or rounded rectangle.

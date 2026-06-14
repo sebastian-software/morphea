@@ -3,6 +3,7 @@
   "input": "assets/curated/terminaro-opaque-table-grid.png",
   "markdown": "/tmp/morphea-mlx-sam-smoke/mlx-sam-segments.md",
   "max_anchor_quality_error": 1.0,
+  "max_component_area": 12000,
   "mlx_max_masks": 4,
   "mlx_model_path": "checkpoints/sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors",
   "mlx_score_threshold": 0.01,

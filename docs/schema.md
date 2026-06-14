@@ -1046,7 +1046,8 @@ Supported fields:
 - `color_tolerance`
 - `max_size`
 - `max_colors`
-- `max_component_area`
+- `max_component_area`: defers oversized Flat-Color components and oversized
+  MLX/SAM adapter masks before geometry gating
 - `split_components`: default `true`, emits connected-component proposals
   instead of one proposal per color mask
 - `mlx_model_path`: local JSON proposal payload or `.safetensors` checkpoint

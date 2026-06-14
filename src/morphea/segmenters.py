@@ -122,6 +122,7 @@ class MlxSamSegmenter:
     score_threshold: float = 0.0
     max_masks: int | None = None
     timeout_seconds: float | None = None
+    max_component_area: int | None = None
     source: str = "mlx_sam"
 
     def propose(self, image_path: str | Path) -> tuple[SegmentProposal, ...]:
@@ -235,6 +236,7 @@ def mlx_sam_runtime_status(segmenter: MlxSamSegmenter) -> dict[str, object]:
         "score_threshold": segmenter.score_threshold,
         "max_masks": segmenter.max_masks,
         "timeout_seconds": segmenter.timeout_seconds,
+        "max_component_area": segmenter.max_component_area,
         "capabilities": _mlx_sam_capabilities(
             package_available=package_available,
             sam_package_available=sam_package_available,
@@ -614,6 +616,7 @@ def _mlx_sam_package_proposals(
                     None,
                     component,
                     confidence=confidence,
+                    max_component_area=segmenter.max_component_area,
                 )
             )
     return tuple(proposals)
@@ -701,6 +704,7 @@ def _json_adapter_proposals(
                 str(color) if isinstance(color, str) else None,
                 component,
                 confidence=confidence,
+                max_component_area=segmenter.max_component_area,
             )
         )
         if segmenter.max_masks is not None and len(accepted) >= segmenter.max_masks:
@@ -783,8 +787,15 @@ def _proposal_from_adapter_component(
     component: MaskComponent,
     *,
     confidence: float,
+    max_component_area: int | None = None,
 ) -> SegmentProposal:
-    anchor_summary = _primitive_anchor_summary(component)
+    status = _proposal_status(component.area, max_component_area)
+    downstream_status, rejection_reason = _downstream_status(status)
+    anchor_summary = (
+        _primitive_anchor_summary(component)
+        if downstream_status == "pending"
+        else {}
+    )
     return SegmentProposal(
         id=f"{source}-{index:04d}",
         source=source,
@@ -792,8 +803,9 @@ def _proposal_from_adapter_component(
         color=color,
         bounds=component.bounds,
         area=component.area,
-        status="proposed",
-        downstream_status="pending",
+        status=status,
+        downstream_status=downstream_status,
+        rejection_reason=rejection_reason,
         **anchor_summary,
     )
 

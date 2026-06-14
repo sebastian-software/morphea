@@ -691,6 +691,9 @@ Implemented so far:
   same status, Flat-Color segment, MLX/SAM segment, and segment-comparison
   steps while keeping checkpoint weights and generated `/tmp` outputs out of
   git.
+- MLX/SAM adapter masks now respect `max_component_area` before geometry
+  gating, so oversized AI masks are deferred instead of being allowed to pass
+  as coarse primitive anchors.
 - `morphea segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed and a checkpoint is configured.
 - `morphea status` treats the `mlx_sam_package_available` adapter state as an
@@ -1252,6 +1255,8 @@ Implemented so far:
   current MLX/SAM runtime smoke against a Flat-Color baseline without
   committing local checkpoints or generated smoke reports
 - segment configs include component splitting and `max_component_area`
+- MLX/SAM adapter proposals respect `max_component_area`, preventing oversized
+  AI masks from bypassing the same deferral path used by Flat-Color components
 - segment configs include future MLX model/runtime knobs without requiring the
   MLX backend to be installed
 - vectorize scoring weights for raster error, quality error, complexity, and
