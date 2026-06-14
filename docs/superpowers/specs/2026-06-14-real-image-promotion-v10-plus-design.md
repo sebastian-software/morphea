@@ -294,6 +294,9 @@ the rejected candidate count next to matching/selected/forbidden counts.
 Promotion export manifests preserve the gate records, and `promotion-review.md`
 renders a Candidate Rejections table so reviewers do not have to inspect raw
 JSON for rejected shape/topology candidates.
+Nested-contour evidence is now explicit as `nested_contour_count`, derived from
+hole counts plus cutout anchors, with optional `min_nested_contours` and
+`max_nested_contours` region-gate limits.
 
 Exit criteria:
 

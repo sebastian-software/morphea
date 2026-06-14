@@ -78,6 +78,8 @@ PROMOTION_REGION_TOPOLOGY_LIMITS = {
     "max_open_anchors",
     "max_hole_count",
     "max_cutout_count",
+    "min_nested_contours",
+    "max_nested_contours",
     "max_disconnected_components",
 }
 PROMOTION_VISUAL_THRESHOLD_KEYS = {
@@ -1598,6 +1600,7 @@ def _region_gate_anchor_evidence(
             "closed": _anchor_closed(anchor),
             "hole_count": _anchor_hole_count(anchor),
             "cutout": _anchor_has_cutout(anchor),
+            "nested_contour_count": _anchor_nested_contour_count(anchor),
         }
         if bounds is not None and region_bounds is not None:
             item["region_iou"] = round(_bounds_iou(bounds, region_bounds), 6)
@@ -1617,6 +1620,9 @@ def _region_topology_summary(
     open_count = len(anchors) - closed_count
     hole_count = sum(_anchor_hole_count(anchor) for anchor in anchors)
     cutout_count = sum(1 for anchor in anchors if _anchor_has_cutout(anchor))
+    nested_contour_count = sum(
+        _anchor_nested_contour_count(anchor) for anchor in anchors
+    )
     return {
         "selected_anchor_count": len(anchors),
         "disconnected_component_count": len(anchors),
@@ -1625,6 +1631,7 @@ def _region_topology_summary(
         "open_anchor_count": open_count,
         "hole_count": hole_count,
         "cutout_count": cutout_count,
+        "nested_contour_count": nested_contour_count,
     }
 
 
@@ -1640,6 +1647,8 @@ def _region_topology_failures(
         ("max_open_anchors", "open_anchor_count", "<="),
         ("max_hole_count", "hole_count", "<="),
         ("max_cutout_count", "cutout_count", "<="),
+        ("min_nested_contours", "nested_contour_count", ">="),
+        ("max_nested_contours", "nested_contour_count", "<="),
         (
             "max_disconnected_components",
             "disconnected_component_count",
@@ -1698,6 +1707,10 @@ def _anchor_has_cutout(anchor: dict[str, object]) -> bool:
         strategy = export_policy.get("cutout_strategy")
         return isinstance(strategy, str) and bool(strategy)
     return False
+
+
+def _anchor_nested_contour_count(anchor: dict[str, object]) -> int:
+    return _anchor_hole_count(anchor) + (1 if _anchor_has_cutout(anchor) else 0)
 
 
 def _manifest_anchor_bounds(
@@ -3816,6 +3829,7 @@ def _fmt_region_topology(evidence: dict[str, object]) -> str:
         f"open={_fmt_markdown_value(summary.get('open_anchor_count'))}, "
         f"holes={_fmt_markdown_value(summary.get('hole_count'))}, "
         f"cutouts={_fmt_markdown_value(summary.get('cutout_count'))}, "
+        f"nested={_fmt_markdown_value(summary.get('nested_contour_count'))}, "
         f"failures={failure_text}"
     )
 
@@ -4220,6 +4234,7 @@ def _validate_region_topology_limits(
     for minimum_key, maximum_key in (
         ("min_closed_anchors", "max_closed_anchors"),
         ("min_open_anchors", "max_open_anchors"),
+        ("min_nested_contours", "max_nested_contours"),
     ):
         minimum = gate.get(minimum_key)
         maximum = gate.get(maximum_key)

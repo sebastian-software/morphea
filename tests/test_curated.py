@@ -10,6 +10,8 @@ from PIL import Image, ImageDraw
 from morphea.cli import main
 from morphea.curated import (
     _promotion_region_results,
+    _region_topology_failures,
+    _region_topology_summary,
     _structure_threshold_promotion_gate,
     check_curated_suite,
     load_curated_suite,
@@ -1404,6 +1406,7 @@ class CuratedSuiteTests(unittest.TestCase):
             topology = gate_by_id["circle-region"]["evidence"]["topology_summary"]
             self.assertEqual(topology["closed_anchor_count"], 1)
             self.assertEqual(topology["open_anchor_count"], 0)
+            self.assertEqual(topology["nested_contour_count"], 0)
             self.assertFalse(gate_by_id["empty-region"]["ok"])
             self.assertEqual(region_by_id["empty-region"]["state"], "rejected")
             self.assertIn(
@@ -1469,7 +1472,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 "min_iou=0.3 | matching=1, selected=1, forbidden=0, rejected=0 | "
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
-                "closed=1, open=0, holes=0, cutouts=0, failures=n/a |",
+                "closed=1, open=0, holes=0, cutouts=0, nested=0, failures=n/a |",
                 markdown,
             )
             self.assertIn(
@@ -1485,10 +1488,33 @@ class CuratedSuiteTests(unittest.TestCase):
                 "matching=1, selected=1, forbidden=0, rejected=1 | "
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
-                "closed=1, open=0, holes=0, cutouts=0, "
+                "closed=1, open=0, holes=0, cutouts=0, nested=0, "
                 "failures=`closed_anchor_count 1 > 0` |",
                 markdown,
             )
+
+    def test_region_topology_summary_reports_nested_contours(self):
+        summary = _region_topology_summary(
+            [
+                {"kind": "cubic_path", "metrics": {"path_hole_count": 2}},
+                {
+                    "kind": "stroke_path",
+                    "stroke": {"is_cutout": True, "closed": True},
+                },
+            ]
+        )
+
+        self.assertEqual(summary["hole_count"], 2)
+        self.assertEqual(summary["cutout_count"], 1)
+        self.assertEqual(summary["nested_contour_count"], 3)
+        self.assertEqual(
+            _region_topology_failures({"max_nested_contours": 2}, summary),
+            ["nested_contour_count 3 > 2"],
+        )
+        self.assertEqual(
+            _region_topology_failures({"min_nested_contours": 4}, summary),
+            ["nested_contour_count 3 < 4"],
+        )
 
     def test_structure_threshold_can_ignore_non_structural_layer_roles(self):
         gate = _structure_threshold_promotion_gate(

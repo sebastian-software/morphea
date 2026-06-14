@@ -479,10 +479,13 @@ Promotion metadata fields:
 
 Region gate topology limits are optional non-negative integer fields:
 `min_closed_anchors`, `max_closed_anchors`, `min_open_anchors`,
-`max_open_anchors`, `max_hole_count`, `max_cutout_count`, and
-`max_disconnected_components`. Region-gate evidence includes
+`max_open_anchors`, `max_hole_count`, `max_cutout_count`,
+`min_nested_contours`, `max_nested_contours`, and
+`max_disconnected_components`. `nested_contour_count` is a conservative
+per-region proxy derived from hole counts plus cutout anchors. Region-gate
+evidence includes
 `topology_summary` with selected-anchor, closed/open, hole, cutout, disconnected
-component, and kind-count summaries. Evidence also includes
+component, nested-contour, and kind-count summaries. Evidence also includes
 `candidate_rejections` for selected anchors that were rejected by the gate,
 with anchor id, kind, bounds, overlap metrics, reject reasons such as
 `kind_mismatch`, `forbidden_kind`, or `topology_failure`, and topology failures

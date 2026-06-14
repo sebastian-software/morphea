@@ -1250,6 +1250,7 @@
                 "hole_count": 0,
                 "id": "anchor-0036",
                 "kind": "circle",
+                "nested_contour_count": 0,
                 "region_iou": 0.013894
               },
               {
@@ -1265,6 +1266,7 @@
                 "hole_count": 0,
                 "id": "anchor-0037",
                 "kind": "circle",
+                "nested_contour_count": 0,
                 "region_iou": 0.00954
               },
               {
@@ -1280,6 +1282,7 @@
                 "hole_count": 0,
                 "id": "anchor-0038",
                 "kind": "circle",
+                "nested_contour_count": 0,
                 "region_iou": 0.006808
               },
               {
@@ -1295,6 +1298,7 @@
                 "hole_count": 0,
                 "id": "anchor-0039",
                 "kind": "circle",
+                "nested_contour_count": 0,
                 "region_iou": 0.002568
               },
               {
@@ -1310,6 +1314,7 @@
                 "hole_count": 0,
                 "id": "anchor-0040",
                 "kind": "circle",
+                "nested_contour_count": 0,
                 "region_iou": 0.002491
               }
             ],
@@ -1323,6 +1328,7 @@
               "kind_counts": {
                 "circle": 5
               },
+              "nested_contour_count": 0,
               "open_anchor_count": 0,
               "selected_anchor_count": 5
             }
@@ -2037,6 +2043,7 @@
                 "hole_count": 0,
                 "id": "anchor-0083",
                 "kind": "stroke_circle",
+                "nested_contour_count": 0,
                 "region_iou": 0.482589
               }
             ],
@@ -2050,6 +2057,7 @@
               "kind_counts": {
                 "stroke_circle": 1
               },
+              "nested_contour_count": 0,
               "open_anchor_count": 0,
               "selected_anchor_count": 1
             }
