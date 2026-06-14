@@ -1008,8 +1008,9 @@ Implemented so far:
 - deterministic `morphea curated-check --snapshot snapshot.json` regression
   summaries for important commits/configurations.
 - `morphea curated-check --markdown report.md` writes scan-friendly real-image
-  suite reports with case status, failed expectations, key metrics, and
-  artifact directories.
+  suite reports with a Corpus Ledger for quality labels, stress families,
+  expected promotion families, issue tags, licensing status, plus case status,
+  failed expectations, key metrics, and artifact directories.
 - second documented curated case:
   `chatgpt-image-2026-06-11`, covering the opaque white-background version of
   the Greek-figures/table illustration.

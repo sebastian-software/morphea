@@ -565,6 +565,13 @@ The curated output root also includes suite-level review packet artifacts:
   failed gate/component ids, the contact sheet image, review artifact links,
   and terminal decision-template links without requiring raw JSON inspection.
 
+When `curated-check --markdown` is used, the suite Markdown report includes a
+Corpus Ledger table before the promotion-gate details. The ledger surfaces each
+promotion case's red/yellow/green quality label, current status, stress family,
+expected promotion families, issue tags, and licensing status, with per-case
+detail sections repeating source provenance and expected promotion families so
+reviewers do not need to inspect raw suite JSON for the corpus contract.
+
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 

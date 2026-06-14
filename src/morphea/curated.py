@@ -257,6 +257,30 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
+            "## Corpus Ledger",
+            "",
+            "| Case | Quality | Current status | Stress family | Expected families | Issues | Licensing |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for case in _promotion_sorted_cases(cases):
+        if not isinstance(case, dict):
+            continue
+        promotion = case.get("promotion", {})
+        promotion = promotion if isinstance(promotion, dict) else {}
+        lines.append(
+            "| "
+            f"`{case.get('id', 'n/a')}` | "
+            f"{_fmt_promotion_quality(promotion)} | "
+            f"`{promotion.get('current_status', 'n/a')}` | "
+            f"`{promotion.get('stress_family', 'n/a')}` | "
+            f"{_fmt_markdown_list(promotion.get('expected_promotion_families'))} | "
+            f"{_fmt_markdown_list(promotion.get('current_issues'))} | "
+            f"`{promotion.get('licensing_status', 'n/a')}` |"
+        )
+    lines.extend(
+        [
+            "",
             "## Promotion Gates",
             "",
             "| Case | Decision | Quality | Failed gates |",
@@ -336,6 +360,18 @@ def render_curated_markdown(report: dict[str, Any]) -> str:
                 f"quality={_fmt_promotion_quality(promotion)}, "
                 f"stress=`{promotion.get('stress_family', 'n/a')}`, "
                 f"issues={_fmt_markdown_list(promotion.get('current_issues'))}"
+            )
+            lines.append(
+                "- Source provenance: "
+                f"`{promotion.get('source_provenance', 'n/a')}`"
+            )
+            lines.append(
+                "- Expected promotion families: "
+                f"{_fmt_markdown_list(promotion.get('expected_promotion_families'))}"
+            )
+            lines.append(
+                "- Licensing: "
+                f"`{promotion.get('licensing_status', 'n/a')}`"
             )
         if isinstance(case.get("promotion_summary"), dict):
             lines.append(

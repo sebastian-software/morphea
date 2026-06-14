@@ -1006,6 +1006,12 @@ class CuratedSuiteTests(unittest.TestCase):
         self.assertIn("# Morphēa Curated Check", markdown)
         self.assertIn("## Families", markdown)
         self.assertIn("| `test_fixture` | 1 | 1 | 0 | 1 | 0 |", markdown)
+        self.assertIn("## Corpus Ledger", markdown)
+        self.assertIn(
+            "| `simple-circle` | `red` | `checked` | `test_fixture` | "
+            "`circle` | `fragmentation` | `test_fixture` |",
+            markdown,
+        )
         self.assertIn(
             "| `simple-circle` | `rejected` | `red` | `current_quality_label`, `circle-shape-class` |",
             markdown,
@@ -1025,6 +1031,15 @@ class CuratedSuiteTests(unittest.TestCase):
             "- Promotion: quality=`red`, stress=`test_fixture`, issues=`fragmentation`",
             markdown,
         )
+        self.assertIn(
+            "- Source provenance: `generated test fixture`",
+            markdown,
+        )
+        self.assertIn(
+            "- Expected promotion families: `circle`",
+            markdown,
+        )
+        self.assertIn("- Licensing: `test_fixture`", markdown)
         self.assertIn(
             "- Promotion gates: decision=`rejected`, failed=`current_quality_label`, `circle-shape-class`",
             markdown,

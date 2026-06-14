@@ -177,6 +177,11 @@ Deliverables:
 - updated curated snapshot and suite-family baseline after each accepted fix;
 - no Lucide or primitive regression.
 
+Current report slice: `curated-check --markdown` now writes a Corpus Ledger that
+lists each promotion case's quality label, current status, stress family,
+expected promotion families, issue tags, and licensing status before the
+promotion-gate details.
+
 Exit criteria:
 
 - `chatgpt-image-2026-06-11` no longer fails fallback layer depth, or the gate

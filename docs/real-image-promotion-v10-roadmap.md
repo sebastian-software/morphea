@@ -205,9 +205,9 @@ Required report order:
 Every report should include:
 
 - case-level red/yellow/green status;
+- stress family, expected promotion families, issue tags, and licensing status;
 - region-level promotion decisions;
 - failed hard gates;
-- issue tags;
 - score component breakdowns;
 - reference/render/diff contact sheet links;
 - snapshot comparison when a baseline exists;
