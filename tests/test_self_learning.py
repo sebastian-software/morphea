@@ -28,6 +28,7 @@ from morphea.self_learning import (
     render_training_gate_markdown,
     render_training_comparison_markdown,
     run_self_learning_cycle,
+    _multi_family_regression_audit,
     _reviewed_label_loop_audit,
     retrain_centroid_classifier,
     retrain_mlx_classifier,
@@ -2243,12 +2244,28 @@ class SelfLearningTests(unittest.TestCase):
                 ],
                 1,
             )
+            self.assertTrue(result["multi_family_regression_audit"]["ok"])
+            self.assertEqual(
+                result["multi_family_regression_audit"]["summary"]["missing_checks"],
+                [],
+            )
+            self.assertGreaterEqual(
+                result["multi_family_regression_audit"]["summary"][
+                    "primitive_family_count"
+                ],
+                1,
+            )
             cycle_report = json.loads(
                 (output_dir / "self-learning-cycle.json").read_text(encoding="utf-8")
             )
             self.assertTrue(cycle_report["reviewed_label_loop_audit"]["ok"])
+            self.assertTrue(cycle_report["multi_family_regression_audit"]["ok"])
             self.assertIn(
                 "## RIP7 Reviewed Label Loop Audit",
+                (output_dir / "self-learning-cycle.md").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "## RIP8 Multi-Family Regression Audit",
                 (output_dir / "self-learning-cycle.md").read_text(encoding="utf-8"),
             )
             if result["gate"]["accepted"]:
@@ -2388,6 +2405,89 @@ class SelfLearningTests(unittest.TestCase):
             self.assertIn(
                 "model_acceptance_contract",
                 audit["summary"]["missing_checks"],
+            )
+
+    def test_multi_family_regression_audit_marks_hidden_baseline_regression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            comparison = root / "comparison.json"
+            comparison.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "summary": {
+                            "status": "regressed",
+                            "train_examples_delta": 1,
+                            "best_accuracy_delta": -0.1,
+                            "worst_accuracy_delta": -0.2,
+                        },
+                        "delta": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            audit = _multi_family_regression_audit(
+                {
+                    "artifacts": {"comparison": str(comparison)},
+                    "acceptance_gate": {
+                        "accepted": True,
+                        "blocking_reasons": [],
+                    },
+                    "suite_family_validation": {
+                        "primitive": {
+                            "status": "regressed",
+                            "ok": False,
+                            "families": [
+                                {
+                                    "split": "val",
+                                    "family": "circle",
+                                    "accuracy_delta": -0.2,
+                                    "outcome": "regressed",
+                                }
+                            ],
+                        },
+                        "real_image": {
+                            "status": "not_configured",
+                            "ok": None,
+                            "families": [],
+                        },
+                        "lucide": {
+                            "status": "not_configured",
+                            "ok": None,
+                            "families": [],
+                        },
+                    },
+                    "suite_family_baseline_comparison": {
+                        "status": "checked",
+                        "ok": False,
+                        "comparison_count": 1,
+                        "comparison_outcome_counts": {"new_regression": 1},
+                        "new_regression_count": 1,
+                        "known_debt_count": 0,
+                        "missing_current_family_count": 0,
+                        "comparisons": [
+                            {
+                                "status": "new_regression",
+                                "suite": "primitive",
+                                "split": "val",
+                                "family": "circle",
+                                "baseline_outcome": "held",
+                                "current_outcome": "regressed",
+                            }
+                        ],
+                        "new_regressions": [{"family": "circle"}],
+                        "known_debt": [],
+                        "resolved_regressions": [],
+                        "missing_current_families": [],
+                    },
+                }
+            )
+
+            self.assertFalse(audit["ok"])
+            self.assertEqual(
+                audit["summary"]["missing_checks"],
+                ["blocking_regression_visibility"],
             )
 
     def test_self_learning_cycle_validates_accepted_model_on_curated_suite(self):
@@ -4026,6 +4126,23 @@ class SelfLearningTests(unittest.TestCase):
                         ],
                     },
                 },
+                "multi_family_regression_audit": {
+                    "ok": True,
+                    "checks": {
+                        "blocking_regression_visibility": True,
+                        "suite_family_view": True,
+                    },
+                    "summary": {
+                        "covered_check_count": 2,
+                        "required_check_count": 2,
+                        "missing_checks": [],
+                        "primitive_family_count": 1,
+                        "real_image_family_count": 1,
+                        "lucide_family_count": 0,
+                        "red_failure_count": 0,
+                        "yellow_drift_count": 1,
+                    },
+                },
                 "artifacts": {
                     "comparison": "comparison.json",
                     "gate": "gate.json",
@@ -4119,6 +4236,10 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("- Status: `fail`", markdown)
         self.assertIn("| `model_acceptance_contract` | `false` |", markdown)
         self.assertIn("- Applied review decisions: `accepted: 1`", markdown)
+        self.assertIn("## RIP8 Multi-Family Regression Audit", markdown)
+        self.assertIn("- Covered checks: 2 / 2", markdown)
+        self.assertIn("- Yellow drift: 1", markdown)
+        self.assertIn("| `suite_family_view` | `true` |", markdown)
         self.assertIn("## Reviewed Labels", markdown)
         self.assertIn("- Issue counts: `fragmentation: 1`", markdown)
         self.assertIn("review_item_id: 1", markdown)

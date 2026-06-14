@@ -526,6 +526,14 @@ records, acceptance-gate consistency, model-acceptance discipline, suite-family
 validation/baseline records, baseline update review evidence, and MLX raster
 pseudo-label minimums.
 
+Self-learning reports now also carry `multi_family_regression_audit`, a RIP8
+contract for cross-family regression discipline. It checks that primitive,
+real-image, and Lucide family views are present, that real-image
+pipeline-quality counts and contact-sheet evidence remain inspectable, that
+baseline comparison regressions are blocking when new, and that red failures,
+yellow drift, and training comparison deltas are explicit enough to review
+without manually correlating separate artifacts.
+
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training
 gate summary, so a primitive-family regression can block model acceptance even

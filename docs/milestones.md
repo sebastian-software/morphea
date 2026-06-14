@@ -1019,6 +1019,11 @@ Implemented so far:
   artifacts, provenance summaries, training/acceptance gates, model-acceptance
   discipline, suite-family validation, baseline review evidence, and MLX raster
   pseudo-label minimums.
+- self-learning cycle reports include `multi_family_regression_audit`, a
+  machine-readable RIP8 block for primitive/real-image/Lucide family views,
+  per-family outcomes, real-image pipeline-quality counts, baseline-regression
+  blocking visibility, configured validation artifacts, contact-sheet evidence,
+  failure severity, yellow drift, and comparison delta records.
 
 Remaining:
 

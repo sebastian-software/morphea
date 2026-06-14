@@ -1575,6 +1575,14 @@ Top-level fields:
   provenance summary records, training gate records, acceptance-gate consistency,
   model-acceptance discipline, suite-family validation records, baseline update
   review evidence, and MLX raster pseudo-label minimums.
+- `multi_family_regression_audit`: machine-readable RIP8 contract with
+  `schema_version`, `ok`, suite-level `checks`, and aggregate counts for
+  primitive, real-image, and Lucide families. The checks cover the normalized
+  suite-family view, per-family outcome records, real-image pipeline-quality
+  counts, baseline comparison records, blocking visibility for new baseline
+  regressions, configured validation artifacts, contact-sheet evidence, failed
+  gate severity/reason records, yellow-drift records, and training comparison
+  delta records.
 
 `morphea self-learn` always writes comparison and gate artifacts. It writes
 `model.json` only when the training gate accepts the reviewed-label

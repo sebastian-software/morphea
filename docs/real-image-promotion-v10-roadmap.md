@@ -713,6 +713,15 @@ Required report views:
 - node and fragmentation deltas;
 - contact-sheet index.
 
+Current machine-readable evidence: `morphea self-learn` cycle reports include
+`multi_family_regression_audit`, a RIP8 contract that checks whether regression
+evidence remains visible across primitive, real-image, and Lucide families. The
+audit verifies the normalized suite-family view, per-family outcomes, real-image
+pipeline-quality counts, baseline comparison records, blocking visibility for
+new baseline regressions, configured validation artifacts, contact-sheet
+evidence, failed-gate severity records, yellow-drift records, and training
+comparison deltas.
+
 Exit criteria:
 
 - every detector change can be audited by family;

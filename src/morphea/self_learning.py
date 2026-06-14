@@ -1136,6 +1136,7 @@ def run_self_learning_cycle(
         "suite_family_baseline_snapshot": suite_family_baseline_snapshot,
     }
     result["reviewed_label_loop_audit"] = _reviewed_label_loop_audit(result)
+    result["multi_family_regression_audit"] = _multi_family_regression_audit(result)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text(
         render_self_learning_cycle_markdown(result),
@@ -1972,6 +1973,333 @@ def _reviewed_label_loop_audit(result: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _multi_family_regression_audit(result: dict[str, object]) -> dict[str, object]:
+    validation = result.get("suite_family_validation")
+    baseline = result.get("suite_family_baseline_comparison")
+    comparison = _json_object_from_path(_cycle_artifact_path(result, "comparison"))
+    curated_report = _json_object_from_path(
+        _cycle_artifact_path(result, "curated_report")
+    )
+    lucide_report = _json_object_from_path(
+        _cycle_artifact_path(result, "lucide_report")
+    )
+    checks = {
+        "suite_family_view": _suite_family_view_ok(validation),
+        "family_outcome_records": _family_outcome_records_ok(validation),
+        "real_image_quality_counts": _real_image_quality_counts_ok(validation),
+        "baseline_comparison_records": _baseline_comparison_records_ok(baseline),
+        "blocking_regression_visibility": _blocking_regression_visibility_ok(result),
+        "configured_validation_artifacts": _configured_validation_artifacts_ok(
+            result,
+            curated_report=curated_report,
+            lucide_report=lucide_report,
+        ),
+        "contact_sheet_index": _contact_sheet_index_ok(curated_report),
+        "failure_severity_records": _failure_severity_records_ok(curated_report),
+        "yellow_drift_records": _yellow_drift_records_ok(
+            validation,
+            curated_report,
+        ),
+        "comparison_delta_records": _comparison_delta_records_ok(comparison),
+    }
+    missing_checks = [name for name, covered in checks.items() if not covered]
+    failure_summary = _curated_failure_summary(curated_report)
+    return {
+        "schema_version": 1,
+        "ok": not missing_checks,
+        "checks": checks,
+        "summary": {
+            "required_check_count": len(checks),
+            "covered_check_count": sum(1 for value in checks.values() if value),
+            "missing_checks": missing_checks,
+            "primitive_family_count": _suite_family_count(validation, "primitive"),
+            "real_image_family_count": _suite_family_count(validation, "real_image"),
+            "lucide_family_count": _suite_family_count(validation, "lucide"),
+            "baseline_comparison_count": _dict_int(
+                baseline,
+                "comparison_count",
+            ),
+            "new_regression_count": _dict_int(baseline, "new_regression_count"),
+            "known_debt_count": _dict_int(baseline, "known_debt_count"),
+            "missing_current_family_count": _dict_int(
+                baseline,
+                "missing_current_family_count",
+            ),
+            "red_failure_count": failure_summary["red_failure_count"],
+            "yellow_drift_count": failure_summary["yellow_drift_count"],
+            "contact_sheet_count": failure_summary["contact_sheet_count"],
+        },
+    }
+
+
+def _suite_family_view_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for suite_name in SELF_LEARNING_FAMILY_VALIDATION_SUITES:
+        suite = value.get(suite_name)
+        if not isinstance(suite, dict):
+            return False
+        if not isinstance(suite.get("status"), str):
+            return False
+        if suite.get("ok") is not None and not isinstance(suite.get("ok"), bool):
+            return False
+        if not isinstance(suite.get("families"), list):
+            return False
+    return True
+
+
+def _family_outcome_records_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for suite_name in SELF_LEARNING_FAMILY_VALIDATION_SUITES:
+        suite = value.get(suite_name)
+        if not isinstance(suite, dict):
+            return False
+        families = suite.get("families")
+        if not isinstance(families, list):
+            return False
+        for family in families:
+            if not isinstance(family, dict):
+                return False
+            if not _non_empty_string(family.get("family")):
+                return False
+            if not _non_empty_string(family.get("outcome")):
+                return False
+            if suite_name == "primitive":
+                if not isinstance(family.get("split"), str):
+                    return False
+                if "accuracy_delta" not in family:
+                    return False
+            else:
+                for key in (
+                    "case_count",
+                    "checked_count",
+                    "passed_count",
+                    "failed_count",
+                    "missing_source_count",
+                ):
+                    if key not in family:
+                        return False
+    return True
+
+
+def _real_image_quality_counts_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    real_image = value.get("real_image")
+    if not isinstance(real_image, dict):
+        return False
+    if real_image.get("status") != "checked":
+        return True
+    families = real_image.get("families")
+    if not isinstance(families, list):
+        return False
+    for family in families:
+        if not isinstance(family, dict):
+            return False
+        counts = family.get("pipeline_quality_counts")
+        if counts is not None and not _count_map_ok(counts):
+            return False
+    return True
+
+
+def _baseline_comparison_records_ok(value: object) -> bool:
+    if value is None:
+        return True
+    if not isinstance(value, dict):
+        return False
+    if value.get("status") != "checked":
+        return False
+    if not isinstance(value.get("ok"), bool):
+        return False
+    if not isinstance(value.get("comparisons"), list):
+        return False
+    if not _count_map_ok(value.get("comparison_outcome_counts")):
+        return False
+    for key in (
+        "new_regressions",
+        "known_debt",
+        "resolved_regressions",
+        "missing_current_families",
+    ):
+        if not isinstance(value.get(key), list):
+            return False
+    return True
+
+
+def _blocking_regression_visibility_ok(result: dict[str, object]) -> bool:
+    baseline = result.get("suite_family_baseline_comparison")
+    if not isinstance(baseline, dict) or baseline.get("ok") is not False:
+        return True
+    acceptance_gate = result.get("acceptance_gate")
+    if not isinstance(acceptance_gate, dict):
+        return False
+    blocking = acceptance_gate.get("blocking_reasons")
+    return (
+        isinstance(blocking, list)
+        and "suite_family_baseline_regressed" in blocking
+    )
+
+
+def _configured_validation_artifacts_ok(
+    result: dict[str, object],
+    *,
+    curated_report: dict[str, object] | None,
+    lucide_report: dict[str, object] | None,
+) -> bool:
+    curated = result.get("curated_validation")
+    if isinstance(curated, dict) and curated.get("status") == "checked":
+        if curated_report is None or not isinstance(
+            curated_report.get("cases"),
+            list,
+        ):
+            return False
+    lucide = result.get("lucide_validation")
+    if isinstance(lucide, dict) and lucide.get("status") == "checked":
+        if lucide_report is None or not isinstance(
+            lucide_report.get("cases"),
+            list,
+        ):
+            return False
+    return True
+
+
+def _contact_sheet_index_ok(curated_report: dict[str, object] | None) -> bool:
+    if curated_report is None:
+        return True
+    for case in _report_case_objects(curated_report):
+        if not isinstance(case.get("promotion"), dict):
+            continue
+        if case.get("status") != "checked":
+            continue
+        artifacts = case.get("artifacts")
+        if not isinstance(artifacts, dict):
+            return False
+        contact_sheet = _path_from_value(artifacts.get("contact_sheet"))
+        if contact_sheet is None or not contact_sheet.exists():
+            return False
+    return True
+
+
+def _failure_severity_records_ok(curated_report: dict[str, object] | None) -> bool:
+    if curated_report is None:
+        return True
+    for gate in _failed_curated_gates(curated_report):
+        if gate.get("severity") not in {"red", "yellow"}:
+            return False
+        if not _non_empty_string(gate.get("reason")):
+            return False
+        if not _non_empty_string(gate.get("id")):
+            return False
+    return True
+
+
+def _yellow_drift_records_ok(
+    validation: object,
+    curated_report: dict[str, object] | None,
+) -> bool:
+    if not _real_image_quality_counts_ok(validation):
+        return False
+    if curated_report is None:
+        return True
+    for gate in _failed_curated_gates(curated_report):
+        if gate.get("severity") == "yellow" and not _non_empty_string(
+            gate.get("reason")
+        ):
+            return False
+    return True
+
+
+def _comparison_delta_records_ok(comparison: dict[str, object] | None) -> bool:
+    if not isinstance(comparison, dict):
+        return False
+    summary = comparison.get("summary")
+    delta = comparison.get("delta")
+    if not isinstance(summary, dict) or not isinstance(delta, dict):
+        return False
+    if summary.get("status") not in {
+        "improved",
+        "insufficient_data",
+        "mixed",
+        "regressed",
+        "unchanged",
+    }:
+        return False
+    return (
+        "train_examples_delta" in summary
+        and "best_accuracy_delta" in summary
+        and "worst_accuracy_delta" in summary
+    )
+
+
+def _curated_failure_summary(
+    curated_report: dict[str, object] | None,
+) -> dict[str, int]:
+    failed_gates = _failed_curated_gates(curated_report)
+    contact_sheet_count = 0
+    if curated_report is not None:
+        for case in _report_case_objects(curated_report):
+            artifacts = case.get("artifacts")
+            if not isinstance(artifacts, dict):
+                continue
+            contact_sheet = _path_from_value(artifacts.get("contact_sheet"))
+            if contact_sheet is not None and contact_sheet.exists():
+                contact_sheet_count += 1
+    return {
+        "red_failure_count": sum(
+            1 for gate in failed_gates if gate.get("severity") == "red"
+        ),
+        "yellow_drift_count": sum(
+            1 for gate in failed_gates if gate.get("severity") == "yellow"
+        ),
+        "contact_sheet_count": contact_sheet_count,
+    }
+
+
+def _failed_curated_gates(
+    curated_report: dict[str, object] | None,
+) -> list[dict[str, object]]:
+    if curated_report is None:
+        return []
+    failed: list[dict[str, object]] = []
+    for case in _report_case_objects(curated_report):
+        gates = case.get("promotion_gates")
+        if not isinstance(gates, list):
+            continue
+        for gate in gates:
+            if isinstance(gate, dict) and gate.get("ok") is not True:
+                failed.append(gate)
+    return failed
+
+
+def _report_case_objects(report: dict[str, object]) -> list[dict[str, object]]:
+    return _object_list(report.get("cases"))
+
+
+def _suite_family_count(value: object, suite_name: str) -> int:
+    if not isinstance(value, dict):
+        return 0
+    suite = value.get(suite_name)
+    if not isinstance(suite, dict):
+        return 0
+    return len(_object_list(suite.get("families")))
+
+
+def _dict_int(value: object, key: str) -> int:
+    if not isinstance(value, dict):
+        return 0
+    return _int_value(value.get(key))
+
+
+def _count_map_ok(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return all(
+        isinstance(key, str) and isinstance(count, int)
+        for key, count in value.items()
+    )
+
+
 def _accepted_label_only_dataset(
     reviewed: dict[str, object] | None,
     dataset: dict[str, object] | None,
@@ -2068,10 +2396,10 @@ def _training_gate_records_ok(
             return False
     return comparison_summary.get("status") in {
         "improved",
-        "unchanged",
+        "insufficient_data",
         "mixed",
         "regressed",
-        "insufficient",
+        "unchanged",
     }
 
 
@@ -2304,6 +2632,32 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
             ]
         )
         checks = audit.get("checks", {})
+        if isinstance(checks, dict):
+            for name, covered in sorted(checks.items()):
+                lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
+    family_audit = result.get("multi_family_regression_audit")
+    if isinstance(family_audit, dict):
+        family_summary = family_audit.get("summary", {})
+        family_summary = family_summary if isinstance(family_summary, dict) else {}
+        lines.extend(
+            [
+                "",
+                "## RIP8 Multi-Family Regression Audit",
+                "",
+                f"- Status: `{'pass' if family_audit.get('ok', False) else 'fail'}`",
+                f"- Covered checks: {_fmt_metric(family_summary.get('covered_check_count'))} / {_fmt_metric(family_summary.get('required_check_count'))}",
+                f"- Missing checks: {_format_reason_list(family_summary.get('missing_checks'))}",
+                f"- Primitive families: {_fmt_metric(family_summary.get('primitive_family_count'))}",
+                f"- Real-image families: {_fmt_metric(family_summary.get('real_image_family_count'))}",
+                f"- Lucide families: {_fmt_metric(family_summary.get('lucide_family_count'))}",
+                f"- Red failures: {_fmt_metric(family_summary.get('red_failure_count'))}",
+                f"- Yellow drift: {_fmt_metric(family_summary.get('yellow_drift_count'))}",
+                "",
+                "| Check | Covered |",
+                "| --- | --- |",
+            ]
+        )
+        checks = family_audit.get("checks", {})
         if isinstance(checks, dict):
             for name, covered in sorted(checks.items()):
                 lines.append(f"| `{name}` | `{str(bool(covered)).lower()}` |")
