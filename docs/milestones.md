@@ -943,6 +943,10 @@ Implemented so far:
 - `morphea lucide-check --markdown report.md` writes a Quality Ledger that
   separates semantic pass/fail from visual-review labels and keeps named yellow
   Lucide calibration cases visible
+- `morphea lucide-corpus suite.json -o corpus.json --output-dir corpus/`
+  renders the definitive Lucide SVG set into supervised PNG/SVG training
+  examples with explicit shape, forbidden-shape, metric, bounded-region, and
+  source-SVG structure targets for own-model work
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle

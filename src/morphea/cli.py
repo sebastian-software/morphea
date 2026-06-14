@@ -22,7 +22,7 @@ from morphea.curated import (
 from morphea.dataset import generate_synthetic_dataset
 from morphea.eval import write_eval_summary
 from morphea.images import scene_from_flat_color_image
-from morphea.lucide_quality import check_lucide_suite
+from morphea.lucide_quality import build_lucide_training_corpus, check_lucide_suite
 from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
@@ -340,6 +340,12 @@ LUCIDE_CHECK_CONFIG_KEYS = {
     "output_dir",
     "markdown",
 } | set(VECTORIZE_DEFAULT_CONFIG)
+LUCIDE_CORPUS_CONFIG_KEYS = {
+    "suite",
+    "output",
+    "output_dir",
+    "markdown",
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -1058,6 +1064,20 @@ def main(argv: list[str] | None = None) -> None:
     )
     lucide_check.add_argument("--markdown", type=Path)
     lucide_check.add_argument("--config", type=Path)
+
+    lucide_corpus = subcommands.add_parser(
+        "lucide-corpus",
+        help="Build a supervised Lucide PNG/SVG training corpus manifest.",
+    )
+    lucide_corpus.add_argument("suite", type=Path, nargs="?")
+    lucide_corpus.add_argument("-o", "--output", type=Path)
+    lucide_corpus.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory for rendered PNGs and copied source SVGs.",
+    )
+    lucide_corpus.add_argument("--markdown", type=Path)
+    lucide_corpus.add_argument("--config", type=Path)
 
     promotion_export = subcommands.add_parser(
         "promotion-export",
@@ -1896,6 +1916,23 @@ def main(argv: list[str] | None = None) -> None:
             "checked "
             f"{result['case_count']} Lucide cases "
             f"({result['failed_count']} failed)"
+        )
+        if not result["ok"]:
+            raise SystemExit(1)
+        return
+
+    if args.command == "lucide-corpus":
+        corpus_config = _resolved_lucide_corpus_config(args)
+        result = build_lucide_training_corpus(
+            corpus_config["suite"],
+            output=corpus_config["output"],
+            output_dir=corpus_config["output_dir"],
+            markdown=corpus_config.get("markdown"),
+        )
+        print(
+            "built "
+            f"{result['example_count']} Lucide training examples "
+            f"from {result['case_count']} cases"
         )
         if not result["ok"]:
             raise SystemExit(1)
@@ -3182,6 +3219,23 @@ def _resolved_lucide_check_config(args: argparse.Namespace) -> dict[str, object]
     return config
 
 
+def _resolved_lucide_corpus_config(args: argparse.Namespace) -> dict[str, object]:
+    config = _load_lucide_corpus_config(args.config)
+    if args.suite is not None:
+        config["suite"] = args.suite
+    if args.output is not None:
+        config["output"] = args.output
+    if args.output_dir is not None:
+        config["output_dir"] = args.output_dir
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    _require_config_paths(config, ("suite", "output", "output_dir"), "lucide-corpus")
+    for key in ("suite", "output", "output_dir", "markdown"):
+        if config.get(key) is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -3339,6 +3393,23 @@ def _load_lucide_check_config(path: Path | None) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("suite", "output", "output_dir", "markdown", "classifier_model"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_lucide_corpus_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("lucide-corpus config must be a JSON object")
+    unknown = sorted(set(loaded) - LUCIDE_CORPUS_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported lucide-corpus config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("suite", "output", "output_dir", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 from morphea.cli import main
 from morphea.lucide_quality import (
     _check_expectations,
+    build_lucide_training_corpus,
     check_lucide_suite,
     load_lucide_suite,
     lucide_source_renderer_status,
@@ -155,6 +156,167 @@ class LucideQualityTests(unittest.TestCase):
                 "quality_label yellow requires review_notes",
             ):
                 load_lucide_suite(suite)
+
+    def test_build_lucide_training_corpus_writes_png_svg_and_labels(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "minus.svg"
+            suite = root / "suite.json"
+            output = root / "corpus.json"
+            output_dir = root / "corpus"
+            markdown = root / "corpus.md"
+            source.write_text(
+                """
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="M5 12h14" />
+</svg>
+""".strip(),
+                encoding="utf-8",
+            )
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "source_package": "lucide-static",
+                        "source_version": "test",
+                        "render": {
+                            "size": 64,
+                            "background": "#ffffff",
+                            "color": "#000000",
+                        },
+                        "cases": [
+                            {
+                                "id": "minus",
+                                "family": "simple_stroke_glyphs",
+                                "source": "minus.svg",
+                                "expectations": [
+                                    {
+                                        "id": "one-stroke",
+                                        "kind": "stroke_polyline",
+                                        "min_count": 1,
+                                        "max_count": 1,
+                                    },
+                                    {
+                                        "id": "no-circle",
+                                        "kind": "stroke_circle",
+                                        "min_count": 0,
+                                        "max_count": 0,
+                                    },
+                                    {
+                                        "id": "svg-close",
+                                        "metric": "svg_raster_l1_error",
+                                        "max_value": 0.04,
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch(
+                "morphea.lucide_quality.lucide_source_renderer_status",
+                return_value={"backend": "mock", "available": True},
+            ), patch(
+                "morphea.lucide_quality._render_source_svg",
+                side_effect=_write_minus_png,
+            ):
+                result = build_lucide_training_corpus(
+                    suite,
+                    output=output,
+                    output_dir=output_dir,
+                    markdown=markdown,
+                )
+
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["example_count"], 1)
+            self.assertTrue((output_dir / "minus" / "input.png").exists())
+            self.assertTrue((output_dir / "minus" / "source.svg").exists())
+            example = result["examples"][0]
+            self.assertEqual(example["status"], "rendered")
+            self.assertEqual(example["split"], "train")
+            self.assertEqual(
+                example["labels"]["anchor_kind_targets"],
+                {"stroke_polyline": 1},
+            )
+            self.assertEqual(
+                example["labels"]["forbidden_anchor_kinds"],
+                {"stroke_circle": 1},
+            )
+            self.assertEqual(
+                example["labels"]["metric_targets"][0]["metric"],
+                "svg_raster_l1_error",
+            )
+            self.assertEqual(
+                example["labels"]["source_svg"]["path_command_counts"],
+                {"H": 1, "M": 1},
+            )
+            saved = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                saved["target_summary"]["anchor_kind_targets"],
+                {"stroke_polyline": 1},
+            )
+            self.assertIn("# Morphea Lucide Training Corpus", markdown.read_text())
+
+    def test_lucide_corpus_cli_writes_manifest(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "minus.svg"
+            suite = root / "suite.json"
+            output = root / "corpus.json"
+            output_dir = root / "corpus"
+            source.write_text(
+                "<svg xmlns='http://www.w3.org/2000/svg'><path d='M5 12h14' /></svg>",
+                encoding="utf-8",
+            )
+            suite.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "render": {"size": 64},
+                        "cases": [
+                            {
+                                "id": "minus",
+                                "family": "simple_stroke_glyphs",
+                                "source": "minus.svg",
+                                "expectations": [
+                                    {
+                                        "id": "one-stroke",
+                                        "kind": "stroke_polyline",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch(
+                "morphea.lucide_quality.lucide_source_renderer_status",
+                return_value={"backend": "mock", "available": True},
+            ), patch(
+                "morphea.lucide_quality._render_source_svg",
+                side_effect=_write_minus_png,
+            ):
+                with redirect_stdout(StringIO()):
+                    main(
+                        [
+                            "lucide-corpus",
+                            str(suite),
+                            "-o",
+                            str(output),
+                            "--output-dir",
+                            str(output_dir),
+                        ]
+                    )
+
+            self.assertEqual(
+                json.loads(output.read_text(encoding="utf-8"))["example_count"],
+                1,
+            )
 
     def test_lucide_cli_exits_nonzero_when_contract_fails(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -441,6 +441,19 @@ fields into case reports, derives `quality_summary`, and the Markdown report
 writes a Quality Ledger that names yellow/red cases separately from semantic
 pass/fail status.
 
+`morphea lucide-corpus suite.json -o corpus.json --output-dir corpus/` renders
+the same Lucide source SVGs into supervised PNG/SVG training examples without
+running vectorization. The corpus manifest has `schema_version: 1`,
+`source: "lucide_suite"`, source package/version metadata, renderer and render
+config, `family_summary`, `target_summary`, and an `examples` array. Each
+example records `input_png`, copied `source_svg`, split, family,
+`quality_label`, review notes, render config, and `labels` derived from the
+suite expectations plus parsed source-SVG structure. Labels include
+`anchor_kind_targets`, `group_kind_targets`, forbidden kind maps, bounded
+anchor targets, metric targets, raw expectations, source SVG element counts,
+and path-command counts. This artifact is intended as supervised training
+data; it is not a promotion-quality acceptance gate by itself.
+
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates
 the metadata and copies it into JSON reports, Markdown reports, and deterministic

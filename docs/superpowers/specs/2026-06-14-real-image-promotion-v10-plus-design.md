@@ -314,7 +314,11 @@ explicit zero-match contracts: `circle` forbids a full-icon irregular
 `stroke_path` via `not-irregular-badge-outline`, and `badge-check` forbids a
 full-icon `stroke_circle` via `not-circle-substitute`. Lucide Markdown reports
 render these as `= 0` expectations, and violations are labeled
-`forbidden_matches`.
+`forbidden_matches`. `morphea lucide-corpus` now renders the same suite into a
+supervised PNG/SVG corpus manifest with source-SVG structure, positive shape
+targets, forbidden-shape targets, bounded-region targets, and metric targets,
+so own-model work can train from definitive icon ground truth rather than
+MLX/SAM proposal output.
 
 Exit criteria:
 

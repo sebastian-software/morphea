@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +47,7 @@ LUCIDE_VECTORIZE_CONFIG_KEYS = {
     "rounded_rect_max_fill_error",
 }
 LUCIDE_QUALITY_LABELS = {"green", "yellow", "red"}
+_PATH_COMMAND = re.compile(r"[AaCcHhLlMmQqSsTtVvZz]")
 
 
 def load_lucide_suite(path: str | Path) -> dict[str, Any]:
@@ -168,6 +171,135 @@ def check_lucide_suite(
         markdown_path.parent.mkdir(parents=True, exist_ok=True)
         markdown_path.write_text(render_lucide_markdown(report), encoding="utf-8")
     return report
+
+
+def build_lucide_training_corpus(
+    suite_path: str | Path,
+    *,
+    output: str | Path,
+    output_dir: str | Path,
+    markdown: str | Path | None = None,
+) -> dict[str, Any]:
+    """Render Lucide source SVGs into a supervised image/SVG corpus manifest."""
+
+    suite_file = Path(suite_path)
+    suite = load_lucide_suite(suite_file)
+    render_config = _render_config(suite)
+    renderer = lucide_source_renderer_status()
+    corpus_dir = Path(output_dir)
+    corpus_dir.mkdir(parents=True, exist_ok=True)
+    examples = [
+        _lucide_training_example(
+            case,
+            suite_file=suite_file,
+            output_dir=corpus_dir,
+            renderer=renderer,
+            render_config=render_config,
+        )
+        for case in suite["cases"]
+    ]
+    rendered_examples = [item for item in examples if item.get("status") == "rendered"]
+    report = {
+        "schema_version": 1,
+        "source": "lucide_suite",
+        "suite": str(suite_file),
+        "source_package": suite.get("source_package"),
+        "source_version": suite.get("source_version"),
+        "renderer": renderer,
+        "render": render_config,
+        "output_dir": str(corpus_dir),
+        "case_count": len(examples),
+        "example_count": len(rendered_examples),
+        "ok": len(rendered_examples) == len(examples),
+        "family_summary": _training_family_summary(examples),
+        "target_summary": _training_target_summary(rendered_examples),
+        "examples": examples,
+    }
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    if markdown is not None:
+        markdown_path = Path(markdown)
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(
+            render_lucide_corpus_markdown(report),
+            encoding="utf-8",
+        )
+    return report
+
+
+def render_lucide_corpus_markdown(report: dict[str, Any]) -> str:
+    """Render a scan-friendly supervised Lucide corpus summary."""
+
+    examples = [
+        item for item in report.get("examples", []) if isinstance(item, dict)
+    ]
+    target_summary = report.get("target_summary", {})
+    if not isinstance(target_summary, dict):
+        target_summary = {}
+    lines = [
+        "# Morphea Lucide Training Corpus",
+        "",
+        f"- Suite: `{report.get('suite', 'n/a')}`",
+        f"- Source: `{report.get('source_package', 'n/a')}@{report.get('source_version', 'n/a')}`",
+        f"- Renderer: `{_renderer_label(report.get('renderer'))}`",
+        f"- Output dir: `{report.get('output_dir', 'n/a')}`",
+        f"- Cases: {_fmt_value(report.get('case_count'))}",
+        f"- Examples: {_fmt_value(report.get('example_count'))}",
+        f"- OK: `{str(report.get('ok', False)).lower()}`",
+        "",
+        "## Families",
+        "",
+        "| Family | Cases | Rendered | Missing |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    family_summary = report.get("family_summary", {})
+    if isinstance(family_summary, dict):
+        for family, summary in sorted(family_summary.items()):
+            if not isinstance(summary, dict):
+                continue
+            lines.append(
+                "| "
+                f"`{family}` | "
+                f"{_fmt_value(summary.get('case_count'))} | "
+                f"{_fmt_value(summary.get('rendered_count'))} | "
+                f"{_fmt_value(summary.get('missing_count'))} |"
+            )
+    lines.extend(
+        [
+            "",
+            "## Target Summary",
+            "",
+            f"- Anchor targets: {_fmt_counts(target_summary.get('anchor_kind_targets'))}",
+            f"- Forbidden anchors: {_fmt_counts(target_summary.get('forbidden_anchor_kinds'))}",
+            f"- Source SVG elements: {_fmt_counts(target_summary.get('source_element_counts'))}",
+            "",
+            "## Examples",
+            "",
+            "| Case | Split | Family | Quality | Status | PNG | Source SVG | Anchor targets | Forbidden |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for example in examples:
+        labels = example.get("labels", {})
+        if not isinstance(labels, dict):
+            labels = {}
+        lines.append(
+            "| "
+            f"`{example.get('id', 'n/a')}` | "
+            f"`{example.get('split', 'n/a')}` | "
+            f"`{example.get('family', 'n/a')}` | "
+            f"`{example.get('quality_label', 'n/a')}` | "
+            f"`{example.get('status', 'n/a')}` | "
+            f"`{example.get('input_png', 'n/a')}` | "
+            f"`{example.get('source_svg', 'n/a')}` | "
+            f"{_fmt_counts(labels.get('anchor_kind_targets'))} | "
+            f"{_fmt_counts(labels.get('forbidden_anchor_kinds'))} |"
+        )
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_lucide_markdown(report: dict[str, Any]) -> str:
@@ -436,6 +568,194 @@ def _check_lucide_case(
     elif input_path.name.endswith(".lucide-input.png"):
         input_path.unlink(missing_ok=True)
     return result
+
+
+def _lucide_training_example(
+    case: dict[str, Any],
+    *,
+    suite_file: Path,
+    output_dir: Path,
+    renderer: dict[str, Any],
+    render_config: dict[str, Any],
+) -> dict[str, Any]:
+    source = (suite_file.parent / str(case["source"])).resolve()
+    case_dir = output_dir / str(case["id"])
+    input_png = case_dir / "input.png"
+    source_copy = case_dir / "source.svg"
+    labels = _lucide_training_labels(case, source)
+    result: dict[str, Any] = {
+        "id": case["id"],
+        "split": str(case.get("split", "train")),
+        "family": case["family"],
+        "quality_label": _lucide_quality_label(case, ok=True),
+        "review_notes": _lucide_review_notes(case),
+        "status": "not_rendered",
+        "source": str(source),
+        "source_exists": source.exists(),
+        "input_png": str(input_png),
+        "source_svg": str(source_copy),
+        "render": dict(render_config),
+        "labels": labels,
+    }
+    if not source.exists():
+        result["status"] = "missing_source"
+        return result
+    if not renderer.get("available"):
+        result["status"] = "renderer_unavailable"
+        result["renderer"] = renderer
+        return result
+    case_dir.mkdir(parents=True, exist_ok=True)
+    _render_source_svg(
+        source,
+        input_png,
+        renderer=renderer,
+        render_config=render_config,
+    )
+    shutil.copy2(source, source_copy)
+    result["status"] = "rendered"
+    return result
+
+
+def _lucide_training_labels(case: dict[str, Any], source: Path) -> dict[str, Any]:
+    expectations = [
+        expectation
+        for expectation in case.get("expectations", [])
+        if isinstance(expectation, dict)
+    ]
+    return {
+        "schema_version": 1,
+        "source_svg": _source_svg_training_summary(source),
+        "anchor_kind_targets": _expected_kind_counts(expectations, "kind"),
+        "group_kind_targets": _expected_kind_counts(expectations, "group_kind"),
+        "forbidden_anchor_kinds": _forbidden_kind_counts(expectations, "kind"),
+        "forbidden_group_kinds": _forbidden_kind_counts(expectations, "group_kind"),
+        "bounded_anchor_targets": _bounded_anchor_targets(expectations),
+        "metric_targets": _metric_targets(expectations),
+        "expectations": [dict(expectation) for expectation in expectations],
+    }
+
+
+def _source_svg_training_summary(source: Path) -> dict[str, Any]:
+    if not source.exists():
+        return {"status": "missing_source"}
+    try:
+        root = ET.fromstring(source.read_text(encoding="utf-8"))
+    except ET.ParseError as exc:
+        return {
+            "status": "parse_error",
+            "error": str(exc),
+        }
+    path_command_counts: dict[str, int] = {}
+    path_count = 0
+    for element in root.iter():
+        if _local_name(element.tag) != "path":
+            continue
+        path_count += 1
+        for command in _PATH_COMMAND.findall(element.attrib.get("d", "")):
+            key = command.upper()
+            path_command_counts[key] = path_command_counts.get(key, 0) + 1
+    return {
+        "status": "parsed",
+        "view_box": root.attrib.get("viewBox"),
+        "width": root.attrib.get("width"),
+        "height": root.attrib.get("height"),
+        "fill": root.attrib.get("fill"),
+        "stroke": root.attrib.get("stroke"),
+        "stroke_width": root.attrib.get("stroke-width"),
+        "stroke_linecap": root.attrib.get("stroke-linecap"),
+        "stroke_linejoin": root.attrib.get("stroke-linejoin"),
+        "element_counts": _svg_element_counts(root),
+        "path_count": path_count,
+        "path_command_counts": dict(sorted(path_command_counts.items())),
+    }
+
+
+def _svg_element_counts(root: ET.Element) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for element in root.iter():
+        name = _local_name(element.tag)
+        counts[name] = counts.get(name, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _expected_kind_counts(
+    expectations: list[dict[str, Any]],
+    key: str,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for expectation in expectations:
+        value = expectation.get(key)
+        if not isinstance(value, str) or not value:
+            continue
+        minimum = int(expectation.get("min_count", 1))
+        maximum = expectation.get("max_count")
+        if minimum <= 0 and maximum == 0:
+            continue
+        if minimum <= 0:
+            continue
+        counts[value] = counts.get(value, 0) + minimum
+    return dict(sorted(counts.items()))
+
+
+def _forbidden_kind_counts(
+    expectations: list[dict[str, Any]],
+    key: str,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for expectation in expectations:
+        value = expectation.get(key)
+        if not isinstance(value, str) or not value:
+            continue
+        if (
+            int(expectation.get("min_count", 1)) == 0
+            and expectation.get("max_count") == 0
+        ):
+            counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _bounded_anchor_targets(
+    expectations: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    targets = []
+    for expectation in expectations:
+        kind = expectation.get("kind")
+        bounds = expectation.get("bounds")
+        if not isinstance(kind, str) or bounds is None:
+            continue
+        targets.append(
+            {
+                "id": expectation.get("id"),
+                "kind": kind,
+                "bounds": bounds,
+                "min_iou": expectation.get("min_iou", 0.0),
+                "min_count": expectation.get("min_count", 1),
+                "max_count": expectation.get("max_count"),
+            }
+        )
+    return targets
+
+
+def _metric_targets(expectations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    targets = []
+    for expectation in expectations:
+        metric = expectation.get("metric")
+        if not isinstance(metric, str) or not metric:
+            continue
+        target = {
+            "id": expectation.get("id"),
+            "metric": metric,
+        }
+        if "min_value" in expectation:
+            target["min_value"] = expectation["min_value"]
+        if "max_value" in expectation:
+            target["max_value"] = expectation["max_value"]
+        targets.append(target)
+    return targets
 
 
 def _render_source_svg(
@@ -817,6 +1137,61 @@ def _family_summary(cases: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
 
 def _quality_summary(cases: list[dict[str, Any]]) -> dict[str, int]:
     return _counts(case.get("quality_label", "unknown") for case in cases)
+
+
+def _training_family_summary(
+    examples: list[dict[str, Any]],
+) -> dict[str, dict[str, int]]:
+    summary: dict[str, dict[str, int]] = {}
+    for example in examples:
+        family = str(example.get("family", "unknown"))
+        item = summary.setdefault(
+            family,
+            {"case_count": 0, "rendered_count": 0, "missing_count": 0},
+        )
+        item["case_count"] += 1
+        if example.get("status") == "rendered":
+            item["rendered_count"] += 1
+        else:
+            item["missing_count"] += 1
+    return dict(sorted(summary.items()))
+
+
+def _training_target_summary(
+    examples: list[dict[str, Any]],
+) -> dict[str, dict[str, int]]:
+    anchor_targets: dict[str, int] = {}
+    group_targets: dict[str, int] = {}
+    forbidden_anchors: dict[str, int] = {}
+    source_element_counts: dict[str, int] = {}
+    path_command_counts: dict[str, int] = {}
+    for example in examples:
+        labels = example.get("labels", {})
+        if not isinstance(labels, dict):
+            continue
+        _add_counts(anchor_targets, labels.get("anchor_kind_targets"))
+        _add_counts(group_targets, labels.get("group_kind_targets"))
+        _add_counts(forbidden_anchors, labels.get("forbidden_anchor_kinds"))
+        source_svg = labels.get("source_svg", {})
+        if isinstance(source_svg, dict):
+            _add_counts(source_element_counts, source_svg.get("element_counts"))
+            _add_counts(path_command_counts, source_svg.get("path_command_counts"))
+    return {
+        "anchor_kind_targets": dict(sorted(anchor_targets.items())),
+        "group_kind_targets": dict(sorted(group_targets.items())),
+        "forbidden_anchor_kinds": dict(sorted(forbidden_anchors.items())),
+        "source_element_counts": dict(sorted(source_element_counts.items())),
+        "path_command_counts": dict(sorted(path_command_counts.items())),
+    }
+
+
+def _add_counts(target: dict[str, int], value: object) -> None:
+    if not isinstance(value, dict):
+        return
+    for key, count in value.items():
+        if not isinstance(count, (int, float)):
+            continue
+        target[str(key)] = target.get(str(key), 0) + int(count)
 
 
 def _lucide_quality_label(case: dict[str, Any], *, ok: bool) -> str:

@@ -239,6 +239,9 @@ Exit criteria:
 - Lucide status is documented as 24/24, with the prior `badge-check` false
   positive resolved and named yellow cases still visible in generated
   `lucide-check --markdown` reports.
+- `morphea lucide-corpus` can render the Lucide calibration suite into a
+  supervised PNG/SVG training manifest so own-model work starts from explicit
+  ground truth instead of MLX/SAM proposal output.
 - Real-image suite status is summarized with green/yellow/red labels.
 - Existing snapshot and run artifact commands remain documented.
 - No document claims that aggregate pass/fail equals visual quality.

@@ -61,6 +61,12 @@ also pins the negative side of the contract: `badge-check` requires
 `not-irregular-badge-outline = 0`; forbidden-match failures are reported as
 `forbidden_matches`.
 
+`morphea lucide-corpus` now renders the same Lucide source SVGs into supervised
+PNG/SVG training examples with machine-readable anchor, forbidden-shape,
+metric, bounded-region, and source-SVG path-command targets. This creates the
+first explicit definitive-shape corpus for own-model training; it is separate
+from `lucide-check` quality gating and from MLX/SAM proposal experiments.
+
 ## Visual Artifact Posture
 
 Current curated runs emit per-case run directories with input copy, SVG output,
