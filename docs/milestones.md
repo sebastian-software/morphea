@@ -1017,7 +1017,7 @@ Implemented so far:
 - the same Markdown report includes a Region Truth table for configured
   source-region gates, with stable region ids, state, bounds, expected kinds,
   actual matching counts, topology evidence, per-region layer-depth evidence,
-  and selected-anchor kind profiles.
+  selected-anchor kind profiles, and candidate rejection counts.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

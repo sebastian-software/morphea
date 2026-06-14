@@ -1284,6 +1284,16 @@ class CuratedSuiteTests(unittest.TestCase):
                     "max_closed_anchors": 0,
                     "severity": "red",
                 },
+                {
+                    "id": "forbid-circle-region",
+                    "gate_type": "shape_class",
+                    "bounds": [4, 4, 18, 18],
+                    "expected_kinds": ["circle"],
+                    "forbidden_kinds": ["circle"],
+                    "min_iou": 0.3,
+                    "min_count": 1,
+                    "severity": "red",
+                },
             ]
             suite_path.write_text(
                 json.dumps(
@@ -1325,6 +1335,10 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertEqual(
                 gate_by_id["circle-region"]["evidence"]["matching_count"],
                 1,
+            )
+            self.assertEqual(
+                gate_by_id["circle-region"]["evidence"]["candidate_rejections"],
+                [],
             )
             self.assertTrue(gate_by_id["wide-circle-region"]["ok"])
             self.assertEqual(
@@ -1394,6 +1408,22 @@ class CuratedSuiteTests(unittest.TestCase):
                 "closed_anchor_count 1 > 0",
                 gate_by_id["circle-topology"]["reason"],
             )
+            topology_rejection = gate_by_id["circle-topology"]["evidence"][
+                "candidate_rejections"
+            ][0]
+            self.assertEqual(topology_rejection["id"], "anchor-0000")
+            self.assertEqual(topology_rejection["kind"], "circle")
+            self.assertEqual(topology_rejection["reasons"], ["topology_failure"])
+            self.assertEqual(
+                topology_rejection["topology_failures"],
+                ["closed_anchor_count 1 > 0"],
+            )
+            self.assertFalse(gate_by_id["forbid-circle-region"]["ok"])
+            forbidden_rejection = gate_by_id["forbid-circle-region"]["evidence"][
+                "candidate_rejections"
+            ][0]
+            self.assertEqual(forbidden_rejection["id"], "anchor-0000")
+            self.assertEqual(forbidden_rejection["reasons"], ["forbidden_kind"])
             components = result["cases"][0]["metrics"]["editability_v10_components"]
             self.assertEqual(
                 components["shape_identity_confidence"]["score"],
@@ -1401,7 +1431,7 @@ class CuratedSuiteTests(unittest.TestCase):
             )
             self.assertEqual(
                 components["shape_identity_confidence"]["failed_gates"],
-                ["empty-region"],
+                ["empty-region", "forbid-circle-region"],
             )
             self.assertEqual(
                 components["topology_consistency"]["score"],
@@ -1428,7 +1458,7 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn(
                 "| `single-circle` | `circle-region` | `promoted` | "
                 "`shape_class` | `4,4,18,18` | kinds=`circle`, "
-                "min_iou=0.3 | matching=1, selected=1, forbidden=0 | "
+                "min_iou=0.3 | matching=1, selected=1, forbidden=0, rejected=0 | "
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, failures=n/a |",
@@ -1437,14 +1467,14 @@ class CuratedSuiteTests(unittest.TestCase):
             self.assertIn(
                 "| `single-circle` | `empty-region` | `rejected` | "
                 "`shape_class` | `0,0,4,4` | kinds=`circle`, "
-                "min_iou=0.1 | matching=0, selected=0, forbidden=0 | "
+                "min_iou=0.1 | matching=0, selected=0, forbidden=0, rejected=0 | "
                 "layers=0, structural=0, roles=`none`, kinds=`none` |",
                 markdown,
             )
             self.assertIn(
                 "| `single-circle` | `circle-topology` | `rejected` | "
                 "`topology` | `4,4,18,18` | kinds=`circle`, min_iou=0.3 | "
-                "matching=1, selected=1, forbidden=0 | "
+                "matching=1, selected=1, forbidden=0, rejected=1 | "
                 "layers=1, structural=1, roles=`filled_primitives`, "
                 "kinds=`circle`=1 | "
                 "closed=1, open=0, holes=0, cutouts=0, "

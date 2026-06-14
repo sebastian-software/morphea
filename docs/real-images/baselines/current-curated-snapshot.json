@@ -1226,6 +1226,7 @@
               1005.0,
               700.0
             ],
+            "candidate_rejections": [],
             "description": "The shoulder brooches and center gold dots must contain five editable circle anchors without relying on circles elsewhere in the image.",
             "expected_kinds": [
               "circle"
@@ -2010,6 +2011,7 @@
               200.0,
               174.0
             ],
+            "candidate_rejections": [],
             "description": "The visible unselected radio-control region must contain a stroked circle anchor inside the expected source bounds.",
             "expected_kinds": [
               "stroke_circle"

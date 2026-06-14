@@ -286,6 +286,12 @@ Deliverables:
 - candidate-level reject reasons for shape and topology mismatches;
 - focused fixtures for every corrected failure.
 
+Current evidence slice: region-gate evidence now writes `candidate_rejections`
+for selected anchors that failed the region contract. Rejections preserve anchor
+id, kind, geometry overlap, reasons (`kind_mismatch`, `forbidden_kind`,
+`topology_failure`), and topology failures, while the Region Truth table exposes
+the rejected candidate count next to matching/selected/forbidden counts.
+
 Exit criteria:
 
 - badge-like, ring-like, and radio-control-like objects cannot satisfy each

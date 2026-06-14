@@ -1163,6 +1163,13 @@ def _region_promotion_gates(
         ]
         topology_summary = _region_topology_summary(selected)
         topology_failures = _region_topology_failures(gate, topology_summary)
+        candidate_rejections = _region_gate_candidate_rejections(
+            selected,
+            expected_kinds=expected_kinds,
+            forbidden_kinds=forbidden_kinds,
+            topology_failures=topology_failures,
+            region_bounds=bounds,
+        )
         count_ok = len(matching) >= min_count
         if isinstance(max_count, int):
             count_ok = count_ok and len(matching) <= max_count
@@ -1201,6 +1208,7 @@ def _region_promotion_gates(
                     "forbidden_count": len(forbidden),
                     "topology_summary": topology_summary,
                     "topology_failures": topology_failures,
+                    "candidate_rejections": candidate_rejections,
                     "selected_anchors": _region_gate_anchor_evidence(
                         selected,
                         region_bounds=bounds,
@@ -1543,6 +1551,36 @@ def _region_gate_reason(
     if topology_failures:
         return "topology constraints failed: " + ", ".join(topology_failures)
     return f"matching anchors in region: {matching_count}"
+
+
+def _region_gate_candidate_rejections(
+    anchors: list[dict[str, object]],
+    *,
+    expected_kinds: list[str],
+    forbidden_kinds: list[str],
+    topology_failures: list[str],
+    region_bounds: tuple[float, float, float, float] | None = None,
+) -> list[dict[str, object]]:
+    rejections: list[dict[str, object]] = []
+    for anchor in anchors[:12]:
+        kind = str(anchor.get("kind", "unknown"))
+        reasons = []
+        if expected_kinds and kind not in expected_kinds:
+            reasons.append("kind_mismatch")
+        if kind in forbidden_kinds:
+            reasons.append("forbidden_kind")
+        if topology_failures:
+            reasons.append("topology_failure")
+        if not reasons:
+            continue
+        item = _region_gate_anchor_evidence(
+            [anchor],
+            region_bounds=region_bounds,
+        )[0]
+        item["reasons"] = reasons
+        item["topology_failures"] = list(topology_failures)
+        rejections.append(item)
+    return rejections
 
 
 def _region_gate_anchor_evidence(
@@ -3688,10 +3726,15 @@ def _fmt_region_expected(evidence: dict[str, object]) -> str:
 
 
 def _fmt_region_actual(evidence: dict[str, object]) -> str:
+    candidate_rejections = evidence.get("candidate_rejections")
+    rejected_count = (
+        len(candidate_rejections) if isinstance(candidate_rejections, list) else 0
+    )
     return (
         f"matching={_fmt_markdown_value(evidence.get('matching_count'))}, "
         f"selected={_fmt_markdown_value(evidence.get('selected_count'))}, "
-        f"forbidden={_fmt_markdown_value(evidence.get('forbidden_count'))}"
+        f"forbidden={_fmt_markdown_value(evidence.get('forbidden_count'))}, "
+        f"rejected={_fmt_markdown_value(rejected_count)}"
     )
 
 
