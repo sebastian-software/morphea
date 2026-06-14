@@ -291,7 +291,11 @@ Purpose: make human review fast, consistent, and reusable for learning.
 
 Deliverables:
 
-- review packets grouped by failed gate and issue tag;
+- review packets grouped by failed gate and issue tag. First slice: curated
+  runs with `--output-dir` write suite-level `review-packet.json` and
+  `review-packet.md` that collect deferred/rejected cases and link their
+  contact sheet, promotion review, editability review, and pending
+  `review-decision.json`;
 - reviewer decision templates for accepted, corrected, rejected, and deferred;
 - applied-review summaries that link back to region truth and promotion gates;
 - a small local gallery for current green/yellow/red examples.

@@ -420,6 +420,8 @@ class CuratedSuiteTests(unittest.TestCase):
                 run=True,
             )
 
+            self.assertIn("review_packet", result["artifacts"])
+            self.assertIn("review_packet_markdown", result["artifacts"])
             case = result["cases"][0]
             self.assertTrue(case["ok"])
             self.assertEqual(case["promotion_summary"]["decision"], "deferred")
@@ -448,6 +450,46 @@ class CuratedSuiteTests(unittest.TestCase):
                 manifest["anchors"][0]["promotion_state"],
                 "deferred",
             )
+            review_packet = json.loads(
+                (output_dir / "review-packet.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(review_packet["case_count"], 1)
+            self.assertEqual(review_packet["deferred_count"], 1)
+            self.assertEqual(review_packet["manual_review_count"], 1)
+            self.assertEqual(
+                review_packet["issue_groups"],
+                {"manual_review_pending": ["simple-circle"]},
+            )
+            self.assertEqual(
+                review_packet["failed_gate_groups"],
+                {"current_quality_label": ["simple-circle"]},
+            )
+            self.assertEqual(
+                review_packet["cases"][0]["case_id"],
+                "simple-circle",
+            )
+            self.assertEqual(
+                review_packet["cases"][0]["suggested_review_decision"],
+                "deferred",
+            )
+            self.assertIn(
+                "review_decision",
+                review_packet["cases"][0]["artifacts"],
+            )
+            review_packet_markdown = (
+                output_dir / "review-packet.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("# Morphēa Review Packet", review_packet_markdown)
+            self.assertIn(
+                "| `manual_review_pending` | `simple-circle` |",
+                review_packet_markdown,
+            )
+            self.assertIn(
+                "| `current_quality_label` | `simple-circle` |",
+                review_packet_markdown,
+            )
+            self.assertIn("| `simple-circle` | `deferred` |", review_packet_markdown)
+            self.assertIn("- Review decision: `", review_packet_markdown)
 
     def test_promotion_export_artifacts_partition_rejected_anchors(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -536,6 +536,15 @@ directory includes the standard vectorize artifacts plus:
   diff, promotion decision, and failed-gate panels for cases with promotion
   metadata
 
+The curated output root also includes suite-level review packet artifacts:
+
+- `review-packet.json`: machine-readable queue of deferred/rejected cases that
+  need a reviewer decision, with issue tags, failed gate/component ids,
+  suggested decision, and paths to per-case review artifacts
+- `review-packet.md`: scan-friendly Markdown summary of the same queue, with
+  links/paths to contact sheets, promotion reviews, editability reviews, and
+  `review-decision.json` files
+
 When a suite case includes `promotion` metadata, checked and missing-source
 case reports also include:
 

@@ -184,6 +184,11 @@ def check_curated_suite(
         "family_summary": _curated_family_summary(cases),
         "cases": cases,
     }
+    if suite_output_dir is not None:
+        report["artifacts"] = _write_review_packet_artifacts(
+            suite_output_dir,
+            report,
+        )
     if overrides:
         report["config_overrides"] = _json_config(overrides)
     if baseline_snapshot is not None:
@@ -2134,6 +2139,238 @@ def _write_promotion_export_artifacts(
         "editability_review": str(editability_review_path),
         "review_decision": str(review_decision_path),
     }
+
+
+def _write_review_packet_artifacts(
+    output_dir: Path,
+    report: dict[str, Any],
+) -> dict[str, str]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    packet = _review_packet(report)
+    packet_path = output_dir / "review-packet.json"
+    markdown_path = output_dir / "review-packet.md"
+    packet_path.write_text(
+        json.dumps(packet, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        _render_review_packet_markdown(packet),
+        encoding="utf-8",
+    )
+    return {
+        "review_packet": str(packet_path),
+        "review_packet_markdown": str(markdown_path),
+    }
+
+
+def _review_packet(report: dict[str, Any]) -> dict[str, object]:
+    cases = [
+        _review_packet_case(case)
+        for case in report.get("cases", [])
+        if isinstance(case, dict) and _case_needs_review_packet(case)
+    ]
+    return {
+        "schema_version": 1,
+        "suite": report.get("suite"),
+        "run": bool(report.get("run", False)),
+        "case_count": len(cases),
+        "deferred_count": sum(
+            1 for case in cases if case.get("promotion_decision") == "deferred"
+        ),
+        "rejected_count": sum(
+            1 for case in cases if case.get("promotion_decision") == "rejected"
+        ),
+        "manual_review_count": sum(
+            1 for case in cases if case.get("editability_decision") == "manual_review"
+        ),
+        "issue_groups": _review_packet_groups(cases, "issue_tags"),
+        "failed_gate_groups": _review_packet_groups(cases, "failed_gate_ids"),
+        "cases": cases,
+    }
+
+
+def _case_needs_review_packet(case: dict[str, Any]) -> bool:
+    summary = case.get("promotion_summary", {})
+    review = case.get("editability_review", {})
+    decision = summary.get("decision") if isinstance(summary, dict) else None
+    editability_decision = review.get("decision") if isinstance(review, dict) else None
+    return decision in {"deferred", "rejected"} or editability_decision in {
+        "manual_review",
+        "rejected",
+    }
+
+
+def _review_packet_case(case: dict[str, Any]) -> dict[str, object]:
+    promotion = case.get("promotion", {})
+    promotion = promotion if isinstance(promotion, dict) else {}
+    summary = case.get("promotion_summary", {})
+    summary = summary if isinstance(summary, dict) else {}
+    review = case.get("editability_review", {})
+    review = review if isinstance(review, dict) else {}
+    decision = case.get("review_decision", {})
+    decision = decision if isinstance(decision, dict) else {}
+    artifacts = case.get("artifacts", {})
+    artifacts = artifacts if isinstance(artifacts, dict) else {}
+    return {
+        "case_id": case.get("id"),
+        "status": case.get("status"),
+        "source": case.get("source"),
+        "source_exists": bool(case.get("source_exists", False)),
+        "quality_label": promotion.get("current_quality_label"),
+        "issue_tags": _promotion_issue_tags(promotion),
+        "promotion_decision": summary.get("decision", "n/a"),
+        "red_gate_count": summary.get("red_gate_count", 0),
+        "yellow_gate_count": summary.get("yellow_gate_count", 0),
+        "failed_gate_ids": _failed_gate_ids(case.get("promotion_gates")),
+        "editability_decision": review.get("decision", "n/a"),
+        "editability_accepted": bool(review.get("accepted", False)),
+        "failed_component_ids": _failed_component_ids(
+            review.get("failed_components")
+        ),
+        "suggested_review_decision": decision.get("suggested_decision", "n/a"),
+        "review_decision_state": decision.get("decision", "n/a"),
+        "artifacts": {
+            key: artifacts[key]
+            for key in (
+                "contact_sheet",
+                "promotion_review",
+                "editability_review",
+                "review_decision",
+                "promotion_export",
+                "manifest",
+            )
+            if isinstance(artifacts.get(key), str)
+        },
+    }
+
+
+def _failed_gate_ids(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [
+        str(gate.get("id", "n/a"))
+        for gate in value
+        if isinstance(gate, dict) and not gate.get("ok", False)
+    ]
+
+
+def _failed_component_ids(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [
+        str(component.get("id", "n/a"))
+        for component in value
+        if isinstance(component, dict)
+    ]
+
+
+def _review_packet_groups(
+    cases: list[dict[str, object]],
+    field: str,
+) -> dict[str, list[str]]:
+    groups: dict[str, list[str]] = {}
+    for case in cases:
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str):
+            continue
+        values = case.get(field)
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if isinstance(value, str) and value:
+                groups.setdefault(value, []).append(case_id)
+    return {key: groups[key] for key in sorted(groups)}
+
+
+def _render_review_packet_markdown(packet: dict[str, object]) -> str:
+    cases = packet.get("cases", [])
+    cases = cases if isinstance(cases, list) else []
+    lines = [
+        "# Morphēa Review Packet",
+        "",
+        f"- Suite: `{packet.get('suite', 'n/a')}`",
+        f"- Cases needing review: {_fmt_markdown_value(packet.get('case_count'))}",
+        f"- Deferred: {_fmt_markdown_value(packet.get('deferred_count'))}",
+        f"- Rejected: {_fmt_markdown_value(packet.get('rejected_count'))}",
+        f"- Manual review: {_fmt_markdown_value(packet.get('manual_review_count'))}",
+        "",
+        "## Issue Groups",
+        "",
+        "| Issue | Cases |",
+        "| --- | --- |",
+    ]
+    lines.extend(_review_packet_group_rows(packet.get("issue_groups")))
+    lines.extend(
+        [
+            "",
+            "## Failed Gate Groups",
+            "",
+            "| Gate | Cases |",
+            "| --- | --- |",
+        ]
+    )
+    lines.extend(_review_packet_group_rows(packet.get("failed_gate_groups")))
+    lines.extend(
+        [
+            "",
+            "## Cases",
+            "",
+            "| Case | Promotion | Editability | Suggested | Issues | Failed gates | Failed components |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    if not cases:
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        lines.append(
+            "| "
+            f"`{case.get('case_id', 'n/a')}` | "
+            f"`{case.get('promotion_decision', 'n/a')}` | "
+            f"`{case.get('editability_decision', 'n/a')}` | "
+            f"`{case.get('suggested_review_decision', 'n/a')}` | "
+            f"{_fmt_markdown_list(case.get('issue_tags'))} | "
+            f"{_fmt_markdown_list(case.get('failed_gate_ids'))} | "
+            f"{_fmt_markdown_list(case.get('failed_component_ids'))} |"
+        )
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        lines.extend(["", f"## {case.get('case_id', 'n/a')}", ""])
+        lines.append(f"- Source: `{case.get('source', 'n/a')}`")
+        lines.append(
+            "- Decision: "
+            f"promotion=`{case.get('promotion_decision', 'n/a')}`, "
+            f"editability=`{case.get('editability_decision', 'n/a')}`, "
+            f"suggested=`{case.get('suggested_review_decision', 'n/a')}`"
+        )
+        artifacts = case.get("artifacts", {})
+        artifacts = artifacts if isinstance(artifacts, dict) else {}
+        lines.extend(
+            [
+                f"- Contact sheet: `{artifacts.get('contact_sheet', 'n/a')}`",
+                f"- Promotion review: `{artifacts.get('promotion_review', 'n/a')}`",
+                f"- Editability review: `{artifacts.get('editability_review', 'n/a')}`",
+                f"- Review decision: `{artifacts.get('review_decision', 'n/a')}`",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _review_packet_group_rows(value: object) -> list[str]:
+    if not isinstance(value, dict) or not value:
+        return ["| n/a | n/a |"]
+    rows: list[str] = []
+    for key in sorted(value):
+        cases = value.get(key)
+        case_text = (
+            ", ".join(f"`{case}`" for case in cases)
+            if isinstance(cases, list) and cases
+            else "n/a"
+        )
+        rows.append(f"| `{key}` | {case_text} |")
+    return rows
 
 
 def _promotion_anchor_state_indexes(

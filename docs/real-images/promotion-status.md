@@ -115,6 +115,10 @@ anchor-index partitions plus anchor-state counts, so failed semantic candidates
 remain explicit even when `fallback.svg` contains all non-promoted anchors.
 The `morphea promotion-export` command can regenerate promoted/fallback SVGs
 from any promotion-annotated manifest, outside curated sidecar generation.
+The curated output root also writes `review-packet.json` and
+`review-packet.md`, which collect all deferred/rejected cases into one
+reviewer-facing queue with contact-sheet, promotion-review, editability-review,
+and pending review-decision paths.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may
