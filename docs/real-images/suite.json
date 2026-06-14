@@ -91,6 +91,16 @@
             "min_anchor_coverage": 0.8,
             "max_hole_count": 0,
             "max_cutout_count": 0,
+            "required_topology_descriptors": [
+              "closed",
+              "multi_component"
+            ],
+            "forbidden_topology_descriptors": [
+              "single_component",
+              "holes",
+              "cutouts",
+              "nested_contours"
+            ],
             "severity": "red",
             "description": "The shoulder brooches and center gold dots must contain five editable circle anchors without relying on circles elsewhere in the image."
           }

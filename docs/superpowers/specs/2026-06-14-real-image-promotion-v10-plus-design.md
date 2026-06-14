@@ -304,6 +304,10 @@ Region gates can require or forbid these labels with
 single-control regions to reject multi-component or nested candidates directly.
 The real UI radio-control region now requires `closed` and `single_component`
 and forbids multi-component, hole, cutout, and nested-contour descriptors.
+The real Terminaro gold-circle region now requires `closed` and
+`multi_component` and forbids single-component, hole, cutout, and nested-contour
+descriptors, preserving the five-circle contract rather than accepting a ring
+or merged badge-like substitute.
 
 Exit criteria:
 

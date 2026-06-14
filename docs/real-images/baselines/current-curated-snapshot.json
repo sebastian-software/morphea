@@ -1099,6 +1099,12 @@
             "expected_kinds": [
               "circle"
             ],
+            "forbidden_topology_descriptors": [
+              "single_component",
+              "holes",
+              "cutouts",
+              "nested_contours"
+            ],
             "gate_type": "shape_class",
             "id": "gold-circle-region-shape-class",
             "max_cutout_count": 0,
@@ -1106,6 +1112,10 @@
             "min_anchor_coverage": 0.8,
             "min_count": 5,
             "min_iou": 0.0,
+            "required_topology_descriptors": [
+              "closed",
+              "multi_component"
+            ],
             "severity": "red"
           }
         ],
@@ -1233,11 +1243,19 @@
             ],
             "forbidden_count": 0,
             "forbidden_kinds": [],
-            "forbidden_topology_descriptors": [],
+            "forbidden_topology_descriptors": [
+              "single_component",
+              "holes",
+              "cutouts",
+              "nested_contours"
+            ],
             "matching_count": 5,
             "min_anchor_coverage": 0.8,
             "min_iou": 0.0,
-            "required_topology_descriptors": [],
+            "required_topology_descriptors": [
+              "closed",
+              "multi_component"
+            ],
             "selected_anchors": [
               {
                 "anchor_coverage": 1.0,

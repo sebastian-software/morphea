@@ -1024,6 +1024,9 @@ Implemented so far:
 - the UI radio-control source region uses descriptor gates to require one
   closed component and reject multi-component, holed, cutout, or nested
   candidates.
+- the Terminaro gold-circle source region uses descriptor gates to require
+  multiple closed circle components and reject single-component, holed, cutout,
+  or nested substitutes.
 - checked promotion runs include Candidate Rejections in `promotion-review.md`,
   so shape/topology reject reasons are reviewable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
