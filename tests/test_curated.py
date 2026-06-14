@@ -2671,6 +2671,14 @@ class CuratedSuiteTests(unittest.TestCase):
                 str(output_dir / "review-packet.json"),
             )
             self.assertEqual(harvest_config_data["decisions"], {})
+            self.assertEqual(
+                sorted(harvest_config_data["decision_templates"]["simple-circle"]),
+                ["accepted", "corrected", "deferred", "rejected"],
+            )
+            for template_path in harvest_config_data["decision_templates"][
+                "simple-circle"
+            ].values():
+                self.assertTrue(Path(template_path).exists())
             self.assertEqual(harvest_config_data["run_root"], str(output_dir))
             self.assertEqual(
                 harvest_config_data["curated_report"],

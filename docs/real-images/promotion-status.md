@@ -145,8 +145,10 @@ per-decision apply commands for queued review cases.
 review-oriented artifact set through one command and derives default report,
 Markdown, and snapshot paths under the output root. It also writes a starter
 `promotion-review-harvest.json` config with empty decisions and stable
-follow-up paths for review-to-harvest preparation. The resulting curated
-report also includes the generated harvest command in JSON and Markdown.
+follow-up paths for review-to-harvest preparation. That starter config lists
+available terminal decision templates per queued case without applying any of
+them automatically. The resulting curated report also includes the generated
+harvest command in JSON and Markdown.
 
 Red gate failures produce `promotion_summary.decision: rejected`; yellow-only
 failures produce `deferred`; all gates passing produces `promoted`. A case may

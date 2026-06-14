@@ -387,7 +387,9 @@ writes the review packet and gallery artifacts plus a starter
 `promotion-review-harvest.json` config for the follow-up review-to-harvest
 step. The final curated report JSON and Markdown now surface that generated
 harvest command directly, so reviewers can continue without inspecting the
-starter config by hand.
+starter config by hand. The starter config also lists each queued case's
+accepted/corrected/rejected/deferred terminal templates while keeping
+`decisions` empty until a reviewer explicitly selects one.
 They also write `review-decision.json`, a pending machine-readable decision
 record with suggested accepted/corrected/rejected/deferred outcome and the
 gate/component evidence needed for review, plus terminal

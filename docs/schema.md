@@ -404,10 +404,10 @@ review-oriented wrapper around `curated-check`: it runs the suite, writes
 the output root by default, and emits the same per-case artifacts,
 `review-packet.json`, `review-packet.md`, and `review-gallery.html`. It also
 writes `promotion-review-harvest.json`, a starter config with empty
-`decisions` and stable paths for `promotion-review-harvest --config`. The
-final `curated-report.json` and `curated-report.md` also include
-`next_commands`, starting with the exact harvest command for the generated
-starter config.
+`decisions`, per-case `decision_templates` for reviewer selection, and stable
+paths for `promotion-review-harvest --config`. The final `curated-report.json`
+and `curated-report.md` also include `next_commands`, starting with the exact
+harvest command for the generated starter config.
 
 Curated suite expectations support four mutually exclusive check types:
 `kind` with `min_count` and optional `max_count`, `kinds` with a non-empty array
@@ -1076,6 +1076,11 @@ Supported fields:
 - `harvest_config`: optional generated `harvest-curated` config path
 - `decisions`: object mapping case ids to terminal
   `review-decision.json` paths
+- `decision_templates`: optional review-run metadata mapping case ids to
+  available terminal decision template paths. This field is accepted in config
+  files for reviewer convenience but is not applied automatically; reviewers
+  still select terminal decisions by populating `decisions` or passing
+  `--decision`.
 - `suite`: optional suite override for the generated harvest config
 - `run_root`: optional run-root override for manifest lookup and generated
   harvest config

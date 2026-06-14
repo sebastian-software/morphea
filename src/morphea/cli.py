@@ -293,6 +293,7 @@ PROMOTION_REVIEW_HARVEST_CONFIG_KEYS = {
     "markdown",
     "harvest_config",
     "decisions",
+    "decision_templates",
     "suite",
     "run_root",
     "harvest_output",
@@ -1722,6 +1723,11 @@ def main(argv: list[str] | None = None) -> None:
         review_harvest_config = _promotion_review_run_harvest_config(
             review_run_config,
         )
+        review_harvest_config["decision_templates"] = (
+            _promotion_review_run_decision_templates(
+                review_harvest_config["review_packet"]
+            )
+        )
         review_harvest_config_path = (
             review_run_config["output_dir"] / "promotion-review-harvest.json"
         )
@@ -2773,6 +2779,36 @@ def _promotion_review_run_harvest_config(
         "snapshot": str(config["snapshot"]),
         "harvest_markdown": str(output_dir / "harvested-pseudo-labels.md"),
     }
+
+
+def _promotion_review_run_decision_templates(
+    review_packet: str | Path,
+) -> dict[str, dict[str, str]]:
+    packet = json.loads(Path(review_packet).read_text(encoding="utf-8"))
+    if not isinstance(packet, dict):
+        raise ValueError("promotion review packet must be a JSON object")
+    templates_by_case: dict[str, dict[str, str]] = {}
+    cases = packet.get("cases", [])
+    if not isinstance(cases, list):
+        return templates_by_case
+    for case in cases:
+        if not isinstance(case, dict):
+            continue
+        case_id = case.get("case_id")
+        artifacts = case.get("artifacts", {})
+        artifacts = artifacts if isinstance(artifacts, dict) else {}
+        templates = artifacts.get("review_templates", {})
+        templates = templates if isinstance(templates, dict) else {}
+        if not isinstance(case_id, str) or not case_id:
+            continue
+        decision_templates = {
+            decision: path
+            for decision in ("accepted", "corrected", "rejected", "deferred")
+            if isinstance((path := templates.get(decision)), str) and path
+        }
+        if decision_templates:
+            templates_by_case[case_id] = decision_templates
+    return templates_by_case
 
 
 def _promotion_review_run_next_commands(config_path: str | Path) -> list[str]:
