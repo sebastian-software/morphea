@@ -947,6 +947,12 @@ Implemented so far:
   renders the definitive Lucide SVG set into supervised PNG/SVG training
   examples with explicit shape, forbidden-shape, metric, bounded-region, and
   source-SVG structure targets for own-model work
+- `morphea train-lucide-targets corpus.json -o model.json` trains the generic
+  `raster_target_classifier` from rendered Lucide PNG features to explicit
+  shape targets, giving the definitive-shape corpus an actual MLX model
+  artifact while keeping Lucide as a corpus adapter rather than a classifier
+  name; the default 12x12-raster-feature MLP reaches 1.0 train exact-match
+  accuracy on the checked-in 24-case Lucide corpus smoke
 - `morphea self-learn --suite-family-baseline baseline.json` distinguishes
   newly introduced family regressions from known baseline debt before accepting
   the cycle

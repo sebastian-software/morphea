@@ -318,7 +318,15 @@ render these as `= 0` expectations, and violations are labeled
 supervised PNG/SVG corpus manifest with source-SVG structure, positive shape
 targets, forbidden-shape targets, bounded-region targets, and metric targets,
 so own-model work can train from definitive icon ground truth rather than
-MLX/SAM proposal output.
+MLX/SAM proposal output. `morphea train-lucide-targets` now turns that Lucide
+corpus into the generic `raster_target_classifier`; the Lucide name stays at
+the corpus-adapter boundary while the classifier remains reusable for icon, UI,
+synthetic, and real-image target corpora. With local MLX available, the
+artifact trains an `mlx_multilabel_raster_target_head`, with the older centroid
+path kept only as an explicit unavailable-runtime fallback. The default head is
+a small 12x12-raster-feature MLP (`epochs: 300`, `hidden_dim: 32`) and the
+current CLI smoke reaches 1.0 train exact-match accuracy on the checked-in
+24-case Lucide corpus.
 
 Exit criteria:
 

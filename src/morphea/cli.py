@@ -23,6 +23,10 @@ from morphea.dataset import generate_synthetic_dataset
 from morphea.eval import write_eval_summary
 from morphea.images import scene_from_flat_color_image
 from morphea.lucide_quality import build_lucide_training_corpus, check_lucide_suite
+from morphea.lucide_model import (
+    LucideTargetTrainingConfig,
+    train_lucide_target_model,
+)
 from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
@@ -346,6 +350,16 @@ LUCIDE_CORPUS_CONFIG_KEYS = {
     "output_dir",
     "markdown",
 }
+TRAIN_LUCIDE_TARGETS_CONFIG_KEYS = {
+    "corpus",
+    "output",
+    "markdown",
+    "epochs",
+    "hidden_dim",
+    "learning_rate",
+    "grid_size",
+    "allow_unavailable",
+}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -618,6 +632,24 @@ def main(argv: list[str] | None = None) -> None:
         help="Write a fallback artifact when MLX is not installed.",
     )
     train_mlx.add_argument("--config", type=Path)
+
+    train_lucide_targets = subcommands.add_parser(
+        "train-lucide-targets",
+        help="Train the generic raster-target model from a Lucide corpus.",
+    )
+    train_lucide_targets.add_argument("corpus", type=Path, nargs="?")
+    train_lucide_targets.add_argument("-o", "--output", type=Path)
+    train_lucide_targets.add_argument("--markdown", type=Path)
+    train_lucide_targets.add_argument("--epochs", type=int)
+    train_lucide_targets.add_argument("--hidden-dim", type=int)
+    train_lucide_targets.add_argument("--learning-rate", type=float)
+    train_lucide_targets.add_argument("--grid-size", type=int)
+    train_lucide_targets.add_argument(
+        "--allow-unavailable",
+        action="store_true",
+        help="Write a centroid fallback artifact when MLX is not installed.",
+    )
+    train_lucide_targets.add_argument("--config", type=Path)
 
     eval_classifier = subcommands.add_parser(
         "eval-classifier",
@@ -1418,6 +1450,21 @@ def main(argv: list[str] | None = None) -> None:
         )
         print(
             f"trained {model['model_type']} with {model['train_examples']} examples "
+            f"(status={model['status']})"
+        )
+        return
+
+    if args.command == "train-lucide-targets":
+        train_config, target_config = _resolved_train_lucide_targets_config(args)
+        model = train_lucide_target_model(
+            train_config["corpus"],
+            output=train_config["output"],
+            markdown=train_config.get("markdown"),
+            config=target_config,
+        )
+        print(
+            f"trained {model['model_type']} with "
+            f"{model['train_examples']} examples "
             f"(status={model['status']})"
         )
         return
@@ -3236,6 +3283,43 @@ def _resolved_lucide_corpus_config(args: argparse.Namespace) -> dict[str, object
     return config
 
 
+def _resolved_train_lucide_targets_config(
+    args: argparse.Namespace,
+) -> tuple[dict[str, Path | None], LucideTargetTrainingConfig]:
+    config = _load_train_lucide_targets_config(args.config)
+    if args.corpus is not None:
+        config["corpus"] = args.corpus
+    if args.output is not None:
+        config["output"] = args.output
+    if args.markdown is not None:
+        config["markdown"] = args.markdown
+    for key in ("epochs", "hidden_dim", "learning_rate", "grid_size"):
+        value = getattr(args, key, None)
+        if value is not None:
+            config[key] = value
+    if args.allow_unavailable:
+        config["allow_unavailable"] = True
+    _require_config_paths(config, ("corpus", "output"), "train-lucide-targets")
+    return (
+        {
+            "corpus": Path(str(config["corpus"])),
+            "output": Path(str(config["output"])),
+            "markdown": (
+                Path(str(config["markdown"]))
+                if config.get("markdown") is not None
+                else None
+            ),
+        },
+        LucideTargetTrainingConfig(
+            epochs=int(config.get("epochs", 300)),
+            hidden_dim=int(config.get("hidden_dim", 32)),
+            learning_rate=float(config.get("learning_rate", 0.15)),
+            grid_size=int(config.get("grid_size", 12)),
+            allow_unavailable=bool(config.get("allow_unavailable", False)),
+        ),
+    )
+
+
 def _load_vectorize_config(path: Path) -> dict[str, object]:
     loaded = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(loaded, dict):
@@ -3410,6 +3494,23 @@ def _load_lucide_corpus_config(path: Path | None) -> dict[str, object]:
         raise ValueError(msg)
     config = dict(loaded)
     for key in ("suite", "output", "output_dir", "markdown"):
+        if key in config and config[key] is not None:
+            config[key] = Path(str(config[key]))
+    return config
+
+
+def _load_train_lucide_targets_config(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("train-lucide-targets config must be a JSON object")
+    unknown = sorted(set(loaded) - TRAIN_LUCIDE_TARGETS_CONFIG_KEYS)
+    if unknown:
+        msg = f"unsupported train-lucide-targets config keys: {', '.join(unknown)}"
+        raise ValueError(msg)
+    config = dict(loaded)
+    for key in ("corpus", "output", "markdown"):
         if key in config and config[key] is not None:
             config[key] = Path(str(config[key]))
     return config

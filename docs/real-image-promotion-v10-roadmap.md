@@ -242,6 +242,12 @@ Exit criteria:
 - `morphea lucide-corpus` can render the Lucide calibration suite into a
   supervised PNG/SVG training manifest so own-model work starts from explicit
   ground truth instead of MLX/SAM proposal output.
+- `morphea train-lucide-targets` can train the generic
+  `raster_target_classifier` from the rendered Lucide corpus, proving the
+  definitive-shape track now produces an own MLX model artifact instead of
+  only evaluation reports while keeping Lucide as a corpus adapter. The default
+  12x12-raster-feature MLP reaches 1.0 train exact-match accuracy on the
+  checked-in 24-case Lucide corpus smoke.
 - Real-image suite status is summarized with green/yellow/red labels.
 - Existing snapshot and run artifact commands remain documented.
 - No document claims that aggregate pass/fail equals visual quality.

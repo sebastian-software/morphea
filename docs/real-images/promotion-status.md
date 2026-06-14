@@ -66,6 +66,14 @@ PNG/SVG training examples with machine-readable anchor, forbidden-shape,
 metric, bounded-region, and source-SVG path-command targets. This creates the
 first explicit definitive-shape corpus for own-model training; it is separate
 from `lucide-check` quality gating and from MLX/SAM proposal experiments.
+`morphea train-lucide-targets` now trains the generic
+`raster_target_classifier` from that rendered corpus. Lucide remains the
+definitive-shape corpus source, while the model path is reusable for later
+icon, UI, synthetic, and real-image target corpora. With local MLX available,
+the artifact contains an `mlx_multilabel_raster_target_head`; the centroid
+path is retained only as an explicit unavailable-runtime fallback. The current
+default head is a small 12x12-raster-feature MLP and reaches 1.0 train
+exact-match accuracy on the checked-in 24-case Lucide corpus smoke.
 
 ## Visual Artifact Posture
 

@@ -454,6 +454,23 @@ anchor targets, metric targets, raw expectations, source SVG element counts,
 and path-command counts. This artifact is intended as supervised training
 data; it is not a promotion-quality acceptance gate by itself.
 
+`morphea train-lucide-targets corpus.json -o model.json` trains the generic
+raster-target model from that corpus. The Lucide name belongs to the corpus
+adapter, not to the classifier itself: the model artifact has
+`model_type: "raster_target_classifier"` and, when local MLX is available,
+`training_implementation: "mlx_multilabel_raster_target_head"`. It records the
+source corpus, target label key, raster feature names, target names,
+train-example count, MLX runtime status, learned multi-label head weights,
+per-target fallback centroids, target summary, and split evaluation with target
+accuracy and exact-match accuracy. The current default MLX head is a small
+JSON-serializable MLP over global ink features plus a 12x12 ink grid
+(`epochs: 300`, `hidden_dim: 32`, `learning_rate: 0.15`), which reaches
+1.0 train exact-match accuracy on the checked-in 24-case Lucide corpus smoke.
+If MLX is unavailable, the command fails by default; `allow_unavailable` can
+intentionally write a
+`centroid_raster_target_baseline` fallback artifact for reproducible planning
+and CI environments.
+
 Curated suite cases may include optional `promotion` metadata for the
 real-image promotion roadmap. When present, `morphea curated-check` validates
 the metadata and copies it into JSON reports, Markdown reports, and deterministic
