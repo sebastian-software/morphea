@@ -2285,6 +2285,21 @@ class SelfLearningTests(unittest.TestCase):
             self.assertTrue(
                 volatile_snapshot_fields.isdisjoint(changelog_entries[0]),
             )
+            markdown = (output_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8",
+            )
+            self.assertIn(
+                f"- Source cycle: `{output_dir / 'self-learning-cycle.json'}`",
+                markdown,
+            )
+            self.assertIn(
+                f"- Base dataset: `{base_dir / 'dataset.json'}`",
+                markdown,
+            )
+            self.assertIn(
+                f"- Reviewed labels: `{reviewed}`",
+                markdown,
+            )
 
     def test_self_learning_cycle_requires_review_evidence_for_baseline_snapshot(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2438,6 +2453,9 @@ class SelfLearningTests(unittest.TestCase):
             {
                 "status": "skipped_retrain",
                 "accepted": False,
+                "base_dataset": "base.json",
+                "reviewed_labels": "reviewed.json",
+                "validation_dataset": "validation.json",
                 "pseudo_dataset": {
                     "count": 2,
                     "samples": [
@@ -2472,6 +2490,7 @@ class SelfLearningTests(unittest.TestCase):
                 "artifacts": {
                     "comparison": "comparison.json",
                     "gate": "gate.json",
+                    "summary": "cycle.json",
                 },
                 "suite_family_validation": {
                     "primitive": {
@@ -2583,6 +2602,10 @@ class SelfLearningTests(unittest.TestCase):
         )
         self.assertIn("## Suite Family Baseline Snapshot", markdown)
         self.assertIn("- Status: `skipped_not_accepted`", markdown)
+        self.assertIn("- Source cycle: `cycle.json`", markdown)
+        self.assertIn("- Base dataset: `base.json`", markdown)
+        self.assertIn("- Reviewed labels: `reviewed.json`", markdown)
+        self.assertIn("- Validation dataset: `validation.json`", markdown)
         self.assertIn("| `gate` | `gate.json` |", markdown)
         self.assertIn("`comparison_status_mixed`", markdown)
 

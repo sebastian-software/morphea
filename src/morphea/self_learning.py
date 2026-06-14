@@ -874,6 +874,9 @@ def run_self_learning_cycle(
         suite_family_baseline_comparison=suite_family_baseline_comparison,
     )
     summary_path = output / "self-learning-cycle.json"
+    markdown_path = (
+        Path(markdown) if markdown is not None else output / "self-learning-cycle.md"
+    )
     suite_family_baseline_snapshot = _write_suite_family_baseline_snapshot(
         output=suite_family_baseline_output_path,
         baseline_source=Path(suite_family_baseline)
@@ -932,6 +935,8 @@ def run_self_learning_cycle(
                 if suite_family_baseline_snapshot.get("status") == "written"
                 else None
             ),
+            "summary": str(summary_path),
+            "summary_markdown": str(markdown_path),
         },
         "pseudo_dataset": {
             "count": pseudo_dataset["count"],
@@ -963,18 +968,11 @@ def run_self_learning_cycle(
         "suite_family_baseline_comparison": suite_family_baseline_comparison,
         "suite_family_baseline_snapshot": suite_family_baseline_snapshot,
     }
-    summary_path.write_text(
-        json.dumps(result, indent=2, sort_keys=True),
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(
+        render_self_learning_cycle_markdown(result),
         encoding="utf-8",
     )
-    if markdown is not None:
-        markdown_path = Path(markdown)
-    else:
-        markdown_path = output / "self-learning-cycle.md"
-    markdown_path.parent.mkdir(parents=True, exist_ok=True)
-    markdown_path.write_text(render_self_learning_cycle_markdown(result), encoding="utf-8")
-    result["artifacts"]["summary"] = str(summary_path)
-    result["artifacts"]["summary_markdown"] = str(markdown_path)
     summary_path.write_text(
         json.dumps(result, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -1636,6 +1634,10 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 f"- Status: `{baseline_snapshot.get('status', 'n/a')}`",
                 f"- Output: `{baseline_snapshot.get('output', 'n/a')}`",
                 f"- Changelog: `{baseline_snapshot.get('changelog', 'n/a')}`",
+                f"- Source cycle: `{artifacts.get('summary', 'n/a')}`",
+                f"- Base dataset: `{result.get('base_dataset', 'n/a')}`",
+                f"- Reviewed labels: `{result.get('reviewed_labels', 'n/a')}`",
+                f"- Validation dataset: `{result.get('validation_dataset', 'n/a')}`",
                 f"- Reviewer: `{_baseline_snapshot_review_value(baseline_snapshot, 'reviewer')}`",
                 f"- Reason: `{_baseline_snapshot_review_value(baseline_snapshot, 'reason')}`",
                 f"- Missing evidence: {_format_reason_list(baseline_snapshot.get('missing_review_fields'))}",

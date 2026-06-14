@@ -415,6 +415,10 @@ or resolved regressions.
 writes for rejected cycles.
 Baseline snapshot writes now require reviewer, reason, and changelog evidence;
 successful writes embed the review record and append a JSONL changelog entry.
+Cycle Markdown keeps the portable baseline artifact clean while surfacing the
+run-local source cycle, base dataset, reviewed-label file, and validation
+dataset next to the snapshot status, so baseline promotions can be audited back
+to the exact accepted retraining cycle.
 Existing baseline output files are protected unless the configured
 `suite_family_baseline` path matches the output path, so checked-in baselines
 cannot be overwritten by an accidental ad hoc output path.

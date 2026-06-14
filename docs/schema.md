@@ -1169,7 +1169,11 @@ reason, and changelog evidence are supplied; rejected cycles report
 Persisted suite-family baseline snapshots and changelog entries are portable
 review artifacts and intentionally omit run-local paths such as `base_dataset`,
 `reviewed_labels`, `validation_dataset`, and `source_cycle`; those paths remain
-in the cycle report itself.
+in the cycle report itself. Cycle Markdown repeats that run-local provenance in
+the baseline snapshot section, including the source cycle report path, base
+dataset, reviewed labels, and validation dataset, so reviewers can audit why a
+portable baseline was written without making the baseline artifact
+machine-specific.
 When `suite_family_baseline_comparison.ok` is true, configured curated or
 Lucide suite failures are treated as known baseline debt: they remain in
 `acceptance_gate.reasons` but are omitted from

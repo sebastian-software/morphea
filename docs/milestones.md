@@ -478,6 +478,9 @@ Implemented so far:
 - suite-family baseline snapshots require reviewer, reason, and changelog
   evidence before writing, so accepted baseline refreshes produce a review
   record and JSONL changelog entry.
+- self-learning Markdown keeps baseline snapshots portable while surfacing the
+  source cycle report, base dataset, reviewed-label file, and validation
+  dataset beside the snapshot status for audit handoff.
 - existing suite-family baseline output files are protected unless
   `--suite-family-baseline` points to the same path, preventing accidental
   overwrites of checked-in baseline artifacts.
