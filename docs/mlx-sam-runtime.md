@@ -36,7 +36,7 @@ Check the live SAM package runtime after configuring a local checkpoint:
 
 ```sh
 .venv-mlx-sam/bin/python -m morphea.cli status \
-  --mlx-sam-model-path checkpoints/sam2.1_hiera_tiny_image_segmenter.safetensors
+  --mlx-sam-model-path checkpoints/sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors
 ```
 
 Without `--mlx-sam-model-path`, `mlx_sam` should remain `not_configured`. With
@@ -51,21 +51,70 @@ segmentation run. Use an explicit setup step to download or convert a SAM2.1
 checkpoint into `checkpoints/`, then pass that path to Morphēa.
 
 For a first smoke test, prefer a small or quantized SAM2.1 MLX checkpoint from
-the `mlx-sam` model family, then run:
+the `mlx-sam` model family. The smallest local proof path used so far is the
+4-bit tiny checkpoint:
+
+```sh
+.venv-mlx-sam/bin/python - <<'PY'
+from huggingface_hub import hf_hub_download
+
+repo = "avbiswas/sam2.1-hiera-tiny-mlx-4bit"
+for filename in (
+    "sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors",
+    "sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors.json",
+):
+    print(hf_hub_download(repo_id=repo, filename=filename, local_dir="checkpoints"))
+PY
+```
+
+Then run Flat-Color and MLX/SAM side by side:
+
+```sh
+.venv/bin/python -m morphea.cli segment assets/curated/terminaro-opaque-table-grid.png \
+  --segmenter flat_color \
+  --max-size 256 \
+  --max-colors 10 \
+  --min-area 12 \
+  --color-tolerance 18 \
+  --max-component-area 12000 \
+  --geometry-gate \
+  --require-reserved-anchor \
+  -o /tmp/morphea-mlx-sam-smoke/flat-color-segments.json \
+  --markdown /tmp/morphea-mlx-sam-smoke/flat-color-segments.md
+```
 
 ```sh
 .venv-mlx-sam/bin/python -m morphea.cli segment assets/curated/terminaro-opaque-table-grid.png \
   --segmenter mlx_sam \
-  --mlx-model-path checkpoints/sam2.1_hiera_tiny_image_segmenter.safetensors \
-  --mlx-max-masks 9 \
-  --mlx-timeout-seconds 30 \
+  --mlx-model-path checkpoints/sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors \
+  --mlx-score-threshold 0.01 \
+  --mlx-max-masks 4 \
+  --mlx-timeout-seconds 45 \
   --geometry-gate \
   --require-reserved-anchor \
-  -o runs/mlx-sam-smoke/segments.json \
-  --markdown runs/mlx-sam-smoke/segments.md
+  -o /tmp/morphea-mlx-sam-smoke/mlx-sam-segments.json \
+  --markdown /tmp/morphea-mlx-sam-smoke/mlx-sam-segments.md
+```
+
+Compare the manifests:
+
+```sh
+.venv/bin/python -m morphea.cli compare-segments \
+  /tmp/morphea-mlx-sam-smoke/flat-color-segments.json \
+  /tmp/morphea-mlx-sam-smoke/mlx-sam-segments.json \
+  -o /tmp/morphea-mlx-sam-smoke/segment-comparison.json \
+  --markdown /tmp/morphea-mlx-sam-smoke/segment-comparison.md
 ```
 
 That run is only a real milestone signal if it produces inspectable proposals
 and can be compared against the flat-color baseline with `compare-segments`.
 Package availability alone is not enough evidence that SAM improves real-image
 promotion quality.
+
+The first checked local smoke on `assets/curated/terminaro-opaque-table-grid.png`
+proved live SAM execution, not promotion improvement: Flat-Color produced 41
+proposals with 29 geometry-gate accepted proposals, while the 4-prompt tiny
+MLX/SAM run produced 4 proposals and all 4 passed the geometry gate. The
+comparison verdict was `noise` because green promotion proxy count dropped from
+29 to 4, even though red rejected candidates dropped from 12 to 0. Treat this
+as runtime evidence and a prompt/config baseline, not as quality evidence.

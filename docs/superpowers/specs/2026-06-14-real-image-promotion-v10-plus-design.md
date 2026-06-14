@@ -420,7 +420,13 @@ Current implementation:
   unchanged, or needing review from green promotion, red candidate,
   manual-review, and proposal-count deltas. When segment manifests carry
   `promotion_regions`, the assessment uses true promotion-region state counts;
-  otherwise it records downstream-status proxy counts as the basis.
+  otherwise it records downstream-status proxy counts as the basis. The first
+  local tiny 4-bit SAM2.1 MLX smoke on
+  `assets/curated/terminaro-opaque-table-grid.png` now proves live
+  `mlx_sam_grid_points` execution and comparison artifact generation: 4 MLX/SAM
+  proposals passed the geometry gate, but the source assessment was `noise`
+  because the green promotion proxy count dropped from 29 to 4 versus the
+  Flat-Color baseline.
 
 Exit criteria:
 

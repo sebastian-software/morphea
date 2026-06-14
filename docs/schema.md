@@ -1042,7 +1042,9 @@ Supported fields:
 - `max_component_area`
 - `split_components`: default `true`, emits connected-component proposals
   instead of one proposal per color mask
-- `mlx_model_path`
+- `mlx_model_path`: local JSON proposal payload or `.safetensors` checkpoint
+  path. Segment manifests serialize this as a string whether it came from a
+  config file or the `--mlx-model-path` CLI flag.
 - `mlx_score_threshold`
 - `mlx_max_masks`
 - `mlx_timeout_seconds`

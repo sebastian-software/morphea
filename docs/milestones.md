@@ -670,6 +670,13 @@ Implemented so far:
   environment and `mlx_model_path` points at a `.safetensors` checkpoint,
   `MlxSamSegmenter` can run bounded grid-point prompts and convert positive
   live SAM masks into the same proposal schema and geometry gate.
+- the first local live-SAM smoke used the 4-bit tiny SAM2.1 MLX checkpoint
+  `sam2.1_hiera_tiny_image_segmenter_q8_trunk_mask_q4_memory.safetensors` on
+  `assets/curated/terminaro-opaque-table-grid.png`; it produced 4 MLX/SAM
+  proposals, all accepted by the geometry gate, then compared them against the
+  Flat-Color baseline with `compare-segments`. The comparison was intentionally
+  recorded as a runtime proof rather than a quality claim: green promotion
+  proxy count dropped from 29 to 4 and the source assessment was `noise`.
 - `morphea segment --segmenter mlx_sam` exposes the explicit not-configured path
   until the local MLX/SAM runtime is installed and a checkpoint is configured.
 - `morphea status` treats the `mlx_sam_package_available` adapter state as an
