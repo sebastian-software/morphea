@@ -716,8 +716,11 @@ applies only explicitly supplied terminal decision files, writes
 same `promotion-apply-review` rules, summarizes applied, harvestable, and
 pending cases, and writes a `harvest-curated --config` file with
 `require_applied_review: true`. Cases without an applied review remain pending
-in the prep report rather than becoming implicit training candidates. The same
-inputs can be loaded from
+in the prep report rather than becoming implicit training candidates. Pending
+cases carry available terminal `decision_templates` in JSON and Markdown when
+the review packet or config exposes them, so reviewers can see the
+accepted/corrected/rejected/deferred choices without applying them
+automatically. The same inputs can be loaded from
 `morphea promotion-review-harvest --config promotion-review-harvest.json`;
 CLI arguments override config values, and individual `--decision case=path`
 arguments override same-case entries in the config `decisions` object.

@@ -2706,7 +2706,22 @@ class CuratedSuiteTests(unittest.TestCase):
                 (output_dir / "review-harvest.json").read_text(encoding="utf-8")
             )
             self.assertEqual(review_harvest["pending_case_count"], 1)
+            self.assertEqual(
+                sorted(
+                    review_harvest["pending_cases"][0]["decision_templates"]
+                ),
+                ["accepted", "corrected", "deferred", "rejected"],
+            )
+            self.assertEqual(
+                review_harvest["decision_templates"],
+                harvest_config_data["decision_templates"],
+            )
             self.assertTrue((output_dir / "review-harvest.md").exists())
+            review_harvest_markdown = (output_dir / "review-harvest.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("Decision templates", review_harvest_markdown)
+            self.assertIn("accepted", review_harvest_markdown)
             self.assertTrue((output_dir / "harvest-curated.json").exists())
 
 

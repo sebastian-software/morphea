@@ -12,6 +12,12 @@ from morphea.self_learning import HARVEST_FILTER_DEFAULTS
 
 
 HARVESTABLE_PROMOTION_DECISIONS = {"accepted", "corrected"}
+TERMINAL_PROMOTION_REVIEW_DECISIONS = (
+    "accepted",
+    "corrected",
+    "rejected",
+    "deferred",
+)
 
 
 def prepare_promotion_review_harvest(
@@ -21,6 +27,7 @@ def prepare_promotion_review_harvest(
     markdown: str | Path | None = None,
     harvest_config: str | Path | None = None,
     decisions: dict[str, str | Path] | None = None,
+    decision_templates: dict[str, dict[str, str | Path]] | None = None,
     suite: str | Path | None = None,
     run_root: str | Path | None = None,
     harvest_output: str | Path | None = None,
@@ -36,6 +43,7 @@ def prepare_promotion_review_harvest(
     cases = _packet_cases(packet)
     cases_by_id = _cases_by_id(cases)
     decision_map = decisions or {}
+    template_map = _decision_template_map(cases, decision_templates)
     unknown_cases = sorted(set(decision_map) - set(cases_by_id))
     if unknown_cases:
         raise ValueError(
@@ -76,6 +84,7 @@ def prepare_promotion_review_harvest(
         cases,
         base_dir=base_dir,
         run_root=run_root_path,
+        decision_templates=template_map,
     )
     harvest_cfg = _harvest_curated_config(
         packet=packet,
@@ -107,6 +116,7 @@ def prepare_promotion_review_harvest(
         ),
         "pending_case_count": len(pending_cases),
         "pending_cases": pending_cases,
+        "decision_templates": template_map,
         "harvest_config": harvest_cfg,
         "harvest_config_path": str(harvest_config) if harvest_config else None,
         "next_commands": _next_commands(harvest_config),
@@ -185,8 +195,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
             "",
             "## Pending Cases",
             "",
-            "| Case | Suggested | Review decision | Manifest |",
-            "| --- | --- | --- | --- |",
+            "| Case | Suggested | Review decision | Decision templates | Manifest |",
+            "| --- | --- | --- | --- | --- |",
         ]
     )
     pending = result.get("pending_cases", [])
@@ -199,10 +209,11 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('suggested_review_decision', 'n/a')}` | "
                 f"`{item.get('review_decision', 'n/a')}` | "
+                f"{_fmt_decision_templates(item.get('decision_templates'))} | "
                 f"`{item.get('manifest', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a |")
 
     config_path = result.get("harvest_config_path")
     commands = result.get("next_commands", [])
@@ -251,6 +262,7 @@ def _packet_review_status(
     *,
     base_dir: Path,
     run_root: Path,
+    decision_templates: dict[str, dict[str, str]],
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     applied_cases: list[dict[str, object]] = []
     pending_cases: list[dict[str, object]] = []
@@ -283,10 +295,53 @@ def _packet_review_status(
                         "n/a",
                     ),
                     "review_decision": case.get("review_decision_state", "n/a"),
+                    "decision_templates": decision_templates.get(case_id, {}),
                     "manifest": str(manifest_path) if manifest_path else None,
                 }
             )
     return applied_cases, pending_cases
+
+
+def _decision_template_map(
+    cases: list[dict[str, object]],
+    configured: dict[str, dict[str, str | Path]] | None,
+) -> dict[str, dict[str, str]]:
+    template_map: dict[str, dict[str, str]] = {}
+    for case in cases:
+        case_id = case.get("case_id")
+        if not isinstance(case_id, str) or not case_id:
+            continue
+        templates = _case_packet_decision_templates(case)
+        if templates:
+            template_map[case_id] = templates
+    if configured:
+        for case_id, templates in configured.items():
+            if not isinstance(case_id, str) or not case_id:
+                continue
+            normalized = _normalized_terminal_templates(templates)
+            if normalized:
+                template_map[case_id] = normalized
+    return template_map
+
+
+def _case_packet_decision_templates(case: dict[str, object]) -> dict[str, str]:
+    artifacts = case.get("artifacts", {})
+    if not isinstance(artifacts, dict):
+        return {}
+    templates = artifacts.get("review_templates", {})
+    if not isinstance(templates, dict):
+        return {}
+    return _normalized_terminal_templates(templates)
+
+
+def _normalized_terminal_templates(
+    templates: dict[str, object],
+) -> dict[str, str]:
+    return {
+        decision: str(path)
+        for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS
+        if isinstance((path := templates.get(decision)), (str, Path)) and str(path)
+    }
 
 
 def _case_manifest_path(
@@ -389,6 +444,17 @@ def _fmt_value(value: object) -> str:
     if isinstance(value, int):
         return str(value)
     return "n/a"
+
+
+def _fmt_decision_templates(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    parts = [
+        f"`{decision}`=`{value[decision]}`"
+        for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS
+        if isinstance(value.get(decision), str) and value[decision]
+    ]
+    return ", ".join(parts) if parts else "n/a"
 
 
 def _write_json(path: Path, data: Any) -> None:

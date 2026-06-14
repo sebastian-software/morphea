@@ -293,10 +293,13 @@ evidence.
 explicit `case-id=terminal-decision.json` inputs, writes the per-case applied
 review summary beside the manifest, reports which packet cases are applied,
 harvestable, or still pending, and can write a `harvest-curated --config` file
-with `require_applied_review: true`. The CLI regression fixture exercises the
-generated config end to end: an accepted applied review produces harvestable
-pseudo-label evidence, while a deferred applied review remains visible as
-`applied_review_not_accepted` and is excluded from training candidates.
+with `require_applied_review: true`. Pending rows now carry available terminal
+decision-template paths in JSON and Markdown, so a reviewer can choose a
+terminal accepted/corrected/rejected/deferred file without reading the packet
+JSON. The CLI regression fixture exercises the generated config end to end: an
+accepted applied review produces harvestable pseudo-label evidence, while a
+deferred applied review remains visible as `applied_review_not_accepted` and is
+excluded from training candidates.
 `morphea promotion-review-harvest --config` makes the same review-to-harvest
 bridge repeatable; config decisions can be overridden case-by-case with
 explicit `--decision case-id=path` arguments.

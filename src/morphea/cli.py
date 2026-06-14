@@ -1325,6 +1325,7 @@ def main(argv: list[str] | None = None) -> None:
             markdown=review_harvest_config.get("markdown"),
             harvest_config=review_harvest_config.get("harvest_config"),
             decisions=review_harvest_config.get("decisions"),
+            decision_templates=review_harvest_config.get("decision_templates"),
             suite=review_harvest_config.get("suite"),
             run_root=review_harvest_config.get("run_root"),
             harvest_output=review_harvest_config.get("harvest_output"),
@@ -3168,6 +3169,12 @@ def _load_promotion_review_harvest_config(
         config["decisions"] = _promotion_review_decisions_from_config(
             config["decisions"],
         )
+    if "decision_templates" in config:
+        config["decision_templates"] = (
+            _promotion_review_decision_templates_from_config(
+                config["decision_templates"],
+            )
+        )
     return config
 
 
@@ -3188,6 +3195,38 @@ def _promotion_review_decisions_from_config(value: object) -> dict[str, Path]:
             )
         decisions[case_id] = Path(path)
     return decisions
+
+
+def _promotion_review_decision_templates_from_config(
+    value: object,
+) -> dict[str, dict[str, str]]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("promotion-review-harvest decision_templates must be an object")
+    templates_by_case: dict[str, dict[str, str]] = {}
+    for case_id, templates in value.items():
+        if not isinstance(case_id, str) or not case_id:
+            raise ValueError(
+                "promotion-review-harvest decision_templates must use non-empty case ids"
+            )
+        if not isinstance(templates, dict):
+            raise ValueError(
+                "promotion-review-harvest decision_templates must map case ids to objects"
+            )
+        terminal_templates: dict[str, str] = {}
+        for decision in ("accepted", "corrected", "rejected", "deferred"):
+            path = templates.get(decision)
+            if path is None:
+                continue
+            if not isinstance(path, str) or not path:
+                raise ValueError(
+                    "promotion-review-harvest decision_templates must map decisions to paths"
+                )
+            terminal_templates[decision] = path
+        if terminal_templates:
+            templates_by_case[case_id] = terminal_templates
+    return templates_by_case
 
 
 def _load_training_gate_config(path: Path) -> dict[str, object]:

@@ -514,7 +514,10 @@ Current implementation:
   the generated config carries accepted applied reviews forward while keeping
   deferred applied reviews visible but out of pseudo-label harvesting.
   `promotion-review-harvest --config` makes the same bridge repeatable with a
-  case-id decision map and explicit per-case CLI overrides.
+  case-id decision map and explicit per-case CLI overrides. Pending cases in
+  its JSON/Markdown report now include terminal decision-template paths when
+  available, but those templates remain guidance until a reviewer adds a
+  `decisions` entry or passes `--decision`.
 
 Exit criteria:
 

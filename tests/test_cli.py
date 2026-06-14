@@ -530,6 +530,12 @@ class CliTests(unittest.TestCase):
                 json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
                 encoding="utf-8",
             )
+            templates = {
+                decision: str(root / f"{decision}.json")
+                for decision in ("accepted", "corrected", "rejected", "deferred")
+            }
+            for path in templates.values():
+                Path(path).write_text("{}", encoding="utf-8")
             review_packet = root / "review-packet.json"
             review_packet.write_text(
                 json.dumps(
@@ -541,7 +547,10 @@ class CliTests(unittest.TestCase):
                                 "case_id": "real-case",
                                 "suggested_review_decision": "deferred",
                                 "review_decision_state": "pending",
-                                "artifacts": {"manifest": str(manifest)},
+                                "artifacts": {
+                                    "manifest": str(manifest),
+                                    "review_templates": templates,
+                                },
                             }
                         ],
                     }
@@ -549,9 +558,19 @@ class CliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             output = root / "review-harvest.json"
+            markdown = root / "review-harvest.md"
 
             with redirect_stdout(StringIO()) as stdout:
-                main(["promotion-review-harvest", str(review_packet), "-o", str(output)])
+                main(
+                    [
+                        "promotion-review-harvest",
+                        str(review_packet),
+                        "-o",
+                        str(output),
+                        "--markdown",
+                        str(markdown),
+                    ]
+                )
 
             self.assertIn("pending=1", stdout.getvalue())
             result = json.loads(output.read_text(encoding="utf-8"))
@@ -560,6 +579,14 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["harvestable_case_count"], 0)
             self.assertEqual(result["pending_case_count"], 1)
             self.assertEqual(result["pending_cases"][0]["case_id"], "real-case")
+            self.assertEqual(
+                result["pending_cases"][0]["decision_templates"],
+                templates,
+            )
+            self.assertEqual(result["decision_templates"]["real-case"], templates)
+            rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn("Decision templates", rendered)
+            self.assertIn(templates["accepted"], rendered)
 
     def test_status_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:
