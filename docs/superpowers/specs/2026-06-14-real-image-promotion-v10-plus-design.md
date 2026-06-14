@@ -390,7 +390,9 @@ Current implementation:
   reruns and harvests only accepted/corrected applied reviews. `merge-labels`
   keeps review and applied-review provenance in pseudo-label manifests, and
   dataset samples carry review item id, review reason, issue tags, applied
-  decision, applied case id, and source review-decision path.
+  decision, applied case id, and source review-decision path. `self-learn`
+  Markdown reports summarize reviewed-label issue counts and provenance-field
+  coverage.
 
 Exit criteria:
 

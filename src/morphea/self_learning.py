@@ -1557,6 +1557,16 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         f"- Best accuracy delta: {_fmt_metric(comparison.get('best_accuracy_delta'))}",
         f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
     ]
+    if reviewed_summary or isinstance(pseudo_dataset.get("samples"), list):
+        lines.extend(
+            [
+                "",
+                "## Reviewed Labels",
+                "",
+                f"- Issue counts: {_format_issue_counts(_counts_from_object(reviewed_summary.get('issue_counts')))}",
+                f"- Provenance fields: {_format_issue_counts(_reviewed_sample_provenance_counts(pseudo_dataset.get('samples')))}",
+            ]
+        )
     curated = result.get("curated_validation")
     if isinstance(curated, dict):
         lines.extend(
@@ -2455,6 +2465,24 @@ def _counts_from_object(value: object) -> dict[str, int]:
         for key, count in value.items()
         if isinstance(count, (int, float))
     }
+
+
+def _reviewed_sample_provenance_counts(value: object) -> dict[str, int]:
+    samples = value if isinstance(value, list) else []
+    fields = (
+        "review_item_id",
+        "review_reason",
+        "applied_review_case_id",
+        "applied_review_source_review_decision",
+    )
+    counts = {field: 0 for field in fields}
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        for field in fields:
+            if sample.get(field):
+                counts[field] += 1
+    return {field: count for field, count in counts.items() if count}
 
 
 def _reviewed_label(item: dict[str, object]) -> dict[str, object]:

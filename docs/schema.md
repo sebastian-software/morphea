@@ -655,7 +655,9 @@ write a model after the training comparison gate passes, but `accepted` is only
 true when the training gate accepts and, when a curated suite is configured,
 the classifier-backed curated validation also passes. The cycle summary also
 records reviewed-label issue counts and applied-review decision counts from the
-pseudo-label dataset.
+pseudo-label dataset; the Markdown report additionally summarizes reviewed-label
+issue counts and which review/apply-review provenance fields are present on
+dataset samples.
 
 Training comparison reports include per-label `label_accuracy` for validation
 splits and `delta.label_accuracy` rows. These label-level deltas are included

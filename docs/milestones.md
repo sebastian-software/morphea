@@ -455,6 +455,9 @@ Implemented so far:
   now requires an accepted training comparison gate and, when configured,
   passing curated validation, with reviewed-label issue counts and
   applied-review decision counts in the cycle summary.
+- self-learning Markdown reports include reviewed-label issue counts and
+  provenance-field coverage for review item ids, review reasons, applied case
+  ids, and source review-decision paths.
 - training comparisons expose per-label validation accuracy deltas, and those
   label-level deltas feed the best/worst gate summary so primitive-family
   regressions can block acceptance.

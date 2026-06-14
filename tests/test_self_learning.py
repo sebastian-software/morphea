@@ -2440,8 +2440,18 @@ class SelfLearningTests(unittest.TestCase):
                 "accepted": False,
                 "pseudo_dataset": {
                     "count": 2,
+                    "samples": [
+                        {
+                            "review_item_id": "review-00000",
+                            "review_reason": "applied_review_accepted",
+                            "review_issues": ["fragmentation"],
+                            "applied_review_case_id": "circle-case",
+                            "applied_review_source_review_decision": "circle-review.json",
+                        }
+                    ],
                     "reviewed_label_summary": {
                         "applied_review_decision_counts": {"accepted": 1},
+                        "issue_counts": {"fragmentation": 1},
                     },
                 },
                 "comparison_summary": {
@@ -2543,6 +2553,10 @@ class SelfLearningTests(unittest.TestCase):
         self.assertIn("`training_gate_not_accepted`", markdown)
         self.assertIn("- Blocking acceptance reasons: `training_gate_not_accepted`", markdown)
         self.assertIn("- Applied review decisions: `accepted: 1`", markdown)
+        self.assertIn("## Reviewed Labels", markdown)
+        self.assertIn("- Issue counts: `fragmentation: 1`", markdown)
+        self.assertIn("review_item_id: 1", markdown)
+        self.assertIn("applied_review_case_id: 1", markdown)
         self.assertIn("## Suite Family Validation", markdown)
         self.assertIn(
             "| `primitive` | `improved` | `True` | `circle` |",

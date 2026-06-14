@@ -391,6 +391,8 @@ trainable datasets.
 `morphea self-learn` separates retraining from acceptance: acceptance requires
 the training comparison gate plus passing curated validation when configured,
 and cycle summaries expose reviewed-label issue and applied-decision counts.
+Cycle Markdown reports also show reviewed-label issue counts and provenance
+field coverage, so a training run can be scanned for missing review lineage.
 Training comparisons now include per-label validation accuracy deltas, and
 those deltas feed best/worst gate summaries so primitive-family regressions can
 block acceptance.
