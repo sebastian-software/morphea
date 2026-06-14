@@ -138,6 +138,7 @@ def apply_promotion_review_decision(
     reason: str | None = None,
     correction_notes: str | None = None,
     corrected_artifacts: list[str] | None = None,
+    reviewed_region_ids: list[str] | None = None,
 ) -> dict[str, object]:
     review_path = Path(review_decision)
     data = json.loads(review_path.read_text(encoding="utf-8"))
@@ -157,6 +158,7 @@ def apply_promotion_review_decision(
             "reason": reason,
             "correction_notes": correction_notes,
             "corrected_artifacts": corrected_artifacts,
+            "reviewed_region_ids": reviewed_region_ids,
         }.items()
         if value is not None
     }
@@ -173,6 +175,9 @@ def apply_promotion_review_decision(
     )
     corrected_artifacts_value = _string_list(
         _review_value(data, "corrected_artifacts", corrected_artifacts)
+    )
+    reviewed_region_ids_value = _unique_string_list(
+        _review_value(data, "reviewed_region_ids", reviewed_region_ids)
     )
     if decision == "corrected":
         if not correction_notes_value:
@@ -191,6 +196,7 @@ def apply_promotion_review_decision(
         "reason": reason_value,
         "correction_notes": correction_notes_value,
         "corrected_artifacts": corrected_artifacts_value,
+        "reviewed_region_ids": reviewed_region_ids_value,
         "issue_tags": _string_list(data.get("issue_tags")),
         "source_decisions": _object_dict(data.get("source_decisions")),
         "failed_gates": _object_list(data.get("failed_gates")),
@@ -210,6 +216,7 @@ def apply_promotion_review_decision(
         if not isinstance(manifest_data, dict):
             raise ValueError("promotion review manifest must be a JSON object")
         result["manifest"] = str(manifest_path)
+        apply_reviewed_region_promotions(manifest_data, result)
         manifest_data["review_decision_applied"] = result
         promotion = manifest_data.get("promotion")
         if isinstance(promotion, dict):
@@ -250,6 +257,9 @@ def render_promotion_review_decision_markdown(result: dict[str, object]) -> str:
         f"- Issue tags: {_format_review_values(result.get('issue_tags'))}",
         f"- Correction notes: `{result.get('correction_notes', '')}`",
         f"- Corrected artifacts: {_format_review_values(result.get('corrected_artifacts'))}",
+        f"- Reviewed regions: {_format_review_values(result.get('reviewed_region_ids'))}",
+        f"- Review-promoted regions: {_format_review_values(result.get('review_promoted_region_ids'))}",
+        f"- Review-promoted anchors: {_format_review_values(result.get('review_promoted_anchor_indexes'))}",
         f"- Quality label policy: `{_review_policy_mode(result.get('quality_label_policy'))}`",
         "- Updates `current_quality_label`: "
         f"`{str(_review_policy_updates_label(result.get('quality_label_policy'))).lower()}`",
@@ -284,6 +294,121 @@ def _review_artifact_markdown(value: object) -> list[str]:
         if isinstance(path, str) and path:
             lines.append(f"| `{key}` | `{path}` |")
     return lines
+
+
+def apply_reviewed_region_promotions(
+    manifest: dict[str, object],
+    result: dict[str, object],
+) -> None:
+    reviewed_region_ids = _unique_string_list(result.get("reviewed_region_ids"))
+    result["review_promoted_region_ids"] = []
+    result["review_promoted_anchor_indexes"] = []
+    if not reviewed_region_ids:
+        return
+    promotion = manifest.get("promotion")
+    if not isinstance(promotion, dict):
+        raise ValueError(
+            "reviewed promotion regions require manifest promotion metadata"
+        )
+    regions = promotion.get("regions")
+    if not isinstance(regions, list):
+        raise ValueError("reviewed promotion regions require manifest promotion.regions")
+    regions_by_id = {
+        str(region.get("id")): region
+        for region in regions
+        if isinstance(region, dict) and isinstance(region.get("id"), str)
+    }
+    unknown_regions = [
+        region_id
+        for region_id in reviewed_region_ids
+        if region_id not in regions_by_id
+    ]
+    if unknown_regions:
+        raise ValueError(
+            "reviewed promotion regions are not in manifest: "
+            + ", ".join(unknown_regions)
+        )
+    if result.get("decision") not in {"accepted", "corrected"}:
+        return
+
+    anchors = manifest.get("anchors")
+    anchors = anchors if isinstance(anchors, list) else []
+    promoted_region_ids: list[str] = []
+    promoted_anchor_indexes: set[int] = set()
+    for region_id in reviewed_region_ids:
+        region = regions_by_id[region_id]
+        state = region.get("state")
+        gate_ok = region.get("gate_ok")
+        if gate_ok is not True and state != "promoted":
+            raise ValueError(
+                "reviewed promotion region is not gate-ok: " + region_id
+            )
+        selected_values = region.get("selected_anchor_indexes", [])
+        selected_values = selected_values if isinstance(selected_values, list) else []
+        selected = [
+            index
+            for index in selected_values
+            if isinstance(index, int) and 0 <= index < len(anchors)
+        ]
+        if not selected:
+            raise ValueError(
+                "reviewed promotion region has no selected anchors: " + region_id
+            )
+        promoted_region_ids.append(region_id)
+        promoted_anchor_indexes.update(selected)
+        if state != "promoted":
+            region["state_before_review"] = state
+        region["state"] = "promoted"
+        region["review_promotion"] = _review_promotion_record(result)
+
+    _promote_reviewed_manifest_anchors(
+        anchors,
+        promoted_anchor_indexes=promoted_anchor_indexes,
+        promoted_region_ids=set(promoted_region_ids),
+        review_promotion=_review_promotion_record(result),
+    )
+    result["review_promoted_region_ids"] = promoted_region_ids
+    result["review_promoted_anchor_indexes"] = sorted(promoted_anchor_indexes)
+
+
+def _promote_reviewed_manifest_anchors(
+    anchors: list[object],
+    *,
+    promoted_anchor_indexes: set[int],
+    promoted_region_ids: set[str],
+    review_promotion: dict[str, object],
+) -> None:
+    for index in sorted(promoted_anchor_indexes):
+        anchor = anchors[index]
+        if not isinstance(anchor, dict):
+            continue
+        state = anchor.get("promotion_state")
+        if state != "promoted":
+            anchor["promotion_state_before_review"] = state
+        anchor["promotion_state"] = "promoted"
+        refs = anchor.get("promotion_regions")
+        if not isinstance(refs, list):
+            continue
+        for ref in refs:
+            if not isinstance(ref, dict):
+                continue
+            region_id = ref.get("region_id")
+            if not isinstance(region_id, str) or region_id not in promoted_region_ids:
+                continue
+            ref_state = ref.get("state")
+            if ref_state != "promoted":
+                ref["state_before_review"] = ref_state
+            ref["state"] = "promoted"
+            ref["review_promotion"] = review_promotion
+
+
+def _review_promotion_record(result: dict[str, object]) -> dict[str, object]:
+    return {
+        "decision": result.get("decision"),
+        "source_review_decision": result.get("source_review_decision"),
+        "reviewer": result.get("reviewer"),
+        "reason": result.get("reason"),
+    }
 
 
 def _review_policy_mode(value: object) -> str:
@@ -339,6 +464,18 @@ def _string_list(value: object) -> list[str]:
     return [str(item) for item in value if isinstance(item, str) and item]
 
 
+def _unique_string_list(value: object) -> list[str]:
+    items = [item.strip() for item in _string_list(value) if item.strip()]
+    seen: set[str] = set()
+    unique: list[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        unique.append(item)
+    return unique
+
+
 def _string_value(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
@@ -374,7 +511,13 @@ def _object_dict(value: object) -> dict[str, object]:
 
 
 def _format_review_values(value: object) -> str:
-    items = _string_list(value)
+    items = []
+    if isinstance(value, list):
+        items = [
+            str(item)
+            for item in value
+            if isinstance(item, (str, int)) and str(item)
+        ]
     if not items:
         return "`none`"
     return ", ".join(f"`{item}`" for item in items)

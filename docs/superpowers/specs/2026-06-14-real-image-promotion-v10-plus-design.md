@@ -530,8 +530,8 @@ Current implementation:
   cases with template-readiness labels for missing reviewer evidence.
 - `promotion-apply-review` can apply a terminal template with explicit CLI
   reviewer evidence overrides (`--reviewer`, `--reason`, and corrected-evidence
-  flags), so reviewers can avoid hand-editing JSON while still supplying
-  required evidence.
+  flags, plus `--reviewed-region` for explicit region evidence), so reviewers
+  can avoid hand-editing JSON while still supplying required evidence.
 - `promotion-review-harvest --config` can carry case-scoped
   `decision_overrides` for the same reviewer evidence fields, allowing
   template-backed `decision_choices` to apply generated terminal templates
@@ -543,6 +543,10 @@ Current implementation:
 - `promotion-review-harvest --config` also accepts the same evidence directly
   as case-scoped CLI flags, so a reviewer can choose a terminal template and
   supply reviewer/reason evidence from one command line.
+- Accepted/corrected applied reviews can now carry explicit
+  `reviewed_region_ids`. Applying such a decision validates the listed regions
+  against the run manifest, promotes only gate-ok reviewed regions plus their
+  selected anchors, and keeps suite `current_quality_label` updates manual.
 - Harvest prep reports render evidence-flag hints beside decision-choice
   commands when templates are missing reviewer fields, making the no-JSON-edit
   path visible without turning placeholder values into executable defaults.
@@ -599,7 +603,10 @@ and quality-label review-policy refinements:
    review evidence. Current policy is sidecar-only: pending decisions,
    terminal templates, and applied summaries carry `quality_label_policy` with
    `updates_current_quality_label: false`; suite labels remain manual metadata
-   until the suite file is explicitly edited.
+   until the suite file is explicitly edited. Accepted/corrected region
+   evidence is now carried through `reviewed_region_ids`, so reviewed gate-ok
+   regions can become harvestable without making whole-case label updates
+   implicit.
 3. Add a follow-up guard that keeps text-like fallback grouping from masking
    non-text organic fallback debt in future UI screenshots. Current guard:
    `text_like_fragment_group` only marks small glyph-sized cubic paths as

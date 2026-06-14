@@ -294,7 +294,12 @@ overrides and render reviewer/reason evidence in Markdown. They include the
 same sidecar-only quality-label policy, so accepted/corrected decisions are
 harvestable evidence rather than automatic suite-label updates. They also
 preserve `review_artifacts` and render those links in Markdown before
-gate/component evidence.
+gate/component evidence. Terminal decisions can carry explicit
+`reviewed_region_ids`; accepted/corrected reviews validate those ids against
+gate-ok promotion regions and mark only those reviewed regions plus their
+selected anchors as review-promoted. This gives reviewers a region-scoped path
+from manual-review-pending evidence to harvestable anchors without promoting a
+whole case by implication.
 
 `morphea promotion-review-harvest` now turns a suite-level
 `review-packet.json` into a reproducible harvest-prep report. It applies only
@@ -329,8 +334,9 @@ relevant, are filled or supplied through config-level `decision_overrides`.
 The report now also prints
 evidence-flag hints beside each decision-choice command, so reviewers can avoid
 editing the config by appending case-scoped `--reviewer`, `--reason`,
-`--correction-notes`, and `--corrected-artifact` flags to the selected
-`promotion-review-harvest --config ... --decision-choice ...` command.
+`--correction-notes`, `--corrected-artifact`, and `--reviewed-region` flags to
+the selected `promotion-review-harvest --config ... --decision-choice ...`
+command.
 Reviewer choices and evidence can also be stored in a portable
 `decision_plan` overlay with `decision_choices` and `decision_overrides`, then
 merged into a fresh generated harvest config without committing run-local

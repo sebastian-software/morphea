@@ -710,11 +710,19 @@ terminal review decision, rejects still-pending decisions, requires non-empty
 persist `review_decision_applied` back into the run manifest and its top-level
 `promotion` object. `corrected` decisions additionally require
 `correction_notes` and at least one `corrected_artifacts` entry, so corrected
-records cannot be harvested without correction evidence. Generated terminal
-templates may be applied without manually editing JSON by passing
+records cannot be harvested without correction evidence. Terminal records may
+also carry `reviewed_region_ids`: when such a record is applied against a
+manifest, accepted/corrected decisions validate those ids against
+`promotion.regions`, require each listed region to be gate-ok or already
+promoted, and mark only those reviewed regions plus their selected anchors as
+review-promoted. Unknown or gate-failed reviewed regions are rejected rather
+than turned into training evidence. Generated terminal templates may be applied
+without manually editing JSON by passing
 `--reviewer`, `--reason`, and for corrected reviews `--correction-notes` plus
-one or more `--corrected-artifact` values; these CLI values are recorded as
-review overrides in the applied summary. The applied summary includes
+one or more `--corrected-artifact` values, plus repeatable
+`--reviewed-region region-id` values for explicit region-scoped evidence;
+these CLI values are recorded as review overrides in the applied summary. The
+applied summary includes
 `quality_label_policy` with `mode: sidecar_only` and
 `updates_current_quality_label: false`, preserves `review_artifacts`, and
 renders those links plus reviewer/reason evidence in Markdown before the
@@ -749,8 +757,9 @@ same mechanism and remain overrideable by CLI choices or direct `--decision`
 paths. The same command accepts case-scoped CLI evidence flags:
 `--reviewer case=name`, `--reason case=reason`,
 `--correction-notes case=notes`, and repeatable
-`--corrected-artifact case=path`; these flags override same-case
-`decision_overrides` from config and are passed through to
+`--corrected-artifact case=path` and `--reviewed-region case=region-id`;
+these flags override same-case `decision_overrides` from config and are passed
+through to
 `promotion-apply-review`. When the prep run itself is driven by `--config`,
 pending cases also carry `decision_choice_commands` in JSON and Markdown:
 one copy/paste command per available terminal template, shaped like
@@ -1142,9 +1151,10 @@ Supported fields:
 - `decision_overrides`: optional object mapping case ids to explicit review
   evidence fields passed to `promotion-apply-review` when that case's terminal
   decision is applied. Supported fields are `reviewer`, `reason`,
-  `correction_notes`, and `corrected_artifacts`. These values let generated
-  terminal templates stay unedited while the config still supplies the required
-  reviewer evidence; applied summaries record the fields as review overrides.
+  `correction_notes`, `corrected_artifacts`, and `reviewed_region_ids`. These
+  values let generated terminal templates stay unedited while the config still
+  supplies the required reviewer evidence; applied summaries record the fields
+  as review overrides.
 - `suite`: optional suite override for the generated harvest config
 - `run_root`: optional run-root override for manifest lookup and generated
   harvest config
@@ -1164,8 +1174,8 @@ arguments are merged into the config `decisions` object and override the same
 case id. `decision_overrides` are case-scoped and are applied to whichever
 terminal decision path or decision choice is selected for that case. The
 case-scoped CLI flags `--reviewer`, `--reason`, `--correction-notes`, and
-`--corrected-artifact` override same-field config or plan evidence for the
-selected case.
+`--corrected-artifact` plus repeatable `--reviewed-region` override same-field
+config or plan evidence for the selected case.
 
 ## Promotion Review Decision Plan v1
 
@@ -1179,7 +1189,7 @@ Supported fields:
   (`accepted`, `corrected`, `rejected`, or `deferred`)
 - `decision_overrides`: object mapping case ids to the same explicit reviewer
   evidence fields supported by harvest configs: `reviewer`, `reason`,
-  `correction_notes`, and `corrected_artifacts`
+  `correction_notes`, `corrected_artifacts`, and `reviewed_region_ids`
 
 Decision plans intentionally do not contain run-local template paths. They are
 portable review evidence overlays that become actionable only when combined

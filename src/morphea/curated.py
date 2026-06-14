@@ -3503,6 +3503,7 @@ def _promotion_review_decision_record(
         "reason": "",
         "correction_notes": "",
         "corrected_artifacts": [],
+        "reviewed_region_ids": [],
         "issue_tags": _promotion_issue_tags(promotion),
         "source_decisions": {
             "promotion_decision": summary.get("decision", "n/a"),

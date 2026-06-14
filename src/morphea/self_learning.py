@@ -21,6 +21,7 @@ from morphea.mlx_classifier import (
     MlxClassifierTrainingConfig,
     train_mlx_transformer_classifier,
 )
+from morphea.promotion_export import apply_reviewed_region_promotions
 
 
 HARVEST_FILTER_DEFAULTS = {
@@ -330,6 +331,7 @@ def _write_manifest_applied_review(
     if not isinstance(manifest, dict):
         return
     manifest["review_decision_applied"] = applied_review
+    apply_reviewed_region_promotions(manifest, applied_review)
     promotion = manifest.get("promotion")
     if isinstance(promotion, dict):
         promotion["review_decision_applied"] = applied_review

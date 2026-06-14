@@ -213,6 +213,59 @@ class SelfLearningTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_harvest_curated_restores_reviewed_region_promotions(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_reviewed_region_suite(root)
+            run_root = root / "runs"
+            output = root / "pseudo.json"
+            curated_report = root / "curated.json"
+            applied_review = {
+                "decision": "accepted",
+                "case_id": "circle-case",
+                "reviewed_region_ids": ["circle-region"],
+                "reviewer": "qa",
+                "reason": "accepted visible circle region",
+                "issue_tags": ["manual_review_pending"],
+            }
+            _write_manifest(
+                run_root,
+                "circle-case",
+                diagnostics=[],
+                classifier_error=0.0,
+                applied_review=applied_review,
+            )
+
+            result = harvest_curated_pseudo_labels(
+                suite=suite,
+                run_root=run_root,
+                output=output,
+                curated_report=curated_report,
+                require_applied_review=True,
+            )
+
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(
+                result["pseudo_labels"][0]["review_decision_applied"][
+                    "review_promoted_region_ids"
+                ],
+                ["circle-region"],
+            )
+            manifest = json.loads(
+                (run_root / "circle-case" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(manifest["anchors"][0]["promotion_state"], "promoted")
+            self.assertEqual(
+                manifest["promotion"]["regions"][0]["state"],
+                "promoted",
+            )
+            self.assertEqual(
+                manifest["promotion"]["regions"][0]["state_before_review"],
+                "deferred",
+            )
+
     def test_promotion_review_harvest_config_keeps_deferred_out_of_harvest(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -3296,6 +3349,76 @@ def _write_curated_review_harvest_suite(root: Path) -> Path:
     suite = root / "suite.json"
     suite.write_text(
         json.dumps({"version": 1, "cases": cases}),
+        encoding="utf-8",
+    )
+    return suite
+
+
+def _write_curated_reviewed_region_suite(root: Path) -> Path:
+    source = root / "circle.png"
+    image = Image.new("RGB", (32, 32), "white")
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((8, 8, 23, 23), fill="#c08011")
+    image.save(source)
+    suite = root / "suite.json"
+    suite.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "cases": [
+                    {
+                        "id": "circle-case",
+                        "source": str(source),
+                        "promotion": {
+                            "stress_family": "reviewed_region_fixture",
+                            "source_provenance": "generated test fixture",
+                            "licensing_status": "test_fixture",
+                            "expected_promotion_families": ["circle"],
+                            "current_quality_label": "red",
+                            "quality_label_review_policy": "manual_review_pending",
+                            "current_status": (
+                                "checked_semantic_pass_manual_review_pending"
+                            ),
+                            "current_issues": ["manual_review_pending"],
+                            "visual_audit_status": "run_artifacts_only",
+                            "visual_thresholds": {
+                                "family": "reviewed_region_fixture",
+                                "max_raster_l1_error": 1.0,
+                                "max_raster_edge_error": 1.0,
+                                "severity": "red",
+                            },
+                            "structure_thresholds": {
+                                "max_fragmentation_penalty": 1.0,
+                                "max_layer_count": 10,
+                                "severity": "red",
+                            },
+                            "review_notes": ["reviewed region restore fixture"],
+                            "region_gates": [
+                                {
+                                    "id": "circle-region",
+                                    "gate_type": "shape_class",
+                                    "bounds": [6, 6, 26, 26],
+                                    "expected_kinds": ["circle"],
+                                    "min_count": 1,
+                                    "min_anchor_coverage": 0.5,
+                                }
+                            ],
+                        },
+                        "recommended_config": {
+                            "min_area": 4,
+                            "timeout_seconds": 5,
+                        },
+                        "expectations": [
+                            {
+                                "id": "circle-anchor",
+                                "kind": "circle",
+                                "min_count": 1,
+                            }
+                        ],
+                    }
+                ],
+            }
+        ),
         encoding="utf-8",
     )
     return suite

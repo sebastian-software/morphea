@@ -280,6 +280,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 review_decision["allowed_decisions"],
                 ["accepted", "corrected", "rejected", "deferred"],
             )
+            self.assertEqual(review_decision["reviewed_region_ids"], [])
             self.assertEqual(review_decision["issue_tags"], [])
             manifest = json.loads(
                 (output_dir / "simple-circle" / "manifest.json").read_text(
@@ -531,6 +532,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 accepted_template["allowed_decisions"],
                 ["accepted", "corrected", "rejected", "deferred"],
             )
+            self.assertEqual(accepted_template["reviewed_region_ids"], [])
             self.assertEqual(
                 accepted_template["quality_label_policy"]["mode"],
                 "sidecar_only",

@@ -94,6 +94,9 @@ def prepare_promotion_review_harvest(
             corrected_artifacts=_override_string_list(
                 overrides.get("corrected_artifacts")
             ),
+            reviewed_region_ids=_override_string_list(
+                overrides.get("reviewed_region_ids")
+            ),
         )
         newly_applied.append(
             {
@@ -101,6 +104,15 @@ def prepare_promotion_review_harvest(
                 "decision": applied.get("decision"),
                 "accepted_for_promotion": bool(
                     applied.get("accepted_for_promotion", False)
+                ),
+                "reviewed_region_ids": applied.get("reviewed_region_ids", []),
+                "review_promoted_region_ids": applied.get(
+                    "review_promoted_region_ids",
+                    [],
+                ),
+                "review_promoted_anchor_indexes": applied.get(
+                    "review_promoted_anchor_indexes",
+                    [],
                 ),
                 "source_review_decision": applied.get("source_review_decision"),
                 "review_overrides": applied.get("review_overrides", []),
@@ -187,8 +199,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         "",
         "## Newly Applied",
         "",
-        "| Case | Decision | Accepted | Overrides | Manifest | Output |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| Case | Decision | Accepted | Review-promoted regions | Review-promoted anchors | Overrides | Manifest | Output |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     applied = result.get("newly_applied_decisions", [])
     if isinstance(applied, list) and applied:
@@ -200,12 +212,14 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('decision', 'n/a')}` | "
                 f"`{str(item.get('accepted_for_promotion', False)).lower()}` | "
+                f"{_fmt_value_list(item.get('review_promoted_region_ids'))} | "
+                f"{_fmt_value_list(item.get('review_promoted_anchor_indexes'))} | "
                 f"{_fmt_review_overrides(item.get('review_overrides'))} | "
                 f"`{item.get('manifest', 'n/a')}` | "
                 f"`{item.get('output', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [
@@ -353,6 +367,15 @@ def _packet_review_status(
                     "anchor_state_counts": promotion_state_counts or {},
                     "accepted_for_promotion": bool(
                         applied.get("accepted_for_promotion", False)
+                    ),
+                    "reviewed_region_ids": applied.get("reviewed_region_ids", []),
+                    "review_promoted_region_ids": applied.get(
+                        "review_promoted_region_ids",
+                        [],
+                    ),
+                    "review_promoted_anchor_indexes": applied.get(
+                        "review_promoted_anchor_indexes",
+                        [],
                     ),
                     "reviewer": applied.get("reviewer"),
                     "reason": applied.get("reason"),
@@ -627,6 +650,19 @@ def _evidence_flags_for_missing_fields(
         if field in missing_fields:
             flags.append(f"{option} {shlex.quote(f'{case_id}={placeholder}')}")
     return flags
+
+
+def _fmt_value_list(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "`none`"
+    items = [
+        str(item)
+        for item in value
+        if isinstance(item, (str, int)) and str(item)
+    ]
+    if not items:
+        return "`none`"
+    return ", ".join(f"`{item}`" for item in items)
 
 
 def _decision_template_map(

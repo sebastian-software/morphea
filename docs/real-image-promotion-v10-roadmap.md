@@ -416,12 +416,17 @@ persist `review_decision_applied` into run manifests. Terminal records require
 reviewer and reason evidence, and `corrected` records require correction notes
 plus corrected artifacts before they can be applied. Reviewer evidence can be
 supplied by editing the terminal template or by passing `--reviewer`,
-`--reason`, `--correction-notes`, and `--corrected-artifact` values to
+`--reason`, `--correction-notes`, `--corrected-artifact`, and
+`--reviewed-region` values to
 `promotion-apply-review`; applied summaries record any CLI overrides. Pending,
 terminal, and applied review records carry `quality_label_policy.mode` set to
 `sidecar_only`, making accepted/corrected reviews auditable evidence without
 implicitly rewriting suite `current_quality_label`. Applied review Markdown
 preserves and renders `review_artifacts` before the gate/component evidence.
+Accepted/corrected reviews can now name explicit `reviewed_region_ids`; applying
+those decisions against a manifest validates the listed regions, promotes only
+gate-ok reviewed regions and their selected anchors, and leaves whole-case
+quality labels manual.
 `morphea promotion-review-harvest` applies explicitly selected terminal
 decision files from a suite `review-packet.json`, writes per-case applied
 review summaries beside manifests, reports applied/harvestable/pending packet
@@ -449,9 +454,9 @@ the selected command executable while showing the exact case-scoped flags to
 add.
 
 Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
-`correction_notes`, and `corrected_artifacts` to the selected terminal
-template, so generated templates can remain untouched while applied summaries
-still record the explicit evidence override fields.
+`correction_notes`, `corrected_artifacts`, and `reviewed_region_ids` to the
+selected terminal template, so generated templates can remain untouched while
+applied summaries still record the explicit evidence override fields.
 The same selected choices and evidence can now live in a portable
 `decision_plan` JSON overlay, keeping reviewer decisions in case-id terms
 without embedding run-local template paths. `promotion-review-harvest` merges
@@ -463,8 +468,9 @@ evidence exists.
 
 The same evidence can be supplied without editing config JSON by appending
 case-scoped CLI flags (`--reviewer case=name`, `--reason case=reason`, plus
-corrected-decision notes/artifacts) to a `promotion-review-harvest --config`
-command with `--decision-choice case=decision`.
+corrected-decision notes/artifacts and `--reviewed-region case=region-id`) to a
+`promotion-review-harvest --config` command with
+`--decision-choice case=decision`.
 
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates. For

@@ -446,7 +446,10 @@ Implemented so far:
   applied JSON/Markdown summaries with preserved `review_artifacts`, and can
   persist `review_decision_applied` into a run manifest. It can also apply
   generated terminal templates with explicit CLI evidence overrides such as
-  `--reviewer`, `--reason`, `--correction-notes`, and `--corrected-artifact`.
+  `--reviewer`, `--reason`, `--correction-notes`, `--corrected-artifact`, and
+  `--reviewed-region`. Accepted/corrected reviewed regions are validated
+  against gate-ok manifest regions and only those selected anchors become
+  review-promoted.
 - `morphea harvest --require-applied-review` gates pseudo-label harvesting on
   applied promotion review decisions, so only `accepted` and `corrected`
   applied decisions become candidates while missing, invalid, rejected, and
@@ -1246,7 +1249,8 @@ Implemented so far:
   templates without committing those paths. The same evidence can be supplied
   directly with case-scoped CLI flags such as `--reviewer case=name`,
   `--reason case=reason`, `--correction-notes case=notes`, and
-  `--corrected-artifact case=path`; harvest prep Markdown shows those
+  `--corrected-artifact case=path`, plus `--reviewed-region case=region-id`;
+  harvest prep Markdown shows those
   evidence-flag hints and aggregate readiness counts beside decision-choice
   commands when reviewer evidence is missing, pending rows preserve
   review-artifact links from the packet, and applied rows show reviewer,

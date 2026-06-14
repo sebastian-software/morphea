@@ -1061,6 +1061,12 @@ def main(argv: list[str] | None = None) -> None:
         action="append",
         default=None,
     )
+    promotion_apply_review.add_argument(
+        "--reviewed-region",
+        action="append",
+        default=None,
+        help="Promotion region id explicitly reviewed by this terminal decision.",
+    )
 
     promotion_review_harvest = subcommands.add_parser(
         "promotion-review-harvest",
@@ -1111,6 +1117,12 @@ def main(argv: list[str] | None = None) -> None:
         action="append",
         default=[],
         help="Corrected-decision artifact path as CASE_ID=path; repeatable.",
+    )
+    promotion_review_harvest.add_argument(
+        "--reviewed-region",
+        action="append",
+        default=[],
+        help="Reviewed promotion region as CASE_ID=region-id; repeatable.",
     )
     promotion_review_harvest.add_argument("--suite", type=Path)
     promotion_review_harvest.add_argument("--run-root", type=Path)
@@ -1376,6 +1388,7 @@ def main(argv: list[str] | None = None) -> None:
             reason=args.reason,
             correction_notes=args.correction_notes,
             corrected_artifacts=args.corrected_artifact,
+            reviewed_region_ids=args.reviewed_region,
         )
         print(
             "applied promotion review "
@@ -1918,6 +1931,7 @@ def _promotion_review_override_args(
     reasons: list[str],
     correction_notes: list[str],
     corrected_artifacts: list[str],
+    reviewed_regions: list[str],
 ) -> dict[str, dict[str, object]]:
     overrides: dict[str, dict[str, object]] = {}
     for field, values in (
@@ -1942,6 +1956,18 @@ def _promotion_review_override_args(
             artifacts = []
             overrides[case_id]["corrected_artifacts"] = artifacts
         artifacts.append(value)
+    for case_id, value in _promotion_review_string_assignment_items(
+        reviewed_regions,
+        "reviewed_region_ids",
+    ):
+        regions = overrides.setdefault(case_id, {}).setdefault(
+            "reviewed_region_ids",
+            [],
+        )
+        if not isinstance(regions, list):
+            regions = []
+            overrides[case_id]["reviewed_region_ids"] = regions
+        regions.append(value)
     return overrides
 
 
@@ -1986,7 +2012,7 @@ def _merge_promotion_review_overrides(
     for case_id, overrides in cli.items():
         case_overrides = merged.setdefault(case_id, {})
         for field, value in overrides.items():
-            if field == "corrected_artifacts":
+            if field in {"corrected_artifacts", "reviewed_region_ids"}:
                 case_overrides[field] = list(value) if isinstance(value, list) else []
             else:
                 case_overrides[field] = value
@@ -2043,6 +2069,7 @@ def _resolved_promotion_review_harvest_config(
         reasons=args.reason,
         correction_notes=args.correction_notes,
         corrected_artifacts=args.corrected_artifact,
+        reviewed_regions=args.reviewed_region,
     )
     config["decision_overrides"] = _merge_promotion_review_overrides(
         _merge_promotion_review_overrides(
@@ -3505,7 +3532,13 @@ def _promotion_review_decision_overrides_from_config(
     if not isinstance(value, dict):
         raise ValueError("promotion-review-harvest decision_overrides must be an object")
     overrides_by_case: dict[str, dict[str, object]] = {}
-    allowed = {"reviewer", "reason", "correction_notes", "corrected_artifacts"}
+    allowed = {
+        "reviewer",
+        "reason",
+        "correction_notes",
+        "corrected_artifacts",
+        "reviewed_region_ids",
+    }
     for case_id, overrides in value.items():
         if not isinstance(case_id, str) or not case_id:
             raise ValueError(
@@ -3547,6 +3580,21 @@ def _promotion_review_decision_overrides_from_config(
                     "corrected_artifacts must be a non-empty string array"
                 )
             normalized["corrected_artifacts"] = list(corrected)
+        reviewed_regions = overrides.get("reviewed_region_ids")
+        if reviewed_regions is not None:
+            if (
+                not isinstance(reviewed_regions, list)
+                or not reviewed_regions
+                or not all(
+                    isinstance(item, str) and bool(item.strip())
+                    for item in reviewed_regions
+                )
+            ):
+                raise ValueError(
+                    "promotion-review-harvest decision_overrides "
+                    "reviewed_region_ids must be a non-empty string array"
+                )
+            normalized["reviewed_region_ids"] = list(reviewed_regions)
         if normalized:
             overrides_by_case[case_id] = normalized
     return overrides_by_case

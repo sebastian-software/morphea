@@ -186,6 +186,7 @@ class CliTests(unittest.TestCase):
                         "reason": "corrected topology",
                         "correction_notes": "merged duplicate control",
                         "corrected_artifacts": ["corrected.svg"],
+                        "reviewed_region_ids": ["radio-control-region-topology"],
                         "issue_tags": ["topology_mismatch"],
                         "source_decisions": {
                             "editability_decision": "manual_review",
@@ -207,7 +208,37 @@ class CliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             manifest.write_text(
-                json.dumps({"schema_version": 1, "promotion": {}}),
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "anchors": [
+                            {
+                                "id": "anchor-0000",
+                                "kind": "stroke_circle",
+                                "promotion_state": "deferred",
+                                "promotion_regions": [
+                                    {
+                                        "region_id": "radio-control-region-topology",
+                                        "state": "deferred",
+                                        "gate_id": "radio-control-region-topology",
+                                        "reason": "manual review pending",
+                                    }
+                                ],
+                            }
+                        ],
+                        "promotion": {
+                            "regions": [
+                                {
+                                    "id": "radio-control-region-topology",
+                                    "state": "deferred",
+                                    "gate_ok": True,
+                                    "selected_anchor_indexes": [0],
+                                    "reason": "manual review pending",
+                                }
+                            ]
+                        },
+                    }
+                ),
                 encoding="utf-8",
             )
 
@@ -230,6 +261,15 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["decision"], "corrected")
             self.assertTrue(result["accepted_for_promotion"])
             self.assertFalse(result["matches_suggestion"])
+            self.assertEqual(
+                result["reviewed_region_ids"],
+                ["radio-control-region-topology"],
+            )
+            self.assertEqual(
+                result["review_promoted_region_ids"],
+                ["radio-control-region-topology"],
+            )
+            self.assertEqual(result["review_promoted_anchor_indexes"], [0])
             self.assertEqual(result["issue_tags"], ["topology_mismatch"])
             self.assertEqual(
                 result["failed_gates"][0]["id"],
@@ -262,6 +302,26 @@ class CliTests(unittest.TestCase):
                 manifest_data["promotion"]["review_decision_applied"]["decision"],
                 "corrected",
             )
+            self.assertEqual(
+                manifest_data["anchors"][0]["promotion_state"],
+                "promoted",
+            )
+            self.assertEqual(
+                manifest_data["anchors"][0]["promotion_state_before_review"],
+                "deferred",
+            )
+            self.assertEqual(
+                manifest_data["anchors"][0]["promotion_regions"][0]["state"],
+                "promoted",
+            )
+            self.assertEqual(
+                manifest_data["promotion"]["regions"][0]["state"],
+                "promoted",
+            )
+            self.assertEqual(
+                manifest_data["promotion"]["regions"][0]["state_before_review"],
+                "deferred",
+            )
             self.assertFalse(
                 manifest_data["promotion"]["review_decision_applied"][
                     "quality_label_policy"
@@ -277,6 +337,14 @@ class CliTests(unittest.TestCase):
             )
             self.assertIn(
                 "- Updates `current_quality_label`: `false`",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "- Reviewed regions: `radio-control-region-topology`",
+                markdown.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "- Review-promoted anchors: `0`",
                 markdown.read_text(encoding="utf-8"),
             )
             self.assertIn(
@@ -309,6 +377,59 @@ class CliTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "requires reviewer"):
                 main(["promotion-apply-review", str(review_decision)])
+
+    def test_promotion_apply_review_cli_rejects_gate_failed_reviewed_region(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            review_decision = root / "review-decision.json"
+            manifest = root / "manifest.json"
+            review_decision.write_text(
+                json.dumps(
+                    {
+                        "case_id": "case",
+                        "decision": "accepted",
+                        "reviewer": "qa",
+                        "reason": "should not promote failed region",
+                        "reviewed_region_ids": ["failed-region"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "anchors": [
+                            {
+                                "id": "anchor-0000",
+                                "kind": "circle",
+                                "promotion_state": "rejected",
+                            }
+                        ],
+                        "promotion": {
+                            "regions": [
+                                {
+                                    "id": "failed-region",
+                                    "state": "rejected",
+                                    "gate_ok": False,
+                                    "selected_anchor_indexes": [0],
+                                }
+                            ]
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "not gate-ok"):
+                main(
+                    [
+                        "promotion-apply-review",
+                        str(review_decision),
+                        "--manifest",
+                        str(manifest),
+                    ]
+                )
 
     def test_promotion_apply_review_cli_accepts_review_evidence_overrides(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -713,6 +834,142 @@ class CliTests(unittest.TestCase):
             )
             rendered = markdown.read_text(encoding="utf-8")
             self.assertIn("applied_review_without_promoted_anchors", rendered)
+
+    def test_promotion_review_harvest_cli_promotes_reviewed_regions(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = root / "suite.json"
+            run_root = root / "runs"
+            case_dir = run_root / "real-case"
+            case_dir.mkdir(parents=True)
+            manifest = case_dir / "manifest.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "anchors": [
+                            {
+                                "id": "anchor-0000",
+                                "kind": "circle",
+                                "color": "#dd2222",
+                                "promotion_state": "deferred",
+                                "promotion_regions": [
+                                    {
+                                        "region_id": "circle-region",
+                                        "state": "deferred",
+                                        "gate_id": "circle-region",
+                                        "reason": "manual review pending",
+                                    }
+                                ],
+                            }
+                        ],
+                        "promotion": {
+                            "summary": {"decision": "deferred"},
+                            "regions": [
+                                {
+                                    "id": "circle-region",
+                                    "state": "deferred",
+                                    "gate_ok": True,
+                                    "selected_anchor_indexes": [0],
+                                    "reason": "manual review pending",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "real-case",
+                                "suggested_review_decision": "accepted",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(manifest)},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            accepted_decision = root / "accepted.json"
+            accepted_decision.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "case_id": "real-case",
+                        "decision": "accepted",
+                        "reviewer": "",
+                        "reason": "",
+                        "reviewed_region_ids": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = root / "review-harvest.json"
+            markdown = root / "review-harvest.md"
+            config = root / "promotion-review-harvest.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "review_packet": str(review_packet),
+                        "output": str(output),
+                        "markdown": str(markdown),
+                        "run_root": str(run_root),
+                        "decision_choices": {"real-case": "accepted"},
+                        "decision_templates": {
+                            "real-case": {"accepted": str(accepted_decision)}
+                        },
+                        "decision_overrides": {
+                            "real-case": {
+                                "reviewer": "qa",
+                                "reason": "accepted visible circle region",
+                                "reviewed_region_ids": ["circle-region"],
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with redirect_stdout(StringIO()) as stdout:
+                main(["promotion-review-harvest", "--config", str(config)])
+
+            self.assertIn("harvestable=1", stdout.getvalue())
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["harvestable_case_count"], 1)
+            self.assertEqual(
+                result["newly_applied_decisions"][0]["review_promoted_region_ids"],
+                ["circle-region"],
+            )
+            self.assertEqual(
+                result["newly_applied_decisions"][0]["review_promoted_anchor_indexes"],
+                [0],
+            )
+            self.assertEqual(
+                result["newly_applied_decisions"][0]["review_overrides"],
+                ["reason", "reviewed_region_ids", "reviewer"],
+            )
+            self.assertTrue(result["applied_cases"][0]["harvestable"])
+            self.assertEqual(result["applied_cases"][0]["promoted_anchor_count"], 1)
+            self.assertEqual(
+                result["applied_cases"][0]["review_promoted_region_ids"],
+                ["circle-region"],
+            )
+            manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(manifest_data["anchors"][0]["promotion_state"], "promoted")
+            self.assertEqual(
+                manifest_data["review_decision_applied"]["reviewed_region_ids"],
+                ["circle-region"],
+            )
+            rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn("`circle-region`", rendered)
+            self.assertIn("`0`", rendered)
 
     def test_promotion_review_harvest_cli_accepts_config_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
