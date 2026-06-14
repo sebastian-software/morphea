@@ -231,8 +231,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
             "",
             "## Pending Cases",
             "",
-            "| Case | Suggested | Review decision | Decision templates | Manifest |",
-            "| --- | --- | --- | --- | --- |",
+            "| Case | Suggested | Review decision | Review artifacts | Decision templates | Manifest |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
     )
     pending = result.get("pending_cases", [])
@@ -245,11 +245,12 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('suggested_review_decision', 'n/a')}` | "
                 f"`{item.get('review_decision', 'n/a')}` | "
+                f"{_fmt_review_artifacts(item.get('review_artifacts'))} | "
                 f"{_fmt_decision_templates(item.get('decision_templates'))} | "
                 f"`{item.get('manifest', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
 
     _append_decision_choice_commands(
         lines,
@@ -344,6 +345,7 @@ def _packet_review_status(
                         "n/a",
                     ),
                     "review_decision": case.get("review_decision_state", "n/a"),
+                    "review_artifacts": _case_review_artifacts(case),
                     "decision_templates": decision_templates.get(case_id, {}),
                     "decision_template_readiness": decision_template_readiness.get(
                         case_id,
@@ -360,6 +362,23 @@ def _packet_review_status(
                 }
             )
     return applied_cases, pending_cases
+
+
+def _case_review_artifacts(case: dict[str, object]) -> dict[str, str]:
+    artifacts = case.get("artifacts", {})
+    if not isinstance(artifacts, dict):
+        return {}
+    return {
+        key: value
+        for key in (
+            "contact_sheet",
+            "promotion_review",
+            "editability_review",
+            "review_decision",
+            "promotion_export",
+        )
+        if isinstance((value := artifacts.get(key)), str) and value
+    }
 
 
 def _decision_template_readiness(
@@ -698,6 +717,23 @@ def _fmt_review_overrides(value: object) -> str:
     if not isinstance(value, list):
         return "n/a"
     parts = [f"`{item}`" for item in value if isinstance(item, str) and item]
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_review_artifacts(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    parts = [
+        f"`{key}`=`{value[key]}`"
+        for key in (
+            "contact_sheet",
+            "promotion_review",
+            "editability_review",
+            "review_decision",
+            "promotion_export",
+        )
+        if isinstance(value.get(key), str) and value[key]
+    ]
     return ", ".join(parts) if parts else "n/a"
 
 

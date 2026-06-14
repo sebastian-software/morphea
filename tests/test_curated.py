@@ -2714,6 +2714,16 @@ class CuratedSuiteTests(unittest.TestCase):
                 ["accepted", "corrected", "deferred", "rejected"],
             )
             self.assertEqual(
+                sorted(review_harvest["pending_cases"][0]["review_artifacts"]),
+                [
+                    "contact_sheet",
+                    "editability_review",
+                    "promotion_export",
+                    "promotion_review",
+                    "review_decision",
+                ],
+            )
+            self.assertEqual(
                 review_harvest["decision_templates"],
                 harvest_config_data["decision_templates"],
             )
@@ -2770,6 +2780,10 @@ class CuratedSuiteTests(unittest.TestCase):
                 encoding="utf-8"
             )
             self.assertIn("Decision templates", review_harvest_markdown)
+            self.assertIn("Review artifacts", review_harvest_markdown)
+            self.assertIn("contact_sheet", review_harvest_markdown)
+            self.assertIn("promotion_review", review_harvest_markdown)
+            self.assertIn("editability_review", review_harvest_markdown)
             self.assertIn("## Decision Choice Commands", review_harvest_markdown)
             self.assertIn("needs edit: `reviewer`, `reason`", review_harvest_markdown)
             self.assertIn("Evidence flags to add", review_harvest_markdown)

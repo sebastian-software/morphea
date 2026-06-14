@@ -725,7 +725,10 @@ in the prep report rather than becoming implicit training candidates. Pending
 cases carry available terminal `decision_templates` in JSON and Markdown when
 the review packet or config exposes them, so reviewers can see the
 accepted/corrected/rejected/deferred choices without applying them
-automatically. The same inputs can be loaded from
+automatically. Pending cases also preserve packet `review_artifacts` links for
+contact sheets, promotion reviews, editability reviews, pending decision
+records, and promotion exports, so the harvest-prep report can be used without
+opening raw packet JSON. The same inputs can be loaded from
 `morphea promotion-review-harvest --config promotion-review-harvest.json`;
 CLI arguments override config values, and individual `--decision case=path`
 arguments override same-case entries in the config `decisions` object. The
