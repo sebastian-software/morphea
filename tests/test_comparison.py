@@ -296,8 +296,30 @@ class SnapshotComparisonTests(unittest.TestCase):
             },
             comparison["source_deltas"],
         )
+        self.assertEqual(
+            comparison["source_delta_assessment"]["verdict"],
+            "improved",
+        )
+        self.assertEqual(
+            comparison["source_delta_assessment"]["green_promotion_delta"],
+            2.0,
+        )
+        self.assertEqual(
+            comparison["source_delta_assessment"]["manual_review_delta"],
+            -2.0,
+        )
+        self.assertEqual(
+            comparison["source_delta_assessment"]["risk_signals"],
+            [],
+        )
+        self.assertIn(
+            "green_promotion_increase",
+            comparison["source_delta_assessment"]["positive_signals"],
+        )
 
         markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn("## Source Assessment", markdown)
+        self.assertIn("- Verdict: `improved`", markdown)
         self.assertIn("## Source Summaries", markdown)
         self.assertIn(
             "| `after` | `mlx_sam` | `json_adapter_available` | "
@@ -306,6 +328,58 @@ class SnapshotComparisonTests(unittest.TestCase):
         )
         self.assertIn("## Source Deltas", markdown)
         self.assertIn("`downstream_status_counts` | `accepted`", markdown)
+
+    def test_render_segment_manifest_comparison_flags_source_noise(self):
+        comparison = render_segment_manifest_comparison(
+            _segment_manifest(
+                source="flat_color",
+                summary={"downstream_status_counts": {"accepted": 1}},
+                proposals=[
+                    {
+                        "id": "flat_color-0000",
+                        "source": "flat_color",
+                        "status": "proposed",
+                        "downstream_status": "accepted",
+                    }
+                ],
+            ),
+            _segment_manifest(
+                source="mlx_sam",
+                backend={
+                    "status": "json_adapter_available",
+                    "adapter": "json_proposals",
+                },
+                summary={"downstream_status_counts": {"pending": 2}},
+                proposals=[
+                    {
+                        "id": "mlx_sam-0000",
+                        "source": "mlx_sam",
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                    },
+                    {
+                        "id": "mlx_sam-0001",
+                        "source": "mlx_sam",
+                        "status": "proposed",
+                        "downstream_status": "pending",
+                    },
+                ],
+            ),
+            before="flat-color.json",
+            after="mlx-sam.json",
+        )
+
+        assessment = comparison["source_delta_assessment"]
+        self.assertEqual(assessment["verdict"], "noise")
+        self.assertEqual(assessment["green_promotion_delta"], -1.0)
+        self.assertEqual(assessment["manual_review_delta"], 2.0)
+        self.assertEqual(assessment["proposal_count_delta"], 1.0)
+        self.assertIn("green_promotion_decrease", assessment["risk_signals"])
+        self.assertIn("manual_review_increase", assessment["risk_signals"])
+        self.assertIn(
+            "proposal_count_increase_without_green_gain",
+            assessment["risk_signals"],
+        )
 
     def test_compare_segment_manifests_cli_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as temp_dir:

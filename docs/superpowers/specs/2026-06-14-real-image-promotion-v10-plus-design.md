@@ -331,8 +331,11 @@ Current implementation:
   proposal count, downstream status, decision reasons, anchor kinds, reserved
   anchors, and proposal groups. Its Markdown report renders Source Summaries
   and Source Deltas tables so selected classical and MLX/SAM runs can be
-  reviewed side by side. The downstream status rows are treated as promotion
-  proxies until region-level promotion labels exist.
+  reviewed side by side. It also emits a source delta assessment that labels
+  the comparison as improved, mixed, noise, unchanged, or needing review from
+  green promotion, red candidate, manual-review, and proposal-count deltas. The
+  downstream status rows are treated as promotion proxies until region-level
+  promotion labels exist.
 
 Exit criteria:
 

@@ -135,6 +135,12 @@ def render_segment_manifest_comparison(
         before_source_summary,
         after_source_summary,
     )
+    downstream_status_deltas = [
+        delta
+        for delta in source_deltas
+        if delta.get("group") == "downstream_status_counts"
+    ]
+    source_delta_assessment = _segment_source_delta_assessment(source_deltas)
     shared_ids = sorted(set(before_proposals) & set(after_proposals))
     proposal_changes = []
     for proposal_id in shared_ids:
@@ -162,11 +168,8 @@ def render_segment_manifest_comparison(
         "after_source": _backend_source(after_data),
         "source_summaries": [before_source_summary, after_source_summary],
         "source_deltas": source_deltas,
-        "downstream_status_deltas": [
-            delta
-            for delta in source_deltas
-            if delta.get("group") == "downstream_status_counts"
-        ],
+        "downstream_status_deltas": downstream_status_deltas,
+        "source_delta_assessment": source_delta_assessment,
         "before_proposal_count": int(before_data.get("proposal_count", 0)),
         "after_proposal_count": int(after_data.get("proposal_count", 0)),
         "proposal_count_delta": int(after_data.get("proposal_count", 0))
@@ -209,14 +212,49 @@ def render_segment_manifest_comparison_markdown(
         f"- Added groups: {_id_list(comparison.get('added_group_ids', []))}",
         f"- Removed groups: {_id_list(comparison.get('removed_group_ids', []))}",
         "",
-        "## Source Summaries",
+        "## Source Assessment",
         "",
-        (
-            "| Side | Source | Backend | Adapter | Proposals | Downstream Status | "
-            "Anchor Kinds | Reserved Anchors | Groups |"
-        ),
-        "| --- | --- | --- | --- | ---: | --- | --- | ---: | --- |",
     ]
+    assessment = _dict_value(comparison.get("source_delta_assessment"))
+    if assessment:
+        lines.extend(
+            [
+                f"- Verdict: {_code_cell(assessment.get('verdict'))}",
+                (
+                    "- Green promotion delta: "
+                    f"`{_fmt(assessment.get('green_promotion_delta'))}`"
+                ),
+                (
+                    "- Red candidate delta: "
+                    f"`{_fmt(assessment.get('red_candidate_delta'))}`"
+                ),
+                (
+                    "- Manual review delta: "
+                    f"`{_fmt(assessment.get('manual_review_delta'))}`"
+                ),
+                (
+                    "- Proposal count delta: "
+                    f"`{_fmt(assessment.get('proposal_count_delta'))}`"
+                ),
+                f"- Positive signals: {_signal_cell(assessment.get('positive_signals'))}",
+                f"- Risk signals: {_signal_cell(assessment.get('risk_signals'))}",
+            ]
+        )
+    else:
+        lines.append("- Verdict: `n/a`")
+
+    lines.extend(
+        [
+            "",
+            "## Source Summaries",
+            "",
+            (
+                "| Side | Source | Backend | Adapter | Proposals | "
+                "Downstream Status | Anchor Kinds | Reserved Anchors | Groups |"
+            ),
+            "| --- | --- | --- | --- | ---: | --- | --- | ---: | --- |",
+        ]
+    )
     source_summaries = _list_value(comparison.get("source_summaries"))
     if source_summaries:
         for summary in source_summaries:
@@ -689,6 +727,85 @@ def _segment_source_deltas(
     return _summary_count_deltas(before_counts, after_counts)
 
 
+def _segment_source_delta_assessment(
+    source_deltas: list[dict[str, Any]],
+) -> dict[str, Any]:
+    green_delta = _segment_delta_value(
+        source_deltas,
+        group="downstream_status_counts",
+        key="accepted",
+    )
+    red_delta = _segment_delta_value(
+        source_deltas,
+        group="downstream_status_counts",
+        key="rejected",
+    )
+    manual_delta = _segment_delta_value(
+        source_deltas,
+        group="downstream_status_counts",
+        key="pending",
+    )
+    proposal_delta = _segment_delta_value(
+        source_deltas,
+        group="proposal_count",
+        key="value",
+    )
+    positive_signals = []
+    risk_signals = []
+    if green_delta > 0:
+        positive_signals.append("green_promotion_increase")
+    if red_delta < 0:
+        positive_signals.append("red_candidate_decrease")
+    if manual_delta < 0:
+        positive_signals.append("manual_review_decrease")
+    if green_delta < 0:
+        risk_signals.append("green_promotion_decrease")
+    if red_delta > 0:
+        risk_signals.append("red_candidate_increase")
+    if manual_delta > 0:
+        risk_signals.append("manual_review_increase")
+    if proposal_delta > 0 and green_delta <= 0:
+        risk_signals.append("proposal_count_increase_without_green_gain")
+
+    if (
+        green_delta == 0
+        and red_delta == 0
+        and manual_delta == 0
+        and proposal_delta == 0
+    ):
+        verdict = "unchanged"
+    elif green_delta > 0 and red_delta <= 0 and manual_delta <= 0:
+        verdict = "improved"
+    elif green_delta <= 0 and risk_signals:
+        verdict = "noise"
+    elif green_delta > 0 and risk_signals:
+        verdict = "mixed"
+    else:
+        verdict = "needs_review"
+
+    return {
+        "verdict": verdict,
+        "green_promotion_delta": green_delta,
+        "red_candidate_delta": red_delta,
+        "manual_review_delta": manual_delta,
+        "proposal_count_delta": proposal_delta,
+        "positive_signals": positive_signals,
+        "risk_signals": risk_signals,
+    }
+
+
+def _segment_delta_value(
+    deltas: list[dict[str, Any]],
+    *,
+    group: str,
+    key: str,
+) -> float:
+    for delta in deltas:
+        if delta.get("group") == group and delta.get("key") == key:
+            return _number_or_zero(delta.get("delta"))
+    return 0.0
+
+
 def _segment_delta_groups(summary: dict[str, Any]) -> dict[str, Any]:
     return {
         "proposal_count": summary.get("proposal_count", 0),
@@ -824,6 +941,13 @@ def _count_cell(value: Any) -> str:
         return "`none`"
     parts = [f"{key}: {counts[key]}" for key in sorted(counts)]
     return "`" + ", ".join(parts) + "`"
+
+
+def _signal_cell(value: Any) -> str:
+    signals = _list_value(value)
+    if not signals:
+        return "`none`"
+    return "`" + ", ".join(str(signal) for signal in signals) + "`"
 
 
 def _id_list(values: Any) -> str:

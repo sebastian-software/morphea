@@ -602,6 +602,9 @@ Implemented so far:
 - segment comparison Markdown reports include Source Summaries and Source
   Deltas tables so classical and MLX/SAM proposal runs can be reviewed side by
   side without opening the raw JSON.
+- segment comparisons include a source delta assessment that labels side-by-side
+  runs as improved, mixed, noise, unchanged, or needing review from green
+  promotion, red candidate, manual-review, and proposal-count deltas.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
