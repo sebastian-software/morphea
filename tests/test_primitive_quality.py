@@ -118,6 +118,23 @@ class PrimitiveQualityTests(unittest.TestCase):
         )
         self.assertEqual(report["variant_summary"], {"seeded": 9})
 
+    def test_primitive_quality_harness_adds_arc_and_ellipse_seeded_variants(self):
+        report = check_primitive_quality(
+            variant_count=11,
+            variant_seed=11,
+            filter_pattern="variant_*",
+        )
+
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["case_count"], 11)
+        actual_kinds = {
+            case["id"]: case["actual_kind"]
+            for case in report["cases"]
+        }
+        self.assertEqual(actual_kinds["variant_arc_11_0009"], "arc")
+        self.assertEqual(actual_kinds["variant_ellipse_11_0010"], "ellipse")
+        self.assertEqual(report["variant_summary"], {"seeded": 11})
+
     def test_primitive_variant_specs_are_seed_stable(self):
         first = primitive_variant_specs(count=4, seed=7)
         second = primitive_variant_specs(count=4, seed=7)

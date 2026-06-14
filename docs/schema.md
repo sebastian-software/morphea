@@ -310,8 +310,8 @@ horizontal/vertical/diagonal strokes, outlined ring, rounded rectangle, and a
 simple quad. These cases are intentionally boring and should stay stricter than
 the curated real-image suite. `primitive-check --variant-count N` appends
 seeded variants for square, rectangle, circle, horizontal/vertical/diagonal
-stroke, outlined ring, rounded rectangle, and quad families without changing
-the default full fixed-fixture run.
+stroke, arc, filled ellipse, outlined ring, rounded rectangle, and quad
+families without changing the default full fixed-fixture run.
 
 ## Primitive Gallery Site v1
 

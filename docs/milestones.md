@@ -1460,6 +1460,9 @@ Implemented so far:
 - seeded primitive variants now also cover diagonal strokes, outlined rings,
   and rounded rectangles with bounded random geometry that keeps the intended
   primitive family distinct from neighboring ellipse/path fallbacks.
+- seeded primitive variants also cover arcs and filled ellipses; arcs sample
+  from stable hand-verified parameter envelopes, while ellipses keep enough
+  aspect-ratio separation to avoid collapsing into circle-like cases.
 - primitive quality reports include `variant_summary` and per-case
   `variant_source`, so seeded variant coverage is visible separately from
   hand-authored fixed fixtures.
@@ -1471,7 +1474,7 @@ Acceptance evidence:
 
 Remaining:
 
-- expand seeded variants into arc, ellipse, and cut-out families only after
+- expand seeded variants into cut-out and stroke-ellipse families only after
   those higher-variance families have similarly tight parameter envelopes.
 
 ## M13: Ground-Truth Primitive Specs

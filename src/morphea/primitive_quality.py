@@ -1618,6 +1618,17 @@ RANDOM_VARIANT_FAMILIES = (
     "diagonal_stroke",
     "outlined_ring",
     "rounded_rectangle",
+    "arc",
+    "ellipse",
+)
+RANDOM_ARC_VARIANTS = (
+    (32, 40, 20, -150, -30, 3),
+    (30, 38, 17, -150, -30, 3),
+    (33, 42, 22, -152, -28, 3),
+    (32, 41, 19, -149, -31, 5),
+    (32, 24, 20, 30, 150, 3),
+    (40, 32, 20, 120, 240, 3),
+    (24, 32, 20, -60, 60, 3),
 )
 
 
@@ -1735,6 +1746,24 @@ def _random_variant_spec(
             variant,
             (x0, y0, x0 + width, y0 + height),
             radius,
+        )
+    elif family == "arc":
+        arc = RANDOM_ARC_VARIANTS[rng.randint(0, len(RANDOM_ARC_VARIANTS) - 1)]
+        spec = _arc_spec(case_id, "arc", variant, arc)
+    elif family == "ellipse":
+        if rng.randint(0, 1):
+            width = rng.randint(34, 48)
+            height = rng.randint(16, 26)
+        else:
+            width = rng.randint(16, 26)
+            height = rng.randint(34, 48)
+        x0 = rng.randint(4, 60 - width)
+        y0 = rng.randint(4, 60 - height)
+        spec = _ellipse_spec(
+            case_id,
+            "ellipse",
+            variant,
+            (x0, y0, x0 + width, y0 + height),
         )
     else:
         raise ValueError(f"unsupported primitive variant family: {family}")
