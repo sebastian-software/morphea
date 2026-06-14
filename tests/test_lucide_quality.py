@@ -324,6 +324,54 @@ class LucideQualityTests(unittest.TestCase):
         self.assertEqual(results[2]["failure_reason"], "insufficient_anchors")
         self.assertEqual(results[2]["missing_count"], 1)
 
+    def test_forbidden_kind_expectations_report_forbidden_matches(self):
+        results = _check_expectations(
+            [
+                {
+                    "id": "not-circle-substitute",
+                    "kind": "stroke_circle",
+                    "min_count": 0,
+                    "max_count": 0,
+                }
+            ],
+            {"anchors": [{"kind": "stroke_circle"}]},
+        )
+
+        self.assertFalse(results[0]["ok"])
+        self.assertEqual(results[0]["actual_count"], 1)
+        self.assertEqual(results[0]["failure_reason"], "forbidden_matches")
+        self.assertEqual(results[0]["excess_count"], 1)
+
+    def test_checked_in_lucide_suite_pins_badge_and_circle_false_positives(self):
+        suite = load_lucide_suite("assets/lucide/suite.json")
+        cases = {case["id"]: case for case in suite["cases"]}
+
+        circle_expectations = {
+            expectation["id"]: expectation
+            for expectation in cases["circle"]["expectations"]
+        }
+        badge_expectations = {
+            expectation["id"]: expectation
+            for expectation in cases["badge-check"]["expectations"]
+        }
+
+        self.assertEqual(
+            circle_expectations["not-irregular-badge-outline"]["kind"],
+            "stroke_path",
+        )
+        self.assertEqual(
+            circle_expectations["not-irregular-badge-outline"]["max_count"],
+            0,
+        )
+        self.assertEqual(
+            badge_expectations["not-circle-substitute"]["kind"],
+            "stroke_circle",
+        )
+        self.assertEqual(
+            badge_expectations["not-circle-substitute"]["max_count"],
+            0,
+        )
+
     def test_bounds_require_kind_expectation(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -422,6 +470,48 @@ class LucideQualityTests(unittest.TestCase):
         self.assertIn(
             "| `no-fallback-path` | `metric:generic_path_count` | 1 | <= 0 | `false` | `metric_above_max`, excess_value=1 |",
             markdown,
+        )
+
+        forbidden_markdown = render_lucide_markdown(
+            {
+                "suite": "suite.json",
+                "source_package": "lucide-static",
+                "source_version": "test",
+                "renderer": {"backend": "mock", "available": True},
+                "case_count": 1,
+                "passed_count": 0,
+                "failed_count": 1,
+                "ok": False,
+                "family_summary": {},
+                "cases": [
+                    {
+                        "id": "badge-check",
+                        "family": "circle_compound_strokes",
+                        "status": "checked",
+                        "ok": False,
+                        "quality_label": "red",
+                        "review_notes": ["badge became a circle"],
+                        "anchor_kind_counts": {"stroke_circle": 1},
+                        "metrics": {},
+                        "expectations": [
+                            {
+                                "id": "not-circle-substitute",
+                                "kind": "stroke_circle",
+                                "actual_count": 1,
+                                "min_count": 0,
+                                "max_count": 0,
+                                "ok": False,
+                                "failure_reason": "forbidden_matches",
+                                "excess_count": 1,
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertIn(
+            "| `not-circle-substitute` | `kind:stroke_circle` | 1 | = 0 | `false` | `forbidden_matches`, excess_count=1 |",
+            forbidden_markdown,
         )
 
 

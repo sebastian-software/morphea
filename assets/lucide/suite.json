@@ -107,7 +107,15 @@
       "family": "circle_compound_strokes",
       "source": "icons/circle.svg",
       "expectations": [
-        {"id": "circle-primitive", "kind": "stroke_circle", "min_count": 1},
+        {"id": "circle-primitive", "kind": "stroke_circle", "min_count": 1, "max_count": 1},
+        {
+          "id": "not-irregular-badge-outline",
+          "kind": "stroke_path",
+          "min_count": 0,
+          "max_count": 0,
+          "bounds": [0, 0, 64, 64],
+          "min_iou": 0.5
+        },
         {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
         {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.06}
       ]
@@ -182,6 +190,14 @@
           "min_count": 1,
           "bounds": [18, 20, 46, 44],
           "min_iou": 0.35
+        },
+        {
+          "id": "not-circle-substitute",
+          "kind": "stroke_circle",
+          "min_count": 0,
+          "max_count": 0,
+          "bounds": [0, 0, 64, 64],
+          "min_iou": 0.5
         },
         {"id": "no-fallback-path", "metric": "generic_path_count", "max_value": 0},
         {"id": "svg-close", "metric": "svg_raster_l1_error", "max_value": 0.16}

@@ -308,6 +308,12 @@ The real Terminaro gold-circle region now requires `closed` and
 `multi_component` and forbids single-component, hole, cutout, and nested-contour
 descriptors, preserving the five-circle contract rather than accepting a ring
 or merged badge-like substitute.
+The Lucide calibration suite now pins the same shape-class boundary with
+explicit zero-match contracts: `circle` forbids a full-icon irregular
+`stroke_path` via `not-irregular-badge-outline`, and `badge-check` forbids a
+full-icon `stroke_circle` via `not-circle-substitute`. Lucide Markdown reports
+render these as `= 0` expectations, and violations are labeled
+`forbidden_matches`.
 
 Exit criteria:
 

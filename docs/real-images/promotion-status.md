@@ -55,7 +55,11 @@ Lucide case reports now include `failed_expectation_count`,
 shortfall/excess details. `badge-check` now uses bounded expectations to
 separate the outer badge outline from the inner check mark. The inner
 `check-stroke` region passes, and the outer `editable-badge-outline`
-expectation now matches the closed irregular `stroke_path` outline.
+expectation now matches the closed irregular `stroke_path` outline. The suite
+also pins the negative side of the contract: `badge-check` requires
+`not-circle-substitute = 0`, while `circle` requires
+`not-irregular-badge-outline = 0`; forbidden-match failures are reported as
+`forbidden_matches`.
 
 ## Visual Artifact Posture
 
@@ -172,7 +176,7 @@ candidate.
 
 | Criterion | Status | Evidence |
 | --- | --- | --- |
-| `badge-check` cannot pass as a circle-like substitute. | met | Lucide calibration is 24/24; `badge-check` passes only because the badge outline is preserved as a closed irregular `stroke_path`, not as a circle substitute. |
+| `badge-check` cannot pass as a circle-like substitute. | met | Lucide calibration is 24/24; `badge-check` passes only because the badge outline is preserved as a closed irregular `stroke_path`, with `not-circle-substitute = 0` preventing a full-icon `stroke_circle` from satisfying the case. |
 | Wrong topology is red even with acceptable L1. | met | The prior `radio-control-region-topology` duplicate-anchor failure selected 2 components and was rejected; the current deduped run selects 1 component and passes, proving the red topology gate caught the earlier bad shape before it was fixed. |
 | Markdown reports show failed gates before aggregate metrics. | met | `render_curated_markdown` begins with the Promotion Gates table before the case metrics table. |
 | Contact sheets are first-class review artifacts. | met | Curated runs emit source, preview, anchor overlay, SVG render, diff, promotion summary, and failed-gate panels. |

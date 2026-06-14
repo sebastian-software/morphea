@@ -627,7 +627,12 @@ def _annotate_shape_expectation_failure(result: dict[str, Any]) -> None:
             result["failure_reason"] = "insufficient_anchors"
         return
     if "max_count" in result and actual > int(result["max_count"]):
-        result["failure_reason"] = "too_many_matches"
+        result["failure_reason"] = (
+            "forbidden_matches"
+            if int(result["max_count"]) == 0
+            and int(result.get("min_count", 0)) == 0
+            else "too_many_matches"
+        )
         result["excess_count"] = actual - int(result["max_count"])
 
 
@@ -916,8 +921,11 @@ def _expectation_markdown_row(expectation: dict[str, Any]) -> str:
         "cumulative_min_count",
         expectation.get("min_count"),
     )
-    required = f">= {_fmt_value(required_minimum)}"
-    if "max_count" in expectation:
+    if required_minimum == 0 and expectation.get("max_count") == 0:
+        required = "= 0"
+    else:
+        required = f">= {_fmt_value(required_minimum)}"
+    if "max_count" in expectation and required != "= 0":
         required += f", <= {_fmt_value(expectation.get('max_count'))}"
     return (
         "| "

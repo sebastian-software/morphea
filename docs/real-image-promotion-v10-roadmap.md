@@ -56,6 +56,10 @@ approximation. The current honest Lucide posture is now 24/24 after preserving
 that are semantically plausible but visibly loose. `lucide-check` reports now
 preserve optional `quality_label` and `review_notes` metadata and write a
 Quality Ledger that names the five yellow calibration cases directly.
+The suite also carries negative contracts for the original false-positive
+class: `badge-check` requires zero full-icon `stroke_circle` matches, and
+`circle` requires zero full-icon irregular `stroke_path` matches. When those
+guards fail, Lucide reports label the issue as `forbidden_matches`.
 
 Future gates must catch this class of error. A benchmark may be useful while
 red. It is harmful when it calls red output green.

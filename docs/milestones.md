@@ -1027,6 +1027,10 @@ Implemented so far:
 - the Terminaro gold-circle source region uses descriptor gates to require
   multiple closed circle components and reject single-component, holed, cutout,
   or nested substitutes.
+- Lucide circle/badge calibration now includes explicit zero-match contracts:
+  `circle` forbids a full-icon irregular `stroke_path`, and `badge-check`
+  forbids a full-icon `stroke_circle`; report rows render those constraints as
+  `= 0`, with regressions labeled `forbidden_matches`.
 - checked promotion runs include Candidate Rejections in `promotion-review.md`,
   so shape/topology reject reasons are reviewable without opening raw JSON.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
