@@ -269,7 +269,10 @@ are harvestable evidence rather than automatic suite-label updates.
 explicit `case-id=terminal-decision.json` inputs, writes the per-case applied
 review summary beside the manifest, reports which packet cases are applied,
 harvestable, or still pending, and can write a `harvest-curated --config` file
-with `require_applied_review: true`.
+with `require_applied_review: true`. The CLI regression fixture exercises the
+generated config end to end: an accepted applied review produces harvestable
+pseudo-label evidence, while a deferred applied review remains visible as
+`applied_review_not_accepted` and is excluded from training candidates.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
@@ -356,7 +359,6 @@ topology, shape identity, fragmentation, and provenance thresholds are now
 mechanically green after text-like fallback grouping. All three real-image
 cases defer to manual review instead of being rejected as detector failures.
 The next narrow promotion-quality target is to run these deferred cases through
-explicit reviewer decisions, then use `promotion-review-harvest` and the
-generated `harvest-curated --config` path to prove that accepted/corrected
-sidecar evidence can move forward while rejected/deferred evidence stays out
-of training.
+explicit reviewer decisions. The review-harvest policy path is now covered by
+a regression fixture; the remaining work is real review of the three current
+deferred cases, not automatic promotion.

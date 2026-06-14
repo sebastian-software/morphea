@@ -213,6 +213,102 @@ class SelfLearningTests(unittest.TestCase):
                 markdown.read_text(encoding="utf-8"),
             )
 
+    def test_promotion_review_harvest_config_keeps_deferred_out_of_harvest(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            suite = _write_curated_review_harvest_suite(root)
+            run_root = root / "runs"
+            accepted_manifest = _write_initial_promotion_manifest(
+                run_root,
+                "accepted-case",
+            )
+            deferred_manifest = _write_initial_promotion_manifest(
+                run_root,
+                "deferred-case",
+            )
+            review_packet = root / "review-packet.json"
+            review_packet.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "suite": str(suite),
+                        "cases": [
+                            {
+                                "case_id": "accepted-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(accepted_manifest)},
+                            },
+                            {
+                                "case_id": "deferred-case",
+                                "suggested_review_decision": "deferred",
+                                "review_decision_state": "pending",
+                                "artifacts": {"manifest": str(deferred_manifest)},
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            accepted_decision = _write_terminal_promotion_decision(
+                root,
+                "accepted-case",
+                "accepted",
+            )
+            deferred_decision = _write_terminal_promotion_decision(
+                root,
+                "deferred-case",
+                "deferred",
+            )
+            review_harvest = root / "review-harvest.json"
+            harvest_config = root / "harvest-curated.json"
+
+            with redirect_stdout(StringIO()):
+                main(
+                    [
+                        "promotion-review-harvest",
+                        str(review_packet),
+                        "-o",
+                        str(review_harvest),
+                        "--harvest-config",
+                        str(harvest_config),
+                        "--run-root",
+                        str(run_root),
+                        "--harvest-output",
+                        str(root / "pseudo.json"),
+                        "--decision",
+                        f"accepted-case={accepted_decision}",
+                        "--decision",
+                        f"deferred-case={deferred_decision}",
+                    ]
+                )
+                main(["harvest-curated", "--config", str(harvest_config)])
+
+            prep = json.loads(review_harvest.read_text(encoding="utf-8"))
+            self.assertEqual(prep["applied_case_count"], 2)
+            self.assertEqual(prep["harvestable_case_count"], 1)
+            self.assertEqual(prep["pending_case_count"], 0)
+            result = json.loads((root / "pseudo.json").read_text(encoding="utf-8"))
+            self.assertEqual(result["filters"]["require_applied_review"], True)
+            self.assertEqual(result["pseudo_label_count"], 1)
+            self.assertEqual(result["pseudo_labels"][0]["run"], "accepted-case")
+            self.assertEqual(
+                result["pseudo_labels"][0]["review_decision_applied"]["decision"],
+                "accepted",
+            )
+            rejected = {
+                item["run"]: item
+                for item in result["rejected_runs"]
+            }
+            self.assertEqual(
+                rejected["deferred-case"]["reason"],
+                "applied_review_not_accepted",
+            )
+            self.assertEqual(
+                rejected["deferred-case"]["review_decision"],
+                "deferred",
+            )
+
     def test_harvest_rejects_runs_with_warning_diagnostics(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / "runs"
@@ -3068,6 +3164,76 @@ def _write_curated_circle_suite(root: Path) -> Path:
         encoding="utf-8",
     )
     return suite
+
+
+def _write_curated_review_harvest_suite(root: Path) -> Path:
+    cases = []
+    for case_id, color in (
+        ("accepted-case", "#c08011"),
+        ("deferred-case", "#1166aa"),
+    ):
+        source = root / f"{case_id}.png"
+        image = Image.new("RGB", (32, 32), "white")
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((8, 8, 23, 23), fill=color)
+        image.save(source)
+        cases.append(
+            {
+                "id": case_id,
+                "source": str(source),
+                "recommended_config": {
+                    "min_area": 4,
+                    "timeout_seconds": 5,
+                },
+                "expectations": [
+                    {
+                        "id": "circle-anchor",
+                        "kind": "circle",
+                        "min_count": 1,
+                    }
+                ],
+            }
+        )
+    suite = root / "suite.json"
+    suite.write_text(
+        json.dumps({"version": 1, "cases": cases}),
+        encoding="utf-8",
+    )
+    return suite
+
+
+def _write_initial_promotion_manifest(root: Path, case_id: str) -> Path:
+    run_dir = root / case_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    manifest = run_dir / "manifest.json"
+    manifest.write_text(
+        json.dumps({"schema_version": 1, "promotion": {}, "anchors": []}),
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def _write_terminal_promotion_decision(
+    root: Path,
+    case_id: str,
+    decision: str,
+) -> Path:
+    path = root / f"{case_id}-{decision}.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "case_id": case_id,
+                "decision": decision,
+                "suggested_decision": "deferred",
+                "reviewer": "qa",
+                "reason": f"{decision} review fixture",
+                "issue_tags": ["manual_review_pending"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
 
 
 if __name__ == "__main__":

@@ -1049,7 +1049,9 @@ Implemented so far:
   `review-packet.json`, applies only explicit terminal review decisions,
   persists `review_decision_applied` beside case manifests, reports applied,
   harvestable, and pending cases, and can write a `harvest-curated --config`
-  file with `require_applied_review: true`.
+  file with `require_applied_review: true`; the CLI regression path proves the
+  generated config harvests accepted applied reviews while excluding deferred
+  applied reviews as `applied_review_not_accepted`.
 - snapshot comparisons include explicit `promotion_region_deltas` and Markdown
   rows that identify the changed, added, or removed source-region id.
 - second documented curated case:

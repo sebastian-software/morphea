@@ -493,7 +493,9 @@ Current implementation:
   explicit terminal decision files from a review packet, persists
   `review_decision_applied` through the existing apply-review rules, reports
   applied/harvestable/pending packet cases, and writes a `harvest-curated`
-  config with `require_applied_review: true`.
+  config with `require_applied_review: true`. The CLI regression path proves
+  the generated config carries accepted applied reviews forward while keeping
+  deferred applied reviews visible but out of pseudo-label harvesting.
 
 Exit criteria:
 
