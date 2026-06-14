@@ -266,11 +266,12 @@ class SelfLearningTests(unittest.TestCase):
                 "deferred",
             )
 
-    def test_region_review_plan_merges_reviewed_training_dataset(self):
+    def test_region_review_plan_feeds_self_learning_cycle(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             suite = _write_curated_reviewed_region_suite(root)
             review_root = root / "review-run"
+            base_dir = root / "base"
             decision_plan = root / "region-plan.json"
             decision_plan.write_text(
                 json.dumps(
@@ -291,6 +292,16 @@ class SelfLearningTests(unittest.TestCase):
             review_queue = root / "review.json"
             reviewed = root / "reviewed.json"
             dataset_dir = root / "dataset"
+            cycle_dir = root / "cycle"
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=109,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
 
             with redirect_stdout(StringIO()):
                 main(
@@ -328,6 +339,19 @@ class SelfLearningTests(unittest.TestCase):
                 )
                 main(["apply-review", str(review_queue), "-o", str(reviewed)])
                 main(["merge-labels", str(reviewed), "-o", str(dataset_dir)])
+                main(
+                    [
+                        "self-learn",
+                        str(base_dir / "dataset.json"),
+                        "--reviewed-labels",
+                        str(reviewed),
+                        "-o",
+                        str(cycle_dir),
+                        "--allow-unchanged",
+                        "--max-worst-accuracy-drop",
+                        "1.0",
+                    ]
+                )
 
             harvest = json.loads(
                 (review_root / "harvested-pseudo-labels.json").read_text(
@@ -364,6 +388,34 @@ class SelfLearningTests(unittest.TestCase):
                 ],
                 ["circle-region"],
             )
+            cycle = json.loads(
+                (cycle_dir / "self-learning-cycle.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(cycle["pseudo_dataset"]["count"], 1)
+            self.assertEqual(
+                cycle["pseudo_dataset"]["reviewed_label_summary"][
+                    "applied_review_decision_counts"
+                ],
+                {"accepted": 1},
+            )
+            self.assertEqual(
+                cycle["pseudo_dataset"]["reviewed_label_summary"][
+                    "provenance_field_counts"
+                ],
+                {
+                    "applied_review_case_id": 1,
+                    "applied_review_source_review_decision": 1,
+                    "review_item_id": 1,
+                    "review_reason": 1,
+                },
+            )
+            self.assertTrue(cycle["gate"]["accepted"])
+            cycle_markdown = (cycle_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("- Applied review decisions: `accepted: 1`", cycle_markdown)
+            self.assertIn("applied_review_case_id: 1", cycle_markdown)
+            self.assertIn("review_item_id: 1", cycle_markdown)
 
     def test_promotion_review_harvest_config_keeps_deferred_out_of_harvest(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1515,6 +1567,15 @@ class SelfLearningTests(unittest.TestCase):
             self.assertEqual(
                 dataset["reviewed_label_summary"]["issue_counts"],
                 {"fragmentation": 1},
+            )
+            self.assertEqual(
+                dataset["reviewed_label_summary"]["provenance_field_counts"],
+                {
+                    "applied_review_case_id": 1,
+                    "applied_review_source_review_decision": 1,
+                    "review_item_id": 1,
+                    "review_reason": 1,
+                },
             )
             pseudo_manifest = json.loads(
                 (output_dir / "train" / "pseudo-00000.json").read_text(

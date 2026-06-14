@@ -43,6 +43,22 @@ PYTHONPATH=src python3 -m morphea.cli apply-review \
 PYTHONPATH=src python3 -m morphea.cli merge-labels \
   /tmp/morphea-real-image-review-run/reviewed.json \
   -o /tmp/morphea-real-image-review-run/reviewed-dataset
+
+PYTHONPATH=src python3 -m morphea.cli generate \
+  -o /tmp/morphea-real-image-review-base \
+  --count 4 \
+  --seed 109 \
+  --width 64 \
+  --height 64 \
+  --val-count 1 \
+  --test-count 1
+
+PYTHONPATH=src python3 -m morphea.cli self-learn \
+  /tmp/morphea-real-image-review-base/dataset.json \
+  --reviewed-labels /tmp/morphea-real-image-review-run/reviewed.json \
+  -o /tmp/morphea-real-image-review-run/self-learn \
+  --allow-unchanged \
+  --max-worst-accuracy-drop 1.0
 ```
 
 The region-scoped plan accepts only the Terminaro
@@ -50,5 +66,9 @@ The region-scoped plan accepts only the Terminaro
 generated illustration and UI radio screenshot remain explicitly deferred. This
 plan produces trusted pseudo-label candidates only for the reviewed Terminaro
 gold-circle anchors, converts those candidates into accepted reviewed labels,
-and writes a reviewed-label dataset without updating suite
-`current_quality_label` metadata.
+feeds those labels into a self-learning training gate, and writes a
+reviewed-label dataset without updating suite `current_quality_label` metadata.
+The self-learning cycle summary preserves applied-review decision counts and
+provenance-field coverage so the accepted training evidence remains auditable;
+the current checked-in replay may still reject model acceptance when the
+training comparison regresses.

@@ -1603,13 +1603,20 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
         f"- Worst accuracy delta: {_fmt_metric(comparison.get('worst_accuracy_delta'))}",
     ]
     if reviewed_summary or isinstance(pseudo_dataset.get("samples"), list):
+        provenance_counts = _counts_from_object(
+            reviewed_summary.get("provenance_field_counts")
+        )
+        if not provenance_counts:
+            provenance_counts = _reviewed_sample_provenance_counts(
+                pseudo_dataset.get("samples")
+            )
         lines.extend(
             [
                 "",
                 "## Reviewed Labels",
                 "",
                 f"- Issue counts: {_format_issue_counts(_counts_from_object(reviewed_summary.get('issue_counts')))}",
-                f"- Provenance fields: {_format_issue_counts(_reviewed_sample_provenance_counts(pseudo_dataset.get('samples')))}",
+                f"- Provenance fields: {_format_issue_counts(provenance_counts)}",
             ]
         )
     curated = result.get("curated_validation")
@@ -2115,6 +2122,7 @@ def _reviewed_label_dataset_summary(samples: list[dict[str, object]]) -> dict[st
         "sample_count": len(samples),
         "applied_review_decision_counts": dict(sorted(decision_counts.items())),
         "issue_counts": dict(sorted(issue_counts.items())),
+        "provenance_field_counts": _reviewed_sample_provenance_counts(samples),
     }
 
 

@@ -365,15 +365,20 @@ become rejected items, and issue tags survive into reviewed-label artifacts.
 provenance in accepted pseudo-label training manifests and records
 `review_issues` plus `applied_review_decision` in dataset samples. Rejected and
 deferred review items remain outside the trainable dataset. The region-scoped
-plan path is covered through merge-labels: accepted Terminaro region anchors
-become reviewed train examples, while deferred real-image cases stay out of the
-dataset.
+plan path is covered through merge-labels and `morphea self-learn`: accepted
+Terminaro region anchors become reviewed train examples, reach the
+self-learning training gate, and keep applied-review provenance visible in the
+cycle report, while deferred real-image cases stay out of the dataset. The
+checked-in replay remains conservative about model acceptance: the five
+accepted Terminaro region labels are consumed, then the gate rejects the update
+on `comparison_status_regressed` instead of writing a model.
 
 `morphea self-learn` now separates retraining from model acceptance. A model can
 be written after the training comparison gate accepts, but the cycle's
 `accepted` flag is true only when that gate accepts and any configured curated
 validation suite also passes. Cycle summaries include reviewed-label issue
-counts and applied-review decision counts from the pseudo-label dataset.
+counts, applied-review decision counts, and provenance-field coverage from the
+pseudo-label dataset.
 
 Training comparison reports now include per-label validation accuracy and
 `delta.label_accuracy`; those label-level deltas feed the best/worst training

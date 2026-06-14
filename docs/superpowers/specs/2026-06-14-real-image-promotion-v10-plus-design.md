@@ -474,10 +474,15 @@ Current implementation:
   keeps review and applied-review provenance in pseudo-label manifests, and
   dataset samples carry review item id, review reason, issue tags, applied
   decision, applied case id, and source review-decision path. `self-learn`
-  Markdown reports summarize reviewed-label issue counts and provenance-field
-  coverage. The current region-scoped plan has a CLI regression through
-  review, apply-review, and merge-labels, proving accepted reviewed region
-  anchors can become train examples while deferred evidence remains excluded.
+  JSON and Markdown reports summarize reviewed-label issue counts,
+  applied-review decision counts, and provenance-field coverage. The current
+  region-scoped plan has a CLI regression through review, apply-review,
+  merge-labels, and self-learn, proving accepted reviewed region anchors can
+  become train examples, reach a retraining gate, and remain auditable while
+  deferred evidence stays excluded. The current checked-in replay keeps model
+  acceptance conservative: five accepted Terminaro region labels are carried
+  into the cycle, but the training gate rejects the update when the comparison
+  status regresses.
 
 Exit criteria:
 
