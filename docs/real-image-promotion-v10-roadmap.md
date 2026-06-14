@@ -551,7 +551,10 @@ dataset next to the snapshot status, so baseline promotions can be audited back
 to the exact accepted retraining cycle.
 Existing baseline output files are protected unless the configured
 `suite_family_baseline` path matches the output path, so checked-in baselines
-cannot be overwritten by an accidental ad hoc output path.
+cannot be overwritten by an accidental ad hoc output path. In-place baseline
+refreshes also refuse coverage shrinkage with `skipped_coverage_regression`,
+preventing a temporary smoke dataset from replacing a reviewed baseline with
+lower primitive example or suite case coverage.
 `docs/real-images/baselines/current-suite-family-baseline.json` is checked in
 as a reviewed accepted-cycle baseline and is exercised through the real
 `morphea self-learn --suite-family-baseline` CLI path. Current known baseline

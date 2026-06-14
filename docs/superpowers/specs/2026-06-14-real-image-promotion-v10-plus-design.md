@@ -536,7 +536,10 @@ Current implementation:
   and outcome counts, including held, improved, known-debt, resolved-regression,
   new-regression, and missing-current-family states. Missing current coverage
   for a previously good baseline family blocks model acceptance instead of
-  silently accepting an under-validated cycle.
+  silently accepting an under-validated cycle. In-place baseline snapshot
+  refreshes now also skip writes with `skipped_coverage_regression` when
+  primitive example counts or suite case coverage would shrink relative to the
+  existing reviewed baseline.
 
 Exit criteria:
 

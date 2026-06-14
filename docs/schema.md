@@ -1464,6 +1464,11 @@ current `suite_family_validation` as the next baseline artifact only when
 reviewer, reason, and changelog evidence are supplied; rejected cycles report
 `skipped_not_accepted`, and missing review evidence reports
 `skipped_missing_review_evidence` without overwriting the requested output.
+When refreshing an existing baseline output from the same
+`suite_family_baseline` path, the writer also rejects coverage shrinkage with
+`skipped_coverage_regression`; `coverage_regressions` lists the suite, split,
+family, metric, baseline value, and current value for each primitive
+example-count or suite case-count regression.
 Persisted suite-family baseline snapshots and changelog entries are portable
 review artifacts and intentionally omit run-local paths such as `base_dataset`,
 `reviewed_labels`, `validation_dataset`, and `source_cycle`; those paths remain

@@ -3629,6 +3629,151 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertFalse(changelog.exists())
 
+    def test_self_learning_cycle_refuses_baseline_coverage_regression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            base_dir = root / "base"
+            reviewed = root / "reviewed.json"
+            output_dir = root / "cycle"
+            baseline_output = root / "checked-in-baseline.json"
+            changelog = root / "suite-family-baseline-changelog.jsonl"
+            baseline_snapshot = {
+                "schema_version": 1,
+                "source": "self_learning_cycle",
+                "accepted": True,
+                "suite_family_validation": {
+                    "primitive": {
+                        "status": "held",
+                        "ok": True,
+                        "families": [
+                            {
+                                "split": "val",
+                                "family": "circle",
+                                "baseline_examples": 10,
+                                "augmented_examples": 10,
+                                "outcome": "held",
+                            }
+                        ],
+                    },
+                    "real_image": {"status": "not_configured", "families": []},
+                    "lucide": {"status": "not_configured", "families": []},
+                },
+            }
+            baseline_output.write_text(
+                json.dumps(baseline_snapshot, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            generate_synthetic_dataset(
+                output_dir=base_dir,
+                count=4,
+                seed=109,
+                width=64,
+                height=64,
+                val_count=1,
+                test_count=1,
+            )
+            _write_reviewed_circle(reviewed)
+
+            def held_but_smaller_comparison(**kwargs):
+                report = {
+                    "schema_version": 1,
+                    "summary": {
+                        "status": "accepted",
+                        "train_examples_delta": 1,
+                        "best_accuracy_delta": 0.0,
+                        "worst_accuracy_delta": 0.0,
+                    },
+                    "delta": {
+                        "label_accuracy": {
+                            "val": {
+                                "circle": {
+                                    "baseline_accuracy": 1.0,
+                                    "augmented_accuracy": 1.0,
+                                    "accuracy_delta": 0.0,
+                                    "baseline_examples": 2,
+                                    "augmented_examples": 2,
+                                }
+                            }
+                        }
+                    },
+                }
+                Path(kwargs["output"]).write_text(
+                    json.dumps(report),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# comparison\n", encoding="utf-8")
+                return report
+
+            def accepted_gate(**kwargs):
+                Path(kwargs["output"]).write_text(
+                    json.dumps(
+                        {
+                            "decision": "accept",
+                            "accepted": True,
+                            "reasons": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                Path(kwargs["markdown"]).write_text("# gate\n", encoding="utf-8")
+                return {"decision": "accept", "accepted": True, "reasons": []}
+
+            with (
+                patch(
+                    "morphea.self_learning.compare_retraining",
+                    held_but_smaller_comparison,
+                ),
+                patch("morphea.self_learning.gate_training_comparison", accepted_gate),
+            ):
+                result = run_self_learning_cycle(
+                    base_dataset=base_dir / "dataset.json",
+                    reviewed_labels=reviewed,
+                    output_dir=output_dir,
+                    suite_family_baseline=baseline_output,
+                    suite_family_baseline_output=baseline_output,
+                    suite_family_baseline_reviewer="qa",
+                    suite_family_baseline_reason="coverage regression guard",
+                    suite_family_baseline_changelog=changelog,
+                )
+
+            self.assertTrue(result["accepted"])
+            snapshot = result["suite_family_baseline_snapshot"]
+            self.assertEqual(snapshot["status"], "skipped_coverage_regression")
+            self.assertEqual(
+                snapshot["coverage_regressions"],
+                [
+                    {
+                        "suite": "primitive",
+                        "split": "val",
+                        "family": "circle",
+                        "metric": "baseline_examples",
+                        "baseline": 10,
+                        "current": 2,
+                    },
+                    {
+                        "suite": "primitive",
+                        "split": "val",
+                        "family": "circle",
+                        "metric": "augmented_examples",
+                        "baseline": 10,
+                        "current": 2,
+                    },
+                ],
+            )
+            self.assertEqual(
+                json.loads(baseline_output.read_text(encoding="utf-8")),
+                baseline_snapshot,
+            )
+            self.assertFalse(changelog.exists())
+            markdown = (output_dir / "self-learning-cycle.md").read_text(
+                encoding="utf-8",
+            )
+            self.assertIn("- Status: `skipped_coverage_regression`", markdown)
+            self.assertIn(
+                "`primitive/val/circle: baseline_examples 10->2`",
+                markdown,
+            )
+
     def test_self_learning_cycle_skips_curated_validation_without_model(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

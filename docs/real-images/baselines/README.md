@@ -86,3 +86,7 @@ PYTHONPATH=src python3 -m morphea.cli self-learn /private/tmp/morphea-base/datas
 Accepted refreshes append to `suite-family-baseline-changelog.jsonl`. The
 persisted baseline snapshot and changelog stay portable: run-local paths remain
 in the cycle report, not in checked-in baseline artifacts.
+When refreshing the checked-in baseline in place, the writer refuses coverage
+shrinkage with `skipped_coverage_regression`; use a representative base and
+validation dataset rather than the minimal smoke dataset so primitive example
+counts do not collapse while real-image metadata is being refreshed.

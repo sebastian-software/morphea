@@ -1323,6 +1323,19 @@ def _write_suite_family_baseline_snapshot(
             "changelog": str(changelog) if changelog is not None else None,
             "review": normalized_review,
         }
+    coverage_regressions = _suite_family_baseline_coverage_regressions(
+        suite_family_validation,
+        baseline_source,
+    )
+    if coverage_regressions:
+        return {
+            "status": "skipped_coverage_regression",
+            "output": str(output),
+            "baseline_source": str(baseline_source) if baseline_source else None,
+            "changelog": str(changelog) if changelog is not None else None,
+            "review": normalized_review,
+            "coverage_regressions": coverage_regressions,
+        }
     output.parent.mkdir(parents=True, exist_ok=True)
     snapshot = {
         "schema_version": 1,
@@ -1364,6 +1377,57 @@ def _baseline_output_matches_source(
     if baseline_source is None:
         return False
     return output.resolve() == baseline_source.resolve()
+
+
+def _suite_family_baseline_coverage_regressions(
+    current: dict[str, object],
+    baseline_source: Path | None,
+) -> list[dict[str, object]]:
+    if baseline_source is None or not baseline_source.exists():
+        return []
+    baseline_data = json.loads(baseline_source.read_text(encoding="utf-8"))
+    baseline = _suite_family_validation_from_baseline(baseline_data)
+    baseline_rows = _suite_family_outcomes_by_key(baseline)
+    current_rows = _suite_family_outcomes_by_key(current)
+    regressions = []
+    for key, baseline_row in sorted(baseline_rows.items()):
+        suite_name, split, family = key
+        current_row = current_rows.get(key)
+        if not isinstance(current_row, dict):
+            continue
+        for metric in _suite_family_coverage_metrics(suite_name):
+            baseline_value = _numeric_metric(baseline_row.get(metric))
+            current_value = _numeric_metric(current_row.get(metric))
+            if (
+                baseline_value is not None
+                and current_value is not None
+                and current_value < baseline_value
+            ):
+                regressions.append(
+                    {
+                        "suite": suite_name,
+                        "split": split,
+                        "family": family,
+                        "metric": metric,
+                        "baseline": baseline_value,
+                        "current": current_value,
+                    }
+                )
+    return regressions
+
+
+def _suite_family_coverage_metrics(suite_name: str) -> tuple[str, ...]:
+    if suite_name == "primitive":
+        return ("baseline_examples", "augmented_examples")
+    return ("case_count", "checked_count")
+
+
+def _numeric_metric(value: object) -> int | float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    return None
 
 
 def _suite_family_baseline_review(review: dict[str, object]) -> dict[str, object]:
@@ -1980,6 +2044,7 @@ def render_self_learning_cycle_markdown(result: dict[str, object]) -> str:
                 f"- Reviewer: `{_baseline_snapshot_review_value(baseline_snapshot, 'reviewer')}`",
                 f"- Reason: `{_baseline_snapshot_review_value(baseline_snapshot, 'reason')}`",
                 f"- Missing evidence: {_format_reason_list(baseline_snapshot.get('missing_review_fields'))}",
+                f"- Coverage regressions: {_suite_family_coverage_regression_list(baseline_snapshot.get('coverage_regressions'))}",
             ]
         )
     lines.extend(
@@ -2137,6 +2202,27 @@ def _pipeline_quality_counts_evidence(item: dict[str, object]) -> str:
         f"{label}: {_fmt_metric(count)}"
         for label, count in sorted(counts.items())
     )
+
+
+def _suite_family_coverage_regression_list(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "`none`"
+    items = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        split = item.get("split") or "n/a"
+        items.append(
+            "`"
+            f"{item.get('suite', 'n/a')}/"
+            f"{split}/"
+            f"{item.get('family', 'n/a')}: "
+            f"{item.get('metric', 'n/a')} "
+            f"{_fmt_metric(item.get('baseline'))}->"
+            f"{_fmt_metric(item.get('current'))}"
+            "`"
+        )
+    return ", ".join(items) if items else "`none`"
 
 
 def _format_reason_list(value: object) -> str:

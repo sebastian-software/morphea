@@ -472,7 +472,10 @@ Existing baseline output files are protected: the cycle writes an existing
 `--suite-family-baseline-output` path only when `--suite-family-baseline`
 points to that same path. Otherwise it reports
 `skipped_existing_output_requires_matching_baseline` and leaves the file
-untouched.
+untouched. In-place baseline refreshes now also report
+`skipped_coverage_regression` instead of writing when primitive example counts
+or suite case coverage would shrink relative to the existing reviewed
+baseline.
 
 `docs/real-images/baselines/current-suite-family-baseline.json` is now a
 checked-in reviewed accepted-cycle baseline for
