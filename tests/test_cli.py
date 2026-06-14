@@ -276,6 +276,35 @@ class CliTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 main(["promotion-apply-review", str(review_decision)])
 
+    def test_promotion_apply_review_cli_requires_reviewer_and_reason(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review_decision = Path(temp_dir) / "review-decision.json"
+            review_decision.write_text(
+                json.dumps({"case_id": "case", "decision": "accepted"}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "requires reviewer"):
+                main(["promotion-apply-review", str(review_decision)])
+
+    def test_promotion_apply_review_cli_requires_corrected_evidence(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            review_decision = Path(temp_dir) / "review-decision.json"
+            review_decision.write_text(
+                json.dumps(
+                    {
+                        "case_id": "case",
+                        "decision": "corrected",
+                        "reviewer": "qa",
+                        "reason": "requires corrected evidence",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "correction_notes"):
+                main(["promotion-apply-review", str(review_decision)])
+
     def test_promotion_review_harvest_cli_applies_decision_and_writes_config(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -404,6 +433,8 @@ class CliTests(unittest.TestCase):
                         "schema_version": 1,
                         "case_id": "real-case",
                         "decision": "deferred",
+                        "reviewer": "qa",
+                        "reason": "defer from config",
                     }
                 ),
                 encoding="utf-8",
@@ -415,6 +446,8 @@ class CliTests(unittest.TestCase):
                         "schema_version": 1,
                         "case_id": "real-case",
                         "decision": "accepted",
+                        "reviewer": "qa",
+                        "reason": "accepted override",
                     }
                 ),
                 encoding="utf-8",

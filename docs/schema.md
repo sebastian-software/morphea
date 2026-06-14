@@ -675,10 +675,13 @@ lists fallback, rejected, and deferred items missing from the promoted SVG.
 
 `morphea promotion-apply-review review-decision.json -o applied-review.json
 --markdown applied-review.md --manifest manifest.json` consumes an edited
-terminal review decision, rejects still-pending decisions, writes an applied
-review summary, and can persist `review_decision_applied` back into the run
-manifest and its top-level `promotion` object. The applied summary includes
-`quality_label_policy` with `mode: sidecar_only` and
+terminal review decision, rejects still-pending decisions, requires non-empty
+`reviewer` and `reason` evidence, writes an applied review summary, and can
+persist `review_decision_applied` back into the run manifest and its top-level
+`promotion` object. `corrected` decisions additionally require
+`correction_notes` and at least one `corrected_artifacts` entry, so corrected
+records cannot be harvested without correction evidence. The applied summary
+includes `quality_label_policy` with `mode: sidecar_only` and
 `updates_current_quality_label: false`, so accepted/corrected reviews remain
 promotion evidence until suite metadata is deliberately edited.
 

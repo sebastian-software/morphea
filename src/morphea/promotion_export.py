@@ -146,6 +146,15 @@ def apply_promotion_review_decision(
         allowed = ", ".join(sorted(PROMOTION_REVIEW_DECISIONS))
         raise ValueError(f"promotion review decision must be one of: {allowed}")
     suggested = data.get("suggested_decision")
+    reviewer = _required_review_string(data, "reviewer")
+    reason = _required_review_string(data, "reason")
+    correction_notes = _string_value(data.get("correction_notes"))
+    corrected_artifacts = _string_list(data.get("corrected_artifacts"))
+    if decision == "corrected":
+        if not correction_notes:
+            raise ValueError("corrected promotion reviews require correction_notes")
+        if not corrected_artifacts:
+            raise ValueError("corrected promotion reviews require corrected_artifacts")
     result = {
         "schema_version": 1,
         "source_review_decision": str(review_path),
@@ -154,10 +163,10 @@ def apply_promotion_review_decision(
         "accepted_for_promotion": decision in {"accepted", "corrected"},
         "suggested_decision": suggested,
         "matches_suggestion": decision == suggested,
-        "reviewer": data.get("reviewer", ""),
-        "reason": data.get("reason", ""),
-        "correction_notes": data.get("correction_notes", ""),
-        "corrected_artifacts": _string_list(data.get("corrected_artifacts")),
+        "reviewer": reviewer,
+        "reason": reason,
+        "correction_notes": correction_notes,
+        "corrected_artifacts": corrected_artifacts,
         "issue_tags": _string_list(data.get("issue_tags")),
         "source_decisions": _object_dict(data.get("source_decisions")),
         "failed_gates": _object_list(data.get("failed_gates")),
@@ -275,6 +284,17 @@ def _string_list(value: object) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value if isinstance(item, str) and item]
+
+
+def _string_value(value: object) -> str:
+    return value.strip() if isinstance(value, str) else ""
+
+
+def _required_review_string(data: dict[str, object], key: str) -> str:
+    value = _string_value(data.get(key))
+    if not value:
+        raise ValueError(f"promotion review decision requires {key}")
+    return value
 
 
 def _object_list(value: object) -> list[object]:

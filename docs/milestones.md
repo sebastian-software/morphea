@@ -432,8 +432,10 @@ Implemented so far:
   failed gates/components, artifact links, and terminal decision-template
   links.
 - `morphea promotion-apply-review` validates edited promotion review decisions,
-  rejects pending records, writes applied JSON/Markdown summaries, and can
-  persist `review_decision_applied` into a run manifest.
+  rejects pending records, requires reviewer/reason evidence, requires
+  correction notes and corrected artifacts for `corrected` records, writes
+  applied JSON/Markdown summaries, and can persist
+  `review_decision_applied` into a run manifest.
 - `morphea harvest --require-applied-review` gates pseudo-label harvesting on
   applied promotion review decisions, so only `accepted` and `corrected`
   applied decisions become candidates while missing, invalid, rejected, and

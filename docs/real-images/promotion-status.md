@@ -258,11 +258,13 @@ that pending record, so a reviewer can start from the accepted, corrected,
 rejected, or deferred outcome without stripping pending state manually.
 
 `morphea promotion-apply-review` consumes an edited terminal
-`review-decision.json`, rejects still-pending decisions, writes an applied
-review summary JSON/Markdown, and can persist `review_decision_applied` back
-into the run manifest and its `promotion` object. Applied summaries include
-the same sidecar-only quality-label policy, so accepted/corrected decisions
-are harvestable evidence rather than automatic suite-label updates.
+`review-decision.json`, rejects still-pending decisions, requires reviewer and
+reason evidence, writes an applied review summary JSON/Markdown, and can
+persist `review_decision_applied` back into the run manifest and its
+`promotion` object. `corrected` decisions also require correction notes and
+corrected-artifact evidence. Applied summaries include the same sidecar-only
+quality-label policy, so accepted/corrected decisions are harvestable evidence
+rather than automatic suite-label updates.
 
 `morphea promotion-review-harvest` now turns a suite-level
 `review-packet.json` into a reproducible harvest-prep report. It applies only
