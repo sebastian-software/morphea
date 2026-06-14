@@ -742,6 +742,48 @@ class SegmenterTests(unittest.TestCase):
             )
             self.assertIn("json_adapter_available", markdown.read_text(encoding="utf-8"))
 
+    def test_segment_cli_serializes_cli_mlx_model_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            image_path = _write_two_color_image()
+            model_path = root / "sam-proposals.json"
+            output = root / "segments.json"
+            model_path.write_text(
+                json.dumps(
+                    {
+                        "proposals": [
+                            {
+                                "bounds": [1, 1, 6, 6],
+                                "confidence": 0.92,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("morphea.segmenters.is_mlx_runtime_available", return_value=False):
+                with redirect_stdout(StringIO()):
+                    main(
+                        [
+                            "segment",
+                            str(image_path),
+                            "-o",
+                            str(output),
+                            "--segmenter",
+                            "mlx_sam",
+                            "--mlx-model-path",
+                            str(model_path),
+                        ]
+                    )
+
+            manifest = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest["config"]["mlx_model_path"],
+                str(model_path),
+            )
+            self.assertEqual(manifest["backend"]["status"], "json_adapter_available")
+
     def test_segment_cli_writes_tile_grid_proposal_groups(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

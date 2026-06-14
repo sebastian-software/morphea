@@ -2348,6 +2348,8 @@ def _resolved_segment_config(args: argparse.Namespace) -> dict[str, object]:
         value = getattr(args, key, None)
         if value is not None:
             config[key] = value
+    if config.get("mlx_model_path") is not None:
+        config["mlx_model_path"] = str(config["mlx_model_path"])
     return config
 
 
