@@ -329,8 +329,10 @@ Current implementation:
 
 - `compare-segments` now reports source summaries and source deltas for
   proposal count, downstream status, decision reasons, anchor kinds, reserved
-  anchors, and proposal groups. The downstream status rows are treated as
-  promotion proxies until region-level promotion labels exist.
+  anchors, and proposal groups. Its Markdown report renders Source Summaries
+  and Source Deltas tables so selected classical and MLX/SAM runs can be
+  reviewed side by side. The downstream status rows are treated as promotion
+  proxies until region-level promotion labels exist.
 
 Exit criteria:
 

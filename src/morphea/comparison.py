@@ -209,11 +209,41 @@ def render_segment_manifest_comparison_markdown(
         f"- Added groups: {_id_list(comparison.get('added_group_ids', []))}",
         f"- Removed groups: {_id_list(comparison.get('removed_group_ids', []))}",
         "",
-        "## Source Deltas",
+        "## Source Summaries",
         "",
-        "| Group | Key | Before | After | Delta |",
-        "| --- | --- | ---: | ---: | ---: |",
+        (
+            "| Side | Source | Backend | Adapter | Proposals | Downstream Status | "
+            "Anchor Kinds | Reserved Anchors | Groups |"
+        ),
+        "| --- | --- | --- | --- | ---: | --- | --- | ---: | --- |",
     ]
+    source_summaries = _list_value(comparison.get("source_summaries"))
+    if source_summaries:
+        for summary in source_summaries:
+            lines.append(
+                "| "
+                f"{_code_cell(summary.get('side'))} | "
+                f"{_code_cell(summary.get('source'))} | "
+                f"{_code_cell(summary.get('backend_status'))} | "
+                f"{_code_cell(summary.get('backend_adapter'))} | "
+                f"{_fmt(summary.get('proposal_count'))} | "
+                f"{_count_cell(summary.get('downstream_status_counts'))} | "
+                f"{_count_cell(summary.get('anchor_kind_counts'))} | "
+                f"{_fmt(summary.get('reserved_anchor_count'))} | "
+                f"{_count_cell(summary.get('proposal_group_counts'))} |"
+            )
+    else:
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
+
+    lines.extend(
+        [
+            "",
+            "## Source Deltas",
+            "",
+            "| Group | Key | Before | After | Delta |",
+            "| --- | --- | ---: | ---: | ---: |",
+        ]
+    )
     source_deltas = _list_value(comparison.get("source_deltas"))
     if source_deltas:
         for delta in source_deltas:
@@ -780,6 +810,20 @@ def _fmt(value: Any) -> str:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return f"{value:.6g}"
     return "n/a"
+
+
+def _code_cell(value: Any) -> str:
+    if value is None or value == "":
+        return "`n/a`"
+    return f"`{value}`"
+
+
+def _count_cell(value: Any) -> str:
+    counts = _dict_value(value)
+    if not counts:
+        return "`none`"
+    parts = [f"{key}: {counts[key]}" for key in sorted(counts)]
+    return "`" + ", ".join(parts) + "`"
 
 
 def _id_list(values: Any) -> str:

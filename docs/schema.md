@@ -1580,8 +1580,9 @@ Top-level fields:
   numeric group metrics for shared proposal group ids
 
 `morphea compare-segments --markdown comparison.md` writes a scan-friendly
-Markdown summary with a Source Deltas table for comparing flat-color and
-MLX/SAM proposal outputs or for comparing gated and ungated segment configs.
+Markdown summary with Source Summaries and Source Deltas tables for comparing
+flat-color and MLX/SAM proposal outputs or for comparing gated and ungated
+segment configs.
 
 ## Segment Comparison Config v1
 

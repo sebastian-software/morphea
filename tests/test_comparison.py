@@ -298,6 +298,12 @@ class SnapshotComparisonTests(unittest.TestCase):
         )
 
         markdown = render_segment_manifest_comparison_markdown(comparison)
+        self.assertIn("## Source Summaries", markdown)
+        self.assertIn(
+            "| `after` | `mlx_sam` | `json_adapter_available` | "
+            "`json_proposals` | 3 | `accepted: 2, rejected: 1` |",
+            markdown,
+        )
         self.assertIn("## Source Deltas", markdown)
         self.assertIn("`downstream_status_counts` | `accepted`", markdown)
 

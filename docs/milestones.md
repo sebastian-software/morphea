@@ -599,6 +599,9 @@ Implemented so far:
   config differences, added/removed proposals, changed downstream/anchor
   decisions, and added/removed/changed proposal groups such as
   `proposal_tile_grid`.
+- segment comparison Markdown reports include Source Summaries and Source
+  Deltas tables so classical and MLX/SAM proposal runs can be reviewed side by
+  side without opening the raw JSON.
 - segment configs accept future MLX runtime knobs for model path, score
   threshold, mask count, and runtime timeout while preserving the explicit
   not-configured failure path
