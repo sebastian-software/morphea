@@ -421,8 +421,11 @@ preserves and renders `review_artifacts` before the gate/component evidence.
 decision files from a suite `review-packet.json`, writes per-case applied
 review summaries beside manifests, reports applied/harvestable/pending packet
 cases, and can emit a ready `harvest-curated --config` file with
-`require_applied_review: true`. Pending packet cases now include terminal
-decision-template paths in JSON and Markdown, keeping reviewer choice visible
+`require_applied_review: true`. Applied case rows include reviewer, reason,
+source decision path, and applied review-artifact links, keeping harvestable
+evidence auditable after a terminal decision has already been applied. Pending
+packet cases now include terminal decision-template paths in JSON and Markdown,
+keeping reviewer choice visible
 without turning templates into implicit decisions. `decision_choices` and
 `--decision-choice case=accepted` let a reviewer turn a visible terminal option
 into the underlying template path explicitly; direct `--decision case=path`

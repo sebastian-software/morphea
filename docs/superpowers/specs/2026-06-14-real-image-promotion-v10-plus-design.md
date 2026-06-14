@@ -539,6 +539,9 @@ Current implementation:
   reviewers can reach contact sheets, promotion reviews, editability reviews,
   pending decisions, and promotion exports from the same report that contains
   the decision-choice commands.
+- Harvest prep applied rows include reviewer, reason, source decision path, and
+  applied review-artifact links, keeping harvestable decisions auditable after
+  they move out of the pending queue.
 
 Exit criteria:
 

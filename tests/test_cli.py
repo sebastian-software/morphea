@@ -466,6 +466,9 @@ class CliTests(unittest.TestCase):
                         "reviewer": "qa",
                         "reason": "reviewed current deferred evidence",
                         "issue_tags": ["manual_review_pending"],
+                        "review_artifacts": {
+                            "promotion_review": "promotion-review.md",
+                        },
                     }
                 ),
                 encoding="utf-8",
@@ -498,6 +501,19 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result["applied_case_count"], 1)
             self.assertEqual(result["harvestable_case_count"], 1)
             self.assertEqual(result["pending_case_count"], 0)
+            self.assertEqual(result["applied_cases"][0]["reviewer"], "qa")
+            self.assertEqual(
+                result["applied_cases"][0]["reason"],
+                "reviewed current deferred evidence",
+            )
+            self.assertEqual(
+                result["applied_cases"][0]["source_review_decision"],
+                str(terminal_decision),
+            )
+            self.assertEqual(
+                result["applied_cases"][0]["review_artifacts"],
+                {"promotion_review": "promotion-review.md"},
+            )
             manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
             self.assertEqual(
                 manifest_data["review_decision_applied"]["decision"],
@@ -511,10 +527,11 @@ class CliTests(unittest.TestCase):
             self.assertEqual(config["suite"], str(suite))
             self.assertEqual(config["run_root"], str(run_root))
             self.assertTrue(config["require_applied_review"])
-            self.assertIn(
-                "harvest-curated --config",
-                markdown.read_text(encoding="utf-8"),
-            )
+            rendered = markdown.read_text(encoding="utf-8")
+            self.assertIn("harvest-curated --config", rendered)
+            self.assertIn("reviewed current deferred evidence", rendered)
+            self.assertIn("promotion_review", rendered)
+            self.assertIn(str(terminal_decision), rendered)
 
     def test_promotion_review_harvest_cli_resolves_decision_choice(self):
         with tempfile.TemporaryDirectory() as temp_dir:

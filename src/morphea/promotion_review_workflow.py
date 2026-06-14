@@ -207,8 +207,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
             "",
             "## Applied Case Status",
             "",
-            "| Case | Decision | Harvestable | Manifest |",
-            "| --- | --- | --- | --- |",
+            "| Case | Decision | Harvestable | Reviewer | Reason | Source decision | Review artifacts | Manifest |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     applied_cases = result.get("applied_cases", [])
@@ -221,10 +221,14 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('decision', 'n/a')}` | "
                 f"`{str(item.get('harvestable', False)).lower()}` | "
+                f"{_fmt_table_code(item.get('reviewer'))} | "
+                f"{_fmt_table_code(item.get('reason'))} | "
+                f"{_fmt_table_code(item.get('source_review_decision'))} | "
+                f"{_fmt_review_artifacts(item.get('review_artifacts'))} | "
                 f"`{item.get('manifest', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [
@@ -333,6 +337,9 @@ def _packet_review_status(
                     "source_review_decision": applied.get(
                         "source_review_decision",
                     ),
+                    "review_artifacts": _object_dict(
+                        applied.get("review_artifacts"),
+                    ),
                     "manifest": str(manifest_path) if manifest_path else None,
                 }
             )
@@ -379,6 +386,12 @@ def _case_review_artifacts(case: dict[str, object]) -> dict[str, str]:
         )
         if isinstance((value := artifacts.get(key)), str) and value
     }
+
+
+def _object_dict(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
 
 
 def _decision_template_readiness(
@@ -718,6 +731,13 @@ def _fmt_review_overrides(value: object) -> str:
         return "n/a"
     parts = [f"`{item}`" for item in value if isinstance(item, str) and item]
     return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_table_code(value: object) -> str:
+    if not isinstance(value, str) or not value:
+        return "n/a"
+    escaped = value.replace("|", "\\|").replace("`", "'")
+    return f"`{escaped}`"
 
 
 def _fmt_review_artifacts(value: object) -> str:

@@ -297,7 +297,9 @@ gate/component evidence.
 explicit `case-id=terminal-decision.json` inputs, writes the per-case applied
 review summary beside the manifest, reports which packet cases are applied,
 harvestable, or still pending, and can write a `harvest-curated --config` file
-with `require_applied_review: true`. Pending rows now carry available terminal
+with `require_applied_review: true`. Applied rows show reviewer, reason, source
+decision path, and applied review-artifact links before a case is treated as
+harvestable. Pending rows now carry available terminal
 decision-template paths in JSON and Markdown, so a reviewer can choose a
 terminal accepted/corrected/rejected/deferred file without reading the packet
 JSON. The CLI regression fixture exercises the generated config end to end: an

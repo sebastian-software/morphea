@@ -720,8 +720,10 @@ applies only explicitly supplied terminal decision files, writes
 `applied-review.json` / `applied-review.md` beside the case manifest via the
 same `promotion-apply-review` rules, summarizes applied, harvestable, and
 pending cases, and writes a `harvest-curated --config` file with
-`require_applied_review: true`. Cases without an applied review remain pending
-in the prep report rather than becoming implicit training candidates. Pending
+`require_applied_review: true`. Applied case rows include reviewer, reason,
+source decision path, and applied review-artifact links, so harvestable cases
+remain auditable from the prep report. Cases without an applied review remain
+pending in the prep report rather than becoming implicit training candidates. Pending
 cases carry available terminal `decision_templates` in JSON and Markdown when
 the review packet or config exposes them, so reviewers can see the
 accepted/corrected/rejected/deferred choices without applying them
