@@ -29,6 +29,7 @@ def prepare_promotion_review_harvest(
     review_config: str | Path | None = None,
     decisions: dict[str, str | Path] | None = None,
     decision_templates: dict[str, dict[str, str | Path]] | None = None,
+    decision_overrides: dict[str, dict[str, object]] | None = None,
     suite: str | Path | None = None,
     run_root: str | Path | None = None,
     harvest_output: str | Path | None = None,
@@ -44,8 +45,13 @@ def prepare_promotion_review_harvest(
     cases = _packet_cases(packet)
     cases_by_id = _cases_by_id(cases)
     decision_map = decisions or {}
+    override_map = decision_overrides or {}
     template_map = _decision_template_map(cases, decision_templates)
-    template_readiness = _decision_template_readiness(template_map, base_dir)
+    template_readiness = _decision_template_readiness(
+        template_map,
+        base_dir,
+        override_map,
+    )
     choice_command_map = _decision_choice_commands(review_config, template_map)
     unknown_cases = sorted(set(decision_map) - set(cases_by_id))
     if unknown_cases:
@@ -53,11 +59,18 @@ def prepare_promotion_review_harvest(
             "review decisions reference unknown packet cases: "
             + ", ".join(unknown_cases)
         )
+    unknown_overrides = sorted(set(override_map) - set(cases_by_id))
+    if unknown_overrides:
+        raise ValueError(
+            "review decision overrides reference unknown packet cases: "
+            + ", ".join(unknown_overrides)
+        )
 
     run_root_path = Path(run_root) if run_root is not None else base_dir
     newly_applied = []
     for case_id, decision_path in sorted(decision_map.items()):
         case = cases_by_id[case_id]
+        overrides = override_map.get(case_id, {})
         manifest_path = _case_manifest_path(case, base_dir, run_root_path)
         if manifest_path is None:
             raise ValueError(f"review packet case {case_id} has no manifest artifact")
@@ -68,6 +81,12 @@ def prepare_promotion_review_harvest(
             output=applied_output,
             markdown=applied_markdown,
             manifest=manifest_path,
+            reviewer=_override_string(overrides.get("reviewer")),
+            reason=_override_string(overrides.get("reason")),
+            correction_notes=_override_string(overrides.get("correction_notes")),
+            corrected_artifacts=_override_string_list(
+                overrides.get("corrected_artifacts")
+            ),
         )
         newly_applied.append(
             {
@@ -77,6 +96,7 @@ def prepare_promotion_review_harvest(
                     applied.get("accepted_for_promotion", False)
                 ),
                 "source_review_decision": applied.get("source_review_decision"),
+                "review_overrides": applied.get("review_overrides", []),
                 "manifest": str(manifest_path),
                 "output": str(applied_output),
                 "markdown": str(applied_markdown),
@@ -123,6 +143,7 @@ def prepare_promotion_review_harvest(
         "pending_case_count": len(pending_cases),
         "pending_cases": pending_cases,
         "decision_templates": template_map,
+        "decision_overrides": override_map,
         "decision_template_readiness": template_readiness,
         "decision_choice_commands": choice_command_map,
         "harvest_config": harvest_cfg,
@@ -155,8 +176,8 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
         "",
         "## Newly Applied",
         "",
-        "| Case | Decision | Accepted | Manifest | Output |",
-        "| --- | --- | --- | --- | --- |",
+        "| Case | Decision | Accepted | Overrides | Manifest | Output |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     applied = result.get("newly_applied_decisions", [])
     if isinstance(applied, list) and applied:
@@ -168,11 +189,12 @@ def render_promotion_review_harvest_markdown(result: dict[str, object]) -> str:
                 f"`{item.get('case_id', 'n/a')}` | "
                 f"`{item.get('decision', 'n/a')}` | "
                 f"`{str(item.get('accepted_for_promotion', False)).lower()}` | "
+                f"{_fmt_review_overrides(item.get('review_overrides'))} | "
                 f"`{item.get('manifest', 'n/a')}` | "
                 f"`{item.get('output', 'n/a')}` |"
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a |")
 
     lines.extend(
         [
@@ -296,6 +318,9 @@ def _packet_review_status(
                     "accepted_for_promotion": bool(
                         applied.get("accepted_for_promotion", False)
                     ),
+                    "reviewer": applied.get("reviewer"),
+                    "reason": applied.get("reason"),
+                    "review_overrides": applied.get("review_overrides", []),
                     "source_review_decision": applied.get(
                         "source_review_decision",
                     ),
@@ -329,10 +354,13 @@ def _packet_review_status(
 def _decision_template_readiness(
     decision_templates: dict[str, dict[str, str]],
     base_dir: Path,
+    decision_overrides: dict[str, dict[str, object]] | None = None,
 ) -> dict[str, dict[str, dict[str, object]]]:
     readiness: dict[str, dict[str, dict[str, object]]] = {}
+    override_map = decision_overrides or {}
     for case_id, templates in sorted(decision_templates.items()):
         case_readiness: dict[str, dict[str, object]] = {}
+        overrides = override_map.get(case_id, {})
         for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS:
             template = templates.get(decision)
             if not template:
@@ -340,6 +368,7 @@ def _decision_template_readiness(
             case_readiness[decision] = _terminal_template_readiness(
                 decision=decision,
                 template_path=_resolve_path(template, base_dir),
+                overrides=overrides,
             )
         if case_readiness:
             readiness[case_id] = case_readiness
@@ -350,6 +379,7 @@ def _terminal_template_readiness(
     *,
     decision: str,
     template_path: Path,
+    overrides: dict[str, object] | None = None,
 ) -> dict[str, object]:
     try:
         data = json.loads(template_path.read_text(encoding="utf-8"))
@@ -371,7 +401,7 @@ def _terminal_template_readiness(
             "ready": False,
             "missing_fields": ["template_object"],
         }
-    missing = _terminal_template_missing_fields(decision, data)
+    missing = _terminal_template_missing_fields(decision, data, overrides or {})
     return {
         "path": str(template_path),
         "ready": not missing,
@@ -382,20 +412,44 @@ def _terminal_template_readiness(
 def _terminal_template_missing_fields(
     decision: str,
     data: dict[str, object],
+    overrides: dict[str, object] | None = None,
 ) -> list[str]:
     missing: list[str] = []
+    overrides = overrides or {}
     if data.get("decision") != decision:
         missing.append("decision")
-    if not _non_empty_string(data.get("reviewer")):
+    if not _non_empty_string(_override_value(data, overrides, "reviewer")):
         missing.append("reviewer")
-    if not _non_empty_string(data.get("reason")):
+    if not _non_empty_string(_override_value(data, overrides, "reason")):
         missing.append("reason")
     if decision == "corrected":
-        if not _non_empty_string(data.get("correction_notes")):
+        if not _non_empty_string(
+            _override_value(data, overrides, "correction_notes")
+        ):
             missing.append("correction_notes")
-        if not _non_empty_string_list(data.get("corrected_artifacts")):
+        if not _non_empty_string_list(
+            _override_value(data, overrides, "corrected_artifacts")
+        ):
             missing.append("corrected_artifacts")
     return missing
+
+
+def _override_value(
+    data: dict[str, object],
+    overrides: dict[str, object],
+    key: str,
+) -> object:
+    return overrides[key] if key in overrides else data.get(key)
+
+
+def _override_string(value: object) -> str | None:
+    return value if isinstance(value, str) else None
+
+
+def _override_string_list(value: object) -> list[str] | None:
+    if not isinstance(value, list):
+        return None
+    return [item for item in value if isinstance(item, str)]
 
 
 def _non_empty_string(value: object) -> bool:
@@ -585,6 +639,13 @@ def _fmt_decision_templates(value: object) -> str:
         for decision in TERMINAL_PROMOTION_REVIEW_DECISIONS
         if isinstance(value.get(decision), str) and value[decision]
     ]
+    return ", ".join(parts) if parts else "n/a"
+
+
+def _fmt_review_overrides(value: object) -> str:
+    if not isinstance(value, list):
+        return "n/a"
+    parts = [f"`{item}`" for item in value if isinstance(item, str) and item]
     return ", ".join(parts) if parts else "n/a"
 
 

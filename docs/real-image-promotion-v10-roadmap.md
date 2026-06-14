@@ -431,6 +431,12 @@ remains the final override. Config-driven prep reports also emit
 copy/pasteable from the same Markdown report. The report marks template
 readiness next to those commands, so unedited generated templates clearly show
 which reviewer evidence is still missing before they can be applied.
+
+Case-scoped `decision_overrides` in the config can supply `reviewer`, `reason`,
+`correction_notes`, and `corrected_artifacts` to the selected terminal
+template, so generated templates can remain untouched while applied summaries
+still record the explicit evidence override fields.
+
 `morphea harvest --require-applied-review` can then gate pseudo-label
 harvesting so only accepted/corrected applied decisions become candidates.
 `morphea harvest-curated --require-applied-review` preserves existing applied

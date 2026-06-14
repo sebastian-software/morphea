@@ -404,8 +404,9 @@ review-oriented wrapper around `curated-check`: it runs the suite, writes
 the output root by default, and emits the same per-case artifacts,
 `review-packet.json`, `review-packet.md`, and `review-gallery.html`. It also
 writes `promotion-review-harvest.json`, a starter config with empty
-`decisions`, per-case `decision_templates` for reviewer selection, and stable
-paths for `promotion-review-harvest --config`. The final `curated-report.json`
+`decisions`, empty `decision_overrides`, per-case `decision_templates` for
+reviewer selection, and stable paths for `promotion-review-harvest --config`.
+The final `curated-report.json`
 and `curated-report.md` also include `next_commands`, starting with the exact
 harvest command for the generated starter config.
 
@@ -737,7 +738,8 @@ carry `decision_choice_commands` in JSON and Markdown, one copy/paste
 per available terminal template. The prep report also carries
 `decision_template_readiness`, marking whether each terminal template already
 has required reviewer evidence; generated templates normally report missing
-`reviewer` and `reason` until edited.
+`reviewer` and `reason` until edited or until case-scoped
+`decision_overrides` supply the same evidence.
 
 `morphea harvest --require-applied-review` filters run manifests through
 `review_decision_applied`: only `accepted` and `corrected` applied decisions
@@ -1102,6 +1104,12 @@ Supported fields:
   files for reviewer convenience but is not applied automatically; reviewers
   still select terminal decisions by populating `decisions`, using
   `decision_choices`, or passing `--decision` / `--decision-choice`.
+- `decision_overrides`: optional object mapping case ids to explicit review
+  evidence fields passed to `promotion-apply-review` when that case's terminal
+  decision is applied. Supported fields are `reviewer`, `reason`,
+  `correction_notes`, and `corrected_artifacts`. These values let generated
+  terminal templates stay unedited while the config still supplies the required
+  reviewer evidence; applied summaries record the fields as review overrides.
 - `suite`: optional suite override for the generated harvest config
 - `run_root`: optional run-root override for manifest lookup and generated
   harvest config
@@ -1115,7 +1123,8 @@ Supported fields:
 
 CLI arguments override values loaded from the config file. `--decision`
 arguments are merged into the config `decisions` object and override the same
-case id.
+case id. `decision_overrides` are case-scoped and are applied to whichever
+terminal decision path or decision choice is selected for that case.
 
 ## Review Queue and Reviewed Labels v1
 

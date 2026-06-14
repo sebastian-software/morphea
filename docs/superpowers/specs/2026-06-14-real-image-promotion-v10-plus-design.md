@@ -500,10 +500,10 @@ Current implementation:
   `curated-report.json`, `curated-report.md`, and `curated-snapshot.json`
   paths under the output root, and writes per-case artifacts plus suite-level
   `review-packet.json`, `review-packet.md`, and `review-gallery.html`. It also
-  writes a starter `promotion-review-harvest.json` config with empty decisions,
-  per-case terminal decision template paths, and stable follow-up paths, then
-  surfaces the generated `promotion-review-harvest --config` command in report
-  JSON and Markdown.
+  writes a starter `promotion-review-harvest.json` config with empty
+  `decisions`, empty `decision_overrides`, per-case terminal decision template
+  paths, and stable follow-up paths, then surfaces the generated
+  `promotion-review-harvest --config` command in report JSON and Markdown.
 - `curated-check --run --output-dir --markdown --snapshot` remains the lower
   level suite-run entry point for explicit artifact paths.
 - `promotion-review-harvest` is the review-to-harvest bridge: it applies only
@@ -525,6 +525,10 @@ Current implementation:
   reviewer evidence overrides (`--reviewer`, `--reason`, and corrected-evidence
   flags), so reviewers can avoid hand-editing JSON while still supplying
   required evidence.
+- `promotion-review-harvest --config` can carry case-scoped
+  `decision_overrides` for the same reviewer evidence fields, allowing
+  template-backed `decision_choices` to apply generated terminal templates
+  without mutating those template files.
 
 Exit criteria:
 

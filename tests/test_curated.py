@@ -2671,6 +2671,7 @@ class CuratedSuiteTests(unittest.TestCase):
                 str(output_dir / "review-packet.json"),
             )
             self.assertEqual(harvest_config_data["decisions"], {})
+            self.assertEqual(harvest_config_data["decision_overrides"], {})
             self.assertEqual(
                 sorted(harvest_config_data["decision_templates"]["simple-circle"]),
                 ["accepted", "corrected", "deferred", "rejected"],

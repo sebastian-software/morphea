@@ -144,8 +144,9 @@ per-decision apply commands for queued review cases.
 `morphea promotion-review-run suite.json --output-dir review-run` runs the same
 review-oriented artifact set through one command and derives default report,
 Markdown, and snapshot paths under the output root. It also writes a starter
-`promotion-review-harvest.json` config with empty decisions and stable
-follow-up paths for review-to-harvest preparation. That starter config lists
+`promotion-review-harvest.json` config with empty decisions, empty
+`decision_overrides`, and stable follow-up paths for review-to-harvest
+preparation. That starter config lists
 available terminal decision templates per queued case without applying any of
 them automatically. The resulting curated report also includes the generated
 harvest command in JSON and Markdown.
@@ -313,7 +314,8 @@ prep reports now include `decision_choice_commands` for pending cases, so each
 visible terminal template has a copy/paste command that reruns the same config
 with the selected choice. The same report marks template readiness; generated
 terminal templates remain `needs edit` until required `reviewer` and `reason`
-fields, plus corrected-evidence fields when relevant, are filled.
+fields, plus corrected-evidence fields when relevant, are filled or supplied
+through config-level `decision_overrides`.
 
 `morphea harvest --require-applied-review` now gates pseudo-label harvesting on
 `review_decision_applied`: only `accepted` and `corrected` applied decisions

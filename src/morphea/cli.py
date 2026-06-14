@@ -295,6 +295,7 @@ PROMOTION_REVIEW_HARVEST_CONFIG_KEYS = {
     "decisions",
     "decision_choices",
     "decision_templates",
+    "decision_overrides",
     "suite",
     "run_root",
     "harvest_output",
@@ -1355,6 +1356,7 @@ def main(argv: list[str] | None = None) -> None:
             review_config=review_harvest_config.get("review_config"),
             decisions=review_harvest_config.get("decisions"),
             decision_templates=review_harvest_config.get("decision_templates"),
+            decision_overrides=review_harvest_config.get("decision_overrides"),
             suite=review_harvest_config.get("suite"),
             run_root=review_harvest_config.get("run_root"),
             harvest_output=review_harvest_config.get("harvest_output"),
@@ -2833,6 +2835,7 @@ def _promotion_review_run_harvest_config(
         "markdown": str(output_dir / "review-harvest.md"),
         "harvest_config": str(output_dir / "harvest-curated.json"),
         "decisions": {},
+        "decision_overrides": {},
         "suite": str(config["suite"]),
         "run_root": str(output_dir),
         "harvest_output": str(output_dir / "harvested-pseudo-labels.json"),
@@ -3239,6 +3242,12 @@ def _load_promotion_review_harvest_config(
                 config["decision_templates"],
             )
         )
+    if "decision_overrides" in config:
+        config["decision_overrides"] = (
+            _promotion_review_decision_overrides_from_config(
+                config["decision_overrides"],
+            )
+        )
     return config
 
 
@@ -3315,6 +3324,61 @@ def _promotion_review_decision_templates_from_config(
         if terminal_templates:
             templates_by_case[case_id] = terminal_templates
     return templates_by_case
+
+
+def _promotion_review_decision_overrides_from_config(
+    value: object,
+) -> dict[str, dict[str, object]]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("promotion-review-harvest decision_overrides must be an object")
+    overrides_by_case: dict[str, dict[str, object]] = {}
+    allowed = {"reviewer", "reason", "correction_notes", "corrected_artifacts"}
+    for case_id, overrides in value.items():
+        if not isinstance(case_id, str) or not case_id:
+            raise ValueError(
+                "promotion-review-harvest decision_overrides must use non-empty case ids"
+            )
+        if not isinstance(overrides, dict):
+            raise ValueError(
+                "promotion-review-harvest decision_overrides must map case ids to objects"
+            )
+        unknown = sorted(set(overrides) - allowed)
+        if unknown:
+            raise ValueError(
+                "promotion-review-harvest decision_overrides unsupported fields: "
+                + ", ".join(unknown)
+            )
+        normalized: dict[str, object] = {}
+        for key in ("reviewer", "reason", "correction_notes"):
+            value_for_key = overrides.get(key)
+            if value_for_key is None:
+                continue
+            if not isinstance(value_for_key, str) or not value_for_key.strip():
+                raise ValueError(
+                    "promotion-review-harvest decision_overrides "
+                    f"{key} must be a non-empty string"
+                )
+            normalized[key] = value_for_key
+        corrected = overrides.get("corrected_artifacts")
+        if corrected is not None:
+            if (
+                not isinstance(corrected, list)
+                or not corrected
+                or not all(
+                    isinstance(item, str) and bool(item.strip())
+                    for item in corrected
+                )
+            ):
+                raise ValueError(
+                    "promotion-review-harvest decision_overrides "
+                    "corrected_artifacts must be a non-empty string array"
+                )
+            normalized["corrected_artifacts"] = list(corrected)
+        if normalized:
+            overrides_by_case[case_id] = normalized
+    return overrides_by_case
 
 
 def _promotion_review_decisions_from_choices(

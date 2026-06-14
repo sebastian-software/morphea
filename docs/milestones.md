@@ -1193,7 +1193,8 @@ Implemented so far:
   gallery artifacts plus a starter `promotion-review-harvest.json` config and
   report-level harvest follow-up command. The starter config also lists the
   terminal decision templates available for each queued review case while
-  keeping `decisions` empty until explicit reviewer selection.
+  keeping `decisions` and `decision_overrides` empty until explicit reviewer
+  selection and evidence entry.
 - `morphea segment --config segment.json` for repeatable input/output,
   report, and segment proposal runs
 - `morphea segment --markdown proposals.md` for scan-friendly segment proposal
@@ -1231,7 +1232,9 @@ Implemented so far:
 - `morphea promotion-review-harvest --config promotion-review-harvest.json` for
   repeatable review-to-harvest preparation with case-id decision maps,
   template-backed `decision_choices`, copy/paste decision-choice commands for
-  pending cases, template-readiness labels, and per-case CLI overrides
+  pending cases, template-readiness labels, and case-scoped
+  `decision_overrides` that pass reviewer/reason and corrected-review evidence
+  into `promotion-apply-review`
 - `morphea sweep` configs can carry output roots and Markdown report paths for
   repeatable config comparisons
 - schema-v1 sweep configs
